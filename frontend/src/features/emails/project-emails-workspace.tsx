@@ -16,7 +16,6 @@ import {
   Link2Icon,
   MagnifyingGlassIcon,
   MixerHorizontalIcon,
-  OpenInNewWindowIcon,
   PaperPlaneIcon,
   Pencil1Icon,
   PlusIcon,
@@ -24,7 +23,7 @@ import {
   StarFilledIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
-import { Check, FolderOpen, ImageIcon, ListTodo, Loader2, Paperclip, Plus, Sparkles } from "lucide-react";
+import { Check, Download, FolderOpen, ImageIcon, ListTodo, Loader2, Paperclip, Plus, Sparkles, Star, StarOff } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -56,6 +55,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { cn } from "@/lib/utils";
 import type { EmailSource, ProjectEmail } from "@/hooks/use-emails";
 import { useProjects } from "@/hooks/use-projects";
@@ -110,6 +110,14 @@ interface ProjectEmailsWorkspaceProps {
   onSourceFilterChange?: (source: EmailSource) => void;
   /** Returns false for read-only (Outlook-synced) emails so Edit is hidden. */
   canEdit?: (email: ProjectEmail) => boolean;
+  /** Hide the compose affordance on read-only (global / Outlook) surfaces. */
+  canCompose?: boolean;
+  /** Hide the delete affordance on read-only surfaces. */
+  canDelete?: boolean;
+  /** Mail / Table / List switcher rendered in the list header. */
+  viewSwitcher?: React.ReactNode;
+  /** Filter control rendered next to search in the list header. */
+  filterControl?: React.ReactNode;
   onCompose: () => void;
   onEdit: (email: ProjectEmail) => void;
   onDelete: (email: ProjectEmail) => void;
@@ -858,6 +866,10 @@ export function ProjectEmailsWorkspace({
   searchValue,
   onSearchChange,
   canEdit,
+  canCompose = true,
+  canDelete = true,
+  viewSwitcher,
+  filterControl,
   onCompose,
   onEdit,
   onDelete,
@@ -870,7 +882,6 @@ export function ProjectEmailsWorkspace({
   );
   const [importanceDialogOpen, setImportanceDialogOpen] = React.useState(false);
   const [importanceSignal, setImportanceSignal] = React.useState<"important" | "not_important" | null>(null);
-  const [leftFilter, setLeftFilter] = React.useState<"all" | "attachments" | "starred">("all");
   const [createTaskOpen, setCreateTaskOpen] = React.useState(false);
   const [taskTitle, setTaskTitle] = React.useState("");
   const [taskDescription, setTaskDescription] = React.useState("");
@@ -880,6 +891,9 @@ export function ProjectEmailsWorkspace({
   const [isCreatingTask, setIsCreatingTask] = React.useState(false);
   const [previewAttachment, setPreviewAttachment] = React.useState<EmailAttachmentRecord | null>(null);
   const [attachmentOverrides, setAttachmentOverrides] = React.useState<Record<number, string | null>>({});
+  const [summaryOpen, setSummaryOpen] = React.useState(false);
+  const [summary, setSummary] = React.useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = React.useState(false);
 
   React.useEffect(() => {
     if (searchValue.trim().length > 0) {
@@ -887,13 +901,10 @@ export function ProjectEmailsWorkspace({
     }
   }, [searchValue]);
 
-  const visibleEmails = React.useMemo(() => {
-    return emails.filter((email) => {
-      if (leftFilter === "attachments") return Boolean(email.has_attachments);
-      if (leftFilter === "starred") return Boolean(email.is_starred);
-      return true;
-    });
-  }, [emails, leftFilter]);
+  // Filtering (status, source, attachments, starred, date) is applied upstream
+  // in EmailsClient via the shared filter state, so the rail renders the list
+  // as-given.
+  const visibleEmails = emails;
 
   React.useEffect(() => {
     if (visibleEmails.length === 0) {
@@ -987,6 +998,36 @@ export function ProjectEmailsWorkspace({
     [],
   );
 
+  // Reset the AI summary whenever the selected email changes — a summary for one
+  // thread must never leak into another.
+  React.useEffect(() => {
+    setSummaryOpen(false);
+    setSummary(null);
+    setSummaryLoading(false);
+  }, [selectedEmailId]);
+
+  const handleSummarize = React.useCallback(async () => {
+    if (!selectedEmail) return;
+    setSummaryOpen(true);
+    if (summary) return;
+    setSummaryLoading(true);
+    try {
+      const result = await apiFetch<{ summary: string }>(
+        `/api/projects/${selectedEmail.project_id}/emails/${selectedEmail.id}/summarize`,
+        { method: "POST" },
+      );
+      setSummary(result.summary);
+    } catch (error) {
+      setSummary(
+        error instanceof Error
+          ? `Could not generate summary: ${error.message}`
+          : "Could not generate summary.",
+      );
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, [selectedEmail, summary]);
+
   const handleOpenCreateTask = React.useCallback(() => {
     if (!selectedEmail) return;
     setTaskTitle(suggestedTaskTitle(selectedEmail));
@@ -1048,6 +1089,7 @@ export function ProjectEmailsWorkspace({
                 </div>
               </div>
               <div className="flex items-center gap-1 text-muted-foreground">
+                {filterControl}
                 <Button
                   type="button"
                   variant="ghost"
@@ -1058,16 +1100,18 @@ export function ProjectEmailsWorkspace({
                 >
                   <MagnifyingGlassIcon className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onCompose}
-                  aria-label="Compose"
-                  title="Compose"
-                  className="h-8 w-8 rounded-full text-muted-foreground shadow-none"
-                >
-                  <Pencil1Icon className="h-4 w-4" />
-                </Button>
+                {canCompose ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onCompose}
+                    aria-label="Compose"
+                    title="Compose"
+                    className="h-8 w-8 rounded-full text-muted-foreground shadow-none"
+                  >
+                    <Pencil1Icon className="h-4 w-4" />
+                  </Button>
+                ) : null}
               </div>
             </div>
 
@@ -1088,24 +1132,9 @@ export function ProjectEmailsWorkspace({
               ))}
             </div>
 
-            <div className="mt-3 flex items-center gap-2">
-              {[
-                { key: "all", label: "All" },
-                { key: "attachments", label: "Attachments" },
-                { key: "starred", label: "Starred" },
-              ].map((filter) => (
-                <Button
-                  key={filter.key}
-                  type="button"
-                  variant={leftFilter === filter.key ? "secondary" : "ghost"}
-                  size="sm"
-                  onClick={() => setLeftFilter(filter.key as typeof leftFilter)}
-                  className="h-7 rounded-full px-3 text-xs shadow-none"
-                >
-                  {filter.label}
-                </Button>
-              ))}
-            </div>
+            {viewSwitcher ? (
+              <div className="mt-3 flex items-center">{viewSwitcher}</div>
+            ) : null}
 
             <AnimatePresence initial={false}>
               {isSearchExpanded ? (
@@ -1179,14 +1208,16 @@ export function ProjectEmailsWorkspace({
                 <p className="mt-2 max-w-xs leading-6">
                   Draft client updates, track incoming messages, and keep project conversations in one quiet workspace.
                 </p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={onCompose}
-                  className="mt-6 h-10 rounded-full px-4 shadow-none"
-                >
-                  Start a draft
-                </Button>
+                {canCompose ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onCompose}
+                    className="mt-6 h-10 rounded-full px-4 shadow-none"
+                  >
+                    Start a draft
+                  </Button>
+                ) : null}
               </div>
             ) : (
               <motion.div
@@ -1293,19 +1324,51 @@ export function ProjectEmailsWorkspace({
                           <Pencil1Icon className="h-4 w-4" />
                         </Button>
                       ) : null}
+                      {canDelete ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onDelete(selectedEmail)}
+                          className="h-8 w-8 rounded-full"
+                          aria-label="Delete email"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+
+                {summaryOpen ? (
+                  <InfoAlert
+                    role="status"
+                    icon={<Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />}
+                    className="items-start gap-2 rounded-none border-x-0 border-t-0 border-b border-border/60 bg-muted/30 px-8 py-3 text-muted-foreground [&>div]:flex-1 xl:px-10"
+                  >
+                    <div className="flex w-full items-start gap-2">
+                      {summaryLoading ? (
+                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Loader2 className="h-3 w-3 animate-spin" /> Summarizing…
+                        </span>
+                      ) : (
+                        <p className="flex-1 text-xs leading-relaxed text-muted-foreground">
+                          {summary}
+                        </p>
+                      )}
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() => onDelete(selectedEmail)}
-                        className="h-8 w-8 rounded-full"
-                        aria-label="Delete email"
+                        onClick={() => setSummaryOpen(false)}
+                        aria-label="Close summary"
+                        className="size-6 shrink-0 text-muted-foreground"
                       >
-                        <TrashIcon className="h-4 w-4" />
+                        <Cross2Icon className="h-3.5 w-3.5" />
                       </Button>
                     </div>
-                  </div>
-                </div>
+                  </InfoAlert>
+                ) : null}
 
                 <ScrollArea className="flex-1">
                   <div className="flex flex-col gap-8 px-8 pb-8 pt-8 xl:px-10">
@@ -1344,9 +1407,10 @@ export function ProjectEmailsWorkspace({
 
                     {selectedAttachments.length > 0 ? (
                       <div className="space-y-3 border-t border-border/60 pt-5">
-                        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                          <Paperclip className="h-4 w-4 text-muted-foreground" />
-                          Attachments
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                          <Paperclip className="h-3.5 w-3.5" />
+                          {selectedAttachments.length}{" "}
+                          {selectedAttachments.length === 1 ? "Attachment" : "Attachments"}
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                           {selectedAttachments.map((attachment) => (
@@ -1358,8 +1422,10 @@ export function ProjectEmailsWorkspace({
                                 type="button"
                                 variant="ghost"
                                 onClick={() => setPreviewAttachment(attachment)}
+                                disabled={!isPreviewableAttachment(attachment)}
+                                aria-label={`Preview ${attachment.fileName}`}
                                 className={cn(
-                                  "flex h-28 w-full items-center justify-center overflow-hidden rounded-xl bg-muted/30 p-0",
+                                  "flex h-28 w-full items-center justify-center overflow-hidden rounded-xl bg-muted/30 p-0 disabled:opacity-100",
                                   isPreviewableAttachment(attachment) && "hover:bg-muted/50",
                                 )}
                               >
@@ -1400,11 +1466,16 @@ export function ProjectEmailsWorkspace({
                                   type="button"
                                   variant="ghost"
                                   size="icon"
-                                  className="h-7 w-7 rounded-full"
-                                  onClick={() => setPreviewAttachment(attachment)}
-                                  aria-label={`Preview ${attachment.fileName}`}
+                                  className="h-7 w-7 rounded-full text-muted-foreground hover:text-foreground"
+                                  onClick={() =>
+                                    window.open(
+                                      attachmentUrl(selectedEmail.project_id, attachment.id),
+                                      "_blank",
+                                    )
+                                  }
+                                  aria-label={`Download ${attachment.fileName}`}
                                 >
-                                  <OpenInNewWindowIcon className="h-3.5 w-3.5" />
+                                  <Download className="h-3.5 w-3.5" />
                                 </Button>
                               </div>
                             </div>
@@ -1413,45 +1484,52 @@ export function ProjectEmailsWorkspace({
                       </div>
                     ) : null}
 
-                    <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border/60 pt-5">
-                      <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
-                        <ProjectAssignmentPopover email={selectedEmail} variant="toolbar" />
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                          <div className="inline-flex items-center gap-2 text-muted-foreground">
-                            <Sparkles className="h-4 w-4" />
-                            <span className="text-[15px] font-medium">AI feedback</span>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleImportanceIntent("important")}
-                            className="h-auto rounded-md px-0 py-0 text-[15px] font-medium text-foreground/78 shadow-none hover:bg-transparent hover:text-foreground"
-                          >
-                            Mark important
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleImportanceIntent("not_important")}
-                            className="h-auto rounded-md px-0 py-0 text-[15px] font-medium text-foreground/78 shadow-none hover:bg-transparent hover:text-foreground"
-                          >
-                            Not important
-                          </Button>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleOpenCreateTask}
-                          disabled={!selectedEmail.project_id}
-                          className="h-auto rounded-md px-0 py-0 text-[15px] font-medium text-foreground/85 shadow-none hover:bg-transparent hover:text-foreground"
-                        >
-                          <ListTodo className="mr-2 h-4 w-4 text-muted-foreground" />
-                          Create task
-                        </Button>
-                      </div>
+                    <div className="flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-5">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => void handleSummarize()}
+                        className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Summarize
+                      </Button>
+
+                      <ProjectAssignmentPopover email={selectedEmail} />
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleImportanceIntent("important")}
+                        className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <Star className="h-3.5 w-3.5" />
+                        Mark important
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleImportanceIntent("not_important")}
+                        className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <StarOff className="h-3.5 w-3.5" />
+                        Not important
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleOpenCreateTask}
+                        disabled={!selectedEmail.project_id}
+                        className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <ListTodo className="h-3.5 w-3.5" />
+                        Create task
+                      </Button>
                     </div>
                   </div>
                 </ScrollArea>
@@ -1473,16 +1551,18 @@ export function ProjectEmailsWorkspace({
                     Nothing selected
                   </div>
                   <p className="mt-3 text-[15px] leading-7 text-muted-foreground">
-                    Select a message from the inbox rail or start a new draft. This center pane is where the thread stays in focus.
+                    Select a message from the inbox rail{canCompose ? " or start a new draft" : ""}. This center pane is where the thread stays in focus.
                   </p>
-                  <Button
-                    size="sm"
-                    onClick={onCompose}
-                    className="mt-6 h-10 rounded-full px-4 shadow-none"
-                  >
-                    <PlusIcon className="mr-2 h-4 w-4" />
-                    Compose email
-                  </Button>
+                  {canCompose ? (
+                    <Button
+                      size="sm"
+                      onClick={onCompose}
+                      className="mt-6 h-10 rounded-full px-4 shadow-none"
+                    >
+                      <PlusIcon className="mr-2 h-4 w-4" />
+                      Compose email
+                    </Button>
+                  ) : null}
                 </div>
               </motion.div>
             )}
@@ -1517,16 +1597,18 @@ export function ProjectEmailsWorkspace({
                   <Pencil1Icon className="h-4 w-4" />
                 </Button>
               ) : null}
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => onDelete(selectedEmail)}
-                aria-label="Delete email"
-                className="h-8 w-8 text-destructive hover:text-destructive"
-              >
-                <TrashIcon className="h-4 w-4" />
-              </Button>
+              {canDelete ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onDelete(selectedEmail)}
+                  aria-label="Delete email"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </Button>
+              ) : null}
             </div>
           ) : null
         }

@@ -1,0 +1,2625 @@
+{
+  "suite": "app-expert-eval-suite",
+  "endpoint": "https://alleato-backend-rbnj.onrender.com/api/intelligence/app-expert",
+  "total": 50,
+  "passed": 50,
+  "failed": 0,
+  "results": [
+    {
+      "id": "appnav-change-events-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4508,
+      "question": "Where do I create a change event for a project?",
+      "response": {
+        "answer": "I can’t determine where to create a change event from App Expert metadata right now because the generated artifacts are missing.\n\nChecked:\n- App expert artifact status: missing\n- Feature registry search: failed due to missing `docs/architecture/generated/feature-registry.generated.json`\n- App sitemap search: failed due to missing `docs/architecture/generated/app-sitemap.generated.json`\n\nWhat’s needed:\n- Regenerate App Expert docs artifacts with `npm run docs:generate-app-expert`\n\nWithout those artifacts, I can’t safely give you the exact route or help article for creating a project change event.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4306,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-rfis-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3880,
+      "question": "Where do RFIs live in the app?",
+      "response": {
+        "answer": "I can’t answer this reliably from App Expert artifacts right now.\n\nWhat I checked:\n- App Expert artifact status\n- Feature registry search for `RFI`\n- App sitemap search for `RFI`\n\nWhat I found:\n- Both generated artifacts are missing:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n\nBecause the required curated metadata is unavailable, I can’t confirm where RFIs live in the app without risking an unsupported guess.\n\nIf you want, I can still try to infer it from implementation source files as fallback evidence, but that would be implementation evidence, not curated App Expert documentation.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3777,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-submittals-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 12004,
+      "question": "Which page owns submittals?",
+      "response": {
+        "answer": "I can’t determine which page owns submittals from the App Expert artifacts because the required generated files are missing.\n\nChecked:\n- App Expert artifact status: both generated artifacts are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search for `submittals`: failed due to missing artifact\n- App sitemap search for `submittals`: failed due to missing artifact\n\nWhat remains uncertain:\n- The owning route/page for submittals\n- Any curated help article tied to submittals\n- Whether the page is documented in the generated sitemap or feature registry\n\nIf you want, I can still help by inspecting source files directly for route ownership, but that would be implementation evidence rather than curated App Expert metadata.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/page",
+            "sourceType": "sitemap",
+            "route": "/page",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 11889,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-budget-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3517,
+      "question": "Where should I go to review project budget line items?",
+      "response": {
+        "answer": "I can’t answer this reliably from App Expert right now because the generated artifacts are missing:\n\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nWhat I checked:\n- App Expert artifact status: missing/stale\n- Curated feature registry: unavailable\n- App sitemap search: unavailable\n\nSo I can’t verify the exact route or help article for “project budget line items” yet. If you want, I can answer once those artifacts are regenerated, or you can point me to the relevant project/budget page and I’ll use route-level evidence if available.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/stale",
+            "sourceType": "sitemap",
+            "route": "/stale",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/budget",
+            "sourceType": "sitemap",
+            "route": "/budget",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3417,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-prime-contracts-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4631,
+      "question": "Where do owner prime contracts live?",
+      "response": {
+        "answer": "I can’t verify this in App Expert right now because the required generated artifacts are missing:\n\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nChecked:\n- App Expert artifact status: missing/stale\n- Feature registry search for “owner prime contracts”: failed due to missing artifact\n- App sitemap search for “owner prime contracts”: failed due to missing artifact\n\nWithout those artifacts, I can’t reliably tell you where owner prime contracts live. If you want, I can help once the app-expert docs are regenerated.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/stale",
+            "sourceType": "sitemap",
+            "route": "/stale",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4520,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-commitments-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4089,
+      "question": "Where are subcontract commitments managed?",
+      "response": {
+        "answer": "I can’t verify this in App Expert right now because the required generated artifacts are missing:\n\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nChecked:\n- App Expert artifact status: missing/stale\n- Feature registry search for “subcontract commitments”: unavailable due to missing artifact\n- Sitemap search for “subcontract commitments”: unavailable due to missing artifact\n\nSo I can’t reliably name the route or help article for subcontract commitments yet.\n\nWhat remains needed:\n- Regenerate App Expert artifacts with `npm run docs:generate-app-expert`\n\nIf you want, I can still help by looking directly through the repository source files for likely implementation evidence, but that would be outside the curated App Expert artifacts.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/stale",
+            "sourceType": "sitemap",
+            "route": "/stale",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3986,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-documents-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3595,
+      "question": "Where do I find project documents?",
+      "response": {
+        "answer": "I can’t answer this reliably from App Expert artifacts right now.\n\nWhat I checked:\n- App Expert artifact status\n- Feature registry search for:\n  - “project documents”\n  - “documents”\n- App sitemap search for:\n  - “project documents”\n  - “documents”\n\nWhat happened:\n- Both generated artifacts are missing:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n\nBecause those required artifacts are absent, I don’t have curated or route-backed evidence to identify where “project documents” live in the app.\n\nIf you want, I can help once the artifacts are regenerated, or you can point me to a specific route/project context and I’ll look for implementation evidence.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/project",
+            "sourceType": "sitemap",
+            "route": "/project",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3511,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-drawings-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4049,
+      "question": "Where are drawings viewed?",
+      "response": {
+        "answer": "I can’t answer this reliably yet because the required App Expert artifacts are missing.\n\nChecked:\n- App Expert artifact status: both generated files are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search: unavailable because the artifact is missing\n- App sitemap search: unavailable because the artifact is missing\n\nWhat remains uncertain:\n- Whether “drawings” is a dedicated page, a document viewer, a module inside another route, or only accessible from a specific workflow.\n\nIf you want, I can still help by inspecting the repository directly for route/source evidence, but that would be implementation evidence rather than curated App Expert docs.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/source",
+            "sourceType": "sitemap",
+            "route": "/source",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3966,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-project-directory-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4319,
+      "question": "Where do I manage project team contacts?",
+      "response": {
+        "answer": "I can’t answer this reliably right now because the required App Expert artifacts are missing:\n\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nWhat I checked:\n- Artifact status: both missing\n- Feature registry search for “project team contacts”: failed due to missing registry\n- Sitemap search for “project team contacts”: failed due to missing sitemap\n\nBecause the generated docs are absent, I can’t confirm the route, help article, or implementation source for managing project team contacts without guessing.\n\nIf you want, regenerate the artifacts first with:\n- `npm run docs:generate-app-expert`\n\nThen I can look up the exact place to manage project team contacts and cite the route/help article/source file.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help",
+            "sourceType": "sitemap",
+            "route": "/help",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/source",
+            "sourceType": "sitemap",
+            "route": "/source",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4232,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-company-directory-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4076,
+      "question": "Where do company records live outside a project?",
+      "response": {
+        "answer": "I can’t answer this from App Expert artifacts because the required generated docs are missing.\n\nWhat I checked:\n- App Expert artifact status\n- Feature registry search for:\n  - “company records outside a project”\n  - “company records”\n- App sitemap search for “company records”\n\nResult:\n- `docs/architecture/generated/app-sitemap.generated.json` is missing\n- `docs/architecture/generated/feature-registry.generated.json` is missing\n\nSo there’s no curated route/help/feature evidence available, and I can’t safely claim where company records live outside a project.\n\nIf you want, regenerate the artifacts with:\n- `npm run docs:generate-app-expert`\n\nThen I can re-check and give you the exact route/help/article/source-file evidence.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/feature",
+            "sourceType": "sitemap",
+            "route": "/help/feature",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/article/source-file",
+            "sourceType": "sitemap",
+            "route": "/help/article/source-file",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3970,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-create-project",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4177,
+      "question": "How do I start a new project?",
+      "response": {
+        "answer": "I can’t answer this reliably from App Expert yet.\n\nWhat I checked:\n- App Expert artifact status\n- Feature registry for:\n  - `start new project`\n  - `new project`\n  - `project creation`\n\nWhat I found:\n- Required generated artifacts are missing:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n\nBecause those curated artifacts are unavailable, I can’t verify the documented workflow, exact route, or help article for starting a new project.\n\nWhat’s needed:\n- Regenerate App Expert docs/artifacts with:\n  - `npm run docs:generate-app-expert`\n\nIf you want, I can still help by inspecting the implementation source directly, but that would be route/implementation evidence rather than curated App Expert documentation.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/artifacts",
+            "sourceType": "sitemap",
+            "route": "/artifacts",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/implementation",
+            "sourceType": "sitemap",
+            "route": "/implementation",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4098,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-budget-line-items",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4888,
+      "question": "How should budget line items work?",
+      "response": {
+        "answer": "I can’t answer this reliably from App Expert right now because the required generated artifacts are missing.\n\nChecked:\n- App Expert artifact status: both generated files are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search for `budget line items` failed for the same reason.\n\nWhat remains uncertain:\n- Whether “budget line items” is a documented feature\n- The user-facing behavior\n- Any exact routes, help articles, or implementation source files\n\nTo proceed, the app docs artifacts need to be generated first:\n- `npm run docs:generate-app-expert`\n\nIf you want, I can answer again once those artifacts are available.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4797,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-change-management-lifecycle",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4921,
+      "question": "Explain the change management lifecycle in the app.",
+      "response": {
+        "answer": "I can’t reliably explain the app’s change management lifecycle because the required App Expert artifacts are missing.\n\nChecked:\n- `docs/architecture/generated/app-sitemap.generated.json` — missing\n- `docs/architecture/generated/feature-registry.generated.json` — missing\n\nResult:\n- App Expert status: not OK\n- Feature metadata search: unavailable\n- Sitemap search: unavailable\n\nWhat remains uncertain:\n- Whether the app has a documented change management lifecycle at all\n- The exact user-facing workflow, routes, help articles, and any implementation-backed evidence\n\nTo proceed, the app docs need to be generated first:\n- `npm run docs:generate-app-expert`\n\nIf you want, I can also help you locate the underlying source docs or route files directly from the repo instead, but I can’t claim the lifecycle behavior from the missing generated artifacts.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4823,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-rfi-create",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4295,
+      "question": "Can the app help create an RFI?",
+      "response": {
+        "answer": "I can’t confirm whether the app can help create an RFI because the required App Expert artifacts are missing.\n\nChecked:\n- Artifact status: `app-sitemap.generated.json` missing\n- Artifact status: `feature-registry.generated.json` missing\n- Feature search for `RFI`: failed because the feature registry artifact is missing\n- Sitemap search for `RFI`: failed because the sitemap artifact is missing\n\nWhat this means:\n- I don’t have curated feature/help metadata to verify whether an RFI workflow exists.\n- I also can’t fall back to route evidence because the sitemap artifact is unavailable.\n\nIf you want, I can answer this once the App Expert artifacts are regenerated, or you can ask me to inspect a specific route if you have one.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help",
+            "sourceType": "sitemap",
+            "route": "/help",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4186,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-submittal-review",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4812,
+      "question": "What should I check on the submittals page?",
+      "response": {
+        "answer": "I can’t answer this reliably from App Expert artifacts right now.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search for “submittals page”: failed because the artifact is missing\n- App sitemap search for “submittals”: failed because the artifact is missing\n\nBecause the required curated metadata is unavailable, I can’t verify:\n- the submittals page route\n- documented behavior on that page\n- any linked help article\n- any implementation-backed page details\n\nIf you want, I can still help if you either:\n1. regenerate the App Expert artifacts, or\n2. give me the exact route or source file for the submittals page so I can inspect implementation evidence directly.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4719,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-prime-contract-sov",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3166,
+      "question": "Where does schedule of values fit into prime contracts?",
+      "response": {
+        "answer": "I can’t answer this reliably from App Expert artifacts because the generated docs are missing.\n\nChecked:\n- App sitemap artifact: missing at `docs/architecture/generated/app-sitemap.generated.json`\n- Feature registry artifact: missing at `docs/architecture/generated/feature-registry.generated.json`\n\nBecause those artifacts are unavailable, I can’t verify whether “schedule of values” is documented under prime contracts, nor can I safely cite a route or help article.\n\nIf you want, I can still help in one of two ways:\n1. You regenerate the App Expert artifacts and I’ll answer from the curated docs.\n2. I inspect the codebase directly for implementation evidence of where schedule of values appears in prime contract workflows.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3061,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-commitment-sov",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3487,
+      "question": "Where does a subcontractor SOV belong?",
+      "response": {
+        "answer": "I can’t determine this from App Expert artifacts right now.\n\nChecked:\n- Artifact status: missing generated docs\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search for `subcontractor SOV`: failed because the registry artifact is missing\n\nWhat this means:\n- I do not have curated feature/help metadata to confirm where a subcontractor SOV belongs.\n- I also can’t safely infer behavior from routes because the sitemap artifact is missing too.\n\nTo answer reliably, the generated App Expert artifacts need to be created first:\n- `npm run docs:generate-app-expert`\n\nIf you want, I can still help once those artifacts are available, or you can tell me the current route/page and I’ll check it against implementation evidence.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help",
+            "sourceType": "sitemap",
+            "route": "/help",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/page",
+            "sourceType": "sitemap",
+            "route": "/page",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3383,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-invoicing-owner",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3686,
+      "question": "Where do owner invoices belong?",
+      "response": {
+        "answer": "I can’t determine where owner invoices belong from App Expert metadata right now because the required generated artifacts are missing.\n\nChecked:\n- App Expert artifact status: missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search for `owner invoices`: failed for the same reason\n\nWhat this means:\n- I don’t have curated feature/help metadata to answer this reliably.\n- I also can’t safely fall back to route evidence because the sitemap artifact is missing too.\n\nTo proceed, the generated docs need to be created first:\n- `npm run docs:generate-app-expert`\n\nIf you want, I can also help interpret the result after those artifacts are regenerated.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help",
+            "sourceType": "sitemap",
+            "route": "/help",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3584,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-direct-costs",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4443,
+      "question": "What are direct costs for in the app?",
+      "response": {
+        "answer": "I can’t verify this in App Expert right now because the required generated artifacts are missing:\n\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nBoth returned `APP_EXPERT_ARTIFACT_MISSING`, so any answer about “direct costs” in the app would be uncertain.\n\nWhat I checked:\n- App Expert artifact status: missing\n- Curated feature/help metadata: unavailable until the generated artifacts exist\n\nWhat remains uncertain:\n- Whether “Direct Costs” is a feature, label, workflow section, or route in the app\n- Its exact user-facing behavior\n- Any source-file-backed implementation details\n\nIf you want, regenerate the App Expert artifacts and I can look it up precisely:\n- `npm run docs:generate-app-expert`",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help",
+            "sourceType": "sitemap",
+            "route": "/help",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4362,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-schedule",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3953,
+      "question": "Where do schedule tasks live?",
+      "response": {
+        "answer": "I can’t answer confidently from App Expert artifacts because the generated docs are missing.\n\nWhat I checked:\n- App Expert artifact status: both generated files are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search for `schedule tasks`: failed due to missing artifact\n- Sitemap search for `schedule tasks`: failed due to missing artifact\n\nWhat remains uncertain:\n- The user-facing location for “schedule tasks”\n- Any exact route or help article path\n- Whether it lives under a scheduling, automations, jobs, or background-tasks area\n\nIf you want, I can still inspect the source tree for implementation evidence, but that would be route/file discovery rather than curated documentation.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/file",
+            "sourceType": "sitemap",
+            "route": "/file",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3692,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-hidden-page",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4402,
+      "question": "Why might I not see a project page?",
+      "response": {
+        "answer": "I can’t verify a project page from App Expert artifacts right now because the generated docs are missing.\n\nWhat I checked:\n- App Expert artifact status: missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry searches for:\n  - `project page`\n  - `project`\n  Both failed with the same missing-artifact error.\n\nSo the only defensible answer is: I don’t have documented or route-discovered evidence yet for why a project page would not appear.\n\nWhat remains uncertain:\n- Whether a project page exists at all\n- Whether it is hidden by permissions, missing project ID, route scope, or a conditional UI state\n- Whether there is a specific route or help article describing this behavior\n\nIf you want, I can still investigate the codebase directly for route and permission logic, but that would be implementation evidence rather than curated App Expert documentation.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4307,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-admin-page",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4053,
+      "question": "How should the assistant explain admin-only pages?",
+      "response": {
+        "answer": "I can’t answer this reliably from App Expert artifacts right now.\n\nChecked:\n- App Expert artifact status: both generated artifacts are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search: failed because the registry artifact is missing\n- App sitemap search: failed because the sitemap artifact is missing\n\nBecause the required curated sources are unavailable, I can’t verify:\n- whether admin-only pages are documented\n- what exact routes they use\n- whether there is a help article for the behavior\n- whether the assistant should describe them as hidden, restricted, or role-gated\n\nWhat remains uncertain:\n- documented user-facing behavior\n- route-level implementation evidence\n- any help article or feature registry entry for admin pages\n\nIf you want, I can help once the generated artifacts are available, or you can run:\n`npm run docs:generate-app-expert`",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3969,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-employee-email-privacy",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 8126,
+      "question": "What if someone can see another employee's emails?",
+      "response": {
+        "answer": "I can’t verify this in App Expert right now because the required generated artifacts are missing:\n\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nChecked:\n- App Expert artifact status: missing/stale\n- Feature registry searches for:\n  - “someone can see another employee's emails”\n  - “employee emails visibility permissions”\n  - “emails access employee”\n\nResult:\n- No usable feature/help metadata is available, so I can’t confirm documented behavior or route-backed implementation.\n\nWhat remains uncertain:\n- Whether employees can see other employees’ emails\n- Whether this is a permission issue, a role-based view, or an unintended exposure\n- Any exact route, help article, or source file evidence\n\nIf you want, I can still help you frame the issue as a likely permissions/privacy bug report, but I can’t claim the app’s behavior from the current evidence.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/stale",
+            "sourceType": "sitemap",
+            "route": "/stale",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help",
+            "sourceType": "sitemap",
+            "route": "/help",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/privacy",
+            "sourceType": "sitemap",
+            "route": "/privacy",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 8030,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-project-membership",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3952,
+      "question": "Why does project membership matter?",
+      "response": {
+        "answer": "I can’t answer this reliably from App Expert artifacts right now.\n\nWhat I checked:\n- App Expert artifact status\n- Feature registry searches for:\n  - “project membership”\n  - “membership matters”\n  - “project access”\n\nWhat happened:\n- The generated artifacts are missing:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n\nBecause the curated docs/registry are unavailable, I can’t verify the user-facing meaning of “project membership” or point to exact routes/help articles without guessing.\n\nIf you want, I can still help in one of two ways:\n1. You regenerate the App Expert artifacts and I’ll answer from the curated docs.\n2. I can inspect implementation files directly and give you implementation evidence, clearly labeled as such.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/registry",
+            "sourceType": "sitemap",
+            "route": "/registry",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help",
+            "sourceType": "sitemap",
+            "route": "/help",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3857,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-user-management",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 6158,
+      "question": "Where should user management questions point?",
+      "response": {
+        "answer": "I can’t determine the user-management destination from the app artifacts because the generated App Expert docs are missing.\n\nWhat I checked:\n- `search_feature_registry(\"user management\")` → failed with `APP_EXPERT_ARTIFACT_MISSING`\n- `get_app_expert_artifact_status()` → both generated artifacts are missing:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n\nWhat remains uncertain:\n- The exact route, page title, or help article for user management\n- Whether user management is exposed as a route, feature, or help article\n\nIf you want, I can help once the App Expert artifacts are generated.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 6072,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-actions",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3866,
+      "question": "Can Ask Alleato create records for me?",
+      "response": {
+        "answer": "I can’t confirm that Ask Alleato can create records.\n\nWhat I checked:\n- App Expert artifact status: failed\n  - Missing `docs/architecture/generated/app-sitemap.generated.json`\n  - Missing `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry searches for:\n  - `Ask Alleato create records`\n  - `create records`\n  - `records`\n  all failed because the feature registry artifact is missing.\n\nWhat this means:\n- I have no curated feature/help evidence to verify a record-creation action.\n- Per the available evidence, I cannot claim Ask Alleato is able to write/create records.\n\nIf you want, I can still help interpret the app’s implementation evidence once the generated App Expert artifacts are available.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help",
+            "sourceType": "sitemap",
+            "route": "/help",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/create",
+            "sourceType": "sitemap",
+            "route": "/create",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3771,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-source-order",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4972,
+      "question": "How should Ask Alleato decide what app documentation to trust?",
+      "response": {
+        "answer": "I can’t determine that from App Expert artifacts right now.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search failed with the same missing-artifact error\n\nWhat this means:\n- I don’t have curated app docs or route metadata to verify which documentation Ask Alleato should trust.\n- Per the App Expert workflow, I can’t safely infer behavior from missing artifacts.\n\nUncertainty remains:\n- No help article path was available to read.\n- No route lookup was possible because no current route was supplied and the sitemap artifact is missing.\n- No implementation evidence was available to distinguish documented behavior from source behavior.\n\nIf you want, I can answer this once the generated App Expert docs are available, or I can help you infer it from source files if you point me to the relevant code path.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4889,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-app-expert",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3747,
+      "question": "What is the App Expert supposed to answer?",
+      "response": {
+        "answer": "I can’t answer what the App Expert is supposed to answer from generated app data because the required artifacts are missing.\n\nChecked:\n- `docs/architecture/generated/app-sitemap.generated.json` — missing\n- `docs/architecture/generated/feature-registry.generated.json` — missing\n\nResult:\n- App Expert artifact status is not OK, so curated metadata, route lookup, and feature/help evidence are unavailable right now.\n\nWhat remains uncertain:\n- The app’s actual routes, features, permissions, and help articles\n- Whether any route-specific or workflow behavior is documented\n\nTo proceed, the artifacts need to be generated first:\n- `npm run docs:generate-app-expert`",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help",
+            "sourceType": "sitemap",
+            "route": "/help",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3660,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-ai-actions",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3860,
+      "question": "What AI assistant actions are live versus planned?",
+      "response": {
+        "answer": "I can’t verify live vs planned AI assistant actions because the required App Expert artifacts are missing.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are unavailable\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Curated feature registry searches for:\n  - `AI assistant actions live planned`\n  - `assistant action status`\n  - `assistant actions`\n  All failed because the feature registry artifact is missing.\n\nWhat remains uncertain:\n- Which AI assistant actions are currently live\n- Which actions are only planned\n- Any help articles or source-backed implementation evidence for assistant capabilities\n\nTo answer this properly, the generated App Expert docs need to be created first:\n- `npm run docs:generate-app-expert`\n\nIf you want, I can also help interpret the generated results once those artifacts exist.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3752,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-memory",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 7633,
+      "question": "Where does AI memory fit in the product?",
+      "response": {
+        "answer": "I can’t answer this reliably from App Expert data right now.\n\nChecked:\n- App Expert artifact status\n- Result: missing generated artifacts\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n\nBecause the curated sitemap and feature registry are missing, I can’t search the product docs or confirm where AI memory fits in the product without guessing.\n\nWhat’s needed:\n- Regenerate App Expert artifacts with `npm run docs:generate-app-expert`\n- Then I can search the feature registry and help articles, and give you the exact route/article/source references\n\nIf you want, I can still help with a best-effort answer from codebase evidence only, but that would be implementation evidence, not curated product documentation.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/article/source",
+            "sourceType": "sitemap",
+            "route": "/article/source",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 7539,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-documents-rag-boundary",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4318,
+      "question": "What is the difference between project documents and RAG knowledge?",
+      "response": {
+        "answer": "I can’t answer this reliably from App Expert artifacts right now because the required generated docs are missing.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search for `project documents RAG knowledge` also failed for the same reason.\n\nWhat remains uncertain:\n- Whether “project documents” and “RAG knowledge” are distinct product concepts in this app, and if so, their documented differences.\n- Any exact routes, help articles, or source-backed implementation details.\n\nTo proceed, the docs need to be generated first:\n- `npm run docs:generate-app-expert`\n\nIf you want, I can still help by explaining the likely conceptual difference in general terms, but it would not be app-specific or source-backed.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4207,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-feature-route-source",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 8190,
+      "question": "What source should the assistant cite for where a page exists?",
+      "response": {
+        "answer": "I can’t verify the source from App Expert artifacts right now: both generated files are missing.\n\nChecked:\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nStatus:\n- App sitemap: missing\n- Feature registry: missing\n\nBecause the required curated artifacts are unavailable, I can’t reliably determine what source the assistant should cite for where a page exists. The next required step is to regenerate the App Expert docs:\n- `npm run docs:generate-app-expert`\n\nIf you want, I can answer again once those artifacts are available.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 8079,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-feature-registry-source",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 7882,
+      "question": "What source should the assistant cite for whether a feature is documented?",
+      "response": {
+        "answer": "I can’t verify this from the generated App Expert artifacts right now.\n\nChecked:\n- `docs/architecture/generated/app-sitemap.generated.json` — missing\n- `docs/architecture/generated/feature-registry.generated.json` — missing\n\nBecause the curated sitemap and feature registry are unavailable, I can’t name the authoritative source for “whether a feature is documented” without risking a wrong answer.\n\nWhat should be cited, once artifacts exist:\n- Prefer the **curated help article** linked from feature metadata\n- If no help article exists, cite the **feature registry entry**\n- For page-specific behavior, cite the **exact route** and, only if needed, the **implementation source file** as implementation evidence\n\nIf you want, I can still help once the docs are regenerated (`npm run docs:generate-app-expert`).",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 7787,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-route-discovered-boundary",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3093,
+      "question": "What should the assistant say if a route exists but there is no help article?",
+      "response": {
+        "answer": "I can’t answer the app-specific question yet because the required App Expert artifacts are missing.\n\nWhat I checked:\n- App sitemap artifact: missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n- Feature registry artifact: missing\n  - `docs/architecture/generated/feature-registry.generated.json`\n\nThe tool reported:\n- `APP_EXPERT_ARTIFACT_MISSING`\n- You need to run: `npm run docs:generate-app-expert`\n\nBecause the generated metadata is unavailable, I can’t verify whether a route exists, whether a help article is attached, or what the assistant should say for that route.\n\nIf you regenerate the artifacts, I can answer using the required workflow and cite the exact route / help article / source file.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3000,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-artifact-freshness",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4045,
+      "question": "How can the assistant know whether its app map is current?",
+      "response": {
+        "answer": "I can’t verify that the app map is current because the App Expert artifacts are missing.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search: failed for the same missing artifact\n- App sitemap search: failed for the same missing artifact\n\nWhat this means:\n- I do not have fresh generated route metadata to compare against.\n- I can’t claim the app map is current from the available evidence.\n\nCurrent uncertainty:\n- The generated app sitemap is unavailable, so freshness and completeness are unknown until `npm run docs:generate-app-expert` is run.\n\nIf you want, I can still help once those artifacts are regenerated, or I can explain how to validate the app map from route/source files directly as implementation evidence.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/source",
+            "sourceType": "sitemap",
+            "route": "/source",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3952,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-live-feature",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4712,
+      "question": "How should Ask Alleato answer when a feature is live?",
+      "response": {
+        "answer": "I can’t answer that reliably right now because the required App Expert artifacts are missing.\n\nWhat I checked:\n- App Expert artifact status: failed\n- Feature registry search: failed\n\nMissing artifacts:\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nBecause of that, I can’t verify whether Ask Alleato has documented live-feature behavior, any help article, or any implementation-backed route/source file.\n\nWhat remains uncertain:\n- The exact user-facing response when a feature is live\n- Whether there is a documented help article for this behavior\n- Whether any route-specific implementation exists that differs from docs\n\nTo proceed, the App Expert docs need regeneration:\n- `npm run docs:generate-app-expert`\n\nAfter that, I can search the feature registry, open any linked help article, and answer with exact routes or source references if available.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/source",
+            "sourceType": "sitemap",
+            "route": "/source",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4628,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-partial-feature",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3857,
+      "question": "How should Ask Alleato explain a partially implemented feature?",
+      "response": {
+        "answer": "I can’t verify an app-specific answer right now because the required App Expert artifacts are missing:\n\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nSo I can’t safely claim documented Ask Alleato behavior, help article guidance, or implementation-backed route evidence.\n\nWhat I can say from the checks:\n- No curated feature metadata was available.\n- No help article path could be resolved from feature metadata.\n- No route lookup was possible because no route was supplied and the generated sitemap is missing.\n\nIf you want the exact app behavior, regenerate the artifacts first:\n- `npm run docs:generate-app-expert`\n\nThen I can answer with:\n- the documented user-facing wording for partially implemented features,\n- exact route/source references,\n- and any implementation evidence if docs are incomplete.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/source",
+            "sourceType": "sitemap",
+            "route": "/source",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3768,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-planned-feature",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 9572,
+      "question": "How should Ask Alleato explain a planned feature?",
+      "response": {
+        "answer": "I couldn’t verify this from App Expert artifacts because the generated docs are missing.\n\nChecked:\n- App Expert artifact status: failed\n- Missing artifacts:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n\nWhat that means:\n- I could not search curated feature/help metadata.\n- I could not confirm any documented behavior for how Ask Alleato should explain a planned feature.\n- I also could not read a linked help article, because no feature metadata was available to point to one.\n\nSo the correct answer is: **uncertain until the App Expert docs are generated**.\n\nIf you want, I can still help once those artifacts exist, or you can run:\n- `npm run docs:generate-app-expert`\n\nThen I can give you the exact documented wording, routes, and help article references.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help",
+            "sourceType": "sitemap",
+            "route": "/help",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 9487,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-blocked-feature",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3741,
+      "question": "How should Ask Alleato explain a blocked feature?",
+      "response": {
+        "answer": "I can’t answer this reliably from the current App Expert artifacts.\n\nWhat I checked:\n- App Expert artifact status: both required generated files are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search: unavailable because the registry artifact is missing\n- Sitemap search: unavailable because the sitemap artifact is missing\n\nBecause the curated metadata is missing, I can’t verify how Ask Alleato should explain a blocked feature, and I shouldn’t guess.\n\nWhat’s needed:\n- Regenerate the App Expert docs/artifacts:\n  - `npm run docs:generate-app-expert`\n\nIf you want, I can still help once those artifacts are available, or I can answer from implementation source files if you point me to the relevant route/source path.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/artifacts:",
+            "sourceType": "sitemap",
+            "route": "/artifacts:",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/source",
+            "sourceType": "sitemap",
+            "route": "/source",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3644,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-deprecated-feature",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 5923,
+      "question": "How should Ask Alleato explain deprecated behavior?",
+      "response": {
+        "answer": "I can’t answer this from App Expert evidence right now because the required generated artifacts are missing.\n\nChecked:\n- App Expert artifact status: missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search: failed for the same reason\n\nWhat remains uncertain:\n- Whether Ask Alleato has any documented guidance for deprecated behavior\n- Whether there is a help article or source-backed user-facing explanation for it\n\nTo answer this correctly, the app artifacts need to be regenerated first:\n- `npm run docs:generate-app-expert`\n\nIf you want, I can retry once those artifacts exist.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 5834,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-missing-button",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4127,
+      "question": "Why might a button be missing on a page?",
+      "response": {
+        "answer": "I checked App Expert artifacts first, and they’re missing:\n\n- `docs/architecture/generated/app-sitemap.generated.json` — missing\n- `docs/architecture/generated/feature-registry.generated.json` — missing\n\nBecause the curated sitemap and feature registry are unavailable, I can’t verify any documented reason a button would be missing on a specific page, and I can’t inspect route-based evidence without a current route or project ID.\n\nWhat remains uncertain:\n- Whether the button is hidden by permission, feature flag, state, or page-specific workflow\n- Whether this is intended behavior vs a defect\n- Which exact page/route you mean\n\nIf you want a precise answer, provide:\n- the current route, and/or\n- a project ID\n\nThen I can check route-specific evidence.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/route",
+            "sourceType": "sitemap",
+            "route": "/route",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/or",
+            "sourceType": "sitemap",
+            "route": "/or",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4023,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-empty-data",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 5633,
+      "question": "Why might a page be empty even though the route exists?",
+      "response": {
+        "answer": "I can’t verify this with App Expert artifacts right now: both generated sources are missing.\n\nChecked:\n- `docs/architecture/generated/app-sitemap.generated.json` — missing\n- `docs/architecture/generated/feature-registry.generated.json` — missing\n\nBecause the curated metadata is unavailable, I can only give a general explanation, not route-backed evidence.\n\nWhy a route may exist but the page appears empty:\n- The route is registered, but its component renders no visible content yet.\n- The page depends on data that failed to load, so the shell renders but the body stays blank.\n- Permissions or feature flags hide all UI for the current user.\n- The route is an intermediate/layout route with no default child content.\n- A redirect, loader, or error boundary is swallowing the expected content.\n- The page is intentionally placeholder/unfinished implementation.\n\nWhat remains uncertain:\n- The exact route behavior\n- Whether this is documented user-facing behavior\n- Whether it is due to permissions, missing data, or a rendering bug\n\nIf you want a route-specific answer, provide the route and project ID, and I can check the implementation-backed source files once the App Expert artifacts are available.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/layout",
+            "sourceType": "sitemap",
+            "route": "/layout",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/unfinished",
+            "sourceType": "sitemap",
+            "route": "/unfinished",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 5400,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-wrong-page",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 6273,
+      "question": "What should I do if I am on the wrong page for a workflow?",
+      "response": {
+        "answer": "I can’t verify this from App Expert artifacts right now.\n\nWhat I checked:\n- App Expert artifact status: missing\n- Feature registry search: failed because `docs/architecture/generated/feature-registry.generated.json` does not exist\n\nSo I can’t confirm any documented workflow behavior, routes, or help article for “wrong page” handling. The only reliable answer is: check the workflow’s documented route or help article once the generated App Expert docs are available.\n\nIf you want, I can help once the artifacts are regenerated with:\n- `npm run docs:generate-app-expert`\n\nThen I can look up the exact route, help article path, and documented behavior.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 6192,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-stale-docs",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4432,
+      "question": "What should Ask Alleato say if documentation and the route map disagree?",
+      "response": {
+        "answer": "I can’t verify a documented answer because the App Expert artifacts are missing.\n\nChecked:\n- `docs/architecture/generated/app-sitemap.generated.json` — missing\n- `docs/architecture/generated/feature-registry.generated.json` — missing\n\nBecause of that, I can’t safely claim what Ask Alleato should say when documentation and the route map disagree.\n\nWhat remains uncertain:\n- The exact user-facing wording for this conflict\n- Whether there is a curated help article for this behavior\n- Whether route-discovered implementation evidence overrides the docs\n\nIf you want, I can help once the generated artifacts are available, or I can inspect the source files directly if you provide the relevant route or docs path.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4331,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-no-current-route",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3315,
+      "question": "Can the App Expert answer without knowing my current page?",
+      "response": {
+        "answer": "No.\n\nI checked the required App Expert artifacts and both are missing:\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nBecause the generated metadata is unavailable, I can’t verify page-specific behavior, route scope, or help docs. I also can’t answer confidently from route evidence without a current route or project ID.\n\nWhat remains uncertain:\n- whether the App Expert answer depends on the current page\n- which route you’re on\n- whether any help article or feature metadata documents this behavior\n\nIf you want, provide the current route or project ID and I can re-check once the generated artifacts are available.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3234,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "admin-feedback-inbox",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3517,
+      "question": "Where should questions about feedback and annotation triage go?",
+      "response": {
+        "answer": "I can’t determine this from App Expert artifacts right now.\n\nWhat I checked:\n- Artifact status: both generated sources are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search for `feedback annotation triage` failed because the registry artifact is missing.\n\nBecause the required curated metadata is unavailable, I can’t reliably identify the correct route, help article, or workflow destination.\n\nIf you want, regenerate the App Expert artifacts with:\n- `npm run docs:generate-app-expert`\n\nThen I can answer with the exact route, help article path, or source file.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3433,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "feature-progress-reports",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4991,
+      "question": "Does the app have progress reports?",
+      "response": {
+        "answer": "I can’t confirm whether the app has progress reports because the required App Expert artifacts are missing.\n\nChecked:\n- Artifact status: both generated artifacts are unavailable\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search: failed due to missing artifact\n- Sitemap search: failed due to missing artifact\n\nWhat this means:\n- I don’t have curated feature/help metadata to verify a “progress reports” feature.\n- I also can’t fall back to route evidence because the generated sitemap is missing.\n\nIf you want, regenerate the App Expert artifacts first:\n- `npm run docs:generate-app-expert`\n\nThen I can check:\n- whether “progress reports” exists as a feature,\n- which route it lives on,\n- and whether there’s a help article documenting it.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help",
+            "sourceType": "sitemap",
+            "route": "/help",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4900,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "feature-photos",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 10152,
+      "question": "Where are project photos?",
+      "response": {
+        "answer": "I couldn’t verify where project photos live because the required App Expert artifacts are missing.\n\nChecked:\n- Artifact status: both generated files are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Search attempts failed for the same reason:\n  - `search_feature_registry(\"project photos\")`\n  - `search_feature_registry(\"photos project\")`\n  - `search_app_sitemap(\"project photos\")`\n  - `search_app_sitemap(\"photos\")`\n\nWhat this means:\n- There’s no curated feature/help metadata available to answer from.\n- I also can’t use route-discovered evidence because the sitemap artifact is unavailable.\n\nTo proceed, the App Expert artifacts need to be generated first:\n- `npm run docs:generate-app-expert`\n\nOnce that’s done, I can look up the exact route, feature entry, and help article path for project photos.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help",
+            "sourceType": "sitemap",
+            "route": "/help",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 10035,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "feature-daily-log",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3178,
+      "question": "Where do daily logs live?",
+      "response": {
+        "answer": "I can’t answer this reliably right now because the required App Expert artifacts are missing.\n\nChecked:\n- App sitemap artifact: missing\n- Feature registry artifact: missing\n\nExact status:\n- `docs/architecture/generated/app-sitemap.generated.json` not found\n- `docs/architecture/generated/feature-registry.generated.json` not found\n\nBecause the curated metadata is unavailable, I can’t verify where “daily logs” live without risking an unsupported answer. If you want, I can still try to infer it from route/source files as implementation evidence, but that would be less authoritative than the generated App Expert artifacts.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/source",
+            "sourceType": "sitemap",
+            "route": "/source",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3079,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "feature-outlook-integration",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4990,
+      "question": "How should the app explain Outlook integration?",
+      "response": {
+        "answer": "I can’t verify how the app should explain Outlook integration because the required App Expert artifacts are missing.\n\nChecked:\n- App Expert artifact status: both generated artifacts are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search for “Outlook integration”: unavailable due to missing artifact\n- Sitemap search for “Outlook integration”: unavailable due to missing artifact\n\nWhat remains uncertain:\n- Whether Outlook integration is documented in a help article\n- Whether there is a dedicated route or current-page behavior for the integration\n- Whether the app exposes this as a user-facing feature, workflow, or action\n\nIf you want, I can help once the artifacts are regenerated with:\n`npm run docs:generate-app-expert`",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4847,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    }
+  ]
+}

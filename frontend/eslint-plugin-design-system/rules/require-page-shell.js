@@ -57,6 +57,7 @@ module.exports = {
       // Redirect-only pages: these return null after calling router.replace() in useEffect.
       // They cannot use PageShell because they render nothing — the redirect is the page.
       'edit/page.tsx',
+      'database/page.tsx',
       // Thin delegation pages: the page exists only to extract URL params and pass them to
       // a feature component that already owns its own PageShell. Adding a second PageShell
       // here would create nested shells.

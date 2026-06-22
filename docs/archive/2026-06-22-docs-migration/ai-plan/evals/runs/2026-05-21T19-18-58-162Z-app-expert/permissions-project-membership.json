@@ -1,0 +1,61 @@
+{
+  "id": "permissions-project-membership",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 3952,
+  "question": "Why does project membership matter?",
+  "response": {
+    "answer": "I can’t answer this reliably from App Expert artifacts right now.\n\nWhat I checked:\n- App Expert artifact status\n- Feature registry searches for:\n  - “project membership”\n  - “membership matters”\n  - “project access”\n\nWhat happened:\n- The generated artifacts are missing:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n\nBecause the curated docs/registry are unavailable, I can’t verify the user-facing meaning of “project membership” or point to exact routes/help articles without guessing.\n\nIf you want, I can still help in one of two ways:\n1. You regenerate the App Expert artifacts and I’ll answer from the curated docs.\n2. I can inspect implementation files directly and give you implementation evidence, clearly labeled as such.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/registry",
+        "sourceType": "sitemap",
+        "route": "/registry",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help",
+        "sourceType": "sitemap",
+        "route": "/help",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3857,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

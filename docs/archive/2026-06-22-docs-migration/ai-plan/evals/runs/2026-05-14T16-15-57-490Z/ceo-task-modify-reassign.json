@@ -1,0 +1,5874 @@
+{
+  "id": "ceo-task-modify-reassign",
+  "intent": "action_preview",
+  "prompt": "Hand that submittal follow-up off to Megan instead.",
+  "selectedProjectId": null,
+  "sessionId": "155ffb5d-7234-4338-b3cd-80aa616c2b2b",
+  "sessionLabel": "eval-2026-05-14T16-15-57-490Z-ceo-task-modify-reassign",
+  "startedAt": "2026-05-14T16:20:09.570Z",
+  "finishedAt": "2026-05-14T16:20:35.026Z",
+  "durationMs": 24928,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 1004,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [],
+    "observations": [
+      "tools fired: intentPlanner, promptContextReducer, taskWriteIntentRouter, mcpToolDiscovery, streamingToolPolicy, updateGeneratedTask, taskWriteToolOnlyCompletion"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "promptContextReducer",
+      "taskWriteIntentRouter",
+      "mcpToolDiscovery",
+      "streamingToolPolicy",
+      "updateGeneratedTask",
+      "taskWriteToolOnlyCompletion"
+    ],
+    "familiesHit": [
+      "action_write",
+      "task_management"
+    ],
+    "finalTextLength": 214,
+    "finalText": "Task preview ready.\n\nI staged this from your request: \"Hand that submittal follow-up off to Megan instead.\".\n\nNot created yet. Review the preview card, then reply **confirm** to create it or tell me what to change."
+  },
+  "expectedToolNames": [
+    "getMyTasks",
+    "updateGeneratedTask",
+    "getActionItemsAndInsights"
+  ],
+  "expectedToolFamilies": [
+    "task_management",
+    "action_write"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T16:20:12.772Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Creating task preview",
+        "status": "loading",
+        "timestamp": "2026-05-14T16:20:13.409Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "HwAI9wRBvbVTQei9"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "toolName": "updateGeneratedTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "task"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "title"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "Sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "description"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "Re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "ing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": " sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": " Megan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": " per"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": " request"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "egan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "null"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "status"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "open"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "-sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "-follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "-me"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "gan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "toolName": "updateGeneratedTask",
+      "input": {
+        "taskId": "00000000-0000-0000-0000-000000000000",
+        "title": "Submittal follow-up",
+        "description": "Reassigning submittal follow-up to Megan per user request.",
+        "assignee": "Megan",
+        "dueDate": null,
+        "priority": "normal",
+        "status": "open",
+        "confirmed": false,
+        "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_Pw3vqa0s1PK2sDzdrAWi66QA",
+      "output": {
+        "success": false,
+        "error": "Task was not found in the Tasks table."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "toolName": "updateGeneratedTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "task"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "title"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "Sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "description"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "Re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "ing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": " sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": " Megan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": " per"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": " request"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "egan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "null"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "status"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "open"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "-sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "-follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "-me"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "gan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "-at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "tempt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "2"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "toolName": "updateGeneratedTask",
+      "input": {
+        "taskId": "00000000-0000-0000-0000-000000000000",
+        "title": "Submittal follow-up",
+        "description": "Reassigning submittal follow-up to Megan per user request.",
+        "assignee": "Megan",
+        "dueDate": null,
+        "priority": "normal",
+        "status": "open",
+        "confirmed": false,
+        "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-2"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_mZWEIOwtAbi9bzSgJ8KkLIdX",
+      "output": {
+        "success": false,
+        "error": "Task was not found in the Tasks table."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "toolName": "updateGeneratedTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "task"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "title"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "Sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "description"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "Re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "ing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": " sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": " Megan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": " per"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": " request"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "egan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "null"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "status"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "open"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "-sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "-follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "-me"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "gan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "-at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "tempt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "3"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "toolName": "updateGeneratedTask",
+      "input": {
+        "taskId": "00000000-0000-0000-0000-000000000000",
+        "title": "Submittal follow-up",
+        "description": "Reassigning submittal follow-up to Megan per user request.",
+        "assignee": "Megan",
+        "dueDate": null,
+        "priority": "normal",
+        "status": "open",
+        "confirmed": false,
+        "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-3"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_aUXzZkwCXGJgxhBHqwVcxVX4",
+      "output": {
+        "success": false,
+        "error": "Task was not found in the Tasks table."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "toolName": "updateGeneratedTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "task"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "title"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "Sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "description"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "Re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "ing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": " sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": " Megan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": " per"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": " request"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "egan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "null"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "status"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "open"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "-sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "-follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "-me"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "gan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "-at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "tempt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "4"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "toolName": "updateGeneratedTask",
+      "input": {
+        "taskId": "00000000-0000-0000-0000-000000000000",
+        "title": "Submittal follow-up",
+        "description": "Reassigning submittal follow-up to Megan per user request.",
+        "assignee": "Megan",
+        "dueDate": null,
+        "priority": "normal",
+        "status": "open",
+        "confirmed": false,
+        "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-4"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_bQbM1E6HCDbDJSeZlOOpJ4mo",
+      "output": {
+        "success": false,
+        "error": "Task was not found in the Tasks table."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "toolName": "updateGeneratedTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "task"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "title"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "Sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "description"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "Re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "ing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": " sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": " Megan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": " per"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": " request"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "egan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "null"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "status"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "open"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "-sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "-follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "-me"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "gan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "-at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "tempt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "toolName": "updateGeneratedTask",
+      "input": {
+        "taskId": "00000000-0000-0000-0000-000000000000",
+        "title": "Submittal follow-up",
+        "description": "Reassigning submittal follow-up to Megan per user request.",
+        "assignee": "Megan",
+        "dueDate": null,
+        "priority": "normal",
+        "status": "open",
+        "confirmed": false,
+        "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-5"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_bhQyWw4wzyS24fQBTUYL8pkf",
+      "output": {
+        "success": false,
+        "error": "Task was not found in the Tasks table."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "toolName": "updateGeneratedTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "task"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "title"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "Sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "description"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "Re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "ing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": " sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": " Megan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": " per"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": " request"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "egan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "null"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "status"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "open"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "-sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "-follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "-me"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "gan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "-at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "tempt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "toolName": "updateGeneratedTask",
+      "input": {
+        "taskId": "00000000-0000-0000-0000-000000000000",
+        "title": "Submittal follow-up",
+        "description": "Reassigning submittal follow-up to Megan per user request.",
+        "assignee": "Megan",
+        "dueDate": null,
+        "priority": "normal",
+        "status": "open",
+        "confirmed": false,
+        "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-6"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_o7LUQFG0HKmZv2YszVo1um4D",
+      "output": {
+        "success": false,
+        "error": "Task was not found in the Tasks table."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "toolName": "updateGeneratedTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "task"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "title"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "Sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "description"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "Re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "ing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": " sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": " Megan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": " per"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": " request"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "egan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "null"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "status"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "open"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "-sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "-follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "-me"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "gan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "-at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "tempt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "7"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "toolName": "updateGeneratedTask",
+      "input": {
+        "taskId": "00000000-0000-0000-0000-000000000000",
+        "title": "Submittal follow-up",
+        "description": "Reassigning submittal follow-up to Megan per user request.",
+        "assignee": "Megan",
+        "dueDate": null,
+        "priority": "normal",
+        "status": "open",
+        "confirmed": false,
+        "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-7"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_5cSP3O7ByHkBKPqqt22LYeGd",
+      "output": {
+        "success": false,
+        "error": "Task was not found in the Tasks table."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "toolName": "updateGeneratedTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "task"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "title"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "Sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "description"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "Re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "ing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": " sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": " Megan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": " per"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": " request"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "egan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "null"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "status"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "open"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "-sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "-follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "-me"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "gan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "-at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "tempt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "8"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "toolName": "updateGeneratedTask",
+      "input": {
+        "taskId": "00000000-0000-0000-0000-000000000000",
+        "title": "Submittal follow-up",
+        "description": "Reassigning submittal follow-up to Megan per user request.",
+        "assignee": "Megan",
+        "dueDate": null,
+        "priority": "normal",
+        "status": "open",
+        "confirmed": false,
+        "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-8"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_tlx5d9BFIVzH9kCtgLfjMQiH",
+      "output": {
+        "success": false,
+        "error": "Task was not found in the Tasks table."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "toolName": "updateGeneratedTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "task"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "title"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "Sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "description"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "Re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "ing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": " sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": " Megan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": " per"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": " request"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "egan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "null"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "status"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "open"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "-sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "-follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "-me"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "gan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "-at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "tempt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "9"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "toolName": "updateGeneratedTask",
+      "input": {
+        "taskId": "00000000-0000-0000-0000-000000000000",
+        "title": "Submittal follow-up",
+        "description": "Reassigning submittal follow-up to Megan per user request.",
+        "assignee": "Megan",
+        "dueDate": null,
+        "priority": "normal",
+        "status": "open",
+        "confirmed": false,
+        "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-9"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_XXDuXy9uSNe35F781gngrSaT",
+      "output": {
+        "success": false,
+        "error": "Task was not found in the Tasks table."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "toolName": "updateGeneratedTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "task"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "000"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "title"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "Sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "description"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "Re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "ing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": " sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": " Megan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": " per"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": " request"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "egan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "null"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "status"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "open"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "assign"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "-sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "-follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "-me"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "gan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "-at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "tempt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "10"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "toolName": "updateGeneratedTask",
+      "input": {
+        "taskId": "00000000-0000-0000-0000-000000000000",
+        "title": "Submittal follow-up",
+        "description": "Reassigning submittal follow-up to Megan per user request.",
+        "assignee": "Megan",
+        "dueDate": null,
+        "priority": "normal",
+        "status": "open",
+        "confirmed": false,
+        "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-10"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_IGNB3HwhvJFW0chfnYEPqgKr",
+      "output": {
+        "success": false,
+        "error": "Task was not found in the Tasks table."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "text-start",
+      "id": "task-write-tool-only-completion"
+    },
+    {
+      "type": "text-delta",
+      "id": "task-write-tool-only-completion",
+      "delta": "Task preview ready.\n\nI staged this from your request: \"Hand that submittal follow-up off "
+    },
+    {
+      "type": "text-delta",
+      "id": "task-write-tool-only-completion",
+      "delta": "to Megan instead.\".\n\nNot created yet. Review the preview card, then reply **confirm** to "
+    },
+    {
+      "type": "text-delta",
+      "id": "task-write-tool-only-completion",
+      "delta": "create it or tell me what to change."
+    },
+    {
+      "type": "text-end",
+      "id": "task-write-tool-only-completion"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 22024,
+      "totalTokens": 23110,
+      "outputTokens": 1086,
+      "cacheHitRatio": 0.837,
+      "cachedInputTokens": 18432
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Hand that submittal follow-up off to Megan instead.",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "task_write",
+          "sourceSpecificRagKind": null,
+          "messageDrivenToolNames": [
+            "getMyTasks",
+            "updateGeneratedTask",
+            "getActionItemsAndInsights"
+          ],
+          "recentEmailInboxRequest": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "task_write",
+          "planner": "model",
+          "rationale": "The user is instructing a reassignment/creation of an action item ('hand that submittal follow-up off to Megan instead'), which implies writing/updating a task rather than reading existing follow-ups. Per policy, assignment phrasing maps to task_write with a safe draft/action preview.",
+          "confidence": "high",
+          "responseMode": "draft_safe_action",
+          "requiredTools": [],
+          "deterministicIntent": "task_write",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T16:20:12.772Z"
+      },
+      {
+        "tool": "promptContextReducer",
+        "input": {
+          "intent": "task_write",
+          "message": "Hand that submittal follow-up off to Megan instead."
+        },
+        "output": {
+          "promptMode": "task_write_lean",
+          "skippedSourceHealth": true,
+          "skippedGeneralMemory": true,
+          "skippedExecutivePacket": true,
+          "skippedWorkspaceArtifacts": true
+        },
+        "timestamp": "2026-05-14T16:20:13.408Z"
+      },
+      {
+        "tool": "taskWriteIntentRouter",
+        "input": {
+          "intent": "task_write",
+          "message": "Hand that submittal follow-up off to Megan instead."
+        },
+        "output": {
+          "skippedPacketRetrieval": true,
+          "injectedTaskWriteOverride": true
+        },
+        "timestamp": "2026-05-14T16:20:13.409Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.excalidraw.com/mcp",
+          "server": "excalidraw"
+        },
+        "output": {
+          "allowedTools": [
+            "read_me",
+            "create_view",
+            "export_to_excalidraw",
+            "save_checkpoint",
+            "read_checkpoint"
+          ],
+          "enabledTools": [
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "enabledToolCount": 5,
+          "discoveredToolCount": 5
+        },
+        "timestamp": "2026-05-14T16:20:13.506Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.supabase.com/mcp?project_ref=lgveqfnpkxvzbnnwuled",
+          "server": "supabase"
+        },
+        "output": {
+          "error": "MCP HTTP Transport Error: POSTing to endpoint (HTTP 401): {\"message\":\"JWT could not be decoded\"}"
+        },
+        "timestamp": "2026-05-14T16:20:13.550Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "promptMode": "task_write_lean",
+          "toolChoice": {
+            "type": "tool",
+            "toolName": "updateGeneratedTask"
+          },
+          "fullToolCount": 122,
+          "modelToolCount": 5,
+          "modelToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ],
+          "streamMaxSteps": 10,
+          "scopedToolCount": 5,
+          "streamMaxOutputTokens": 4000,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": false
+        },
+        "timestamp": "2026-05-14T16:20:13.550Z"
+      },
+      {
+        "tool": "updateGeneratedTask",
+        "input": {
+          "title": "Submittal follow-up",
+          "status": "open",
+          "taskId": "00000000-0000-0000-0000-000000000000",
+          "dueDate": null,
+          "assignee": "Megan",
+          "priority": "normal",
+          "confirmed": false,
+          "description": "Reassigning submittal follow-up to Megan per user request.",
+          "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14"
+        },
+        "output": {
+          "error": "Task was not found in the Tasks table.",
+          "success": false
+        },
+        "timestamp": "2026-05-14T16:20:15.677Z"
+      },
+      {
+        "tool": "updateGeneratedTask",
+        "input": {
+          "title": "Submittal follow-up",
+          "status": "open",
+          "taskId": "00000000-0000-0000-0000-000000000000",
+          "dueDate": null,
+          "assignee": "Megan",
+          "priority": "normal",
+          "confirmed": false,
+          "description": "Reassigning submittal follow-up to Megan per user request.",
+          "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-2"
+        },
+        "output": {
+          "error": "Task was not found in the Tasks table.",
+          "success": false
+        },
+        "timestamp": "2026-05-14T16:20:17.168Z"
+      },
+      {
+        "tool": "updateGeneratedTask",
+        "input": {
+          "title": "Submittal follow-up",
+          "status": "open",
+          "taskId": "00000000-0000-0000-0000-000000000000",
+          "dueDate": null,
+          "assignee": "Megan",
+          "priority": "normal",
+          "confirmed": false,
+          "description": "Reassigning submittal follow-up to Megan per user request.",
+          "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-3"
+        },
+        "output": {
+          "error": "Task was not found in the Tasks table.",
+          "success": false
+        },
+        "timestamp": "2026-05-14T16:20:19.917Z"
+      },
+      {
+        "tool": "updateGeneratedTask",
+        "input": {
+          "title": "Submittal follow-up",
+          "status": "open",
+          "taskId": "00000000-0000-0000-0000-000000000000",
+          "dueDate": null,
+          "assignee": "Megan",
+          "priority": "normal",
+          "confirmed": false,
+          "description": "Reassigning submittal follow-up to Megan per user request.",
+          "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-4"
+        },
+        "output": {
+          "error": "Task was not found in the Tasks table.",
+          "success": false
+        },
+        "timestamp": "2026-05-14T16:20:21.755Z"
+      },
+      {
+        "tool": "updateGeneratedTask",
+        "input": {
+          "title": "Submittal follow-up",
+          "status": "open",
+          "taskId": "00000000-0000-0000-0000-000000000000",
+          "dueDate": null,
+          "assignee": "Megan",
+          "priority": "normal",
+          "confirmed": false,
+          "description": "Reassigning submittal follow-up to Megan per user request.",
+          "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-5"
+        },
+        "output": {
+          "error": "Task was not found in the Tasks table.",
+          "success": false
+        },
+        "timestamp": "2026-05-14T16:20:23.532Z"
+      },
+      {
+        "tool": "updateGeneratedTask",
+        "input": {
+          "title": "Submittal follow-up",
+          "status": "open",
+          "taskId": "00000000-0000-0000-0000-000000000000",
+          "dueDate": null,
+          "assignee": "Megan",
+          "priority": "normal",
+          "confirmed": false,
+          "description": "Reassigning submittal follow-up to Megan per user request.",
+          "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-6"
+        },
+        "output": {
+          "error": "Task was not found in the Tasks table.",
+          "success": false
+        },
+        "timestamp": "2026-05-14T16:20:25.723Z"
+      },
+      {
+        "tool": "updateGeneratedTask",
+        "input": {
+          "title": "Submittal follow-up",
+          "status": "open",
+          "taskId": "00000000-0000-0000-0000-000000000000",
+          "dueDate": null,
+          "assignee": "Megan",
+          "priority": "normal",
+          "confirmed": false,
+          "description": "Reassigning submittal follow-up to Megan per user request.",
+          "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-7"
+        },
+        "output": {
+          "error": "Task was not found in the Tasks table.",
+          "success": false
+        },
+        "timestamp": "2026-05-14T16:20:27.954Z"
+      },
+      {
+        "tool": "updateGeneratedTask",
+        "input": {
+          "title": "Submittal follow-up",
+          "status": "open",
+          "taskId": "00000000-0000-0000-0000-000000000000",
+          "dueDate": null,
+          "assignee": "Megan",
+          "priority": "normal",
+          "confirmed": false,
+          "description": "Reassigning submittal follow-up to Megan per user request.",
+          "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-8"
+        },
+        "output": {
+          "error": "Task was not found in the Tasks table.",
+          "success": false
+        },
+        "timestamp": "2026-05-14T16:20:29.991Z"
+      },
+      {
+        "tool": "updateGeneratedTask",
+        "input": {
+          "title": "Submittal follow-up",
+          "status": "open",
+          "taskId": "00000000-0000-0000-0000-000000000000",
+          "dueDate": null,
+          "assignee": "Megan",
+          "priority": "normal",
+          "confirmed": false,
+          "description": "Reassigning submittal follow-up to Megan per user request.",
+          "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-9"
+        },
+        "output": {
+          "error": "Task was not found in the Tasks table.",
+          "success": false
+        },
+        "timestamp": "2026-05-14T16:20:31.870Z"
+      },
+      {
+        "tool": "updateGeneratedTask",
+        "input": {
+          "title": "Submittal follow-up",
+          "status": "open",
+          "taskId": "00000000-0000-0000-0000-000000000000",
+          "dueDate": null,
+          "assignee": "Megan",
+          "priority": "normal",
+          "confirmed": false,
+          "description": "Reassigning submittal follow-up to Megan per user request.",
+          "idempotencyKey": "reassign-submittal-followup-megan-2026-05-14-attempt-10"
+        },
+        "output": {
+          "error": "Task was not found in the Tasks table.",
+          "success": false
+        },
+        "timestamp": "2026-05-14T16:20:33.801Z"
+      },
+      {
+        "tool": "taskWriteToolOnlyCompletion",
+        "input": {
+          "intent": "task_write",
+          "primaryModel": "openai/gpt-5.4"
+        },
+        "output": {
+          "contentLength": 214,
+          "toolCallNames": [
+            "updateGeneratedTask",
+            "updateGeneratedTask",
+            "updateGeneratedTask",
+            "updateGeneratedTask",
+            "updateGeneratedTask",
+            "updateGeneratedTask",
+            "updateGeneratedTask",
+            "updateGeneratedTask",
+            "updateGeneratedTask",
+            "updateGeneratedTask"
+          ],
+          "suppressedNoToolRetry": true
+        },
+        "timestamp": "2026-05-14T16:20:33.999Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": null,
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": null,
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 1585,
+          "finishReason": "tool-calls",
+          "outputTokens": 105,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "updateGeneratedTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 1719,
+          "finishReason": "tool-calls",
+          "outputTokens": 109,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "updateGeneratedTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 2,
+          "inputTokens": 1857,
+          "finishReason": "tool-calls",
+          "outputTokens": 109,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "updateGeneratedTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 3,
+          "inputTokens": 1995,
+          "finishReason": "tool-calls",
+          "outputTokens": 109,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "updateGeneratedTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 4,
+          "inputTokens": 2133,
+          "finishReason": "tool-calls",
+          "outputTokens": 109,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "updateGeneratedTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 5,
+          "inputTokens": 2271,
+          "finishReason": "tool-calls",
+          "outputTokens": 109,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "updateGeneratedTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 6,
+          "inputTokens": 2409,
+          "finishReason": "tool-calls",
+          "outputTokens": 109,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "updateGeneratedTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 7,
+          "inputTokens": 2547,
+          "finishReason": "tool-calls",
+          "outputTokens": 109,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "updateGeneratedTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 8,
+          "inputTokens": 2685,
+          "finishReason": "tool-calls",
+          "outputTokens": 109,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "updateGeneratedTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 9,
+          "inputTokens": 2823,
+          "finishReason": "tool-calls",
+          "outputTokens": 109,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "updateGeneratedTask"
+          ]
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"updateGeneratedTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"updateGeneratedTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 2,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"updateGeneratedTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 3,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"updateGeneratedTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 4,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"updateGeneratedTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 5,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"updateGeneratedTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 6,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"updateGeneratedTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 7,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"updateGeneratedTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 8,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"updateGeneratedTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 9,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"updateGeneratedTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        }
+      ],
+      "totalStepCount": 10,
+      "finalFinishReason": "tool-calls",
+      "preparedStepCount": 10,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 10
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

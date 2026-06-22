@@ -18,7 +18,7 @@ export function TestScenariosTab({ markdown, slug }: Props) {
       <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
         <p>No test scenarios file found for <strong>{slug}</strong>.</p>
         <p className="text-xs">
-          Create <code className="rounded bg-muted px-1 py-0.5">docs/testing/{slug}-scenarios.md</code> to populate this tab.
+          Create <code className="rounded bg-muted px-1 py-0.5">docs/archive/2026-06-22-docs-migration/testing/{slug}-scenarios.md</code> to populate this tab.
         </p>
       </div>
     );

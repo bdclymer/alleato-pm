@@ -1,0 +1,46 @@
+{
+  "id": "financial-forecast",
+  "intent": "financial_analysis",
+  "prompt": "How is our forecast tracking against the original budget on Westfield?",
+  "selectedProjectId": 43,
+  "sessionId": "becc8da4-54fa-459f-abf9-28c8df76c5a5",
+  "sessionLabel": "eval-2026-05-12T17-46-02-176Z-financial-forecast",
+  "startedAt": "2026-05-12T17:53:53.777Z",
+  "finishedAt": "2026-05-12T17:54:09.319Z",
+  "durationMs": 281,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getForecastComparison, getCostTrends] to fire — none did",
+      "mustInclude missing: \"forecast\"",
+      "answer length 0 < min 120"
+    ],
+    "warnings": [
+      "expected family 'financial' not represented",
+      "expected family 'forecast' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getForecastComparison",
+    "getCostTrends"
+  ],
+  "expectedToolFamilies": [
+    "financial",
+    "forecast"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

@@ -1,0 +1,158 @@
+{
+  "generatedAt": "2026-05-14T20:24:12.129Z",
+  "baseUrl": "http://localhost:3000",
+  "bundle": null,
+  "filter": "action-task|task-register|realworld-teams-source-freshness",
+  "totalCases": 3,
+  "passed": 2,
+  "failed": 1,
+  "toolCoverage": {
+    "intentPlanner": 3,
+    "streamingToolPolicy": 3,
+    "promptContextReducer": 2,
+    "mcpToolDiscovery": 2,
+    "taskWriteIntentRouter": 1,
+    "mcpToolDiscoverySkipped": 1,
+    "createTask": 1,
+    "taskWriteToolOnlyCompletion": 1,
+    "getActionItemsAndInsights": 1,
+    "assistantSourceHealth": 1,
+    "messageDrivenToolRouter": 1,
+    "searchTeamsMessages": 1,
+    "noToolRetry": 1
+  },
+  "intentDistribution": {
+    "action_preview": 1,
+    "task_management": 1,
+    "source_health": 1
+  },
+  "results": [
+    {
+      "id": "action-task-preview-no-write",
+      "intent": "action_preview",
+      "prompt": "Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm.",
+      "selectedProjectId": null,
+      "sessionId": "a5612534-1164-41d7-9e24-56002782216c",
+      "sessionLabel": "eval-2026-05-14T20-20-59-309Z-03621cf3-action-task-preview-no-write",
+      "startedAt": "2026-05-14T20:20:59.420Z",
+      "finishedAt": "2026-05-14T20:21:53.693Z",
+      "durationMs": 53810,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 953,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, taskWriteIntentRouter, mcpToolDiscoverySkipped, streamingToolPolicy, createTask, taskWriteToolOnlyCompletion"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "taskWriteIntentRouter",
+          "mcpToolDiscoverySkipped",
+          "streamingToolPolicy",
+          "createTask",
+          "taskWriteToolOnlyCompletion"
+        ],
+        "familiesHit": [
+          "action_write",
+          "task_management"
+        ],
+        "finalTextLength": 324,
+        "finalText": "Task preview ready.\n\nI staged this from your request: \"Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm.\".\n\nNot created yet. Review the preview card, then reply **confirm** to create it or tell me what to change."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "action_write"
+      ]
+    },
+    {
+      "id": "task-register-source-grounded",
+      "intent": "task_management",
+      "prompt": "Show me my real task list from actual records. Split it into overdue, due soon, blocked, and unclear if you can.",
+      "selectedProjectId": null,
+      "sessionId": "6946257c-567d-4c06-82de-5bd7930562d9",
+      "sessionLabel": "eval-2026-05-14T20-20-59-309Z-03621cf3-task-register-source-grounded",
+      "startedAt": "2026-05-14T20:21:53.694Z",
+      "finishedAt": "2026-05-14T20:22:16.865Z",
+      "durationMs": 22769,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 213,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected required tool 'getMyTasks' to fire",
+          "mustInclude missing: \"Sources Checked\""
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, mcpToolDiscovery, streamingToolPolicy, getActionItemsAndInsights"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getActionItemsAndInsights"
+        ],
+        "familiesHit": [
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 766,
+        "finalText": "I’m not seeing any assigned tasks for you in the current records.\n\n## Real task list from actual records\n**Overdue**\n- None found\n\n**Due soon**\n- None found\n\n**Blocked**\n- None found\n\n**Unclear / needs assignment context**\n- None found\n\n## What the records currently show\n- Open tasks: **0**\n- Structured action items: **0**\n- Priority items: **0**\n- Unresolved insights: **0**\n- Overdue RFIs: **0**\n\n## Important caveat\nThis likely means one of two things:\n1. there truly are no tracked action items assigned in the system, or\n2. your name/assignee identity isn’t being matched in the records.\n\nIf you want the real list tied specifically to your name, send me the name you’d be assigned under in meetings/tasks/emails, and I’ll pull **your** actual items directly."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "task_management"
+      ]
+    },
+    {
+      "id": "realworld-teams-source-freshness",
+      "intent": "source_health",
+      "prompt": "Are Teams messages current enough to trust today, or is source sync stale?",
+      "selectedProjectId": null,
+      "sessionId": "8e23d438-489a-4675-b873-9d3665cb9439",
+      "sessionLabel": "eval-2026-05-14T20-20-59-309Z-03621cf3-realworld-teams-source-freshness",
+      "startedAt": "2026-05-14T20:22:16.866Z",
+      "finishedAt": "2026-05-14T20:24:12.128Z",
+      "durationMs": 114429,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 897,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, searchTeamsMessages, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "searchTeamsMessages",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "communications",
+          "source_health"
+        ],
+        "finalTextLength": 781,
+        "finalText": "Teams message sync is lagging today. There are 1,065 unembedded sources and 11,501 uncompiled items in the pipeline, which means recent Teams messages may not be fully searchable or included in updates right now. The system shows a critical sync issue specifically on Teams DM export for acannon@alleatogroup.com, so coverage for direct messages to/from that user is especially at risk.\n\nNet: Teams search can surface older or partially-processed conversations, but do not trust it as fully up-to-date today. For anything time-sensitive or absolutely current, confirm with a direct Teams check or ask for an email confirmation.\n\nNext step: If you’re relying on real-time signal from Teams, backstop with another channel or call out the risk in any deliverable relying on this data."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "source_health"
+      ]
+    }
+  ]
+}

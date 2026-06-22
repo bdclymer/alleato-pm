@@ -4,7 +4,7 @@ import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { useRealtimePresenceRoom } from "@/hooks/use-realtime-presence-room";
-import { getRoomId } from "@/lib/liveblocks/rooms";
+import { getRoomId } from "@/lib/collaboration/rooms";
 import { useEntityContext } from "./use-entity-context";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 

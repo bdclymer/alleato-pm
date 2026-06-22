@@ -1,0 +1,45 @@
+{
+  "id": "realworld-last-five-emails",
+  "intent": "source_lookup",
+  "prompt": "Can you tell me my last five emails?",
+  "selectedProjectId": null,
+  "sessionId": "b787d0f8-921e-408b-ad7c-5686721db78c",
+  "sessionLabel": "eval-2026-05-13T23-16-55-179Z-realworld-last-five-emails",
+  "startedAt": "2026-05-13T23:18:35.699Z",
+  "finishedAt": "2026-05-13T23:18:51.219Z",
+  "durationMs": 2,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [sourceSpecificRagRetrieval, getRecentEmails, getRecentOutlookEmails] to fire — none did",
+      "mustIncludeAny missing one of: \"email\", \"inbox\", \"Outlook\", \"received\", \"no emails\"",
+      "answer length 0 < min 120"
+    ],
+    "warnings": [
+      "expected family 'communications' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "sourceSpecificRagRetrieval",
+    "getRecentEmails",
+    "getRecentOutlookEmails"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

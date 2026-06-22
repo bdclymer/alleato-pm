@@ -1,0 +1,54 @@
+{
+  "id": "feature-daily-log",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 3178,
+  "question": "Where do daily logs live?",
+  "response": {
+    "answer": "I can’t answer this reliably right now because the required App Expert artifacts are missing.\n\nChecked:\n- App sitemap artifact: missing\n- Feature registry artifact: missing\n\nExact status:\n- `docs/architecture/generated/app-sitemap.generated.json` not found\n- `docs/architecture/generated/feature-registry.generated.json` not found\n\nBecause the curated metadata is unavailable, I can’t verify where “daily logs” live without risking an unsupported answer. If you want, I can still try to infer it from route/source files as implementation evidence, but that would be less authoritative than the generated App Expert artifacts.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/source",
+        "sourceType": "sitemap",
+        "route": "/source",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3079,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

@@ -1,0 +1,45 @@
+{
+  "id": "source-lookup-meetings",
+  "intent": "source_lookup",
+  "prompt": "What did Brandon say about billing in any recent meeting?",
+  "selectedProjectId": null,
+  "sessionId": "17740503-4ca5-42db-b1ec-6049313e7d78",
+  "sessionLabel": "eval-2026-05-12T17-33-02-004Z-source-lookup-meetings",
+  "startedAt": "2026-05-12T17:37:16.220Z",
+  "finishedAt": "2026-05-12T17:37:31.821Z",
+  "durationMs": 309,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"0df4e605-31a5-42c1-bbfc-b55c417aadee\",\"timestamp\":\"2026-05-12T17:37:16.528Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"0df4e605-31a5-42c1-bbfc-b55c417aadee\",\"timestamp\":\"2026-05-12T17:37:16.528Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [searchMeetingsByTopic, semanticSearch] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'meetings' not represented",
+      "expected family 'semantic' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"0df4e605-31a5-42c1-bbfc-b55c417aadee\",\"timestamp\":\"2026-05-12T17:37:16.528Z\"}"
+  },
+  "expectedToolNames": [
+    "searchMeetingsByTopic",
+    "semanticSearch"
+  ],
+  "expectedToolFamilies": [
+    "meetings",
+    "semantic"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

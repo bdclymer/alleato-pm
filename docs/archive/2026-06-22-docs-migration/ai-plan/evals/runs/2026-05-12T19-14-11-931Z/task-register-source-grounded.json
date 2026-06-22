@@ -1,0 +1,45 @@
+{
+  "id": "task-register-source-grounded",
+  "intent": "task_management",
+  "prompt": "What are my tasks? Only answer from actual task records or source-backed extracted tasks, and separate overdue, due soon, and blocked if you can.",
+  "selectedProjectId": null,
+  "sessionId": "57dcdfa2-a0d8-4d09-bdbf-b61c8312087c",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-task-register-source-grounded",
+  "startedAt": "2026-05-12T19:38:41.480Z",
+  "finishedAt": "2026-05-12T19:38:56.794Z",
+  "durationMs": 2,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "assistant message was not persisted to chat_history",
+      "expected required tool 'getMyTasks' to fire",
+      "mustInclude missing: \"Sources Checked\"",
+      "mustIncludeAny missing one of: \"overdue\", \"due soon\", \"blocked\", \"task\"",
+      "answer length 0 < min 180",
+      "required metadata missing: tool_trace",
+      "required metadata missing: response_quality",
+      "response_quality.score missing"
+    ],
+    "warnings": [
+      "expected family 'task_management' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "task_management"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

@@ -18,6 +18,8 @@ const embedPath = path.join(
   "backend/src/services/integrations/microsoft_graph/embed.py"
 );
 const source = fs.readFileSync(embedPath, "utf8");
+const aiTransportPath = path.join(root, "backend/src/services/ai_transport.py");
+const aiTransport = fs.readFileSync(aiTransportPath, "utf8");
 const migrationPath = path.join(
   root,
   "supabase/migrations/20260429162000_graph_rag_source_type_cleanup_guardrails.sql",
@@ -34,18 +36,26 @@ function requireContains(needle, message) {
   }
 }
 
+function requireTransportContains(needle, message) {
+  if (!aiTransport.includes(needle)) {
+    failures.push(message);
+  }
+}
+
 function requireNotContains(needle, message) {
   if (source.includes(needle)) {
     failures.push(message);
   }
 }
 
-requireContains("AI_GATEWAY_API_KEY", "Graph embeddings must support AI_GATEWAY_API_KEY.");
-requireContains("https://ai-gateway.vercel.sh/v1", "Graph embeddings must use the Vercel AI Gateway base URL.");
-requireContains('"model_prefix": "openai/"', "AI Gateway Graph embeddings must prefix OpenAI model names.");
-requireContains("OPENAI_API_KEY", "Graph embeddings should retain direct OpenAI fallback.");
-requireContains("Graph embedding failed across all providers", "Graph embeddings must fail loudly when every provider fails.");
-requireContains("len(embedding) != EMBEDDING_DIMENSIONS", "Graph embeddings must validate vector dimensions before writes.");
+requireContains("get_openai_client", "Graph embeddings must route provider selection through shared ai_transport.");
+requireTransportContains("AI_GATEWAY_API_KEY", "Graph embeddings must support AI_GATEWAY_API_KEY through shared ai_transport.");
+requireTransportContains("https://ai-gateway.vercel.sh/v1", "Graph embeddings must use the Vercel AI Gateway base URL through shared ai_transport.");
+requireTransportContains("OPENAI_API_KEY", "Graph embeddings should retain direct OpenAI fallback through shared ai_transport.");
+requireTransportContains("AI_PROVIDER_PATH", "Graph embeddings must keep an explicit provider-path override for operations.");
+requireTransportContains("AI_GATEWAY_REQUIRED", "Graph embeddings must support fail-closed gateway enforcement.");
+requireTransportContains("retry_ai_call", "Graph embeddings must use shared retry/failure behavior.");
+requireContains("len(e) != EMBEDDING_DIMENSIONS", "Graph embeddings must validate vector dimensions before writes.");
 requireContains('"source_type": source_type', "Graph chunks must write source_type so Teams/email retrieval can filter correctly.");
 requireContains('category == "teams_message"', "Graph chunks must classify Teams chunks as teams_message.");
 requireContains('"teams_dm"', "Graph chunks must split Teams DMs from channel messages.");
@@ -63,7 +73,7 @@ requireContains("'raw_ingested', 'segmented', 'compiled', 'error'", "Graph embed
 requireContains("interval '365 days'", "Graph embedding must not repair source records older than one year.");
 requireContains("source_at desc", "Graph embedding must prioritize newest source records first.");
 requireContains("repair_scan_limit", "Graph embedding repair must scan past the first page of already-good completed rows.");
-requireContains('order("date", desc=True)', "Graph embedding fallback must prioritize newest Graph source dates first.");
+requireContains('order("created_at", desc=True)', "Graph embedding fallback must prioritize newest Graph source rows first.");
 requireNotContains("return [[] for _ in texts]", "Graph embeddings must not return empty vectors after provider failure.");
 
 if (!migration.includes("repair_graph_document_chunk_source_types_batch")) {

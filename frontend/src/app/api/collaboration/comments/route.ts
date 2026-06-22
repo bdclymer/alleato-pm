@@ -5,7 +5,7 @@ import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { entityTypeLabel, type CommentableEntityType } from "@/lib/liveblocks/rooms";
+import { entityTypeLabel, type CommentableEntityType } from "@/lib/collaboration/rooms";
 
 const getQuerySchema = z.object({
   entityType: z.string().min(1),

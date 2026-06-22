@@ -1,0 +1,148 @@
+{
+  "id": "realworld-last-five-emails",
+  "intent": "source_lookup",
+  "prompt": "Can you tell me my last five emails?",
+  "selectedProjectId": null,
+  "sessionId": "4055a90f-a183-4c24-bb58-6c4483793f89",
+  "sessionLabel": "eval-2026-05-19T08-39-59-589Z-c3bd861a-realworld-last-five-emails",
+  "startedAt": "2026-05-19T08:39:59.631Z",
+  "finishedAt": "2026-05-19T08:40:12.493Z",
+  "durationMs": 12419,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 8,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [consultMicrosoftExecutiveAssistant] to fire — none did",
+      "expected required tool 'consultMicrosoftExecutiveAssistant' to fire",
+      "mustIncludeAny missing one of: \"email\", \"inbox\", \"Outlook\", \"received\", \"no emails\"",
+      "consultMicrosoftExecutiveAssistant trace sources [(none)] did not include required microsoft_graph_live"
+    ],
+    "warnings": [
+      "expected family 'communications' not represented",
+      "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+    ],
+    "observations": [
+      "tools fired: (none)",
+      "judge email_operator: skipped"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 293,
+    "finalText": "The assistant could not get a usable response from the AI provider. This usually means the provider account is out of credits, over quota, or blocked by billing. I saved your question so it is not lost; after the provider billing issue is fixed, retry this message or choose a different model.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 12419
+    },
+    "judge": {
+      "status": "skipped",
+      "rubric": "email_operator",
+      "score": null,
+      "minScore": 4,
+      "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+      "strengths": [],
+      "weaknesses": [],
+      "dimensionScores": {},
+      "provider": null,
+      "model": "openai/gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "consultMicrosoftExecutiveAssistant"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "status": "loading",
+        "timestamp": "2026-05-19T08:40:00.165Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (0 sources, 0 warnings)",
+        "status": "success",
+        "durations": {},
+        "timestamp": "2026-05-19T08:40:03.359Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "PFttt7KyaPI2J4JD"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "finish",
+      "finishReason": "other"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {},
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "retrieval-complete",
+          "status": "success",
+          "message": "Retrieved (0 sources, 0 warnings)",
+          "durations": {},
+          "timestamp": "2026-05-19T08:40:03.359Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": 1,
+    "tool_trace": [],
+    "architecture": "retrieval-planner-v2",
+    "finish_reason": "other",
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+      "sources": [],
+      "responseFormat": "conversational"
+    },
+    "response_quality": {
+      "score": 50,
+      "reasons": [
+        "no successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "low",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "response_message_id": "PFttt7KyaPI2J4JD",
+    "empty_model_response": true
+  }
+}

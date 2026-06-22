@@ -1,0 +1,2267 @@
+{
+  "id": "documents-search",
+  "intent": "document_question",
+  "prompt": "Find the latest Westfield contract or change-order document and tell me the business terms I should care about.",
+  "selectedProjectId": 43,
+  "sessionId": "ea7d3753-498d-44a9-b837-d9d060da6510",
+  "sessionLabel": "eval-2026-05-14T15-39-25-476Z-documents-search",
+  "startedAt": "2026-05-14T15:41:45.821Z",
+  "finishedAt": "2026-05-14T15:42:37.105Z",
+  "durationMs": 50621,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 209,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "global forbidden phrase: \"retrieval\""
+    ],
+    "observations": [
+      "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, queryDocumentRows, noToolRetry"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "assistantSourceHealth",
+      "semanticSearch",
+      "sourceLookupIntentRouter",
+      "messageDrivenToolRouter",
+      "mcpToolDiscovery",
+      "streamingToolPolicy",
+      "queryDocumentRows",
+      "noToolRetry"
+    ],
+    "familiesHit": [
+      "structured",
+      "documents",
+      "semantic",
+      "source_health"
+    ],
+    "finalTextLength": 1053,
+    "finalText": "No relevant contract or change-order document for Westfield Collective turned up in the system search. I checked across meetings, Teams, emails, and the document index—retrieval came back empty. This could be a pipeline issue (sources waiting on embedding or not uploaded), or the document simply isn't here.\n\n**What that means:**  \nI can't quote business terms, payment language, retainage, or risk-shifting clauses without the actual contract or CO doc. That's a hard stop for actionable contract review.\n\n**What to do next:**  \n- Confirm if the latest contract or CO is uploaded and named properly in the project files.\n- If you're missing it from the doc index, flag for upload/embedding so it's searchable and can alert on upcoming milestones or buried risk terms.\n\nIf you want to drill in somewhere else—like pending change events, current signature status, or financial exposure—let me know. That data is available from the other side (change-order log, approvals, or financial packets), even if the PDF itself hasn't cleared the source pipeline."
+  },
+  "expectedToolNames": [
+    "searchDocuments",
+    "searchExternalDocuments",
+    "queryDocumentRows"
+  ],
+  "expectedToolFamilies": [
+    "documents",
+    "semantic"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T15:41:48.902Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Searching source records for the requested discussion context",
+        "status": "loading",
+        "timestamp": "2026-05-14T15:41:50.983Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "synthesis",
+        "message": "Loaded source records — synthesizing answer",
+        "status": "success",
+        "timestamp": "2026-05-14T15:42:08.984Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "JEWCk2KAD6vcj8eD"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "toolName": "queryDocumentRows"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "inputTextDelta": "dataset"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "inputTextDelta": "west"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "inputTextDelta": "_collect"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "inputTextDelta": "ive"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "inputTextDelta": "sheet"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "inputTextDelta": "Filter"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "inputTextDelta": "*"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "toolName": "queryDocumentRows",
+      "input": {
+        "datasetId": "westfield_collective",
+        "sheetFilter": "*"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_7tOKbILl1LH1YkHZ8qmhBKav",
+      "output": {
+        "error": "No dataset found for id \"westfield_collective\"."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "toolName": "queryDocumentRows"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "inputTextDelta": "dataset"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "inputTextDelta": "west"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "inputTextDelta": "_collect"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "inputTextDelta": "ive"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "inputTextDelta": "sheet"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "inputTextDelta": "Filter"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "inputTextDelta": "*"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "toolName": "queryDocumentRows",
+      "input": {
+        "datasetId": "westfield_collective",
+        "sheetFilter": "*"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_XCovPpQsNd14nfqB7LIqUOhd",
+      "output": {
+        "error": "No dataset found for id \"westfield_collective\"."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "toolName": "queryDocumentRows"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "inputTextDelta": "dataset"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "inputTextDelta": "west"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "inputTextDelta": "_collect"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "inputTextDelta": "ive"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "inputTextDelta": "sheet"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "inputTextDelta": "Filter"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "inputTextDelta": "*"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "toolName": "queryDocumentRows",
+      "input": {
+        "datasetId": "westfield_collective",
+        "sheetFilter": "*"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_4PawHeEnHsjLv7qDjbnGNKoS",
+      "output": {
+        "error": "No dataset found for id \"westfield_collective\"."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "toolName": "queryDocumentRows"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "inputTextDelta": "dataset"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "inputTextDelta": "west"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "inputTextDelta": "_collect"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "inputTextDelta": "ive"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "inputTextDelta": "sheet"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "inputTextDelta": "Filter"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "inputTextDelta": "*"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "toolName": "queryDocumentRows",
+      "input": {
+        "datasetId": "westfield_collective",
+        "sheetFilter": "*"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_jw5KFe3wuVin5O4PfnS3BbCT",
+      "output": {
+        "error": "No dataset found for id \"westfield_collective\"."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "toolName": "queryDocumentRows"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "inputTextDelta": "dataset"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "inputTextDelta": "west"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "inputTextDelta": "_collect"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "inputTextDelta": "ive"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "inputTextDelta": "sheet"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "inputTextDelta": "Filter"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "inputTextDelta": "latest"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "toolName": "queryDocumentRows",
+      "input": {
+        "datasetId": "westfield_collective",
+        "sheetFilter": "latest"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_7JQtiQapCDO9qvXI9V94hlS3",
+      "output": {
+        "error": "No dataset found for id \"westfield_collective\"."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "toolName": "queryDocumentRows"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "inputTextDelta": "dataset"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "inputTextDelta": "west"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "inputTextDelta": "_collect"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "inputTextDelta": "ive"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "inputTextDelta": "sheet"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "inputTextDelta": "Filter"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "inputTextDelta": "contracts"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "toolName": "queryDocumentRows",
+      "input": {
+        "datasetId": "westfield_collective",
+        "sheetFilter": "contracts"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_68401TQa6mAKCnsb6uGUSGTM",
+      "output": {
+        "error": "No dataset found for id \"westfield_collective\"."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "toolName": "queryDocumentRows"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "inputTextDelta": "dataset"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "inputTextDelta": "west"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "inputTextDelta": "_collect"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "inputTextDelta": "ive"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "inputTextDelta": "sheet"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "inputTextDelta": "Filter"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "inputTextDelta": "latest"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "toolName": "queryDocumentRows",
+      "input": {
+        "datasetId": "westfield_collective",
+        "sheetFilter": "latest"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_tsymupKVGAFMbLvLPU07FTwj",
+      "output": {
+        "error": "No dataset found for id \"westfield_collective\"."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "toolName": "queryDocumentRows"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "inputTextDelta": "dataset"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "inputTextDelta": "west"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "inputTextDelta": "_collect"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "inputTextDelta": "ive"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "inputTextDelta": "sheet"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "inputTextDelta": "Filter"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "inputTextDelta": "latest"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "toolName": "queryDocumentRows",
+      "input": {
+        "datasetId": "westfield_collective",
+        "sheetFilter": "latest"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_Jt9NWRa0W4X4REaEVpm2DBTd",
+      "output": {
+        "error": "No dataset found for id \"westfield_collective\"."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "toolName": "queryDocumentRows"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "inputTextDelta": "dataset"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "inputTextDelta": "west"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "inputTextDelta": "_collect"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "inputTextDelta": "ive"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "inputTextDelta": "sheet"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "inputTextDelta": "Filter"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "inputTextDelta": "latest"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "toolName": "queryDocumentRows",
+      "input": {
+        "datasetId": "westfield_collective",
+        "sheetFilter": "latest"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_F5liATRI6evcQtxrzBQ7qYll",
+      "output": {
+        "error": "No dataset found for id \"westfield_collective\"."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "toolName": "queryDocumentRows"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "inputTextDelta": "dataset"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "inputTextDelta": "west"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "inputTextDelta": "_collect"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "inputTextDelta": "ive"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "inputTextDelta": "sheet"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "inputTextDelta": "Filter"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "inputTextDelta": "latest"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "toolName": "queryDocumentRows",
+      "input": {
+        "datasetId": "westfield_collective",
+        "sheetFilter": "latest"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_5rHtwV0CpXCPZTYPAYtEJMIt",
+      "output": {
+        "error": "No dataset found for id \"westfield_collective\"."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-failure-response"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "No relevant contract or change-order document for Westfield Collective turned up in the "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "system search. I checked across meetings, Teams, emails, and the document index—retrieval "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "came back empty. This could be a pipeline issue (sources waiting on embedding or not "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "uploaded), or the document simply isn't here.\n\n**What that means:**  \nI can't quote "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "business terms, payment language, retainage, or risk-shifting clauses without the actual "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "contract or CO doc. That's a hard stop for actionable contract review.\n\n**What to do "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "next:**  \n- Confirm if the latest contract or CO is uploaded and named properly in the "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "project files.\n- If you're missing it from the doc index, flag for upload/embedding so "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "it's searchable and can alert on upcoming milestones or buried risk terms.\n\nIf you want to "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "drill in somewhere else—like pending change events, current signature status, or financial "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "exposure—let me know. That data is available from the other side (change-order log, "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "approvals, or financial packets), even if the PDF itself hasn't cleared the source "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "pipeline."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-failure-response"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 69460,
+      "totalTokens": 69740,
+      "outputTokens": 280,
+      "cacheHitRatio": 0.862,
+      "cachedInputTokens": 59904
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Find the latest Westfield contract or change-order document and tell me the business terms I should care about.",
+          "taskSourceReview": null,
+          "selectedProjectId": 43,
+          "deterministicIntent": "latest_status",
+          "sourceSpecificRagKind": null,
+          "messageDrivenToolNames": [
+            "queryDocumentRows",
+            "searchExternalDocuments",
+            "searchDocuments",
+            "semanticSearch"
+          ],
+          "recentEmailInboxRequest": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "source_lookup",
+          "planner": "model",
+          "rationale": "The user wants the latest specific internal document ('Westfield contract or change-order document') and a summary of the key business terms. This requires locating internal project records/documents first, then extracting relevant terms. Because they asked for the latest internal document and its contents, source_lookup is the best fit over latest_status.",
+          "confidence": "high",
+          "responseMode": "retrieve_sources",
+          "requiredTools": [
+            "project_documents_search"
+          ],
+          "deterministicIntent": "latest_status",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T15:41:48.900Z"
+      },
+      {
+        "tool": "assistantSourceHealth",
+        "input": {
+          "reason": "source_status_request"
+        },
+        "output": {
+          "alerts": [
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: jdawson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:jdawson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: ctragesser@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:ctragesser@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: njepson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "njepson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: mparsons@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "mparsons@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: jdawson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "jdawson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "ctragesser@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: crusin@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "crusin@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: awehner@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "awehner@alleatogroup.com"
+            }
+          ],
+          "counts": {
+            "sources": 30,
+            "uncompiled": 10790,
+            "unembedded": 941,
+            "warningSources": 0,
+            "criticalSources": 30,
+            "failedSubscriptions": 0,
+            "expiringSubscriptions": 0
+          },
+          "reason": "source_status_request",
+          "sources": [
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-14T08:40:46.370016+00:00",
+              "resourceId": "user:jdawson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: jdawson@alleatogroup.com",
+              "staleMinutes": 410,
+              "lastSuccessAt": "2026-05-14T08:40:46.370016+00:00",
+              "uncompiledCount": 937,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-14T07:40:20.111311+00:00",
+              "resourceId": "user:ctragesser@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: ctragesser@alleatogroup.com",
+              "staleMinutes": 470,
+              "lastSuccessAt": "2026-05-14T07:40:20.111311+00:00",
+              "uncompiledCount": 937,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+              "resourceId": "njepson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: njepson@alleatogroup.com",
+              "staleMinutes": 20292,
+              "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+              "resourceId": "mparsons@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: mparsons@alleatogroup.com",
+              "staleMinutes": 20293,
+              "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+              "resourceId": "jdawson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: jdawson@alleatogroup.com",
+              "staleMinutes": 20294,
+              "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+              "resourceId": "ctragesser@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: ctragesser@alleatogroup.com",
+              "staleMinutes": 4171,
+              "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+              "resourceId": "crusin@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: crusin@alleatogroup.com",
+              "staleMinutes": 20295,
+              "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+              "resourceId": "awehner@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: awehner@alleatogroup.com",
+              "staleMinutes": 20296,
+              "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+              "resourceId": "accounting@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: accounting@alleatogroup.com",
+              "staleMinutes": 20295,
+              "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T18:14:44.817404+00:00",
+              "resourceId": "acannon@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: acannon@alleatogroup.com",
+              "staleMinutes": 1276,
+              "lastSuccessAt": "2026-05-13T18:14:44.817404+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T20:06:20.616839+00:00",
+              "resourceId": "38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: 38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+              "staleMinutes": 1164,
+              "lastSuccessAt": "2026-05-13T20:06:20.616839+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T00:00:00+00:00",
+              "resourceId": "document_metadata",
+              "lastErrorAt": null,
+              "resourceName": "Outlook email",
+              "staleMinutes": 2370,
+              "lastSuccessAt": "2026-05-13T00:00:00+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            }
+          ],
+          "generatedAt": "2026-05-14T15:41:50.872Z",
+          "missingStage": "embedding_backlog",
+          "overallStatus": "degraded"
+        },
+        "timestamp": "2026-05-14T15:41:50.872Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "error": "semanticSearch timed out during source lookup retrieval",
+        "input": {
+          "query": "Find the latest Westfield contract or change-order document and tell me the business terms I should care about.",
+          "projectId": 43,
+          "threshold": 0.5,
+          "matchCount": 12,
+          "skipRerank": false
+        },
+        "timestamp": "2026-05-14T15:42:08.984Z"
+      },
+      {
+        "tool": "sourceLookupIntentRouter",
+        "input": {
+          "query": "Find the latest Westfield contract or change-order document and tell me the business terms I should care about.",
+          "intent": "source_lookup",
+          "selectedProjectId": 43
+        },
+        "output": {
+          "mode": "additive-context",
+          "resultCount": 0,
+          "recentTeamsWindow": null,
+          "usedProjectBriefingTemplate": false
+        },
+        "timestamp": "2026-05-14T15:42:08.984Z"
+      },
+      {
+        "tool": "messageDrivenToolRouter",
+        "input": {
+          "intent": "source_lookup",
+          "message": "Find the latest Westfield contract or change-order document and tell me the business terms I should care about."
+        },
+        "output": {
+          "requiredToolNames": [
+            "queryDocumentRows",
+            "searchExternalDocuments",
+            "searchDocuments",
+            "semanticSearch"
+          ]
+        },
+        "timestamp": "2026-05-14T15:42:08.984Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.excalidraw.com/mcp",
+          "server": "excalidraw"
+        },
+        "output": {
+          "allowedTools": [
+            "read_me",
+            "create_view",
+            "export_to_excalidraw",
+            "save_checkpoint",
+            "read_checkpoint"
+          ],
+          "enabledTools": [
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "enabledToolCount": 5,
+          "discoveredToolCount": 5
+        },
+        "timestamp": "2026-05-14T15:42:09.109Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.supabase.com/mcp?project_ref=lgveqfnpkxvzbnnwuled",
+          "server": "supabase"
+        },
+        "output": {
+          "error": "MCP HTTP Transport Error: POSTing to endpoint (HTTP 401): {\"message\":\"JWT could not be decoded\"}"
+        },
+        "timestamp": "2026-05-14T15:42:09.149Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "promptMode": "full_strategist",
+          "toolChoice": {
+            "type": "tool",
+            "toolName": "queryDocumentRows"
+          },
+          "fullToolCount": 99,
+          "modelToolCount": 4,
+          "modelToolNames": [
+            "queryDocumentRows",
+            "searchExternalDocuments",
+            "searchDocuments",
+            "semanticSearch"
+          ],
+          "streamMaxSteps": 10,
+          "scopedToolCount": 4,
+          "streamMaxOutputTokens": 4000,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": false
+        },
+        "timestamp": "2026-05-14T15:42:09.149Z"
+      },
+      {
+        "tool": "queryDocumentRows",
+        "input": {
+          "datasetId": "westfield_collective",
+          "sheetFilter": "*"
+        },
+        "output": {
+          "error": "No dataset found for id \"westfield_collective\"."
+        },
+        "timestamp": "2026-05-14T15:42:12.249Z"
+      },
+      {
+        "tool": "queryDocumentRows",
+        "input": {
+          "datasetId": "westfield_collective",
+          "sheetFilter": "*"
+        },
+        "output": {
+          "error": "No dataset found for id \"westfield_collective\"."
+        },
+        "timestamp": "2026-05-14T15:42:14.001Z"
+      },
+      {
+        "tool": "queryDocumentRows",
+        "input": {
+          "datasetId": "westfield_collective",
+          "sheetFilter": "*"
+        },
+        "output": {
+          "error": "No dataset found for id \"westfield_collective\"."
+        },
+        "timestamp": "2026-05-14T15:42:21.317Z"
+      },
+      {
+        "tool": "queryDocumentRows",
+        "input": {
+          "datasetId": "westfield_collective",
+          "sheetFilter": "*"
+        },
+        "output": {
+          "error": "No dataset found for id \"westfield_collective\"."
+        },
+        "timestamp": "2026-05-14T15:42:22.741Z"
+      },
+      {
+        "tool": "queryDocumentRows",
+        "input": {
+          "datasetId": "westfield_collective",
+          "sheetFilter": "latest"
+        },
+        "output": {
+          "error": "No dataset found for id \"westfield_collective\"."
+        },
+        "timestamp": "2026-05-14T15:42:24.760Z"
+      },
+      {
+        "tool": "queryDocumentRows",
+        "input": {
+          "datasetId": "westfield_collective",
+          "sheetFilter": "contracts"
+        },
+        "output": {
+          "error": "No dataset found for id \"westfield_collective\"."
+        },
+        "timestamp": "2026-05-14T15:42:25.804Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "input": {
+          "query": "Find the latest Westfield contract or change-order document and tell me the business terms I should care about.",
+          "projectId": 43,
+          "threshold": 0.5,
+          "matchCount": 12,
+          "skipRerank": false
+        },
+        "output": {
+          "message": "No results found for \"Find the latest Westfield contract or change-order document and tell me the business terms I should care about.\". Try rephrasing or broadening your search.",
+          "results": []
+        },
+        "timestamp": "2026-05-14T15:42:26.313Z"
+      },
+      {
+        "tool": "queryDocumentRows",
+        "input": {
+          "datasetId": "westfield_collective",
+          "sheetFilter": "latest"
+        },
+        "output": {
+          "error": "No dataset found for id \"westfield_collective\"."
+        },
+        "timestamp": "2026-05-14T15:42:27.789Z"
+      },
+      {
+        "tool": "queryDocumentRows",
+        "input": {
+          "datasetId": "westfield_collective",
+          "sheetFilter": "latest"
+        },
+        "output": {
+          "error": "No dataset found for id \"westfield_collective\"."
+        },
+        "timestamp": "2026-05-14T15:42:29.040Z"
+      },
+      {
+        "tool": "queryDocumentRows",
+        "input": {
+          "datasetId": "westfield_collective",
+          "sheetFilter": "latest"
+        },
+        "output": {
+          "error": "No dataset found for id \"westfield_collective\"."
+        },
+        "timestamp": "2026-05-14T15:42:30.265Z"
+      },
+      {
+        "tool": "queryDocumentRows",
+        "input": {
+          "datasetId": "westfield_collective",
+          "sheetFilter": "latest"
+        },
+        "output": {
+          "error": "No dataset found for id \"westfield_collective\"."
+        },
+        "timestamp": "2026-05-14T15:42:31.365Z"
+      },
+      {
+        "tool": "noToolRetry",
+        "input": {
+          "reason": "The model/tool run completed without returning final assistant text.",
+          "retryModel": "openai/gpt-4.1",
+          "primaryModel": "openai/gpt-5.4"
+        },
+        "output": {
+          "succeeded": true,
+          "contentLength": 1053
+        },
+        "timestamp": "2026-05-14T15:42:35.659Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        },
+        {
+          "id": "8fdb4362-863f-4f06-a66d-75bfb37403d4",
+          "type": "commitment",
+          "content": "Verify latest post-April-22 communications and check structured budget, commitments, direct costs, and change orders before quoting exposure dollars for Westfield Collective."
+        },
+        {
+          "id": "3b39f81a-6d4e-408c-8ce3-509ffb649487",
+          "type": "fact",
+          "content": "Westfield Collective is engaged in active closeout and commercial coordination with ongoing discussions about LOI/warranty language, change-order signatures, and remaining work."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 5,
+      "relevantUsed": 2,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": {
+      "alerts": [
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: jdawson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:jdawson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: ctragesser@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:ctragesser@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: njepson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "njepson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: mparsons@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "mparsons@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: jdawson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "jdawson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "ctragesser@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: crusin@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "crusin@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: awehner@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "awehner@alleatogroup.com"
+        }
+      ],
+      "counts": {
+        "sources": 30,
+        "uncompiled": 10790,
+        "unembedded": 941,
+        "warningSources": 0,
+        "criticalSources": 30,
+        "failedSubscriptions": 0,
+        "expiringSubscriptions": 0
+      },
+      "reason": "source_status_request",
+      "sources": [
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-14T08:40:46.370016+00:00",
+          "resourceId": "user:jdawson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: jdawson@alleatogroup.com",
+          "staleMinutes": 410,
+          "lastSuccessAt": "2026-05-14T08:40:46.370016+00:00",
+          "uncompiledCount": 937,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-14T07:40:20.111311+00:00",
+          "resourceId": "user:ctragesser@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: ctragesser@alleatogroup.com",
+          "staleMinutes": 470,
+          "lastSuccessAt": "2026-05-14T07:40:20.111311+00:00",
+          "uncompiledCount": 937,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+          "resourceId": "njepson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: njepson@alleatogroup.com",
+          "staleMinutes": 20292,
+          "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+          "resourceId": "mparsons@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: mparsons@alleatogroup.com",
+          "staleMinutes": 20293,
+          "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+          "resourceId": "jdawson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: jdawson@alleatogroup.com",
+          "staleMinutes": 20294,
+          "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+          "resourceId": "ctragesser@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: ctragesser@alleatogroup.com",
+          "staleMinutes": 4171,
+          "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+          "resourceId": "crusin@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: crusin@alleatogroup.com",
+          "staleMinutes": 20295,
+          "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+          "resourceId": "awehner@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: awehner@alleatogroup.com",
+          "staleMinutes": 20296,
+          "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+          "resourceId": "accounting@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: accounting@alleatogroup.com",
+          "staleMinutes": 20295,
+          "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T18:14:44.817404+00:00",
+          "resourceId": "acannon@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: acannon@alleatogroup.com",
+          "staleMinutes": 1276,
+          "lastSuccessAt": "2026-05-13T18:14:44.817404+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T20:06:20.616839+00:00",
+          "resourceId": "38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: 38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+          "staleMinutes": 1164,
+          "lastSuccessAt": "2026-05-13T20:06:20.616839+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T00:00:00+00:00",
+          "resourceId": "document_metadata",
+          "lastErrorAt": null,
+          "resourceName": "Outlook email",
+          "staleMinutes": 2370,
+          "lastSuccessAt": "2026-05-13T00:00:00+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        }
+      ],
+      "generatedAt": "2026-05-14T15:41:50.872Z",
+      "missingStage": "embedding_backlog",
+      "overallStatus": "degraded"
+    },
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 6694,
+          "finishReason": "tool-calls",
+          "outputTokens": 28,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "queryDocumentRows"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 6750,
+          "finishReason": "tool-calls",
+          "outputTokens": 28,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "queryDocumentRows"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 2,
+          "inputTokens": 6806,
+          "finishReason": "tool-calls",
+          "outputTokens": 28,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "queryDocumentRows"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 3,
+          "inputTokens": 6862,
+          "finishReason": "tool-calls",
+          "outputTokens": 28,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "queryDocumentRows"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 4,
+          "inputTokens": 6918,
+          "finishReason": "tool-calls",
+          "outputTokens": 28,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "queryDocumentRows"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 5,
+          "inputTokens": 6974,
+          "finishReason": "tool-calls",
+          "outputTokens": 28,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "queryDocumentRows"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 6,
+          "inputTokens": 7030,
+          "finishReason": "tool-calls",
+          "outputTokens": 28,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "queryDocumentRows"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 7,
+          "inputTokens": 7086,
+          "finishReason": "tool-calls",
+          "outputTokens": 28,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "queryDocumentRows"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 8,
+          "inputTokens": 7142,
+          "finishReason": "tool-calls",
+          "outputTokens": 28,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "queryDocumentRows"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 9,
+          "inputTokens": 7198,
+          "finishReason": "tool-calls",
+          "outputTokens": 28,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "queryDocumentRows"
+          ]
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"queryDocumentRows\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "queryDocumentRows",
+            "searchExternalDocuments",
+            "searchDocuments",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"queryDocumentRows\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "queryDocumentRows",
+            "searchExternalDocuments",
+            "searchDocuments",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 2,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"queryDocumentRows\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "queryDocumentRows",
+            "searchExternalDocuments",
+            "searchDocuments",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 3,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"queryDocumentRows\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "queryDocumentRows",
+            "searchExternalDocuments",
+            "searchDocuments",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 4,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"queryDocumentRows\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "queryDocumentRows",
+            "searchExternalDocuments",
+            "searchDocuments",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 5,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"queryDocumentRows\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "queryDocumentRows",
+            "searchExternalDocuments",
+            "searchDocuments",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 6,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"queryDocumentRows\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "queryDocumentRows",
+            "searchExternalDocuments",
+            "searchDocuments",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 7,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"queryDocumentRows\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "queryDocumentRows",
+            "searchExternalDocuments",
+            "searchDocuments",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 8,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"queryDocumentRows\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "queryDocumentRows",
+            "searchExternalDocuments",
+            "searchDocuments",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 9,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"queryDocumentRows\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "queryDocumentRows",
+            "searchExternalDocuments",
+            "searchDocuments",
+            "semanticSearch"
+          ]
+        }
+      ],
+      "totalStepCount": 10,
+      "finalFinishReason": "tool-calls",
+      "preparedStepCount": 10,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 10
+    },
+    "response_quality": {
+      "score": 70,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response",
+        "1 tool call failure(s)"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

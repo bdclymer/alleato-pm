@@ -556,14 +556,11 @@ def get_intelligence_compiler_status(
     )
 
     current_packet_ids_by_target: Dict[str, set] = {}
-    operating_summary_targets = set()
     for packet in packets:
         if packet.get("packet_type") != "current" or not packet.get("target_id"):
             continue
         packet_ids = current_packet_ids_by_target.setdefault(packet["target_id"], set())
         packet_ids.add(packet.get("id"))
-        if packet.get("compiler_version") == "project-operating-summary-v1":
-            operating_summary_targets.add(packet["target_id"])
     packet_card_pairs = {
         (row.get("packet_id"), row.get("insight_card_id"))
         for row in packet_cards
@@ -573,11 +570,6 @@ def get_intelligence_compiler_status(
         if card.get("current_status") not in ACTIVE_CARD_STATUSES:
             continue
         if card.get("attribution_status") == "rejected":
-            continue
-        if (
-            card.get("primary_target_id") in operating_summary_targets
-            and card.get("compiler_version") != "project-operating-summary-v1"
-        ):
             continue
         current_packet_ids = current_packet_ids_by_target.get(card.get("primary_target_id"), set())
         if not any((packet_id, card.get("id")) in packet_card_pairs for packet_id in current_packet_ids):
@@ -2213,33 +2205,6 @@ def compile_current_packet(
     compiler_version: str = COMPILER_VERSION,
 ) -> Dict[str, Any]:
     """Compile promoted cards into the current packet row read by the advisor."""
-    target = _fetch_target(supabase, target_id)
-    use_operating_summary = os.getenv(
-        "INTELLIGENCE_USE_OPERATING_SUMMARY_COMPILER",
-        "true",
-    ).lower() not in {"0", "false", "no"}
-    if (
-        use_operating_summary
-        and target.get("target_type") == "client_project"
-        and target.get("project_id")
-    ):
-        from src.services.intelligence.operating_summary import refresh_project_operating_packet
-
-        result = refresh_project_operating_packet(
-            supabase,
-            int(target["project_id"]),
-        )
-        return {
-            "status": "compiled",
-            "packet_id": result.get("packet_id"),
-            "target_id": target_id,
-            "card_count": result.get("card_count", 0),
-            "evidence_count": result.get("linked_evidence_count", 0),
-            "compiler_version": result.get("compiler_version"),
-            "packet_version": result.get("packet_version"),
-            "synthesis_compiler": "project_operating_summary",
-        }
-
     projection = build_current_packet_projection(
         supabase,
         target_id,

@@ -1,0 +1,294 @@
+{
+  "generatedAt": "2026-05-14T20:26:40.054Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "task-action-items-regression",
+    "description": "Agentic-eval guardrail for task and action-item prompts. The assistant must recognize common owner phrasing for tasks, action items, open loops, and waiting-on-team questions without requiring exact wording.",
+    "criteria": [
+      "Every task-list variant must use a source-backed task or action-item tool.",
+      "The assistant must not ask which list, project, or action item source the user means.",
+      "Owner phrasing like open loops, my list, and waiting on my team must route as task/action-item retrieval.",
+      "Answers must be direct and useful enough for morning triage, not generic planning advice."
+    ]
+  },
+  "filter": "(tasks-list-of-action-items-canonical|tasks-what-do-i-need-to-do-today|tasks-open-loops-all|tasks-whats-on-my-list|realworld-most-important-tasks|realworld-waiting-on-team)$",
+  "totalCases": 6,
+  "passed": 6,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 6,
+    "promptContextReducer": 6,
+    "getMyTasks": 4,
+    "backendDeepAgentExecutiveBriefing": 2,
+    "mcpToolDiscovery": 2,
+    "streamingToolPolicy": 2,
+    "noToolRetry": 2,
+    "messageDrivenToolRouter": 1
+  },
+  "intentDistribution": {
+    "task_management": 6
+  },
+  "results": [
+    {
+      "id": "tasks-list-of-action-items-canonical",
+      "intent": "task_management",
+      "prompt": "What's on my list of action items?",
+      "selectedProjectId": null,
+      "sessionId": "2648a8cb-ca20-4b34-924a-7f76b2641514",
+      "sessionLabel": "eval-2026-05-14T20-25-17-982Z-89a03d2c-tasks-list-of-action-items-canonical",
+      "startedAt": "2026-05-14T20:25:17.998Z",
+      "finishedAt": "2026-05-14T20:25:22.812Z",
+      "durationMs": 4405,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 9,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, getMyTasks"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "getMyTasks"
+        ],
+        "familiesHit": [
+          "task_management"
+        ],
+        "finalTextLength": 281,
+        "finalText": "I checked the task register for Test User.\n\nI did not find any open task rows directly assigned to you in the checked task sources.\n\n**Sources Checked**\n- tasks.assignee_person_id / assignee_email / assignee_name\n- schedule_tasks.assignee text\n- executive_briefing_follow_ups.owner"
+      },
+      "expectedToolNames": [
+        "getMyTasks",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management"
+      ]
+    },
+    {
+      "id": "tasks-what-do-i-need-to-do-today",
+      "intent": "task_management",
+      "prompt": "What do I need to do today?",
+      "selectedProjectId": null,
+      "sessionId": "2bfaf3f4-ad92-4cb4-930d-d5c250c99382",
+      "sessionLabel": "eval-2026-05-14T20-25-17-982Z-89a03d2c-tasks-what-do-i-need-to-do-today",
+      "startedAt": "2026-05-14T20:25:22.813Z",
+      "finishedAt": "2026-05-14T20:25:26.745Z",
+      "durationMs": 3867,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 9,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, getMyTasks"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "getMyTasks"
+        ],
+        "familiesHit": [
+          "task_management"
+        ],
+        "finalTextLength": 281,
+        "finalText": "I checked the task register for Test User.\n\nI did not find any open task rows directly assigned to you in the checked task sources.\n\n**Sources Checked**\n- tasks.assignee_person_id / assignee_email / assignee_name\n- schedule_tasks.assignee text\n- executive_briefing_follow_ups.owner"
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "task_management"
+      ]
+    },
+    {
+      "id": "tasks-open-loops-all",
+      "intent": "task_management",
+      "prompt": "Any open loops I should know about?",
+      "selectedProjectId": null,
+      "sessionId": "3ce95a3c-549d-4941-9aa6-6f7dad51415c",
+      "sessionLabel": "eval-2026-05-14T20-25-17-982Z-89a03d2c-tasks-open-loops-all",
+      "startedAt": "2026-05-14T20:25:26.745Z",
+      "finishedAt": "2026-05-14T20:25:30.386Z",
+      "durationMs": 3577,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 9,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'actions' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, getMyTasks"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "getMyTasks"
+        ],
+        "familiesHit": [
+          "task_management"
+        ],
+        "finalTextLength": 281,
+        "finalText": "I checked the task register for Test User.\n\nI did not find any open task rows directly assigned to you in the checked task sources.\n\n**Sources Checked**\n- tasks.assignee_person_id / assignee_email / assignee_name\n- schedule_tasks.assignee text\n- executive_briefing_follow_ups.owner"
+      },
+      "expectedToolNames": [
+        "getMyTasks",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions"
+      ]
+    },
+    {
+      "id": "tasks-whats-on-my-list",
+      "intent": "task_management",
+      "prompt": "What's on my list?",
+      "selectedProjectId": null,
+      "sessionId": "10fa9499-8df6-4742-bafd-85289b59b3c3",
+      "sessionLabel": "eval-2026-05-14T20-25-17-982Z-89a03d2c-tasks-whats-on-my-list",
+      "startedAt": "2026-05-14T20:25:30.387Z",
+      "finishedAt": "2026-05-14T20:25:33.455Z",
+      "durationMs": 3008,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 9,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, getMyTasks"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "getMyTasks"
+        ],
+        "familiesHit": [
+          "task_management"
+        ],
+        "finalTextLength": 281,
+        "finalText": "I checked the task register for Test User.\n\nI did not find any open task rows directly assigned to you in the checked task sources.\n\n**Sources Checked**\n- tasks.assignee_person_id / assignee_email / assignee_name\n- schedule_tasks.assignee text\n- executive_briefing_follow_ups.owner"
+      },
+      "expectedToolNames": [
+        "getMyTasks",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management"
+      ]
+    },
+    {
+      "id": "realworld-most-important-tasks",
+      "intent": "task_management",
+      "prompt": "What are my most important tasks right now?",
+      "selectedProjectId": null,
+      "sessionId": "da7b5711-4f11-42ff-b66d-9eaeb1579519",
+      "sessionLabel": "eval-2026-05-14T20-25-17-982Z-89a03d2c-realworld-most-important-tasks",
+      "startedAt": "2026-05-14T20:25:33.456Z",
+      "finishedAt": "2026-05-14T20:26:05.804Z",
+      "durationMs": 31922,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 31,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, backendDeepAgentExecutiveBriefing, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "backendDeepAgentExecutiveBriefing",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 1626,
+        "finalText": "Your most important tasks right now are:\n\n1. **Clear the Mail/Tax Document Backlog**  \n   - Rapidly close out all outstanding mail and tax documentation issues. This is operationally urgent due to potential tax/audit exposure. The most recent evidence highlights a backlog and need for improved processing—this is your #1 risk item.\n\n2. **Follow Up on the Accounting Outstanding Issues List**  \n   - Misty was to distribute a current detailed list of open issues, with Maria and Shania supporting outreach. Stick closely to the Thursday/Friday scheduled check processing; escalate anything unresolved by end of the week to prevent backlog build-up.\n\n3. **Review the Union Collective Design Pay Application & Invoice**  \n   - There is an active design milestone billing (“Union Collective: Design Pay App 1”) associated with a contractual milestone schedule. Immediately review alignment between the invoice, milestone status, and contract terms to resolve or approve payment and avoid payment/cash-flow delays.\n\n**First Action:**  \n- Assign explicit ownership for remaining mail/tax intake and track open accounting/billing follow-ups in a shared list.  \n- Audit and sign off on all unresolved issues by Friday.  \n- Ensure that the Union Collective invoice is either paid or holds a clear documented reason for delay.\n\n**Watchlist:**  \n- The February marketing report is being prepared but is lower risk versus the above.\n\n**Source gaps:**  \n- No working tasks/project system found, so list may miss more recent or less visible tasks. If any new issues surfaced since mid-March, manually confirm prioritization with your team."
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getMyTasks",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions"
+      ]
+    },
+    {
+      "id": "realworld-waiting-on-team",
+      "intent": "task_management",
+      "prompt": "What am I waiting on from my team?",
+      "selectedProjectId": null,
+      "sessionId": "efcc8687-e2fb-40d7-a7d0-f7f6356ce8e7",
+      "sessionLabel": "eval-2026-05-14T20-25-17-982Z-89a03d2c-realworld-waiting-on-team",
+      "startedAt": "2026-05-14T20:26:05.805Z",
+      "finishedAt": "2026-05-14T20:26:40.053Z",
+      "durationMs": 33826,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 32,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'people' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, messageDrivenToolRouter, backendDeepAgentExecutiveBriefing, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "messageDrivenToolRouter",
+          "backendDeepAgentExecutiveBriefing",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 1676,
+        "finalText": "Key task and project tracking sources are currently unavailable, so I can’t provide a precise, up-to-date list of what you’re waiting on from your team.\n\nBased on recent executive briefings, emails, Teams messages, and meetings, the most likely outstanding items are:\n\n1. **Pending Approvals & Status Updates**\n   - Several emails and briefings reference internal clarifications, likely indicating you’re waiting on feedback, confirmations, or approvals from specific team members.\n   - No recent confirmation that all required inputs have been received for ongoing processes.\n\n2. **Document & Schedule Revisions**\n   - The latest project documents include an updated milestone schedule (as of 2026-05-12), and recent invoices (2026-05-14), suggesting you may be waiting on supporting documentation to finalize payments or validate project milestones.\n   - There is likely a dependency on team members updating or distributing the latest scheduled information.\n\n3. **Outstanding Issue Follow-ups**\n   - Meeting notes highlight unresolved items needing action (e.g., financial audit prep, backlog processing, and status updates on deliverables).\n   - Commitments from colleagues to send issue lists, conduct outreach, or prepare reports.\n\n**First Action:**  \nDirectly request a status update from your direct reports or leads, specifically asking for confirmation of:  \n- All outstanding approvals and issues being addressed  \n- The latest schedule and documentation status  \n- Any blockers on submittals, payments, or deliverables\n\nIf you want a more granular breakdown (e.g., by area, team, or document), fixing the underlying task tracking source should be prioritized next."
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getMyTasks",
+        "getActionItemsAndInsights",
+        "getPeopleAndRoles"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions",
+        "people"
+      ]
+    }
+  ]
+}

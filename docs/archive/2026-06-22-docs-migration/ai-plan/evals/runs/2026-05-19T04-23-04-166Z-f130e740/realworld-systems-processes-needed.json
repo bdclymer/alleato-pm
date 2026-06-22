@@ -1,0 +1,527 @@
+{
+  "id": "realworld-systems-processes-needed",
+  "intent": "implementation_planning",
+  "prompt": "What systems and processes do you think we need to put in place?",
+  "selectedProjectId": null,
+  "sessionId": "7a094c62-7061-4e76-8298-01364c34b166",
+  "sessionLabel": "eval-2026-05-19T04-23-04-166Z-f130e740-realworld-systems-processes-needed",
+  "startedAt": "2026-05-19T04:28:13.089Z",
+  "finishedAt": "2026-05-19T04:28:41.158Z",
+  "durationMs": 22826,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 7,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [backendDeepAgentExecutiveBriefing, getPortfolioOverview, getActionItemsAndInsights, assistantSourceHealth] to fire — none did",
+      "expected required tool 'backendDeepAgentExecutiveBriefing' to fire"
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'actions' not represented",
+      "expected family 'source_health' not represented"
+    ],
+    "observations": [
+      "tools fired: executive_briefing_reader, tasks_reader, emails_reader, teams_reader, meetings_reader, documents_reader, projects_reader, financials_reader, schedule_reader, deepagents_runtime",
+      "backend Deep Agents memory candidates: 0",
+      "judge strategic_advisor: pass (4/4)"
+    ],
+    "toolNames": [
+      "executive_briefing_reader",
+      "tasks_reader",
+      "emails_reader",
+      "teams_reader",
+      "meetings_reader",
+      "documents_reader",
+      "projects_reader",
+      "financials_reader",
+      "schedule_reader",
+      "deepagents_runtime"
+    ],
+    "familiesHit": [],
+    "finalTextLength": 3199,
+    "finalText": "The business needs tighter control on three things: one place for project documentation, one place for procurement/material status, and one disciplined cadence for schedule, RFIs, and action-item follow-through. Right now the evidence shows the team is still relying on ad hoc coordination, and that is exactly where cost leakage and missed handoffs start.\n\nEvidence\n- The Collective project coordination note says the team is still setting up access and “start a submittal log,” and needs to add multiple subcontractors and architectural teams to an upcoming meeting while using JobPlanner to manage documentation. That points to a missing standard workflow for submittals and document access.\n- The Uniqlo & GPC huddle shows half of required materials are onsite, additional items need to be consolidated for clarity and cost control, and weekend testing was deferred until Monday for full supervision. That’s a procurement tracking and field-verification control gap, not just a timing issue.\n- The same huddle notes riser and hanger installation is advancing but safety concerns for injured workers were raised. That tells me field execution needs a clearer safety escalation and daily oversight process.\n- The Fireflies review says the team is using Microsoft Project to link hiring with project schedules and holding weekly meetings to refine hiring plans. That is good, but it also shows staffing is being managed in a semi-manual way rather than through a formal resourcing system.\n- The accounting team message asks whether to delete other cost-code types and leave only expense, which is a sign the cost-code structure and accounting rules are not fully standardized yet.\n\nWhat this means\nThe common failure mode is not lack of effort; it’s lack of operating system. Projects are being run through email, meetings, and individual judgment, which works until volume rises or pressure hits. The highest-leverage fix is to standardize a few core controls: document log, procurement log, action log, safety escalation, and a clean cost-code structure. That would reduce missed handoffs, make meetings shorter, and give leadership a real view of where work is stuck.\n\nRecommended next steps\n- Standardize a project control pack for every job: submittal log, RFI log, procurement log, action log, and decision log, all owned by the PM and updated weekly.\n- Put one person on materials tracking per active job so “onsite / ordered / missing / install-ready” is visible before the weekly meeting.\n- Require every OAC or internal coordination meeting to end with named owners and due dates, then review those items first in the next meeting.\n- Formalize a safety escalation path for field issues so concerns like the injured-worker note get assigned and closed immediately, not just discussed.\n- Clean up cost-code governance so the accounting team has one standard structure instead of debating code types ad hoc.\n\nUncertainty\n- The source set is strong on examples, but it is not a full operating review of every project or department.\n- I can see the process symptoms clearly; I cannot yet confirm which of these gaps is the biggest across the whole company without a deeper cross-project audit.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 45000,
+      "maxDurationMs": 120000,
+      "durationMs": 22826
+    },
+    "judge": {
+      "status": "pass",
+      "rubric": "strategic_advisor",
+      "score": 4,
+      "minScore": 4,
+      "summary": "The answer earns a pass because it moves beyond a generic list and identifies a concrete operating-system gap: weak project controls across documentation, procurement, safety, and cost-code governance. It uses evidence from multiple sources, ties that evidence to business risk, and proposes actionable process changes. The main weakness is that the recommendations are still somewhat broad and lack a sharper implementation sequence with owners/timing.",
+      "strengths": [
+        "Leads with a clear point of view that the company needs an operating system, not just more meetings.",
+        "Connects multiple evidence points into business implications like cost leakage, missed handoffs, and safety risk.",
+        "Surfaces useful process gaps the user did not explicitly ask for, including cost-code governance and safety escalation.",
+        "Stays honest about uncertainty by acknowledging this is not a full operating review.",
+        "Provides specific operational next steps such as submittal logs, procurement tracking, action logs, and named owners/due dates."
+      ],
+      "weaknesses": [
+        "Next steps are directionally good but not prioritized into a phased implementation plan with owners, sequencing, or timing.",
+        "Some recommendations are still high-level and not fully tailored to scale, role clarity, or system ownership.",
+        "The answer could better distinguish between what should be standardized immediately versus what requires a broader process redesign.",
+        "It cites evidence well, but does not quantify impact or identify which gap is most urgent based on business risk."
+      ],
+      "dimensionScores": {
+        "clear_executive_point_of_view": 5,
+        "connects_evidence_to_business_implications": 4,
+        "specific_operational_next_steps": 4,
+        "surfaces_unasked_considerations": 4,
+        "sounds_like_high_level_strategist": 4,
+        "honest_about_missing_evidence": 5
+      },
+      "provider": "vercel_gateway",
+      "model": "openai/gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "backendDeepAgentExecutiveBriefing",
+    "getPortfolioOverview",
+    "getActionItemsAndInsights",
+    "assistantSourceHealth"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "actions",
+    "source_health"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: packet_first_resolve_from_text",
+        "status": "loading",
+        "timestamp": "2026-05-19T04:28:13.429Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Checking Render Deep Agents executive briefing",
+        "status": "loading",
+        "timestamp": "2026-05-19T04:28:13.562Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-deep-agent-executive-briefing",
+      "data": {
+        "widget": {
+          "type": "source_evidence_drawer",
+          "id": "deep-agent-executive-briefing-evidence",
+          "title": "Alleato source coverage",
+          "sources": [
+            {
+              "id": "6a52bb92-e7a5-438b-bd56-a32a3d1eceef",
+              "title": "executive_briefing",
+              "sourceType": "project_record",
+              "date": "2026-05-18T05:27:07.046+00:00",
+              "snippet": "Read-only executive_briefing source row.",
+              "confidence": "medium"
+            },
+            {
+              "id": "218a5bf1-e15a-4071-8932-2a250c18ed3f",
+              "title": "meeting_digest",
+              "sourceType": "project_record",
+              "date": "2026-05-17T22:00:09.693785+00:00",
+              "snippet": "Read-only executive_briefing source row.",
+              "confidence": "medium"
+            },
+            {
+              "id": "44ae4290-a3a2-4b38-aa01-09edb925b265",
+              "title": "Uniqlo & GPC Huddle",
+              "sourceType": "project_record",
+              "date": "May 15, 2026",
+              "snippet": "📦 Material orders and procurement tracked: Half of required materials are onsite; additional items must be consolidated for clarity and cost control. ⏳ Weekend testing postponed: Water pressure tests deferred until Monday for full supervision to prevent unnoticed leaks and risks. 🔧 Installation progress is steady: Riser and hanger installation on System 4 is advancing, but safety concerns for injured workers were noted. 🗓️ Timeline for rack installation: Targeting completion of System A section ",
+              "confidence": "medium"
+            },
+            {
+              "id": "32e94af5-2ac9-4e47-8c92-f956c4956369",
+              "title": "Exol Framing Meeting AZ Interiors",
+              "sourceType": "project_record",
+              "date": "May 15, 2026",
+              "snippet": "✅ Simplified Control Room Design: Eliminated complex framing for control room, using a pre-built option to save time and costs. 📏 Standardized Wall Heights: Restroom and office walls capped at 12 feet, optimizing design and fit with mechanical systems. 🧊 Insulation Strategy Confirmed: Rigid insulation will extend to deck, enhancing noise and thermal control in office boundaries. 💰 Cost-Saving Material Choices: Shift from 18-gauge to 20-gauge studs for partitions, balancing structural needs with ",
+              "confidence": "medium"
+            },
+            {
+              "id": "4",
+              "title": "QA change event audit verification 004",
+              "sourceType": "email",
+              "date": "2026-04-30T10:46:15.356+00:00",
+              "snippet": "Read-only emails source row.",
+              "confidence": "medium"
+            },
+            {
+              "id": "20",
+              "title": "SC-1010-001 - QA Concrete Subcontract - QA document email 1777590000",
+              "sourceType": "email",
+              "date": "2026-04-30T22:50:14.643848+00:00",
+              "snippet": "Read-only emails source row.",
+              "confidence": "medium"
+            },
+            {
+              "id": "teamsdm_858eabf19d4b0e5e_2025-02-04",
+              "title": "Teams DM Conversation: 19:362f7b90-",
+              "sourceType": "teams",
+              "date": "2026-04-30T13:38:33.359015",
+              "snippet": "The conversation reveals coordination efforts to set up access and start a submittal log for the Collective project, specifically to save metal panel information received from Nick. There is a need to add multiple subcontractors and architectural teams to an upcoming meeting and to ensure proper access to JobPlanner for managing project documentation.",
+              "confidence": "medium"
+            },
+            {
+              "id": "teamsdm_1764086889888",
+              "title": "Teams DM: Accounting Team",
+              "sourceType": "teams",
+              "date": "2026-03-24T18:52:44.544563",
+              "snippet": "[Teams Direct Message: Accounting Team]\n\n[2025-11-25] Maria Calcetero: Can we just delete the other type of cost codes and leave only expense? or do we use the other ones?&nbsp; Jose &nbsp; Mendez &nbsp; Brandon &nbsp; Clymer &nbsp; Jesse &nbsp; Dawson ?",
+              "confidence": "medium"
+            },
+            {
+              "id": "19dce251-ae62-4234-a64d-125a32920d75",
+              "title": "Updating Notion Check Data base review &Fireflies review",
+              "sourceType": "meeting",
+              "date": "2026-03-23T05:59:18.416238",
+              "snippet": "The team is enhancing recruitment efforts by utilizing various channels, including headhunters and job platforms, to improve candidate sourcing and visibility, while implementing a centralized email for resume submissions to streamline processes. They are also focusing on acquiring necessary multi-state licenses for commercial construction, particularly in California and Nevada, which involves compliance steps such as exams and background checks. Additionally, the team's check processing is bein",
+              "confidence": "medium"
+            },
+            {
+              "id": "56be1573-334e-4c4c-87a0-b1c4782ec8e4",
+              "title": "Fireflies review",
+              "sourceType": "meeting",
+              "date": "2026-03-23T05:59:08.814747",
+              "snippet": "The team discussed the urgent need for qualified project staff to initiate multiple upcoming projects, emphasizing the absence of a formal hiring budget. They identified the challenges in finding competent superintendents and project managers. Shania Johnson will manage staffing updates using Microsoft Project, linking hiring with project schedules, while weekly meetings with Jesse will refine hiring plans. The group also highlighted the need for improved recruitment processes, including the cre",
+              "confidence": "medium"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-deep-agent-executive-briefing"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-deep-agent-executive-briefing",
+      "delta": "The business needs tighter control on three things: one place for project documentation, one place for procurement/material status, and one disciplined cadence for schedule, RFIs, and action-item follow-through. Right now the evidence shows the team is still relying on ad hoc coordination, and that is exactly where cost leakage and missed handoffs start.\n\nEvidence\n- The Collective project coordination note says the team is still setting up access and “start a submittal log,” and needs to add multiple subcontractors and architectural teams to an upcoming meeting while using JobPlanner to manage documentation. That points to a missing standard workflow for submittals and document access.\n- The Uniqlo & GPC huddle shows half of required materials are onsite, additional items need to be consolidated for clarity and cost control, and weekend testing was deferred until Monday for full supervision. That’s a procurement tracking and field-verification control gap, not just a timing issue.\n- The same huddle notes riser and hanger installation is advancing but safety concerns for injured workers were raised. That tells me field execution needs a clearer safety escalation and daily oversight process.\n- The Fireflies review says the team is using Microsoft Project to link hiring with project schedules and holding weekly meetings to refine hiring plans. That is good, but it also shows staffing is being managed in a semi-manual way rather than through a formal resourcing system.\n- The accounting team message asks whether to delete other cost-code types and leave only expense, which is a sign the cost-code structure and accounting rules are not fully standardized yet.\n\nWhat this means\nThe common failure mode is not lack of effort; it’s lack of operating system. Projects are being run through email, meetings, and individual judgment, which works until volume rises or pressure hits. The highest-leverage fix is to standardize a few core controls: document log, procurement log, action log, safety escalation, and a clean cost-code structure. That would reduce missed handoffs, make meetings shorter, and give leadership a real view of where work is stuck.\n\nRecommended next steps\n- Standardize a project control pack for every job: submittal log, RFI log, procurement log, action log, and decision log, all owned by the PM and updated weekly.\n- Put one person on materials tracking per active job so “onsite / ordered / missing / install-ready” is visible before the weekly meeting.\n- Require every OAC or internal coordination meeting to end with named owners and due dates, then review those items first in the next meeting.\n- Formalize a safety escalation path for field issues so concerns like the injured-worker note get assigned and closed immediately, not just discussed.\n- Clean up cost-code governance so the accounting team has one standard structure instead of debating code types ad hoc.\n\nUncertainty\n- The source set is strong on examples, but it is not a full operating review of every project or department.\n- I can see the process symptoms clearly; I cannot yet confirm which of these gaps is the biggest across the whole company without a deeper cross-project audit."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-deep-agent-executive-briefing"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Render Deep Agents executive answer returned",
+        "status": "success",
+        "timestamp": "2026-05-19T04:28:35.906Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": null,
+    "data_parts": [
+      {
+        "id": "assistant-widget-deep-agent-executive-briefing",
+        "data": {
+          "widget": {
+            "id": "deep-agent-executive-briefing-evidence",
+            "type": "source_evidence_drawer",
+            "title": "Alleato source coverage",
+            "sources": [
+              {
+                "id": "6a52bb92-e7a5-438b-bd56-a32a3d1eceef",
+                "date": "2026-05-18T05:27:07.046+00:00",
+                "title": "executive_briefing",
+                "snippet": "Read-only executive_briefing source row.",
+                "confidence": "medium",
+                "sourceType": "project_record"
+              },
+              {
+                "id": "218a5bf1-e15a-4071-8932-2a250c18ed3f",
+                "date": "2026-05-17T22:00:09.693785+00:00",
+                "title": "meeting_digest",
+                "snippet": "Read-only executive_briefing source row.",
+                "confidence": "medium",
+                "sourceType": "project_record"
+              },
+              {
+                "id": "44ae4290-a3a2-4b38-aa01-09edb925b265",
+                "date": "May 15, 2026",
+                "title": "Uniqlo & GPC Huddle",
+                "snippet": "📦 Material orders and procurement tracked: Half of required materials are onsite; additional items must be consolidated for clarity and cost control. ⏳ Weekend testing postponed: Water pressure tests deferred until Monday for full supervision to prevent unnoticed leaks and risks. 🔧 Installation progress is steady: Riser and hanger installation on System 4 is advancing, but safety concerns for injured workers were noted. 🗓️ Timeline for rack installation: Targeting completion of System A section ",
+                "confidence": "medium",
+                "sourceType": "project_record"
+              },
+              {
+                "id": "32e94af5-2ac9-4e47-8c92-f956c4956369",
+                "date": "May 15, 2026",
+                "title": "Exol Framing Meeting AZ Interiors",
+                "snippet": "✅ Simplified Control Room Design: Eliminated complex framing for control room, using a pre-built option to save time and costs. 📏 Standardized Wall Heights: Restroom and office walls capped at 12 feet, optimizing design and fit with mechanical systems. 🧊 Insulation Strategy Confirmed: Rigid insulation will extend to deck, enhancing noise and thermal control in office boundaries. 💰 Cost-Saving Material Choices: Shift from 18-gauge to 20-gauge studs for partitions, balancing structural needs with ",
+                "confidence": "medium",
+                "sourceType": "project_record"
+              },
+              {
+                "id": "4",
+                "date": "2026-04-30T10:46:15.356+00:00",
+                "title": "QA change event audit verification 004",
+                "snippet": "Read-only emails source row.",
+                "confidence": "medium",
+                "sourceType": "email"
+              },
+              {
+                "id": "20",
+                "date": "2026-04-30T22:50:14.643848+00:00",
+                "title": "SC-1010-001 - QA Concrete Subcontract - QA document email 1777590000",
+                "snippet": "Read-only emails source row.",
+                "confidence": "medium",
+                "sourceType": "email"
+              },
+              {
+                "id": "teamsdm_858eabf19d4b0e5e_2025-02-04",
+                "date": "2026-04-30T13:38:33.359015",
+                "title": "Teams DM Conversation: 19:362f7b90-",
+                "snippet": "The conversation reveals coordination efforts to set up access and start a submittal log for the Collective project, specifically to save metal panel information received from Nick. There is a need to add multiple subcontractors and architectural teams to an upcoming meeting and to ensure proper access to JobPlanner for managing project documentation.",
+                "confidence": "medium",
+                "sourceType": "teams"
+              },
+              {
+                "id": "teamsdm_1764086889888",
+                "date": "2026-03-24T18:52:44.544563",
+                "title": "Teams DM: Accounting Team",
+                "snippet": "[Teams Direct Message: Accounting Team]\n\n[2025-11-25] Maria Calcetero: Can we just delete the other type of cost codes and leave only expense? or do we use the other ones?&nbsp; Jose &nbsp; Mendez &nbsp; Brandon &nbsp; Clymer &nbsp; Jesse &nbsp; Dawson ?",
+                "confidence": "medium",
+                "sourceType": "teams"
+              },
+              {
+                "id": "19dce251-ae62-4234-a64d-125a32920d75",
+                "date": "2026-03-23T05:59:18.416238",
+                "title": "Updating Notion Check Data base review &Fireflies review",
+                "snippet": "The team is enhancing recruitment efforts by utilizing various channels, including headhunters and job platforms, to improve candidate sourcing and visibility, while implementing a centralized email for resume submissions to streamline processes. They are also focusing on acquiring necessary multi-state licenses for commercial construction, particularly in California and Nevada, which involves compliance steps such as exams and background checks. Additionally, the team's check processing is bein",
+                "confidence": "medium",
+                "sourceType": "meeting"
+              },
+              {
+                "id": "56be1573-334e-4c4c-87a0-b1c4782ec8e4",
+                "date": "2026-03-23T05:59:08.814747",
+                "title": "Fireflies review",
+                "snippet": "The team discussed the urgent need for qualified project staff to initiate multiple upcoming projects, emphasizing the absence of a formal hiring budget. They identified the challenges in finding competent superintendents and project managers. Shania Johnson will manage staffing updates using Microsoft Project, linking hiring with project schedules, while weekly meetings with Jesse will refine hiring plans. The group also highlighted the need for improved recruitment processes, including the cre",
+                "confidence": "medium",
+                "sourceType": "meeting"
+              }
+            ]
+          }
+        },
+        "type": "data-assistant-widget"
+      }
+    ],
+    "tool_trace": [
+      {
+        "tool": "executive_briefing_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What systems and processes do you think we need to put in place?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 69 executive_briefing row(s) from `daily_recaps`.",
+        "status": "success",
+        "timestamp": "2026-05-19T04:28:35.652Z",
+        "durationMs": 1540
+      },
+      {
+        "tool": "tasks_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What systems and processes do you think we need to put in place?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 100 tasks row(s) from `executive_briefing_follow_ups`.",
+        "status": "success",
+        "timestamp": "2026-05-19T04:28:35.652Z",
+        "durationMs": 641
+      },
+      {
+        "tool": "emails_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What systems and processes do you think we need to put in place?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 100 emails row(s) from `project_emails`.",
+        "status": "success",
+        "timestamp": "2026-05-19T04:28:35.652Z",
+        "durationMs": 749
+      },
+      {
+        "tool": "teams_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What systems and processes do you think we need to put in place?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 90 teams row(s) from `document_metadata`.",
+        "status": "success",
+        "timestamp": "2026-05-19T04:28:35.652Z",
+        "durationMs": 5505
+      },
+      {
+        "tool": "meetings_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What systems and processes do you think we need to put in place?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 2 meetings row(s) from `document_metadata`.",
+        "status": "success",
+        "timestamp": "2026-05-19T04:28:35.652Z",
+        "durationMs": 1126
+      },
+      {
+        "tool": "documents_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What systems and processes do you think we need to put in place?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 100 documents row(s) from `project_documents`.",
+        "status": "success",
+        "timestamp": "2026-05-19T04:28:35.652Z",
+        "durationMs": 896
+      },
+      {
+        "tool": "projects_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What systems and processes do you think we need to put in place?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 100 projects row(s) from `projects`.",
+        "status": "success",
+        "timestamp": "2026-05-19T04:28:35.652Z",
+        "durationMs": 201
+      },
+      {
+        "tool": "financials_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What systems and processes do you think we need to put in place?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 100 financials row(s) from `acumatica_project_budgets`.",
+        "status": "success",
+        "timestamp": "2026-05-19T04:28:35.652Z",
+        "durationMs": 1897
+      },
+      {
+        "tool": "schedule_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What systems and processes do you think we need to put in place?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 100 schedule row(s) from `schedule_tasks`.",
+        "status": "success",
+        "timestamp": "2026-05-19T04:28:35.652Z",
+        "durationMs": 185
+      },
+      {
+        "tool": "deepagents_runtime",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What systems and processes do you think we need to put in place?",
+          "selectedProjectId": null
+        },
+        "detail": "Deep Agents runtime produced an executive synthesis from checked source coverage with durable memory.",
+        "status": "success",
+        "timestamp": "2026-05-19T04:28:35.652Z",
+        "durationMs": 9234
+      }
+    ],
+    "architecture": "render-backend-deep-agents-v1",
+    "provider_path": "render-backend-ai-gateway",
+    "retrieval_plan": {
+      "intent": "implementation_planning",
+      "reason": "packet_first_resolve_from_text",
+      "sources": [
+        "intelligencePacket",
+        "projectSnapshot",
+        "semanticVectorSearch"
+      ],
+      "responseFormat": "briefing_template"
+    },
+    "backend_deep_agent": {
+      "mode": "deep_agents",
+      "endpoint": "executive-briefing",
+      "confidence": "high",
+      "orchestrator": "deep-agents-executive-intelligence",
+      "organization": {
+        "name": "Alleato"
+      },
+      "evidence_count": 16,
+      "source_coverage": [
+        {
+          "status": "checked",
+          "sourceType": "executive_briefing",
+          "recordCount": 69
+        },
+        {
+          "status": "checked",
+          "sourceType": "tasks",
+          "recordCount": 100
+        },
+        {
+          "status": "checked",
+          "sourceType": "emails",
+          "recordCount": 100
+        },
+        {
+          "status": "checked",
+          "sourceType": "teams",
+          "recordCount": 90
+        },
+        {
+          "status": "checked",
+          "sourceType": "meetings",
+          "recordCount": 2
+        },
+        {
+          "status": "checked",
+          "sourceType": "documents",
+          "recordCount": 100
+        },
+        {
+          "status": "checked",
+          "sourceType": "projects",
+          "recordCount": 100
+        },
+        {
+          "status": "checked",
+          "sourceType": "financials",
+          "recordCount": 100
+        },
+        {
+          "status": "checked",
+          "sourceType": "schedule",
+          "recordCount": 100
+        }
+      ],
+      "memory_candidates": [],
+      "memory_candidate_count": 0,
+      "recommended_action_count": 1
+    }
+  }
+}

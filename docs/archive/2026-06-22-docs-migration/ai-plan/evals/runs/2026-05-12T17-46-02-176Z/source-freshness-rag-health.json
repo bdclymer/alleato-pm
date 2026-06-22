@@ -1,0 +1,6047 @@
+{
+  "id": "source-freshness-rag-health",
+  "intent": "source_health",
+  "prompt": "Before giving me strategy, tell me whether Teams, Outlook/email, meetings, and packets are up to date enough to trust. If anything is stale or unembedded, say exactly what stage is missing and how that changes confidence.",
+  "selectedProjectId": null,
+  "sessionId": "dc5577be-8604-49d0-9182-d2980e340c40",
+  "sessionLabel": "eval-2026-05-12T17-46-02-176Z-source-freshness-rag-health",
+  "startedAt": "2026-05-12T18:09:59.150Z",
+  "finishedAt": "2026-05-12T18:10:30.298Z",
+  "durationMs": 30538,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 981,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "global forbidden phrase: \"RAG\"",
+      "global forbidden phrase: \"retrieval\""
+    ],
+    "observations": [
+      "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, streamingToolPolicy"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "assistantSourceHealth",
+      "semanticSearch",
+      "sourceLookupIntentRouter",
+      "streamingToolPolicy"
+    ],
+    "familiesHit": [
+      "semantic",
+      "source_health"
+    ],
+    "finalTextLength": 4386,
+    "finalText": "Not fully.\n\nHere’s the straight read on source trust right now:\n\n### What I trust\n- **Meetings:** usable, but not complete.\n  - I’m getting fresh meeting transcript results from **2026-05-11**, so meeting ingestion is working at least partially.\n  - That means I trust meetings for **recent directional signal** — decisions, themes, action items, who said what — **if they’ve already made it through transcription and indexing**.\n\n- **Teams:** probably usable, but I do **not** have a clean sync-health line item here proving Teams is fully current.\n  - So I’d treat Teams as **helpful but not guaranteed comprehensive** until a search on the exact topic confirms current coverage.\n\n### What I do not fully trust\n- **Outlook/email:** **degraded enough to be cautious.**\n  - You have **critical Outlook sync issues** on multiple mailboxes:\n    - `njepson@alleatogroup.com`\n    - `mparsons@alleatogroup.com`\n    - `jdawson@alleatogroup.com`\n    - `ctragesser@alleatogroup.com`\n    - `crusin@alleatogroup.com`\n    - `bclymer@alleatogroup.com`\n  - That means email evidence can be **missing entirely** from some of the people who matter most.\n  - So if I say “there were no emails about X,” that would be a weak claim right now.\n\n### What is stale / missing\nThe system health says:\n\n- **Overall status:** `degraded`\n- **Likely missing stage when evidence is thin:** `embedding_backlog`\n- **721 unembedded**\n- **9,820 uncompiled**\n\nThat matters.\n\n### Exact stage that’s missing\nTwo different pipeline gaps are showing:\n\n1. **embedding_backlog**\n   - This means source records may have been ingested, but **not embedded into vector search yet**.\n   - Practical effect: semantic search can miss recent content even if it technically exists in the system.\n   - Confidence impact:\n     - **Good for exact known records you can directly access**\n     - **Weaker for “find everything about X” searches**\n     - Biggest risk is **false negatives**\n\n2. **uncompiled**\n   - This usually means content exists upstream but hasn’t been fully processed into the compiled/searchable layer used for broad retrieval and synthesis.\n   - Practical effect: I may see some source fragments, but not the full corpus needed for a “this is everything” answer.\n   - Confidence impact:\n     - **Fine for partial signal**\n     - **Not strong enough for exhaustive claims**\n\n### What that means by source\n- **Teams:** medium confidence\n  - Likely searchable in places, but broad semantic recall may miss items if they’re still in embedding/compilation backlog.\n\n- **Outlook/email:** low-to-medium confidence\n  - Not just backlog risk — there are also **critical mailbox sync issues**, which is worse.\n  - Absence of email evidence is **not reliable** right now.\n\n- **Meetings:** medium confidence\n  - I can see recent meeting transcripts, which is good.\n  - But backlog means I still wouldn’t call meeting coverage complete.\n\n- **Packets:** lower confidence unless you mean records already explicitly created and stored in the packet system\n  - I don’t see a packet sync-health status line here equivalent to meetings being clearly fresh.\n  - So I would trust **specific packet records I can directly retrieve**, but not assume packet-related search is globally current if it depends on the same backlog-affected retrieval path.\n\n### Bottom line\nIf you want the blunt version:\n\n- **Trust meetings enough for situational awareness**\n- **Trust Teams enough to look for signal, not absence**\n- **Do not trust email silence right now**\n- **Do not trust broad “we searched everything” claims while embedding_backlog and uncompiled counts are this high**\n\n### How this changes my confidence\n- **High confidence:** direct record retrieval that returns a concrete current item\n- **Medium confidence:** recent meeting-based synthesis\n- **Low confidence:** “nothing was said in email/Teams” or “this is the full picture” conclusions\n\n### Best operating posture right now\nUse the system for:\n- finding **existing evidence**\n- spotting **themes**\n- pulling **recent meeting signal**\n\nDo **not** use it alone for:\n- proving nothing happened\n- proving no one communicated something\n- asserting complete coverage across email-heavy workflows\n\nIf you want, I can give you strategy next with the right confidence labels attached:\n1. **safe to act on now**\n2. **needs manual spot-check**\n3. **not trustworthy until pipeline catches up**"
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "source_health"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T18:10:04.598Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Searching source records for the requested discussion context",
+        "status": "loading",
+        "timestamp": "2026-05-12T18:10:05.950Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "synthesis",
+        "message": "Loaded source records — synthesizing answer",
+        "status": "success",
+        "timestamp": "2026-05-12T18:10:08.500Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "5SpxWs2YyXH48dCT"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Here"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " straight"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Meet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " usable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " complete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’m"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " getting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fresh"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " transcript"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " results"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "11"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ingestion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " working"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " least"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " partially"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " directional"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " themes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " who"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " said"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’ve"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " already"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " made"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " through"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " transcription"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " indexing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " probably"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " usable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-health"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " item"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " here"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " proving"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " So"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " treat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "help"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ful"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " guaranteed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " comprehensive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " until"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " topic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confirms"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "de"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "graded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cautious"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " You"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "critical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " multiple"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mail"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "boxes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "   "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "nje"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "pson"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "   "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "m"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "par"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "sons"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "   "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "jd"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "aw"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "son"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "   "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ct"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "rag"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "esser"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "   "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "usin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "   "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "bc"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "missing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " entirely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " some"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " people"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " who"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matter"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " most"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " So"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " say"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " were"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " emails"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " X"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " would"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " weak"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " claim"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " missing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " health"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " says"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Overall"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "de"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "graded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Lik"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " missing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " when"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "embedding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "_back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "log"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "721"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "embedded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "9"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "820"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "compiled"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Exact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " missing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Two"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " different"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pipeline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gaps"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " showing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "embedding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "_back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "log"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " records"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " may"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " been"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ested"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " embedded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vector"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " yet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Practical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " effect"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " semantic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " miss"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " content"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " even"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " technically"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exists"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " impact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " known"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " records"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " directly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " access"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "We"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "aker"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "find"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " everything"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " X"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " searches"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Biggest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "false"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " negatives"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "compiled"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " usually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " content"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exists"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " upstream"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hasn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " been"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " processed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " compiled"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "able"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " layer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " used"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " broad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synthesis"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Practical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " effect"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " may"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " see"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " some"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fragments"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " full"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " corpus"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " everything"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " impact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Fine"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " partial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " strong"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exhaustive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " claims"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " medium"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Lik"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " searchable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " places"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " broad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " semantic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recall"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " may"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " miss"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " embedding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "comp"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ilation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " backlog"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " low"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-medium"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " just"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " backlog"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "critical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mailbox"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " worse"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Abs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reliable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Meet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " medium"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " see"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " transcripts"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " But"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " backlog"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " wouldn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " call"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " complete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Packets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lower"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unless"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " records"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " already"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " explicitly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " created"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stored"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " don"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " see"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-health"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " here"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " equivalent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clearly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fresh"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " So"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " would"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "specific"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " records"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " directly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieve"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " assume"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-related"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " globally"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " depends"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " same"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " backlog"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "affected"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " path"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Bottom"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " blunt"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " version"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " situ"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ational"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " awareness"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " absence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " silence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " broad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "we"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " searched"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " everything"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " claims"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " while"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " embedding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "_back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "log"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "compiled"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " counts"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " high"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " How"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " changes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " my"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "High"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " direct"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " record"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " returns"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " concrete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " item"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Medium"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-based"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synthesis"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Low"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "nothing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " said"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " full"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " picture"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " conclusions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Best"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operating"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " posture"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Use"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " finding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "existing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " spotting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "themes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pulling"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " use"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alone"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " proving"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " nothing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " happened"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " proving"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " communicated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " something"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " asserting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " complete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " across"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-heavy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " workflows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " give"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " strategy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " labels"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " attached"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "safe"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " act"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " manual"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " spot"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-check"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trustworthy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " until"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pipeline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " catches"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 29447,
+      "totalTokens": 30424,
+      "outputTokens": 977,
+      "cacheHitRatio": 0.922,
+      "cachedInputTokens": 27136
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Before giving me strategy, tell me whether Teams, Outlook/email, meetings, and packets are up to date enough to trust. If anything is stale or unembedded, say exactly what stage is missing and how that changes confidence.",
+          "selectedProjectId": null,
+          "deterministicIntent": "source_lookup",
+          "sourceSpecificRagKind": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "source_lookup",
+          "planner": "model",
+          "rationale": "The user is explicitly asking whether underlying evidence channels (Teams, Outlook/email, meetings, and packets) are current and trustworthy, and wants exact identification of stale or unembedded stages and their effect on confidence. This is a source coverage/freshness verification request, which fits source_lookup. No clarification is required before checking source sync, ingestion, and embed/AI",
+          "confidence": "high",
+          "responseMode": "retrieve_sources",
+          "requiredTools": [
+            "project_data_freshness_check",
+            "source_ingestion_status",
+            "connector_sync_status"
+          ],
+          "deterministicIntent": "source_lookup",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-12T18:10:04.598Z"
+      },
+      {
+        "tool": "assistantSourceHealth",
+        "input": {
+          "reason": "source_status_request"
+        },
+        "output": {
+          "alerts": [
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: njepson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "njepson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: mparsons@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "mparsons@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: jdawson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "jdawson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "ctragesser@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: crusin@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "crusin@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: bclymer@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "bclymer@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: awehner@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "awehner@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: accounting@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "accounting@alleatogroup.com"
+            }
+          ],
+          "counts": {
+            "sources": 30,
+            "uncompiled": 9820,
+            "unembedded": 721,
+            "warningSources": 4,
+            "criticalSources": 25,
+            "failedSubscriptions": 0,
+            "expiringSubscriptions": 0
+          },
+          "reason": "source_status_request",
+          "sources": [
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+              "resourceId": "njepson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: njepson@alleatogroup.com",
+              "staleMinutes": 17546,
+              "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+              "uncompiledCount": 94,
+              "unembeddedCount": 2
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+              "resourceId": "mparsons@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: mparsons@alleatogroup.com",
+              "staleMinutes": 17547,
+              "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+              "uncompiledCount": 94,
+              "unembeddedCount": 2
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+              "resourceId": "jdawson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: jdawson@alleatogroup.com",
+              "staleMinutes": 17547,
+              "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+              "uncompiledCount": 94,
+              "unembeddedCount": 2
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+              "resourceId": "ctragesser@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: ctragesser@alleatogroup.com",
+              "staleMinutes": 1424,
+              "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+              "uncompiledCount": 94,
+              "unembeddedCount": 2
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+              "resourceId": "crusin@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: crusin@alleatogroup.com",
+              "staleMinutes": 17549,
+              "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+              "uncompiledCount": 94,
+              "unembeddedCount": 2
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T22:16:34.993856+00:00",
+              "resourceId": "bclymer@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: bclymer@alleatogroup.com",
+              "staleMinutes": 1168,
+              "lastSuccessAt": "2026-05-11T22:16:34.993856+00:00",
+              "uncompiledCount": 94,
+              "unembeddedCount": 2
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+              "resourceId": "awehner@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: awehner@alleatogroup.com",
+              "staleMinutes": 17549,
+              "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+              "uncompiledCount": 94,
+              "unembeddedCount": 2
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+              "resourceId": "accounting@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: accounting@alleatogroup.com",
+              "staleMinutes": 17548,
+              "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+              "uncompiledCount": 94,
+              "unembeddedCount": 2
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T22:16:36.352269+00:00",
+              "resourceId": "acannon@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: acannon@alleatogroup.com",
+              "staleMinutes": 1168,
+              "lastSuccessAt": "2026-05-11T22:16:36.352269+00:00",
+              "uncompiledCount": 94,
+              "unembeddedCount": 2
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T00:00:00+00:00",
+              "resourceId": "document_metadata",
+              "lastErrorAt": null,
+              "resourceName": "Outlook email",
+              "staleMinutes": 2504,
+              "lastSuccessAt": "2026-05-11T00:00:00+00:00",
+              "uncompiledCount": 94,
+              "unembeddedCount": 2
+            },
+            {
+              "source": "onedrive_file",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T17:56:15.051467+00:00",
+              "resourceId": "sharepoint:AlleatoGroup:/SOP",
+              "lastErrorAt": null,
+              "resourceName": "SharePoint: AlleatoGroup/SOP",
+              "staleMinutes": 1428,
+              "lastSuccessAt": "2026-05-11T17:56:15.051467+00:00",
+              "uncompiledCount": 329,
+              "unembeddedCount": 11
+            },
+            {
+              "source": "onedrive_file",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T17:56:12.97766+00:00",
+              "resourceId": "njepson@alleatogroup.com:/Alleato Group/2026 Jobs",
+              "lastErrorAt": null,
+              "resourceName": "OneDrive: njepson@alleatogroup.com/Alleato Group/2026 Jobs",
+              "staleMinutes": 1428,
+              "lastSuccessAt": "2026-05-11T17:56:12.97766+00:00",
+              "uncompiledCount": 329,
+              "unembeddedCount": 11
+            }
+          ],
+          "generatedAt": "2026-05-12T18:10:05.806Z",
+          "missingStage": "embedding_backlog",
+          "overallStatus": "degraded"
+        },
+        "timestamp": "2026-05-12T18:10:05.806Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "input": {
+          "query": "Before giving me strategy, tell me whether Teams, Outlook/email, meetings, and packets are up to date enough to trust. If anything is stale or unembedded, say exactly what stage is missing and how that changes confidence.",
+          "threshold": 0.5,
+          "matchCount": 12,
+          "skipRerank": false
+        },
+        "output": {
+          "query": "Before giving me strategy, tell me whether Teams, Outlook/email, meetings, and packets are up to date enough to trust. If anything is stale or unembedded, say exactly what stage is missing and how that changes confidence.",
+          "results": [
+            {
+              "content": "[15:41] Brandon Clymer: Now, would, did you, you want us to give you, like, a list of everything that we've set, like everybody that we've sent bid invites to, maybe, and then that way you can look at that. [task]\n[15:55] Mark Ferderer: Yeah, I, I, that, that would be fine.\n[15:59] Mark Ferderer: I, Brandon, the thing is, we haven't discussed all that. [task]\n[16:02] Mark Ferderer: And what we don't want to be is you ended up sending something to someone that's slightly financially unsound or whatever.\n[16:11] Mark Ferderer: You didn't catch it.\n[16:12] Mark Ferderer: We didn't catch it because we don't even know who they are. [task]\n[16:15] Mark Ferderer: And you're upside down because, you know, and as a result, we are, it's not, it's not a lack of confidence in you or, or Alito in any way.\n[16:26] Mark Ferderer: And maybe the numbers you know, whatever.\n[16:30] Mark Ferderer: Maybe the numbers 300, but I, but this is not to be onerous. [metric]\n[16:33] Mark Ferderer: You, you've seen how I, you know, how I approach things.\n[16:37] Mark Ferderer: It's pretty practical stuff that I, you know, spend my time on it just.\n[16:43] Mark Ferderer: And you know, I don't know if it's not, if it's not there.\n[16:37] Mark Ferderer: It's pretty practical stuff that I, you know, spend my time on it just.\n[16:43] Mark Ferderer: And you know, I don't know if it's not, if it's not there.\n[16:50] Mark Ferderer: Is there recourse or are we potentially collectively missing opportunities to be.\n[17:01] Mark Ferderer: To double check stuff? [question]\n[17:02] Mark Ferderer: That's, that's probably the biggest intention that I have on that. [task]\n[17:09] Mark Ferderer: Thoughts? [question]\n[17:12] Brandon Clymer: Yeah, I, I think I understand what your intent is.\n[17:16] Brandon Clymer: I'm trying to think of the best way to do that.\n[17:21] Brandon Clymer: Basically, you don't, you're.\n[17:23] Brandon Clymer: You don't want to get caught with, hey, we hired some two guys in a truck and they can't perform it. [metric]\n[17:30] Brandon Clymer: And now it's, you know, $100,000, you know, Delta or something like that. [pricing, metric]\n[17:35] Brandon Clymer: Is that accurate? [question]\n[17:30] Brandon Clymer: And now it's, you know, $100,000, you know, Delta or something like that. [pricing, metric]\n[17:35] Brandon Clymer: Is that accurate? [question]\n[17:36] Mark Ferderer: Yeah, that, you know, or time.\n[17:39] Mark Ferderer: Right.\n[17:39] Mark Ferderer: It's also.\n[17:40] Mark Ferderer: Yeah, yeah, by time we collectively sort that out, we're four months down the road. [metric]\n[17:46] Mark Ferderer: And I don't know what, you know, the, exactly what the law in Indiana looks like, but you know, some states, it's very, very difficult to, to, you know, move forward when you're in a, in a bind with a sub supplier or sub.\n[18:03] Mark Ferderer: Sub, you know.\n[18:05] Brandon Clymer: So, Logan, what do you, what, what's.\n[18:08] Brandon Clymer: Do you have any ideas on a legal verbiage of how to.\n[18:13] Logan Stevens: I think there just needs to be some kind of timing like, you know, we provide the information and you guys have to respond by, you know, within four or five days. [metric]\n[18:24] Mark Ferderer: Five days is deemed approved, but within five days or you can move on and then. [task, metric]\n[18:13] Logan Stevens: I think there just needs to be some kind of timing like, you know, we provide the information and you guys have to respond by, you know, within four or five days. [metric]\n[18:24] Mark Ferderer: Five days is deemed approved, but within five days or you can move on and then. [task, metric]\n[18:29] Logan Stevens: Yeah, right.\n[18:30] Logan Stevens: And then if you guys want to go through the process of reviewing all of those subs, then I think that that's fair.\n[18:40] Brandon Clymer: So I guess really the, the language is, is more of just we provide a list of subcontractors, you know, we intend to use or are soliciting bids from it.\n[18:53] Brandon Clymer: Would that be the verbiage we would use for that, Logan? [question]\n[18:57] Logan Stevens: Yeah, I think that that's reasonable.\n[19:02] Brandon Clymer: Okay, so then.\n[19:03] Schertzing, Grant E: Yeah, so I have no comments on my end.\n[19:05] Schertzing, Grant E: I think that that works for me.\n[19:10] Brandon Clymer: Okay, so I guess Logan, or if you want to type, you know, put that on your list to type something up and then, you know, send it back to get it put in.\n[19:21] Schertzing, Grant E: Okay.",
+              "metadata": {
+                "date": "2026-05-11T18:30:00+00:00",
+                "title": "A141 Discussion",
+                "source": "fireflies",
+                "category": null,
+                "speakers": [
+                  "Brandon Clymer",
+                  "Mark Ferderer"
+                ],
+                "project_id": 67,
+                "chunk_index": 22,
+                "source_type": "meeting_transcript",
+                "end_timestamp": "16:43",
+                "start_timestamp": "15:41"
+              },
+              "recordId": "01KRBZZEZNAGAG88HTSK4FG2JV",
+              "createdAt": "2026-05-11T18:30:00+00:00",
+              "finalScore": 0.447,
+              "projectIds": [
+                67
+              ],
+              "similarity": 0.386,
+              "sourceTable": "meeting_transcript",
+              "sourceChunkId": "01KRBZZEZNAGAG88HTSK4FG2JV-22",
+              "sourceDocumentId": "01KRBZZEZNAGAG88HTSK4FG2JV"
+            },
+            {
+              "content": "[49:53] Mark Ferderer: Of insufficient work, whatever the issue is.\n[49:58] Mark Ferderer: But we have no incentive to wait either. [task]\n[50:00] Mark Ferderer: Brandon, you know that we want, we want to be in the building sooner or later. [task]\n[50:04] Mark Ferderer: So just surprising you at the end doesn't help us either.\n[50:07] Mark Ferderer: So I think we're co.\n[50:08] Mark Ferderer: Motivated in that regard.\n[50:11] Mark Ferderer: But yeah, some language around prompt notification makes sense.\n[50:15] Brandon Clymer: Yeah.\n[50:15] Brandon Clymer: And the reason I have all the, you know, I bring up some of these things, Mark, is, you know, a, just because we know things have to be right. [task]\n[50:23] Brandon Clymer: And B, all of my subcontractors as part of their contract, get access to this prime contract.\n[50:29] Brandon Clymer: And I know that if there's disputes language in there, they're going to say, hey, wait a minute, like we, we got to know this sooner or later so we can fix it. [task, metric]\n[50:37] Schertzing, Grant E: Yeah.",
+              "metadata": {
+                "date": "2026-05-11T18:30:00+00:00",
+                "title": "A141 Discussion",
+                "source": "fireflies",
+                "category": null,
+                "speakers": [
+                  "Brandon Clymer",
+                  "Mark Ferderer",
+                  "Schertzing, Grant E"
+                ],
+                "project_id": 67,
+                "chunk_index": 70,
+                "source_type": "meeting_transcript",
+                "end_timestamp": "50:37",
+                "start_timestamp": "49:53"
+              },
+              "recordId": "01KRBZZEZNAGAG88HTSK4FG2JV",
+              "createdAt": "2026-05-11T18:30:00+00:00",
+              "finalScore": 0.443,
+              "projectIds": [
+                67
+              ],
+              "similarity": 0.382,
+              "sourceTable": "meeting_transcript",
+              "sourceChunkId": "01KRBZZEZNAGAG88HTSK4FG2JV-70",
+              "sourceDocumentId": "01KRBZZEZNAGAG88HTSK4FG2JV"
+            },
+            {
+              "content": "[13:58] Jesse Dawson: Manpower right now, you do you have.\n[14:00] Jesse Dawson: A schedule of who's going where and like one thing that. [metric]\n[14:04] Jesse Dawson: So Jasmine, she's in charge of the recruiting and like she found these four people and then probably some of the best like people she's brought in, like. [metric]\n[14:16] Jesse Dawson: Anyone's done in like a week to get, you know, she just uses different systems or different ways of doing it to go out and find, you know, Meyer Najem is where the other guy worked. [metric]\n[14:29] Jesse Dawson: That's the project engineer on there.\n[14:31] Jesse Dawson: So you guys may not know what Andrew does, but these are big, big construction gcs in Indianapolis.\n[14:38] Jesse Dawson: So they're coming, you know they should have some good experience and ready to step right in and help out.\n[14:46] Jesse Dawson: But anyway, so she's doing that.\n[14:49] Jesse Dawson: So what we're trying to do is if, you know, I did a Microsoft project manpower schedule, but, you know, updating the start and stop dates I haven't really done just because I didn't. [task]\n[15:01] Jesse Dawson: I don't know when your sprinkler jobs are supposed to stop and start, but if you can teams message her, that would be very helpful to give her because she's going to make her own spreadsheet of all the projects and when they stop and start. [task]\n[15:15] Jesse Dawson: So if you can message her, say, here's all the projects and here's how I think my guys are going to cover them. [task]\n[15:22] Jesse Dawson: And, you know, she'll put them all the dates in there and then you'll see, hey, I got this job start.\n[15:15] Jesse Dawson: So if you can message her, say, here's all the projects and here's how I think my guys are going to cover them. [task]\n[15:22] Jesse Dawson: And, you know, she'll put them all the dates in there and then you'll see, hey, I got this job start.\n[15:27] Jesse Dawson: I got nobody to go there where.\n[15:30] Jesse Dawson: And at that point do we take, you know, one of these project project engineers or someone from there, like, how do we man that or do we.\n[15:40] Jesse Dawson: Need to go hire another person? [question]\n[15:43] Andrew Cannon: Right.\n[15:44] Kebba Mass: So right now as we stand, we have the one in Utah that just started, that's going to finish right when the one here in Florida is going to start. [task, metric]\n[15:57] Kebba Mass: And I think we are covered until maybe if a new one comes up, we might need another guy, but for now, we are pretty covered.\n[16:08] Jesse Dawson: Okay, well, all I'm saying is, like, put that in writing.\n[16:11] Jesse Dawson: Just get that in her schedule.\n[16:13] Jesse Dawson: And then every time you get a new job, you just contact her, either email or message or call, and then she'll add it to her list.\n[16:22] Jesse Dawson: You give her the manpower, who you got is going to be covering it or if it's a need, and then,.",
+              "metadata": {
+                "date": "2026-05-11T19:30:00+00:00",
+                "title": "Cost Coding and Approval CC Transactions & Time Sheets",
+                "source": "fireflies",
+                "category": null,
+                "speakers": [
+                  "Jesse Dawson"
+                ],
+                "project_id": 31,
+                "chunk_index": 24,
+                "source_type": "meeting_transcript",
+                "end_timestamp": "15:22",
+                "start_timestamp": "13:58"
+              },
+              "recordId": "01KQR4YAPKS4EDRKAVVGEW307Z",
+              "createdAt": "2026-05-11T19:30:00+00:00",
+              "finalScore": 0.44,
+              "projectIds": [
+                31
+              ],
+              "similarity": 0.378,
+              "sourceTable": "meeting_transcript",
+              "sourceChunkId": "01KQR4YAPKS4EDRKAVVGEW307Z-24",
+              "sourceDocumentId": "01KQR4YAPKS4EDRKAVVGEW307Z"
+            },
+            {
+              "content": "[07:25] Lauren Rohlfs: Doing something.\n[07:27] Misty Rogers: Same for sure.\n[07:29] Misty Rogers: And Maria stole one of my questions.\n[07:33] Misty Rogers: So I was going to ask about AI as well.\n[07:37] Misty Rogers: And at this point we are, we're really just looking to build a team.\n[07:47] Misty Rogers: Brandon is the CEO and he is a construction powerhouse.\n[07:54] Misty Rogers: He knows everything about that side of it.\n[07:58] Misty Rogers: He has dabbled in the accounting so that he could get it up and running and get everything going.\n[08:05] Misty Rogers: But at this point we're really needing to put some processes into place and get the roles really structured and things like that.\n[08:16] Misty Rogers: And so you would be working really closely with the team. [task]\n[08:21] Misty Rogers: We do use teams obviously for communication between the accounting team and, you know, reaching out to the CEO and the other members.\n[08:32] Misty Rogers: And Maria, have you used teams much? [question]\n[08:21] Misty Rogers: We do use teams obviously for communication between the accounting team and, you know, reaching out to the CEO and the other members.\n[08:32] Misty Rogers: And Maria, have you used teams much? [question]\n[08:37] Lauren Rohlfs: Teams and zoom.\n[08:38] Lauren Rohlfs: Both pretty much.\n[08:40] Lauren Rohlfs: Same.\n[08:41] Misty Rogers: Perfect, perfect, perfect, perfect.\n[08:44] Misty Rogers: So how many years of accounting experience would you say you have? [question]\n[08:48] Lauren Rohlfs: Oh Lord, Lord.\n[08:51] Lauren Rohlfs: Let's say I started.\n[08:52] Lauren Rohlfs: I would, I would have to say probably without looking at my resume because it's been a while, probably close to 15, 16 years now. [metric]\n[09:00] Lauren Rohlfs: My youngest.\n[09:01] Lauren Rohlfs: Will my youngest be 18 next month. [metric]",
+              "metadata": {
+                "date": "2026-05-11T17:00:00+00:00",
+                "title": "Interview Accountant position (Lauren Rohlfs)",
+                "source": "fireflies",
+                "category": null,
+                "speakers": [
+                  "Lauren Rohlfs",
+                  "Misty Rogers"
+                ],
+                "project_id": 60,
+                "chunk_index": 12,
+                "source_type": "meeting_transcript",
+                "end_timestamp": "08:32",
+                "start_timestamp": "07:25"
+              },
+              "recordId": "01KQSABX5M3EDKVSAHJHHSR25M",
+              "createdAt": "2026-05-11T17:00:00+00:00",
+              "finalScore": 0.438,
+              "projectIds": [
+                60
+              ],
+              "similarity": 0.376,
+              "sourceTable": "meeting_transcript",
+              "sourceChunkId": "01KQSABX5M3EDKVSAHJHHSR25M-12",
+              "sourceDocumentId": "01KQSABX5M3EDKVSAHJHHSR25M"
+            },
+            {
+              "content": "[01:00] Andrew Cannon: Okay, good.\n[01:03] Andrew Cannon: Tab open here.\n[01:15] Jerome  DKGR: Actually, in the office today or.\n[01:18] Jerome  DKGR: Thought you were.\n[01:19] Jerome  DKGR: I thought you were.\n[01:19] Jerome  DKGR: I thought you were out today.\n[01:24] Jerome  DKGR: Hopefully you're not on this call on the.\n[01:25] Jerome  DKGR: On vacation.\n[01:25] Jerome  DKGR: On a vacation day.\n[01:26] Andrew Cannon: No, I decided to go ahead and come in. [task]\n[01:32] Andrew Cannon: I've been a real team player there.\n[01:37] Andrew Cannon: All right, so we have some updates for the team.\n[01:32] Andrew Cannon: I've been a real team player there.\n[01:37] Andrew Cannon: All right, so we have some updates for the team.\n[01:40] Andrew Cannon: So last Thursday we met with the owners and they add some new. [task]\n[01:48] Andrew Cannon: New ideas. [task]\n[01:50] Andrew Cannon: So right now nothing really is official, but we want to at least kind of bring everything.\n[01:59] Andrew Cannon: Bring it to everyone's attention.\n[02:03] Andrew Cannon: Hey, Ben, thanks for joining.\n[02:04] Andrew Cannon: I was just letting everyone know there's been some design changes.\n[02:09] Andrew Cannon: We're figuring out, you know, what's going to be official.\n[02:13] Andrew Cannon: We're hoping to meet with the owner. [metric]\n[02:14] Andrew Cannon: We're planning to meet with the owner tomorrow to confirm some of these markups that we've made.\n[02:22] Andrew Cannon: I'll start on the first floor just kind of showing different areas and I'm going too fast. [task, metric]",
+              "metadata": {
+                "date": "2026-05-11T17:00:00+00:00",
+                "title": "Union Collective: Design Meeting",
+                "source": "fireflies",
+                "category": null,
+                "speakers": [
+                  "Andrew Cannon",
+                  "Jerome  DKGR"
+                ],
+                "project_id": 1009,
+                "chunk_index": 2,
+                "source_type": "meeting_transcript",
+                "end_timestamp": "01:37",
+                "start_timestamp": "01:00"
+              },
+              "recordId": "01KQR4YAPJ9E6R9A9WS7A8ZBED",
+              "createdAt": "2026-05-11T17:00:00+00:00",
+              "finalScore": 0.432,
+              "projectIds": [
+                1009
+              ],
+              "similarity": 0.37,
+              "sourceTable": "meeting_transcript",
+              "sourceChunkId": "01KQR4YAPJ9E6R9A9WS7A8ZBED-2",
+              "sourceDocumentId": "01KQR4YAPJ9E6R9A9WS7A8ZBED"
+            },
+            {
+              "content": "[05:03] Logan Stevens: What are you thinking? [question]\n[05:04] Brandon Clymer: I. I honestly didn't look through it like.\n[05:07] Brandon Clymer: So I figured Mark and I talked and we figured we just would get you Two on call.\n[05:12] Brandon Clymer: You know, I don't think there's a lot of difference between what I marked up and what you guys marked up.\n[05:18] Brandon Clymer: So we were.\n[05:18] Brandon Clymer: We figured it'd be pretty easy to come to an agreement on, so we just let you guys kind of go through it.\n[05:24] Schertzing, Grant E: All right, well, then we can.\n[05:26] Schertzing, Grant E: We can do that. [task]\n[05:27] Schertzing, Grant E: So I've got the A141 in front of me first. [metric]\n[05:30] Schertzing, Grant E: The first material comment I have flagged was 13 on page folder. [metric]\n[05:36] Brandon Clymer: You want to share your screen grant so that I. I.\n[05:39] Brandon Clymer: Because I'm not looking at it that way.\n[05:36] Brandon Clymer: You want to share your screen grant so that I. I.\n[05:39] Brandon Clymer: Because I'm not looking at it that way.\n[05:40] Logan Stevens: I can see it.\n[05:41] Brandon Clymer: Sure.\n[05:41] Schertzing, Grant E: Yeah.\n[05:42] Schertzing, Grant E: Let me do that.\n[05:52] Logan Stevens: All right.\n[05:52] Schertzing, Grant E: Can you see that? [question]\n[05:54] Logan Stevens: Yep.\n[05:57] Schertzing, Grant E: So I'll go back to the top just to be able to.\n[06:00] Schertzing, Grant E: All right, so we obviously are going to be updating the information on the first page, both the. [metric]\n[06:06] Schertzing, Grant E: Specifically the information about the project and then scrolling down the first substantive. [metric]",
+              "metadata": {
+                "date": "2026-05-11T18:30:00+00:00",
+                "title": "A141 Discussion",
+                "source": "fireflies",
+                "category": null,
+                "speakers": [
+                  "Brandon Clymer",
+                  "Logan Stevens",
+                  "Schertzing, Grant E"
+                ],
+                "project_id": 67,
+                "chunk_index": 7,
+                "source_type": "meeting_transcript",
+                "end_timestamp": "05:39",
+                "start_timestamp": "05:03"
+              },
+              "recordId": "01KRBZZEZNAGAG88HTSK4FG2JV",
+              "createdAt": "2026-05-11T18:30:00+00:00",
+              "finalScore": 0.425,
+              "projectIds": [
+                67
+              ],
+              "similarity": 0.362,
+              "sourceTable": "meeting_transcript",
+              "sourceChunkId": "01KRBZZEZNAGAG88HTSK4FG2JV-7",
+              "sourceDocumentId": "01KRBZZEZNAGAG88HTSK4FG2JV"
+            },
+            {
+              "content": "[71:38] Douglas Franklin: You have anything else? [metric, question]\n[71:39] Benjamin Cottrell: All right, well, let me back up one second.\n[71:42] Nick Vrettos: Just want to make sure we've got a milestone date on our calendar for 60% DD set next Friday, the 22nd.\n[71:49] Greg Larison: When.\n[71:50] Nick Vrettos: When do we expect. [task]\n[71:52] Nick Vrettos: To be clear, when do we expect kitchen plans, kitchen equipment layouts, plans and furniture plans or RCPs? [question]\n[72:01] Andrew Cannon: I know Daniel Stewart provided kitchen drawings. [task]\n[72:04] Andrew Cannon: Did that not take it to you? [question]\n[72:07] Nick Vrettos: I'll have to double check what's on the online foldable.\n[72:10] Nick Vrettos: And I checked last week. [task]\n[72:11] Nick Vrettos: I need them.\n[72:12] Nick Vrettos: I need them in CAD so I can pull them into my plan.\n[72:47] Benjamin Cottrell: Yeah, so I emailed Daniel last week and he mentioned the PDFs were kind of in flux.\n[72:52] Benjamin Cottrell: That's why we don't have solid cas. [task]\n[72:55] Benjamin Cottrell: I don't want to speak for him,. [task]\n[72:57] Andrew Cannon: But I think he, I asked him the same question from Nick is like, hey man, can we have the, the actual schedule for each piece of equipment and, and you know, make model sizes of scuff.\n[73:09] Andrew Cannon: I know we have cut sheets, but.\n[73:10] Benjamin Cottrell: If all that changes, then everything we've done kind of changes.\n[73:13] Benjamin Cottrell: So he indicated that that was forthcoming, if not yet. [metric]\n[73:17] Benjamin Cottrell: So Nick, or is that. [metric]\n[73:19] Benjamin Cottrell: Nick and I, we're understanding correctly that that's what's coming on the 22nd.\n[73:25] Benjamin Cottrell: So maybe we don't do a 60% set for you guys and we just skip to 90, I think.\n[73:31] Jerome  DKGR: Yeah.\n[73:31] Benjamin Cottrell: Based on.\n[73:54] Andrew Cannon: We are not.\n[73:55] Douglas Franklin: Those are staying put in the design. [task, metric]\n[73:57] Douglas Franklin: So a lot of outlets are.\n[73:59] Douglas Franklin: But to your guys's point, there's a lot of moving parts and we're firming these up as quickly as we can with the owner to get the final information to you and so the plans can be solidified by that, that 22nd date. [metric]\n[74:15] Benjamin Cottrell: Okay. [metric]\n[74:16] Benjamin Cottrell: So, Nick, I think it's fair to say we just dropped the 60% set because that would basically be useless.\n[74:22] Benjamin Cottrell: It'd basically be our plans again from 30% and there's no value for you.\n[74:26] Benjamin Cottrell: All.\n[74:27] Nick Vrettos: Correct. [metric]\n[74:28] Benjamin Cottrell: Because if it's.\n[74:29] Nick Vrettos: If they're trying to solidify the plan by the 22nd, then there's really nothing new that we're going to be able to show on the 22nd.\n[74:36] Douglas Franklin: Right. [metric]",
+              "metadata": {
+                "date": "2026-05-11T17:00:00+00:00",
+                "title": "Union Collective: Design Meeting",
+                "source": "fireflies",
+                "category": null,
+                "speakers": [
+                  "Andrew Cannon",
+                  "Benjamin Cottrell",
+                  "Douglas Franklin",
+                  "Greg Larison",
+                  "Nick Vrettos"
+                ],
+                "project_id": 1009,
+                "chunk_index": 108,
+                "source_type": "meeting_transcript",
+                "end_timestamp": "72:12",
+                "start_timestamp": "71:38"
+              },
+              "recordId": "01KQR4YAPJ9E6R9A9WS7A8ZBED",
+              "createdAt": "2026-05-11T17:00:00+00:00",
+              "finalScore": 0.424,
+              "projectIds": [
+                1009
+              ],
+              "similarity": 0.361,
+              "sourceTable": "meeting_transcript",
+              "sourceChunkId": "01KQR4YAPJ9E6R9A9WS7A8ZBED-108",
+              "sourceDocumentId": "01KQR4YAPJ9E6R9A9WS7A8ZBED"
+            },
+            {
+              "content": "[11:22] Evan Schulte: What is your, do you have any sort of plans for that? [question]\n[11:25] Evan Schulte: Or have you, have you talked about that at all internally? [question]\n[11:29] Brandon Clymer: I mean, that's something that I asked the team to figure out how that works, what we do, whether they can just kick out, you know, all that data. [task]\n[11:39] Brandon Clymer: So that's, you know, one of the things that we, we have to figure out. [task]\n[11:44] Evan Schulte: Okay.\n[11:45] Evan Schulte: Yeah.\n[11:45] Evan Schulte: So on a, on a project, by project basis, we could certainly do some things.\n[11:51] Evan Schulte: It would just be very difficult to.\n[11:54] Evan Schulte: I mean really, it would have to.\n[11:56] Evan Schulte: That's the type of thing that has to be just direct from system to system.\n[12:00] Evan Schulte: Like it data transfer from Acumatica to QuickBooks.\n[12:02] Evan Schulte: Because it's more comprehensive, right? [question]",
+              "metadata": {
+                "date": "2026-05-11T18:00:00+00:00",
+                "title": "Alleato QuickBooks transfer discussion",
+                "source": "fireflies",
+                "category": null,
+                "speakers": [
+                  "Brandon Clymer",
+                  "Evan Schulte"
+                ],
+                "project_id": 60,
+                "chunk_index": 14,
+                "source_type": "meeting_transcript",
+                "end_timestamp": "12:02",
+                "start_timestamp": "11:22"
+              },
+              "recordId": "01KR1S7M4S00745RQQYSW16D0W",
+              "createdAt": "2026-05-11T18:00:00+00:00",
+              "finalScore": 0.423,
+              "projectIds": [
+                60
+              ],
+              "similarity": 0.359,
+              "sourceTable": "meeting_transcript",
+              "sourceChunkId": "01KR1S7M4S00745RQQYSW16D0W-14",
+              "sourceDocumentId": "01KR1S7M4S00745RQQYSW16D0W"
+            },
+            {
+              "content": "[11:55] Andrew Cannon: You know, I've heard talks of, of acquiring a bourbon company.\n[12:00] Andrew Cannon: I don't want to, you know, put too much out there.\n[12:03] Daniel Stewart: Yeah, sure, sure. [metric]\n[12:04] Andrew Cannon: Because I really don't know.\n[12:08] Andrew Cannon: So not 100% sure.\n[12:11] Daniel Stewart: Okay. [metric]\n[12:12] Nick Vrettos: I was just.\n[12:14] Andrew Cannon: It was a go, but it's not 100% just yet.\n[12:18] Andrew Cannon: So that's why we don't want to, you know, have you guys making all these changes just yet.\n[12:22] Daniel Stewart: But we'll.\n[12:22] Daniel Stewart: Sure.\n[12:23] Andrew Cannon: We're trying to confirm either tomorrow or, you know, soon after.",
+              "metadata": {
+                "date": "2026-05-11T17:00:00+00:00",
+                "title": "Union Collective: Design Meeting",
+                "source": "fireflies",
+                "category": null,
+                "speakers": [
+                  "Andrew Cannon",
+                  "Daniel Stewart",
+                  "Nick Vrettos"
+                ],
+                "project_id": 1009,
+                "chunk_index": 17,
+                "source_type": "meeting_transcript",
+                "end_timestamp": "12:23",
+                "start_timestamp": "11:55"
+              },
+              "recordId": "01KQR4YAPJ9E6R9A9WS7A8ZBED",
+              "createdAt": "2026-05-11T17:00:00+00:00",
+              "finalScore": 0.42,
+              "projectIds": [
+                1009
+              ],
+              "similarity": 0.356,
+              "sourceTable": "meeting_transcript",
+              "sourceChunkId": "01KQR4YAPJ9E6R9A9WS7A8ZBED-17",
+              "sourceDocumentId": "01KQR4YAPJ9E6R9A9WS7A8ZBED"
+            },
+            {
+              "content": "[16:45] Bart Adamson: Could you do this? [question]\n[16:46] Bart Adamson: You know, could you do this this way? [question]\n[16:48] Bart Adamson: You know, there's not.\n[16:50] Bart Adamson: With the complexity comes a lot of options.\n[16:52] Bart Adamson: With the simplicity comes a lot less options.\n[16:55] Bart Adamson: But I think it sounds like it lines up really good with how you guys do business.\n[16:59] Bart Adamson: So I think we would certainly encourage you and help you, you know, where we can, and be there to support you through that process.\n[17:08] Brandon Clymer: Okay.\n[17:09] Brandon Clymer: All right, well, I'll get with my accounting team, you know, have them kind of lay out some sort of plan and get with your team to. [task]\n[17:16] Brandon Clymer: To figure out, you know, what. [task]\n[17:18] Evan Schulte: What.\n[17:19] Brandon Clymer: You know, kind of what test jobs we want to do and what that looks like. [task]",
+              "metadata": {
+                "date": "2026-05-11T18:00:00+00:00",
+                "title": "Alleato QuickBooks transfer discussion",
+                "source": "fireflies",
+                "category": null,
+                "speakers": [
+                  "Bart Adamson",
+                  "Brandon Clymer",
+                  "Evan Schulte"
+                ],
+                "project_id": 60,
+                "chunk_index": 25,
+                "source_type": "meeting_transcript",
+                "end_timestamp": "17:19",
+                "start_timestamp": "16:45"
+              },
+              "recordId": "01KR1S7M4S00745RQQYSW16D0W",
+              "createdAt": "2026-05-11T18:00:00+00:00",
+              "finalScore": 0.418,
+              "projectIds": [
+                60
+              ],
+              "similarity": 0.354,
+              "sourceTable": "meeting_transcript",
+              "sourceChunkId": "01KR1S7M4S00745RQQYSW16D0W-25",
+              "sourceDocumentId": "01KR1S7M4S00745RQQYSW16D0W"
+            },
+            {
+              "content": "[61:39] Jerome  DKGR: But yeah, they just have.\n[61:40] Jerome  DKGR: It's.\n[61:41] Jerome  DKGR: It's in there.\n[61:42] Andrew Cannon: Perfect. [task]\n[61:43] Andrew Cannon: Perfect.\n[61:48] Andrew Cannon: See if I got anything else. [task]\n[62:02] Andrew Cannon: I am good on my end. [task]\n[62:04] Andrew Cannon: Doug, I know you had some timeline or schedule notes you wanted to end with today.\n[62:11] Douglas Franklin: Yeah, I will share the.\n[62:13] Douglas Franklin: What we put together.\n[62:20] Douglas Franklin: Everybody see my screen there? [question]\n[62:23] Andrew Cannon: Unfortunately. [metric]\n[62:20] Douglas Franklin: Everybody see my screen there? [question]\n[62:23] Andrew Cannon: Unfortunately. [metric]\n[62:28] Douglas Franklin: So this is a. [task]\n[62:29] Douglas Franklin: The first pass sent a what I put together schedule from a owner meeting standpoint in a design team meeting or activity.\n[62:38] Douglas Franklin: So obviously you can see today's date. [task]\n[62:40] Douglas Franklin: We've got our. [metric]\n[62:41] Douglas Franklin: Just wrapping up our design coordination meeting. [task, metric]\n[62:45] Douglas Franklin: Andrew and I on the 13th will be finalizing some interior design working and coordination. [metric]\n[62:52] Douglas Franklin: Then we have an internal owner meeting on the 14th. [task]\n[62:56] Douglas Franklin: The big milestone dates for kind of really the design partnership is by the 21st.\n[63:03] Douglas Franklin: We need to make sure we have the floor plan set from the owner standpoint, building location and furniture layout finalized just from a electrical lighting H VAC disbursement as well.\n[63:18] Douglas Franklin: So that's going to drive a lot of the decisions we make. [task]",
+              "metadata": {
+                "date": "2026-05-11T17:00:00+00:00",
+                "title": "Union Collective: Design Meeting",
+                "source": "fireflies",
+                "category": null,
+                "speakers": [
+                  "Andrew Cannon",
+                  "Douglas Franklin",
+                  "Jerome  DKGR"
+                ],
+                "project_id": 1009,
+                "chunk_index": 94,
+                "source_type": "meeting_transcript",
+                "end_timestamp": "62:23",
+                "start_timestamp": "61:39"
+              },
+              "recordId": "01KQR4YAPJ9E6R9A9WS7A8ZBED",
+              "createdAt": "2026-05-11T17:00:00+00:00",
+              "finalScore": 0.414,
+              "projectIds": [
+                1009
+              ],
+              "similarity": 0.35,
+              "sourceTable": "meeting_transcript",
+              "sourceChunkId": "01KQR4YAPJ9E6R9A9WS7A8ZBED-94",
+              "sourceDocumentId": "01KQR4YAPJ9E6R9A9WS7A8ZBED"
+            },
+            {
+              "content": "[42:24] Gregory Davis: I have one on here for $80 a day that it was charging me. [pricing, metric]\n[42:30] Gregory Davis: So I don't know.\n[42:31] Gregory Davis: I have to figure that out.\n[42:32] Gregory Davis: Oh, my next thing is though.\n[42:56] Kebba Mass: Messages on teams.\n[43:00] Gregory Davis: Yeah,.\n[43:02] Kebba Mass: That screen on the left at the bottom.\n[43:09] Kebba Mass: One on the left. [task]\n[43:10] Gregory Davis: Okay, there we go.\n[43:23] Gregory Davis: Was that a company announcement? [question]\n[43:27] Kebba Mass: I don't know.\n[43:28] Kebba Mass: It might be social media, like welcoming new people.",
+              "metadata": {
+                "date": "2026-05-11T17:00:00+00:00",
+                "title": "Uniqlo & GPC Huddle",
+                "source": "fireflies",
+                "category": null,
+                "speakers": [
+                  "Gregory Davis",
+                  "Kebba Mass"
+                ],
+                "project_id": 31,
+                "chunk_index": 74,
+                "source_type": "meeting_transcript",
+                "end_timestamp": "43:28",
+                "start_timestamp": "42:24"
+              },
+              "recordId": "01KRBN937D853Q5WVKM9NE6ZNS",
+              "createdAt": "2026-05-11T17:00:00+00:00",
+              "finalScore": 0.41,
+              "projectIds": [
+                31
+              ],
+              "similarity": 0.345,
+              "sourceTable": "meeting_transcript",
+              "sourceChunkId": "01KRBN937D853Q5WVKM9NE6ZNS-74",
+              "sourceDocumentId": "01KRBN937D853Q5WVKM9NE6ZNS"
+            }
+          ],
+          "resultCount": 12,
+          "retrievalBreakdown": {
+            "knowledgeMatches": 0,
+            "usedProjectFilter": false,
+            "externalChunkMatches": 24,
+            "activeRetrievalWeights": 0,
+            "filteredAdminOnlySources": []
+          }
+        },
+        "timestamp": "2026-05-12T18:10:08.497Z"
+      },
+      {
+        "tool": "sourceLookupIntentRouter",
+        "input": {
+          "query": "Before giving me strategy, tell me whether Teams, Outlook/email, meetings, and packets are up to date enough to trust. If anything is stale or unembedded, say exactly what stage is missing and how that changes confidence.",
+          "intent": "source_lookup",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": "additive-context",
+          "resultCount": 12,
+          "recentTeamsWindow": null,
+          "usedProjectBriefingTemplate": false
+        },
+        "timestamp": "2026-05-12T18:10:08.500Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "streamingModelToolsEnabled": true
+        },
+        "timestamp": "2026-05-12T18:10:08.500Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": {
+      "alerts": [
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: njepson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "njepson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: mparsons@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "mparsons@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: jdawson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "jdawson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "ctragesser@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: crusin@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "crusin@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: bclymer@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "bclymer@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: awehner@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "awehner@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: accounting@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "accounting@alleatogroup.com"
+        }
+      ],
+      "counts": {
+        "sources": 30,
+        "uncompiled": 9820,
+        "unembedded": 721,
+        "warningSources": 4,
+        "criticalSources": 25,
+        "failedSubscriptions": 0,
+        "expiringSubscriptions": 0
+      },
+      "reason": "source_status_request",
+      "sources": [
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+          "resourceId": "njepson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: njepson@alleatogroup.com",
+          "staleMinutes": 17546,
+          "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+          "uncompiledCount": 94,
+          "unembeddedCount": 2
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+          "resourceId": "mparsons@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: mparsons@alleatogroup.com",
+          "staleMinutes": 17547,
+          "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+          "uncompiledCount": 94,
+          "unembeddedCount": 2
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+          "resourceId": "jdawson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: jdawson@alleatogroup.com",
+          "staleMinutes": 17547,
+          "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+          "uncompiledCount": 94,
+          "unembeddedCount": 2
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+          "resourceId": "ctragesser@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: ctragesser@alleatogroup.com",
+          "staleMinutes": 1424,
+          "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+          "uncompiledCount": 94,
+          "unembeddedCount": 2
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+          "resourceId": "crusin@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: crusin@alleatogroup.com",
+          "staleMinutes": 17549,
+          "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+          "uncompiledCount": 94,
+          "unembeddedCount": 2
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T22:16:34.993856+00:00",
+          "resourceId": "bclymer@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: bclymer@alleatogroup.com",
+          "staleMinutes": 1168,
+          "lastSuccessAt": "2026-05-11T22:16:34.993856+00:00",
+          "uncompiledCount": 94,
+          "unembeddedCount": 2
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+          "resourceId": "awehner@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: awehner@alleatogroup.com",
+          "staleMinutes": 17549,
+          "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+          "uncompiledCount": 94,
+          "unembeddedCount": 2
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+          "resourceId": "accounting@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: accounting@alleatogroup.com",
+          "staleMinutes": 17548,
+          "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+          "uncompiledCount": 94,
+          "unembeddedCount": 2
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T22:16:36.352269+00:00",
+          "resourceId": "acannon@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: acannon@alleatogroup.com",
+          "staleMinutes": 1168,
+          "lastSuccessAt": "2026-05-11T22:16:36.352269+00:00",
+          "uncompiledCount": 94,
+          "unembeddedCount": 2
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T00:00:00+00:00",
+          "resourceId": "document_metadata",
+          "lastErrorAt": null,
+          "resourceName": "Outlook email",
+          "staleMinutes": 2504,
+          "lastSuccessAt": "2026-05-11T00:00:00+00:00",
+          "uncompiledCount": 94,
+          "unembeddedCount": 2
+        },
+        {
+          "source": "onedrive_file",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T17:56:15.051467+00:00",
+          "resourceId": "sharepoint:AlleatoGroup:/SOP",
+          "lastErrorAt": null,
+          "resourceName": "SharePoint: AlleatoGroup/SOP",
+          "staleMinutes": 1428,
+          "lastSuccessAt": "2026-05-11T17:56:15.051467+00:00",
+          "uncompiledCount": 329,
+          "unembeddedCount": 11
+        },
+        {
+          "source": "onedrive_file",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T17:56:12.97766+00:00",
+          "resourceId": "njepson@alleatogroup.com:/Alleato Group/2026 Jobs",
+          "lastErrorAt": null,
+          "resourceName": "OneDrive: njepson@alleatogroup.com/Alleato Group/2026 Jobs",
+          "staleMinutes": 1428,
+          "lastSuccessAt": "2026-05-11T17:56:12.97766+00:00",
+          "uncompiledCount": 329,
+          "unembeddedCount": 11
+        }
+      ],
+      "generatedAt": "2026-05-12T18:10:05.806Z",
+      "missingStage": "embedding_backlog",
+      "overallStatus": "degraded"
+    },
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 29447,
+          "finishReason": "stop",
+          "outputTokens": 977,
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "extractStructuredActionBrief",
+            "createChangeOrder",
+            "createChangeEvent",
+            "updateProjectStatus",
+            "createRFI",
+            "createTask",
+            "createGeneratedTask",
+            "createProjectCompany",
+            "createProjectContact",
+            "updateGeneratedTask",
+            "deleteGeneratedTask",
+            "flagProjectRisk",
+            "updateRFIStatus",
+            "createMeetingNote",
+            "createSubmittal",
+            "logDailyReport",
+            "generateProjectSummary",
+            "createInitiativeCard",
+            "createCommitment",
+            "submitFeedback",
+            "addBoardItem",
+            "sendTeamsMessage",
+            "findRelatedFeatureRequests",
+            "captureFeatureRequestPacket",
+            "updateFeatureRequestPacket",
+            "scoreFeatureRequestReadiness",
+            "generateImplementationPlan",
+            "generateClaudeCodeHandoff",
+            "draftLinearIssueFromFeatureRequest",
+            "draftLinearSubIssuesFromImplementationPlan",
+            "attachLinearIssueToFeatureRequest",
+            "attachLinearSubIssueToFeatureRequest",
+            "recordLinearStatusUpdateForFeatureRequest",
+            "createWeeklyProgressReportDraft",
+            "updateProgressReportSections",
+            "listProgressReportPhotos",
+            "selectProgressReportPhotos",
+            "generateProgressReportPdf",
+            "listWorkspaceArtifacts",
+            "getDraftArtifact",
+            "saveWorkspaceArtifact",
+            "promoteWorkspaceArtifact",
+            "getSubmittalLog",
+            "getSpecRequirements",
+            "detectMissingSubmittals",
+            "logFeedback",
+            "reviewDocument",
+            "consultCFO",
+            "consultCOO",
+            "consultCRO",
+            "consultCHRO",
+            "consultVPBD",
+            "consultCMO",
+            "getCommitmentsOverview",
+            "getChangeOrderDetails",
+            "getDirectCostsSummary",
+            "getBudgetLineItems",
+            "getCostTrends",
+            "getMarginAnalysis",
+            "getAPAgingReport",
+            "getARAgingReport",
+            "getCashPositionReport",
+            "getVendorSpendReport",
+            "getRecentBills",
+            "getRecentInvoices",
+            "getAcumaticaProjectBudget",
+            "getAcumaticaProjectList",
+            "getPurchaseOrderSummary",
+            "getPeopleAndRoles",
+            "getVendorPerformance",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getCrossProjectComparison",
+            "getHistoricalTrends",
+            "semanticSearch",
+            "getCompanyKnowledge",
+            "recallPastConversations",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "saveToKnowledgeBase",
+            "saveInsight",
+            "searchMemories",
+            "writeMemory",
+            "findProject",
+            "getRecentEmails",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchExternalDocuments",
+            "queryBudgetData",
+            "queryChangeOrders",
+            "queryCommitments",
+            "queryDirectCosts",
+            "queryScheduleTasks",
+            "queryDocumentRows",
+            "searchStructuredFinancialRows",
+            "getScheduleAnalysis",
+            "searchAppHelp",
+            "getForecastComparison",
+            "getMeetingIntelligence",
+            "getProjectBriefingSnapshot",
+            "getFinancialAnalysis",
+            "getProjectBudgetSummary",
+            "getActionItemsAndInsights",
+            "getMeetingsByDate",
+            "searchDocuments",
+            "getProjectDetails"
+          ]
+        }
+      ],
+      "totalStepCount": 1,
+      "finalFinishReason": "stop",
+      "preparedStepCount": 1,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "retrieval trace included 12 source-bearing record(s) without inline citations"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

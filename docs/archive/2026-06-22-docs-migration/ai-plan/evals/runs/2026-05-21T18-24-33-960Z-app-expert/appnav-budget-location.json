@@ -1,0 +1,68 @@
+{
+  "id": "appnav-budget-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6348,
+  "question": "Where should I go to review project budget line items?",
+  "response": {
+    "answer": "Go to the project Budget page:\n\n- Route: `/[projectId]/budget`\n- Page title: `Budget`\n\nThat’s the documented place to review budget line items. The feature registry entry for **Budget Line Items** points to this page and says it supports adding/editing/modifying budget line items.\n\nWhat I checked:\n- App artifact status: current and available\n- Feature registry: `Budget Line Items` → `/[projectId]/budget`\n- App sitemap: `Budget` page at `frontend/src/app/(main)/[projectId]/budget/page.tsx`\n\nUncertainty:\n- The curated help article path in the registry (`docs/help/articles/budget-line-items.md`) was not found in the filesystem via direct read or glob, so I can’t quote help-text details from it. The route evidence is still clear.\n\nIf you want, I can also point you to the related setup page:\n- `/[projectId]/budget/setup`",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/budget",
+        "sourceType": "sitemap",
+        "route": "/budget",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/editing/modifying",
+        "sourceType": "sitemap",
+        "route": "/editing/modifying",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/budget/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/budget/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/budget-line-items.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/budget-line-items.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/budget/setup",
+        "sourceType": "sitemap",
+        "route": "/budget/setup",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6337,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

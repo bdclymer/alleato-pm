@@ -5,7 +5,7 @@ import {
   CollaborationEntityProvider,
   type CollaborationEntityContextValue,
 } from "./entity-context";
-import type { CommentableEntityType } from "@/lib/liveblocks/rooms";
+import type { CommentableEntityType } from "@/lib/collaboration/rooms";
 
 interface EntityRoomProps {
   entityType: CommentableEntityType;

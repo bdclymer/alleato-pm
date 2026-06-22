@@ -1,0 +1,70 @@
+{
+  "suite": "app-expert-eval-suite",
+  "endpoint": "https://alleato-backend-rbnj.onrender.com/api/intelligence/app-expert",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "results": [
+    {
+      "id": "appnav-change-events-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 6774,
+      "question": "Where do I create a change event for a project?",
+      "response": {
+        "answer": "I can’t answer this reliably from App Expert artifacts right now.\n\nChecked:\n- App Expert artifact status: both generated artifacts are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search: failed because the registry artifact is missing\n- App sitemap search: failed because the sitemap artifact is missing\n\nWhat this means:\n- I don’t have curated help/feature metadata to confirm where a “change event” is created for a project.\n- I also can’t safely fall back to route evidence because the generated route data is unavailable.\n\nIf you want, I can help in one of two ways:\n1. You regenerate the App Expert artifacts, then I can answer precisely.\n2. I can inspect the source code directly to find the route/page that creates project change events, but that would be implementation evidence rather than curated docs.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/feature",
+            "sourceType": "sitemap",
+            "route": "/feature",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/page",
+            "sourceType": "sitemap",
+            "route": "/page",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 6347,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    }
+  ]
+}

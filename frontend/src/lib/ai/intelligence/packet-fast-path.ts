@@ -43,8 +43,8 @@ export function projectPacketFastPathBlockReason(
       : null;
 
   if (packet.isStale) return "packet_is_stale";
-  if (packet.compilerVersion !== "project-operating-summary-v1") {
-    return "compiler_version_not_operating_summary";
+  if (packet.compilerVersion !== "project_intelligence_synthesis_v1") {
+    return "compiler_version_not_project_intelligence_synthesis";
   }
   if (qualityGateStatus !== null && qualityGateStatus !== "passed") {
     return "quality_gate_not_passed";

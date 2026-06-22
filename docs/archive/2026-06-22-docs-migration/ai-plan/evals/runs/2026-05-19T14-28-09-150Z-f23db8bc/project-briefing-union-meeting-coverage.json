@@ -1,0 +1,511 @@
+{
+  "id": "project-briefing-union-meeting-coverage",
+  "intent": "project_briefing",
+  "prompt": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+  "selectedProjectId": 1009,
+  "sessionId": "6b728fdb-5342-4d24-afff-96b371bfee57",
+  "sessionLabel": "eval-2026-05-19T14-28-09-150Z-f23db8bc-project-briefing-union-meeting-coverage",
+  "startedAt": "2026-05-19T14:28:09.249Z",
+  "finishedAt": "2026-05-19T14:28:32.111Z",
+  "durationMs": 22474,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 7,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "expected family 'semantic' not represented",
+      "expected family 'communications' not represented"
+    ],
+    "observations": [
+      "tools fired: backendDeepAgentProjectStatus, project_lookup, packet_reader, teams_reader, meetings_reader, emails_reader, documents_reader, financials_reader, schedule_reader, rfi_reader, submittal_reader, deepagents_runtime",
+      "backend Deep Agents memory candidates: 0"
+    ],
+    "toolNames": [
+      "backendDeepAgentProjectStatus",
+      "project_lookup",
+      "packet_reader",
+      "teams_reader",
+      "meetings_reader",
+      "emails_reader",
+      "documents_reader",
+      "financials_reader",
+      "schedule_reader",
+      "rfi_reader",
+      "submittal_reader",
+      "deepagents_runtime"
+    ],
+    "familiesHit": [
+      "project",
+      "risk"
+    ],
+    "finalTextLength": 2444,
+    "finalText": "Union Collective is in late-stage design and pre-permit coordination, but the real choke point is still schedule and financing alignment. This is not a clean green light yet; it reads like a job that can move, but only if the next decisions stay tight.\n\nEvidence\n- The current packet says Union Collective is “moving through late-stage design and pre-permit coordination,” with “schedule and financing alignment” as the main gating issues. Source: packet current entry, 2026-05-19.\n- Recent meetings are present in the packet, including a Civil Design Meeting on 2026-05-15 and a DGI Meeting on 2026-05-18. Source: meetings coverage, latest 2026-05-18.\n- Emails are active and recent, including a solar roof coordination thread on 2026-05-18/19 that shows product questions still being resolved. Source: emails coverage, latest 2026-05-19.\n- Financials are present in the packet, but the latest financial record is 2026-05-07, so the money picture is not as fresh as the comms and meetings. Source: financials coverage.\n- Meeting transcripts are available in the packet. Source: meetings coverage shows 6 records; one evidence item is a meeting row, and the packet clearly includes meeting source material. There is no indication they are missing.\n\nWhat this means\nThis is a coordination-heavy phase, not a settled execution phase. The job is probably being held back more by unresolved alignment than by one single technical issue. If schedule and financing are not locked, design activity will keep creating motion without enough certainty behind it.\n\nRecommended next steps\n- Push for a current decision log on schedule and financing alignment before the next owner-facing update.\n- Use the latest meeting set to pull out open decisions, especially anything tied to pre-permit, solar roof, and design milestone timing.\n- Refresh the financial read before quoting exposure or presenting confidence on timing.\n\nUncertainty\n- Schedule coverage is missing from the structured feed, so I cannot quantify float, overdue tasks, or critical path from that source.\n- RFI and submittal coverage are also missing, so open issue counts are not confirmed from the control system.\n- The packet clearly has meeting source material, but it does not expose full transcript detail in the snippet provided here.\n\nSource coverage note: schedule: missing; rfi: missing; submittal: missing. I did not use unavailable or stale source categories as factual support.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 22474
+    }
+  },
+  "expectedToolNames": [
+    "clientProjectIntelligencePacket",
+    "backendDeepAgentProjectStatus",
+    "semanticSearch"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "semantic",
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: packet_first_with_project",
+        "status": "loading",
+        "timestamp": "2026-05-19T14:28:11.814Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Checking Render Deep Agents project intelligence",
+        "status": "loading",
+        "timestamp": "2026-05-19T14:28:12.587Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-deep-agent-project-status",
+      "data": {
+        "widget": {
+          "type": "source_evidence_drawer",
+          "id": "deep-agent-project-status-evidence",
+          "title": "Union Collective source coverage",
+          "sources": [
+            {
+              "id": "6e6558f3-b8b9-42fa-931a-c4cfafee4036",
+              "title": "current",
+              "sourceType": "project_record",
+              "date": "2026-05-19T14:05:18.031542+00:00",
+              "snippet": "Union Collective is moving through late-stage design and pre-permit coordination, but schedule and financing alignment remain the main gating issues.",
+              "confidence": "medium"
+            },
+            {
+              "id": "teamsdm_2dc16e04aaada9fb_2026-04-08",
+              "title": "Teams DM Conversation: 19:737d4feb-",
+              "sourceType": "teams",
+              "date": "2026-04-30T14:45:23.398172",
+              "snippet": "### Summary of Teams DM Conversation: 19:737d4feb-\n\n**Document Purpose and Type**:  \nThe document is a transcript of a direct message conversation on Microsoft Teams between two individuals, Colin Gillespie and Alec Wehner, dated April 8, 2026. The conversation primarily focuses on their current work situations, educational commitments, and personal experiences related to their professional development.\n\n**Key Topics and Sections**:  \nThe conversation touches on several key topics, including Col",
+              "confidence": "medium"
+            },
+            {
+              "id": "ea-AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQndiGnAAABEgAQAImYkALGKz1Km4xVbWdGDTg=",
+              "title": "Union Collective - Civil Design Meeting -05-15-26.pdf",
+              "sourceType": "meeting",
+              "date": "2026-05-15T21:35:58.475911+00:00",
+              "snippet": "Read-only meetings source row.",
+              "confidence": "medium"
+            },
+            {
+              "id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB-abAAA=",
+              "title": "Email: Union Collective: DGI Meeting",
+              "sourceType": "meeting",
+              "date": "2026-05-18T22:39:05.287014",
+              "snippet": "Read-only meetings source row.",
+              "confidence": "medium"
+            },
+            {
+              "id": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBeAAA=",
+              "title": "Solroof Product - Union Collective",
+              "sourceType": "email",
+              "date": "2026-05-19T12:11:44.483698+00:00",
+              "snippet": "Subject: Solroof Product - Union Collective\nDate: 2026-05-19T11:29:31Z\nFrom: Douglas Franklin <dfranklin@alleatogroup.com>\nTo: philip@ibexdevgroup.com <philip@ibexdevgroup.com>\n\nPhilip, Your contact info was given to us to coordinate efforts on the possible use of the Solroof panels at the Union Collective. I reached out to Solroof before I knew you were the contact.&nbsp; Given some unknowns about the product, we wanted to get answers on a few questions we had. Lead time to get the product over",
+              "confidence": "medium"
+            },
+            {
+              "id": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB-afAAA=",
+              "title": "Alleato Group: Union Collective: Solar Roof",
+              "sourceType": "email",
+              "date": "2026-05-19T00:56:23.095634+00:00",
+              "snippet": "Subject: Alleato Group: Union Collective: Solar Roof\nDate: 2026-05-18T23:04:54Z\nFrom: Andrew Cannon <acannon@alleatogroup.com>\nTo: Philip Johnson <philip@ibexdevgroup.com>\n\nGood Afternoon, Philip,&nbsp; Could you please provide insight on the following questions for the solar roof product? What is the lead time to get the panels over to the United States once we place the order? Is there a local install group in the United States. Any special requirements or rooms needed for the electrical distr",
+              "confidence": "medium"
+            },
+            {
+              "id": "outlook_attachment_c405ba2f75117c953f808773_3777984bd86d0b7eccbbc6e8",
+              "title": "Commitment - Damn Good Interiors (2).pdf",
+              "sourceType": "document",
+              "date": "2026-05-19T00:57:12.305109+00:00",
+              "snippet": "Attachment from Outlook email: Union Collective PO",
+              "confidence": "medium"
+            },
+            {
+              "id": "114",
+              "title": "Union Collective - Design Milestone Schedule - 05-09-2026",
+              "sourceType": "document",
+              "date": "2026-05-12T21:25:51.897366+00:00",
+              "snippet": "Read-only documents source row.",
+              "confidence": "medium"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-deep-agent-project-status"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-deep-agent-project-status",
+      "delta": "Union Collective is in late-stage design and pre-permit coordination, but the real choke point is still schedule and financing alignment. This is not a clean green light yet; it reads like a job that can move, but only if the next decisions stay tight.\n\nEvidence\n- The current packet says Union Collective is “moving through late-stage design and pre-permit coordination,” with “schedule and financing alignment” as the main gating issues. Source: packet current entry, 2026-05-19.\n- Recent meetings are present in the packet, including a Civil Design Meeting on 2026-05-15 and a DGI Meeting on 2026-05-18. Source: meetings coverage, latest 2026-05-18.\n- Emails are active and recent, including a solar roof coordination thread on 2026-05-18/19 that shows product questions still being resolved. Source: emails coverage, latest 2026-05-19.\n- Financials are present in the packet, but the latest financial record is 2026-05-07, so the money picture is not as fresh as the comms and meetings. Source: financials coverage.\n- Meeting transcripts are available in the packet. Source: meetings coverage shows 6 records; one evidence item is a meeting row, and the packet clearly includes meeting source material. There is no indication they are missing.\n\nWhat this means\nThis is a coordination-heavy phase, not a settled execution phase. The job is probably being held back more by unresolved alignment than by one single technical issue. If schedule and financing are not locked, design activity will keep creating motion without enough certainty behind it.\n\nRecommended next steps\n- Push for a current decision log on schedule and financing alignment before the next owner-facing update.\n- Use the latest meeting set to pull out open decisions, especially anything tied to pre-permit, solar roof, and design milestone timing.\n- Refresh the financial read before quoting exposure or presenting confidence on timing.\n\nUncertainty\n- Schedule coverage is missing from the structured feed, so I cannot quantify float, overdue tasks, or critical path from that source.\n- RFI and submittal coverage are also missing, so open issue counts are not confirmed from the control system.\n- The packet clearly has meeting source material, but it does not expose full transcript detail in the snippet provided here.\n\nSource coverage note: schedule: missing; rfi: missing; submittal: missing. I did not use unavailable or stale source categories as factual support."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-deep-agent-project-status"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Render Deep Agents project answer returned",
+        "status": "success",
+        "timestamp": "2026-05-19T14:28:31.712Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": null,
+    "data_parts": [
+      {
+        "id": "assistant-widget-deep-agent-project-status",
+        "data": {
+          "widget": {
+            "id": "deep-agent-project-status-evidence",
+            "type": "source_evidence_drawer",
+            "title": "Union Collective source coverage",
+            "sources": [
+              {
+                "id": "6e6558f3-b8b9-42fa-931a-c4cfafee4036",
+                "date": "2026-05-19T14:05:18.031542+00:00",
+                "title": "current",
+                "snippet": "Union Collective is moving through late-stage design and pre-permit coordination, but schedule and financing alignment remain the main gating issues.",
+                "confidence": "medium",
+                "sourceType": "project_record"
+              },
+              {
+                "id": "teamsdm_2dc16e04aaada9fb_2026-04-08",
+                "date": "2026-04-30T14:45:23.398172",
+                "title": "Teams DM Conversation: 19:737d4feb-",
+                "snippet": "### Summary of Teams DM Conversation: 19:737d4feb-\n\n**Document Purpose and Type**:  \nThe document is a transcript of a direct message conversation on Microsoft Teams between two individuals, Colin Gillespie and Alec Wehner, dated April 8, 2026. The conversation primarily focuses on their current work situations, educational commitments, and personal experiences related to their professional development.\n\n**Key Topics and Sections**:  \nThe conversation touches on several key topics, including Col",
+                "confidence": "medium",
+                "sourceType": "teams"
+              },
+              {
+                "id": "ea-AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQndiGnAAABEgAQAImYkALGKz1Km4xVbWdGDTg=",
+                "date": "2026-05-15T21:35:58.475911+00:00",
+                "title": "Union Collective - Civil Design Meeting -05-15-26.pdf",
+                "snippet": "Read-only meetings source row.",
+                "confidence": "medium",
+                "sourceType": "meeting"
+              },
+              {
+                "id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB-abAAA=",
+                "date": "2026-05-18T22:39:05.287014",
+                "title": "Email: Union Collective: DGI Meeting",
+                "snippet": "Read-only meetings source row.",
+                "confidence": "medium",
+                "sourceType": "meeting"
+              },
+              {
+                "id": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBeAAA=",
+                "date": "2026-05-19T12:11:44.483698+00:00",
+                "title": "Solroof Product - Union Collective",
+                "snippet": "Subject: Solroof Product - Union Collective\nDate: 2026-05-19T11:29:31Z\nFrom: Douglas Franklin <dfranklin@alleatogroup.com>\nTo: philip@ibexdevgroup.com <philip@ibexdevgroup.com>\n\nPhilip, Your contact info was given to us to coordinate efforts on the possible use of the Solroof panels at the Union Collective. I reached out to Solroof before I knew you were the contact.&nbsp; Given some unknowns about the product, we wanted to get answers on a few questions we had. Lead time to get the product over",
+                "confidence": "medium",
+                "sourceType": "email"
+              },
+              {
+                "id": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB-afAAA=",
+                "date": "2026-05-19T00:56:23.095634+00:00",
+                "title": "Alleato Group: Union Collective: Solar Roof",
+                "snippet": "Subject: Alleato Group: Union Collective: Solar Roof\nDate: 2026-05-18T23:04:54Z\nFrom: Andrew Cannon <acannon@alleatogroup.com>\nTo: Philip Johnson <philip@ibexdevgroup.com>\n\nGood Afternoon, Philip,&nbsp; Could you please provide insight on the following questions for the solar roof product? What is the lead time to get the panels over to the United States once we place the order? Is there a local install group in the United States. Any special requirements or rooms needed for the electrical distr",
+                "confidence": "medium",
+                "sourceType": "email"
+              },
+              {
+                "id": "outlook_attachment_c405ba2f75117c953f808773_3777984bd86d0b7eccbbc6e8",
+                "date": "2026-05-19T00:57:12.305109+00:00",
+                "title": "Commitment - Damn Good Interiors (2).pdf",
+                "snippet": "Attachment from Outlook email: Union Collective PO",
+                "confidence": "medium",
+                "sourceType": "document"
+              },
+              {
+                "id": "114",
+                "date": "2026-05-12T21:25:51.897366+00:00",
+                "title": "Union Collective - Design Milestone Schedule - 05-09-2026",
+                "snippet": "Read-only documents source row.",
+                "confidence": "medium",
+                "sourceType": "document"
+              }
+            ]
+          }
+        },
+        "type": "data-assistant-widget"
+      }
+    ],
+    "tool_trace": [
+      {
+        "tool": "backendDeepAgentProjectStatus",
+        "agent": "frontend-ai-assistant",
+        "input": {
+          "message": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+          "selectedProjectId": 1009
+        },
+        "detail": null,
+        "status": "success",
+        "toolName": "backendDeepAgentProjectStatus",
+        "timestamp": "2026-05-19T14:28:31.220Z",
+        "durationMs": 0
+      },
+      {
+        "tool": "project_lookup",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+          "selectedProjectId": 1009
+        },
+        "detail": "Resolved project row before contract-spike response.",
+        "status": "success",
+        "toolName": "project_lookup",
+        "timestamp": "2026-05-19T14:28:31.220Z",
+        "durationMs": 1557
+      },
+      {
+        "tool": "packet_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+          "selectedProjectId": 1009
+        },
+        "detail": "Found 1 current intelligence packet row(s) across 1 target(s).",
+        "status": "success",
+        "toolName": "packet_reader",
+        "timestamp": "2026-05-19T14:28:31.220Z",
+        "durationMs": 842
+      },
+      {
+        "tool": "teams_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+          "selectedProjectId": 1009
+        },
+        "detail": "Read-only probe found 1 teams row(s) from `document_metadata`.",
+        "status": "success",
+        "toolName": "teams_reader",
+        "timestamp": "2026-05-19T14:28:31.220Z",
+        "durationMs": 826
+      },
+      {
+        "tool": "meetings_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+          "selectedProjectId": 1009
+        },
+        "detail": "Read-only probe found 6 meetings row(s) from `document_metadata`.",
+        "status": "success",
+        "toolName": "meetings_reader",
+        "timestamp": "2026-05-19T14:28:31.220Z",
+        "durationMs": 555
+      },
+      {
+        "tool": "emails_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+          "selectedProjectId": 1009
+        },
+        "detail": "Read-only probe found 100 emails row(s) from `project_emails`.",
+        "status": "success",
+        "toolName": "emails_reader",
+        "timestamp": "2026-05-19T14:28:31.220Z",
+        "durationMs": 776
+      },
+      {
+        "tool": "documents_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+          "selectedProjectId": 1009
+        },
+        "detail": "Read-only probe found 39 documents row(s) from `project_documents`.",
+        "status": "success",
+        "toolName": "documents_reader",
+        "timestamp": "2026-05-19T14:28:31.220Z",
+        "durationMs": 316
+      },
+      {
+        "tool": "financials_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+          "selectedProjectId": 1009
+        },
+        "detail": "Read-only probe found 12 financials row(s) from `acumatica_project_budgets`.",
+        "status": "success",
+        "toolName": "financials_reader",
+        "timestamp": "2026-05-19T14:28:31.220Z",
+        "durationMs": 230
+      },
+      {
+        "tool": "schedule_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+          "selectedProjectId": 1009
+        },
+        "detail": "No schedule rows found in `schedule_tasks` for this project.",
+        "status": "success",
+        "toolName": "schedule_reader",
+        "timestamp": "2026-05-19T14:28:31.220Z",
+        "durationMs": 1083
+      },
+      {
+        "tool": "rfi_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+          "selectedProjectId": 1009
+        },
+        "detail": "No rfi rows found in `rfis` for this project.",
+        "status": "success",
+        "toolName": "rfi_reader",
+        "timestamp": "2026-05-19T14:28:31.220Z",
+        "durationMs": 154
+      },
+      {
+        "tool": "submittal_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+          "selectedProjectId": 1009
+        },
+        "detail": "No submittal rows found in `submittals` for this project.",
+        "status": "success",
+        "toolName": "submittal_reader",
+        "timestamp": "2026-05-19T14:28:31.220Z",
+        "durationMs": 171
+      },
+      {
+        "tool": "deepagents_runtime",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+          "selectedProjectId": 1009
+        },
+        "detail": "Deep Agents runtime produced a synthesis from checked source coverage with durable memory.",
+        "status": "success",
+        "toolName": "deepagents_runtime",
+        "timestamp": "2026-05-19T14:28:31.220Z",
+        "durationMs": 11789
+      }
+    ],
+    "architecture": "render-backend-deep-agents-v1",
+    "provider_path": "render-backend-ai-gateway",
+    "retrieval_plan": {
+      "intent": "latest_status",
+      "reason": "packet_first_with_project",
+      "sources": [
+        "intelligencePacket",
+        "projectSnapshot",
+        "semanticVectorSearch"
+      ],
+      "responseFormat": "briefing_template"
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "backend_deep_agent": {
+      "mode": "deep_agents",
+      "project": {
+        "id": 1009,
+        "name": "Union Collective"
+      },
+      "endpoint": "project-status",
+      "confidence": "medium",
+      "orchestrator": "deep-agents-project-intelligence",
+      "evidence_count": 10,
+      "source_coverage": [
+        {
+          "status": "checked",
+          "sourceType": "packet",
+          "recordCount": 1
+        },
+        {
+          "status": "checked",
+          "sourceType": "teams",
+          "recordCount": 1
+        },
+        {
+          "status": "checked",
+          "sourceType": "meetings",
+          "recordCount": 6
+        },
+        {
+          "status": "checked",
+          "sourceType": "emails",
+          "recordCount": 100
+        },
+        {
+          "status": "checked",
+          "sourceType": "documents",
+          "recordCount": 39
+        },
+        {
+          "status": "checked",
+          "sourceType": "financials",
+          "recordCount": 12
+        },
+        {
+          "status": "missing",
+          "sourceType": "schedule",
+          "recordCount": 0
+        },
+        {
+          "status": "missing",
+          "sourceType": "rfi",
+          "recordCount": 0
+        },
+        {
+          "status": "missing",
+          "sourceType": "submittal",
+          "recordCount": 0
+        }
+      ],
+      "memory_candidates": [],
+      "memory_candidate_count": 0,
+      "recommended_action_count": 1
+    }
+  }
+}

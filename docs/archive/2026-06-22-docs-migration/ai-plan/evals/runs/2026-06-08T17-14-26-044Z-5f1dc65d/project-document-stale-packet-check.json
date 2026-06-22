@@ -1,0 +1,63 @@
+{
+  "id": "project-document-stale-packet-check",
+  "intent": "source_health",
+  "prompt": "For Westfield document intelligence, before I trust the AI readout, tell me whether the project packet, snapshot, and document sources look stale, missing, thin, or current enough.",
+  "selectedProjectId": 43,
+  "sessionId": "83966186-80b9-44f5-b27e-983038496edc",
+  "sessionLabel": "eval-2026-06-08T17-14-26-044Z-5f1dc65d-project-document-stale-packet-check",
+  "startedAt": "2026-06-08T17:20:09.849Z",
+  "finishedAt": "2026-06-08T17:22:28.243Z",
+  "durationMs": 120952,
+  "httpStatus": 0,
+  "streamError": "This operation was aborted",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: This operation was aborted",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [clientProjectIntelligencePacket, getProjectBriefingSnapshot] to fire — none did",
+      "expected required tool 'assistantSourceHealth' to fire",
+      "mustInclude missing: \"Westfield\"",
+      "mustIncludeAny missing one of: \"packet\", \"snapshot\", \"document\", \"source\"",
+      "mustIncludeAny missing one of: \"stale\", \"missing\", \"thin\", \"fresh\", \"current\", \"coverage\"",
+      "answer length 0 < min 180",
+      "duration 120952ms exceeded max budget 90000ms",
+      "required metadata missing: tool_trace",
+      "required metadata missing: response_quality",
+      "required metadata missing: source_debug"
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'source_health' not represented",
+      "duration 120952ms exceeded warning budget 30000ms"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": "",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 90000,
+      "durationMs": 120952
+    }
+  },
+  "expectedToolNames": [
+    "clientProjectIntelligencePacket",
+    "getProjectBriefingSnapshot"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "source_health"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

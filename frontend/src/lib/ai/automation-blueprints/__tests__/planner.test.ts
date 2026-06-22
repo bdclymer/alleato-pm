@@ -17,9 +17,9 @@ function workRun(overrides: Partial<AiWorkRunRow> = {}): AiWorkRunRow {
     workflow_id: "automation_blueprint_draft",
     trigger_type: "user_requested",
     surface: "ai_assistant_automation_blueprint",
-    title: "Draft automation: Task extraction",
-    user_goal: "Schedule task extraction weekdays at 7am",
-    normalized_goal: "schedule task extraction weekdays at 7am",
+    title: "Draft automation: Microsoft Graph sync",
+    user_goal: "Schedule graph sync weekdays at 7am",
+    normalized_goal: "schedule graph sync weekdays at 7am",
     status: "needs_admin_review",
     priority: "normal",
     permission_mode: "admin_approved",
@@ -61,7 +61,7 @@ describe("parseNaturalLanguageSchedule", () => {
 
     expect(
       parseNaturalLanguageSchedule({
-        input: "run task extraction weekdays at 7am",
+        input: "run graph sync weekdays at 7am",
         timezone: "America/New_York",
       }),
     ).toMatchObject({
@@ -98,7 +98,7 @@ describe("parseNaturalLanguageSchedule", () => {
   it("returns ambiguity instead of guessing cadence or time", () => {
     expect(
       parseNaturalLanguageSchedule({
-        input: "run task extraction at 7am",
+        input: "run graph sync at 7am",
         timezone: "America/New_York",
       }),
     ).toMatchObject({
@@ -108,7 +108,7 @@ describe("parseNaturalLanguageSchedule", () => {
 
     expect(
       parseNaturalLanguageSchedule({
-        input: "run task extraction weekdays",
+        input: "run graph sync weekdays",
         timezone: "America/New_York",
       }),
     ).toMatchObject({
@@ -124,7 +124,7 @@ describe("planScheduledAutomation", () => {
 
     const result = await planScheduledAutomation(
       {
-        userInput: "Schedule task extraction weekdays at 7am",
+        userInput: "Schedule graph sync weekdays at 7am",
         timezone: "America/New_York",
       },
       {
@@ -146,7 +146,7 @@ describe("planScheduledAutomation", () => {
 
     const result = await planScheduledAutomation(
       {
-        userInput: "Schedule task extraction weekdays at 7am",
+        userInput: "Schedule graph sync weekdays at 7am",
         userId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
         timezone: "America/New_York",
       },
@@ -161,8 +161,8 @@ describe("planScheduledAutomation", () => {
       reason: null,
       draftCreated: true,
       blueprint: {
-        key: "task_extraction",
-        existingRenderCronName: "alleato-task-extraction",
+        key: "graph_sync",
+        existingRenderCronName: "alleato-graph-sync",
       },
       schedule: {
         cronExpression: "0 7 * * 1-5",
@@ -207,7 +207,7 @@ describe("planScheduledAutomation", () => {
   it("fails loudly when persistence fails", async () => {
     const result = await planScheduledAutomation(
       {
-        userInput: "Schedule packet refresh daily at 9am",
+        userInput: "Schedule graph sync daily at 9am",
         timezone: "America/New_York",
       },
       {

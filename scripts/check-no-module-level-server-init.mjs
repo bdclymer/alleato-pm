@@ -4,11 +4,8 @@
  * at the module level (top of file, outside a function).
  *
  * Why: Module-level initialization runs when Next.js IMPORTS the file during
- * `next build` page-data collection. If the required env var (e.g.
- * LIVEBLOCKS_SECRET_KEY) is absent in CI, the build crashes with a cryptic
- * error that takes hours to trace.
- *
- * This pattern caused 2 separate Liveblocks build failures within 2 weeks.
+ * `next build` page-data collection. If a required env var is absent in CI,
+ * the build crashes with a cryptic error that takes hours to trace.
  *
  * Pattern that triggers this check (any of these at the top level of a file
  * that is NOT marked "use client"):

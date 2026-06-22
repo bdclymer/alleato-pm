@@ -1,0 +1,44 @@
+{
+  "id": "project-briefing-vermillion",
+  "intent": "project_briefing",
+  "prompt": "Give me a current read on Vermillion Rise Warehouse.",
+  "selectedProjectId": 67,
+  "sessionId": "f949bcae-5244-445f-8009-f84391637684",
+  "sessionLabel": "eval-2026-05-02T10-17-07-154Z-project-briefing-vermillion",
+  "startedAt": "2026-05-02T10:17:29.969Z",
+  "finishedAt": "2026-05-02T10:17:45.276Z",
+  "durationMs": 85,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3fc0995d-c9b2-4030-99d2-bb68421e05d3\",\"timestamp\":\"2026-05-02T10:17:30.051Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3fc0995d-c9b2-4030-99d2-bb68421e05d3\",\"timestamp\":\"2026-05-02T10:17:30.051Z\"}",
+      "HTTP 401",
+      "expected at least one of [getProjectBriefingSnapshot] to fire — none did",
+      "mustInclude missing: \"Vermillion\""
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'semantic' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3fc0995d-c9b2-4030-99d2-bb68421e05d3\",\"timestamp\":\"2026-05-02T10:17:30.051Z\"}"
+  },
+  "expectedToolNames": [
+    "getProjectBriefingSnapshot"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "semantic"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

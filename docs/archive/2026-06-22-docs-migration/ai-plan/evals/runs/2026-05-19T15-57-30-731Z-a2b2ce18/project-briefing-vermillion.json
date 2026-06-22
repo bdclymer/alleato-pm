@@ -1,0 +1,509 @@
+{
+  "id": "project-briefing-vermillion",
+  "intent": "project_briefing",
+  "prompt": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+  "selectedProjectId": 67,
+  "sessionId": "5a84740c-4437-4181-8cfe-d4078ce96007",
+  "sessionLabel": "eval-2026-05-19T15-57-30-731Z-a2b2ce18-project-briefing-vermillion",
+  "startedAt": "2026-05-19T15:58:17.208Z",
+  "finishedAt": "2026-05-19T15:58:52.684Z",
+  "durationMs": 35087,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 7,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "expected family 'semantic' not represented",
+      "duration 35087ms exceeded warning budget 30000ms"
+    ],
+    "observations": [
+      "tools fired: backendDeepAgentProjectStatus, project_lookup, packet_reader, teams_reader, meetings_reader, emails_reader, documents_reader, financials_reader, schedule_reader, rfi_reader, submittal_reader, deepagents_runtime",
+      "backend Deep Agents memory candidates: 0"
+    ],
+    "toolNames": [
+      "backendDeepAgentProjectStatus",
+      "project_lookup",
+      "packet_reader",
+      "teams_reader",
+      "meetings_reader",
+      "emails_reader",
+      "documents_reader",
+      "financials_reader",
+      "schedule_reader",
+      "rfi_reader",
+      "submittal_reader",
+      "deepagents_runtime"
+    ],
+    "familiesHit": [
+      "project",
+      "risk"
+    ],
+    "finalTextLength": 2534,
+    "finalText": "Bottom line: Vermillion Rise is not blowing up financially, but it is still immature operationally. The money looks basically flat; the real problem is workflow drag — overdue RFIs, overdue schedule tasks, and active coordination decisions that are still open.\n\nEvidence\n- Budget is essentially flat: revised budget is $13,071,266 vs. $13,059,266 original, a $12,000 delta (0.1%). Source: project_budget_summary.\n- No owner-change exposure is sitting there yet: approved owner change orders $0 and pending owner change orders $0. Source: project_budget_summary.\n- The project is still at 0% complete, and health is listed as n/a. Source: project_briefing_snapshot.\n- Execution risk is concentrated in process control: 4 open RFIs with 1 overdue, 2 open submittals, and 9 overdue schedule tasks. Source: project_briefing_snapshot and project_risk_snapshot.\n- There are 10 active change events, which tells me scope / coordination is still moving. Source: project_risk_snapshot.\n- The latest meeting digest says the team is still finalizing sprinkler zoning, HVAC drawings, and electrical integration, while steel lead time is being pushed from 16 weeks toward 8 weeks after approval. Source: recent meeting digest from 2026-05-19, “Vermillion design weekly call.”\n\nWhat this means\nThis is still a coordination-heavy project, not a clean execution machine yet. The owner-level read is: cost is controlled for now, but the project can still get nicked on schedule and scope if the overdue RFIs, lagging tasks, and design finalization don’t get closed fast. The steel lead-time note matters — that’s the kind of thing that quietly turns into schedule pain if approvals drift.\n\nRecommended next steps\n- PM: close the overdue RFI and clear the 9 overdue schedule tasks first. That is the highest-leverage cleanup.\n- Design / coordination team: lock HVAC, sprinkler, and electrical integration decisions now; don’t let those keep cycling.\n- Procurement: get the steel approval path tightened immediately if the lead time really is the critical driver.\n- Owner update: frame this as “financially stable, operationally still in coordination,” not as a success story.\n\nUncertainty\n- Project health is n/a, so I’m not treating that as meaningful.\n- Financials are current only through 2026-05-07, so I would not overread margin or exposure beyond the confirmed budget delta.\n- I’ve got enough to give you the read, but if you want the sharper version, the next layer is: which of the 9 overdue tasks and 4 RFIs are actually on the critical path.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 35087
+    }
+  },
+  "expectedToolNames": [
+    "backendDeepAgentProjectStatus",
+    "getProjectBriefingSnapshot"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "semantic"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: packet_first_with_project",
+        "status": "loading",
+        "timestamp": "2026-05-19T15:58:17.283Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Checking Render Deep Agents project intelligence",
+        "status": "loading",
+        "timestamp": "2026-05-19T15:58:17.347Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-deep-agent-project-status",
+      "data": {
+        "widget": {
+          "type": "source_evidence_drawer",
+          "id": "deep-agent-project-status-evidence",
+          "title": "Vermillion Rise Warehouse source coverage",
+          "sources": [
+            {
+              "id": "2e4264d3-56f2-4c3a-a1fa-1db34c0b47d2",
+              "title": "current",
+              "sourceType": "project_record",
+              "date": "2026-05-19T15:48:14.616261+00:00",
+              "snippet": "Vermillion Rise Warehouse is moving from design refinement into permit-ready coordination, with cost, scope, and long-lead procurement still active.",
+              "confidence": "medium"
+            },
+            {
+              "id": "teamsdm_1773240960371",
+              "title": "Teams DM: oneOnOne",
+              "sourceType": "teams",
+              "date": "2026-03-23T04:39:33.275926",
+              "snippet": "[Teams Direct Message: oneOnOne]\n\n[2026-03-11] Maria Calcetero: Yes, you said vermillion.. that was on tuesdays",
+              "confidence": "medium"
+            },
+            {
+              "id": "teamsdm_1773240711779",
+              "title": "Teams DM: oneOnOne",
+              "sourceType": "teams",
+              "date": "2026-03-23T04:39:36.061491",
+              "snippet": "[Teams Direct Message: oneOnOne]\n\n[2026-03-11] Brandon Clymer: There isn’t a vermillion rise meeting today",
+              "confidence": "medium"
+            },
+            {
+              "id": "0e4670a4-9983-44c1-98c5-5b9d4c309ec3",
+              "title": "Vermillion Rise Existing building discussions",
+              "sourceType": "meeting",
+              "date": "2026-03-23T05:59:49.035738",
+              "snippet": "The team discussed adjustments to the HVAC layout for a newly assigned 50,000 sq ft building, which is set to improve duct routing and production area flexibility. All HVAC units will be placed on the ground level in specified corners to align with future expansions, while ductwork will be positioned outside to avoid obstruction by tall racking. Structural engineering collaboration is crucial for determining wall penetrations, ensuring compliance with precast panel constraints. Pricing updates a",
+              "confidence": "medium"
+            },
+            {
+              "id": "0ef54372-037b-49e5-aaa8-e7dc5a92fb6a",
+              "title": "Hillsdale Holdings // Alleato Weekly",
+              "sourceType": "meeting",
+              "date": "2026-03-23T05:58:43.386722",
+              "snippet": "The team discussed vital design aspects and demolition strategies to ensure operational efficiency and cost management. Significant points included retaining existing roof drains to avoid a costly rebuild estimated at $500,000, while ensuring controlled risk. The air recovery unit will be dismantled and reused elsewhere, minimizing new equipment costs. Gas piping's location was clarified, with controlled access to the site for verification. Decisions on HVAC unit sizes aimed to optimize current ",
+              "confidence": "medium"
+            },
+            {
+              "id": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPVAAA=",
+              "title": "RE: Hillsdale-Alleato A141",
+              "sourceType": "email",
+              "date": "2026-05-18T13:24:39.672845+00:00",
+              "snippet": "Subject: RE: Hillsdale-Alleato A141\nDate: 2026-05-18T12:53:14Z\nFrom: Logan Stevens <Logan.Stevens@btlaw.com>\nTo: Schertzing, Grant E. <schertzingg@millerjohnson.com>\n\nGood morning, Grant. Checking in here. Thanks! &nbsp; Logan &nbsp;Stevens , &nbsp;Associate ​ ​ ​ ​ Mobile:&nbsp; (574)&nbsp;606-6689 &nbsp; | &nbsp; Direct:&nbsp; (260)&nbsp;425-4742 | &nbsp;Email:&nbsp; Logan.Stevens@btlaw.com 888&nbsp;S.&nbsp;Harrison&nbsp;Street&nbsp;Suite&nbsp;600,&nbsp;Fort&nbsp;Wayne,&nbsp;IN&nbsp;46802 Atla",
+              "confidence": "medium"
+            },
+            {
+              "id": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQndiGwAAA=",
+              "title": "Hillsdale Holdings - Weekly Progress Report",
+              "sourceType": "email",
+              "date": "2026-05-18T02:28:04.153086+00:00",
+              "snippet": "Subject: Hillsdale Holdings - Weekly Progress Report\nDate: 2026-05-15T15:32:35Z\nFrom: Grant Cloud <gcloud@alleatogroup.com>\nTo: Mark Ferderer <mferderer@ferdimation.com>, Brandon Clymer <bclymer@alleatogroup.com>, Jesse Dawson <jdawson@alleatogroup.com>, Bob  Wright <bwright@alleatogroup.com>, marketingalleato@gmail.com <marketingalleato@gmail.com>, Maria Calcetero <Mcalcetero@alleatogroup.com>, Ashley Ortiz <aortiz@alleatogroup.com>\n\nVermillion Rise Team - Please see attached weekly progress re",
+              "confidence": "medium"
+            },
+            {
+              "id": "outlook_attachment_b6c8f229a447e00490f83960_0bffc5006973a3963f72fff0",
+              "title": "Hillsdale-Alleato_A141 (2014) (BT Rev. 5.12.26).docx",
+              "sourceType": "document",
+              "date": "2026-05-15T20:10:40.656539+00:00",
+              "snippet": "Attachment from Outlook email: RE: Hillsdale-Alleato A141",
+              "confidence": "medium"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-deep-agent-project-status"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-deep-agent-project-status",
+      "delta": "Bottom line: Vermillion Rise is not blowing up financially, but it is still immature operationally. The money looks basically flat; the real problem is workflow drag — overdue RFIs, overdue schedule tasks, and active coordination decisions that are still open.\n\nEvidence\n- Budget is essentially flat: revised budget is $13,071,266 vs. $13,059,266 original, a $12,000 delta (0.1%). Source: project_budget_summary.\n- No owner-change exposure is sitting there yet: approved owner change orders $0 and pending owner change orders $0. Source: project_budget_summary.\n- The project is still at 0% complete, and health is listed as n/a. Source: project_briefing_snapshot.\n- Execution risk is concentrated in process control: 4 open RFIs with 1 overdue, 2 open submittals, and 9 overdue schedule tasks. Source: project_briefing_snapshot and project_risk_snapshot.\n- There are 10 active change events, which tells me scope / coordination is still moving. Source: project_risk_snapshot.\n- The latest meeting digest says the team is still finalizing sprinkler zoning, HVAC drawings, and electrical integration, while steel lead time is being pushed from 16 weeks toward 8 weeks after approval. Source: recent meeting digest from 2026-05-19, “Vermillion design weekly call.”\n\nWhat this means\nThis is still a coordination-heavy project, not a clean execution machine yet. The owner-level read is: cost is controlled for now, but the project can still get nicked on schedule and scope if the overdue RFIs, lagging tasks, and design finalization don’t get closed fast. The steel lead-time note matters — that’s the kind of thing that quietly turns into schedule pain if approvals drift.\n\nRecommended next steps\n- PM: close the overdue RFI and clear the 9 overdue schedule tasks first. That is the highest-leverage cleanup.\n- Design / coordination team: lock HVAC, sprinkler, and electrical integration decisions now; don’t let those keep cycling.\n- Procurement: get the steel approval path tightened immediately if the lead time really is the critical driver.\n- Owner update: frame this as “financially stable, operationally still in coordination,” not as a success story.\n\nUncertainty\n- Project health is n/a, so I’m not treating that as meaningful.\n- Financials are current only through 2026-05-07, so I would not overread margin or exposure beyond the confirmed budget delta.\n- I’ve got enough to give you the read, but if you want the sharper version, the next layer is: which of the 9 overdue tasks and 4 RFIs are actually on the critical path."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-deep-agent-project-status"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Render Deep Agents project answer returned",
+        "status": "success",
+        "timestamp": "2026-05-19T15:58:52.275Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": null,
+    "data_parts": [
+      {
+        "id": "assistant-widget-deep-agent-project-status",
+        "data": {
+          "widget": {
+            "id": "deep-agent-project-status-evidence",
+            "type": "source_evidence_drawer",
+            "title": "Vermillion Rise Warehouse source coverage",
+            "sources": [
+              {
+                "id": "2e4264d3-56f2-4c3a-a1fa-1db34c0b47d2",
+                "date": "2026-05-19T15:48:14.616261+00:00",
+                "title": "current",
+                "snippet": "Vermillion Rise Warehouse is moving from design refinement into permit-ready coordination, with cost, scope, and long-lead procurement still active.",
+                "confidence": "medium",
+                "sourceType": "project_record"
+              },
+              {
+                "id": "teamsdm_1773240960371",
+                "date": "2026-03-23T04:39:33.275926",
+                "title": "Teams DM: oneOnOne",
+                "snippet": "[Teams Direct Message: oneOnOne]\n\n[2026-03-11] Maria Calcetero: Yes, you said vermillion.. that was on tuesdays",
+                "confidence": "medium",
+                "sourceType": "teams"
+              },
+              {
+                "id": "teamsdm_1773240711779",
+                "date": "2026-03-23T04:39:36.061491",
+                "title": "Teams DM: oneOnOne",
+                "snippet": "[Teams Direct Message: oneOnOne]\n\n[2026-03-11] Brandon Clymer: There isn’t a vermillion rise meeting today",
+                "confidence": "medium",
+                "sourceType": "teams"
+              },
+              {
+                "id": "0e4670a4-9983-44c1-98c5-5b9d4c309ec3",
+                "date": "2026-03-23T05:59:49.035738",
+                "title": "Vermillion Rise Existing building discussions",
+                "snippet": "The team discussed adjustments to the HVAC layout for a newly assigned 50,000 sq ft building, which is set to improve duct routing and production area flexibility. All HVAC units will be placed on the ground level in specified corners to align with future expansions, while ductwork will be positioned outside to avoid obstruction by tall racking. Structural engineering collaboration is crucial for determining wall penetrations, ensuring compliance with precast panel constraints. Pricing updates a",
+                "confidence": "medium",
+                "sourceType": "meeting"
+              },
+              {
+                "id": "0ef54372-037b-49e5-aaa8-e7dc5a92fb6a",
+                "date": "2026-03-23T05:58:43.386722",
+                "title": "Hillsdale Holdings // Alleato Weekly",
+                "snippet": "The team discussed vital design aspects and demolition strategies to ensure operational efficiency and cost management. Significant points included retaining existing roof drains to avoid a costly rebuild estimated at $500,000, while ensuring controlled risk. The air recovery unit will be dismantled and reused elsewhere, minimizing new equipment costs. Gas piping's location was clarified, with controlled access to the site for verification. Decisions on HVAC unit sizes aimed to optimize current ",
+                "confidence": "medium",
+                "sourceType": "meeting"
+              },
+              {
+                "id": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPVAAA=",
+                "date": "2026-05-18T13:24:39.672845+00:00",
+                "title": "RE: Hillsdale-Alleato A141",
+                "snippet": "Subject: RE: Hillsdale-Alleato A141\nDate: 2026-05-18T12:53:14Z\nFrom: Logan Stevens <Logan.Stevens@btlaw.com>\nTo: Schertzing, Grant E. <schertzingg@millerjohnson.com>\n\nGood morning, Grant. Checking in here. Thanks! &nbsp; Logan &nbsp;Stevens , &nbsp;Associate ​ ​ ​ ​ Mobile:&nbsp; (574)&nbsp;606-6689 &nbsp; | &nbsp; Direct:&nbsp; (260)&nbsp;425-4742 | &nbsp;Email:&nbsp; Logan.Stevens@btlaw.com 888&nbsp;S.&nbsp;Harrison&nbsp;Street&nbsp;Suite&nbsp;600,&nbsp;Fort&nbsp;Wayne,&nbsp;IN&nbsp;46802 Atla",
+                "confidence": "medium",
+                "sourceType": "email"
+              },
+              {
+                "id": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQndiGwAAA=",
+                "date": "2026-05-18T02:28:04.153086+00:00",
+                "title": "Hillsdale Holdings - Weekly Progress Report",
+                "snippet": "Subject: Hillsdale Holdings - Weekly Progress Report\nDate: 2026-05-15T15:32:35Z\nFrom: Grant Cloud <gcloud@alleatogroup.com>\nTo: Mark Ferderer <mferderer@ferdimation.com>, Brandon Clymer <bclymer@alleatogroup.com>, Jesse Dawson <jdawson@alleatogroup.com>, Bob  Wright <bwright@alleatogroup.com>, marketingalleato@gmail.com <marketingalleato@gmail.com>, Maria Calcetero <Mcalcetero@alleatogroup.com>, Ashley Ortiz <aortiz@alleatogroup.com>\n\nVermillion Rise Team - Please see attached weekly progress re",
+                "confidence": "medium",
+                "sourceType": "email"
+              },
+              {
+                "id": "outlook_attachment_b6c8f229a447e00490f83960_0bffc5006973a3963f72fff0",
+                "date": "2026-05-15T20:10:40.656539+00:00",
+                "title": "Hillsdale-Alleato_A141 (2014) (BT Rev. 5.12.26).docx",
+                "snippet": "Attachment from Outlook email: RE: Hillsdale-Alleato A141",
+                "confidence": "medium",
+                "sourceType": "document"
+              }
+            ]
+          }
+        },
+        "type": "data-assistant-widget"
+      }
+    ],
+    "tool_trace": [
+      {
+        "tool": "backendDeepAgentProjectStatus",
+        "agent": "frontend-ai-assistant",
+        "input": {
+          "message": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+          "selectedProjectId": 67
+        },
+        "detail": null,
+        "status": "success",
+        "toolName": "backendDeepAgentProjectStatus",
+        "timestamp": "2026-05-19T15:58:51.667Z",
+        "durationMs": 0
+      },
+      {
+        "tool": "project_lookup",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+          "selectedProjectId": 67
+        },
+        "detail": "Resolved project row before contract-spike response.",
+        "status": "success",
+        "toolName": "project_lookup",
+        "timestamp": "2026-05-19T15:58:51.667Z",
+        "durationMs": 483
+      },
+      {
+        "tool": "packet_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+          "selectedProjectId": 67
+        },
+        "detail": "Found 1 current intelligence packet row(s) across 1 target(s).",
+        "status": "success",
+        "toolName": "packet_reader",
+        "timestamp": "2026-05-19T15:58:51.667Z",
+        "durationMs": 525
+      },
+      {
+        "tool": "teams_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+          "selectedProjectId": 67
+        },
+        "detail": "Read-only probe found 6 teams row(s) from `document_metadata`.",
+        "status": "success",
+        "toolName": "teams_reader",
+        "timestamp": "2026-05-19T15:58:51.667Z",
+        "durationMs": 812
+      },
+      {
+        "tool": "meetings_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+          "selectedProjectId": 67
+        },
+        "detail": "Read-only probe found 18 meetings row(s) from `document_metadata`.",
+        "status": "success",
+        "toolName": "meetings_reader",
+        "timestamp": "2026-05-19T15:58:51.667Z",
+        "durationMs": 1131
+      },
+      {
+        "tool": "emails_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+          "selectedProjectId": 67
+        },
+        "detail": "Read-only probe found 16 emails row(s) from `project_emails`.",
+        "status": "success",
+        "toolName": "emails_reader",
+        "timestamp": "2026-05-19T15:58:51.667Z",
+        "durationMs": 252
+      },
+      {
+        "tool": "documents_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+          "selectedProjectId": 67
+        },
+        "detail": "Read-only probe found 100 documents row(s) from `project_documents`.",
+        "status": "success",
+        "toolName": "documents_reader",
+        "timestamp": "2026-05-19T15:58:51.667Z",
+        "durationMs": 306
+      },
+      {
+        "tool": "financials_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+          "selectedProjectId": 67
+        },
+        "detail": "Read-only probe found 96 financials row(s) from `acumatica_project_budgets`.",
+        "status": "success",
+        "toolName": "financials_reader",
+        "timestamp": "2026-05-19T15:58:51.667Z",
+        "durationMs": 207
+      },
+      {
+        "tool": "schedule_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+          "selectedProjectId": 67
+        },
+        "detail": "Read-only probe found 45 schedule row(s) from `schedule_tasks`.",
+        "status": "success",
+        "toolName": "schedule_reader",
+        "timestamp": "2026-05-19T15:58:51.667Z",
+        "durationMs": 110
+      },
+      {
+        "tool": "rfi_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+          "selectedProjectId": 67
+        },
+        "detail": "Read-only probe found 4 rfi row(s) from `rfis`.",
+        "status": "success",
+        "toolName": "rfi_reader",
+        "timestamp": "2026-05-19T15:58:51.667Z",
+        "durationMs": 117
+      },
+      {
+        "tool": "submittal_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+          "selectedProjectId": 67
+        },
+        "detail": "Read-only probe found 2 submittal row(s) from `submittals`.",
+        "status": "success",
+        "toolName": "submittal_reader",
+        "timestamp": "2026-05-19T15:58:51.667Z",
+        "durationMs": 90
+      },
+      {
+        "tool": "deepagents_runtime",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+          "selectedProjectId": 67
+        },
+        "detail": "Deep Agents runtime produced a synthesis from checked source coverage with durable memory.",
+        "status": "success",
+        "toolName": "deepagents_runtime",
+        "timestamp": "2026-05-19T15:58:51.667Z",
+        "durationMs": 30137
+      }
+    ],
+    "architecture": "render-backend-deep-agents-v1",
+    "provider_path": "render-backend-ai-gateway",
+    "retrieval_plan": {
+      "intent": "task_followup",
+      "reason": "packet_first_with_project",
+      "sources": [
+        "intelligencePacket",
+        "projectSnapshot",
+        "semanticVectorSearch"
+      ],
+      "responseFormat": "briefing_template"
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "backend_deep_agent": {
+      "mode": "deep_agents",
+      "project": {
+        "id": 67,
+        "name": "Vermillion Rise Warehouse"
+      },
+      "endpoint": "project-status",
+      "confidence": "high",
+      "orchestrator": "deep-agents-project-intelligence",
+      "evidence_count": 12,
+      "source_coverage": [
+        {
+          "status": "checked",
+          "sourceType": "packet",
+          "recordCount": 1
+        },
+        {
+          "status": "checked",
+          "sourceType": "teams",
+          "recordCount": 6
+        },
+        {
+          "status": "checked",
+          "sourceType": "meetings",
+          "recordCount": 18
+        },
+        {
+          "status": "checked",
+          "sourceType": "emails",
+          "recordCount": 16
+        },
+        {
+          "status": "checked",
+          "sourceType": "documents",
+          "recordCount": 100
+        },
+        {
+          "status": "checked",
+          "sourceType": "financials",
+          "recordCount": 96
+        },
+        {
+          "status": "checked",
+          "sourceType": "schedule",
+          "recordCount": 45
+        },
+        {
+          "status": "checked",
+          "sourceType": "rfi",
+          "recordCount": 4
+        },
+        {
+          "status": "checked",
+          "sourceType": "submittal",
+          "recordCount": 2
+        }
+      ],
+      "memory_candidates": [],
+      "memory_candidate_count": 0,
+      "recommended_action_count": 1
+    }
+  }
+}

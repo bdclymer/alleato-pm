@@ -6,7 +6,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createServiceClient } from "@/lib/supabase/service";
 
-import { requireAdmin } from "../intelligence-compiler/_shared";
+import { requireAdmin } from "../_shared";
 
 export const GET = withApiGuardrails(
   "/api/admin/intelligence-packets#GET",

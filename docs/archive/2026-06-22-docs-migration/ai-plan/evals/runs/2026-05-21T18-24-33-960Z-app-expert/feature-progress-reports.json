@@ -1,0 +1,54 @@
+{
+  "id": "feature-progress-reports",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4466,
+  "question": "Does the app have progress reports?",
+  "response": {
+    "answer": "Yes.\n\nEvidence:\n- Help article: `docs/help/articles/progress-reports.md`\n- Global route: `/progress-reports`\n- Project route: `/[projectId]/progress-reports`\n\nDocumented behavior:\n- Progress Reports are periodic status reports for owners or internal stakeholders.\n- The app can generate them with AI, route them through approval, and export a branded PDF.\n- Workflow states documented: Draft → Pending Review → Approved → Issued.\n- Export is documented as PDF, with download or email delivery.\n\nWhat I checked:\n- Artifact status: both generated artifacts are current and available.\n- Feature registry: found a documented “Progress Reports” feature linked to the help article.\n- App sitemap: confirmed both global and project-scoped routes.\n\nOne nuance:\n- There is also a route-discovered page at `/[projectId]/progress-reports/[reportId]` with no help article linked. That page exists in implementation evidence, but its exact user-facing behavior is not documented in the curated help article.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/progress-reports.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/progress-reports.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/progress-reports",
+        "sourceType": "sitemap",
+        "route": "/progress-reports",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/progress-reports/[reportId]",
+        "sourceType": "sitemap",
+        "route": "/progress-reports/[reportId]",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 4464,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

@@ -1,0 +1,150 @@
+{
+  "id": "project-document-broad-briefing",
+  "intent": "document_question",
+  "prompt": "For Westfield, give me the document intelligence baseline before we drill into exact files: latest docs, document risks, obligations, conflicts, and what matters to the PM.",
+  "selectedProjectId": 43,
+  "sessionId": "86b73bc2-053f-4463-9182-e08de4e4a737",
+  "sessionLabel": "eval-2026-06-08T17-14-26-044Z-5f1dc65d-project-document-broad-briefing",
+  "startedAt": "2026-06-08T17:14:29.713Z",
+  "finishedAt": "2026-06-08T17:16:47.713Z",
+  "durationMs": 121223,
+  "httpStatus": 200,
+  "streamError": "stream read error: This operation was aborted",
+  "streamEventCount": 8,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: This operation was aborted",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [semanticSearch, searchDocuments, sourceSpecificRagRetrieval, queryDocumentRows] to fire — none did",
+      "expected required tool 'clientProjectIntelligencePacket' to fire",
+      "expected required tool 'getProjectBriefingSnapshot' to fire",
+      "mustInclude missing: \"Westfield\"",
+      "mustIncludeAny missing one of: \"document\", \"documents\", \"drawing\", \"spec\", \"RFI\", \"submittal\"",
+      "mustIncludeAny missing one of: \"obligation\", \"required\", \"approval\", \"due\", \"conflict\", \"revision\"",
+      "mustIncludeAny missing one of: \"PM\", \"risk\", \"action\", \"impact\", \"matters\"",
+      "answer length 0 < min 220",
+      "duration 121223ms exceeded max budget 90000ms",
+      "required metadata missing: tool_trace",
+      "required metadata missing: retrieval_plan",
+      "required metadata missing: source_debug"
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'documents' not represented",
+      "expected family 'semantic' not represented",
+      "duration 121223ms exceeded warning budget 30000ms"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": "",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 90000,
+      "durationMs": 121223
+    }
+  },
+  "expectedToolNames": [
+    "semanticSearch",
+    "searchDocuments",
+    "sourceSpecificRagRetrieval",
+    "queryDocumentRows"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "documents",
+    "semantic"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: packet_first_with_project",
+        "status": "loading",
+        "timestamp": "2026-06-08T17:14:39.981Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "project-intelligence-packet",
+        "message": "Checking current compiled project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-06-08T17:14:44.191Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Checking Render Deep Agents project intelligence",
+        "status": "loading",
+        "timestamp": "2026-06-08T17:14:52.660Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents project status…",
+        "status": "loading",
+        "timestamp": "2026-06-08T17:14:55.660Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents project status…",
+        "status": "loading",
+        "timestamp": "2026-06-08T17:14:58.661Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents project status…",
+        "status": "loading",
+        "timestamp": "2026-06-08T17:15:01.664Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents project status…",
+        "status": "loading",
+        "timestamp": "2026-06-08T17:15:04.664Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Render Deep Agents returned context but not a direct answer; using local synthesis",
+        "status": "warning",
+        "timestamp": "2026-06-08T17:15:04.909Z"
+      }
+    }
+  ],
+  "persistedMetadata": null
+}

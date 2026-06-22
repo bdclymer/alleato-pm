@@ -54,15 +54,6 @@ from src.services.supabase_helpers import SupabaseRagStore
 from src.services.ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from src.services.pipeline import run_full_pipeline
 from src.api.admin_endpoints import require_admin_api_key
-from src.services.agents.deep_project_intelligence import (
-    build_executive_briefing_contract_spike,
-    build_project_status_contract_spike,
-    deep_agents_runtime_inventory,
-)
-from src.services.agents.deep_project_intelligence_contracts import (
-    DeepExecutiveIntelligenceRequest,
-    DeepProjectIntelligenceRequest,
-)
 from src.services.agents.content_builder import ContentBuilderRequest, run_content_builder_agent
 from src.services.agents.docs_research_agent import DocsResearchRequest, run_docs_research_agent
 from src.services.agents.llm_wiki import WikiRequest, list_llm_wiki_archive, run_llm_wiki_agent
@@ -93,13 +84,6 @@ logger = logging.getLogger(__name__)
 _openai_client = OpenAI() if (OpenAI and os.getenv("OPENAI_API_KEY")) else None
 _PIPELINE_MAX_CONCURRENCY = max(1, int(os.getenv("PIPELINE_MAX_CONCURRENCY", "3")))
 _pipeline_semaphore = threading.BoundedSemaphore(_PIPELINE_MAX_CONCURRENCY)
-_INTELLIGENCE_COMPILER_MAX_CONCURRENCY = max(
-    1,
-    int(os.getenv("INTELLIGENCE_COMPILER_MAX_CONCURRENCY", "1")),
-)
-_intelligence_compiler_semaphore = threading.BoundedSemaphore(
-    _INTELLIGENCE_COMPILER_MAX_CONCURRENCY,
-)
 
 
 def _public_backend_error(prefix: str, exc: Exception) -> str:
@@ -137,44 +121,6 @@ def _run_pipeline_limited(metadata_id: str) -> None:
         run_full_pipeline(metadata_id)
         logger.info("[Pipeline] released slot metadata_id=%s", metadata_id)
 
-
-def _run_intelligence_compiler_limited(
-    job_id: str,
-    source_limit: int,
-    packet_limit: int,
-    max_processing_time_ms: Optional[int],
-) -> None:
-    """Run queued compiler work with bounded concurrency for admin-triggered batches."""
-    from src.services.intelligence.compiler import run_intelligence_compiler_batch
-    from src.services.supabase_helpers import get_supabase_client
-
-    logger.info(
-        "[IntelligenceCompilerAPI] waiting for slot (%s max) job_id=%s source_limit=%s packet_limit=%s",
-        _INTELLIGENCE_COMPILER_MAX_CONCURRENCY,
-        job_id,
-        source_limit,
-        packet_limit,
-    )
-    with _intelligence_compiler_semaphore:
-        logger.info("[IntelligenceCompilerAPI] acquired slot job_id=%s", job_id)
-        try:
-            client = get_supabase_client()
-            result = run_intelligence_compiler_batch(
-                client,
-                source_limit=source_limit,
-                packet_limit=packet_limit,
-                max_processing_time_ms=max_processing_time_ms,
-            )
-            logger.info("[IntelligenceCompilerAPI] completed job_id=%s result=%s", job_id, result)
-        except Exception as exc:
-            logger.error(
-                "[IntelligenceCompilerAPI] background run failed job_id=%s: %s",
-                job_id,
-                exc,
-                exc_info=True,
-            )
-        finally:
-            logger.info("[IntelligenceCompilerAPI] released slot job_id=%s", job_id)
 
 app = FastAPI(
     title="Alleato Procore Backend API",
@@ -1311,14 +1257,6 @@ class PipelineProcessRequest(BaseModel):
     metadataId: str
 
 
-class IntelligenceCompilerRunRequest(BaseModel):
-    source_limit: int = 10
-    packet_limit: int = 10
-    dry_run: bool = False
-    background: bool = False
-    max_processing_time_ms: Optional[int] = None
-
-
 class ProjectSynthesizeRequest(BaseModel):
     project_id: int
     since: Optional[str] = None
@@ -1326,11 +1264,6 @@ class ProjectSynthesizeRequest(BaseModel):
     max_extractions: Optional[int] = None
     skip_synthesized: bool = True
     dry_run: bool = False
-
-
-class OperatingSummaryRefreshRequest(BaseModel):
-    project_id: int
-    model: Optional[str] = None
 
 
 def _env_flag_enabled(name: str, default: str = "false") -> bool:
@@ -1370,92 +1303,6 @@ async def pipeline_process_endpoint(
 
     background_tasks.add_task(_run_pipeline_limited, payload.metadataId)
     return {"status": "queued", "metadataId": payload.metadataId}
-
-
-@app.get("/api/intelligence/teams-compiler/status", tags=["Intelligence"], summary="Teams compiler status")
-async def get_teams_compiler_status() -> Dict[str, Any]:
-    """Return Teams compiler monitoring metrics from Supabase."""
-    try:
-        from src.services.supabase_helpers import get_supabase_client
-
-        client = get_supabase_client()
-        result = client.rpc("get_teams_compiler_status").execute()
-        return result.data or {}
-    except Exception as exc:
-        logger.error("[TeamsCompilerAPI] status failed: %s", exc, exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Teams compiler status query failed: {exc}",
-        ) from exc
-
-
-@app.post("/api/intelligence/compiler/run", tags=["Intelligence"], summary="Run AI intelligence compiler queue")
-async def run_intelligence_compiler(
-    request: IntelligenceCompilerRunRequest,
-    background_tasks: BackgroundTasks,
-    _: None = Depends(require_admin_api_key),
-) -> Dict[str, Any]:
-    """Drain queued source intelligence and packet refresh jobs."""
-    import uuid
-
-    job_id = str(uuid.uuid4())
-    if request.source_limit < 0 or request.source_limit > 100:
-        raise HTTPException(status_code=422, detail="source_limit must be between 0 and 100")
-    if request.packet_limit < 0 or request.packet_limit > 100:
-        raise HTTPException(status_code=422, detail="packet_limit must be between 0 and 100")
-    if request.max_processing_time_ms is not None and (
-        request.max_processing_time_ms < 1000 or request.max_processing_time_ms > 600000
-    ):
-        raise HTTPException(status_code=422, detail="max_processing_time_ms must be between 1000 and 600000")
-    if request.dry_run:
-        return {
-            "job_id": job_id,
-            "status": "dry_run",
-            "results": {
-                "source_limit": request.source_limit,
-                "packet_limit": request.packet_limit,
-                "background": request.background,
-                "max_processing_time_ms": request.max_processing_time_ms,
-            },
-        }
-
-    if request.background:
-        background_tasks.add_task(
-            _run_intelligence_compiler_limited,
-            job_id,
-            request.source_limit,
-            request.packet_limit,
-            request.max_processing_time_ms,
-        )
-        return {
-            "job_id": job_id,
-            "status": "queued",
-            "results": {
-                "source_limit": request.source_limit,
-                "packet_limit": request.packet_limit,
-                "background": True,
-                "max_processing_time_ms": request.max_processing_time_ms,
-            },
-        }
-
-    try:
-        from src.services.intelligence.compiler import run_intelligence_compiler_batch
-        from src.services.supabase_helpers import get_supabase_client
-
-        client = get_supabase_client()
-        results = run_intelligence_compiler_batch(
-            client,
-            source_limit=request.source_limit,
-            packet_limit=request.packet_limit,
-            max_processing_time_ms=request.max_processing_time_ms,
-        )
-        return {"job_id": job_id, "status": "completed", "results": results}
-    except Exception as exc:
-        logger.error("[IntelligenceCompilerAPI] run failed job_id=%s: %s", job_id, exc, exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Intelligence compiler run failed for job {job_id}: {exc}",
-        ) from exc
 
 
 @app.post(
@@ -1568,129 +1415,6 @@ async def reconcile_flags(
             status_code=500,
             detail=f"Flag reconcile failed for project {request.project_id}: {exc}",
         ) from exc
-
-
-@app.post(
-    "/api/intelligence/projects/operating-summary/refresh",
-    tags=["Intelligence"],
-    summary="Refresh a project operating-summary packet",
-)
-async def refresh_project_operating_summary(
-    request: OperatingSummaryRefreshRequest,
-    _: None = Depends(require_admin_api_key),
-) -> Dict[str, Any]:
-    """Compile all available project operating sources into the current packet.
-
-    This is the Render-owned production refresh path for packet-first project
-    intelligence. The frontend should read the synced packet from Supabase and
-    use this endpoint to refresh, not run long AI generation in page render.
-    """
-    if request.project_id < 1:
-        raise HTTPException(status_code=422, detail="project_id must be positive")
-
-    try:
-        from src.services.intelligence.operating_summary import refresh_project_operating_packet
-        from src.services.supabase_helpers import get_supabase_client
-
-        client = get_supabase_client()
-        return refresh_project_operating_packet(
-            client,
-            request.project_id,
-            model=request.model,
-        )
-    except Exception as exc:
-        logger.error(
-            "[OperatingSummaryAPI] refresh failed project_id=%s: %s",
-            request.project_id,
-            exc,
-            exc_info=True,
-        )
-        raise HTTPException(
-            status_code=500,
-            detail=f"Operating summary refresh failed for project {request.project_id}: {exc}",
-        ) from exc
-
-
-@app.post(
-    "/api/intelligence/deep-agent/project-status",
-    tags=["Intelligence"],
-    summary="Run Deep Agents project-status contract spike",
-)
-async def run_deep_agent_project_status(
-    request: DeepProjectIntelligenceRequest,
-    _: None = Depends(require_admin_api_key),
-    store: SupabaseRagStore = Depends(get_rag_store),
-) -> Dict[str, Any]:
-    """Return a typed Deep Agents-ready project intelligence packet.
-
-    This endpoint is gated while Slice 1 proves the backend contract. It does
-    not change production chat behavior or run long agent workflows.
-    """
-    if not _env_flag_enabled("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED"):
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Deep Agents project intelligence is disabled. Set "
-                "DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true to run the "
-                "backend contract spike."
-            ),
-        )
-
-    response = build_project_status_contract_spike(
-        request,
-        store,
-        runtime=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME", "contract_spike"),
-        model=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL", "openai:gpt-5.5"),
-    )
-    if (
-        response.tool_trace
-        and response.tool_trace[0].status == "failed"
-        and response.tool_trace[0].detail == "Project lookup returned no row."
-    ):
-        raise HTTPException(status_code=404, detail=response.answer)
-    return response.model_dump(by_alias=True)
-
-
-@app.get(
-    "/api/intelligence/deep-agent/tool-inventory",
-    tags=["Intelligence"],
-    summary="Show the active Render Deep Agents tool inventory",
-)
-async def get_deep_agent_tool_inventory(
-    _: None = Depends(require_admin_api_key),
-) -> Dict[str, Any]:
-    """Return the effective Deep Agents runtime surface for deployment checks."""
-    return deep_agents_runtime_inventory()
-
-
-@app.post(
-    "/api/intelligence/deep-agent/executive-briefing",
-    tags=["Intelligence"],
-    summary="Run Deep Agents business-wide executive briefing",
-)
-async def run_deep_agent_executive_briefing(
-    request: DeepExecutiveIntelligenceRequest,
-    _: None = Depends(require_admin_api_key),
-    store: SupabaseRagStore = Depends(get_rag_store),
-) -> Dict[str, Any]:
-    """Return a typed Deep Agents packet for business-wide assistant prompts."""
-    if not _env_flag_enabled("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED"):
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Deep Agents executive intelligence is disabled. Set "
-                "DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true to run the "
-                "business-wide backend packet."
-            ),
-        )
-
-    response = build_executive_briefing_contract_spike(
-        request,
-        store,
-        runtime=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME", "contract_spike"),
-        model=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL", "openai:gpt-5.5"),
-    )
-    return response.model_dump(by_alias=True)
 
 
 @app.post(
@@ -1884,25 +1608,6 @@ async def run_deep_agent_microsoft_executive_assistant(
     if response.mode == "unavailable":
         raise HTTPException(status_code=502, detail=response.model_dump(by_alias=True))
     return response.model_dump(by_alias=True)
-
-
-@app.get("/api/intelligence/compiler/status", tags=["Intelligence"], summary="AI intelligence compiler status")
-async def get_intelligence_compiler_health(
-    _: None = Depends(require_admin_api_key),
-) -> Dict[str, Any]:
-    """Return queue, promotion, evidence, and packet health for the intelligence compiler."""
-    try:
-        from src.services.intelligence.compiler import get_intelligence_compiler_status
-        from src.services.supabase_helpers import get_supabase_client
-
-        client = get_supabase_client()
-        return get_intelligence_compiler_status(client)
-    except Exception as exc:
-        logger.error("[IntelligenceCompilerAPI] status failed: %s", exc, exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Intelligence compiler status query failed: {exc}",
-        ) from exc
 
 
 # In-process cache for the source-sync health endpoint.

@@ -1,0 +1,63 @@
+{
+  "id": "permissions-project-membership",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 11689,
+  "question": "Why does project membership matter?",
+  "mustInclude": [
+    "project",
+    "membership"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Project membership matters because Alleato PM uses it as one of the core checks to decide what a person can see or change.\n\nFrom the published help article **`docs/help/articles/app-permissions-and-visibility.md`**:\n- “Alleato PM uses role, project membership, and admin checks to decide what a person can see or change.”\n- A hidden page/button/record is most likely because:\n  - the user is not assigned to the project,\n  - the page is admin-only,\n  - the action requires stronger permission,\n  - the record is private or employee-sensitive,\n  - or the source system hasn’t synced the expected record yet.\n\nWhat I checked:\n- App Expert artifact status: current and available.\n- Feature registry: found **`app-permissions-and-visibility`**.\n- Help article: read **`docs/help/articles/app-permissions-and-visibility.md`**.\n\nWhat remains uncertain:\n- I cannot verify the access rules for a specific user or project without a current route or project ID.\n- I also can’t confirm any broader membership behavior beyond the documented permission logic above.\n\nRelated routes from the help article:\n- `/user-management`\n- `/[projectId]/user-management`\n- `/settings`",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/app-permissions-and-visibility.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-permissions-and-visibility.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/button/record",
+        "sourceType": "sitemap",
+        "route": "/button/record",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/user-management",
+        "sourceType": "sitemap",
+        "route": "/user-management",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 11562,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

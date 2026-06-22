@@ -1,0 +1,929 @@
+{
+  "id": "realworld-meeting-invite-clarify",
+  "intent": "calendar_action",
+  "prompt": "Send a meeting invite to Megan Harrison.",
+  "selectedProjectId": null,
+  "sessionId": "a1cf3afc-762c-41ca-8060-9e88a2d6d9b3",
+  "sessionLabel": "eval-2026-05-13T21-51-11-516Z-realworld-meeting-invite-clarify",
+  "startedAt": "2026-05-13T21:55:03.990Z",
+  "finishedAt": "2026-05-13T21:55:28.579Z",
+  "durationMs": 24107,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 122,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [createOutlookCalendarInvite, getPeopleAndRoles] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'calendar_action' not represented"
+    ],
+    "observations": [
+      "tools fired: intentPlanner, mcpToolDiscovery, streamingToolPolicy"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "mcpToolDiscovery",
+      "streamingToolPolicy"
+    ],
+    "familiesHit": [],
+    "finalTextLength": 417,
+    "finalText": "I need the meeting details first:\n\n- Subject\n- Date\n- Start time\n- End time or duration\n- Megan’s email\n- Any agenda/body text\n- Teams meeting or in-person? If in-person, location\n\nIf you want, send it in one line like:\n`Invite Megan Harrison to \"Budget review\" on 2026-05-14 from 2:00 PM to 2:30 PM, megan@company.com, Teams, agenda: review pending change orders.`\n\nOnce I have that, I’ll prepare the invite preview."
+  },
+  "expectedToolNames": [
+    "createOutlookCalendarInvite",
+    "getPeopleAndRoles"
+  ],
+  "expectedToolFamilies": [
+    "calendar_action"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-13T21:55:15.931Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "ZgW3XOcxwFRTgSql"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " details"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " first"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Subject"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Date"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Start"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " time"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " End"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " time"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " duration"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Megan"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Any"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " agenda"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/body"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " text"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-person"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "?"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-person"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " location"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " send"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " like"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Invite"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Megan"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Harrison"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " \""
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " review"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\""
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "14"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "00"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " PM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "30"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " PM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " me"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "gan"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "company"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " agenda"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " review"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pending"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " orders"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".`"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Once"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’ll"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " prepare"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " invite"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " preview"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 6780,
+      "totalTokens": 6900,
+      "outputTokens": 120,
+      "cacheHitRatio": 0,
+      "cachedInputTokens": 0
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Send a meeting invite to Megan Harrison.",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "calendar_action",
+          "sourceSpecificRagKind": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "calendar_action",
+          "planner": "model",
+          "rationale": "The user wants to create and send a meeting invite, which is a calendar action. Because sending should not happen directly without confirmation and key details are missing (time, date, duration, subject, attendees/context), the safest route is to draft the invite flow and ask for clarifying details first.",
+          "confidence": "high",
+          "responseMode": "draft_safe_action",
+          "requiredTools": [],
+          "deterministicIntent": "calendar_action",
+          "shouldAskClarifyingQuestion": true
+        },
+        "timestamp": "2026-05-13T21:55:15.930Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.excalidraw.com/mcp",
+          "server": "excalidraw"
+        },
+        "output": {
+          "allowedTools": [
+            "read_me",
+            "create_view",
+            "export_to_excalidraw",
+            "save_checkpoint",
+            "read_checkpoint"
+          ],
+          "enabledTools": [
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "enabledToolCount": 5,
+          "discoveredToolCount": 5
+        },
+        "timestamp": "2026-05-13T21:55:18.640Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.supabase.com/mcp?project_ref=lgveqfnpkxvzbnnwuled",
+          "server": "supabase"
+        },
+        "output": {
+          "enabledTools": [
+            "mcp_supabase_search_docs",
+            "mcp_supabase_list_tables",
+            "mcp_supabase_list_extensions",
+            "mcp_supabase_get_logs",
+            "mcp_supabase_get_advisors",
+            "mcp_supabase_get_project_url",
+            "mcp_supabase_get_publishable_keys",
+            "mcp_supabase_list_edge_functions",
+            "mcp_supabase_get_edge_function",
+            "mcp_supabase_list_branches"
+          ],
+          "enabledToolCount": 10,
+          "discoveredToolCount": 20
+        },
+        "timestamp": "2026-05-13T21:55:19.434Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "promptMode": "full_strategist",
+          "fullToolCount": 135,
+          "modelToolCount": 14,
+          "modelToolNames": [
+            "createOutlookCalendarInvite",
+            "findProject",
+            "getPeopleAndRoles",
+            "searchMeetingsByTopic",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "streamMaxSteps": 10,
+          "scopedToolCount": 14,
+          "streamMaxOutputTokens": 4000,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": false
+        },
+        "timestamp": "2026-05-13T21:55:19.434Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 6780,
+          "finishReason": "stop",
+          "outputTokens": 120,
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createOutlookCalendarInvite",
+            "findProject",
+            "getPeopleAndRoles",
+            "searchMeetingsByTopic",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        }
+      ],
+      "totalStepCount": 1,
+      "finalFinishReason": "stop",
+      "preparedStepCount": 1,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

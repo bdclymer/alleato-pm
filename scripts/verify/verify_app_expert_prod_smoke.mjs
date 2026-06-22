@@ -155,7 +155,7 @@ async function verifyOpenApiExposure() {
 }
 
 function findSmokeCase() {
-  const suite = readJson("docs/ai-plan/evals/app-expert-eval-suite.json");
+  const suite = readJson("docs/archive/2026-06-22-docs-migration/ai-plan/evals/app-expert-eval-suite.json");
   return (suite.cases ?? []).find((testCase) => testCase.id === "appnav-change-events-location");
 }
 
@@ -224,7 +224,7 @@ async function verifyAppExpertResponse() {
         return (
           sourceType === "sitemap" &&
           (route.includes("/change-events") ||
-            route.includes("docs/help/articles/change-events.md") ||
+            route.includes("docs/archive/2026-06-22-docs-migration/help/articles/change-events.md") ||
             route.includes("frontend/src/app") ||
             route.includes("/src/app"))
         );

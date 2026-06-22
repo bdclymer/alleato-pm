@@ -1,0 +1,46 @@
+{
+  "id": "schedule-analysis",
+  "intent": "operations_analysis",
+  "prompt": "Where are we against the schedule on Westfield? Any tasks slipping?",
+  "selectedProjectId": 43,
+  "sessionId": "22f385ae-663d-47a3-bb61-63acd09dcd3e",
+  "sessionLabel": "eval-2026-05-12T17-33-02-004Z-schedule-analysis",
+  "startedAt": "2026-05-12T17:35:55.445Z",
+  "finishedAt": "2026-05-12T17:36:11.203Z",
+  "durationMs": 387,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"7331e753-0042-4c3f-9ef1-318a76d03140\",\"timestamp\":\"2026-05-12T17:35:55.830Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"7331e753-0042-4c3f-9ef1-318a76d03140\",\"timestamp\":\"2026-05-12T17:35:55.830Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getScheduleAnalysis, queryScheduleTasks] to fire — none did",
+      "mustInclude missing: \"schedule\""
+    ],
+    "warnings": [
+      "expected family 'schedule' not represented",
+      "expected family 'structured' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"7331e753-0042-4c3f-9ef1-318a76d03140\",\"timestamp\":\"2026-05-12T17:35:55.830Z\"}"
+  },
+  "expectedToolNames": [
+    "getScheduleAnalysis",
+    "queryScheduleTasks"
+  ],
+  "expectedToolFamilies": [
+    "schedule",
+    "structured"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

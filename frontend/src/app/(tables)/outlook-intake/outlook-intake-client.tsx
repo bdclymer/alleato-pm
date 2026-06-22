@@ -983,7 +983,7 @@ export function OutlookIntakeClient({
                   "All synced Outlook emails and attachments before and after project matching.",
                 actions: (
                   <Button size="sm" variant="outline" asChild>
-                    <Link href="/outlook-emails">
+                    <Link href="/emails">
                       <Mail />
                       Project Emails
                     </Link>

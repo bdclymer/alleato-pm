@@ -1,0 +1,54 @@
+{
+  "id": "workflow-schedule",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 3953,
+  "question": "Where do schedule tasks live?",
+  "response": {
+    "answer": "I can’t answer confidently from App Expert artifacts because the generated docs are missing.\n\nWhat I checked:\n- App Expert artifact status: both generated files are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search for `schedule tasks`: failed due to missing artifact\n- Sitemap search for `schedule tasks`: failed due to missing artifact\n\nWhat remains uncertain:\n- The user-facing location for “schedule tasks”\n- Any exact route or help article path\n- Whether it lives under a scheduling, automations, jobs, or background-tasks area\n\nIf you want, I can still inspect the source tree for implementation evidence, but that would be route/file discovery rather than curated documentation.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/file",
+        "sourceType": "sitemap",
+        "route": "/file",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3692,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

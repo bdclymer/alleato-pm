@@ -1,0 +1,3816 @@
+{
+  "id": "financial-budget-summary",
+  "intent": "financial_analysis",
+  "prompt": "What does the budget look like on Westfield? Are we tracking under or over?",
+  "selectedProjectId": 43,
+  "sessionId": "4954a369-eafe-4dd9-840e-30632b09fc48",
+  "sessionLabel": "eval-2026-05-02T14-03-13-539Z-financial-budget-summary",
+  "startedAt": "2026-05-02T14:07:15.862Z",
+  "finishedAt": "2026-05-02T14:07:46.339Z",
+  "durationMs": 29736,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 603,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "expected family 'structured' not represented"
+    ],
+    "observations": [
+      "tools fired: clientProjectIntelligencePacket, streamingToolPolicy, getProjectBudgetSummary, getForecastComparison, getBudgetLineItems, getProjectBriefingSnapshot"
+    ],
+    "toolNames": [
+      "clientProjectIntelligencePacket",
+      "streamingToolPolicy",
+      "getProjectBudgetSummary",
+      "getForecastComparison",
+      "getBudgetLineItems",
+      "getProjectBriefingSnapshot"
+    ],
+    "familiesHit": [
+      "project",
+      "financial",
+      "forecast"
+    ],
+    "finalTextLength": 2160,
+    "finalText": "Westfield is **showing on budget right now**.\n\n- **Original budget:** $9,255,275  \n- **Revised budget:** $9,255,275  \n- **Approved budget growth:** $0  \n- **Forecast variance:** $0  \n- **Current read:** **not over budget in the structured summary**  \n  [Source: Budget Summary - Westfield Collective]\n\nWhat matters is the qualifier: the clean budget summary is **not the whole story**.\n\nThere’s still real exposure sitting in change management:\n\n- **Pending change-order exposure:** $1,204,203.55  \n- The project briefing also shows **25 pending change orders totaling $1,990,674.24**  \n  [Source: Budget Summary - Westfield Collective; Source: Project Briefing Snapshot - Westfield Collective]\n\nSo the honest answer is:\n\n- **Officially:** on budget\n- **Practically:** budget is still exposed, and it could move **over** depending on how those pending COs land\n\nThe likely pressure points line up with what’s already been surfacing in project communications:\n\n- plumbing scope\n- floor-sink changes\n- mop-sink / Pepsi-line additions\n- unsigned change-order documentation  \n  [Source: Project Briefing Snapshot - Westfield Collective; current intelligence packet]\n\nBig data gap: I **don’t** have reliable line-item budget detail right now.\n\n- Budget line-item query returned **0 lines**\n- Forecast comparison failed because the underlying budget-line view wasn’t available  \n  [Source: Budget Line Items - Westfield Collective; Source: Forecast Comparison - Westfield Collective]\n\nThat means I can tell you the **summary status**, but I cannot credibly tell you which exact cost codes are bleeding without another pass through the change-order and commitment detail.\n\nMy read: **Westfield is not officially over budget today, but it is not clean.** The risk is sitting in unresolved and unsigned cost movement, not in the posted budget summary.\n\nNext move: I’d go straight at the pending CO stack and separate:\n1. owner-recoverable change value,\n2. subcontract/vendor cost exposure,\n3. anything still unsigned but effectively spent.\n\nIf you want, I can pull the Westfield change orders next and tell you **which specific pending items are driving the exposure**."
+  },
+  "expectedToolNames": [
+    "getProjectBudgetSummary",
+    "queryBudgetData",
+    "getBudgetLineItems"
+  ],
+  "expectedToolFamilies": [
+    "financial",
+    "structured"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-02T14:07:16.191Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-02T14:07:18.024Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Loaded project intelligence packet — synthesizing strategist response",
+        "status": "success",
+        "timestamp": "2026-05-02T14:07:18.900Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "4LUh77a7I2eF1Pzx"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "toolName": "consultCFO"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "question"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "What"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " does"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " budget"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " look"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " like"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " on"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " West"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " Collective"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "?"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " Are"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " we"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " tracking"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " under"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " or"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " over"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " budget"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "?"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " Please"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " analyze"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " budget"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " status"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": ","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " revised"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " budget"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " vs"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " actual"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "/"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "comm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "itted"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "/project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "ed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " costs"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": ","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " whether"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " is"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " under"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " or"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " over"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " Include"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " any"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " notable"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " variance"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " drivers"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " or"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " data"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " gaps"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "context"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "Pinned"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " is"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " West"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " Collective"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " ("
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "43"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": ")."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " Current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " intelligence"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " packet"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " says"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " cost"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " exposure"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " may"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " exist"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " around"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " plumbing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " scope"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": ","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " floor"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "-s"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "ink"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " changes"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": ","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " mop"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "-s"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "ink"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "/"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "Pe"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "psi"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "-line"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " additions"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": ","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " unsigned"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " change"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "-order"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " documentation"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": ","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " past"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "-d"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "ue"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " invoice"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "/payment"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " pressure"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " Need"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " real"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " structured"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " financial"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " verification"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " before"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " quoting"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " exposure"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": " dollars"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": ".\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "toolName": "consultCFO",
+      "input": {
+        "question": "What does the budget look like on Westfield Collective? Are we tracking under or over budget? Please analyze current budget status, revised budget vs actual/committed/projected costs, and whether the project is under or over. Include any notable variance drivers or data gaps.",
+        "context": "Pinned project is Westfield Collective (project 43). Current intelligence packet says cost exposure may exist around plumbing scope, floor-sink changes, mop-sink/Pepsi-line additions, unsigned change-order documentation, and past-due invoice/payment pressure. Need real structured financial verification before quoting exposure dollars."
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_iBCwB9LeeuDlMBUofXiIl9r6",
+      "output": {
+        "agent": "cfo",
+        "analysis": "## Westfield Collective — budget status\n\nThe project is showing as **on budget** in the budget summary, with **$9,255,275** original budget and **$9,255,275** revised budget, so there is **$0** of budget growth and **$0** forecast variance in the structured budget summary. [Source: Budget Summary - Westfield Collective]\n\nThat said, the budget line detail is **not available** right now: the budget line-items query returned **0 lines**, and the forecast comparison tool failed because the underlying `v_budget_lines` table could not be found in the schema cache. [Source: Budget Line Items - Westfield Collective; Source: Forecast Comparison - Westfield Collective]\n\n## What the data says\n\n| Metric | Amount | Status |\n|---|---:|---|\n| Original Budget | **$9,255,275** | Baseline |\n| Revised Budget | **$9,255,275** | **No change** |\n| Approved Budget Changes | **$0** | No approved growth |\n| Budget Delta | **$0** | **On budget** |\n| Forecast Variance | **$0** | **On budget** |\n| Contract Value | **$9,255,275** | Same as budget |\n| Pending Change Orders | **$1,204,203.55** | Exposure pending approval |\n| Payments Received | **$8,722,803.63** | Collected to date |\n\n[Source: Budget Summary - Westfield Collective; Source: Project Briefing Snapshot - Westfield Collective]\n\n## Under or over budget?\n\nBased on the structured budget summary, **Westfield Collective is tracking on budget, not over budget**. There is no approved budget overrun showing in the data returned. [Source: Budget Summary - Westfield Collective]\n\n## Notable variance drivers / exposure\n\nThe biggest financial signal is **not an approved budget overrun**, but **pending change order exposure of $1,204,203.55** and **25 pending change orders totaling $1,990,674.24** in the project briefing snapshot. Those are not yet budget overruns, but they are the most likely source of future budget movement if approved. [Source: Budget Summary - Westfield Collective; Source: Project Briefing Snapshot - Westfield Collective]\n\nThe briefing snapshot also flags several project items that line up with your intelligence packet:\n- **Full interior plumbing scope of work** is listed as an approved commitment.\n- Recent pending change orders include items tied to added plumbing-related scope and other owner/field changes.\n- There are **36 unexecuted commitments** and **144 overdue schedule tasks**, which suggests the project is in a closeout/risk state even though the budget summary is currently flat. [Source: Project Briefing Snapshot - Westfield Collective]\n\n## Data gaps / limitations\n\n- I do **not** have usable budget-line detail for line-by-line variance analysis right now because the budget-line table returned no rows. [Source: Budget Line Items - Westfield Collective]\n- The forecast comparison tool failed due to a missing schema object, so I cannot validate projected final cost from that path. [Source: Forecast Comparison - Westfield Collective]\n- The summary shows **on-budget status**, but the project also has substantial **pending change order exposure**, so the true final position could move once those items are approved or rejected. [Source: Budget Summary - Westfield Collective; Source: Project Briefing Snapshot - Westfield Collective]\n\n## Bottom line\n\n**Current structured data says Westfield Collective is on budget.** The concern is not an approved overrun today; it is the **$1.2M+ pending change-order exposure** and the lack of line-item forecast detail, which means the final position could worsen if those items convert. [Source: Budget Summary - Westfield Collective; Source: Project Briefing Snapshot - Westfield Collective]\n\n## Recommended next steps\n1. **Resolve the budget-line data gap** so we can see cost-code level stress and projected final cost.  \n2. **Triage the $1.99M pending change orders** and separate recoverable owner-side scope from unrecovered cost exposure.  \n3. **Validate the plumbing/floor-sink/mop-sink/Pepsi-line items** specifically, because those are the likely drivers behind the exposure you flagged.  \n\nIf you want, I can next pull the **pending change orders** and isolate the ones tied to plumbing scope so we can quantify the exposure cleanly.",
+        "confidence": "high",
+        "toolsUsed": [
+          "getProjectBudgetSummary",
+          "getBudgetLineItems",
+          "getForecastComparison",
+          "getProjectBriefingSnapshot"
+        ],
+        "durationMs": 13427,
+        "alerts": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "show"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Original"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " $"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "9"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "255"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "275"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "vised"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " $"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "9"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "255"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "275"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Approved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " growth"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " $"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Forecast"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " variance"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " $"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " over"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " structured"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " summary"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Summary"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " qualifier"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " summary"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whole"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " story"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exposure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sitting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " management"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Pending"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-order"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exposure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " $"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "204"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "203"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "55"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " briefing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pending"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " orders"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " totaling"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " $"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "990"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "674"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "24"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Summary"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ";"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brief"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Snapshot"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "So"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " honest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Official"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Pract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ically"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exposed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " could"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " move"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "over"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " depending"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " how"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " those"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pending"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " land"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " likely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pressure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " points"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " already"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " been"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " surf"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "acing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " communications"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " plumbing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " floor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ink"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " changes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mop"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ink"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Pepsi"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " additions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unsigned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-order"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " documentation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brief"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Snapshot"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ";"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " intelligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Big"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "don"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reliable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-item"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " detail"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-item"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " query"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " returned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lines"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Forecast"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " comparison"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " failed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " underlying"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " view"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " wasn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " available"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ";"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Forecast"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Comparison"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "summary"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cannot"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cred"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ibly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " codes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bleeding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " without"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " another"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pass"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " through"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-order"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " detail"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "My"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " officially"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " over"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sitting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unsigned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " movement"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " posted"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " summary"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " move"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " go"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " straight"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pending"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stack"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " separate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cover"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "able"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " value"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " subcontract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/vendor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exposure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " anything"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unsigned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " effectively"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " spent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pull"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " orders"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " specific"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pending"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " driving"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exposure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 35010,
+      "totalTokens": 35619,
+      "outputTokens": 609
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "clientProjectIntelligencePacket",
+        "input": {
+          "query": "What does the budget look like on Westfield? Are we tracking under or over?",
+          "intent": "financial_analysis",
+          "selectedProjectId": 43
+        },
+        "output": {
+          "mode": "additive-context",
+          "packetId": "75216a3a-3684-46f9-813f-05cc3e9a7163",
+          "cardCount": 6,
+          "resolvedTarget": {
+            "id": "0b2bd1aa-c36d-4910-b82e-90958d430036",
+            "slug": "westfield-collective",
+            "source": "selected_project",
+            "projectId": 43
+          },
+          "freshnessStatus": "working_sample"
+        },
+        "timestamp": "2026-05-02T14:07:18.900Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled. Provider matrix 2026-05-01 confirmed AI SDK Gateway and direct OpenAI both pass generateText + streamText with tool calls (finishReason=stop, 1 tool call, non-empty text). Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "streamingModelToolsEnabled": true
+        },
+        "timestamp": "2026-05-02T14:07:18.901Z"
+      },
+      {
+        "tool": "getProjectBudgetSummary",
+        "input": {
+          "projectId": 43,
+          "projectName": "Westfield Collective"
+        },
+        "output": {
+          "project": {
+            "id": 43,
+            "name": "Westfield Collective",
+            "phase": "Complete"
+          },
+          "dataNotes": [
+            "Budget totals are from v_budget_lines (budget data).",
+            "Contract totals are provided separately for context."
+          ],
+          "sourceRef": "[Source: Budget Summary - Westfield Collective]",
+          "budgetSummary": {
+            "budgetDelta": 0,
+            "budgetGrowthPct": 0,
+            "budgetLineCount": 0,
+            "totalRevisedBudget": 0,
+            "totalOriginalBudget": 0,
+            "totalBudgetModifications": 0,
+            "totalApprovedBudgetChanges": 0
+          },
+          "contractContext": {
+            "invoicedAmount": 0,
+            "paymentsReceived": 8722803.63,
+            "pendingChangeOrders": 1204203.55,
+            "approvedChangeOrders": 0,
+            "revisedContractValue": 9255275,
+            "originalContractValue": 9255275
+          }
+        },
+        "timestamp": "2026-05-02T14:07:27.065Z"
+      },
+      {
+        "tool": "getForecastComparison",
+        "input": {
+          "sortBy": "variance",
+          "projectId": 43,
+          "projectName": "Westfield Collective"
+        },
+        "output": {
+          "error": "Could not find the table 'public.v_budget_lines' in the schema cache"
+        },
+        "timestamp": "2026-05-02T14:07:27.069Z"
+      },
+      {
+        "tool": "getBudgetLineItems",
+        "input": {
+          "projectId": 43,
+          "costCodeId": "",
+          "projectName": "Westfield Collective"
+        },
+        "output": {
+          "project": {
+            "id": 43,
+            "name": "Westfield Collective"
+          },
+          "summary": {
+            "lineCount": 0,
+            "budgetGrowthPct": 0,
+            "totalDirectCosts": 0,
+            "totalRevisedBudget": 0,
+            "overBudgetLineCount": 0,
+            "totalOriginalBudget": 0,
+            "totalProjectedFinalCost": null,
+            "totalVarianceAtCompletion": null
+          },
+          "sourceRef": "[Source: Budget Line Items - Westfield Collective]",
+          "budgetLines": [],
+          "overBudgetAlerts": []
+        },
+        "timestamp": "2026-05-02T14:07:27.257Z"
+      },
+      {
+        "tool": "getProjectBriefingSnapshot",
+        "input": {
+          "projectId": 43,
+          "projectName": "Westfield Collective"
+        },
+        "output": {
+          "project": {
+            "id": 43,
+            "name": "Westfield Collective",
+            "phase": "Complete",
+            "client": "Collective Group",
+            "summary": null,
+            "healthStatus": null,
+            "completionPct": 0,
+            "projectNumber": "24-115"
+          },
+          "dataGaps": [
+            "Budget lines came from the budget_lines fallback because v_budget_lines is unavailable."
+          ],
+          "hardFacts": {
+            "rfis": {
+              "open": [],
+              "openCount": 0,
+              "overdueCount": 0,
+              "statusBreakdown": {},
+              "scheduleSensitiveCount": 0
+            },
+            "budget": {
+              "status": "on budget",
+              "budgetDelta": 0,
+              "revisedBudget": 9255275,
+              "originalBudget": 9255275,
+              "forecastVariance": 0,
+              "approvedBudgetChanges": 0
+            },
+            "contract": {
+              "invoicedAmount": 0,
+              "paymentsReceived": 8722803.63,
+              "revisedContractValue": 9255275,
+              "originalContractValue": 9255275,
+              "pendingContractChanges": 1204203.55,
+              "approvedContractChanges": 0
+            },
+            "schedule": {
+              "totalTasks": 150,
+              "overdueCount": 144,
+              "overdueTasks": [
+                {
+                  "name": "Prepare and submit project schedule",
+                  "status": "not_started",
+                  "finishDate": "2025-02-03",
+                  "percentComplete": 0
+                },
+                {
+                  "name": "Receive notice to proceed and sign contract",
+                  "status": "not_started",
+                  "finishDate": "2025-02-03",
+                  "percentComplete": 0
+                },
+                {
+                  "name": "Complete Structural Design Parameters",
+                  "status": "not_started",
+                  "finishDate": "2025-02-05",
+                  "percentComplete": 0
+                },
+                {
+                  "name": "Structural Design For Permit",
+                  "status": "not_started",
+                  "finishDate": "2025-02-21",
+                  "percentComplete": 0
+                },
+                {
+                  "name": "Civil Plans for Permit",
+                  "status": "not_started",
+                  "finishDate": "2025-02-24",
+                  "percentComplete": 0
+                },
+                {
+                  "name": "Submit Site & Structural Foundation Permit",
+                  "status": "not_started",
+                  "finishDate": "2025-02-25",
+                  "percentComplete": 0
+                },
+                {
+                  "name": "Water Service",
+                  "status": "not_started",
+                  "finishDate": "2025-03-10",
+                  "percentComplete": 0
+                },
+                {
+                  "name": "Mechanical Design Drawings",
+                  "status": "not_started",
+                  "finishDate": "2025-03-14",
+                  "percentComplete": 0
+                }
+              ],
+              "incompleteCount": 144,
+              "upcomingMilestones": [],
+              "upcomingMilestoneCount": 0
+            },
+            "submittals": {
+              "open": [],
+              "openCount": 0,
+              "overdueCount": 0,
+              "statusBreakdown": {},
+              "longLeadOpenCount": 0
+            },
+            "commitments": {
+              "totalCount": 36,
+              "unexecuted": [
+                {
+                  "type": "subcontract",
+                  "title": "Providing design, manufacturing of Pre-engineered Metal Buil",
+                  "status": "Approved",
+                  "contractNumber": "SC-000150"
+                },
+                {
+                  "type": "subcontract",
+                  "title": "Landscaping",
+                  "status": "Approved",
+                  "contractNumber": "SC-000184"
+                },
+                {
+                  "type": "subcontract",
+                  "title": "Mass grading and underground utility installation.",
+                  "status": "Approved",
+                  "contractNumber": "SC-000187"
+                },
+                {
+                  "type": "subcontract",
+                  "title": "Architectural Awnings",
+                  "status": "Complete",
+                  "contractNumber": "SC-000189"
+                },
+                {
+                  "type": "subcontract",
+                  "title": "Westfield Collective Closed Cell Spray Foam for both Volleyb",
+                  "status": "Complete",
+                  "contractNumber": "SC-000357"
+                },
+                {
+                  "type": "subcontract",
+                  "title": "Full interior plumbing scope of work",
+                  "status": "Approved",
+                  "contractNumber": "SC-000202"
+                },
+                {
+                  "type": "subcontract",
+                  "title": "All metal pan stairs\nMezzanine stairs and opening railings0\n",
+                  "status": "Complete",
+                  "contractNumber": "SC-000204"
+                },
+                {
+                  "type": "subcontract",
+                  "title": "SC-000240",
+                  "status": "Approved",
+                  "contractNumber": "SC-000240"
+                }
+              ],
+              "statusBreakdown": {
+                "approved": 20,
+                "complete": 15,
+                "terminated": 1
+              },
+              "unexecutedCount": 36
+            },
+            "changeEvents": {
+              "recent": [],
+              "openCount": 0,
+              "statusBreakdown": {}
+            },
+            "changeOrders": {
+              "recent": [
+                {
+                  "title": "PCCO-2403-0073 - Price to demo\n - (2) Two front walls of the dumpster enclosure \n - (2) Two front gates \n - (2) Two front gate posts\n - And dispose demoed block, gates, and metal posts.  \n\nPrice does not include\n - Toothing back in cut block or repairing c",
+                  "amount": 3898.13,
+                  "number": "001877",
+                  "status": "Proposed",
+                  "dueDate": null
+                },
+                {
+                  "title": "PCCO-2403-0070 - Alleato ordered new faucets for the WOK in Fork and Fire. Daniel Stewart did not have the right faucets and we needed to overnight ship faucets in order to pass health inspection.",
+                  "amount": 495.91,
+                  "number": "001884",
+                  "status": "Proposed",
+                  "dueDate": null
+                },
+                {
+                  "title": "PCCO-2403-0071 - Bobby requested day laborers to help unloaded and organize owner provided furniture.",
+                  "amount": 755.77,
+                  "number": "001885",
+                  "status": "Proposed",
+                  "dueDate": null
+                },
+                {
+                  "title": "PCCO-2403-0072 - Deem to furnish and install 6 additional dedicated circuits\n\n- (1) One for the added Co2 machine in the back commissary. Outlet to be installed 8' AFF, and to the right of the hot water heater. Outlet to be installed out of the way of the",
+                  "amount": 11124.83,
+                  "number": "001875",
+                  "status": "Proposed",
+                  "dueDate": null
+                },
+                {
+                  "title": "PCCO-2403-0075 - Recalled change order from last months billing. Andrew made a mistake and wrote a deductive change order. 2 M-07 high tops at the second floor landing ($11,861,44)\nBoth M-07 high top tables were provided and installed by Alleato",
+                  "amount": 11861.44,
+                  "number": "001886",
+                  "status": "Proposed",
+                  "dueDate": null
+                },
+                {
+                  "title": "PCCO-2403-0059 - Deduct for partition rails and high top tables that are provided by ownership.",
+                  "amount": -66226.37,
+                  "number": "001887",
+                  "status": "Proposed",
+                  "dueDate": null
+                },
+                {
+                  "title": "PCO-003 - Engineering fees for combining parcels and re-platting with The City of Westfield.",
+                  "amount": 3898.13,
+                  "number": "000478",
+                  "status": "Proposed",
+                  "dueDate": null
+                },
+                {
+                  "title": "PCO-004 - Existing drain tile across iBeach property and neighboring farm from 2023 agreement with the County",
+                  "amount": 17511.42,
+                  "number": "000480",
+                  "status": "Proposed",
+                  "dueDate": null
+                }
+              ],
+              "recentCount": 25,
+              "pendingCount": 25,
+              "approvedCount": 0,
+              "pendingAmount": 1990674.24,
+              "approvedAmount": 0,
+              "statusBreakdown": {
+                "proposed": 25
+              }
+            },
+            "notifications": {
+              "open": [],
+              "openCount": 0
+            }
+          },
+          "sourceRef": "[Source: Project Briefing Snapshot - Westfield Collective]",
+          "riskSignals": [
+            "25 pending change order(s) need pricing/approval discipline.",
+            "144 incomplete schedule task(s) have finish dates before today.",
+            "36 commitment(s) are not executed."
+          ],
+          "recentMovement": [
+            {
+              "date": "2026-04-29T00:00:00+00:00",
+              "title": "Email: Re:[## 2339 ##] Westfield Collective: Error pushing to ERP",
+              "summary": "The document is an email correspondence from JobPlanner Support addressing an issue related to an error encountered while pushing an invoice to the ERP system, Acumatica. The email is directed to Andrew Cannon from Alleato Group and serves to clarify the reason for the failure in processing the invoice associated with the Westfield Collective project.\n\nKey topics discussed in the email include the identification of a closed and fully billed line in Acumatica that is causing the push error. It explains that the subcontract related to the invoice has an existing bill (Bill 003056) that was unlinked and deleted in JobPlanner but not reversed in Acumatica. The new bill is for a lesser amount due",
+              "decisions": null,
+              "keyTopics": null,
+              "sourceRef": "[Source: microsoft_graph outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHIcetwAAA=]",
+              "actionItems": []
+            },
+            {
+              "date": "2026-04-29T00:00:00+00:00",
+              "title": "Email: Re:[## 2339 ##] Westfield Collective: Error pushing to ERP",
+              "summary": "The document is an email correspondence regarding an issue with pushing data to an ERP system, specifically related to the Westfield Collective project. It is a communication from JobPlanner Support, represented by Kristen Wiginton, to Andrew Cannon of Alleato Group. The purpose of the email is to acknowledge the reported error and inform Andrew that the matter will be escalated to the IT department for further investigation.\n\nKey topics in the email include the acknowledgment of the error in the ERP system and the commitment to provide updates once more information is available. The email emphasizes the importance of addressing the issue promptly to ensure smooth operations related to the W",
+              "decisions": null,
+              "keyTopics": null,
+              "sourceRef": "[Source: microsoft_graph outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHIcetsAAA=]",
+              "actionItems": []
+            },
+            {
+              "date": "2026-04-29T00:00:00+00:00",
+              "title": "Email: RE: Westfield Collective - Repairs and Install Dates",
+              "summary": "The document is an email thread discussing repair and installation dates for the Westfield Collective project. It primarily serves as a communication between Bryan Doss, Vice President of Operations at CIH, and Andrew Cannon and Malachi Amico from Alleato Group. The emails detail the pricing for various repair options, specifically focusing on the replacement of a door frame and hinges.\n\nKey topics include the pricing for a Continuous Hinge ($250), a new door ($550), and a frame replacement ($385). Bryan Doss indicates that the door is currently too wide for a Continuous hinge, necessitating a full door replacement. The labor costs are noted to be Time and Materials (T&M), which suggests tha",
+              "decisions": null,
+              "keyTopics": null,
+              "sourceRef": "[Source: microsoft_graph outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHIcetpAAA=]",
+              "actionItems": []
+            },
+            {
+              "date": "2026-04-29T00:00:00+00:00",
+              "title": "Email: RE: 24-155 Westfield Collective  Documentation - GreyRock Pay Apps",
+              "summary": "The document is a series of email exchanges regarding the payment applications and deductive change orders related to the 24-155 Westfield Collective project, primarily between Jason Kiser, Director of Construction at Grey Rock Construction, and Andrew Cannon, Assistant Project Manager at Alleato Group. The purpose of these communications is to clarify and finalize financial adjustments and documentation associated with the project.\n\nKey topics include the completion of a pay application and the discussion of a deductive change order. Jason Kiser confirms that a joint fill was not completed and proposes a pay application amount of $4,000, while Andrew Cannon seeks confirmation on whether the",
+              "decisions": null,
+              "keyTopics": null,
+              "sourceRef": "[Source: microsoft_graph outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHIcetjAAA=]",
+              "actionItems": []
+            },
+            {
+              "date": "2026-04-29T00:00:00+00:00",
+              "title": "Email: Re: Westfield Collective - Update Request",
+              "summary": "The document is a series of email exchanges regarding the Westfield Collective project, primarily between Malachi Amico, a Project Engineer at Alleato Group, and Joey Cohoat, a Project Manager at Caulking Specialists. The purpose of these emails is to provide updates, address action items, and coordinate work schedules related to caulking tasks at the site.\n\nKey topics discussed include the completion of caulking for the main entrance control joint and interior door casings. Malachi initially requested confirmation of completion dates for these tasks. Joey responded with updates on the weather affecting progress and his schedule, indicating that he would return to the site on Monday, May 4, ",
+              "decisions": null,
+              "keyTopics": null,
+              "sourceRef": "[Source: microsoft_graph outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHIcetgAAA=]",
+              "actionItems": []
+            },
+            {
+              "date": "2026-04-29T00:00:00+00:00",
+              "title": "Email: Re: Westfield Collective - Update Request",
+              "summary": "The document is an email correspondence regarding an update request for the Westfield Collective project. It primarily consists of communication between Joey Cohoat, a Project Manager at Caulking Specialists, and Malachi Amico, a Project Engineer at Alleato Group. The purpose of the email is to provide updates on the project’s progress, address outstanding tasks, and coordinate future work schedules.\n\nKey topics discussed include the completion of caulking tasks for the main entrance and interior door frames. Malachi Amico expresses appreciation for the work done on the first floor and notes that some areas on the second floor were missed, specifically near closets and bathrooms. Joey Cohoat",
+              "decisions": null,
+              "keyTopics": null,
+              "sourceRef": "[Source: microsoft_graph outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHIcetfAAA=]",
+              "actionItems": []
+            },
+            {
+              "date": "2026-04-29T00:00:00+00:00",
+              "title": "Email: Re: 24-155 Westfield Collective  Documentation - GreyRock Pay Apps",
+              "summary": "The document is a series of email exchanges regarding the deductive change order for the 24-155 Westfield Collective project, primarily between Andrew Cannon, Assistant Project Manager at Alleato Group, and Jason Kiser, Director of Construction at Grey Rock Construction. The purpose of these communications is to clarify the amount of the deductive change order, which is in dispute—whether it should be for $3,000 or $4,000. The emails also reference the need for documentation related to the deductive change order and communication with previous project personnel.\n\nKey topics include the confirmation of the deduct amount, the request for documentation related to the deductive change order, and",
+              "decisions": null,
+              "keyTopics": null,
+              "sourceRef": "[Source: microsoft_graph outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHIcihTAAA=]",
+              "actionItems": []
+            },
+            {
+              "date": "2026-04-29T00:00:00+00:00",
+              "title": "Email: Westfield Collective: Error pushing to ERP",
+              "summary": "The document is an email from Andrew Cannon, an Assistant Project Manager at Alleato Group, directed to the Job Planner Support team. The primary purpose of this email is to report an error encountered while attempting to push a Westfield Collective Payable Invoice to the ERP system. This communication falls under the category of technical support requests.\n\nIn the email, Andrew succinctly describes the issue, indicating that he received an error message related to the invoice processing. He requests that the Job Planner Support team address and resolve this issue promptly. The email is dated April 29, 2026, and includes Andrew's contact information, which consists of his mobile number, emai",
+              "decisions": null,
+              "keyTopics": null,
+              "sourceRef": "[Source: microsoft_graph outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHIcihWAAA=]",
+              "actionItems": []
+            },
+            {
+              "date": "2026-04-29T00:00:00+00:00",
+              "title": "Email: Re: Re:[## 2339 ##] Westfield Collective: Error pushing to ERP",
+              "summary": "The document is an email correspondence regarding an error encountered while pushing an invoice to an ERP system related to the Westfield Collective project. The email is part of a support request from Andrew Cannon, an Assistant Project Manager at Alleato Group, to JobPlanner's support team.\n\nIn the email, Andrew Cannon attaches an additional invoice that has generated an error message, indicating a technical issue that needs resolution. He provides his contact information, including his mobile number and email address, and mentions the locations of Alleato Group's offices in Indianapolis and St. Petersburg. The email chain includes a response from Kristen Wiginton, a JobPlanner Account Man",
+              "decisions": null,
+              "keyTopics": null,
+              "sourceRef": "[Source: microsoft_graph outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHIcihYAAA=]",
+              "actionItems": []
+            },
+            {
+              "date": "2026-04-29T00:00:00+00:00",
+              "title": "Email: Re: Westfield Collective",
+              "summary": "The document is an email correspondence regarding the Westfield Collective project, primarily focused on billing and payment details between Andrew Cannon, an Assistant Project Manager at Alleato Group, and Kathie Mason, a Billing Analyst at CIH, Inc. The purpose of the email is to clarify outstanding payments and invoice applications related to the project.\n\nKey topics discussed include the total contract amount of $65,320.50, with payments received totaling $65,202.09, leaving a balance of $118.41 owed for two door hardware cores. Kathie Mason inquires about the specific invoices to which recent payments of $8,124.74 and $3,503.39 should be applied, referencing their respective Purchase Or",
+              "decisions": null,
+              "keyTopics": null,
+              "sourceRef": "[Source: microsoft_graph outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHIcihZAAA=]",
+              "actionItems": []
+            },
+            {
+              "date": "2026-04-29T00:00:00+00:00",
+              "title": "Email: Re: 24-155 Westfield Collective  Documentation - GreyRock Pay Apps",
+              "summary": "The document is a series of email exchanges regarding the financial aspects of the 24-155 Westfield Collective project, specifically focusing on deductive change orders and pay applications between Andrew Cannon, Assistant Project Manager at Alleato Group, and Jason Kiser, Director of Construction at Grey Rock Construction. The correspondence aims to clarify the amount of a change order related to work not completed, specifically the joint fill, and to ensure accurate invoicing for the project.\n\nKey topics discussed include the adjustment of a change order amount from $3,000 to $4,000, as indicated by Jason Kiser. Andrew Cannon confirms he will update the change order and recreate the invoic",
+              "decisions": null,
+              "keyTopics": null,
+              "sourceRef": "[Source: microsoft_graph outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHIcihVAAA=]",
+              "actionItems": []
+            },
+            {
+              "date": "2026-04-29T00:00:00+00:00",
+              "title": "Email: Malachi Amico shared \"Westfield Collective - Project Contacts\" with you",
+              "summary": "The document is an email from Malachi Amico to Andrew Cannon, sharing a file titled \"Westfield Collective - Project Contacts.\" The purpose of this email is to provide Andrew with access to a collaborative document that contains contact information relevant to the closeout phase of the Westfield project. This file is intended for editing, allowing Andrew and others with existing access to contribute or update information as necessary.\n\nKey topics in the email include the invitation to edit the shared document and the context of its use within the Westfield Collective project. The email emphasizes that the link provided is exclusive to Andrew and those who already have access, ensuring that se",
+              "decisions": null,
+              "keyTopics": null,
+              "sourceRef": "[Source: microsoft_graph outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHIceteAAA=]",
+              "actionItems": []
+            }
+          ],
+          "responseContract": {
+            "order": [
+              "Hard Facts",
+              "What Changed",
+              "Insider Analysis",
+              "Recommended Actions",
+              "Confidence and Data Gaps",
+              "Next Step"
+            ],
+            "hardFactsFirst": true,
+            "alwaysEndWithForwardMotion": true
+          },
+          "recommendedQuestions": [
+            "What budget number has leadership committed to: original budget, revised budget, or latest forecast?",
+            "Which pending change orders need owner approval, pricing backup, or a go/no-go decision this week?",
+            "Which RFIs or submittals can move the schedule if they sit another week?",
+            "What long-lead/procurement items are not bought out or fully released?",
+            "What decision can the CEO, owner, or PM make now that would reduce risk fastest?",
+            "What open actions have no clear owner or due date?"
+          ]
+        },
+        "timestamp": "2026-05-02T14:07:27.475Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        },
+        {
+          "id": "8fdb4362-863f-4f06-a66d-75bfb37403d4",
+          "type": "commitment",
+          "content": "Verify latest post-April-22 communications and check structured budget, commitments, direct costs, and change orders before quoting exposure dollars for Westfield Collective."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 4,
+      "relevantUsed": 1,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 16925,
+          "finishReason": "tool-calls",
+          "outputTokens": 135,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "consultCFO"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 18085,
+          "finishReason": "stop",
+          "outputTokens": 474,
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "extractStructuredActionBrief",
+            "consultCFO",
+            "consultCOO",
+            "consultCRO",
+            "consultCHRO",
+            "consultVPBD",
+            "getCommitmentsOverview",
+            "getChangeOrderDetails",
+            "getDirectCostsSummary",
+            "getBudgetLineItems",
+            "getCostTrends",
+            "getMarginAnalysis",
+            "getAPAgingReport",
+            "getARAgingReport",
+            "getCashPositionReport",
+            "getVendorSpendReport",
+            "getRecentBills",
+            "getRecentInvoices",
+            "getAcumaticaProjectBudget",
+            "getAcumaticaProjectList",
+            "getPurchaseOrderSummary",
+            "getPeopleAndRoles",
+            "getVendorPerformance",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getCrossProjectComparison",
+            "getHistoricalTrends",
+            "semanticSearch",
+            "getCompanyKnowledge",
+            "recallPastConversations",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "saveToKnowledgeBase",
+            "saveInsight",
+            "searchMemories",
+            "writeMemory",
+            "findProject",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchExternalDocuments",
+            "queryBudgetData",
+            "queryChangeOrders",
+            "queryCommitments",
+            "queryDirectCosts",
+            "queryScheduleTasks",
+            "queryDocumentRows",
+            "searchStructuredFinancialRows",
+            "getScheduleAnalysis",
+            "searchAppHelp",
+            "getForecastComparison",
+            "getProjectBriefingSnapshot",
+            "getFinancialAnalysis",
+            "getProjectBudgetSummary",
+            "getActionItemsAndInsights",
+            "getMeetingsByDate",
+            "searchDocuments",
+            "getProjectDetails"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "extractStructuredActionBrief",
+            "consultCFO",
+            "consultCOO",
+            "consultCRO",
+            "consultCHRO",
+            "consultVPBD",
+            "getCommitmentsOverview",
+            "getChangeOrderDetails",
+            "getDirectCostsSummary",
+            "getBudgetLineItems",
+            "getCostTrends",
+            "getMarginAnalysis",
+            "getAPAgingReport",
+            "getARAgingReport",
+            "getCashPositionReport",
+            "getVendorSpendReport",
+            "getRecentBills",
+            "getRecentInvoices",
+            "getAcumaticaProjectBudget",
+            "getAcumaticaProjectList",
+            "getPurchaseOrderSummary",
+            "getPeopleAndRoles",
+            "getVendorPerformance",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getCrossProjectComparison",
+            "getHistoricalTrends",
+            "semanticSearch",
+            "getCompanyKnowledge",
+            "recallPastConversations",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "saveToKnowledgeBase",
+            "saveInsight",
+            "searchMemories",
+            "writeMemory",
+            "findProject",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchExternalDocuments",
+            "queryBudgetData",
+            "queryChangeOrders",
+            "queryCommitments",
+            "queryDirectCosts",
+            "queryScheduleTasks",
+            "queryDocumentRows",
+            "searchStructuredFinancialRows",
+            "getScheduleAnalysis",
+            "searchAppHelp",
+            "getForecastComparison",
+            "getProjectBriefingSnapshot",
+            "getFinancialAnalysis",
+            "getProjectBudgetSummary",
+            "getActionItemsAndInsights",
+            "getMeetingsByDate",
+            "searchDocuments",
+            "getProjectDetails"
+          ]
+        }
+      ],
+      "totalStepCount": 2,
+      "finalFinishReason": "stop",
+      "preparedStepCount": 2,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 1
+    },
+    "response_quality": {
+      "score": 90,
+      "reasons": [
+        "compiled intelligence packet with multiple evidence cards",
+        "multiple source citations"
+      ],
+      "confidence": "high",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled. Provider matrix 2026-05-01 confirmed AI SDK Gateway and direct OpenAI both pass generateText + streamText with tool calls (finishReason=stop, 1 tool call, non-empty text). Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

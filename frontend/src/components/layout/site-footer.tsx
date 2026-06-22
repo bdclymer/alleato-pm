@@ -39,7 +39,7 @@ const adminSections = [
     links: [
       { label: "API Docs", href: "/api-docs" },
       { label: "Redoc", href: "/redoc" },
-      { label: "Database", href: "/database" },
+      { label: "Database", href: "/database-inventory" },
       { label: "RAG Eval", href: "/rag-eval" },
       { label: "Docs", href: "/docs" },
     ],

@@ -1,0 +1,56 @@
+{
+  "generatedAt": "2026-05-12T22:21:24.361Z",
+  "baseUrl": "http://localhost:3000",
+  "totalCases": 1,
+  "passed": 0,
+  "failed": 1,
+  "toolCoverage": {},
+  "intentDistribution": {
+    "project_briefing": 1
+  },
+  "results": [
+    {
+      "id": "project-briefing-vermillion",
+      "intent": "project_briefing",
+      "prompt": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+      "selectedProjectId": 67,
+      "sessionId": "6e68f3b9-9305-43f9-b46a-616b637e18d0",
+      "sessionLabel": "eval-2026-05-12T22-20-37-157Z-project-briefing-vermillion",
+      "startedAt": "2026-05-12T22:20:37.160Z",
+      "finishedAt": "2026-05-12T22:21:24.360Z",
+      "durationMs": 31981,
+      "httpStatus": 200,
+      "streamError": "stream read error: terminated",
+      "streamEventCount": 2,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: stream read error: terminated",
+          "assistant message was not persisted to chat_history",
+          "expected at least one of [getProjectBriefingSnapshot] to fire — none did",
+          "mustInclude missing: \"Vermillion\"",
+          "answer length 0 < min 200"
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'semantic' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 0,
+        "finalText": ""
+      },
+      "expectedToolNames": [
+        "getProjectBriefingSnapshot"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic"
+      ]
+    }
+  ]
+}

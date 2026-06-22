@@ -1,0 +1,5018 @@
+{
+  "id": "strategic-rag-cross-source-open-loops",
+  "intent": "strategic_rag",
+  "prompt": "What are the biggest open loops from this week's meetings and Office messages?",
+  "selectedProjectId": null,
+  "sessionId": "8e23ab3c-1af4-472d-9499-4fbef0d4c3a0",
+  "sessionLabel": "eval-2026-05-19T11-16-44-188Z-9a77e16d-strategic-rag-cross-source-open-loops",
+  "startedAt": "2026-05-19T11:19:06.407Z",
+  "finishedAt": "2026-05-19T11:19:51.445Z",
+  "durationMs": 40780,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 890,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "expected family 'actions' not represented"
+    ],
+    "observations": [
+      "tools fired: getMeetingIntelligence, getDomainIntelligence, searchMeetingsByTopic, semanticSearch, sourceSpecificRagRetrieval",
+      "judge strategic_advisor: pass (4/4)"
+    ],
+    "toolNames": [
+      "getMeetingIntelligence",
+      "getDomainIntelligence",
+      "searchMeetingsByTopic",
+      "semanticSearch",
+      "sourceSpecificRagRetrieval"
+    ],
+    "familiesHit": [
+      "meetings",
+      "communications",
+      "semantic"
+    ],
+    "finalTextLength": 4144,
+    "finalText": "The biggest open loops are operational, not strategic. Work is moving, but too much of it still depends on manual follow-up, incomplete documentation, and people remembering what’s next.\n\n1. **Schedule and scope are still loose on active work**\n   - Ace Hardware greenhouse/addition work still has scope and sequencing being clarified, with owner expectations ahead of the current budget reality.\n   - The operations packet flags that at least one job still does not have a usable schedule in the folder and may need one built from scratch.\n   - Why it matters: that’s how jobs drift into missed commitments and late owner conversations.  \n   [Source: Domain Intelligence — Operations]\n\n2. **Closeout is being chased late instead of managed live**\n   - On Uniqlo/GPC, testing, punch list closure, permit-close items, and photo/document collection are all still active loops.\n   - There’s also a pending change order tied to finishing work before handover.\n   - Why it matters: this is the kind of “almost done” work that delays turnover and billing if nobody owns the checklist end-to-end.  \n   [Source: Domain Intelligence — Operations]\n\n3. **Testing and punch-list completion are still gating turnover**\n   - Hydro/air/pressure testing is still underway or pending on Uniqlo-related work.\n   - Missing items like signage and final permit-close details are still being tracked.\n   - Why it matters: these are hard gates, not soft follow-ups. If they slip, handover slips.  \n   [Source: Domain Intelligence — Operations]\n\n4. **App/access issues are still interfering with execution**\n   - In the Exol Wilmer review, team members had app access problems affecting bid tracking and document sharing.\n   - Onboarding meetings also surfaced Bluebeam and Notion access problems.\n   - Why it matters: when access breaks, the team falls back to DMs and memory. That’s fine for a day, bad for a company.  \n   [Source: Domain Intelligence — Operations]\n\n5. **Manual office workflows are still too person-dependent**\n   - The Notion transaction process is still heavily manual: missing job numbers/dates need verification, Acumatica posting is sequential, and training is happening person-to-person.\n   - Maria is exploring bulk edits, but the process is still fragile.\n   - Why it matters: this is an office-side bottleneck that can create reporting lag and avoidable errors.  \n   [Source: Domain Intelligence — Operations]\n\n6. **Knowledge transfer is still informal**\n   - Lauren’s onboarding and the SOP video-library push are good signs, but they also confirm the same issue: too much process knowledge lives with specific people.\n   - Why it matters: if one person is out, the workflow slows down. That’s an execution risk, not just an HR issue.  \n   [Source: Domain Intelligence — Operations]\n\nWhat changed this week:\n- The strongest current signal is from **5/18 operations and onboarding meetings**, not from the formal meeting-intelligence pipeline. That pipeline returned **no matched meeting rows** for the week, so the usable signal is coming from the fresh Operations domain synthesis and its cited meeting/message evidence.\n- I also searched broadly for unresolved loops directly and got **no clean semantic hit**, which tells me the issue isn’t one named “open loop” thread — it’s a pattern across multiple meetings and messages.\n\nWhat I’d do next:\n- **Today:** assign one owner per active job for **schedule + closeout completeness**.\n- **This week:** force a short review on any job with open testing, punch list, or permit-close items.\n- **Office side:** pick one manual workflow — probably the Notion/Acumatica transaction process — and lock down the SOP before it becomes a recurring failure point.\n\nConfidence / gap:\n- Confidence is **medium**. The operations synthesis is fresh and useful.\n- The gap is that the direct weekly meeting-intelligence tool came back empty, so I can see the pattern clearly, but not every individual owner/deadline attached to it.\n\nIf you want, I can turn this into a tighter operator list:\n**“Alert now / Reply / Delegate / Watch”** with named people and likely owners from this week’s meeting evidence.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 45000,
+      "maxDurationMs": 150000,
+      "durationMs": 40780
+    },
+    "judge": {
+      "status": "pass",
+      "rubric": "strategic_advisor",
+      "score": 4,
+      "minScore": 4,
+      "summary": "The answer is strategic and specific enough to pass: it identifies recurring execution risks, explains why they matter, and is honest about evidence limits. It loses points for mixing project-adjacent examples without fully anchoring every claim to the requested week, and for giving only partial ownership/timing detail.",
+      "strengths": [
+        "Leads with a clear point of view that the open loops are operational and execution-driven, not just a recap.",
+        "Connects evidence to business implications such as delayed turnover, billing risk, and drift into missed commitments.",
+        "Surfaces second-order risks the user did not explicitly ask about, including person-dependent workflows, access issues, and knowledge-transfer fragility.",
+        "Is honest about weak evidence by stating the meeting-intelligence pipeline returned no matched rows and confidence is medium.",
+        "Keeps some claims anchored to source labels and flags that usable signal came from recent operations synthesis rather than pretending the meeting tool had clean results."
+      ],
+      "weaknesses": [
+        "Several bullets reference adjacent-project or domain synthesis material without enough project-specific grounding for the exact requested weekly open loops.",
+        "Operational next steps are directionally useful but not specific enough on named owners, exact deadlines, or decision points.",
+        "The answer reads a bit like a synthesized operations memo rather than a tight extract of 'this week's meetings and Office messages.'",
+        "It could separate confirmed open loops from inferred systemic risks more cleanly to avoid blurring evidence with interpretation."
+      ],
+      "dimensionScores": {
+        "1. Leads with a clear executive point of view instead of a neutral data recap.": 4,
+        "2. Connects evidence into business implications, tradeoffs, or second-order risks.": 4,
+        "3. Gives specific, operational next steps with owners/timing when supported.": 3,
+        "4. Surfaces what the user did not ask but should be thinking about.": 4,
+        "5. Sounds like a high-level strategist who knows the business, not a document retriever.": 4,
+        "6. Stays honest about missing or weak evidence and does not fabricate details.": 5,
+        "7. Keeps project-specific claims anchored to the requested project and labels adjacent-project or generic source material as background only.": 3
+      },
+      "provider": "vercel_gateway",
+      "model": "openai/gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "consultMicrosoftExecutiveAssistant",
+    "semanticSearch",
+    "searchTeamsMessages",
+    "searchEmails",
+    "getActionItemsAndInsights",
+    "backendDeepAgentExecutiveBriefing"
+  ],
+  "expectedToolFamilies": [
+    "meetings",
+    "communications",
+    "actions"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: source_specific_rag_recent_meetings",
+        "status": "loading",
+        "timestamp": "2026-05-19T11:19:06.631Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (1 sources, 0 warnings)",
+        "status": "success",
+        "durations": {
+          "source_specific_rag": 736
+        },
+        "timestamp": "2026-05-19T11:19:09.701Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "t4NgSqi4RcM7DPp4"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_hymwu0syE7B6qsksaPLSxtml",
+      "toolName": "searchMeetingsByTopic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hymwu0syE7B6qsksaPLSxtml",
+      "inputTextDelta": "{\"topic\":\"open loops decisions action items blockers this week office messages\",\"projectId\":0,\"projectName\":\"\",\"maxResults\":10}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_hymwu0syE7B6qsksaPLSxtml",
+      "toolName": "searchMeetingsByTopic",
+      "input": {
+        "topic": "open loops decisions action items blockers this week office messages",
+        "projectId": 0,
+        "projectName": "",
+        "maxResults": 10
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_Pvs6HSU7i04ciIIQD9iP2sqk",
+      "toolName": "getMeetingIntelligence"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Pvs6HSU7i04ciIIQD9iP2sqk",
+      "inputTextDelta": "{\"projectId\":0,\"projectName\":\"\",\"startDate\":\"2026-05-12\",\"endDate\":\"2026-05-19\",\"relativeWindow\":\"last_7_days\",\"intent\":\"actions\",\"limit\":10,\"timeZone\":\"America/New_York\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_Pvs6HSU7i04ciIIQD9iP2sqk",
+      "toolName": "getMeetingIntelligence",
+      "input": {
+        "projectId": 0,
+        "projectName": "",
+        "startDate": "2026-05-12",
+        "endDate": "2026-05-19",
+        "relativeWindow": "last_7_days",
+        "intent": "actions",
+        "limit": 10,
+        "timeZone": "America/New_York"
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_B8QfOpyV6rRLdBatZa8wVcxA",
+      "toolName": "semanticSearch"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_B8QfOpyV6rRLdBatZa8wVcxA",
+      "inputTextDelta": "{\"query\":\"open loops unresolved follow-ups decisions blockers from this week's meetings and office messages\", \"projectId\":0,\"projectName\":\"\",\"matchCount\":10,\"threshold\":0.3,\"skipRerank\":false}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_B8QfOpyV6rRLdBatZa8wVcxA",
+      "toolName": "semanticSearch",
+      "input": {
+        "query": "open loops unresolved follow-ups decisions blockers from this week's meetings and office messages",
+        "projectId": 0,
+        "projectName": "",
+        "matchCount": 10,
+        "threshold": 0.3,
+        "skipRerank": false
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_T5DoA0c429d0i76IygB3Wqth",
+      "toolName": "getDomainIntelligence"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_T5DoA0c429d0i76IygB3Wqth",
+      "inputTextDelta": "{\"domain\":\"operations\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_T5DoA0c429d0i76IygB3Wqth",
+      "toolName": "getDomainIntelligence",
+      "input": {
+        "domain": "operations"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_Pvs6HSU7i04ciIIQD9iP2sqk",
+      "output": {
+        "type": "meeting_intelligence",
+        "id": "meeting-intelligence",
+        "title": "Action items",
+        "subtitle": "Structured readout from meeting records, extracted insights, and transcript summaries",
+        "dateLabel": "2026-05-12 to 2026-05-19",
+        "meetingCount": 0,
+        "criticalRiskCount": 0,
+        "decisionCount": 0,
+        "actionItemCount": 0,
+        "topInsights": [
+          "No meeting records matched this window.",
+          "No risk signals were found in the matched meetings.",
+          "No decision signals were found in the matched meetings.",
+          "Opportunity tracking is not available in the current intelligence pipeline; only risks, decisions, and actions are surfaced."
+        ],
+        "recommendedNextActions": [
+          "Check meeting ingestion/source-sync health before using this window for an owner-ready update."
+        ],
+        "emptyState": "No meeting rows matched this request.",
+        "meetings": []
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_T5DoA0c429d0i76IygB3Wqth",
+      "output": {
+        "found": true,
+        "hasPacket": true,
+        "domain": {
+          "slug": "operations",
+          "name": "Operations",
+          "description": "Field operations, project execution, scheduling, safety, quality, and superintendent coordination across the portfolio."
+        },
+        "packet": {
+          "generatedAt": "2026-05-19T09:32:00.809563+00:00",
+          "ageHours": 1.7870833333333334,
+          "isStale": false,
+          "staleAfterHours": 8,
+          "freshnessStatus": "fresh",
+          "coveredStartAt": "2026-05-12T00:00:00+00:00",
+          "coveredEndAt": "2026-05-19T09:32:00.809547+00:00",
+          "executiveSummary": "Operations is running, but too much of the field workflow still depends on manual handoffs, ad hoc coordination, and people-specific knowledge. Across projects, the recurring pattern is not one isolated delay; it is weak process standardization around scheduling, closeout, access, and documentation. The team is compensating with extra communication and follow-up, which keeps work moving but leaves execution fragile.",
+          "currentStatus": "The portfolio shows active field execution across sprinkler, greenhouse, and project closeout work, with testing, punch list completion, and design coordination all in motion. At the same time, multiple documents point to recurring operational friction: unclear or missing schedules, late or incomplete closeout documentation, app/access problems, and manual tracking of materials, photos, and testing records. Several teams are relying on direct supervision, follow-up meetings, and manual updates to keep work aligned, which suggests the operating system is functional but not yet disciplined.",
+          "strategicRead": "This looks like a scaling problem more than a performance problem. The field team can execute, but the system around them is not consistently capturing scope, schedule, documentation, and approvals in a repeatable way. Leadership should read this as a warning that current growth will amplify coordination load unless the company tightens standard operating procedures, access management, and project information control.",
+          "whyItMatters": "The immediate risk this week is avoidable delay: missing schedules, incomplete closeout records, and testing/punch-list dependencies can stall inspections, handovers, and billing. Just as important, the company is spending management time manually resolving issues that should be systemized, which reduces bandwidth for higher-value project control and makes execution quality dependent on specific individuals.",
+          "recommendedNextMoves": [
+            "Standardize a single field execution packet for each job: schedule, scope clarifications, test records, punch list, photos, and closeout docs.",
+            "Assign explicit owners for schedule creation/maintenance on jobs where the folder is missing or unclear.",
+            "Require same-day upload of test results, punch photos, and closeout documents before work is considered complete.",
+            "Reduce people-dependent workflows by documenting recurring field processes and storing them in a shared SOP library.",
+            "Audit the projects with active access, tracking, or documentation issues and resolve the root system gaps, not just the individual tickets."
+          ],
+          "confidenceSummary": {
+            "reason": "Domain synthesis from document_metadata; no signal-candidate review queue.",
+            "overall": "medium",
+            "card_count": 6
+          }
+        },
+        "recurringFindings": [
+          {
+            "id": "981d53e7-dfec-4ad2-8daa-2db6d0b6d7de",
+            "title": "Field execution still depends on manual tracking and ad hoc coordination",
+            "cardType": "process_issue",
+            "summary": "Several documents show operations being managed through manual follow-up rather than a consistent system: schedules are missing from job folders, materials are tracked in spreadsheets/logs with row limits, photos and reports require repeated reminders, and testing/documentation updates are shared reactively. The work is getting done, but the operating model is still highly manual.",
+            "whyItMatters": "Manual coordination increases the chance of missed handoffs, stale information, and avoidable rework as the portfolio grows. It also ties execution quality to whoever is actively chasing the work instead of to a stable process.",
+            "currentStatus": "open",
+            "confidence": "high",
+            "nextAction": "Define one standard field control workflow for schedules, logs, photos, and closeout documents, then enforce it across active jobs.",
+            "sourceCount": 5,
+            "firstSeenAt": null,
+            "lastSeenAt": null,
+            "topEvidence": [
+              {
+                "sourceType": "fireflies",
+                "sourceTitle": "Notion Transaction Process",
+                "sourceOccurredAt": "2026-05-18T19:00:00+00:00",
+                "excerpt": "📅 Weekly Credit Card Transactions: Download occurs Mondays, with transactions picked to avoid duplicates; flow led by Jose.\n🔍 Manual Data Verification Needed: Missing job numbers and dates require cross-checking before Acumatica upload for accuracy.\n⚙️ Sequential Acumatica Posting Process: Manual posting without bulk options increases error risk; posting must be done individually.\n📚 Training and Knowledge Transfer Scheduled: Training session planned for Lauren with Jose’s guidance, focusing on the entire process.\n🔧 Ongoing Notion Improvements: Maria exploring bulk editing options to reduce manual workload and improve efficiency.\n✅ Data Integrity Checks Crucial: Regular audits necessary to ensure synchronization between Notion and Acumatica for accurate reporting.",
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              },
+              {
+                "sourceType": "fireflies",
+                "sourceTitle": "Onboarding Welcome!",
+                "sourceOccurredAt": "2026-05-18T13:30:00+00:00",
+                "excerpt": "✅ Onboarding Setup Progress: Most new hires logged into required apps; some face issues with Bluebeam and Notion access.\n📝 Application Usage Reminder: Onboarding documents must be signed; update professional photos by day's end for recognition.\n⏳ Time Tracking Transition: Shift to Venture app for timesheets in next one to two weeks, simplifying process and accuracy.\n🔧 Technical Challenges Addressed: Bluebeam login issues and hardware problems discussed; new gear ordered to enhance communication stability.\n📹 Training Resources Development: SOP video library initiative underway for easier onboarding; respond promptly to questions for effective knowledge sharing.",
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              },
+              {
+                "sourceType": "fireflies",
+                "sourceTitle": "Uniqlo & GPC Huddle",
+                "sourceOccurredAt": "2026-05-18T12:30:00+00:00",
+                "excerpt": "💧 System Testing: Water and air tests for system three underway; hydro and pressure tests prioritized to ensure readiness.\n📦 Inventory Audit: Unmanaged surplus materials at Siva; plans to verify items and return excess to Accufire for credit.\n🔧 Installation Monitoring: Punch list items like exit signs tracked; missing sign found, adjustments planned to ensure permit closure.\n📸 Daily Reporting: Emphasis on photo documentation and reports for accountability; improvements in photo quality sought for better clarity.\n📞 Team Communication: Daily meetings to confirm schedules and material availability; casual rapport noted as beneficial for team dynamics.\n✅ Punch List Completion: Final inspections planned post-completion; closing out punch list items critical to avoiding project delays.",
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              }
+            ]
+          },
+          {
+            "id": "5c2e90e2-fc1b-4d43-acc9-7d168dbaf244",
+            "title": "Scheduling and scope control are inconsistent at the job level",
+            "cardType": "schedule_risk",
+            "summary": "One operations thread explicitly says there is no schedule in the job folder and that a design schedule may need to be built from scratch. On the Ace Hardware greenhouse work, scope clarity is still being clarified and the team is debating what is included, indicating that scope and sequencing are not yet fully locked.",
+            "whyItMatters": "When schedule and scope are not formally controlled, the team risks misalignment with owners, downstream design/estimating confusion, and preventable delays in field readiness. This is especially risky when teams are already under deadline pressure.",
+            "currentStatus": "open",
+            "confidence": "high",
+            "nextAction": "Require every active job to have a living schedule and scope-of-work document in the folder before field commitments are made.",
+            "sourceCount": 3,
+            "firstSeenAt": null,
+            "lastSeenAt": null,
+            "topEvidence": [
+              {
+                "sourceType": "fireflies",
+                "sourceTitle": "Weekly OAC Meeting// Ace Hardware Champaign-Building Addition",
+                "sourceOccurredAt": "2026-05-14T18:30:00+00:00",
+                "excerpt": "The meeting discussed the greenhouse project with a total budget estimated between $550,000 and $750,000, where the greenhouse structure itself is estimated at $200,000 to $225,000, while site infrastructure costs could add another $300,000 to $400,000. Participants emphasized the need for realistic budget expectations as initial client proposals were around $300,000. The project aims for permit submission in early June, with reviews scheduled for June 2-4, amid concerns over potential permitting delays. Additionally, a priority was placed on tenant build-out needs, which may impact project timelines and budgets. Effective communication and coordination among various teams, including Wisconsin Greenhouse and MEP contractors, were identified as essential to avoid project delays and cost overruns.",
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              },
+              {
+                "sourceType": "fireflies",
+                "sourceTitle": "Weekly// Ace Hardware Champaign IL Meeting",
+                "sourceOccurredAt": "2026-05-14T15:00:00+00:00",
+                "excerpt": "The team focused on finalizing the scope and schedule for the building addition, with La' Kisha Green emphasizing the need for clear boundaries and cost estimates to meet owner expectations. Structural concerns regarding the attachment of the greenhouse were raised, highlighting shared foundations and potential load issues. MEP leads discussed critical timelines for plumbing, electrical, and HVAC systems to ensure design coordination. Energy code compliance was reviewed, with the current wall assembly barely meeting requirements. The team agreed on a three-week timeline for submitting permit drawings and emphasized the importance of communication with owners for finalizing designs and budgets.",
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              },
+              {
+                "sourceType": "teams_message",
+                "sourceTitle": "Teams DM Conversation: 19:459fd1b0-",
+                "sourceOccurredAt": "2026-05-14T00:00:00+00:00",
+                "excerpt": null,
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              }
+            ]
+          },
+          {
+            "id": "f8c8a646-398f-4710-9e77-21315eb3972a",
+            "title": "Closeout documentation is being chased late instead of assembled as work progresses",
+            "cardType": "risk",
+            "summary": "Wilmer closeout communication asks whether all closeout documents are available and whether electrical changes were documented. In other jobs, testing results, photos, and punch list items are repeatedly referenced as items to be collected, shared, or clarified, suggesting closeout discipline is uneven.",
+            "whyItMatters": "Late documentation creates inspection risk, slows turnover, and can delay billing or final acceptance. It also makes the company vulnerable when owners ask for evidence of what was built or changed.",
+            "currentStatus": "open",
+            "confidence": "high",
+            "nextAction": "Make closeout documentation a live workstream with a named owner and weekly completeness check on each active project.",
+            "sourceCount": 3,
+            "firstSeenAt": null,
+            "lastSeenAt": null,
+            "topEvidence": [
+              {
+                "sourceType": "fireflies",
+                "sourceTitle": "Uniqlo & GPC Huddle",
+                "sourceOccurredAt": "2026-05-18T12:30:00+00:00",
+                "excerpt": "💧 System Testing: Water and air tests for system three underway; hydro and pressure tests prioritized to ensure readiness.\n📦 Inventory Audit: Unmanaged surplus materials at Siva; plans to verify items and return excess to Accufire for credit.\n🔧 Installation Monitoring: Punch list items like exit signs tracked; missing sign found, adjustments planned to ensure permit closure.\n📸 Daily Reporting: Emphasis on photo documentation and reports for accountability; improvements in photo quality sought for better clarity.\n📞 Team Communication: Daily meetings to confirm schedules and material availability; casual rapport noted as beneficial for team dynamics.\n✅ Punch List Completion: Final inspections planned post-completion; closing out punch list items critical to avoiding project delays.",
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              },
+              {
+                "sourceType": "teams_message",
+                "sourceTitle": "Teams DM Conversation: 19:meeting_N",
+                "sourceOccurredAt": "2026-05-14T00:00:00+00:00",
+                "excerpt": null,
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              },
+              {
+                "sourceType": "fireflies",
+                "sourceTitle": "Uniqlo+Alleato Group",
+                "sourceOccurredAt": "2026-05-13T21:30:00+00:00",
+                "excerpt": "The meeting highlighted the successful completion of the fire sprinkler pipe replacement, with air pressure and hydro tests scheduled to verify integrity before project handover. All pipes have been upgraded, and documentation including photos will be shared with stakeholders such as Cheryl and Brian. A change order for additional installations is pending approval, crucial for the project's timely completion. The team expects to close all punch list items and dismantle temporary security measures by the end of the month, maintaining open communication about various operational aspects, including structural support and site safety post-demobilization.",
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              }
+            ]
+          },
+          {
+            "id": "a14b045e-b72e-4336-ac53-1ac40a609d34",
+            "title": "App and access problems are interfering with field coordination",
+            "cardType": "process_issue",
+            "summary": "Multiple documents reference login issues, app access problems, and onboarding friction across Bluebeam, Notion, Job Planner, and other tools. In one estimating/project review, access problems specifically affected bid tracking and document sharing.",
+            "whyItMatters": "When field and project teams cannot reliably access core tools, information flow slows and the organization falls back to informal communication. That increases the odds of outdated documents, duplicated effort, and missed dependencies.",
+            "currentStatus": "open",
+            "confidence": "high",
+            "nextAction": "Audit permissions and onboarding for core operations tools, then eliminate recurring access blockers with a single support owner.",
+            "sourceCount": 2,
+            "firstSeenAt": null,
+            "lastSeenAt": null,
+            "topEvidence": [
+              {
+                "sourceType": "fireflies",
+                "sourceTitle": "Exol Wilmer - Review on GC's",
+                "sourceOccurredAt": "2026-05-18T18:00:00+00:00",
+                "excerpt": "🗓️ Project Duration: The Wilmer job schedule targets a year-long duration with 50-60% drawing completion before finalizing.\n💰 Budget Overview: Project value is estimated near $30 million, with soft costs around $1.3 million and GC fees at 8-10%.\n📑 Bid Collection Status: Bids are being collected, with critical areas like doors and roofing needing follow-ups and coordination.\n🔧 Communication Issues: Several team members faced access problems with apps, affecting bid tracking and document sharing.\n📈 Next Steps: Prioritize completing estimates and scope clarifications to support upcoming negotiations and submission deadlines.",
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              },
+              {
+                "sourceType": "fireflies",
+                "sourceTitle": "Onboarding Welcome!",
+                "sourceOccurredAt": "2026-05-18T13:30:00+00:00",
+                "excerpt": "✅ Onboarding Setup Progress: Most new hires logged into required apps; some face issues with Bluebeam and Notion access.\n📝 Application Usage Reminder: Onboarding documents must be signed; update professional photos by day's end for recognition.\n⏳ Time Tracking Transition: Shift to Venture app for timesheets in next one to two weeks, simplifying process and accuracy.\n🔧 Technical Challenges Addressed: Bluebeam login issues and hardware problems discussed; new gear ordered to enhance communication stability.\n📹 Training Resources Development: SOP video library initiative underway for easier onboarding; respond promptly to questions for effective knowledge sharing.",
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              }
+            ]
+          },
+          {
+            "id": "02a491fd-802c-44b6-9db0-1c6bb5a5f9ef",
+            "title": "Testing and punch list work are still gating completion",
+            "cardType": "blocker",
+            "summary": "Uniqlo/GPC documents show hydro, air, and pressure testing alongside punch list items, missing sign installation, and final inspection steps that must be completed to close permits. Another Uniqlo note says all pipes were replaced and testing is needed before handover, with punch list closure and demobilization targeted afterward.",
+            "whyItMatters": "These are the final control points before handover, so any slippage directly delays turnover and can expose the company to reputational damage if the site is not closed cleanly. It also suggests the project finish process is not yet being driven with enough rigor.",
+            "currentStatus": "open",
+            "confidence": "high",
+            "nextAction": "Tighten a pre-handover checklist that ties testing, punch list, photos, and final inspection requirements together before demobilization.",
+            "sourceCount": 2,
+            "firstSeenAt": null,
+            "lastSeenAt": null,
+            "topEvidence": [
+              {
+                "sourceType": "fireflies",
+                "sourceTitle": "Uniqlo & GPC Huddle",
+                "sourceOccurredAt": "2026-05-18T12:30:00+00:00",
+                "excerpt": "💧 System Testing: Water and air tests for system three underway; hydro and pressure tests prioritized to ensure readiness.\n📦 Inventory Audit: Unmanaged surplus materials at Siva; plans to verify items and return excess to Accufire for credit.\n🔧 Installation Monitoring: Punch list items like exit signs tracked; missing sign found, adjustments planned to ensure permit closure.\n📸 Daily Reporting: Emphasis on photo documentation and reports for accountability; improvements in photo quality sought for better clarity.\n📞 Team Communication: Daily meetings to confirm schedules and material availability; casual rapport noted as beneficial for team dynamics.\n✅ Punch List Completion: Final inspections planned post-completion; closing out punch list items critical to avoiding project delays.",
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              },
+              {
+                "sourceType": "fireflies",
+                "sourceTitle": "Uniqlo+Alleato Group",
+                "sourceOccurredAt": "2026-05-13T21:30:00+00:00",
+                "excerpt": "The meeting highlighted the successful completion of the fire sprinkler pipe replacement, with air pressure and hydro tests scheduled to verify integrity before project handover. All pipes have been upgraded, and documentation including photos will be shared with stakeholders such as Cheryl and Brian. A change order for additional installations is pending approval, crucial for the project's timely completion. The team expects to close all punch list items and dismantle temporary security measures by the end of the month, maintaining open communication about various operational aspects, including structural support and site safety post-demobilization.",
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              }
+            ]
+          },
+          {
+            "id": "efff824a-5a56-4daa-8e09-6a8a67f65993",
+            "title": "Execution is being protected by individual knowledge and training backfill",
+            "cardType": "change_management",
+            "summary": "The credit card transaction process document shows Jose leading a manual workflow and Lauren needing training to learn the full process. Onboarding materials also point to SOP video creation and support for new hires, which indicates the company is relying on informal knowledge transfer to keep operations moving.",
+            "whyItMatters": "If key field and operations workflows live in people’s heads, turnover or absence creates immediate execution risk. Training is positive, but it is also a signal that the process itself is not yet self-serve.",
+            "currentStatus": "open",
+            "confidence": "medium",
+            "nextAction": "Convert the highest-frequency operational workflows into short SOPs and recorded walkthroughs so they are not person-dependent.",
+            "sourceCount": 2,
+            "firstSeenAt": null,
+            "lastSeenAt": null,
+            "topEvidence": [
+              {
+                "sourceType": "fireflies",
+                "sourceTitle": "Notion Transaction Process",
+                "sourceOccurredAt": "2026-05-18T19:00:00+00:00",
+                "excerpt": "📅 Weekly Credit Card Transactions: Download occurs Mondays, with transactions picked to avoid duplicates; flow led by Jose.\n🔍 Manual Data Verification Needed: Missing job numbers and dates require cross-checking before Acumatica upload for accuracy.\n⚙️ Sequential Acumatica Posting Process: Manual posting without bulk options increases error risk; posting must be done individually.\n📚 Training and Knowledge Transfer Scheduled: Training session planned for Lauren with Jose’s guidance, focusing on the entire process.\n🔧 Ongoing Notion Improvements: Maria exploring bulk editing options to reduce manual workload and improve efficiency.\n✅ Data Integrity Checks Crucial: Regular audits necessary to ensure synchronization between Notion and Acumatica for accurate reporting.",
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              },
+              {
+                "sourceType": "fireflies",
+                "sourceTitle": "Onboarding Welcome!",
+                "sourceOccurredAt": "2026-05-18T13:30:00+00:00",
+                "excerpt": "✅ Onboarding Setup Progress: Most new hires logged into required apps; some face issues with Bluebeam and Notion access.\n📝 Application Usage Reminder: Onboarding documents must be signed; update professional photos by day's end for recognition.\n⏳ Time Tracking Transition: Shift to Venture app for timesheets in next one to two weeks, simplifying process and accuracy.\n🔧 Technical Challenges Addressed: Bluebeam login issues and hardware problems discussed; new gear ordered to enhance communication stability.\n📹 Training Resources Development: SOP video library initiative underway for easier onboarding; respond promptly to questions for effective knowledge sharing.",
+                "relevanceReason": "Cited by domain synthesis as evidence for this finding."
+              }
+            ]
+          }
+        ],
+        "guidance": "Packet is fresh. Layer in today's raw data (searchMeetings, searchEmails, getRecentEmails) only if the user's question targets activity not yet in the synthesis."
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_hymwu0syE7B6qsksaPLSxtml",
+      "output": {
+        "searchScope": "All projects",
+        "topic": "open loops decisions action items blockers this week office messages",
+        "totalResults": 1,
+        "results": [
+          {
+            "sourceRef": "[Source: Meeting - \"Goodwill Allisonville Road Drawing Review\" - 2026-02-06T18:00:00+00:00]",
+            "id": "01KGNGTJXXSGMYD1VMG1C11WZT",
+            "title": "Goodwill Allisonville Road Drawing Review",
+            "date": "2026-02-06T18:00:00+00:00",
+            "project": "GW Allisonville Rd IN",
+            "projectId": 754,
+            "participants": "njepson@alleatogroup.com, bryce.clendenning@goodwillindy.org, amulder@goodwillindy.org, jerome.daksiewicz@dkgrar.com, nathan.owens@dkgrar.com, awoodhams@deemfirst.com, colin.nicoski@kimley-horn.com, jdawson@alleatogroup.com, bryce.clendenning@goodwillindy.org, amulder@goodwillindy.org, jerome.daksiewicz@dkgrar.com, nathan.owens@dkgrar.com, awoodhams@deemfirst.com, colin.nicoski@kimley-horn.com, jdawson@alleatogroup.com",
+            "summary": "🛠️ Construction Improvements: Utilize 8-foot plywood backing and 11-foot ceilings in key areas for durability and cost savings.\n🏢 Flooring and Fixtures: Install polished concrete flooring; use wall-mounted sinks and floor toilets for easier maintenance.\n🅿️ Parking Adjustments: 22 parking spots lost due to ADA upgrades; ensure close compliance with accessibility standards.\n⚙️ MEP Efficiency: Eight rooftop HVAC units with 600-amp service; focus on central controls for ease of maintenance.\n🤝 Coordination Focus: BIM model updates to streamline electrical and architectural plans; weekly meetings to manage progress and issues.\n💰 Cost-Cutting Measures: Eliminate nonessential features and reuse materials to save $4,000–$6,000 and reduce ongoing costs.",
+            "actionItems": "Add note to verify wall details and match Bloomington standards (02:33)\nCoordinate with electrician about lighting reductions and placement in corridors and riser rooms (11:20)\nRemove paper towel dispensers from plans, add hand dryer detail (01:30:05)\nAdd note to relocate electrical room near utility pole; coordinate with Dean on electrical routing and utility service approach (02:45:30)\nAdd note for carbell installation and wireless doorbell at donation vestibule (02:05:30)\nCoordinate with subcontractors for demo and site logistics including tracking pads and concrete infills at lift location (59:46)\nVerify plywood heights in restrooms, janitor closets, and storage areas (03:24)\nAdd note to remove chases for plumbing and coordinate wall thickness for wall-mounted sink carriers (31:00)\nCoordinate with electrical contractor on junction boxes and conduit layout for data and power as per retail needs (02:08:30)\nConfirm removal of night dropboxes and finalize window backside plywood details (08:10)\nProvide input on specialty fixture provisioning including hand dryers, baby changing stations, and mirror specifications (01:25:36)\nConfirm number of cash wraps to five and clarify electrical box requirements (01:56:20)\nConfirm HVAC unit specifications and single thermostat control location; specify remote sensors (02:58:26)\nCoordinate lighting placement for loading dock and scissor lift power source inside electrical room (02:39:24)\nAdd bollards to canopy columns at specified locations, confirm curb details including paint requirements (01:10:24)\nAdjust pavement and curb design to concrete under canopy area and asphalt elsewhere; modify light pole relocation notes (46:28)\nConfirm electrical room layout and necessity of ceiling (01:44:00)\nVerify load and circuit sizing for IT closet; confirm data outlet requirements (02:22:50)\nReview and finalize electrical outlet placements for retail and back office areas, including plug strips on shelving (02:00:00)\nConfirm fire protection monitoring schedule and requirements with fire marshal (02:54:49)\nConfirm IT room size reduction and adjust office space accordingly (02:23:27)"
+          }
+        ]
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_B8QfOpyV6rRLdBatZa8wVcxA",
+      "output": {
+        "results": [],
+        "message": "No results found for \"open loops unresolved follow-ups decisions blockers from this week's meetings and office messages\". Try rephrasing or broadening your search."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " biggest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " loops"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operational"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " strategic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " moving"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " too"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " much"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " depends"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " manual"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " follow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " incomplete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " documentation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " people"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " remembering"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " loose"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ace"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Hardware"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " greenhouse"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/add"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ition"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sequencing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clarified"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " expectations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ahead"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reality"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " flags"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " least"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " job"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " does"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " usable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " folder"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " may"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " built"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scratch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " how"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " jobs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " drift"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " missed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitments"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " late"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " conversations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Domain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Intelligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " chased"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " late"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " instead"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " managed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " On"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "iq"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "lo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/G"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "PC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " testing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " punch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " closure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " permit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " photo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/document"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " collection"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " all"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " loops"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pending"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " order"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tied"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " finishing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " before"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hand"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "over"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " kind"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "almost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " done"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " delays"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " turnover"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " billing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " nobody"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owns"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " checklist"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " end"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-end"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Domain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Intelligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Testing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " punch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " completion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gating"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " turnover"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Hydro"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "air"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "pressure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " testing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " underway"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pending"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "iq"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "lo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-related"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Missing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " like"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " final"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " permit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " details"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tracked"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " these"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hard"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " soft"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " follow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-ups"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " slip"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hand"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "over"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " slips"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Domain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Intelligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "4"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "App"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/access"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " interfering"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " execution"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " In"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " review"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " members"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " had"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " app"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " access"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " problems"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " affecting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bid"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tracking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " document"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sharing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " On"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "boarding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " surfaced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Blue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "beam"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " access"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " problems"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " when"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " access"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " breaks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " falls"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " D"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ms"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " memory"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fine"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " day"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " company"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Domain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Intelligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Manual"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " office"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " workflows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " too"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " person"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-dependent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " transaction"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " process"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " heavily"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " manual"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " missing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " job"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " numbers"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " verification"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "umat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ica"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " posting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sequential"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " training"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " happening"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " person"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-person"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Maria"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exploring"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bulk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " edits"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " process"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fragile"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " office"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-side"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bott"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "leneck"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " create"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reporting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lag"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " avoid"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "able"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " errors"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Domain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Intelligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Knowledge"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " transfer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " informal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Lauren"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " onboarding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " SOP"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " video"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-library"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " push"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confirm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " same"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " too"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " much"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " process"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " knowledge"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lives"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " specific"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " people"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " person"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " workflow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " slows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " down"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " execution"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " just"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " HR"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Domain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Intelligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " changed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " strongest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "18"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " onboarding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " formal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-int"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "elligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pipeline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pipeline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " returned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matched"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " usable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coming"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fresh"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " domain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synthesis"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " its"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cited"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/message"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " searched"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " broadly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " loops"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " directly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " got"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " semantic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tells"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " me"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " isn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " named"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " loop"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thread"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pattern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " across"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " multiple"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " messages"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " assign"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " per"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " job"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " +"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " completeness"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " force"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " short"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " review"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " any"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " job"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " testing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " punch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " permit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Office"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " side"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pick"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " manual"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " workflow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " probably"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "umat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ica"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " transaction"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " process"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lock"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " down"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " SOP"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " before"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " becomes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recurring"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " failure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " point"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "medium"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synthesis"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fresh"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " useful"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " direct"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " weekly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-int"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "elligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tool"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " came"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " empty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " see"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pattern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clearly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " every"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " individual"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/de"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " attached"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " turn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tighter"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operator"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Alert"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Reply"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Delegate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Watch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " named"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " people"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " likely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owners"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "finish",
+      "finishReason": "stop"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 56996,
+      "totalTokens": 58057,
+      "outputTokens": 1061
+    },
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "retrieval-complete",
+          "status": "success",
+          "message": "Retrieved (1 sources, 0 warnings)",
+          "durations": {
+            "source_specific_rag": 736
+          },
+          "timestamp": "2026-05-19T11:19:09.701Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": 2,
+    "tool_trace": [
+      {
+        "tool": "getMeetingIntelligence",
+        "error": null,
+        "input": {
+          "message": "What are the biggest open loops from this week's meetings and Office messages?",
+          "selectedProjectId": 0
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "getMeetingIntelligence",
+        "timestamp": "2026-05-19T11:19:13.784Z"
+      },
+      {
+        "tool": "getDomainIntelligence",
+        "error": null,
+        "input": {
+          "message": "What are the biggest open loops from this week's meetings and Office messages?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "getDomainIntelligence",
+        "timestamp": "2026-05-19T11:19:14.309Z"
+      },
+      {
+        "tool": "searchMeetingsByTopic",
+        "error": null,
+        "input": {
+          "message": "What are the biggest open loops from this week's meetings and Office messages?",
+          "selectedProjectId": 0
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "searchMeetingsByTopic",
+        "timestamp": "2026-05-19T11:19:27.168Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "error": null,
+        "input": {
+          "message": "What are the biggest open loops from this week's meetings and Office messages?",
+          "selectedProjectId": 0
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "semanticSearch",
+        "timestamp": "2026-05-19T11:19:30.358Z"
+      },
+      {
+        "tool": "searchMeetingsByTopic",
+        "input": {
+          "message": "What are the biggest open loops from this week's meetings and Office messages?",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "searchMeetingsByTopic",
+        "timestamp": "2026-05-19T11:19:46.958Z"
+      },
+      {
+        "tool": "getMeetingIntelligence",
+        "input": {
+          "message": "What are the biggest open loops from this week's meetings and Office messages?",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "getMeetingIntelligence",
+        "timestamp": "2026-05-19T11:19:46.958Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "input": {
+          "message": "What are the biggest open loops from this week's meetings and Office messages?",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "semanticSearch",
+        "timestamp": "2026-05-19T11:19:46.958Z"
+      },
+      {
+        "tool": "getDomainIntelligence",
+        "input": {
+          "message": "What are the biggest open loops from this week's meetings and Office messages?",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "getDomainIntelligence",
+        "timestamp": "2026-05-19T11:19:46.958Z"
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "finish_reason": "stop",
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "source_specific_rag_recent_meetings",
+      "sources": [
+        "sourceSpecificRag"
+      ],
+      "responseFormat": "source_specific_rag"
+    },
+    "response_quality": {
+      "score": 90,
+      "reasons": [
+        "multiple successful tool calls",
+        "multiple source citations"
+      ],
+      "confidence": "high",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "response_message_id": "t4NgSqi4RcM7DPp4",
+    "empty_model_response": false
+  }
+}

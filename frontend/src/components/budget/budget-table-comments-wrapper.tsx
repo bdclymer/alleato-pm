@@ -9,7 +9,7 @@ interface BudgetTableCommentsWrapperProps {
 
 /**
  * Compatibility wrapper for the budget page while cell comments migrate from
- * Liveblocks to the global Velt commenting layer.
+ * the old page-local comments entry point to the global Velt commenting layer.
  */
 export function BudgetTableCommentsWrapper({
   children,

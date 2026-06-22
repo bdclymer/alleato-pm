@@ -1,0 +1,191 @@
+{
+  "id": "realworld-outlook-arrived-today",
+  "intent": "source_lookup",
+  "prompt": "What came in through Outlook today that needs my attention?",
+  "selectedProjectId": null,
+  "sessionId": "eb02e795-d8f9-4145-bd51-7d24ebef5723",
+  "sessionLabel": "eval-2026-06-09T09-49-09-129Z-09b31494-realworld-outlook-arrived-today",
+  "startedAt": "2026-06-09T09:49:37.912Z",
+  "finishedAt": "2026-06-09T09:49:41.597Z",
+  "durationMs": 827,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 6,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "judge email_operator score 1 < 4: The answer does not inspect Outlook content at all. It only reports a tool/runtime failure and a billing error, so it fails the core task of identifying what needs attention. There is no inbox triage, no urgency assessment, no owner/action mapping, and no evidence-backed recommendation for Brandon."
+    ],
+    "warnings": [],
+    "observations": [
+      "tools fired: consultMicrosoftExecutiveAssistant",
+      "judge email_operator: fail (1/4)"
+    ],
+    "toolNames": [
+      "consultMicrosoftExecutiveAssistant"
+    ],
+    "familiesHit": [
+      "communications",
+      "email_action"
+    ],
+    "finalTextLength": 852,
+    "finalText": "I could not complete the live Microsoft inbox check. Failed capability: consultMicrosoftExecutiveAssistant. Cause: The Microsoft Executive Assistant could not complete this request. Failed capability: deepagents_microsoft_executive_assistant_runtime. Detail: Error code: 402 - {'error': {'message': 'A positive credit balance is required for all requests, including BYOK, so fallback providers remain available. Add credits at https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dtop-up to continue.', 'type': 'insufficient_funds'}} Detection gap: this request reached the Microsoft delegation path, but the specialist failure was previously collapsing into a generic provider fallback with no tool evidence. Prevention step: persist the Microsoft tool failure explicitly so Outlook/Brandon assistant regressions fail loudly and stay diagnosable.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 827
+    },
+    "judge": {
+      "status": "fail",
+      "rubric": "email_operator",
+      "score": 1,
+      "minScore": 4,
+      "summary": "The answer does not inspect Outlook content at all. It only reports a tool/runtime failure and a billing error, so it fails the core task of identifying what needs attention. There is no inbox triage, no urgency assessment, no owner/action mapping, and no evidence-backed recommendation for Brandon.",
+      "strengths": [
+        "It is honest about the failure and does not falsely claim to have read or sent anything.",
+        "It avoids inventing email/thread details that were not available."
+      ],
+      "weaknesses": [
+        "Does not separate urgent/critical email from normal inbox noise.",
+        "Does not identify who needs a response, why it matters, or consequences of ignoring it.",
+        "Does not summarize any email threads because none were actually retrieved.",
+        "Does not recommend a concrete response path for any inbox item.",
+        "Does not provide a usable draft or practical next step for Brandon."
+      ],
+      "dimensionScores": {
+        "separates_urgent_from_noise": 1,
+        "identifies_who_needs_response_and_impact": 1,
+        "summarizes_threads_efficiently": 1,
+        "recommends_concrete_response_path": 1,
+        "draft_is_short_direct_practical": 1,
+        "never_claims_sent_or_invents_details": 5,
+        "separates_user_owned_actions_from_inbox_items": 1,
+        "labels_judgments_as_evidence_backed": 1
+      },
+      "provider": "openai",
+      "model": "gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "consultMicrosoftExecutiveAssistant"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "status": "loading",
+        "timestamp": "2026-06-09T09:49:37.963Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Delegating Microsoft operator work",
+        "status": "loading",
+        "timestamp": "2026-06-09T09:49:38.029Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-microsoft-executive-assistant-error"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-microsoft-executive-assistant-error",
+      "delta": "I could not complete the live Microsoft inbox check. Failed capability: consultMicrosoftExecutiveAssistant. Cause: The Microsoft Executive Assistant could not complete this request. Failed capability: deepagents_microsoft_executive_assistant_runtime. Detail: Error code: 402 - {'error': {'message': 'A positive credit balance is required for all requests, including BYOK, so fallback providers remain available. Add credits at https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dtop-up to continue.', 'type': 'insufficient_funds'}} Detection gap: this request reached the Microsoft delegation path, but the specialist failure was previously collapsing into a generic provider fallback with no tool evidence. Prevention step: persist the Microsoft tool failure explicitly so Outlook/Brandon assistant regressions fail loudly and stay diagnosable."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-microsoft-executive-assistant-error"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "error",
+        "message": "Microsoft Executive Assistant failed",
+        "status": "error",
+        "timestamp": "2026-06-09T09:49:38.645Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "tool_trace": [
+      {
+        "tool": "consultMicrosoftExecutiveAssistant",
+        "error": "The Microsoft Executive Assistant could not complete this request. Failed capability: deepagents_microsoft_executive_assistant_runtime. Detail: Error code: 402 - {'error': {'message': 'A positive credit balance is required for all requests, including BYOK, so fallback providers remain available. Add credits at https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dtop-up to continue.', 'type': 'insufficient_funds'}}",
+        "input": {
+          "message": "What came in through Outlook today that needs my attention?",
+          "mailboxUserId": "bclymer@alleatogroup.com",
+          "selectedProjectId": null
+        },
+        "output": {
+          "error": "The Microsoft Executive Assistant could not complete this request. Failed capability: deepagents_microsoft_executive_assistant_runtime. Detail: Error code: 402 - {'error': {'message': 'A positive credit balance is required for all requests, including BYOK, so fallback providers remain available. Add credits at https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dtop-up to continue.', 'type': 'insufficient_funds'}}",
+          "source": "microsoft_graph_live"
+        },
+        "status": "failed",
+        "toolName": "consultMicrosoftExecutiveAssistant",
+        "timestamp": "2026-06-09T09:49:38.645Z"
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "source_debug": {
+      "memory": {
+        "reason": "This answer was produced by a delegated specialist/direct Deep Agents path; inspect delegated trace and backend memory metadata for specialist-side context.",
+        "status": "not_loaded_in_frontend"
+      },
+      "sources": {
+        "timing": {
+          "slowest": [],
+          "failedCount": 0,
+          "totalMeasuredMs": 0
+        },
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 1,
+        "sourceCoverage": []
+      },
+      "orchestrator": "microsoft-executive-assistant",
+      "outputPolicy": null,
+      "retrievalPlan": {
+        "intent": "source_lookup",
+        "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "sources": [],
+        "responseFormat": "conversational"
+      }
+    },
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query_error",
+      "sources": [],
+      "responseFormat": "conversational"
+    },
+    "response_quality": {
+      "score": 45,
+      "reasons": [
+        "no successful tool calls",
+        "no source citations in final response",
+        "1 tool call failure(s)"
+      ],
+      "confidence": "low",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "delegated_orchestrator": "microsoft-executive-assistant"
+  }
+}

@@ -1,0 +1,1734 @@
+{
+  "id": "realworld-teams-source-freshness",
+  "intent": "source_health",
+  "prompt": "Are Teams messages current enough to trust today, or is source sync stale?",
+  "selectedProjectId": null,
+  "sessionId": "19488f3c-3548-43d9-88be-d2f09882101d",
+  "sessionLabel": "eval-2026-06-09T09-19-20-227Z-d8005f0e-realworld-teams-source-freshness",
+  "startedAt": "2026-06-09T09:23:26.649Z",
+  "finishedAt": "2026-06-09T09:23:42.348Z",
+  "durationMs": 15416,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 297,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected required tool 'assistantSourceHealth' to fire",
+      "required metadata missing: source_health"
+    ],
+    "warnings": [
+      "expected family 'source_health' not represented",
+      "global forbidden phrase: \"retrieval\""
+    ],
+    "observations": [
+      "tools fired: semanticSearch"
+    ],
+    "toolNames": [
+      "semanticSearch"
+    ],
+    "familiesHit": [
+      "communications",
+      "semantic"
+    ],
+    "finalTextLength": 1342,
+    "finalText": "Teams is still not something I’d call fully trustworthy for “today” reads.\n\nWhat I can confirm:\n- There’s a known gap in reliably retrieving recent Teams messages, and the system explicitly notes a need for a dedicated recent-message retrieval tool. [Source: ai_memory, 2026-05-19]\n- There was a Teams service restoration update saying messaging was functioning reliably again after a browser issue, with redundant monitoring and a 10-second monitoring protocol in place. But that message itself was from February 15, 2026, surfaced in a later record — so it tells us service was restored then, not that today’s retrieval layer is fully current. [Source: Teams DM summary, 2026-04-30, referencing message dated 2026-02-15]\n\nBottom line:\n- **For historical Teams context:** usable.\n- **For “what was said today” or very recent message certainty:** I would treat it as potentially stale.\n- **For anything decision-critical today:** don’t rely on Teams retrieval alone; cross-check with email, meetings, or direct live confirmation.\n\nWhat’s missing:\n- I don’t have a direct live freshness/status tool for Teams sync in the evidence I can see here, so I can’t prove current-day sync health beyond that known limitation.\n\nIf you want, I can still search Teams plus email plus meetings on a topic and tell you where the freshest signal actually is.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 60000,
+      "durationMs": 15416
+    }
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "source_health"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: source_lookup_intent",
+        "status": "loading",
+        "timestamp": "2026-06-09T09:23:26.722Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (1 sources, 0 warnings)",
+        "status": "success",
+        "durations": {
+          "semantic_search": 7178
+        },
+        "timestamp": "2026-06-09T09:23:34.048Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "i8bKHTdkQq7ytql9"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " something"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " call"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trustworthy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reads"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confirm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " known"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reliably"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieving"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " messages"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " explicitly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " notes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dedicated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-message"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tool"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ai"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "_memory"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "19"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " service"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " restoration"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " update"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " saying"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " messaging"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " functioning"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reliably"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " again"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " after"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " browser"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " redundant"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " monitoring"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "10"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-second"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " monitoring"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " protocol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " place"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " But"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " message"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " itself"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " February"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "15"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " surfaced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " later"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " record"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tells"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " us"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " service"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " restored"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " then"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " layer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " DM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " summary"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "04"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "30"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " referencing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " message"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "02"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "15"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Bottom"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "For"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " historical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " context"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " usable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "For"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " said"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " very"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " message"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " certainty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " would"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " treat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " potentially"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "For"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " anything"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decision"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-critical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " don"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alone"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ";"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cross"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-check"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " direct"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confirmation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " missing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " don"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " direct"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " freshness"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tool"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " see"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " here"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " prove"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-day"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " health"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " beyond"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " known"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " limitation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " plus"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " plus"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " topic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " where"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " freshest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "finish",
+      "finishReason": "stop"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 26855,
+      "totalTokens": 27147,
+      "outputTokens": 292
+    },
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "retrieval-complete",
+          "status": "success",
+          "message": "Retrieved (1 sources, 0 warnings)",
+          "durations": {
+            "semantic_search": 7178
+          },
+          "timestamp": "2026-06-09T09:23:34.048Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": 1,
+    "tool_trace": [
+      {
+        "tool": "semanticSearch",
+        "agent": "retrieval-planner-v2",
+        "input": {
+          "query": "Are Teams messages current enough to trust today, or is source sync stale?",
+          "message": "Are Teams messages current enough to trust today, or is source sync stale?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "resultCount": 8
+        },
+        "status": "success",
+        "toolName": "semanticSearch",
+        "timestamp": "2026-06-09T09:23:41.926Z",
+        "durationMs": 7178
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse.",
+          "projectId": null,
+          "visibility": "private"
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project.",
+          "projectId": null,
+          "visibility": "private"
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly.",
+          "projectId": null,
+          "visibility": "private"
+        },
+        {
+          "id": "44e117de-78c7-4cd9-8986-a80d10558232",
+          "type": "lesson",
+          "content": "There is a significant gap in the ability to retrieve recent Teams messages reliably; a dedicated recent message retrieval tool is needed.",
+          "projectId": null,
+          "similarity": 0.56757215215748,
+          "visibility": "team",
+          "rankingScore": 10.145694981544244,
+          "rankingReason": "freshness=0.89; project=global; similarity=0.57; importance=0.90"
+        }
+      ],
+      "teamUsed": 1,
+      "retrieved": {
+        "team": 1,
+        "relevant": 1,
+        "preferences": 3
+      },
+      "totalUsed": 4,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "source_debug": {
+      "memory": {
+        "memories": [
+          {
+            "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+            "type": "preference",
+            "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+            "type": "preference",
+            "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+            "type": "preference",
+            "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "44e117de-78c7-4cd9-8986-a80d10558232",
+            "type": "lesson",
+            "content": "There is a significant gap in the ability to retrieve recent Teams messages reliably; a dedicated recent message retrieval tool is needed.",
+            "projectId": null,
+            "similarity": 0.56757215215748,
+            "visibility": "team",
+            "rankingScore": 10.145694981544244,
+            "rankingReason": "freshness=0.89; project=global; similarity=0.57; importance=0.90"
+          }
+        ],
+        "teamUsed": 1,
+        "retrieved": {
+          "team": 1,
+          "relevant": 1,
+          "preferences": 3
+        },
+        "totalUsed": 4,
+        "relevantUsed": 0,
+        "preferencesUsed": 3,
+        "recentConversationsUsed": 3
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "semanticSearch",
+              "agent": "retrieval-planner-v2",
+              "status": "success",
+              "durationMs": 7178
+            }
+          ],
+          "failedCount": 0,
+          "totalMeasuredMs": 7178
+        },
+        "toolNames": [
+          "semanticSearch"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 1,
+        "sourceCoverage": []
+      },
+      "orchestrator": "retrieval-planner-v2",
+      "outputPolicy": {
+        "stopWhen": "stepCountIs(10)",
+        "maxOutputTokens": 8000
+      },
+      "retrievalPlan": {
+        "intent": "source_lookup",
+        "reason": "source_lookup_intent",
+        "sources": [
+          "semanticVectorSearch"
+        ],
+        "responseFormat": "source_lookup"
+      }
+    },
+    "finish_reason": "stop",
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "source_lookup_intent",
+      "sources": [
+        "semanticVectorSearch"
+      ],
+      "responseFormat": "source_lookup"
+    },
+    "synthesis_model": "openai/gpt-5.4",
+    "response_quality": {
+      "score": 77,
+      "reasons": [
+        "at least one successful tool call",
+        "multiple source citations"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "response_message_id": "i8bKHTdkQq7ytql9",
+    "empty_model_response": false
+  }
+}

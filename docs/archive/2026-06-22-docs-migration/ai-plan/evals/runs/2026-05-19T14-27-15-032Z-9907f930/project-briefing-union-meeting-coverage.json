@@ -1,0 +1,61 @@
+{
+  "id": "project-briefing-union-meeting-coverage",
+  "intent": "project_briefing",
+  "prompt": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+  "selectedProjectId": 1009,
+  "sessionId": "6728867e-40bb-493b-ad62-414cb7341822",
+  "sessionLabel": "eval-2026-05-19T14-27-15-032Z-9907f930-project-briefing-union-meeting-coverage",
+  "startedAt": "2026-05-19T14:27:16.258Z",
+  "finishedAt": "2026-05-19T14:27:31.910Z",
+  "durationMs": 2,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [clientProjectIntelligencePacket, backendDeepAgentProjectStatus, semanticSearch] to fire — none did",
+      "mustInclude missing: \"Union Collective\"",
+      "mustIncludeAny missing one of: \"meeting\", \"meetings\", \"transcript\", \"transcripts\"",
+      "mustIncludeAny missing one of: \"packet\", \"coverage\", \"source\"",
+      "answer length 0 < min 180",
+      "required metadata missing: response_quality.score"
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'semantic' not represented",
+      "expected family 'communications' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": "",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 2
+    }
+  },
+  "expectedToolNames": [
+    "clientProjectIntelligencePacket",
+    "backendDeepAgentProjectStatus",
+    "semanticSearch"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "semantic",
+    "communications"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

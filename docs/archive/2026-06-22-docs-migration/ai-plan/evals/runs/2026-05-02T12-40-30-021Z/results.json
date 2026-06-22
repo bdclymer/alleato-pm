@@ -1,0 +1,91 @@
+{
+  "generatedAt": "2026-05-02T12:42:02.188Z",
+  "baseUrl": "http://localhost:3000",
+  "totalCases": 1,
+  "passed": 0,
+  "failed": 1,
+  "toolCoverage": {
+    "searchEmails": 2,
+    "searchTeamsMessages": 2,
+    "searchMeetingsByTopic": 2,
+    "clientProjectIntelligencePacket": 1,
+    "streamingToolPolicy": 1,
+    "getActionItemsAndInsights": 1,
+    "getCommitmentsOverview": 1,
+    "getChangeOrderDetails": 1,
+    "getProjectRiskAnalysis": 1,
+    "getDirectCostsSummary": 1,
+    "getProjectBriefingSnapshot": 1,
+    "semanticSearch": 1
+  },
+  "intentDistribution": {
+    "project_briefing": 1
+  },
+  "results": [
+    {
+      "id": "what-changed",
+      "intent": "project_briefing",
+      "prompt": "What changed on Westfield since the last time I asked?",
+      "selectedProjectId": 43,
+      "sessionId": "8fe9f72e-b911-4ee4-adc9-d9e22898b8d3",
+      "sessionLabel": "eval-2026-05-02T12-40-30-021Z-what-changed",
+      "startedAt": "2026-05-02T12:40:30.023Z",
+      "finishedAt": "2026-05-02T12:42:02.184Z",
+      "durationMs": 90007,
+      "httpStatus": 200,
+      "streamError": "stream read error: This operation was aborted",
+      "streamEventCount": 919,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: stream read error: This operation was aborted"
+        ],
+        "warnings": [
+          "expected family 'memory' not represented",
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: clientProjectIntelligencePacket, streamingToolPolicy, searchEmails, searchEmails, searchTeamsMessages, searchTeamsMessages, getActionItemsAndInsights, getCommitmentsOverview, getChangeOrderDetails, getProjectRiskAnalysis, getDirectCostsSummary, getProjectBriefingSnapshot, semanticSearch, searchMeetingsByTopic, searchMeetingsByTopic"
+        ],
+        "toolNames": [
+          "clientProjectIntelligencePacket",
+          "streamingToolPolicy",
+          "searchEmails",
+          "searchEmails",
+          "searchTeamsMessages",
+          "searchTeamsMessages",
+          "getActionItemsAndInsights",
+          "getCommitmentsOverview",
+          "getChangeOrderDetails",
+          "getProjectRiskAnalysis",
+          "getDirectCostsSummary",
+          "getProjectBriefingSnapshot",
+          "semanticSearch",
+          "searchMeetingsByTopic",
+          "searchMeetingsByTopic"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "meetings",
+          "communications",
+          "semantic",
+          "actions"
+        ],
+        "finalTextLength": 3744,
+        "finalText": "Yes. The project moved closer to opening, but it still wasn’t commercially clean.\n\n### What changed since the last time you asked\n\n- **The strongest new signal is that Westfield crossed into opening/turnover mode.**\n  - There was an accepted **“Westfield Collective Grand Opening”** email on **2026-04-07**.  \n  - That’s a real shift from “closeout coordination” to “space is basically live / being launched.”  \n  - [Source: Email from Brandon Clymer, Apr. 7, 2026]\n\n- **Physical completion looked further along, but not fully wrapped.**\n  - Earlier OAC notes showed finish work, casework, doors, tile, and equipment coordination pushing toward TCO/turnover.\n  - There’s also a signal that **final photos likely wouldn’t be ready until end of month**, which means the project was usable but still not fully buttoned up from a completion/documentation standpoint.\n  - [Source: Meeting - “OAC- Westfield Collective” - 2026-02-10]\n  - [Source: Teams message, Apr. 4, 2026]\n\n- **The “remaining items” thread was still active.**\n  - So the closeout list did not disappear. It was still being managed in early April.\n  - [Source: Email from Ryan Wanninger, Apr. 5, 2026]\n\n- **The financial/admin side did not clean up the way it should have.**\n  - The biggest new negative development is a **2026-04-29 ERP invoice push problem**:\n    - Acumatica showed a **closed / fully billed line**\n    - a prior bill had been unlinked/deleted in JobPlanner\n    - but not reversed cleanly in Acumatica\n  - That means billing sync and closeout accounting were still messy after your last baseline.\n  - [Source: Project Briefing Snapshot - Westfield Collective]\n\n- **Change-order execution still looks unresolved.**\n  - The data still shows **25 pending change orders** and **$1,990,674.24 pending amount** in the snapshot.\n  - There’s also newer discussion around a deductive CO being recreated and the amount still being debated.\n  - So this did **not** get materially cleaner.\n  - [Source: Project Briefing Snapshot - Westfield Collective]\n\n- **Costs kept moving in late April.**\n  - New April direct costs were posted, including payments to **Deem, United Excavating, CIH, and Ski Landscape**.\n  - That tells you the job was still absorbing closeout-stage cost activity, not frozen/fully settled.\n  - [Source: Direct Costs - Westfield Collective]\n\n### My read\n\nThe project **advanced physically**, but **administratively it’s still dragging**.\n\nThat’s the change.\n\nLast time, the story was:\n- warranty/LOI language\n- unsigned COs\n- remaining work\n- payment follow-up\n\nNow the story is:\n- the project appears **closer to open / usable**\n- but **billing sync, CO cleanup, and final commercial documentation are still unresolved**\n\nSo the risk has shifted from “can we finish?” to **“can we close this out cleanly without leaving money and paperwork hanging?”**\n\n### What I’d focus on now\n\n1. **Resolve the ERP billing mismatch first**\n   - That’s the newest concrete problem.\n   - If Acumatica and JobPlanner are out of sync, final billing and reconciliation stay messy.\n\n2. **Get a hard list of still-open closeout items**\n   - Not generic “remaining items” — actual item, owner, due date, status.\n\n3. **Force closure on the pending CO paperwork**\n   - Especially any deductive/plumbing-related items that are still unsigned or disputed.\n\n### Confidence / gaps\n\n- High confidence that the project moved further into late closeout/opening.\n- High confidence that **billing/admin cleanup is still not resolved**.\n- Lower confidence on what happened **after 2026-04-29** — I don’t see anything newer than that in the returns I pulled.\n\nIf you want, I can do the next useful cut as a strict **delta table: New since last ask / Still open / Resolved** for Westfield."
+      },
+      "expectedToolNames": [
+        "semanticSearch",
+        "recallPastConversations"
+      ],
+      "expectedToolFamilies": [
+        "semantic",
+        "communications",
+        "memory"
+      ]
+    }
+  ]
+}

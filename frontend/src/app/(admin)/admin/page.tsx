@@ -200,13 +200,6 @@ const sections: AdminMenuSection[] = [
         icon: Terminal,
       },
       {
-        label: "AI Compiler Health",
-        href: "/intelligence-compiler",
-        route: "/intelligence-compiler",
-        description: "Compiler queues, packet status, evidence, and health checks.",
-        icon: Activity,
-      },
-      {
         label: "Source Sync",
         href: "/source-sync",
         route: "/source-sync",
@@ -262,10 +255,10 @@ const sections: AdminMenuSection[] = [
     description: "Database catalog, table explorers, generated table pages, API documentation, and schema-adjacent utilities.",
     items: [
       {
-        label: "Database Catalog",
-        href: "/database",
-        route: "/database",
-        description: "Catalog of public schema tables and table metadata.",
+        label: "Database Inventory",
+        href: "/database-inventory",
+        route: "/database-inventory",
+        description: "Full MAIN + RAG table inventory with purpose, gotchas, owners, and live counts.",
         icon: Database,
       },
       {
@@ -301,13 +294,6 @@ const sections: AdminMenuSection[] = [
         href: "/projects-table-demo",
         route: "/projects-table-demo",
         description: "Projects table demo and table-pattern reference.",
-        icon: Table2,
-      },
-      {
-        label: "Spreadsheet Demo",
-        href: "/spreadsheet-demo",
-        route: "/spreadsheet-demo",
-        description: "Spreadsheet-style data interaction demo.",
         icon: Table2,
       },
       {

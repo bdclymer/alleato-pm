@@ -1,0 +1,75 @@
+{
+  "generatedAt": "2026-05-14T13:10:57.799Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "promptContextReducer": 1,
+    "assistantWidgetPlanner": 1,
+    "backendDeepAgentProjectStatus": 1,
+    "clientProjectIntelligencePacket": 1,
+    "mcpToolDiscovery": 1,
+    "streamingToolPolicy": 1,
+    "getProjectRiskAnalysis": 1,
+    "getActionItemsAndInsights": 1,
+    "getProjectBriefingSnapshot": 1
+  },
+  "intentDistribution": {
+    "risk_review": 1
+  },
+  "results": [
+    {
+      "id": "risk-review-single-project",
+      "intent": "risk_review",
+      "prompt": "What could bite us on Westfield right now? Rank the risks and tell me what I should do first.",
+      "selectedProjectId": 43,
+      "sessionId": "b177060c-5482-4084-9556-54f0c503c8e4",
+      "sessionLabel": "eval-2026-05-14T13-10-02-018Z-risk-review-single-project",
+      "startedAt": "2026-05-14T13:10:02.020Z",
+      "finishedAt": "2026-05-14T13:10:57.797Z",
+      "durationMs": 54954,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1362,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, assistantWidgetPlanner, backendDeepAgentProjectStatus, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, getProjectRiskAnalysis, getActionItemsAndInsights, getProjectBriefingSnapshot"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "assistantWidgetPlanner",
+          "backendDeepAgentProjectStatus",
+          "clientProjectIntelligencePacket",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getProjectRiskAnalysis",
+          "getActionItemsAndInsights",
+          "getProjectBriefingSnapshot"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 6231,
+        "finalText": "What could bite Westfield right now, in order:\n\n## 1) Operations disruption from live-site warranty work\n**Why it matters:** This is the most immediate owner-facing risk. Angie asked whether stair riser touch-ups will take **one day or multiple days starting at 7am**, and the venue **opens to the public at 11am**. If that work is not tightly phased, you risk visible unfinished work, blocked access, cleanup misses, or friction with operations.\n\n**Evidence**\n- 2026-05-12 email from Angie: asks if work is one day or multiple days and requests **advance notice plus a calendar invite**.\n- Recent project signals point to active post-opening corrective work, not a clean closed-out site.\n\n**What to do first**\n- **Today, lock the work plan**: exact date, single-day vs multi-day, start/stop times, area closures, cleanup standard, and who owns owner notification.\n- Send the **calendar invite to Angie immediately** once confirmed.\n- Require contractor confirmation on **public protection / barricades / dust / paint dry time** before dispatch.\n\n---\n\n## 2) Patio repair may fail and come back as rework\n**Why it matters:** The proposed patio patch/broom finish comes with an explicit warning from the contractor: it may look good, but **could fail if the concrete moves or cracks underneath**. That is a classic “do it now, pay for it twice later” risk.\n\n**Evidence**\n- 2026-05-12 email from Browning Chapman: “This will look good. I just hope it holds up. Failure will happen when the concrete moves… Our epoxy primer will help… It may hold up long term.”\n- Action items show **patio pricing is still unresolved and overdue**.\n\n**What to do first**\n- Do **not** approve the finish approach until you get a simple written recommendation on:\n  1. whether this is cosmetic only or substrate-related,  \n  2. expected life of the proposed repair,  \n  3. what is warrantable vs not warrantable, and  \n  4. the cost delta between **patch now** and **more durable corrective work**.\n- Then make a deliberate owner decision: short-term appearance fix or longer-term repair.\n\n---\n\n## 3) Admin / billing sync problem could create avoidable financial noise\n**Why it matters:** There is a current invoice integration problem: an invoice for **$5,800** was deleted in JobPlanner but still exists in Acumatica, so the replacement invoice is failing as an apparent overbill. That is not a project-killer, but it can cause payment confusion, duplicate-pay risk, or bad reporting if it sits.\n\n**Evidence**\n- 2026-05-12 JobPlanner support email: invoice **#003056 for $5,800** still exists in Acumatica after being deleted/unlinked in JobPlanner, causing push failure.\n- Briefing snapshot also shows **heavy pending change activity**: **25 proposed change orders** totaling about **$2.33M pending**, with **none approved** in the structured record.\n\n**What to do first**\n- Have accounting/PM resolve the invoice status in both systems **before any related billing moves forward**.\n- Separately, scrub the pending CO log and identify which are real, current, and decision-ready versus stale closeout noise. The raw pending CO volume is too high to leave unattended.\n\n---\n\n## 4) Punch/warranty items are accumulating and aging\n**Why it matters:** The project looks more like a live closeout/warranty management job now. Multiple owner-visible items are still open or recently active: stair risers, patio, air curtains, glass treatment, casework chips, piano hinges, glue cleanup, lighting work. Any one item is minor; together they create a “still not buttoned up” perception.\n\n**Evidence**\n- Open overdue action items include patio pricing, casework repair dates, piano hinge dates, glue cleanup dates, and lighting visit confirmation.\n- Air curtain issue remains active; Andrew said he is still correcting installed air curtains and plans a smoke test.\n- Recent owner communication on glass/window treatment indicates more finish-level issue resolution is still in motion.\n\n**What to do first**\n- Create a **single Westfield warranty/punch board** with item, owner, date promised, site access constraints, and completion evidence.\n- Push all vendor responses into dated commitments, not “working on it.”\n\n---\n\n## 5) Structured schedule/change data is noisy enough to mislead decisions\n**Why it matters:** The structured tools show **144 overdue schedule tasks** and **45 unexecuted commitments**, but much of that looks inconsistent with the project’s actual stage as an already-open facility. That means the system record is stale/noisy enough that someone could make a bad management call off the dashboard alone.\n\n**Evidence**\n- Risk analysis shows many overdue tasks tied to early design/permitting dates from 2025.\n- Current communications suggest the site is operational and mostly in post-opening corrections.\n- Source quality is mixed: email evidence is current; schedule data appears stale for field decision-making.\n\n**What to do first**\n- Treat the **email/current communications as the better near-term truth** for now.\n- Have PM/admin do a quick cleanup of schedule/closeout status so leadership isn’t staring at false red flags.\n\n---\n\n## What I would do first, in sequence\n1. **Lock and communicate the stair touch-up work window** with Angie today.  \n2. **Force a go/no-go decision on the patio repair approach** based on durability and warranty, not just appearance.  \n3. **Clear the JobPlanner/Acumatica invoice conflict** before it snowballs into billing confusion.  \n4. **Consolidate all open warranty/punch items into one dated tracker** and assign owners.\n\n## Bottom line\nThe thing most likely to bite you **right now** is not a major budget blow-up — it is **owner-facing operational disruption and avoidable rework** from loosely coordinated corrective work. The first move is to tighten the execution plan for the live-site work, then make a deliberate patio decision instead of drifting into a cosmetic repair with known failure risk.\n\n## Confidence and gaps\nConfidence is **medium**. Current email evidence is strong and recent.  \nThe weak spots are:\n- structured schedule data looks stale/noisy,\n- no current RFIs/submittals are present,\n- meeting coverage is older than the latest email thread for these specific issues."
+      },
+      "expectedToolNames": [
+        "backendDeepAgentProjectStatus",
+        "getProjectRiskAnalysis"
+      ],
+      "expectedToolFamilies": [
+        "risk",
+        "project"
+      ]
+    }
+  ]
+}

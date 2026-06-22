@@ -1,0 +1,42 @@
+{
+  "id": "submittals-status",
+  "intent": "operations_analysis",
+  "prompt": "Give me the submittal status on Westfield — anything overdue?",
+  "selectedProjectId": 43,
+  "sessionId": "a7f09cf4-3c82-4011-92f7-292cf55e9472",
+  "sessionLabel": "eval-2026-05-02T10-17-07-154Z-submittals-status",
+  "startedAt": "2026-05-02T10:20:20.687Z",
+  "finishedAt": "2026-05-02T10:20:36.452Z",
+  "durationMs": 109,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"8745b13d-27cd-491e-b50b-8daca7ba37ab\",\"timestamp\":\"2026-05-02T10:20:20.794Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"8745b13d-27cd-491e-b50b-8daca7ba37ab\",\"timestamp\":\"2026-05-02T10:20:20.794Z\"}",
+      "HTTP 401",
+      "expected at least one of [getSubmittalStatus] to fire — none did",
+      "mustInclude missing: \"submittal\""
+    ],
+    "warnings": [
+      "expected family 'operations' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"8745b13d-27cd-491e-b50b-8daca7ba37ab\",\"timestamp\":\"2026-05-02T10:20:20.794Z\"}"
+  },
+  "expectedToolNames": [
+    "getSubmittalStatus"
+  ],
+  "expectedToolFamilies": [
+    "operations"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

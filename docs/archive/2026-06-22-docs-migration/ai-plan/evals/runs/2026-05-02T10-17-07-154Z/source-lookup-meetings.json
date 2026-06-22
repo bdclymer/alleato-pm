@@ -1,0 +1,44 @@
+{
+  "id": "source-lookup-meetings",
+  "intent": "source_lookup",
+  "prompt": "What did Brandon say about billing in any recent meeting?",
+  "selectedProjectId": null,
+  "sessionId": "e2572e79-4c5b-43af-846e-90a204f22ad2",
+  "sessionLabel": "eval-2026-05-02T10-17-07-154Z-source-lookup-meetings",
+  "startedAt": "2026-05-02T10:21:07.656Z",
+  "finishedAt": "2026-05-02T10:21:23.590Z",
+  "durationMs": 352,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3c57b906-3096-4717-b9f3-e2aab873a347\",\"timestamp\":\"2026-05-02T10:21:08.007Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3c57b906-3096-4717-b9f3-e2aab873a347\",\"timestamp\":\"2026-05-02T10:21:08.007Z\"}",
+      "HTTP 401",
+      "expected at least one of [searchMeetingsByTopic, semanticSearch] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'meetings' not represented",
+      "expected family 'semantic' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3c57b906-3096-4717-b9f3-e2aab873a347\",\"timestamp\":\"2026-05-02T10:21:08.007Z\"}"
+  },
+  "expectedToolNames": [
+    "searchMeetingsByTopic",
+    "semanticSearch"
+  ],
+  "expectedToolFamilies": [
+    "meetings",
+    "semantic"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

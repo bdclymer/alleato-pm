@@ -1,0 +1,397 @@
+{
+  "generatedAt": "2026-05-19T09:13:59.253Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "inbox-outlook-regression",
+    "description": "Agentic-eval guardrail for live inbox/date/triage prompts. The Strategist must delegate Microsoft operator work to consultMicrosoftExecutiveAssistant, the specialist must expose microsoft_graph_live in its trace, and the assistant must avoid direct/stale Outlook tools and source-specific RAG fallback.",
+    "criteria": [
+      "Every case must fire consultMicrosoftExecutiveAssistant and its nested trace must include microsoft_graph_live.",
+      "No case may fire sourceSpecificRagRetrieval, getRecentEmails, getRecentOutlookEmails, or readOutlookEmailThread.",
+      "No tool trace's source may be outlook_email_intake or outlook_email_intake_fallback - Microsoft operator inbox reads must hit live Microsoft Graph through the specialist.",
+      "Answers must not tell the user to wait for live Outlook tools.",
+      "Answers must be long enough to explain the inbox result or failure clearly."
+    ]
+  },
+  "filter": "realworld-(last-five-emails|urgent-inbox|important-emails-this-morning|outlook-arrived-today|email-reply-triage)$",
+  "totalCases": 5,
+  "passed": 5,
+  "failed": 0,
+  "warningCount": 6,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": false,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 5,
+    "passed": 0,
+    "failed": 0,
+    "errors": 0,
+    "averageScore": null
+  },
+  "slowestCases": [
+    {
+      "id": "realworld-outlook-arrived-today",
+      "intent": "source_lookup",
+      "durationMs": 40590,
+      "status": "pass",
+      "warnings": [
+        "duration 40590ms exceeded warning budget 30000ms",
+        "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+      ]
+    },
+    {
+      "id": "realworld-urgent-inbox",
+      "intent": "source_lookup",
+      "durationMs": 27460,
+      "status": "pass",
+      "warnings": [
+        "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+      ]
+    },
+    {
+      "id": "realworld-important-emails-this-morning",
+      "intent": "source_lookup",
+      "durationMs": 22759,
+      "status": "pass",
+      "warnings": [
+        "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+      ]
+    },
+    {
+      "id": "realworld-last-five-emails",
+      "intent": "source_lookup",
+      "durationMs": 15906,
+      "status": "pass",
+      "warnings": [
+        "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+      ]
+    },
+    {
+      "id": "realworld-email-reply-triage",
+      "intent": "source_lookup",
+      "durationMs": 11743,
+      "status": "pass",
+      "warnings": [
+        "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+      ]
+    }
+  ],
+  "toolCoverage": {
+    "consultMicrosoftExecutiveAssistant": 5
+  },
+  "intentDistribution": {
+    "source_lookup": 5
+  },
+  "results": [
+    {
+      "id": "realworld-last-five-emails",
+      "intent": "source_lookup",
+      "prompt": "Can you tell me my last five emails?",
+      "selectedProjectId": null,
+      "sessionId": "fec73a9e-0b18-4324-aad9-01e2770b62fc",
+      "sessionLabel": "eval-2026-05-19T09-11-54-678Z-158cad1d-realworld-last-five-emails",
+      "startedAt": "2026-05-19T09:11:54.733Z",
+      "finishedAt": "2026-05-19T09:12:11.139Z",
+      "durationMs": 15906,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+        ],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: skipped"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 2032,
+        "finalText": "Last five inbox emails for bclymer@alleatogroup.com:\n\n1. Vercel — “Approaching your limits: Upgrade now to avoid service disruption”\n   - Received: 2026-05-19 06:40:41 UTC\n   - Notes: Possible operational action needed; usage warning. Not client-urgent, but time-sensitive.\n\n2. Alleato Group — “ERP Integrations Daily Summary”\n   - Received: 2026-05-19 06:16:11 UTC\n   - Notes: Internal/system summary. No immediate action evident from the snippet.\n\n3. Kenny / Alleato-related external sender — “Alleato group 2026 Pay Allowance Adjustment, Compensations Plans_REF - 6li4aon8GM”\n   - Received: 2026-05-19 01:54:16 UTC\n   - Notes: Attachment present. Sender looks unusual/spoof-like; treat as suspicious until verified.\n\n4. Mark Purvis — “Fw: Exol Wilmer”\n   - Received: 2026-05-19 01:29:42 UTC\n   - Notes: Project-related forwarded message with attachment. Likely routine follow-up.\n\n5. Connor Clark — “Re: Superior Beverage 8319 - In Rack Sprinkler Call Follow Up”\n   - Received: 2026-05-19 01:17:59 UTC\n   - Notes: Project follow-up; mentions ceiling height not yet available. No urgent escalation indicated.\n\nUrgent-item assessment:\n- I did not find a true emergency, legal, security, or client-critical escalation in the last five messages.\n- The most notable risk item is the suspicious pay/compensation email with a mismatched-looking sender/domain. That should be verified before opening attachments or replying.\n\nCapability status:\n- Live Outlook inbox read succeeded.\n- No stale context or tool failure occurred.\n- No Teams draft was created because no urgent escalation threshold was clearly met.\n\nRecommended next steps for Megan:\n- Review the Vercel usage warning if that site/app matters operationally.\n- Verify the suspicious compensation email before interacting with it.\n- Open the project follow-ups only if you want a response drafted or summarized further.\n\nApprovals needed:\n- None for reading the inbox.\n- Approval would be needed only if you want me to draft a reply, Teams escalation, or any send/post action.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 15906
+        },
+        "judge": {
+          "status": "skipped",
+          "rubric": "email_operator",
+          "score": null,
+          "minScore": 4,
+          "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+          "strengths": [],
+          "weaknesses": [],
+          "dimensionScores": {},
+          "provider": null,
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-urgent-inbox",
+      "intent": "source_lookup",
+      "prompt": "Is there anything urgent in my inbox?",
+      "selectedProjectId": null,
+      "sessionId": "dfed8d77-9991-441e-95c6-dc4ee2b34d38",
+      "sessionLabel": "eval-2026-05-19T09-11-54-678Z-158cad1d-realworld-urgent-inbox",
+      "startedAt": "2026-05-19T09:12:11.142Z",
+      "finishedAt": "2026-05-19T09:12:39.043Z",
+      "durationMs": 27460,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+        ],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: skipped"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 1889,
+        "finalText": "Yes — there is one urgent item in the inbox, and one security item to flag.\n\nUrgent inbox items\n1. Vendor usage warning from Vercel\n- Subject: “Approaching your limits: Upgrade now to avoid service disruption”\n- Received: 2026-05-19 06:40 UTC\n- Why it matters: the free team has used 75% of Function Invocation usage; if limits are exceeded, projects may be automatically paused.\n- Assessment: operationally urgent, but not a true emergency.\n\nSecurity item\n2. Microsoft 365 quarantine notice\n- Subject: “Microsoft 365 security: You have messages in quarantine”\n- Received: 2026-05-18 22:49 UTC\n- Why it matters: 2 messages were held as prevented phish messages.\n- Assessment: needs review today, but I did not find evidence of an active compromise.\n\nWhat I checked\n- Live Outlook inbox: yes\n- Outlook email search for urgent/security/legal terms: no matching passages\n- Teams search for urgent/security/legal terms: no matching passages\n- No calendar or Microsoft file signals were necessary to improve the answer\n\nEscalation draft for Megan review\n- Teams message draft: available if you want me to prepare it\n- Suggested recipient: someone responsible for the Vercel project / IT-security review\n- Suggested content:\n  “Urgent: Vercel free-tier usage is at 75% for Function Invocation and may pause projects if limits are exceeded. Also, Microsoft 365 quarantine shows 2 prevented phish messages. Please review today and confirm whether any action is needed.”\n\nRecommended next steps for Megan\n- Review the Vercel usage notice today and decide whether to upgrade or reduce usage.\n- Open the Microsoft 365 quarantine notice and confirm the held messages are legitimate phish.\n- If you want, I can draft a concise Teams escalation message for review.\n\nApprovals needed\n- None to inspect or draft.\n- Approval would be needed only if you want me to prepare a Teams or email draft for review.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 27460
+        },
+        "judge": {
+          "status": "skipped",
+          "rubric": "email_operator",
+          "score": null,
+          "minScore": 4,
+          "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+          "strengths": [],
+          "weaknesses": [],
+          "dimensionScores": {},
+          "provider": null,
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-important-emails-this-morning",
+      "intent": "source_lookup",
+      "prompt": "What important emails have I received this morning?",
+      "selectedProjectId": null,
+      "sessionId": "b466d1a3-2b3b-4411-a705-5274744036c4",
+      "sessionLabel": "eval-2026-05-19T09-11-54-678Z-158cad1d-realworld-important-emails-this-morning",
+      "startedAt": "2026-05-19T09:12:39.044Z",
+      "finishedAt": "2026-05-19T09:13:02.183Z",
+      "durationMs": 22759,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+        ],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: skipped"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 2802,
+        "finalText": "This morning’s important emails in bclymer@alleatogroup.com:\n\n- **Vercel — “Approaching your limits: Upgrade now to avoid service disruption”**  \n  Received **06:40 UTC**. Actionable because the free tier is at **75% usage** and the message warns of possible pause if usage exceeds limits.  \n  **Priority:** High operational attention.\n\n- **Alleato Group — “ERP Integrations Daily Summary”**  \n  Received **06:16 UTC**. Routine system summary, but relevant if you’re tracking ERP sync health.  \n  **Priority:** Medium.\n\n- **Suspected spam/phishing — “Alleato group 2026 Pay Allowance Adjustment, Compensations Plans_REF - 6li4aon8GM”** from **kenny@buro-imagin.be**  \n  Received **01:54 UTC** with attachment and odd sender identity. This looks suspicious and should be treated carefully.  \n  **Priority:** High security review.\n\n- **Project thread — “Fw: Exol Wilmer”** from **Mark Purvis**  \n  Received **01:29 UTC**. Appears to be a project reply about an internet outage and has an attachment.  \n  **Priority:** Medium, likely operational follow-up.\n\n- **Project thread — “Re: Superior Beverage 8319 - In Rack Sprinkler Call Follow Up”**  \n  Received **01:17 UTC**. Indicates the ceiling height is still pending and may arrive tomorrow.  \n  **Priority:** Medium.\n\n- **Project thread — “RE: Noblesville Goodwill Excel Center”**  \n  Received **00:35 UTC**. Notes that one participant is unavailable for a site visit and suggests alternate responders tomorrow.  \n  **Priority:** Medium.\n\n- **Non-business/personal — “Boarding & Training Request for Charles”**  \n  Received **00:02 UTC**. Not business-critical unless you need personal triage.  \n  **Priority:** Low.\n\nSupporting checks:\n- Outlook search returned **no additional matches** for urgent/legal/security/prospect keywords this morning.\n- Teams search returned **no supporting urgent items**.\n- I did **not** read calendar or files because the inbox evidence was sufficient and no message required immediate cross-checking.\n\nPotential urgent escalation:\n- **Suspicious compensation-plan email** is the only item that looks like a true security concern.\n- I can prepare a concise Teams escalation draft for Megan’s review if you want it routed.\n\nRecommended next steps for Megan:\n1. Review the **Vercel usage warning** and decide whether to upgrade or monitor usage.\n2. Treat the **compensation-plan email** as suspicious and avoid opening attachments until verified.\n3. Follow up on the **project threads** where tomorrow’s response or missing data is blocking progress.\n4. If you want, I can draft a **Teams escalation message** for the suspicious email and a short response plan for the Vercel alert.\n\nApprovals needed:\n- **None** to review these emails.\n- **Approval required** only if you want me to prepare an escalation draft for Megan.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 22759
+        },
+        "judge": {
+          "status": "skipped",
+          "rubric": "email_operator",
+          "score": null,
+          "minScore": 4,
+          "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+          "strengths": [],
+          "weaknesses": [],
+          "dimensionScores": {},
+          "provider": null,
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-outlook-arrived-today",
+      "intent": "source_lookup",
+      "prompt": "What came in through Outlook today that needs my attention?",
+      "selectedProjectId": null,
+      "sessionId": "6714189f-96dd-40e8-a08c-78d5311a0791",
+      "sessionLabel": "eval-2026-05-19T09-11-54-678Z-158cad1d-realworld-outlook-arrived-today",
+      "startedAt": "2026-05-19T09:13:02.184Z",
+      "finishedAt": "2026-05-19T09:13:43.139Z",
+      "durationMs": 40590,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "duration 40590ms exceeded warning budget 30000ms",
+          "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+        ],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: skipped"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 2566,
+        "finalText": "Today’s Outlook inbox for bclymer@alleatogroup.com has 7 messages. The items that most likely need attention are:\n\n### Highest priority\n1. **Vercel: “Approaching your limits: Upgrade now to avoid service disruption”**\n   - **Why it matters:** free-tier usage is at **75%** and the note warns projects may be **paused** if limits are exceeded.\n   - **Action needed:** decide whether this site/project should be upgraded or monitored.\n   - **Context check:** I searched Outlook and Teams for related Vercel/usage-limit mentions and found **no matches**, so I don’t have evidence of who owns it or whether a decision is already in motion.\n\n### Likely action items\n2. **Alleato Group: ERP Integrations Daily Summary**\n   - **Why it matters:** says there are **2 vendors available to sync** with the ERP accounting system.\n   - **Action needed:** review if you or the integrations owner should approve or process the sync.\n\n3. **Fw: Exol Wilmer**\n   - **Why it matters:** mentions an **internet outage** and has attachments.\n   - **Action needed:** likely project coordination follow-up if this is an active job.\n\n4. **RE: Noblesville Goodwill Excel Center**\n   - **Why it matters:** site visit timing update; they expect a response tomorrow.\n   - **Action needed:** monitor for the follow-up if you own the thread.\n\n5. **Boarding & Training Request for Charles**\n   - **Why it matters:** routine service request; probably only needs attention if you manage that account.\n\n### Items to treat cautiously\n6. **“Alleato group 2026 Pay Allowance Adjustment, Compensations Plans_REF - 6li4aon8GM”**\n   - **Why it matters:** sender/domain looks inconsistent and the subject is unusual.\n   - **Action needed:** **do not open attachments unless verified**. This should be treated as suspicious until confirmed.\n   - **Context check:** Outlook and Teams searches for the subject terms returned **no matches**, so there’s no corroborating context.\n\n### Recommended next steps for Megan\n- Review the **Vercel** alert first and decide whether the service should be upgraded.\n- Confirm ownership of the **ERP integrations** summary and whether the vendor sync should be actioned today.\n- Treat the **pay allowance adjustment** email as suspicious until verified.\n- Skim the project threads for **Exol Wilmer** and **Noblesville Goodwill Excel Center** if you own those jobs.\n\n### Approvals needed\n- **No email or Teams message was sent.**\n- If you want, I can prepare a **Teams escalation draft** for the Vercel limit warning and/or a **suspicious-email alert draft** for review only.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 40590
+        },
+        "judge": {
+          "status": "skipped",
+          "rubric": "email_operator",
+          "score": null,
+          "minScore": 4,
+          "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+          "strengths": [],
+          "weaknesses": [],
+          "dimensionScores": {},
+          "provider": null,
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-email-reply-triage",
+      "intent": "source_lookup",
+      "prompt": "Show me any emails from today that need a reply.",
+      "selectedProjectId": null,
+      "sessionId": "0ae6595d-7041-432f-8ec4-b32b415801d7",
+      "sessionLabel": "eval-2026-05-19T09-11-54-678Z-158cad1d-realworld-email-reply-triage",
+      "startedAt": "2026-05-19T09:13:43.141Z",
+      "finishedAt": "2026-05-19T09:13:59.252Z",
+      "durationMs": 11743,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 2,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+        ],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: skipped"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 2648,
+        "finalText": "Today’s inbox has 7 messages. Likely reply-needed items:\n\n1. **Mark Purvis / Corelectric**\n   - Subject: **Fw: Exol Wilmer**\n   - Received: **01:29 UTC**\n   - Why it needs attention: forwarded thread with attached material and project context; likely needs a response or internal routing.\n\n2. **Connor Clark / Hy-Tek**\n   - Subject: **Re: Superior Beverage 8319 - In Rack Sprinkler Call Follow Up**\n   - Received: **01:17 UTC**\n   - Why it needs attention: direct project update answering a prior request (“ceiling height yet… should have it tomorrow”). Likely needs a follow-up once the missing info arrives.\n\n3. **Sam Hurt / TEC MEP**\n   - Subject: **RE: Noblesville Goodwill Excel Center**\n   - Received: **00:35 UTC**\n   - Why it needs attention: states availability for site visit is limited and suggests alternate responders; likely needs acknowledgment and coordination.\n\n4. **Maria Calcetero / Alleato Group**\n   - Subject: **Boarding & Training Request for Charles**\n   - Received: **00:02 UTC**\n   - Why it needs attention: direct service request with dates and bath request; likely needs a reply confirming scheduling.\n\nPotentially non-reply / low-priority:\n- **Vercel usage warning** — operational notification, not obviously requiring a reply, but may merit action if the usage limit matters.\n- **ERP Integrations Daily Summary** — explicitly says do not reply.\n- **Pay allowance adjustment email** — looks suspicious/phishing-like based on sender mismatch and garbled subject; should be treated cautiously, not replied to.\n\nUrgent escalation:\n- None of the messages clearly meet client/legal/security/emergency escalation criteria from the available text.\n- The **Vercel usage warning** may become operationally urgent if it affects a live service, but I don’t have evidence of immediate outage yet.\n\nWhat I could not verify:\n- I only read the live inbox; I did **not** inspect Teams, calendar, or files because the inbox evidence was sufficient for identifying reply-needed emails.\n- No send/post/mutation occurred.\n\nRecommended next steps for Megan:\n1. Reply to **Maria Calcetero** to confirm Charles’s boarding/training schedule.\n2. Follow up on **Connor Clark** once the missing ceiling-height info arrives.\n3. Acknowledge **Sam Hurt** and route to the alternate responders if needed.\n4. Review **Mark Purvis** thread to determine whether it needs a substantive response or internal handling.\n5. Treat the **pay allowance** email as suspicious and avoid engaging until verified.\n\nApprovals needed:\n- **None** to review or draft responses.\n- If you want, I can draft reply emails for the four reply-needed items for Megan’s review.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 11743
+        },
+        "judge": {
+          "status": "skipped",
+          "rubric": "email_operator",
+          "score": null,
+          "minScore": 4,
+          "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+          "strengths": [],
+          "weaknesses": [],
+          "dimensionScores": {},
+          "provider": null,
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    }
+  ]
+}

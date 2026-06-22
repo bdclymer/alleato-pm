@@ -1,0 +1,9399 @@
+{
+  "id": "toolcov-read-acumatica-project-list",
+  "intent": "accounting",
+  "prompt": "List all the projects we have set up in Acumatica.",
+  "selectedProjectId": null,
+  "sessionId": "bb46f058-0b9c-44e6-94e4-7868f4704183",
+  "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-acumatica-project-list",
+  "startedAt": "2026-06-09T14:41:23.829Z",
+  "finishedAt": "2026-06-09T14:41:50.888Z",
+  "durationMs": 26780,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 1664,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [],
+    "observations": [
+      "tools fired: getAcumaticaProjectList"
+    ],
+    "toolNames": [
+      "getAcumaticaProjectList"
+    ],
+    "familiesHit": [
+      "accounting"
+    ],
+    "finalTextLength": 5116,
+    "finalText": "Acumatica currently has **94 projects** set up.\n\nHere they are, by **project ID — description — status**:\n\n- **24115** — 24-115 Westfield Collective — Active\n- **23101** — Ulta Dallas — Active\n- **22112** — Bella Vegas — Completed\n- **24101** — Crate Escapes — Active\n- **25109** — 25-109 Uniqlo Phillipsburg NJ — Active\n- **24109** — 24-109 Goodwill Bloomington — Active\n- **25127** — 25-127 Ulta Beauty — Active\n- **25114** — 25- 114 Radial Avon IN — Active\n- **25125** — 25-125 Goodwill Noblesville — Active\n- **23114** — Goodwill Excel Center #114 — Active\n- **22109** — Spector Vegas — Completed\n- **22101** — Ulta Beauty Sprinkler/Electrical — Completed\n- **24106** — Cart Cold Storage — Active\n- **22102** — Radial Allentown — Completed\n- **24104** — Goodwill Bart — Active\n- **23102** — CEVA Memphis — Completed\n- **22103** — Radial MD — Completed\n- **26113** — 26-113 GW Allisonville Rd IN — Active\n- **24103** — Lakeshore Temp Power — Active\n- **25113** — 25- 113 Radial Martinsville VA — Active\n- **23106** — Radial Avon — Completed\n- **24111** — 24-111 CEVA Bernville Consulting — Active\n- **25103** — 25-103 Niemann Foods TI — Active\n- **25120** — 25-120 GPC Hai Robotic — Active\n- **25105** — 25-105 Applied Engineering — Active\n- **23104** — AHS Moorsville — Completed\n- **26104** — 26-104 - CEVA Bernville ASRS Phase 2 Bernville, PA — Active\n- **26103** — 26-103 Exol Wilmer — Active\n- **23111** — Cart Hebron — Active\n- **24102** — Wesleyan Office — Active\n- **23112** — Zion Pratt Whitney — Active\n- **24107** — Core Mark — Completed\n- **22108** — Lasik Center — Completed\n- **25111** — 25-111 Goodwill Foundations — Active\n- **25101** — 25-101 Core Mark Atlanta — Active\n- **25108** — 25-108 Goodwill Tremont — Active\n- **26102** — 26-102 Goodwill Commons — Active\n- **23108** — Cart Memphis — Completed\n- **26105** — 26-105 GW Pioneer PKWY — Active\n- **25110** — 25-110 Memphis Cold Storage Phase 2 — Active\n- **22104** — Cooper Road — Completed\n- **26106** — 26-106 GW Washington-IL — Active\n- **25112** — 25-112 Coram Deo Academy — Active\n- **25118** — 25-118 - Radial Brownsburg Indy 1 (Indianapolis, IN) — Active\n- **24108** — 24 -108 Aspire Ridge Haven — Active\n- **22111** — Craig St office — Completed\n- **23113** — Macomb Group Indianapolis — Active\n- **26116** — 26-116 Exol Morrisville — Active\n- **25104** — 25-104 Royal Theatre Apartments — Active\n- **25126** — 25-126 Vermillion Rise Warehouse — Active\n- **25117** — 25-117 Aspire Kissimmee Gardens — Active\n- **23103** — Goodwill Store #25 — Active\n- **23105** — Outreach Lawrence UMC — Completed\n- **25121** — 25-121 The Roebling Homes — Active\n- **26101** — 26-101 Paradise Isle Geotech — Active\n- **23109** — Turning Pointe Academy — Active\n- **25119** — Goodwill- Decatur — Active\n- **24105** — 24-105 Forza Dayton — Active\n- **24112** — 24-112 Goodwill Curb Cut — Active\n- **22107** — Purrs and Gurrs — Completed\n- **22113** — Great Clips Columbus — Completed\n- **23110** — Brennan Pittsburgh — Active\n- **26107** — 26-107 GW Canton IL — Active\n- **25124** — 25-124 Goodwill Bloomington Excel — Active\n- **25116** — 25-116 Hiro Space Split — Active\n- **26112** — 26-112 - McLane Jazz Salt Lake City, UT — Active\n- **25102** — 25-102 Aspire at St. Lucie — Active\n- **24114** — 24-114 Zion Door Dash — Active\n- **23107** — TECOVA DALLAS — Active\n- **26117** — 26-117 - Superior Beverage Exotec — Active\n- **22105** — Vargo Permitting — Completed\n- **26118** — 26-118 Champagne Ace Addition IL — Active\n- **25107** — 25-107 Port Collective — Active\n- **26119** — 26-119 Union Collective KY — Active\n- **26115** — 26-115 Vargo Greenwood Permitting — Active\n- **24113** — 24-113 Aspire Oak Tree Daytona LS Plans — Active\n- **22110** — Pepsi Co — Completed\n- **25115** — 25-115 Zion Arkansas Permit — Active\n- **26114** — 26-114 GW Brookville Rd Retail Store — Active\n- **26111** — 26-111 GW Morris IL — Active\n- **12131** — 25-117 Aspire Kissimmee Gardens — Canceled\n- **21231** — 25-121 The Roebling Homes — Canceled\n- **2401A** — Temporary project code for Forza Cincinnati project - since we don't have the job in Procore yet. — Active\n- **25122** — 25-122 Goodwill Shadeland Ave — Active\n- **25123** — 25-123 Goodwill Shelbyville — Active\n- **25128** — 25-128 Vargo Permitting (Fort Worth, TX) — Active\n- **26108** — 26-108 GW Galesburg IL — Active\n- **26109** — 26-109 GW Macomb IL — Active\n- **26110** — 26-110 GW Peru IL — Active\n- **26120** — 26-120 - NEXCOM SEDC Pensacola, FL — Active\n- **26121** — 26-121 - Varsity Brands — Active\n- **26122** — 26-122 Goodwill Kokomo — Active\n- **26123** — 26-123 Playmakers — Active\n- **8530** — 26-118 Champagne Ace Addition IL — Closed\n\nA couple things worth noticing:\n- There are **duplicate/carryover-looking records** for **Aspire Kissimmee Gardens**, **The Roebling Homes**, and **Champagne Ace Addition IL**.\n- There’s also a **temporary code**: **2401A** for the Forza Cincinnati project.\n\nIf you want, I can clean this up into:\n1. **Active only**\n2. **CSV-style table with customer/income/expenses/net**\n3. **A shortlist of projects that look duplicated, canceled, or suspect**",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 45000,
+      "maxDurationMs": 120000,
+      "durationMs": 26780
+    }
+  },
+  "expectedToolNames": [
+    "getAcumaticaProjectList"
+  ],
+  "expectedToolFamilies": [
+    "accounting"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: conversational_fallback",
+        "status": "loading",
+        "timestamp": "2026-06-09T14:41:23.915Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (0 sources, 0 warnings)",
+        "status": "success",
+        "durations": {},
+        "timestamp": "2026-06-09T14:41:24.815Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "Pf4j8m91mrCZ13kK"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_aaFTh0r6JnwAuVbZvVLgXYFj",
+      "toolName": "getAcumaticaProjectList"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_aaFTh0r6JnwAuVbZvVLgXYFj",
+      "inputTextDelta": "{}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_aaFTh0r6JnwAuVbZvVLgXYFj",
+      "toolName": "getAcumaticaProjectList",
+      "input": {}
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_aaFTh0r6JnwAuVbZvVLgXYFj",
+      "output": {
+        "source": "Acumatica ERP (live)",
+        "sourceRef": "[Source: Acumatica Project List]",
+        "projectCount": 94,
+        "projects": [
+          {
+            "projectId": "24115",
+            "description": "24-115 Westfield Collective",
+            "status": "Active",
+            "customer": "CRAVING",
+            "income": 8969196.37,
+            "expenses": 8360885.57,
+            "netPosition": 608310.7999999989
+          },
+          {
+            "projectId": "23101",
+            "description": "Ulta Dallas",
+            "status": "Active",
+            "customer": "VARGO",
+            "income": 3447367.81,
+            "expenses": 3015448.61,
+            "netPosition": 431919.2000000002
+          },
+          {
+            "projectId": "22112",
+            "description": "Bella Vegas",
+            "status": "Completed",
+            "customer": "BELLA",
+            "income": 928923.17,
+            "expenses": 2737453.87,
+            "netPosition": -1808530.7000000002
+          },
+          {
+            "projectId": "24101",
+            "description": "Crate Escapes",
+            "status": "Active",
+            "customer": "JAMDPR",
+            "income": 2576763.73,
+            "expenses": 2608988.34,
+            "netPosition": -32224.60999999987
+          },
+          {
+            "projectId": "25109",
+            "description": "25-109 Uniqlo Phillipsburg NJ",
+            "status": "Active",
+            "customer": "UNIQLO",
+            "income": 3422108.39,
+            "expenses": 2560949.59,
+            "netPosition": 861158.8000000003
+          },
+          {
+            "projectId": "24109",
+            "description": "24-109 Goodwill Bloomington",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 2760068.78,
+            "expenses": 2544046.53,
+            "netPosition": 216022.25
+          },
+          {
+            "projectId": "25127",
+            "description": "25-127 Ulta Beauty",
+            "status": "Active",
+            "customer": "ULTA",
+            "income": 3268581,
+            "expenses": 2214673.91,
+            "netPosition": 1053907.0899999999
+          },
+          {
+            "projectId": "25114",
+            "description": "25- 114 Radial Avon IN",
+            "status": "Active",
+            "customer": "STORAGESOL",
+            "income": 2225240.58,
+            "expenses": 1814217.17,
+            "netPosition": 411023.41000000015
+          },
+          {
+            "projectId": "25125",
+            "description": "25-125 Goodwill Noblesville",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 2425687.92,
+            "expenses": 1801414.38,
+            "netPosition": 624273.54
+          },
+          {
+            "projectId": "23114",
+            "description": "Goodwill Excel Center #114",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 2340939.94,
+            "expenses": 1749766.28,
+            "netPosition": 591173.6599999999
+          },
+          {
+            "projectId": "22109",
+            "description": "Spector Vegas",
+            "status": "Completed",
+            "customer": "SPECTOR",
+            "income": 1782105.41,
+            "expenses": 1632644.95,
+            "netPosition": 149460.45999999996
+          },
+          {
+            "projectId": "22101",
+            "description": "Ulta Beauty Sprinkler/Electrical",
+            "status": "Completed",
+            "customer": "VARGO",
+            "income": 2003369.03,
+            "expenses": 1609201.23,
+            "netPosition": 394167.80000000005
+          },
+          {
+            "projectId": "24106",
+            "description": "Cart Cold Storage",
+            "status": "Active",
+            "customer": {},
+            "income": 1816661.84,
+            "expenses": 1505754.84,
+            "netPosition": 310907
+          },
+          {
+            "projectId": "22102",
+            "description": "Radial Allentown",
+            "status": "Completed",
+            "customer": "RADIAL",
+            "income": 1675482.86,
+            "expenses": 1500976.45,
+            "netPosition": 174506.41000000015
+          },
+          {
+            "projectId": "24104",
+            "description": "Goodwill Bart",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 1595192.89,
+            "expenses": 1382452.74,
+            "netPosition": 212740.1499999999
+          },
+          {
+            "projectId": "23102",
+            "description": "CEVA Memphis",
+            "status": "Completed",
+            "customer": "CEVA",
+            "income": 1860519.01,
+            "expenses": 1324621.06,
+            "netPosition": 535897.95
+          },
+          {
+            "projectId": "22103",
+            "description": "Radial MD",
+            "status": "Completed",
+            "customer": "BELLA",
+            "income": 1170553.23,
+            "expenses": 940113.14,
+            "netPosition": 230440.08999999997
+          },
+          {
+            "projectId": "26113",
+            "description": "26-113 GW Allisonville Rd IN",
+            "status": "Active",
+            "customer": "PARAGON",
+            "income": 1273505.67,
+            "expenses": 910288.02,
+            "netPosition": 363217.6499999999
+          },
+          {
+            "projectId": "24103",
+            "description": "Lakeshore Temp Power",
+            "status": "Active",
+            "customer": "ZION",
+            "income": 1226793.2,
+            "expenses": 882790.09,
+            "netPosition": 344003.11
+          },
+          {
+            "projectId": "25113",
+            "description": "25- 113 Radial Martinsville VA",
+            "status": "Active",
+            "customer": "RADIAL",
+            "income": 1151334,
+            "expenses": 751559.28,
+            "netPosition": 399774.72
+          },
+          {
+            "projectId": "23106",
+            "description": "Radial Avon",
+            "status": "Completed",
+            "customer": "RADIAL",
+            "income": 902159.29,
+            "expenses": 736563.35,
+            "netPosition": 165595.94000000006
+          },
+          {
+            "projectId": "24111",
+            "description": "24-111 CEVA Bernville Consulting",
+            "status": "Active",
+            "customer": "CEVA",
+            "income": 1093889.59,
+            "expenses": 718350.34,
+            "netPosition": 375539.2500000001
+          },
+          {
+            "projectId": "25103",
+            "description": "25-103 Niemann Foods TI",
+            "status": "Active",
+            "customer": "NIEMANN",
+            "income": 641658.75,
+            "expenses": 568945.75,
+            "netPosition": 72713
+          },
+          {
+            "projectId": "25120",
+            "description": "25-120 GPC Hai Robotic",
+            "status": "Active",
+            "customer": "GPC",
+            "income": 1551098.46,
+            "expenses": 537928.27,
+            "netPosition": 1013170.19
+          },
+          {
+            "projectId": "25105",
+            "description": "25-105 Applied Engineering",
+            "status": "Active",
+            "customer": "APPLIED",
+            "income": 542542.84,
+            "expenses": 491849.23,
+            "netPosition": 50693.609999999986
+          },
+          {
+            "projectId": "23104",
+            "description": "AHS Moorsville",
+            "status": "Completed",
+            "customer": "AHS",
+            "income": 774557.44,
+            "expenses": 479860.01,
+            "netPosition": 294697.42999999993
+          },
+          {
+            "projectId": "26104",
+            "description": "26-104 - CEVA Bernville ASRS Phase 2 Bernville, PA",
+            "status": "Active",
+            "customer": "CEVA",
+            "income": 669681.39,
+            "expenses": 393956.68,
+            "netPosition": 275724.71
+          },
+          {
+            "projectId": "26103",
+            "description": "26-103 Exol Wilmer",
+            "status": "Active",
+            "customer": "GREENBOX",
+            "income": 490361.08,
+            "expenses": 364475.31,
+            "netPosition": 125885.77000000002
+          },
+          {
+            "projectId": "23111",
+            "description": "Cart Hebron",
+            "status": "Active",
+            "customer": {},
+            "income": 530050,
+            "expenses": 359481.87,
+            "netPosition": 170568.13
+          },
+          {
+            "projectId": "24102",
+            "description": "Wesleyan Office",
+            "status": "Active",
+            "customer": "THEWES",
+            "income": 372986,
+            "expenses": 328215.36,
+            "netPosition": 44770.640000000014
+          },
+          {
+            "projectId": "23112",
+            "description": "Zion Pratt Whitney",
+            "status": "Active",
+            "customer": "ZION",
+            "income": 453198,
+            "expenses": 326780.58,
+            "netPosition": 126417.41999999998
+          },
+          {
+            "projectId": "24107",
+            "description": "Core Mark",
+            "status": "Completed",
+            "customer": "CORE-MARK",
+            "income": 348254.67,
+            "expenses": 313420.89,
+            "netPosition": 34833.77999999997
+          },
+          {
+            "projectId": "22108",
+            "description": "Lasik Center",
+            "status": "Completed",
+            "customer": "EYE SURG",
+            "income": 204130.66,
+            "expenses": 288476.83,
+            "netPosition": -84346.17000000001
+          },
+          {
+            "projectId": "25111",
+            "description": "25-111 Goodwill Foundations",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 305343.41,
+            "expenses": 288462.79,
+            "netPosition": 16880.619999999995
+          },
+          {
+            "projectId": "25101",
+            "description": "25-101 Core Mark Atlanta",
+            "status": "Active",
+            "customer": "CORE-MARK",
+            "income": 275654,
+            "expenses": 255624.23,
+            "netPosition": 20029.76999999999
+          },
+          {
+            "projectId": "25108",
+            "description": "25-108 Goodwill Tremont",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 54406.09,
+            "expenses": 245475.09,
+            "netPosition": -191069
+          },
+          {
+            "projectId": "26102",
+            "description": "26-102 Goodwill Commons",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 266450.51,
+            "expenses": 225147.62,
+            "netPosition": 41302.890000000014
+          },
+          {
+            "projectId": "23108",
+            "description": "Cart Memphis",
+            "status": "Completed",
+            "customer": {},
+            "income": 408000,
+            "expenses": 223604.85,
+            "netPosition": 184395.15
+          },
+          {
+            "projectId": "26105",
+            "description": "26-105 GW Pioneer PKWY",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 351516.48,
+            "expenses": 217069.75,
+            "netPosition": 134446.72999999998
+          },
+          {
+            "projectId": "25110",
+            "description": "25-110 Memphis Cold Storage Phase 2",
+            "status": "Active",
+            "customer": "CART.COM",
+            "income": 111573,
+            "expenses": 210679.66,
+            "netPosition": -99106.66
+          },
+          {
+            "projectId": "22104",
+            "description": "Cooper Road",
+            "status": "Completed",
+            "customer": "FORZA",
+            "income": 267329.01,
+            "expenses": 185778.02,
+            "netPosition": 81550.99000000002
+          },
+          {
+            "projectId": "26106",
+            "description": "26-106 GW Washington-IL",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 259954.7,
+            "expenses": 152772.08,
+            "netPosition": 107182.62000000002
+          },
+          {
+            "projectId": "25112",
+            "description": "25-112 Coram Deo Academy",
+            "status": "Active",
+            "customer": "CORAMDEO",
+            "income": 154194.44,
+            "expenses": 139604.69,
+            "netPosition": 14589.75
+          },
+          {
+            "projectId": "25118",
+            "description": "25-118 - Radial Brownsburg Indy 1 (Indianapolis, IN)",
+            "status": "Active",
+            "customer": "RADIAL",
+            "income": 171511.12,
+            "expenses": 135492.52,
+            "netPosition": 36018.600000000006
+          },
+          {
+            "projectId": "24108",
+            "description": "24 -108 Aspire Ridge Haven",
+            "status": "Active",
+            "customer": "VOORHEES",
+            "income": 170477.5,
+            "expenses": 133179.05,
+            "netPosition": 37298.45000000001
+          },
+          {
+            "projectId": "22111",
+            "description": "Craig St office",
+            "status": "Completed",
+            "customer": {},
+            "income": 0,
+            "expenses": 87814.48,
+            "netPosition": -87814.48
+          },
+          {
+            "projectId": "23113",
+            "description": "Macomb Group Indianapolis",
+            "status": "Active",
+            "customer": "MACGRO",
+            "income": 115420,
+            "expenses": 86757.63,
+            "netPosition": 28662.369999999995
+          },
+          {
+            "projectId": "26116",
+            "description": "26-116 Exol Morrisville",
+            "status": "Active",
+            "customer": "GREENBOX",
+            "income": 169618.54,
+            "expenses": 78665.5,
+            "netPosition": 90953.04000000001
+          },
+          {
+            "projectId": "25104",
+            "description": "25-104 Royal Theatre Apartments",
+            "status": "Active",
+            "customer": "ROYALVEN",
+            "income": 79578.77,
+            "expenses": 76998.66,
+            "netPosition": 2580.1100000000006
+          },
+          {
+            "projectId": "25126",
+            "description": "25-126 Vermillion Rise Warehouse",
+            "status": "Active",
+            "customer": "HILLSDALE",
+            "income": 483791.95,
+            "expenses": 70171.61,
+            "netPosition": 413620.34
+          },
+          {
+            "projectId": "25117",
+            "description": "25-117 Aspire Kissimmee Gardens",
+            "status": "Active",
+            "customer": "ASPIREHLTH",
+            "income": 80889,
+            "expenses": 56419.52,
+            "netPosition": 24469.480000000003
+          },
+          {
+            "projectId": "23103",
+            "description": "Goodwill Store #25",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 71726.27,
+            "expenses": 54813,
+            "netPosition": 16913.270000000004
+          },
+          {
+            "projectId": "23105",
+            "description": "Outreach Lawrence UMC",
+            "status": "Completed",
+            "customer": "OUT",
+            "income": 0,
+            "expenses": 44320.2,
+            "netPosition": -44320.2
+          },
+          {
+            "projectId": "25121",
+            "description": "25-121 The Roebling Homes",
+            "status": "Active",
+            "customer": "ANDRUS",
+            "income": 31303.61,
+            "expenses": 43359.07,
+            "netPosition": -12055.46
+          },
+          {
+            "projectId": "26101",
+            "description": "26-101 Paradise Isle Geotech",
+            "status": "Active",
+            "customer": "IBEACH",
+            "income": 0,
+            "expenses": 42100,
+            "netPosition": -42100
+          },
+          {
+            "projectId": "23109",
+            "description": "Turning Pointe Academy",
+            "status": "Active",
+            "customer": "TURNINGPOI",
+            "income": 55042,
+            "expenses": 41146.8,
+            "netPosition": 13895.199999999997
+          },
+          {
+            "projectId": "25119",
+            "description": "Goodwill- Decatur",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 46459,
+            "expenses": 39237.82,
+            "netPosition": 7221.18
+          },
+          {
+            "projectId": "24105",
+            "description": "24-105 Forza Dayton",
+            "status": "Active",
+            "customer": "FORZA",
+            "income": 38982,
+            "expenses": 38938.25,
+            "netPosition": 43.75
+          },
+          {
+            "projectId": "24112",
+            "description": "24-112 Goodwill Curb Cut",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 58643.13,
+            "expenses": 38310.86,
+            "netPosition": 20332.269999999997
+          },
+          {
+            "projectId": "22107",
+            "description": "Purrs and Gurrs",
+            "status": "Completed",
+            "customer": "PURRS",
+            "income": 49024.7,
+            "expenses": 37387.72,
+            "netPosition": 11636.979999999996
+          },
+          {
+            "projectId": "22113",
+            "description": "Great Clips Columbus",
+            "status": "Completed",
+            "customer": "WRIGHT",
+            "income": 47383,
+            "expenses": 32315,
+            "netPosition": 15068
+          },
+          {
+            "projectId": "23110",
+            "description": "Brennan Pittsburgh",
+            "status": "Active",
+            "customer": "WATERFRONT",
+            "income": 20326,
+            "expenses": 26377.11,
+            "netPosition": -6051.110000000001
+          },
+          {
+            "projectId": "26107",
+            "description": "26-107 GW Canton IL",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 66512.63,
+            "expenses": 23092.39,
+            "netPosition": 43420.240000000005
+          },
+          {
+            "projectId": "25124",
+            "description": "25-124 Goodwill Bloomington Excel",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 27447.63,
+            "expenses": 21702.49,
+            "netPosition": 5745.139999999999
+          },
+          {
+            "projectId": "25116",
+            "description": "25-116 Hiro Space Split",
+            "status": "Active",
+            "customer": "DAHLEMFISH",
+            "income": 35972,
+            "expenses": 21196.33,
+            "netPosition": 14775.669999999998
+          },
+          {
+            "projectId": "26112",
+            "description": "26-112 - McLane Jazz Salt Lake City, UT",
+            "status": "Active",
+            "customer": "HY-TEK",
+            "income": 204409.35,
+            "expenses": 19134.29,
+            "netPosition": 185275.06
+          },
+          {
+            "projectId": "25102",
+            "description": "25-102 Aspire at St. Lucie",
+            "status": "Active",
+            "customer": "ASPIRESL",
+            "income": 42304,
+            "expenses": 14388.44,
+            "netPosition": 27915.559999999998
+          },
+          {
+            "projectId": "24114",
+            "description": "24-114 Zion Door Dash",
+            "status": "Active",
+            "customer": "ZION",
+            "income": 36635,
+            "expenses": 13387.61,
+            "netPosition": 23247.39
+          },
+          {
+            "projectId": "23107",
+            "description": "TECOVA DALLAS",
+            "status": "Active",
+            "customer": "FF SOLUTIO",
+            "income": 0,
+            "expenses": 12000,
+            "netPosition": -12000
+          },
+          {
+            "projectId": "26117",
+            "description": "26-117 - Superior Beverage Exotec",
+            "status": "Active",
+            "customer": "HY-TEK",
+            "income": 0,
+            "expenses": 10000,
+            "netPosition": -10000
+          },
+          {
+            "projectId": "22105",
+            "description": "Vargo Permitting",
+            "status": "Completed",
+            "customer": "VARGO",
+            "income": 27666.63,
+            "expenses": 9931.02,
+            "netPosition": 17735.61
+          },
+          {
+            "projectId": "26118",
+            "description": "26-118 Champagne Ace Addition IL",
+            "status": "Active",
+            "customer": "NIEMANN",
+            "income": 49183.93,
+            "expenses": 8931.19,
+            "netPosition": 40252.74
+          },
+          {
+            "projectId": "25107",
+            "description": "25-107 Port Collective",
+            "status": "Active",
+            "customer": {},
+            "income": 0,
+            "expenses": 7224.17,
+            "netPosition": -7224.17
+          },
+          {
+            "projectId": "26119",
+            "description": "26-119 Union Collective KY",
+            "status": "Active",
+            "customer": "IBEACH",
+            "income": 67500,
+            "expenses": 5620.96,
+            "netPosition": 61879.04
+          },
+          {
+            "projectId": "26115",
+            "description": "26-115 Vargo Greenwood Permitting",
+            "status": "Active",
+            "customer": "VARGO",
+            "income": 21367,
+            "expenses": 4011.93,
+            "netPosition": 17355.07
+          },
+          {
+            "projectId": "24113",
+            "description": "24-113 Aspire Oak Tree Daytona LS Plans",
+            "status": "Active",
+            "customer": "ASPIRE",
+            "income": 9000,
+            "expenses": 3926.73,
+            "netPosition": 5073.27
+          },
+          {
+            "projectId": "22110",
+            "description": "Pepsi Co",
+            "status": "Completed",
+            "customer": {},
+            "income": 0,
+            "expenses": 2606,
+            "netPosition": -2606
+          },
+          {
+            "projectId": "25115",
+            "description": "25-115 Zion Arkansas Permit",
+            "status": "Active",
+            "customer": "ZION",
+            "income": 7999,
+            "expenses": 1255,
+            "netPosition": 6744
+          },
+          {
+            "projectId": "26114",
+            "description": "26-114 GW Brookville Rd Retail Store",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 0,
+            "expenses": 925.71,
+            "netPosition": -925.71
+          },
+          {
+            "projectId": "26111",
+            "description": "26-111 GW Morris IL",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 0,
+            "expenses": 40.55,
+            "netPosition": -40.55
+          },
+          {
+            "projectId": "12131",
+            "description": "25-117 Aspire Kissimmee Gardens",
+            "status": "Canceled",
+            "customer": {},
+            "income": 0,
+            "expenses": 0,
+            "netPosition": 0
+          },
+          {
+            "projectId": "21231",
+            "description": "25-121 The Roebling Homes",
+            "status": "Canceled",
+            "customer": {},
+            "income": 0,
+            "expenses": 0,
+            "netPosition": 0
+          },
+          {
+            "projectId": "2401A",
+            "description": "Temporary project code for Forza Cincinnati project - since we don't have the job in Procore yet.",
+            "status": "Active",
+            "customer": "FORZA",
+            "income": 0,
+            "expenses": 0,
+            "netPosition": 0
+          },
+          {
+            "projectId": "25122",
+            "description": "25-122 Goodwill Shadeland Ave",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 0,
+            "expenses": 0,
+            "netPosition": 0
+          },
+          {
+            "projectId": "25123",
+            "description": "25-123 Goodwill Shelbyville",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 0,
+            "expenses": 0,
+            "netPosition": 0
+          },
+          {
+            "projectId": "25128",
+            "description": "25-128 Vargo Permitting (Fort Worth, TX)",
+            "status": "Active",
+            "customer": "VARGO",
+            "income": 0,
+            "expenses": 0,
+            "netPosition": 0
+          },
+          {
+            "projectId": "26108",
+            "description": "26-108 GW Galesburg IL",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 0,
+            "expenses": 0,
+            "netPosition": 0
+          },
+          {
+            "projectId": "26109",
+            "description": "26-109 GW Macomb IL",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 0,
+            "expenses": 0,
+            "netPosition": 0
+          },
+          {
+            "projectId": "26110",
+            "description": "26-110 GW Peru IL",
+            "status": "Active",
+            "customer": "GOODWILL",
+            "income": 0,
+            "expenses": 0,
+            "netPosition": 0
+          },
+          {
+            "projectId": "26120",
+            "description": "26-120 - NEXCOM SEDC Pensacola, FL",
+            "status": "Active",
+            "customer": "HY-TEK",
+            "income": 0,
+            "expenses": 0,
+            "netPosition": 0
+          },
+          {
+            "projectId": "26121",
+            "description": "26-121 - Varsity Brands",
+            "status": "Active",
+            "customer": "HY-TEK",
+            "income": 0,
+            "expenses": 0,
+            "netPosition": 0
+          },
+          {
+            "projectId": "26122",
+            "description": "26-122 Goodwill Kokomo",
+            "status": "Active",
+            "customer": {},
+            "income": 0,
+            "expenses": 0,
+            "netPosition": 0
+          },
+          {
+            "projectId": "26123",
+            "description": "26-123 Playmakers",
+            "status": "Active",
+            "customer": "ROBINSON",
+            "income": 0,
+            "expenses": 0,
+            "netPosition": 0
+          },
+          {
+            "projectId": "8530",
+            "description": "26-118 Champagne Ace Addition IL",
+            "status": "Closed",
+            "customer": {},
+            "income": 0,
+            "expenses": 0,
+            "netPosition": 0
+          }
+        ],
+        "portfolioTotals": {
+          "totalIncome": 61235558.40000002,
+          "totalExpenses": 51243948.910000004,
+          "netPosition": 9991609.490000017
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "umat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ica"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " currently"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "94"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " projects"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " set"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Here"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ID"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " description"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "241"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "15"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "24"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "115"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "231"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "01"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ul"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ta"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Dallas"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "221"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "12"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Bella"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Vegas"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "241"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "01"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Esc"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "apes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "109"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "iq"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "lo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Phillips"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "burg"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " NJ"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "241"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "24"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "109"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Bloomington"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "27"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "127"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ul"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ta"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Beauty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "14"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "114"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Avon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " IN"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "125"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Nob"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "les"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "231"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "14"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Excel"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Center"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " #"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "114"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "221"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " S"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "pector"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Vegas"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "221"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "01"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ul"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ta"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Beauty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Spr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ink"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ler"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/E"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "lect"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "rical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "241"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cart"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cold"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Storage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "221"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "02"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " All"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "own"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "241"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "04"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Bart"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "231"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "02"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CE"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "VA"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Memphis"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "221"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "03"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " MD"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "13"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "113"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " GW"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Allison"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rd"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " IN"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "241"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "03"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Lakes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "hore"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Temp"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Power"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "13"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "113"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Martins"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " VA"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "231"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Avon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "241"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "11"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "24"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "111"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CE"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "VA"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Bern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Consulting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "03"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "103"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Niem"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ann"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Foods"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " TI"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "20"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "120"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " G"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "PC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Hai"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rob"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "otic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "105"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Applied"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Engineering"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "231"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "04"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " A"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "HS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Mo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ors"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "04"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "104"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CE"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "VA"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Bern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "RS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Phase"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Bern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " PA"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "03"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "103"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "231"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "11"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cart"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Heb"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ron"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "241"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "02"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wesley"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Office"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "231"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "12"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Zion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Pratt"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Whitney"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "241"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "07"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Core"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Mark"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "221"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "08"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Las"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ik"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Center"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "11"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "111"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Foundations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "01"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "101"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Core"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Mark"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Atlanta"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "08"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "108"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Trem"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ont"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "02"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "102"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Commons"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "231"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "08"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cart"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Memphis"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "105"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " GW"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Pioneer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " PK"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "WY"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "10"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "110"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Memphis"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cold"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Storage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Phase"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "221"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "04"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cooper"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Road"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "106"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " GW"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Washington"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "IL"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "12"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "112"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "am"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Deo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Academy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "18"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "118"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Browns"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "burg"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Indy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ("
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Indian"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "apolis"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " IN"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ")"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "241"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "08"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "24"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "108"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Aspire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ridge"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Haven"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "221"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "11"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Craig"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " St"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " office"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "231"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "13"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Mac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "omb"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Group"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Indianapolis"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "16"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "116"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Morris"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "04"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "104"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Royal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Theatre"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Apartments"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "126"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Verm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "illion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rise"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Warehouse"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "17"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "117"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Aspire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Kiss"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "im"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mee"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Gardens"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "231"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "03"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Store"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " #"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "231"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outreach"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Lawrence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " U"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "MC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "21"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "121"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ro"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "eb"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ling"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Homes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "01"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "101"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Paradise"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Isle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ge"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "otech"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "231"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Turning"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Pointe"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Academy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "19"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Dec"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "atur"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "241"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "24"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "105"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " For"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "za"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Dayton"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "241"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "12"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "24"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "112"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " C"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "urb"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cut"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "221"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "07"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " P"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "urr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " G"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "urr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "221"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "13"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Great"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Clips"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Columbus"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "231"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "10"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brennan"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Pittsburgh"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "07"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "107"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " GW"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Canton"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " IL"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "24"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "124"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Bloomington"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Excel"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "16"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "116"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Hiro"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Space"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Split"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "12"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "112"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Mc"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Lane"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Jazz"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Salt"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Lake"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " City"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " UT"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "02"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "102"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Aspire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " St"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Luc"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ie"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "241"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "14"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "24"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "114"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Zion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Door"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Dash"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "231"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "07"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " TEC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "OVA"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " D"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ALL"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "AS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "17"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "117"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Superior"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Beverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "otec"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "221"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " V"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "argo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Perm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "itting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "18"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "118"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Champagne"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ace"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Addition"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " IL"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "07"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "107"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Port"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "19"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "119"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Union"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " KY"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "15"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "115"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " V"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "argo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Greenwood"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Perm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "itting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "241"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "13"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "24"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "113"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Aspire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Oak"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Tree"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Daytona"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " LS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Plans"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "221"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "10"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Pepsi"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Co"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "15"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "115"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Zion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Arkansas"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Permit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "14"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "114"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " GW"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rd"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Retail"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Store"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "11"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "111"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " GW"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Morris"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " IL"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "121"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "31"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "117"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Aspire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Kiss"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "im"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mee"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Gardens"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " C"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "anceled"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "212"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "31"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "121"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ro"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "eb"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ling"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Homes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " C"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "anceled"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "240"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "A"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Temporary"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " code"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " For"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "za"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cincinnati"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " since"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " we"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " don't"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " job"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Pro"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "core"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " yet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "22"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "122"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Sh"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "adel"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ave"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "23"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "123"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Shelby"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "251"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "28"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "25"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "128"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " V"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "argo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Perm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "itting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ("
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Fort"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Worth"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " TX"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ")"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "08"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "108"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " GW"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " G"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ales"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "burg"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " IL"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "109"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " GW"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Mac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "omb"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " IL"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "10"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "110"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " GW"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Peru"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " IL"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "20"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "120"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " N"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "EX"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "COM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " S"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ED"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "C"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Pens"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "acola"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " FL"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "21"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "121"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Vars"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brands"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "22"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "122"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Kok"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "omo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "261"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "23"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "123"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Play"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "makers"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "853"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "118"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Champagne"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ace"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Addition"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " IL"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Closed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "A"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " couple"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " things"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " worth"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " noticing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "duplicate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/c"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "arry"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "over"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-looking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " records"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Asp"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Kiss"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "im"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mee"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Gardens"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ro"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "eb"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ling"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Homes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Champ"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "agne"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ace"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Addition"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " IL"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "temporary"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " code"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "240"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "A"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " For"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "za"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cincinnati"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "CSV"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-style"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " table"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " customer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "come"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "expenses"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/net"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "A"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shortlist"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " projects"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " duplicated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " canceled"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " suspect"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "finish",
+      "finishReason": "stop"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 56130,
+      "totalTokens": 57800,
+      "outputTokens": 1670
+    },
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "retrieval-complete",
+          "status": "success",
+          "message": "Retrieved (0 sources, 0 warnings)",
+          "durations": {},
+          "timestamp": "2026-06-09T14:41:24.815Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": 2,
+    "tool_trace": [
+      {
+        "tool": "getAcumaticaProjectList",
+        "error": null,
+        "input": {
+          "message": "List all the projects we have set up in Acumatica.",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": "Acumatica ERP (live)",
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "getAcumaticaProjectList",
+        "timestamp": "2026-06-09T14:41:26.809Z"
+      },
+      {
+        "tool": "getAcumaticaProjectList",
+        "input": {
+          "message": "List all the projects we have set up in Acumatica.",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "getAcumaticaProjectList",
+        "timestamp": "2026-06-09T14:41:50.206Z"
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse.",
+          "projectId": null,
+          "visibility": "private"
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project.",
+          "projectId": null,
+          "visibility": "private"
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly.",
+          "projectId": null,
+          "visibility": "private"
+        }
+      ],
+      "teamUsed": 0,
+      "retrieved": {
+        "team": 0,
+        "relevant": 0,
+        "preferences": 3
+      },
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "source_debug": {
+      "memory": {
+        "memories": [
+          {
+            "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+            "type": "preference",
+            "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+            "type": "preference",
+            "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+            "type": "preference",
+            "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly.",
+            "projectId": null,
+            "visibility": "private"
+          }
+        ],
+        "teamUsed": 0,
+        "retrieved": {
+          "team": 0,
+          "relevant": 0,
+          "preferences": 3
+        },
+        "totalUsed": 3,
+        "relevantUsed": 0,
+        "preferencesUsed": 3,
+        "recentConversationsUsed": 3
+      },
+      "sources": {
+        "timing": {
+          "slowest": [],
+          "failedCount": 0,
+          "totalMeasuredMs": 0
+        },
+        "toolNames": [
+          "getAcumaticaProjectList",
+          "getAcumaticaProjectList"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 2,
+        "sourceCoverage": []
+      },
+      "orchestrator": "retrieval-planner-v2",
+      "outputPolicy": {
+        "stopWhen": "stepCountIs(10)",
+        "maxOutputTokens": 8000
+      },
+      "retrievalPlan": {
+        "intent": "general_conversation",
+        "reason": "conversational_fallback",
+        "sources": [],
+        "responseFormat": "conversational"
+      }
+    },
+    "finish_reason": "stop",
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "general_conversation",
+      "reason": "conversational_fallback",
+      "sources": [],
+      "responseFormat": "conversational"
+    },
+    "synthesis_model": "openai/gpt-5.4",
+    "response_quality": {
+      "score": 62,
+      "reasons": [
+        "at least one successful tool call",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "response_message_id": "Pf4j8m91mrCZ13kK",
+    "empty_model_response": false
+  }
+}

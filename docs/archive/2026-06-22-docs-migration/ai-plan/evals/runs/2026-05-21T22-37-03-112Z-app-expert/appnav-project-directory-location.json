@@ -1,0 +1,65 @@
+{
+  "id": "appnav-project-directory-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4855,
+  "question": "Where do I manage project team contacts?",
+  "mustInclude": [
+    "/[projectId]/directory",
+    "project"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "Manage them in the project-level **Directory**.\n\nWhat I checked:\n- App Expert artifact status: both sitemap and feature registry are current and available.\n- Feature registry: **Project Directory** (`docs/help/articles/project-directory.md`)\n- Help article: **Project Directory**\n\nDocumented behavior:\n- Open a specific project, then open **Directory** from the sidebar.\n- The project directory is the roster for people and companies on that project.\n- It includes tabs for **People** and **Companies**.\n- You can add people, assign a **Project Role**, optionally grant **Project Access**, and save.\n\nExact route:\n- `/[projectId]/directory`\n\nIf you meant the **global** contact database instead of a specific project’s team roster, there is also a separate global route:\n- `/directory`\n- `/directory/contacts`\n\nBut for “project team contacts,” the documented place is `/[projectId]/directory`.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/project-directory.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/project-directory.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/directory",
+        "sourceType": "sitemap",
+        "route": "/directory",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/contacts",
+        "sourceType": "sitemap",
+        "route": "/contacts",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 4744,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

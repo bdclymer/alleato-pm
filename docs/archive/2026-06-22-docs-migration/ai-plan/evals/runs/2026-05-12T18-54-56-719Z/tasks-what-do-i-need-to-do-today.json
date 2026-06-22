@@ -1,0 +1,41 @@
+{
+  "id": "tasks-what-do-i-need-to-do-today",
+  "intent": "task_management",
+  "prompt": "What do I need to do today?",
+  "selectedProjectId": null,
+  "sessionId": "59c866dd-bc28-4cc5-a0c8-3dc781a51033",
+  "sessionLabel": "eval-2026-05-12T18-54-56-719Z-tasks-what-do-i-need-to-do-today",
+  "startedAt": "2026-05-12T18:59:02.057Z",
+  "finishedAt": "2026-05-12T18:59:17.870Z",
+  "durationMs": 540,
+  "httpStatus": 500,
+  "streamError": "HTTP 500: Internal Server Error",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 500: Internal Server Error",
+      "HTTP 500",
+      "assistant message was not persisted to chat_history",
+      "expected required tool 'getMyTasks' to fire",
+      "answer length 21 < min 60"
+    ],
+    "warnings": [
+      "expected family 'task_management' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 21,
+    "finalText": "Internal Server Error"
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "task_management"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

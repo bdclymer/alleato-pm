@@ -184,7 +184,7 @@ export async function planScheduledAutomation(
       reason: "unsupported_blueprint",
       draftCreated: false,
       message:
-        "This automation is not in the approved blueprint catalog yet. Ask for daily recap, task extraction, source health, packet refresh, executive assistant check, or Microsoft Graph sync.",
+        "This automation is not in the approved blueprint catalog yet. Ask for daily recap, source health, executive assistant check, or Microsoft Graph sync.",
     };
   }
 

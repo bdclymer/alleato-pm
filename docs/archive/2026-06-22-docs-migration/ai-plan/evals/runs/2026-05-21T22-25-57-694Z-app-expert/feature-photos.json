@@ -1,0 +1,71 @@
+{
+  "id": "feature-photos",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 3954,
+  "question": "Where are project photos?",
+  "mustInclude": [
+    "photos"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "Project photos are in the project-scoped Photos page:\n\n- Route: `/[projectId]/photos`\n- Source file: `frontend/src/app/(main)/[projectId]/photos/page.tsx`\n- Help article: `docs/help/articles/photos.md`\n\nWhat I checked:\n- Artifact status: both the sitemap and feature registry are current and available.\n- Feature registry: found a documented **Photos** feature.\n- App sitemap: confirmed the exact route and source file.\n\nDocumented behavior from the help/feature metadata:\n- Manage project photos with albums, geotagged map pins, favorites, and grid views.\n\nIf you want, I can also tell you how to get there from the main app navigation.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/photos",
+        "sourceType": "sitemap",
+        "route": "/photos",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/photos/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/photos/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/photos.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/photos.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/feature",
+        "sourceType": "sitemap",
+        "route": "/feature",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3857,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

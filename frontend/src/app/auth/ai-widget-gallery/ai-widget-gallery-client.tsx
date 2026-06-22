@@ -84,7 +84,7 @@ const widgets: AssistantWidgetPayload[] = [
     outlookDraftId: "draft-1",
     outlookWebLink: "https://outlook.office.com/mail/deeplink/compose/draft-1",
     voiceProfile: {
-      path: "docs/ai-plan/brandon-email-voice-profile.md",
+      path: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md",
       version: "2026-05-13",
     },
     adaptiveCard: {},

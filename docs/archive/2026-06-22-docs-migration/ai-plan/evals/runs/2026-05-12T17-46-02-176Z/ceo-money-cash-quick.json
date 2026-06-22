@@ -1,0 +1,3436 @@
+{
+  "id": "ceo-money-cash-quick",
+  "intent": "financial_analysis",
+  "prompt": "How much cash do we have access to today?",
+  "selectedProjectId": null,
+  "sessionId": "fab7a09e-1302-4052-b853-1f649f7ba564",
+  "sessionLabel": "eval-2026-05-12T17-46-02-176Z-ceo-money-cash-quick",
+  "startedAt": "2026-05-12T18:19:26.583Z",
+  "finishedAt": "2026-05-12T18:20:22.945Z",
+  "durationMs": 55797,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 505,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [],
+    "observations": [
+      "tools fired: intentPlanner, streamingToolPolicy, getCashPositionReport, getCashPositionReport, getAPAgingReport, getARAgingReport, getCashPositionReport, getARAgingReport, getRecentInvoices, getAPAgingReport, getRecentBills"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "streamingToolPolicy",
+      "getCashPositionReport",
+      "getCashPositionReport",
+      "getAPAgingReport",
+      "getARAgingReport",
+      "getCashPositionReport",
+      "getARAgingReport",
+      "getRecentInvoices",
+      "getAPAgingReport",
+      "getRecentBills"
+    ],
+    "familiesHit": [
+      "accounting"
+    ],
+    "finalTextLength": 1640,
+    "finalText": "I can’t give you a clean “cash on hand today” number right now because the live cash-position pull from Acumatica failed, and the CFO timeout didn’t return a usable analysis.\n\nWhat I can tell you from the ERP right now:\n\n- **Open AP outstanding:** **$14,110**, all of it **90+ days past due** across **2 bills**.  \n  [Source: Acumatica AP Aging - as of 2026-05-12T18:20:10.996Z]\n- **Recent open AR invoices returned:** **$0**  \n  [Source: Acumatica Recent AR Invoices]\n- **Recent open AP bills returned:** **$0**  \n  [Source: Acumatica Recent AP Bills]\n\nWhat that means:\n\n- I **do not have a verified bank/cash balance** from the ERP right now.\n- I **do have evidence of at least $14.1K in overdue payables** that will pressure available cash.\n- The AR result showing zero open invoices is **not enough to conclude collections are clear** because the AR aging call itself failed while the simpler recent-invoices query returned empty. That’s a data gap, not a business conclusion.\n\nSo the honest answer is:\n\n- **Known immediate obligation:** **$14,110**\n- **Verified accessible cash today:** **not confirmed** because the Acumatica cash-position endpoint is failing\n\nData gap:\n- The failed sources were the **live cash-position report** and **AR aging**. Without those, I can’t responsibly tell you how much cash you can deploy today.\n\nBest next move:\n- If you want, I can give you the **next-best liquidity read** by pulling project-side financial pressure points and outstanding obligations from the app while the ERP cash endpoint is down. That won’t replace bank cash, but it will tell you **where cash is likely to get squeezed next**."
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "accounting"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T18:19:32.120Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-12T18:19:36.316Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "0eWIVWxMmEzULDnX"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "toolName": "consultCFO"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "question"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "How"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " much"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " cash"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " do"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " we"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " have"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " access"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " today"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "?"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " Include"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " cash"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " position"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "/li"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "qu"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "idity"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " from"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " live"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " ERP"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " data"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": ","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " recent"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " infl"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "ows"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " vs"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " out"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "flows"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": ","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " any"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " cave"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "ats"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " about"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " what"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " '"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "access"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " today"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "'"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " means"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "context"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "User"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " wants"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " an"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " immediate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " liquidity"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " view"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " as"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " of"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " today"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " ("
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "12"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "),"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " not"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " a"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " generic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " budget"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": " answer"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": ".\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "toolName": "consultCFO",
+      "input": {
+        "question": "How much cash do we have access to today? Include current cash position/liquidity from live ERP data, recent inflows vs outflows, and any caveats about what 'access to today' means.",
+        "context": "User wants an immediate liquidity view as of today (2026-05-12), not a generic budget answer."
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_v41C0ZN8ny56CePfMefOWUV6",
+      "output": {
+        "agent": "cfo",
+        "analysis": "The CFO encountered an error while analyzing: Sub-agent cfo exceeded 15000ms timeout",
+        "confidence": "low",
+        "toolsUsed": [],
+        "durationMs": 15008,
+        "alerts": [
+          {
+            "severity": "warning",
+            "message": "CFO agent error: Sub-agent cfo exceeded 15000ms timeout"
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_S4HHtWDEpe7t7O16m5KshyTU",
+      "toolName": "getCashPositionReport"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_S4HHtWDEpe7t7O16m5KshyTU",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_S4HHtWDEpe7t7O16m5KshyTU",
+      "inputTextDelta": "window"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_S4HHtWDEpe7t7O16m5KshyTU",
+      "inputTextDelta": "Days"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_S4HHtWDEpe7t7O16m5KshyTU",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_S4HHtWDEpe7t7O16m5KshyTU",
+      "inputTextDelta": "30"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_S4HHtWDEpe7t7O16m5KshyTU",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_S4HHtWDEpe7t7O16m5KshyTU",
+      "toolName": "getCashPositionReport",
+      "input": {
+        "windowDays": 30
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_S4HHtWDEpe7t7O16m5KshyTU",
+      "output": {
+        "error": "Acumatica Check fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"The given key was not present in the dictionary.\",\"exceptionType\":\"System.Collections.Generic.KeyNotFoundException\",\"stackTrace\":\"   at System.ThrowHelper.ThrowKeyNotFoundException()\\r\\n   at System.Collections.Generic.Dictionary`2.get_Item(TKey key)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.TryBindAsDeclaredProperty(PathSegmentToken tokenIn, IEdmEntityType entityType, ODataPathSegment& segment)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.ConvertNonTypeTokenToSegment(PathSegmentToken tokenIn, IEdmModel model, IEdmEntityType entityType)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.ProcessTokenAsPath(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.Visit(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectBinder.Bind(SelectToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SelectExpandSemanticBinder.Parse(IEdmEntityType elementType, IEdmEntitySet entitySet, ExpandToken expandToken, SelectToken selectToken, ODataUriParserConfiguration configuration)\\r\\n   at PX.Api.ContractBased.OData.Helpers.ParseSelectCustomAndExpand(ODataUriParser uriParser, String select, String expand, String custom, IEdmEntityType elementType, EntityImpl entity, Nullable`1 returnBehaviorToSet)\\r\\n   at PX.Api.ContractBased.OData.Helpers.FillRestQueryOptions(IEdmModel edmModel, EntityImpl entity, String filter, String select, String expand, String custom)\\r\\n   at PX.Api.ContractBased.WebApi.Controllers.EntityController.<GetList>d__14.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at lambda_method(Closure , Object )\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ActionMethodExecutor.AwaitableObjectResultExecutor.<Execute>d__0.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeActionMethodAsync>d__12.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeNextActionFilterAsync>d__10.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Rethrow(ActionExecutedContext context)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeInnerFilterAsync>d__13.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ResourceInvoker.<InvokeNextExceptionFilterAsync>d__24.MoveNext()\"}",
+        "suggestion": "The Acumatica ERP connection may be temporarily unavailable. Try again or rely on the Supabase financial data."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_iSL97355qNDeBflfbX1vAipM",
+      "toolName": "getARAgingReport"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_iSL97355qNDeBflfbX1vAipM",
+      "inputTextDelta": "{}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_iSL97355qNDeBflfbX1vAipM",
+      "toolName": "getARAgingReport",
+      "input": {}
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_AKEjQLA6PuPWsk0AWaRebe4d",
+      "toolName": "getAPAgingReport"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKEjQLA6PuPWsk0AWaRebe4d",
+      "inputTextDelta": "{}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_AKEjQLA6PuPWsk0AWaRebe4d",
+      "toolName": "getAPAgingReport",
+      "input": {}
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_JOLMc7ngc1muhD16P979QFw3",
+      "toolName": "getRecentInvoices"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JOLMc7ngc1muhD16P979QFw3",
+      "inputTextDelta": "{\"status\":\"Open\",\"limit\":10}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_JOLMc7ngc1muhD16P979QFw3",
+      "toolName": "getRecentInvoices",
+      "input": {
+        "status": "Open",
+        "limit": 10
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_0lWWIqWLSrgZ8JZBy5Rr6xbX",
+      "toolName": "getRecentBills"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_0lWWIqWLSrgZ8JZBy5Rr6xbX",
+      "inputTextDelta": "{\"status\":\"Open\",\"limit\":10}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_0lWWIqWLSrgZ8JZBy5Rr6xbX",
+      "toolName": "getRecentBills",
+      "input": {
+        "status": "Open",
+        "limit": 10
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_iSL97355qNDeBflfbX1vAipM",
+      "output": {
+        "error": "Acumatica Invoice fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"The given key was not present in the dictionary.\",\"exceptionType\":\"System.Collections.Generic.KeyNotFoundException\",\"stackTrace\":\"   at System.ThrowHelper.ThrowKeyNotFoundException()\\r\\n   at System.Collections.Generic.Dictionary`2.get_Item(TKey key)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.TryBindAsDeclaredProperty(PathSegmentToken tokenIn, IEdmEntityType entityType, ODataPathSegment& segment)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.ConvertNonTypeTokenToSegment(PathSegmentToken tokenIn, IEdmModel model, IEdmEntityType entityType)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.ProcessTokenAsPath(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.Visit(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectBinder.Bind(SelectToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SelectExpandSemanticBinder.Parse(IEdmEntityType elementType, IEdmEntitySet entitySet, ExpandToken expandToken, SelectToken selectToken, ODataUriParserConfiguration configuration)\\r\\n   at PX.Api.ContractBased.OData.Helpers.ParseSelectCustomAndExpand(ODataUriParser uriParser, String select, String expand, String custom, IEdmEntityType elementType, EntityImpl entity, Nullable`1 returnBehaviorToSet)\\r\\n   at PX.Api.ContractBased.OData.Helpers.FillRestQueryOptions(IEdmModel edmModel, EntityImpl entity, String filter, String select, String expand, String custom)\\r\\n   at PX.Api.ContractBased.WebApi.Controllers.EntityController.<GetList>d__14.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at lambda_method(Closure , Object )\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ActionMethodExecutor.AwaitableObjectResultExecutor.<Execute>d__0.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeActionMethodAsync>d__12.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeNextActionFilterAsync>d__10.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Rethrow(ActionExecutedContext context)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeInnerFilterAsync>d__13.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ResourceInvoker.<InvokeNextExceptionFilterAsync>d__24.MoveNext()\"}",
+        "suggestion": "The Acumatica ERP connection may be temporarily unavailable. Try again or rely on the Supabase financial data."
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_JOLMc7ngc1muhD16P979QFw3",
+      "output": {
+        "source": "Acumatica ERP (live)",
+        "sourceRef": "[Source: Acumatica Recent AR Invoices]",
+        "count": 0,
+        "totalAmount": 0,
+        "totalBalance": 0,
+        "invoices": []
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_AKEjQLA6PuPWsk0AWaRebe4d",
+      "output": {
+        "source": "Acumatica ERP (live)",
+        "sourceRef": "[Source: Acumatica AP Aging - as of 2026-05-12T18:20:10.996Z]",
+        "asOf": "2026-05-12T18:20:10.996Z",
+        "buckets": [
+          {
+            "label": "Current",
+            "totalBalance": 0,
+            "count": 0
+          },
+          {
+            "label": "1-30 Days",
+            "totalBalance": 0,
+            "count": 0
+          },
+          {
+            "label": "31-60 Days",
+            "totalBalance": 0,
+            "count": 0
+          },
+          {
+            "label": "61-90 Days",
+            "totalBalance": 0,
+            "count": 0
+          },
+          {
+            "label": "90+ Days",
+            "totalBalance": 14110,
+            "count": 2
+          }
+        ],
+        "totalBalance": 14110,
+        "summary": {
+          "totalOutstandingAP": 14110,
+          "bucketBreakdown": [
+            "90+ Days: $14,110 (2 bills)"
+          ],
+          "overdueAmount": 14110
+        }
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_0lWWIqWLSrgZ8JZBy5Rr6xbX",
+      "output": {
+        "source": "Acumatica ERP (live)",
+        "sourceRef": "[Source: Acumatica Recent AP Bills]",
+        "count": 0,
+        "totalAmount": 0,
+        "totalBalance": 0,
+        "bills": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " give"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cash"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hand"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " number"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cash"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-position"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pull"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "umat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ica"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " failed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CFO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " timeout"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " didn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " return"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " usable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " analysis"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ERP"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AP"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " outstanding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "14"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "110"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " all"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "90"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "+"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " days"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " past"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " due"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " across"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bills"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "umat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ica"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AP"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Aging"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "12"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "T"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "18"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "20"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "10"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "996"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Z"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AR"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " invoices"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " returned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "umat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ica"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AR"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " In"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "voices"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AP"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bills"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " returned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "umat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ica"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AP"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Bills"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " verified"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bank"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/c"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ash"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " balance"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ERP"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " least"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " $"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "14"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " overdue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pay"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ables"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pressure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " available"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cash"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AR"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " result"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " showing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " zero"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " invoices"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " conclude"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " collections"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clear"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AR"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " aging"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " call"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " itself"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " failed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " while"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " simpler"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "voices"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " query"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " returned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " empty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " business"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " conclusion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "So"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " honest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Known"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " immediate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " obligation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "14"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "110"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Verified"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " accessible"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cash"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confirmed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "umat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ica"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cash"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-position"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " endpoint"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " failing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " failed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sources"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " were"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cash"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-position"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " report"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "AR"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " aging"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Without"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " those"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " responsibly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " how"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " much"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cash"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " deploy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Best"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " move"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " give"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-best"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " liquidity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pulling"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-side"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " financial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pressure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " points"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " outstanding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " obligations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " app"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " while"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ERP"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cash"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " endpoint"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " down"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " won"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " replace"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bank"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cash"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "where"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cash"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " likely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " squeezed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 112808,
+      "totalTokens": 113396,
+      "outputTokens": 588,
+      "cacheHitRatio": 0.976,
+      "cachedInputTokens": 110080
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "How much cash do we have access to today?",
+          "selectedProjectId": null,
+          "deterministicIntent": "general_conversation",
+          "sourceSpecificRagKind": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "financial_analysis",
+          "planner": "model",
+          "rationale": "The user is asking about available cash, which is a financial status question. No project is selected, so the assistant should first clarify the scope (which project, portfolio, or company entity) before answering.",
+          "confidence": "high",
+          "responseMode": "ask_clarifying_question",
+          "requiredTools": [],
+          "deterministicIntent": "general_conversation",
+          "shouldAskClarifyingQuestion": true
+        },
+        "timestamp": "2026-05-12T18:19:32.119Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "streamingModelToolsEnabled": true
+        },
+        "timestamp": "2026-05-12T18:19:37.943Z"
+      },
+      {
+        "tool": "getCashPositionReport",
+        "error": "Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"The given key was not present in the dictionary.\",\"exceptionType\":\"System.Collections.Generic.KeyNotFoundException\",\"stackTrace\":\"   at System.ThrowHelper.ThrowKeyNotFoundException()\\r\\n   at System.Collections.Generic.Dictionary`2.get_Item(TKey key)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.TryBindAsDeclaredProperty(PathSegmentToken tokenIn, IEdmEntityType entityType, ODataPathSegment& segment)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.ConvertNonTypeTokenToSegment(PathSegmentToken tokenIn, IEdmModel model, IEdmEntityType entityType)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.ProcessTokenAsPath(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.Visit(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectBinder.Bind(SelectToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SelectExpandSemanticBinder.Parse(IEdmEntityType elementType, IEdmEntitySet entitySet, ExpandToken expandToken, SelectToken selectToken, ODataUriParserConfiguration configuration)\\r\\n   at PX.Api.ContractBased.OData.Helpers.ParseSelectCustomAndExpand(ODataUriParser uriParser, String select, String expand, String custom, IEdmEntityType elementType, EntityImpl entity, Nullable`1 returnBehaviorToSet)\\r\\n   at PX.Api.ContractBased.OData.Helpers.FillRestQueryOptions(IEdmModel edmModel, EntityImpl entity, String filter, String select, String expand, String custom)\\r\\n   at PX.Api.ContractBased.WebApi.Controllers.EntityController.<GetList>d__14.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at lambda_method(Closure , Object )\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ActionMethodExecutor.AwaitableObjectResultExecutor.<Execute>d__0.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeActionMethodAsync>d__12.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeNextActionFilterAsync>d__10.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Rethrow(ActionExecutedContext context)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeInnerFilterAsync>d__13.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ResourceInvoker.<InvokeNextExceptionFilterAsync>d__24.MoveNext()\"}",
+        "input": {
+          "windowDays": 90
+        },
+        "timestamp": "2026-05-12T18:19:49.087Z"
+      },
+      {
+        "tool": "getCashPositionReport",
+        "error": "Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"The given key was not present in the dictionary.\",\"exceptionType\":\"System.Collections.Generic.KeyNotFoundException\",\"stackTrace\":\"   at System.ThrowHelper.ThrowKeyNotFoundException()\\r\\n   at System.Collections.Generic.Dictionary`2.get_Item(TKey key)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.TryBindAsDeclaredProperty(PathSegmentToken tokenIn, IEdmEntityType entityType, ODataPathSegment& segment)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.ConvertNonTypeTokenToSegment(PathSegmentToken tokenIn, IEdmModel model, IEdmEntityType entityType)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.ProcessTokenAsPath(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.Visit(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectBinder.Bind(SelectToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SelectExpandSemanticBinder.Parse(IEdmEntityType elementType, IEdmEntitySet entitySet, ExpandToken expandToken, SelectToken selectToken, ODataUriParserConfiguration configuration)\\r\\n   at PX.Api.ContractBased.OData.Helpers.ParseSelectCustomAndExpand(ODataUriParser uriParser, String select, String expand, String custom, IEdmEntityType elementType, EntityImpl entity, Nullable`1 returnBehaviorToSet)\\r\\n   at PX.Api.ContractBased.OData.Helpers.FillRestQueryOptions(IEdmModel edmModel, EntityImpl entity, String filter, String select, String expand, String custom)\\r\\n   at PX.Api.ContractBased.WebApi.Controllers.EntityController.<GetList>d__14.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at lambda_method(Closure , Object )\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ActionMethodExecutor.AwaitableObjectResultExecutor.<Execute>d__0.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeActionMethodAsync>d__12.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeNextActionFilterAsync>d__10.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Rethrow(ActionExecutedContext context)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeInnerFilterAsync>d__13.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ResourceInvoker.<InvokeNextExceptionFilterAsync>d__24.MoveNext()\"}",
+        "input": {
+          "windowDays": 30
+        },
+        "timestamp": "2026-05-12T18:19:52.564Z"
+      },
+      {
+        "tool": "getAPAgingReport",
+        "input": {},
+        "output": {
+          "asOf": "2026-05-12T18:19:55.017Z",
+          "source": "Acumatica ERP (live)",
+          "buckets": [
+            {
+              "count": 0,
+              "label": "Current",
+              "totalBalance": 0
+            },
+            {
+              "count": 0,
+              "label": "1-30 Days",
+              "totalBalance": 0
+            },
+            {
+              "count": 0,
+              "label": "31-60 Days",
+              "totalBalance": 0
+            },
+            {
+              "count": 0,
+              "label": "61-90 Days",
+              "totalBalance": 0
+            },
+            {
+              "count": 2,
+              "label": "90+ Days",
+              "totalBalance": 14110
+            }
+          ],
+          "summary": {
+            "overdueAmount": 14110,
+            "bucketBreakdown": [
+              "90+ Days: $14,110 (2 bills)"
+            ],
+            "totalOutstandingAP": 14110
+          },
+          "sourceRef": "[Source: Acumatica AP Aging - as of 2026-05-12T18:19:55.017Z]",
+          "totalBalance": 14110
+        },
+        "timestamp": "2026-05-12T18:19:55.017Z"
+      },
+      {
+        "tool": "getARAgingReport",
+        "error": "Acumatica Invoice fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"The given key was not present in the dictionary.\",\"exceptionType\":\"System.Collections.Generic.KeyNotFoundException\",\"stackTrace\":\"   at System.ThrowHelper.ThrowKeyNotFoundException()\\r\\n   at System.Collections.Generic.Dictionary`2.get_Item(TKey key)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.TryBindAsDeclaredProperty(PathSegmentToken tokenIn, IEdmEntityType entityType, ODataPathSegment& segment)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.ConvertNonTypeTokenToSegment(PathSegmentToken tokenIn, IEdmModel model, IEdmEntityType entityType)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.ProcessTokenAsPath(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.Visit(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectBinder.Bind(SelectToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SelectExpandSemanticBinder.Parse(IEdmEntityType elementType, IEdmEntitySet entitySet, ExpandToken expandToken, SelectToken selectToken, ODataUriParserConfiguration configuration)\\r\\n   at PX.Api.ContractBased.OData.Helpers.ParseSelectCustomAndExpand(ODataUriParser uriParser, String select, String expand, String custom, IEdmEntityType elementType, EntityImpl entity, Nullable`1 returnBehaviorToSet)\\r\\n   at PX.Api.ContractBased.OData.Helpers.FillRestQueryOptions(IEdmModel edmModel, EntityImpl entity, String filter, String select, String expand, String custom)\\r\\n   at PX.Api.ContractBased.WebApi.Controllers.EntityController.<GetList>d__14.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at lambda_method(Closure , Object )\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ActionMethodExecutor.AwaitableObjectResultExecutor.<Execute>d__0.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeActionMethodAsync>d__12.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeNextActionFilterAsync>d__10.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Rethrow(ActionExecutedContext context)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeInnerFilterAsync>d__13.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ResourceInvoker.<InvokeNextExceptionFilterAsync>d__24.MoveNext()\"}",
+        "input": {},
+        "timestamp": "2026-05-12T18:19:55.178Z"
+      },
+      {
+        "tool": "getCashPositionReport",
+        "error": "Acumatica Check fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"The given key was not present in the dictionary.\",\"exceptionType\":\"System.Collections.Generic.KeyNotFoundException\",\"stackTrace\":\"   at System.ThrowHelper.ThrowKeyNotFoundException()\\r\\n   at System.Collections.Generic.Dictionary`2.get_Item(TKey key)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.TryBindAsDeclaredProperty(PathSegmentToken tokenIn, IEdmEntityType entityType, ODataPathSegment& segment)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.ConvertNonTypeTokenToSegment(PathSegmentToken tokenIn, IEdmModel model, IEdmEntityType entityType)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.ProcessTokenAsPath(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.Visit(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectBinder.Bind(SelectToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SelectExpandSemanticBinder.Parse(IEdmEntityType elementType, IEdmEntitySet entitySet, ExpandToken expandToken, SelectToken selectToken, ODataUriParserConfiguration configuration)\\r\\n   at PX.Api.ContractBased.OData.Helpers.ParseSelectCustomAndExpand(ODataUriParser uriParser, String select, String expand, String custom, IEdmEntityType elementType, EntityImpl entity, Nullable`1 returnBehaviorToSet)\\r\\n   at PX.Api.ContractBased.OData.Helpers.FillRestQueryOptions(IEdmModel edmModel, EntityImpl entity, String filter, String select, String expand, String custom)\\r\\n   at PX.Api.ContractBased.WebApi.Controllers.EntityController.<GetList>d__14.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at lambda_method(Closure , Object )\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ActionMethodExecutor.AwaitableObjectResultExecutor.<Execute>d__0.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeActionMethodAsync>d__12.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeNextActionFilterAsync>d__10.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Rethrow(ActionExecutedContext context)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeInnerFilterAsync>d__13.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ResourceInvoker.<InvokeNextExceptionFilterAsync>d__24.MoveNext()\"}",
+        "input": {
+          "windowDays": 30
+        },
+        "timestamp": "2026-05-12T18:20:00.117Z"
+      },
+      {
+        "tool": "getARAgingReport",
+        "error": "Acumatica Invoice fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"The given key was not present in the dictionary.\",\"exceptionType\":\"System.Collections.Generic.KeyNotFoundException\",\"stackTrace\":\"   at System.ThrowHelper.ThrowKeyNotFoundException()\\r\\n   at System.Collections.Generic.Dictionary`2.get_Item(TKey key)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.TryBindAsDeclaredProperty(PathSegmentToken tokenIn, IEdmEntityType entityType, ODataPathSegment& segment)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.ConvertNonTypeTokenToSegment(PathSegmentToken tokenIn, IEdmModel model, IEdmEntityType entityType)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.ProcessTokenAsPath(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.Visit(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectBinder.Bind(SelectToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SelectExpandSemanticBinder.Parse(IEdmEntityType elementType, IEdmEntitySet entitySet, ExpandToken expandToken, SelectToken selectToken, ODataUriParserConfiguration configuration)\\r\\n   at PX.Api.ContractBased.OData.Helpers.ParseSelectCustomAndExpand(ODataUriParser uriParser, String select, String expand, String custom, IEdmEntityType elementType, EntityImpl entity, Nullable`1 returnBehaviorToSet)\\r\\n   at PX.Api.ContractBased.OData.Helpers.FillRestQueryOptions(IEdmModel edmModel, EntityImpl entity, String filter, String select, String expand, String custom)\\r\\n   at PX.Api.ContractBased.WebApi.Controllers.EntityController.<GetList>d__14.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at lambda_method(Closure , Object )\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ActionMethodExecutor.AwaitableObjectResultExecutor.<Execute>d__0.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeActionMethodAsync>d__12.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeNextActionFilterAsync>d__10.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Rethrow(ActionExecutedContext context)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeInnerFilterAsync>d__13.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ResourceInvoker.<InvokeNextExceptionFilterAsync>d__24.MoveNext()\"}",
+        "input": {},
+        "timestamp": "2026-05-12T18:20:07.924Z"
+      },
+      {
+        "tool": "getRecentInvoices",
+        "input": {
+          "limit": 10,
+          "status": "Open"
+        },
+        "output": {
+          "count": 0,
+          "source": "Acumatica ERP (live)",
+          "invoices": [],
+          "sourceRef": "[Source: Acumatica Recent AR Invoices]",
+          "totalAmount": 0,
+          "totalBalance": 0
+        },
+        "timestamp": "2026-05-12T18:20:08.762Z"
+      },
+      {
+        "tool": "getAPAgingReport",
+        "input": {},
+        "output": {
+          "asOf": "2026-05-12T18:20:10.996Z",
+          "source": "Acumatica ERP (live)",
+          "buckets": [
+            {
+              "count": 0,
+              "label": "Current",
+              "totalBalance": 0
+            },
+            {
+              "count": 0,
+              "label": "1-30 Days",
+              "totalBalance": 0
+            },
+            {
+              "count": 0,
+              "label": "31-60 Days",
+              "totalBalance": 0
+            },
+            {
+              "count": 0,
+              "label": "61-90 Days",
+              "totalBalance": 0
+            },
+            {
+              "count": 2,
+              "label": "90+ Days",
+              "totalBalance": 14110
+            }
+          ],
+          "summary": {
+            "overdueAmount": 14110,
+            "bucketBreakdown": [
+              "90+ Days: $14,110 (2 bills)"
+            ],
+            "totalOutstandingAP": 14110
+          },
+          "sourceRef": "[Source: Acumatica AP Aging - as of 2026-05-12T18:20:10.996Z]",
+          "totalBalance": 14110
+        },
+        "timestamp": "2026-05-12T18:20:10.996Z"
+      },
+      {
+        "tool": "getRecentBills",
+        "input": {
+          "limit": 10,
+          "status": "Open"
+        },
+        "output": {
+          "bills": [],
+          "count": 0,
+          "source": "Acumatica ERP (live)",
+          "sourceRef": "[Source: Acumatica Recent AP Bills]",
+          "totalAmount": 0,
+          "totalBalance": 0
+        },
+        "timestamp": "2026-05-12T18:20:11.432Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 27318,
+          "finishReason": "tool-calls",
+          "outputTokens": 86,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "consultCFO"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 27484,
+          "finishReason": "tool-calls",
+          "outputTokens": 21,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getCashPositionReport"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 2,
+          "inputTokens": 28375,
+          "finishReason": "tool-calls",
+          "outputTokens": 84,
+          "warningCount": 0,
+          "toolCallCount": 4,
+          "toolCallNames": [
+            "getARAgingReport",
+            "getAPAgingReport",
+            "getRecentInvoices",
+            "getRecentBills"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 3,
+          "inputTokens": 29631,
+          "finishReason": "stop",
+          "outputTokens": 397,
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "extractStructuredActionBrief",
+            "createChangeOrder",
+            "createChangeEvent",
+            "updateProjectStatus",
+            "createRFI",
+            "createTask",
+            "createGeneratedTask",
+            "createProjectCompany",
+            "createProjectContact",
+            "updateGeneratedTask",
+            "deleteGeneratedTask",
+            "flagProjectRisk",
+            "updateRFIStatus",
+            "createMeetingNote",
+            "createSubmittal",
+            "logDailyReport",
+            "generateProjectSummary",
+            "createInitiativeCard",
+            "createCommitment",
+            "submitFeedback",
+            "addBoardItem",
+            "sendTeamsMessage",
+            "findRelatedFeatureRequests",
+            "captureFeatureRequestPacket",
+            "updateFeatureRequestPacket",
+            "scoreFeatureRequestReadiness",
+            "generateImplementationPlan",
+            "generateClaudeCodeHandoff",
+            "draftLinearIssueFromFeatureRequest",
+            "draftLinearSubIssuesFromImplementationPlan",
+            "attachLinearIssueToFeatureRequest",
+            "attachLinearSubIssueToFeatureRequest",
+            "recordLinearStatusUpdateForFeatureRequest",
+            "createWeeklyProgressReportDraft",
+            "updateProgressReportSections",
+            "listProgressReportPhotos",
+            "selectProgressReportPhotos",
+            "generateProgressReportPdf",
+            "listWorkspaceArtifacts",
+            "getDraftArtifact",
+            "saveWorkspaceArtifact",
+            "promoteWorkspaceArtifact",
+            "getSubmittalLog",
+            "getSpecRequirements",
+            "detectMissingSubmittals",
+            "logFeedback",
+            "reviewDocument",
+            "consultCFO",
+            "consultCOO",
+            "consultCRO",
+            "consultCHRO",
+            "consultVPBD",
+            "consultCMO",
+            "getCommitmentsOverview",
+            "getChangeOrderDetails",
+            "getDirectCostsSummary",
+            "getBudgetLineItems",
+            "getCostTrends",
+            "getMarginAnalysis",
+            "getAPAgingReport",
+            "getARAgingReport",
+            "getCashPositionReport",
+            "getVendorSpendReport",
+            "getRecentBills",
+            "getRecentInvoices",
+            "getAcumaticaProjectBudget",
+            "getAcumaticaProjectList",
+            "getPurchaseOrderSummary",
+            "getPeopleAndRoles",
+            "getVendorPerformance",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getCrossProjectComparison",
+            "getHistoricalTrends",
+            "semanticSearch",
+            "getCompanyKnowledge",
+            "recallPastConversations",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "saveToKnowledgeBase",
+            "saveInsight",
+            "searchMemories",
+            "writeMemory",
+            "findProject",
+            "getRecentEmails",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchExternalDocuments",
+            "queryBudgetData",
+            "queryChangeOrders",
+            "queryCommitments",
+            "queryDirectCosts",
+            "queryScheduleTasks",
+            "queryDocumentRows",
+            "searchStructuredFinancialRows",
+            "getScheduleAnalysis",
+            "searchAppHelp",
+            "getForecastComparison",
+            "getMeetingIntelligence",
+            "getProjectBriefingSnapshot",
+            "getFinancialAnalysis",
+            "getProjectBudgetSummary",
+            "getActionItemsAndInsights",
+            "getMeetingsByDate",
+            "searchDocuments",
+            "getProjectDetails"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "extractStructuredActionBrief",
+            "createChangeOrder",
+            "createChangeEvent",
+            "updateProjectStatus",
+            "createRFI",
+            "createTask",
+            "createGeneratedTask",
+            "createProjectCompany",
+            "createProjectContact",
+            "updateGeneratedTask",
+            "deleteGeneratedTask",
+            "flagProjectRisk",
+            "updateRFIStatus",
+            "createMeetingNote",
+            "createSubmittal",
+            "logDailyReport",
+            "generateProjectSummary",
+            "createInitiativeCard",
+            "createCommitment",
+            "submitFeedback",
+            "addBoardItem",
+            "sendTeamsMessage",
+            "findRelatedFeatureRequests",
+            "captureFeatureRequestPacket",
+            "updateFeatureRequestPacket",
+            "scoreFeatureRequestReadiness",
+            "generateImplementationPlan",
+            "generateClaudeCodeHandoff",
+            "draftLinearIssueFromFeatureRequest",
+            "draftLinearSubIssuesFromImplementationPlan",
+            "attachLinearIssueToFeatureRequest",
+            "attachLinearSubIssueToFeatureRequest",
+            "recordLinearStatusUpdateForFeatureRequest",
+            "createWeeklyProgressReportDraft",
+            "updateProgressReportSections",
+            "listProgressReportPhotos",
+            "selectProgressReportPhotos",
+            "generateProgressReportPdf",
+            "listWorkspaceArtifacts",
+            "getDraftArtifact",
+            "saveWorkspaceArtifact",
+            "promoteWorkspaceArtifact",
+            "getSubmittalLog",
+            "getSpecRequirements",
+            "detectMissingSubmittals",
+            "logFeedback",
+            "reviewDocument",
+            "consultCFO",
+            "consultCOO",
+            "consultCRO",
+            "consultCHRO",
+            "consultVPBD",
+            "consultCMO",
+            "getCommitmentsOverview",
+            "getChangeOrderDetails",
+            "getDirectCostsSummary",
+            "getBudgetLineItems",
+            "getCostTrends",
+            "getMarginAnalysis",
+            "getAPAgingReport",
+            "getARAgingReport",
+            "getCashPositionReport",
+            "getVendorSpendReport",
+            "getRecentBills",
+            "getRecentInvoices",
+            "getAcumaticaProjectBudget",
+            "getAcumaticaProjectList",
+            "getPurchaseOrderSummary",
+            "getPeopleAndRoles",
+            "getVendorPerformance",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getCrossProjectComparison",
+            "getHistoricalTrends",
+            "semanticSearch",
+            "getCompanyKnowledge",
+            "recallPastConversations",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "saveToKnowledgeBase",
+            "saveInsight",
+            "searchMemories",
+            "writeMemory",
+            "findProject",
+            "getRecentEmails",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchExternalDocuments",
+            "queryBudgetData",
+            "queryChangeOrders",
+            "queryCommitments",
+            "queryDirectCosts",
+            "queryScheduleTasks",
+            "queryDocumentRows",
+            "searchStructuredFinancialRows",
+            "getScheduleAnalysis",
+            "searchAppHelp",
+            "getForecastComparison",
+            "getMeetingIntelligence",
+            "getProjectBriefingSnapshot",
+            "getFinancialAnalysis",
+            "getProjectBudgetSummary",
+            "getActionItemsAndInsights",
+            "getMeetingsByDate",
+            "searchDocuments",
+            "getProjectDetails"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 2,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "extractStructuredActionBrief",
+            "createChangeOrder",
+            "createChangeEvent",
+            "updateProjectStatus",
+            "createRFI",
+            "createTask",
+            "createGeneratedTask",
+            "createProjectCompany",
+            "createProjectContact",
+            "updateGeneratedTask",
+            "deleteGeneratedTask",
+            "flagProjectRisk",
+            "updateRFIStatus",
+            "createMeetingNote",
+            "createSubmittal",
+            "logDailyReport",
+            "generateProjectSummary",
+            "createInitiativeCard",
+            "createCommitment",
+            "submitFeedback",
+            "addBoardItem",
+            "sendTeamsMessage",
+            "findRelatedFeatureRequests",
+            "captureFeatureRequestPacket",
+            "updateFeatureRequestPacket",
+            "scoreFeatureRequestReadiness",
+            "generateImplementationPlan",
+            "generateClaudeCodeHandoff",
+            "draftLinearIssueFromFeatureRequest",
+            "draftLinearSubIssuesFromImplementationPlan",
+            "attachLinearIssueToFeatureRequest",
+            "attachLinearSubIssueToFeatureRequest",
+            "recordLinearStatusUpdateForFeatureRequest",
+            "createWeeklyProgressReportDraft",
+            "updateProgressReportSections",
+            "listProgressReportPhotos",
+            "selectProgressReportPhotos",
+            "generateProgressReportPdf",
+            "listWorkspaceArtifacts",
+            "getDraftArtifact",
+            "saveWorkspaceArtifact",
+            "promoteWorkspaceArtifact",
+            "getSubmittalLog",
+            "getSpecRequirements",
+            "detectMissingSubmittals",
+            "logFeedback",
+            "reviewDocument",
+            "consultCFO",
+            "consultCOO",
+            "consultCRO",
+            "consultCHRO",
+            "consultVPBD",
+            "consultCMO",
+            "getCommitmentsOverview",
+            "getChangeOrderDetails",
+            "getDirectCostsSummary",
+            "getBudgetLineItems",
+            "getCostTrends",
+            "getMarginAnalysis",
+            "getAPAgingReport",
+            "getARAgingReport",
+            "getCashPositionReport",
+            "getVendorSpendReport",
+            "getRecentBills",
+            "getRecentInvoices",
+            "getAcumaticaProjectBudget",
+            "getAcumaticaProjectList",
+            "getPurchaseOrderSummary",
+            "getPeopleAndRoles",
+            "getVendorPerformance",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getCrossProjectComparison",
+            "getHistoricalTrends",
+            "semanticSearch",
+            "getCompanyKnowledge",
+            "recallPastConversations",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "saveToKnowledgeBase",
+            "saveInsight",
+            "searchMemories",
+            "writeMemory",
+            "findProject",
+            "getRecentEmails",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchExternalDocuments",
+            "queryBudgetData",
+            "queryChangeOrders",
+            "queryCommitments",
+            "queryDirectCosts",
+            "queryScheduleTasks",
+            "queryDocumentRows",
+            "searchStructuredFinancialRows",
+            "getScheduleAnalysis",
+            "searchAppHelp",
+            "getForecastComparison",
+            "getMeetingIntelligence",
+            "getProjectBriefingSnapshot",
+            "getFinancialAnalysis",
+            "getProjectBudgetSummary",
+            "getActionItemsAndInsights",
+            "getMeetingsByDate",
+            "searchDocuments",
+            "getProjectDetails"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 3,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "extractStructuredActionBrief",
+            "createChangeOrder",
+            "createChangeEvent",
+            "updateProjectStatus",
+            "createRFI",
+            "createTask",
+            "createGeneratedTask",
+            "createProjectCompany",
+            "createProjectContact",
+            "updateGeneratedTask",
+            "deleteGeneratedTask",
+            "flagProjectRisk",
+            "updateRFIStatus",
+            "createMeetingNote",
+            "createSubmittal",
+            "logDailyReport",
+            "generateProjectSummary",
+            "createInitiativeCard",
+            "createCommitment",
+            "submitFeedback",
+            "addBoardItem",
+            "sendTeamsMessage",
+            "findRelatedFeatureRequests",
+            "captureFeatureRequestPacket",
+            "updateFeatureRequestPacket",
+            "scoreFeatureRequestReadiness",
+            "generateImplementationPlan",
+            "generateClaudeCodeHandoff",
+            "draftLinearIssueFromFeatureRequest",
+            "draftLinearSubIssuesFromImplementationPlan",
+            "attachLinearIssueToFeatureRequest",
+            "attachLinearSubIssueToFeatureRequest",
+            "recordLinearStatusUpdateForFeatureRequest",
+            "createWeeklyProgressReportDraft",
+            "updateProgressReportSections",
+            "listProgressReportPhotos",
+            "selectProgressReportPhotos",
+            "generateProgressReportPdf",
+            "listWorkspaceArtifacts",
+            "getDraftArtifact",
+            "saveWorkspaceArtifact",
+            "promoteWorkspaceArtifact",
+            "getSubmittalLog",
+            "getSpecRequirements",
+            "detectMissingSubmittals",
+            "logFeedback",
+            "reviewDocument",
+            "consultCFO",
+            "consultCOO",
+            "consultCRO",
+            "consultCHRO",
+            "consultVPBD",
+            "consultCMO",
+            "getCommitmentsOverview",
+            "getChangeOrderDetails",
+            "getDirectCostsSummary",
+            "getBudgetLineItems",
+            "getCostTrends",
+            "getMarginAnalysis",
+            "getAPAgingReport",
+            "getARAgingReport",
+            "getCashPositionReport",
+            "getVendorSpendReport",
+            "getRecentBills",
+            "getRecentInvoices",
+            "getAcumaticaProjectBudget",
+            "getAcumaticaProjectList",
+            "getPurchaseOrderSummary",
+            "getPeopleAndRoles",
+            "getVendorPerformance",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getCrossProjectComparison",
+            "getHistoricalTrends",
+            "semanticSearch",
+            "getCompanyKnowledge",
+            "recallPastConversations",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "saveToKnowledgeBase",
+            "saveInsight",
+            "searchMemories",
+            "writeMemory",
+            "findProject",
+            "getRecentEmails",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchExternalDocuments",
+            "queryBudgetData",
+            "queryChangeOrders",
+            "queryCommitments",
+            "queryDirectCosts",
+            "queryScheduleTasks",
+            "queryDocumentRows",
+            "searchStructuredFinancialRows",
+            "getScheduleAnalysis",
+            "searchAppHelp",
+            "getForecastComparison",
+            "getMeetingIntelligence",
+            "getProjectBriefingSnapshot",
+            "getFinancialAnalysis",
+            "getProjectBudgetSummary",
+            "getActionItemsAndInsights",
+            "getMeetingsByDate",
+            "searchDocuments",
+            "getProjectDetails"
+          ]
+        }
+      ],
+      "totalStepCount": 4,
+      "finalFinishReason": "stop",
+      "preparedStepCount": 4,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 6
+    },
+    "response_quality": {
+      "score": 70,
+      "reasons": [
+        "multiple successful tool calls",
+        "multiple source citations",
+        "5 tool call failure(s)"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

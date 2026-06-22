@@ -1,0 +1,6107 @@
+{
+  "id": "portfolio-overview",
+  "intent": "portfolio_briefing",
+  "prompt": "Across all active projects, what should I worry about this week?",
+  "selectedProjectId": null,
+  "sessionId": "c8709289-fa29-4a01-8eeb-28489243187b",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-portfolio-overview",
+  "startedAt": "2026-05-12T19:16:27.759Z",
+  "finishedAt": "2026-05-12T19:17:58.648Z",
+  "durationMs": 75272,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 1088,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getPortfolioOverview, getProjectsWithRisks] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'risk' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 4671,
+    "finalText": "What I’d worry about this week is the gap between what’s probably happening and what the system is actually capturing.\n\nThe portfolio data is thin right now. That’s the first issue.\n\n## What stands out\n\n- **Most active projects show almost no live operational signal** — no open RFIs, no overdue tasks, no submittal flow, no health status, and no completion updates.\n- **Meeting intelligence for the last 7 days came back empty.**\n- **Open action items and unresolved insights also came back empty.**\n- The three executive scans I tried first for risk, finance, and operations all **timed out**, so I had to fall back to direct portfolio tools.\n\nThat means I can tell you where there is visible smoke, but I can’t honestly tell you the whole house is clear.\n\n## The few projects that do need attention\n\n### Alleato AI\nThis is the noisiest active project in the system right now.\n\n- **20 open change events**\n- **9 total tasks**\n- **1 overdue task**\n- **7 RFIs, with 5 open and all 5 overdue**\n- **11 submittals**\n\nThat is a real congestion pattern. Too many open changes plus overdue RFIs usually means decisions are stacking up faster than they’re getting resolved. If this were a client job, I’d say the team is at risk of managing around unanswered questions instead of clearing them.\n\n### Exol Morrisville\nFinancially, this is one of the biggest active jobs visible in the portfolio.\n\n- **Contract value: $4,046,521**\n- But the portfolio view shows **no RFIs, no tasks, no submittals, no change events**\n\nI don’t trust that as a clean bill of health. I read it as a **detection gap**. A project this size should have more operating signal than zeroes across the board. Given yesterday’s context about schedule pressure here, I’d still keep this on the watch list even though the current project table is quiet.\n\n### Exol Wilmer\n- **Contract value: $412,879**\n- **4 open change events**\n\nNot catastrophic, but open change volume on a smaller job matters faster because there’s less room to absorb it. If those changes are unpriced or unresolved, they can distort margin quickly.\n\n### Ulta Beauty Fresno\n- **Contract value: $3,268,581**\n- **1 open change event**\n- **5 RFIs total**\n\nNot enough here to call it a problem, but it has at least some active signal. Worth checking whether those RFIs are fully resolved at the field level or just technically closed.\n\n### QA Workflow Project\nNot an operations project in the normal sense, but it does have activity:\n- **4 open change events**\n- **3 RFIs total**\n- **1 submittal**\n\n## What I think actually matters most\n\n1. **Overdue information flow is the real risk.**  \n   The only project with strong visible signal — Alleato AI — shows overdue RFIs and stacked changes. That pattern creates rework and bad decisions.\n\n2. **Portfolio visibility is weaker than it should be.**  \n   Empty meetings, empty action items, empty insights, and missing health statuses across 30 current projects is not believable as an operating reality. It means leadership could miss early warnings this week.\n\n3. **The biggest projects may be under-instrumented.**  \n   Exol Morrisville and other active jobs show contract value without matching execution data. That is a management risk by itself.\n\n## What I’d do this week\n\n- **First:** verify data flow on meetings, tasks, and project health updates.  \n  If ingestion or usage is broken, every portfolio review this week will be softer than it should be.\n\n- **Second:** put immediate attention on **Alleato AI** and clear the overdue RFIs.  \n  Someone needs to decide whether those 5 overdue RFIs are waiting on design input, internal review, or just sitting.\n\n- **Third:** force a quick operator check on **Exol Morrisville** and **Exol Wilmer**.  \n  Not because the system shows a fire — because the absence of signal on active revenue jobs is itself a risk.\n\n- **Fourth:** get a short PM-level update on any project over roughly **$3M contract value** that has little or no current activity data in the system.  \n  Those are blind spots.\n\n## Confidence / data gaps\n\nConfidence is **medium-low**.\n\nWhy:\n- Finance, ops, and risk executive scans all timed out.\n- No meeting records matched the last 7 days.\n- No action items or unresolved insights came back.\n- Most projects have **null health status** and near-zero operating telemetry.\n\nSo the answer is not “nothing to worry about.”  \nThe answer is: **worry about the blind spots first, and worry specifically about Alleato AI’s overdue decision backlog.**\n\nIf you want, I can take the next step and give you a **ranked top-10 watchlist of active projects** using direct project-by-project briefing pulls instead of the portfolio rollup."
+  },
+  "expectedToolNames": [
+    "getPortfolioOverview",
+    "getProjectsWithRisks"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "risk"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:16:41.311Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:16:43.626Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "XIeKe94UaVWkm2yH"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_hBFYMBhkawqquwMG9x52lYfH",
+      "toolName": "consultCRO"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hBFYMBhkawqquwMG9x52lYfH",
+      "inputTextDelta": "{\"question\":\"Across all active projects, what should leadership worry about this week? Identify the highest-risk projects, biggest risk drivers, unpriced change exposure, aging RFIs/submittals, schedule risk, claim/dispute signals, and portfolio-level concerns requiring attention now.\",\"context\":\"Need a portfolio-level weekly risk view across active projects, prioritized by urgency and business impact. User wants what to worry about this week.\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_hBFYMBhkawqquwMG9x52lYfH",
+      "toolName": "consultCRO",
+      "input": {
+        "question": "Across all active projects, what should leadership worry about this week? Identify the highest-risk projects, biggest risk drivers, unpriced change exposure, aging RFIs/submittals, schedule risk, claim/dispute signals, and portfolio-level concerns requiring attention now.",
+        "context": "Need a portfolio-level weekly risk view across active projects, prioritized by urgency and business impact. User wants what to worry about this week."
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_8IZjTfZxQWnJP7ibaei1xnwI",
+      "toolName": "consultCFO"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8IZjTfZxQWnJP7ibaei1xnwI",
+      "inputTextDelta": "{\"question\":\"Across all active projects, what financial issues should leadership worry about this week? Focus on cash flow pressure, margin erosion, AP/AR aging concerns, over-budget trends, problematic change order exposure, and any project-level financial red flags requiring action now.\",\"context\":\"Portfolio-level weekly financial pressure scan across active projects.\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_8IZjTfZxQWnJP7ibaei1xnwI",
+      "toolName": "consultCFO",
+      "input": {
+        "question": "Across all active projects, what financial issues should leadership worry about this week? Focus on cash flow pressure, margin erosion, AP/AR aging concerns, over-budget trends, problematic change order exposure, and any project-level financial red flags requiring action now.",
+        "context": "Portfolio-level weekly financial pressure scan across active projects."
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_ZFIf4gCyC338eqblpotAsSgO",
+      "toolName": "consultCOO"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZFIf4gCyC338eqblpotAsSgO",
+      "inputTextDelta": "{\"question\":\"Across all active projects, what operational issues should leadership worry about this week? Focus on schedule slippage, procurement delays, overdue action items, RFI/submittal bottlenecks, and projects needing immediate operator attention.\",\"context\":\"Portfolio-level weekly operations scan across active projects.\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_ZFIf4gCyC338eqblpotAsSgO",
+      "toolName": "consultCOO",
+      "input": {
+        "question": "Across all active projects, what operational issues should leadership worry about this week? Focus on schedule slippage, procurement delays, overdue action items, RFI/submittal bottlenecks, and projects needing immediate operator attention.",
+        "context": "Portfolio-level weekly operations scan across active projects."
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_hBFYMBhkawqquwMG9x52lYfH",
+      "output": {
+        "agent": "cro",
+        "analysis": "The CRO encountered an error while analyzing: Sub-agent cro exceeded 15000ms timeout",
+        "confidence": "low",
+        "toolsUsed": [],
+        "durationMs": 15009,
+        "alerts": [
+          {
+            "severity": "warning",
+            "message": "CRO agent error: Sub-agent cro exceeded 15000ms timeout"
+          }
+        ]
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_8IZjTfZxQWnJP7ibaei1xnwI",
+      "output": {
+        "agent": "cfo",
+        "analysis": "The CFO encountered an error while analyzing: Sub-agent cfo exceeded 15000ms timeout",
+        "confidence": "low",
+        "toolsUsed": [],
+        "durationMs": 15007,
+        "alerts": [
+          {
+            "severity": "warning",
+            "message": "CFO agent error: Sub-agent cfo exceeded 15000ms timeout"
+          }
+        ]
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_ZFIf4gCyC338eqblpotAsSgO",
+      "output": {
+        "agent": "coo",
+        "analysis": "The COO encountered an error while analyzing: Sub-agent coo exceeded 15000ms timeout",
+        "confidence": "low",
+        "toolsUsed": [],
+        "durationMs": 15005,
+        "alerts": [
+          {
+            "severity": "warning",
+            "message": "COO agent error: Sub-agent coo exceeded 15000ms timeout"
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_1YZh8icx5QYNbF4vws9R7Efq",
+      "toolName": "getCrossProjectComparison"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_1YZh8icx5QYNbF4vws9R7Efq",
+      "inputTextDelta": "{\"projectIds\":[],\"phase\":\"Current\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_1YZh8icx5QYNbF4vws9R7Efq",
+      "toolName": "getCrossProjectComparison",
+      "input": {
+        "projectIds": [],
+        "phase": "Current"
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_r2K0Qu4FUcaEbSA7BLOXKLan",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_r2K0Qu4FUcaEbSA7BLOXKLan",
+      "inputTextDelta": "{\"projectId\":0,\"assigneeName\":\"\",\"maxResults\":20}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_r2K0Qu4FUcaEbSA7BLOXKLan",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "projectId": 0,
+        "assigneeName": "",
+        "maxResults": 20
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_urmUUO1D1n2wViPgV9g1vH3G",
+      "toolName": "getMeetingIntelligence"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_urmUUO1D1n2wViPgV9g1vH3G",
+      "inputTextDelta": "{\"projectId\":0,\"projectName\":\"\",\"startDate\":\"2026-05-05\",\"endDate\":\"2026-05-12\",\"relativeWindow\":\"last_7_days\",\"intent\":\"risks\",\"limit\":10,\"timeZone\":\"America/New_York\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_urmUUO1D1n2wViPgV9g1vH3G",
+      "toolName": "getMeetingIntelligence",
+      "input": {
+        "projectId": 0,
+        "projectName": "",
+        "startDate": "2026-05-05",
+        "endDate": "2026-05-12",
+        "relativeWindow": "last_7_days",
+        "intent": "risks",
+        "limit": 10,
+        "timeZone": "America/New_York"
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_thad7IsP1iph0ASgHO3XN6Xm",
+      "toolName": "semanticSearch"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_thad7IsP1iph0ASgHO3XN6Xm",
+      "inputTextDelta": "{\"query\":\"highest risk issues this week across active projects schedule delay procurement cash flow change events owner pressure\", \"projectId\":0,\"projectName\":\"\",\"matchCount\":10,\"threshold\":0.3,\"skipRerank\":false}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_thad7IsP1iph0ASgHO3XN6Xm",
+      "toolName": "semanticSearch",
+      "input": {
+        "query": "highest risk issues this week across active projects schedule delay procurement cash flow change events owner pressure",
+        "projectId": 0,
+        "projectName": "",
+        "matchCount": 10,
+        "threshold": 0.3,
+        "skipRerank": false
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_1YZh8icx5QYNbF4vws9R7Efq",
+      "output": {
+        "projectCount": 30,
+        "comparison": [
+          {
+            "projectId": 767,
+            "projectName": "Alleato AI",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 20,
+            "totalTasks": 9,
+            "overdueTasks": 1,
+            "totalRFIs": 7,
+            "openRFIs": 5,
+            "overdueRFIs": 5,
+            "totalSubmittals": 11
+          },
+          {
+            "projectId": 756,
+            "projectName": "Alleato - Leads",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 60,
+            "projectName": "Alleato Finance",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 1000,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 4,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 90,
+            "projectName": "Alleato Internal Ops",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 89,
+            "projectName": "Alleato Marketing",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 88,
+            "projectName": "ArcEdge",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 1008,
+            "projectName": "Champaign Ace Addition",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 876,
+            "projectName": "Exol Morrisville",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 4046521,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 760,
+            "projectName": "Exol Wilmer",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 412879,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 4,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 865,
+            "projectName": "Goodwill Canton, IL",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 764,
+            "projectName": "Goodwill Commons",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 25125,
+            "projectName": "Goodwill Noblesville",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 842,
+            "projectName": "Goodwill Shadeland Ave",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 765,
+            "projectName": "Goodwill Shelbyville",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 25108,
+            "projectName": "Goodwill Tremont",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 1
+          },
+          {
+            "projectId": 840,
+            "projectName": "Goodwill- Decatur",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 754,
+            "projectName": "GW Allisonville Rd IN",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 869,
+            "projectName": "GW Galesburg",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 868,
+            "projectName": "GW Macomb",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 866,
+            "projectName": "GW Morris",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 867,
+            "projectName": "GW Peru",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 871,
+            "projectName": "GW Pioneer",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 1905,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 870,
+            "projectName": "GW Washington",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 879,
+            "projectName": "McLane Jazz - UT",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 753,
+            "projectName": "McLane Salt Lake City",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 1014,
+            "projectName": "NEXCOM SEDC",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 1010,
+            "projectName": "QA Workflow Project",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 250000,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 4,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 3,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 1
+          },
+          {
+            "projectId": 98,
+            "projectName": "Seminole Collective",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 178,
+            "projectName": "Superior Beverae Exotec ",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 0,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 0,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 0,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          },
+          {
+            "projectId": 761,
+            "projectName": "Ulta Beauty Fresno",
+            "phase": "Current",
+            "healthStatus": null,
+            "healthScore": null,
+            "completionPct": 0,
+            "contractValue": 3268581,
+            "pendingChangeOrders": 0,
+            "openChangeEvents": 1,
+            "totalTasks": 0,
+            "overdueTasks": 0,
+            "totalRFIs": 5,
+            "openRFIs": 0,
+            "overdueRFIs": 0,
+            "totalSubmittals": 0
+          }
+        ]
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_urmUUO1D1n2wViPgV9g1vH3G",
+      "output": {
+        "type": "meeting_intelligence",
+        "id": "meeting-intelligence",
+        "title": "Critical risks",
+        "subtitle": "Structured readout from meeting records, extracted insights, and transcript summaries",
+        "dateLabel": "2026-05-05 to 2026-05-12",
+        "meetingCount": 0,
+        "criticalRiskCount": 0,
+        "decisionCount": 0,
+        "actionItemCount": 0,
+        "topInsights": [
+          "No meeting records matched this window.",
+          "No risk signals were found in the matched meetings.",
+          "No decision signals were found in the matched meetings."
+        ],
+        "recommendedNextActions": [
+          "Check meeting ingestion/source-sync health before using this window for an owner-ready update."
+        ],
+        "emptyState": "No meeting rows matched this request.",
+        "meetings": []
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_r2K0Qu4FUcaEbSA7BLOXKLan",
+      "output": {
+        "sourceRef": "[Source: Action Items & Insights]",
+        "openTasks": [],
+        "priorityItems": [],
+        "structuredActionItems": [],
+        "unresolvedInsights": [],
+        "meetingInsights": [],
+        "overdueRFIs": [],
+        "summary": {
+          "openTaskCount": 0,
+          "overdueTaskCount": 0,
+          "insightCount": 0,
+          "structuredActionItemCount": 0,
+          "overdueRFICount": 0,
+          "sourceErrorCount": 0
+        },
+        "sourceErrors": []
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_thad7IsP1iph0ASgHO3XN6Xm",
+      "output": {
+        "results": [],
+        "message": "No results found for \"highest risk issues this week across active projects schedule delay procurement cash flow change events owner pressure\". Try rephrasing or broadening your search."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " worry"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " between"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " probably"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " happening"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " capturing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " portfolio"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " first"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stands"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Most"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " projects"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " show"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " almost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operational"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " RF"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " overdue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tasks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sub"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mitt"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "al"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " flow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " health"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " completion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " updates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " intelligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "7"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " days"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " came"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " empty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " insights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " came"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " empty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " three"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " executive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scans"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tried"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " first"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " finance"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " all"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "tim"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " had"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fall"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " direct"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " portfolio"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tools"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " where"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " visible"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " smoke"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " honestly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whole"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " house"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clear"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " few"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " projects"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " attention"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ato"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AI"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "isi"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "est"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "20"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " events"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "9"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " total"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tasks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " overdue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " task"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "7"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " RF"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " all"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " overdue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "11"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sub"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mitt"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "als"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " congestion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pattern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Too"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " many"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " changes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " plus"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " overdue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " RF"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " usually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stacking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " faster"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " than"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " getting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " resolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " were"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " client"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " job"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " say"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " managing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " around"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unanswered"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " questions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " instead"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clearing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " them"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Morris"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Financial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " biggest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " jobs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " visible"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " portfolio"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " value"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " $"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "4"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "046"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "521"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " But"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " portfolio"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " view"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " RF"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tasks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sub"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mitt"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "als"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " events"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " don"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bill"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " health"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "etection"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " A"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " size"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " should"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " more"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operating"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " than"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " zero"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "es"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " across"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " board"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Given"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " yesterday"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " context"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pressure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " here"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " keep"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " watch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " even"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " though"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " table"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " quiet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " value"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " $"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "412"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "879"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "4"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " events"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " catastrophic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " volume"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " smaller"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " job"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " faster"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " less"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " room"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " absorb"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " those"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " changes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "priced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " distort"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " margin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " quickly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ul"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ta"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Beauty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Fresno"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " value"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " $"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "268"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "581"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " event"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " RF"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " total"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " here"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " call"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " problem"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " least"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " some"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Worth"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " checking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " those"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " RF"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " resolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " level"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " just"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " technically"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " closed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " QA"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Workflow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " normal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sense"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " does"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " activity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "4"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " events"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " RF"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " total"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sub"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mitt"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "al"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " think"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " most"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Over"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "due"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " information"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " flow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " strong"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " visible"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ato"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AI"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " overdue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " RF"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stacked"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " changes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pattern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " creates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Portfolio"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " visibility"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " weaker"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " than"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " should"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Empty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " empty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " empty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " insights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " missing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " health"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " statuses"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " across"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "30"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " projects"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " believable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operating"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reality"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " It"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " leadership"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " could"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " miss"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " early"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " warnings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " biggest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " projects"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " may"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " under"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "strument"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Morris"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " other"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " jobs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " show"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " value"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " without"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matching"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " execution"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " management"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " itself"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "First"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " verify"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " flow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tasks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " health"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " updates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ingestion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " usage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " broken"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " every"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " portfolio"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " review"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " softer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " than"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " should"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Second"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " put"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " immediate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " attention"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ato"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AI"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clear"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " overdue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " RF"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Someone"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decide"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " those"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " overdue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " RF"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " waiting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " input"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " internal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " review"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " just"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sitting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Third"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " force"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " quick"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operator"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " check"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Morris"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " absence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " revenue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " jobs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " itself"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Fourth"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " short"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " PM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-level"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " update"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " any"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " over"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " roughly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " value"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " little"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " activity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Those"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " blind"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " spots"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gaps"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "medium"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-low"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Finance"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ops"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " executive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scans"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " all"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " timed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " No"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " records"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matched"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "7"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " days"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " No"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " insights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " came"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Most"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " projects"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "null"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " health"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " near"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-zero"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operating"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " telemetry"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "So"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "nothing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " worry"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "w"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "orry"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " blind"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " spots"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " first"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " worry"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " specifically"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ato"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AI"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " overdue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decision"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " backlog"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " take"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " step"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " give"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "rank"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " top"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "10"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " watch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " projects"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " using"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " direct"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " briefing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pulls"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " instead"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " portfolio"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " roll"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "error",
+      "errorText": "I hit a retrieval/generation failure before I could give you a trustworthy strategist answer.\n\nWhat happened: [ai_retrieval_feedback.insert_batch] insert or update on table \"ai_retrieval_feedback\" violates foreign key constraint \"ai_retrieval_feedback_project_id_fkey\"\nWhat I could confirm: I checked 17 sources successfully, but getCashPositionReport, getARAgingReport failed before I could finish the answer.\nWhat that means: No project was pinned, so a narrower project or topic would reduce retrieval ambiguity on the retry.\nI still need a successful retrieval pass before I can give a sourced strategic read on: \"Across all active projects, what should I worry about this week?\".\n\nThe right next move is to retry the same question with the project or decision you care about most. If this repeats, the persisted tool trace now shows exactly which source failed instead of leaving the chat blank."
+    }
+  ],
+  "persistedMetadata": null
+}

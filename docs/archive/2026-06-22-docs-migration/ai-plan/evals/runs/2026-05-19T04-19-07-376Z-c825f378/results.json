@@ -1,0 +1,584 @@
+{
+  "generatedAt": "2026-05-19T04:24:58.724Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "strategic-advisor-quality",
+    "description": "LLM-judge eval for whether the assistant sounds like an intelligent executive strategist instead of a document retriever.",
+    "criteria": [
+      "The answer must lead with a clear business point of view.",
+      "The answer must connect evidence into implications, not just list retrieved facts.",
+      "The answer must include specific next actions or decisions.",
+      "The answer must sound like a high-level Alleato strategist, not a generic RAG summary.",
+      "The answer must acknowledge source gaps without hiding behind them."
+    ]
+  },
+  "filter": "(realworld-most-important-tasks|realworld-waiting-on-team|realworld-business-risks|realworld-systems-processes-needed|portfolio-morning-standup|owner-prep-call-westfield)$",
+  "totalCases": 6,
+  "passed": 0,
+  "failed": 6,
+  "warningCount": 15,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": true,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 6,
+    "passed": 0,
+    "failed": 0,
+    "errors": 6,
+    "averageScore": 0
+  },
+  "slowestCases": [
+    {
+      "id": "portfolio-morning-standup",
+      "intent": "portfolio_briefing",
+      "durationMs": 71214,
+      "status": "fail",
+      "warnings": [
+        "duration 71214ms exceeded warning budget 45000ms"
+      ]
+    },
+    {
+      "id": "realworld-systems-processes-needed",
+      "intent": "implementation_planning",
+      "durationMs": 70227,
+      "status": "fail",
+      "warnings": [
+        "expected family 'project' not represented",
+        "expected family 'actions' not represented",
+        "expected family 'source_health' not represented",
+        "duration 70227ms exceeded warning budget 45000ms"
+      ]
+    },
+    {
+      "id": "realworld-business-risks",
+      "intent": "risk_review",
+      "durationMs": 68855,
+      "status": "fail",
+      "warnings": [
+        "expected family 'project' not represented",
+        "expected family 'risk' not represented",
+        "expected family 'financial' not represented",
+        "expected family 'source_health' not represented",
+        "duration 68855ms exceeded warning budget 45000ms"
+      ]
+    },
+    {
+      "id": "realworld-waiting-on-team",
+      "intent": "task_management",
+      "durationMs": 57896,
+      "status": "fail",
+      "warnings": [
+        "duration 57896ms exceeded warning budget 45000ms"
+      ]
+    },
+    {
+      "id": "realworld-most-important-tasks",
+      "intent": "task_management",
+      "durationMs": 53834,
+      "status": "fail",
+      "warnings": [
+        "duration 53834ms exceeded warning budget 45000ms"
+      ]
+    },
+    {
+      "id": "owner-prep-call-westfield",
+      "intent": "project_briefing",
+      "durationMs": 25303,
+      "status": "fail",
+      "warnings": [
+        "expected family 'project' not represented",
+        "expected family 'semantic' not represented",
+        "expected family 'communications' not represented"
+      ]
+    }
+  ],
+  "toolCoverage": {
+    "semanticSearch": 5,
+    "getActionItemsAndInsights": 3,
+    "getPortfolioOverview": 1,
+    "getProjectsWithRisks": 1,
+    "project_lookup": 1,
+    "packet_reader": 1,
+    "teams_reader": 1,
+    "meetings_reader": 1,
+    "emails_reader": 1,
+    "documents_reader": 1,
+    "financials_reader": 1,
+    "schedule_reader": 1,
+    "rfi_reader": 1,
+    "submittal_reader": 1,
+    "deepagents_runtime": 1,
+    "listDomainIntelligence": 1,
+    "getDomainIntelligence": 1
+  },
+  "intentDistribution": {
+    "portfolio_briefing": 1,
+    "project_briefing": 1,
+    "task_management": 2,
+    "risk_review": 1,
+    "implementation_planning": 1
+  },
+  "results": [
+    {
+      "id": "portfolio-morning-standup",
+      "intent": "portfolio_briefing",
+      "prompt": "Morning. What is the quick operating read across all jobs?",
+      "selectedProjectId": null,
+      "sessionId": "e33a54e5-e86d-4822-ab14-f5f8809dee5f",
+      "sessionLabel": "eval-2026-05-19T04-19-07-376Z-c825f378-portfolio-morning-standup",
+      "startedAt": "2026-05-19T04:19:07.384Z",
+      "finishedAt": "2026-05-19T04:20:19.329Z",
+      "durationMs": 71214,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1294,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "judge strategic_advisor error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
+        ],
+        "warnings": [
+          "duration 71214ms exceeded warning budget 45000ms"
+        ],
+        "observations": [
+          "tools fired: getPortfolioOverview, getProjectsWithRisks, getActionItemsAndInsights, semanticSearch",
+          "judge strategic_advisor: error (0/4)"
+        ],
+        "toolNames": [
+          "getPortfolioOverview",
+          "getProjectsWithRisks",
+          "getActionItemsAndInsights",
+          "semanticSearch"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "communications",
+          "semantic",
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 5423,
+        "finalText": "Quick read: the portfolio is active, but a handful of jobs are carrying most of the risk load, and the task register is oddly quiet enough that I wouldn’t trust it as the full operating picture.\n\n- **40 current-phase jobs** in the system\n- **$19.6M total contract value** across jobs with contract data\n- **22 open change events**\n- **100 meetings recorded**, with insights on **99** of them\n- Risk radar flagged **15 current jobs** with critical items or high/critical insight volume  \n  [Source: Portfolio Overview - Current Projects] [Source: Project Risk Radar - Current projects]\n\nWhat matters this morning:\n\n- **Westfield Collective is the biggest concern.** It’s carrying the highest risk score in the portfolio at **518**, with **74 open critical items** tied to recent site-planning, grading, parking, truck access, and stormwater complexity. That’s not noise — that’s a job that can drift expensively if decisions lag. [Source: Meeting - \"Union Site Review Meeting\" - 2026-05-15T13:30:00+00:00]\n\n- **Union Collective is still decision-bound.** Risk score **232**, with **44 open critical items**. Latest OAC shows design/site planning moving, but zoning amendments and utility/site decisions are still shaping schedule risk. There’s also outside signal that the structural system decision is waiting on reconciled pricing and design-risk alignment. [Source: Meeting - \"Union Collective: OAC\" - 2026-05-14T14:00:00+00:00] [Source: Teams DM Conversation - 2026-05-07]\n\n- **Uniqlo Phillipsburg needs management attention, not just field momentum.** Risk score **203**, with **29 open critical items**. Meeting signal says work is progressing, but separate Teams signal is more important: **IQ Fire responsiveness is at risk while $500K+ remains owed**, and the team wanted a same-day recovery plan for missing pipe, couplings, fabricated parts, tools, tunnel piping rework, and CO exposure. That’s a real execution and relationship risk. [Source: Meeting - \"Uniqlo, Martinsville, CEVA, & GPC Huddle\" - null] [Source: Teams DM Conversation - 2026-05-07]\n\n- **Vermillion Rise is still one of the cleaner high-attention jobs, but it’s not quiet.** Risk score **98**, **10 open change events**, **7 tracked issues**, **13 open critical items**. Latest meeting signal is actually constructive: the team avoided a potential **$500K roof drain rebuild** by retaining existing drains, clarified gas piping, and kept HVAC/electrical design decisions moving. Good progress, but it still needs active leadership because design decisions are directly controlling cost. [Source: Portfolio Overview - Current Projects] [Source: Meeting - \"Hillsdale Holdings // Alleato Weekly\" - null]\n\n- **Exol Wilmer is early but moving into estimate/GC-definition risk.** Risk score **49**, **4 open change events**, with the latest review showing a roughly **$30M job**, soft costs around **$1.3M**, GC fees at **8–10%**, and still-open bid follow-up on doors and roofing. That’s manageable now, but only if scope clarifications tighten quickly. [Source: Meeting - \"Exol Wilmer - Review on GC's\" - 2026-05-18T18:00:00+00:00] [Source: Portfolio Overview - Current Projects]\n\n- **Goodwill Allisonville has a very specific procurement risk.** Latest schedule review flagged **door frame order delays due to submittal issues**, with **6–8 week lead times**, plus sprinkler communication problems. That’s the kind of “small” buyout issue that turns into a real schedule miss if nobody forces resolution this week. [Source: Meeting - \"Weekly Schedule Review Goodwill Allisonville Road Teams Meeting\" - 2026-05-11T13:00:00+00:00]\n\nWhat looks good:\n\n- **Goodwill Tremont / Noblesville signal is better than most.** The latest OAC says drywall is nearing completion, inspections are coming next week, and contractor engagement is improving with POs in approval. That’s one of the few jobs reading like forward motion instead of unresolved friction. [Source: Meeting - \"Goodwill Weekly OAC Meeting\" - null]\n\nWhat’s off in the data:\n\n- The formal action-item/task pull came back with **0 open tasks, 0 priority items, 0 overdue RFIs**. I don’t believe that reflects reality across 40 live jobs. It means the task register is either underused, not current, or this query didn’t surface the real operational backlog. So the stronger signal this morning is coming from meetings and risk radar, not task rows. [Source: Action Items & Insights]\n\nMy take: the portfolio isn’t broadly on fire, but leadership attention is too concentrated in a few places:\n1. **Westfield Collective**\n2. **Union Collective**\n3. **Uniqlo Phillipsburg**\n4. **Vermillion Rise**\n5. **Goodwill Allisonville procurement**\n\nWhat I’d do next, in order:\n1. **Force a decision/recovery huddle on Westfield and Union today** — those are high-consequence decision bottlenecks.\n2. **Get a payment/recovery decision on Uniqlo IQ Fire today** — if $500K+ owed is affecting responsiveness, that needs an owner-level call, not more passive follow-up. [Source: Teams DM Conversation - 2026-05-07]\n3. **Pressure-test the task system** — if the register says zero open items across the portfolio, your ops visibility is weaker than it should be.\n4. **Stay on Vermillion design-to-cost decisions** — that job is still salvageable because the team is making smart cost-avoidance choices early.\n\nIf you want, I’ll turn this into a tighter **red / yellow / green job list** with owner actions for each.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 71214
+        },
+        "judge": {
+          "status": "error",
+          "rubric": "strategic_advisor",
+          "score": 0,
+          "minScore": 4,
+          "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
+          "strengths": [],
+          "weaknesses": [
+            "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
+          ],
+          "dimensionScores": {},
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "getPortfolioOverview",
+        "getProjectsWithRisks"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "risk"
+      ]
+    },
+    {
+      "id": "owner-prep-call-westfield",
+      "intent": "project_briefing",
+      "prompt": "If the Westfield owner calls me today, what should I say and what should I avoid overpromising?",
+      "selectedProjectId": 43,
+      "sessionId": "cfedd5ee-4ba6-421d-b44d-36694f557ac7",
+      "sessionLabel": "eval-2026-05-19T04-19-07-376Z-c825f378-owner-prep-call-westfield",
+      "startedAt": "2026-05-19T04:20:19.331Z",
+      "finishedAt": "2026-05-19T04:20:45.340Z",
+      "durationMs": 25303,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 7,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getProjectBriefingSnapshot, semanticSearch] to fire — none did",
+          "judge strategic_advisor error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'semantic' not represented",
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: project_lookup, packet_reader, teams_reader, meetings_reader, emails_reader, documents_reader, financials_reader, schedule_reader, rfi_reader, submittal_reader, deepagents_runtime",
+          "backend Deep Agents memory candidates: 0",
+          "judge strategic_advisor: error (0/4)"
+        ],
+        "toolNames": [
+          "project_lookup",
+          "packet_reader",
+          "teams_reader",
+          "meetings_reader",
+          "emails_reader",
+          "documents_reader",
+          "financials_reader",
+          "schedule_reader",
+          "rfi_reader",
+          "submittal_reader",
+          "deepagents_runtime"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 2795,
+        "finalText": "Westfield Collective is not in a place where you should sound done. If the owner calls today, say the project is active, the team is working through a few live field issues, and the big thing you’re managing is closing those items without promising dates you can’t control.\n\nEvidence\n- The project still shows 181 overdue schedule tasks, including very early items like notice to proceed, schedule submission, and permit-related design work still marked not started. Source: PM database project briefing and risk snapshot.\n- Financially, the revised budget and revised prime contract are both $9,255,275, with $1,204,204 in pending owner change orders and $8,722,804 already received. Source: PM database budget summary.\n- Recent activity is concentrated in a few live issue threads: dumpster enclosure gates, water pooling at the 2nd-level patio, counter shutter replacement, electrical contact info, and occupancy count. Source: recent activity dated 2026-05-18.\n- Open RFIs and submittals are clean at zero, so the issue is not paperwork backlogs right now; it’s execution and follow-through on field items and overdue workflow. Source: PM database risk snapshot.\n- The latest ingested meeting exists, but the structured data is the better source for owner-facing status; don’t lean on meeting chatter for hard numbers. Source: list_recent_meetings and PM database.\n\nWhat this means\nThe owner should hear that the job is moving, but not that it’s wrapped up. Your risk is overcommitting on finish dates, approvals, or scope closure while several open field threads are still being worked and a large amount of change exposure is still pending owner action.\n\nRecommended next steps\n- Tell the owner you’re tracking the current field issues directly and will confirm status as soon as the responsible parties close them out.\n- Do not promise a completion date for the water pooling, dumpster gate, or counter shutter items unless the responsible vendor has committed in writing.\n- Do not describe the $1,204,204 in pending owner change orders as approved or “essentially done.”\n- If the owner pushes on schedule, anchor the conversation on what is actually complete and what is still being validated, not on optimistic finish language.\n\nAvoid overpromising on\n- Final completion dates\n- Approval of change orders\n- Resolution of field issues before you’ve confirmed vendor/owner response\n- Any statement that the project is “substantially complete” or “basically done”\n\nUncertainty\n- I do not yet have the exact status/owner for the current email threads, so I would avoid naming a specific resolution date unless you verify those threads first.\n\nSource coverage note: meetings: missing; rfi: missing; submittal: missing. I did not use unavailable or stale source categories as factual support.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 25303
+        },
+        "judge": {
+          "status": "error",
+          "rubric": "strategic_advisor",
+          "score": 0,
+          "minScore": 4,
+          "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
+          "strengths": [],
+          "weaknesses": [
+            "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
+          ],
+          "dimensionScores": {},
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic",
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-most-important-tasks",
+      "intent": "task_management",
+      "prompt": "What are my most important tasks right now?",
+      "selectedProjectId": null,
+      "sessionId": "b87f9759-645a-45e1-b056-fc1433aed43c",
+      "sessionLabel": "eval-2026-05-19T04-19-07-376Z-c825f378-realworld-most-important-tasks",
+      "startedAt": "2026-05-19T04:20:45.343Z",
+      "finishedAt": "2026-05-19T04:21:39.760Z",
+      "durationMs": 53834,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 699,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected required tool 'backendDeepAgentExecutiveBriefing' to fire",
+          "required metadata missing: response_quality",
+          "judge strategic_advisor error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
+        ],
+        "warnings": [
+          "duration 53834ms exceeded warning budget 45000ms"
+        ],
+        "observations": [
+          "tools fired: getActionItemsAndInsights, semanticSearch",
+          "judge strategic_advisor: error (0/4)"
+        ],
+        "toolNames": [
+          "getActionItemsAndInsights",
+          "semanticSearch"
+        ],
+        "familiesHit": [
+          "communications",
+          "semantic",
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 2921,
+        "finalText": "Your biggest issue right now is **follow-through on overdue items**. You’ve got **10 open tasks, 9 overdue**, and a few of them are either assigned to you directly or were initiated by you and still hanging. [Source: Action Items & Insights]\n\nMost important right now:\n\n- **Send updated calculations to Matthew** — assigned to **Brandon Clymer**, due **2026-05-06**, now overdue. This is one of the clearest direct actions sitting on you. [Source: Action Items & Insights]\n- **Review quarantined Microsoft 365 message** — assigned to **Brandon Clymer**, due **2026-05-19**. This is the one that’s actually due now, not just stale. [Source: Action Items & Insights]\n- **Lock Uniqlo scope ownership** from the **May 13 Fast Retailing/Uniqlo meeting** — specifically fire suppression, racking coordination, MEP design/order timing, drawing-file format, and updated layout path. It was due **2026-05-13** and is overdue. That matters because unclear ownership turns into delay fast. [Source: Action Items & Insights]\n- **Close the loop on insurance requirements** with **Corey Kunkleman** — there are **two separate open high-priority items** tied to this, both due **2026-05-05**, both saying you needed status back to respond to the client. That duplication usually means the issue got raised more than once and still didn’t die. [Source: Action Items & Insights]\n- **Clear the delegated drawing/signature items** you initiated or are tied into:\n  - **Share 90% drawings** from Richard Ellison, due **2026-05-01**\n  - **Updated Om Nangia signature / send updated signature document** from Brandon Griffith, both due **2026-05-05**  \n  These aren’t necessarily your hands-on tasks, but they’re old enough that they need escalation or closure. [Source: Action Items & Insights]\n\nWhat I’d treat as noise unless you care:\n- **Best Buy survey** — overdue, but low priority.\n- **Fountain Life call scheduling** — personal admin, not business-critical unless you want it back on the radar. [Source: Action Items & Insights]\n\nWhat else is sitting in the background:\n- **Westfield Collective** has multiple unresolved **critical schedule-risk signals** in Teams history — site security/locks, completion list, bollard/gate coordination, landscaping/path sequencing, and contract/warranty wording with LeMaster. These are not verified task rows assigned to you, but they are real unresolved follow-ups that could still need leadership pressure. [Source: Action Items & Insights]\n\nIf I had to rank your top 5 for today:\n\n1. **Review the quarantined M365 message today**\n2. **Send updated calculations to Matthew**\n3. **Resolve or reassign the Uniqlo ownership items**\n4. **Get Corey’s insurance status and respond to the client**\n5. **Force closure on the stale drawings/signature items**\n\nIf you want, I can turn this into a **clean priority list by project** or create **real follow-up tasks** for the items that still need chasing.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 53834
+        },
+        "judge": {
+          "status": "error",
+          "rubric": "strategic_advisor",
+          "score": 0,
+          "minScore": 4,
+          "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
+          "strengths": [],
+          "weaknesses": [
+            "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
+          ],
+          "dimensionScores": {},
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getMyTasks",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions"
+      ]
+    },
+    {
+      "id": "realworld-waiting-on-team",
+      "intent": "task_management",
+      "prompt": "What am I waiting on from my team?",
+      "selectedProjectId": null,
+      "sessionId": "e09e2801-ebb1-4f80-be8b-6bc0829c4eca",
+      "sessionLabel": "eval-2026-05-19T04-19-07-376Z-c825f378-realworld-waiting-on-team",
+      "startedAt": "2026-05-19T04:21:39.762Z",
+      "finishedAt": "2026-05-19T04:22:38.398Z",
+      "durationMs": 57896,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 636,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected required tool 'backendDeepAgentExecutiveBriefing' to fire",
+          "required metadata missing: response_quality",
+          "judge strategic_advisor error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
+        ],
+        "warnings": [
+          "duration 57896ms exceeded warning budget 45000ms"
+        ],
+        "observations": [
+          "tools fired: getActionItemsAndInsights, semanticSearch",
+          "judge strategic_advisor: error (0/4)"
+        ],
+        "toolNames": [
+          "getActionItemsAndInsights",
+          "semanticSearch"
+        ],
+        "familiesHit": [
+          "communications",
+          "semantic",
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 2575,
+        "finalText": "You’re waiting on a few real things from your team, and the clearest blockers are these:\n\n- **Richard Ellison** — share the **90% drawings** with you. Due **2026-05-01**, still open. [Source: Action Items & Insights]\n- **Brandon Griffith** — fix the **Om Nangia signature** issue and send back the updated document. Due **2026-05-05**, still open, and it shows up twice from the same thread, so that one looks unresolved. [Source: Action Items & Insights]\n- **Corey Kunkleman** — give you status on whether the **insurance requirements are met** so you can respond to the client. Due **2026-05-05**, still open, also duplicated in the system. **Project 31.** [Source: Action Items & Insights]\n- **Bob Wright** — create the **design-cost change request** under the existing Steel Services PO for added **Vermillion Rise** design costs. Still open. [Source: Action Items & Insights]\n- **Maria Calcetero** — go back to the charter companies with the **$7,500 Piper offer**. Still open. [Source: Action Items & Insights]\n- **Spencer Geissel** — review the attached **sprinkler options** for **Superior Beverage**. Still open, also duplicated. [Source: Action Items & Insights]\n\nWhat matters most: the overdue items are mostly admin/compliance handoffs, not field production — but they’re the kind that slow your response time and make you the bottleneck if they sit.\n\nThere’s also a second layer: communication-derived follow-ups that look like unresolved team dependencies, especially on **Westfield Collective**. Those are not clean task-register items, but they show repeated unresolved pressure around:\n- completion list / getting people off site,\n- schedule dates not being clearly tracked,\n- locks/security,\n- landscaping sequencing,\n- punch and closeout coordination.  \nAll of that is still surfacing as unresolved risk signal in the system. [Source: Action Items & Insights]\n\nOne thing that’s directly on your side too:\n- **RFI #2** — “Specified fire rating for north wall assembly” is open, overdue, and the ball is in **Brandon**. Due **2026-04-10**. [Source: Action Items & Insights]\n\nMy read: you’re not mainly waiting on broad effort from the team — you’re waiting on **specific confirmations and document handoffs**. The highest-value chases today are:\n1. **Corey** on insurance status\n2. **Brandon Griffith** on signature correction\n3. **Richard** on 90% drawings\n4. **Bob** on Vermillion design-cost change request\n\nIf you want, I can turn this into a **clean “waiting on others” list by person and project** or draft **Teams follow-up messages** to each of them.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 57896
+        },
+        "judge": {
+          "status": "error",
+          "rubric": "strategic_advisor",
+          "score": 0,
+          "minScore": 4,
+          "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
+          "strengths": [],
+          "weaknesses": [
+            "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
+          ],
+          "dimensionScores": {},
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getMyTasks",
+        "getActionItemsAndInsights",
+        "getPeopleAndRoles"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions"
+      ]
+    },
+    {
+      "id": "realworld-business-risks",
+      "intent": "risk_review",
+      "prompt": "What risks exist in the business right now?",
+      "selectedProjectId": null,
+      "sessionId": "c294944d-df20-43f7-b5c2-c210de2a881f",
+      "sessionLabel": "eval-2026-05-19T04-19-07-376Z-c825f378-realworld-business-risks",
+      "startedAt": "2026-05-19T04:22:38.399Z",
+      "finishedAt": "2026-05-19T04:23:47.886Z",
+      "durationMs": 68855,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1488,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [backendDeepAgentExecutiveBriefing, getProjectsWithRisks, getPortfolioOverview, getFinancialAnalysis, assistantSourceHealth] to fire — none did",
+          "expected required tool 'backendDeepAgentExecutiveBriefing' to fire",
+          "judge strategic_advisor error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'risk' not represented",
+          "expected family 'financial' not represented",
+          "expected family 'source_health' not represented",
+          "duration 68855ms exceeded warning budget 45000ms"
+        ],
+        "observations": [
+          "tools fired: listDomainIntelligence, getDomainIntelligence, semanticSearch",
+          "judge strategic_advisor: error (0/4)"
+        ],
+        "toolNames": [
+          "listDomainIntelligence",
+          "getDomainIntelligence",
+          "semanticSearch"
+        ],
+        "familiesHit": [
+          "communications",
+          "semantic"
+        ],
+        "finalTextLength": 6761,
+        "finalText": "Yes. The business has real risk right now, and it’s mostly coming from **process fragility while the company is trying to scale**.\n\nThe short version: **you do not have one big fire — you have several connected weak points that can turn into financial mistakes, delayed execution, and margin leakage if they stay manual.**\n\n## The risks that matter most right now\n\n### 1. Financial control risk\nThis is the biggest one.\n\nAccounting is still too manual across transaction coding, payroll/time tracking, and system handoffs. The clearest signal is that:\n- credit card coding still requires weekly downloads, duplicate checks, job/date verification, and **individual posting into Acumatica**\n- payroll/time tracking is still being reworked through **TimeCo / Venture / Acumatica**\n- leadership discussed **billing discrepancies, inaccurate revenue recognition, and a $1.7M revenue increase not reflected in financial statements** [Source: Domain Intelligence — Accounting; evidence from “Rob & Brandon - Next steps,” 2026-05-14]\n\nWhat that means:\n- financial statements can be directionally wrong at exactly the wrong time\n- WIP and revenue visibility are not solid enough for confident growth decisions\n- too much depends on a few people knowing how the workarounds work\n\nIf I had to name the sharpest business risk today, it’s this: **management could be making decisions off numbers that are not wrong enough to trigger panic, but wrong enough to distort margin, backlog, and cash planning.**\n\n### 2. Key-person dependency risk\nThis shows up everywhere.\n\nLauren’s onboarding is being used to transfer critical accounting workflow knowledge, but the documents also make it clear that core execution still relies on people like **Jose, Misty, and Maria** to train, troubleshoot, and unblock work [Source: Domain Intelligence — Accounting; People & Talent, 2026-05-19 packet]\n\nWhat that means:\n- if one of those people is overloaded, absent, or leaves, throughput drops fast\n- onboarding stays slow\n- process quality depends on memory and availability, not a system\n\nThat’s not just an HR issue. It’s an operating risk.\n\n### 3. Operations execution risk\nOperations are moving, but there’s too much manual coordination and too many late clarifications.\n\nCurrent patterns across active work:\n- scope and schedule clarity are still being built midstream\n- closeout documentation is arriving late\n- estimating/procurement still depends on chasing bids and missing material data\n- teams are compensating with daily follow-ups and manual checks instead of stable workflows  \n[Source: Domain Intelligence — Operations, generated 2026-05-19]\n\nExamples in the evidence:\n- Wilmer still needed scope clarifications and bid follow-ups on doors, roofing, and other trades [Exol Wilmer - Review on GC's, 2026-05-18]\n- Uniqlo/GPC is still managing testing, punch items, surplus material verification, photo documentation, and permit-close discipline near closeout [Uniqlo & GPC Huddle, 2026-05-18]\n\nWhat that means:\n- delays compound quietly\n- closeout and billing can slip\n- field teams burn time chasing information instead of executing\n\n### 4. BD conversion and margin-protection risk\nThe pipeline is active, but the BD machine is noisier than it should be.\n\nThe recurring pattern:\n- pricing gaps\n- incomplete design inputs\n- bid coverage still dependent on manual chase work\n- owner expectations sometimes ahead of design/budget reality  \n[Source: Domain Intelligence — Business Development]\n\nThat matters because **bad precon discipline becomes bad project margin later**.\n\nStrong example:\n- Ace Champaign discussed a total budget likely between **$550K and $750K** while initial client proposals were around **$300K**, with permitting and coordination still in play [Weekly OAC Meeting// Ace Hardware Champaign-Building Addition, 2026-05-14]\n\nThat’s the classic setup for margin pain:\n- sold number anchored early\n- scope still moving\n- team forced to make reality fit the budget\n\n### 5. Systems/tooling risk\nThis is underneath almost everything else.\n\nThere are repeated issues with:\n- Notion\n- Bluebeam\n- Job Planner / BuildingConnected access\n- Acumatica workflow friction\n- manual uploads and cross-checks between systems  \n[Source: Domain Intelligence — Operations; People & Talent; BD]\n\nThat sounds administrative, but it’s not. It directly affects:\n- onboarding speed\n- bid tracking\n- document sharing\n- transaction posting\n- field coordination\n\nIn plain English: **the company is spending too much senior energy just keeping the machine running.**\n\n### 6. Hiring and role-fit risk\nNot the biggest risk, but it’s real.\n\nThe People & Talent packet shows:\n- active recruiting\n- compensation sensitivity\n- need for clearer role fit on senior hires\n- pay expectations already being discussed explicitly  \n[Source: Domain Intelligence — People & Talent]\n\nThat means growth hiring can get expensive fast if:\n- role scope is vague\n- compensation bands aren’t set\n- leaders hire for urgency instead of fit\n\n## What all of this adds up to\n\nThe business risk is not “we don’t have opportunities.”\n\nIt’s this:\n\n**Alleato is growing with an operating system that still depends too much on manual coordination, tribal knowledge, and leadership intervention.**\n\nThat creates four concrete exposures:\n1. **Financial reporting distortion**\n2. **Margin leakage before and after award**\n3. **Execution drag from incomplete handoffs**\n4. **Scaling bottlenecks tied to specific people**\n\n## What I’d do next\n\nThree moves, in order:\n\n1. **Pick one owner for systems/process stabilization across accounting + time tracking + workflow handoffs.**  \n   Right now the risks are cross-functional, so they won’t get fixed piecemeal.\n\n2. **Lock down the top 5 repeatable workflows into SOPs immediately.**  \n   Start with:\n   - weekly transaction coding/posting\n   - payroll/time export and approval\n   - onboarding/access setup\n   - bid tracking/follow-up\n   - closeout documentation\n\n3. **Force a weekly risk review on financial visibility and precon scope gaps.**  \n   Specifically:\n   - WIP/revenue exceptions\n   - projects with sold budgets ahead of stable design\n   - pursuits with missing trade coverage\n   - closeout-ready jobs missing docs\n\n## Confidence / gaps\n\nI’m confident on the direction of the risk. The domain packets are fresh as of **2026-05-19**.\n\nWhat I have not pulled yet is live accounting data like:\n- AP/AR aging\n- cash position\n- current vendor exposure\n\nSo I can tell you the **operating risks** are real. I have not yet quantified the **cash and balance-sheet pressure** behind them in this answer.\n\nIf you want the sharper version, I can do the next pass as:\n**“Top 5 business risks ranked by financial impact”** using live accounting data plus the domain signals.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 68855
+        },
+        "judge": {
+          "status": "error",
+          "rubric": "strategic_advisor",
+          "score": 0,
+          "minScore": 4,
+          "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
+          "strengths": [],
+          "weaknesses": [
+            "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
+          ],
+          "dimensionScores": {},
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getProjectsWithRisks",
+        "getPortfolioOverview",
+        "getFinancialAnalysis",
+        "assistantSourceHealth"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "risk",
+        "financial",
+        "source_health"
+      ]
+    },
+    {
+      "id": "realworld-systems-processes-needed",
+      "intent": "implementation_planning",
+      "prompt": "What systems and processes do you think we need to put in place?",
+      "selectedProjectId": null,
+      "sessionId": "92e1e1dd-e481-4cb5-b68f-a29a137d43c9",
+      "sessionLabel": "eval-2026-05-19T04-19-07-376Z-c825f378-realworld-systems-processes-needed",
+      "startedAt": "2026-05-19T04:23:47.888Z",
+      "finishedAt": "2026-05-19T04:24:58.723Z",
+      "durationMs": 70227,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1290,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [backendDeepAgentExecutiveBriefing, getPortfolioOverview, getActionItemsAndInsights, assistantSourceHealth] to fire — none did",
+          "expected required tool 'backendDeepAgentExecutiveBriefing' to fire",
+          "judge strategic_advisor error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'actions' not represented",
+          "expected family 'source_health' not represented",
+          "duration 70227ms exceeded warning budget 45000ms"
+        ],
+        "observations": [
+          "tools fired: semanticSearch",
+          "judge strategic_advisor: error (0/4)"
+        ],
+        "toolNames": [
+          "semanticSearch"
+        ],
+        "familiesHit": [
+          "communications",
+          "semantic"
+        ],
+        "finalTextLength": 5157,
+        "finalText": "You need a real operating system, not a pile of good intentions.\n\nBased on the meeting history, the biggest gap is consistency. The same theme keeps showing up: get the work into a defined system, make it visible, and make it repeatable.\n\nWhat I’d put in place:\n\n## 1. A single workflow system for operational work\nThis came through clearly on 2026-05-13: Brandon said to set up a system using **files, notes, and activities** so Jose, Rob, and others are all working the same way, with visibility into whether something has been processed yet [meeting transcript, 2026-05-13].\n\nThat means:\n- one place where every item lives\n- one status flow\n- one owner\n- one source of truth for attachments and notes\n- visible handoff history\n\nIf you don’t do this, the work stays person-dependent.\n\n## 2. Standard SOPs for repeatable tasks\nOn 2026-03-23 and 2026-03-20, the team kept coming back to **onboarding checklists, master documents, and office management systems** [meeting transcript, 2026-03-23; meeting segment summary, 2026-03-20].\n\nYou need SOPs for:\n- onboarding\n- purchasing / ordering\n- equipment setup\n- app and login provisioning\n- document filing\n- recurring office/admin workflows\n- closeout of completed tasks\n\nNot theoretical SOPs. Short, usable ones.\n\n## 3. A master checklist library\nThe team already identified the need for a **master onboarding document** and detailed checklists [meeting segment summary, 2026-03-20]. Ashley also said she needed help making the **office management checklist and systems** [meeting transcript, 2026-03-23].\n\nBuild a checklist library for:\n- new hire onboarding\n- new project setup\n- vendor setup\n- monthly accounting/admin close steps\n- meeting follow-up\n- procurement / equipment ordering\n- offboarding\n\nChecklists are what keep standards alive when the business gets busy.\n\n## 4. A testing / pilot process before rollout\nThis is non-negotiable. On 2026-05-13, Brandon said not to just take a new system live suddenly — test it first [meeting transcript, 2026-05-13].\n\nSo every new process should have:\n- pilot users\n- test cases\n- a 2-week trial run\n- feedback loop\n- go-live criteria\n- owner for revisions\n\nThat keeps you from rolling out something that looks clean but breaks in practice.\n\n## 5. A real automation map\nOn 2026-03-23, Brandon said, “we need to hammer on this automation” and that “everything is a data entry point” [meeting transcript, 2026-03-23].\n\nThat means you should map:\n- where data first enters\n- who touches it next\n- what can be auto-created\n- what status changes should trigger alerts/tasks\n- what documents should auto-attach\n- what reporting should auto-update\n\nIf you don’t map the handoffs first, automation just speeds up a messy process.\n\n## 6. A training system, not just documentation\nKebba’s point on 2026-03-23 was right: once systems exist, AI and training content become useful. He talked about **SOPs, onboarding schedules, videos, and a learning lab** so people can click, watch, and follow the process [meeting transcript, 2026-03-23].\n\nYou need:\n- short SOP videos\n- role-based training paths\n- searchable process library\n- “how do I do this?” quick guides\n- screenshots and examples\n- refresher training when a process changes\n\nDocumentation without training gets ignored.\n\n## 7. A working-memory / in-progress workspace\nThe May 3 Teams DM laid this out well: not just long-term memory, but a **workspace for active work in progress** — drafts, follow-ups, assigned owners, due dates, staged outputs [Teams DM, 2026-05-03].\n\nThat should hold:\n- draft emails\n- draft RFIs\n- draft weekly reports\n- meeting action items before finalization\n- pending approvals\n- “waiting on” items\n- next moves tied to the exact object\n\nThis is the difference between “AI can answer questions” and “AI can help run the company.”\n\n## 8. Role clarity and handoff rules\nThe deeper issue underneath all of this is handoff ambiguity. Brandon’s comments about checks, balances, and staying nimble only work if people know:\n- who starts the process\n- who reviews it\n- who approves it\n- what counts as complete\n- what happens if it stalls\n\nWithout that, systems become shared confusion.\n\n## What matters most\nThe core answer is this:\n\nYou need **standardized workflows + checklists + visible handoffs + pilot testing + automation triggers + training**.\n\nThat’s the stack.\n\nIf I were sequencing it, I’d do it in this order:\n1. Define the top 10 repeatable workflows\n2. Build checklists for each\n3. Set owner/status/handoff rules\n4. Put them in one shared system\n5. Pilot with a small group\n6. Add automation only after the workflow is stable\n7. Record SOP videos and training\n\n## My read\nYou’re at the point where growth will punish loose process. That matches the April 24 discussion warning that the business is asking more from the current team than the current structure can comfortably support [Rob & Brandon progress check-in, 2026-04-24].\n\nSo this isn’t admin clean-up. It’s capacity protection.\n\nIf you want, I can turn this into a concrete rollout plan:\n- the exact systems/processes to build first\n- owners\n- 30/60/90-day sequence\n- what should be manual first vs automated later.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 70227
+        },
+        "judge": {
+          "status": "error",
+          "rubric": "strategic_advisor",
+          "score": 0,
+          "minScore": 4,
+          "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
+          "strengths": [],
+          "weaknesses": [
+            "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
+          ],
+          "dimensionScores": {},
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getPortfolioOverview",
+        "getActionItemsAndInsights",
+        "assistantSourceHealth"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "actions",
+        "source_health"
+      ]
+    }
+  ]
+}

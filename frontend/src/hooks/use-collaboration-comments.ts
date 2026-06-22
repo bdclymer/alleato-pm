@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { apiFetch } from "@/lib/api-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { CommentableEntityType } from "@/lib/liveblocks/rooms";
+import type { CommentableEntityType } from "@/lib/collaboration/rooms";
 
 export interface CollaborationComment {
   id: string;

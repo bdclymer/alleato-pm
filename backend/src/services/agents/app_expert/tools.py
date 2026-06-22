@@ -117,7 +117,7 @@ def _safe_help_article_path(file_path: str) -> Path | None:
     raw = file_path.strip()
     if not raw:
         return None
-    relative = raw.removeprefix("docs/help/articles/")
+    relative = raw.removeprefix("docs/archive/2026-06-22-docs-migration/help/articles/")
     candidates: list[Path] = []
     if raw.startswith("docs/"):
         candidates.append((_repo_root() / raw).resolve())
@@ -267,7 +267,7 @@ def get_feature_details(feature_id_or_title: str) -> str:
 
 @tool
 def get_help_article(file_path_or_slug: str, max_chars: int = 6000) -> str:
-    """Read one curated help article by docs/help/articles path or article slug."""
+    """Read one curated help article by docs/archive/2026-06-22-docs-migration/help/articles path or article slug."""
     article_path = _safe_help_article_path(file_path_or_slug)
     if article_path is None:
         slug = file_path_or_slug.strip().removesuffix(".md").removesuffix(".mdx")
@@ -278,7 +278,7 @@ def get_help_article(file_path_or_slug: str, max_chars: int = 6000) -> str:
                 "ok": False,
                 "error": (
                     "GET_HELP_ARTICLE_NOT_FOUND: expected a path under "
-                    "docs/help/articles or an article slug."
+                    "docs/archive/2026-06-22-docs-migration/help/articles or an article slug."
                 ),
             }
         )

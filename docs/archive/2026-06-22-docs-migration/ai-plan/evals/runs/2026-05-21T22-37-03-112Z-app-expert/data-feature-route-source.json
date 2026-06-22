@@ -1,0 +1,79 @@
+{
+  "id": "data-feature-route-source",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6377,
+  "question": "What source should the assistant cite for where a page exists?",
+  "mustInclude": [
+    "sitemap",
+    "route"
+  ],
+  "preferredTools": [
+    "get_app_expert_artifact_status",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "For “where a page exists,” cite the **generated route evidence first** if you need the actual page location, and the **curated help article** if you need user-facing behavior.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are present and fresh enough to use.\n- Feature registry search: found documented examples that link pages to help articles.\n- App sitemap search: found exact route metadata with source file paths.\n\nBest citation hierarchy:\n1. **Curated help article** — for user-facing behavior/capabilities  \n   - Example: `docs/help/articles/app-navigation-and-feature-map.md`\n2. **Route metadata / app sitemap** — for where the page exists in the app  \n   - Example route: `/[projectId]/budget`\n   - Source file: `frontend/src/app/(main)/[projectId]/budget/page.tsx`\n3. **Implementation evidence** — if no curated doc exists  \n   - Example: route-discovered entries like `Billing Periods` from `frontend/src/app/(main)/[projectId]/billing-periods/page.tsx`\n\nSo the assistant should cite:\n- **the help article path** when explaining what a page does\n- **the exact route and source file** when answering where the page exists\n\nIf you want, I can look up a specific page and give you the exact route plus the best citation source.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/capabilities",
+        "sourceType": "sitemap",
+        "route": "/capabilities",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-navigation-and-feature-map.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-navigation-and-feature-map.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/budget",
+        "sourceType": "sitemap",
+        "route": "/budget",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/budget/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/budget/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/billing-periods/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/billing-periods/page.tsx",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6290,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "get_app_expert_artifact_status",
+    "search_app_sitemap"
+  ]
+}

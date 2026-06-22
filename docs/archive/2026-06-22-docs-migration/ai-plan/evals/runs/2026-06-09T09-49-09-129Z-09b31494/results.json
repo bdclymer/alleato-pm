@@ -1,0 +1,476 @@
+{
+  "generatedAt": "2026-06-09T09:49:45.273Z",
+  "baseUrl": "https://alleato-5y4fbd5ji-meganharrisons-projects.vercel.app",
+  "bundle": {
+    "name": "inbox-outlook-regression",
+    "description": "Agentic-eval guardrail for live inbox/date/triage prompts. The Strategist must delegate Microsoft operator work to consultMicrosoftExecutiveAssistant, the specialist must expose microsoft_graph_live in its trace, and the assistant must avoid direct/stale Outlook tools and source-specific RAG fallback.",
+    "criteria": [
+      "Every case must fire consultMicrosoftExecutiveAssistant and its nested trace must include microsoft_graph_live.",
+      "No case may fire sourceSpecificRagRetrieval, getRecentEmails, getRecentOutlookEmails, or readOutlookEmailThread.",
+      "No tool trace's source may be outlook_email_intake or outlook_email_intake_fallback - Microsoft operator inbox reads must hit live Microsoft Graph through the specialist.",
+      "Answers must not tell the user to wait for live Outlook tools.",
+      "Answers must be long enough to explain the inbox result or failure clearly."
+    ]
+  },
+  "filter": "realworld-(last-five-emails|urgent-inbox|important-emails-this-morning|outlook-arrived-today|email-reply-triage)$",
+  "totalCases": 5,
+  "passed": 0,
+  "failed": 5,
+  "warningCount": 0,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": true,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 5,
+    "passed": 0,
+    "failed": 5,
+    "errors": 0,
+    "averageScore": 1.2
+  },
+  "slowestCases": [
+    {
+      "id": "realworld-urgent-inbox",
+      "intent": "source_lookup",
+      "durationMs": 16567,
+      "status": "fail",
+      "warnings": []
+    },
+    {
+      "id": "realworld-last-five-emails",
+      "intent": "source_lookup",
+      "durationMs": 2834,
+      "status": "fail",
+      "warnings": []
+    },
+    {
+      "id": "realworld-email-reply-triage",
+      "intent": "source_lookup",
+      "durationMs": 971,
+      "status": "fail",
+      "warnings": []
+    },
+    {
+      "id": "realworld-important-emails-this-morning",
+      "intent": "source_lookup",
+      "durationMs": 945,
+      "status": "fail",
+      "warnings": []
+    },
+    {
+      "id": "realworld-outlook-arrived-today",
+      "intent": "source_lookup",
+      "durationMs": 827,
+      "status": "fail",
+      "warnings": []
+    }
+  ],
+  "toolCoverage": {
+    "consultMicrosoftExecutiveAssistant": 5
+  },
+  "intentDistribution": {
+    "source_lookup": 5
+  },
+  "results": [
+    {
+      "id": "realworld-last-five-emails",
+      "intent": "source_lookup",
+      "prompt": "Can you tell me my last five emails?",
+      "selectedProjectId": null,
+      "sessionId": "1af0f661-2b4d-4885-84f5-6555977d38b4",
+      "sessionLabel": "eval-2026-06-09T09-49-09-129Z-09b31494-realworld-last-five-emails",
+      "startedAt": "2026-06-09T09:49:09.136Z",
+      "finishedAt": "2026-06-09T09:49:14.868Z",
+      "durationMs": 2834,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "judge email_operator score 1 < 4: The response is a tool-failure notice, not an email operator answer. It does not identify any emails, recipients, urgency, or action path, and it includes internal runtime/debug details instead of user-facing inbox handling. No thread evidence is provided, so it fails the source_lookup task."
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: fail (1/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 852,
+        "finalText": "I could not complete the live Microsoft inbox check. Failed capability: consultMicrosoftExecutiveAssistant. Cause: The Microsoft Executive Assistant could not complete this request. Failed capability: deepagents_microsoft_executive_assistant_runtime. Detail: Error code: 402 - {'error': {'message': 'A positive credit balance is required for all requests, including BYOK, so fallback providers remain available. Add credits at https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dtop-up to continue.', 'type': 'insufficient_funds'}} Detection gap: this request reached the Microsoft delegation path, but the specialist failure was previously collapsing into a generic provider fallback with no tool evidence. Prevention step: persist the Microsoft tool failure explicitly so Outlook/Brandon assistant regressions fail loudly and stay diagnosable.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 2834
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 1,
+          "minScore": 4,
+          "summary": "The response is a tool-failure notice, not an email operator answer. It does not identify any emails, recipients, urgency, or action path, and it includes internal runtime/debug details instead of user-facing inbox handling. No thread evidence is provided, so it fails the source_lookup task.",
+          "strengths": [
+            "It does not falsely claim to have read or sent email.",
+            "It explicitly reports that the Microsoft inbox check failed instead of inventing results."
+          ],
+          "weaknesses": [
+            "Does not answer the user’s request to tell them the last five emails.",
+            "No separation of urgent vs normal inbox items because no emails are summarized.",
+            "No identification of who needs a response, why it matters, or consequences of ignoring anything.",
+            "No concrete recommendation such as reply, delegate, watch, draft, or ignore.",
+            "Includes internal failure/debug text that is not useful to Brandon and not a proper email summary."
+          ],
+          "dimensionScores": {
+            "urgent_vs_normal": 1,
+            "who_needs_response_and_why": 1,
+            "thread_summary_efficiency": 1,
+            "concrete_response_path": 1,
+            "draft_quality": 1,
+            "no_false_claims_or_invented_details": 4,
+            "separates_owned_actions_from_inbox_items": 1,
+            "evidence_backed_suspicion_or_ignore": 1
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-urgent-inbox",
+      "intent": "source_lookup",
+      "prompt": "Is there anything urgent in my inbox?",
+      "selectedProjectId": null,
+      "sessionId": "d280dcbd-3c35-4887-847b-35eeb03057bb",
+      "sessionLabel": "eval-2026-06-09T09-49-09-129Z-09b31494-realworld-urgent-inbox",
+      "startedAt": "2026-06-09T09:49:14.869Z",
+      "finishedAt": "2026-06-09T09:49:34.397Z",
+      "durationMs": 16567,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 11,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "judge email_operator score 1 < 4: The answer does not inspect inbox content or identify any urgent email. It only reports a tool failure and internal debugging notes, so it fails the core task of separating urgent items from noise and providing actionable inbox guidance."
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: fail (1/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 852,
+        "finalText": "I could not complete the live Microsoft inbox check. Failed capability: consultMicrosoftExecutiveAssistant. Cause: The Microsoft Executive Assistant could not complete this request. Failed capability: deepagents_microsoft_executive_assistant_runtime. Detail: Error code: 402 - {'error': {'message': 'A positive credit balance is required for all requests, including BYOK, so fallback providers remain available. Add credits at https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dtop-up to continue.', 'type': 'insufficient_funds'}} Detection gap: this request reached the Microsoft delegation path, but the specialist failure was previously collapsing into a generic provider fallback with no tool evidence. Prevention step: persist the Microsoft tool failure explicitly so Outlook/Brandon assistant regressions fail loudly and stay diagnosable.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 16567
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 1,
+          "minScore": 4,
+          "summary": "The answer does not inspect inbox content or identify any urgent email. It only reports a tool failure and internal debugging notes, so it fails the core task of separating urgent items from noise and providing actionable inbox guidance.",
+          "strengths": [
+            "It does not falsely claim to have read or sent email.",
+            "It explicitly reports that the live inbox check failed instead of inventing results."
+          ],
+          "weaknesses": [
+            "No urgent vs normal inbox triage was performed.",
+            "No specific email, sender, or thread was identified as needing a response.",
+            "No explanation of why any item matters or what happens if ignored.",
+            "No concrete recommendation such as reply now, delegate, watch, draft, or ignore.",
+            "Includes internal failure/debug details rather than a user-facing inbox summary."
+          ],
+          "dimensionScores": {
+            "separates_urgent_from_noise": 1,
+            "identifies_who_needs_response_why_what_if_ignored": 1,
+            "summarizes_threads_efficiently": 1,
+            "recommends_concrete_response_path": 1,
+            "drafts_short_direct_practical": 1,
+            "no_false_sent_or_invented_details": 4,
+            "separates_user_owned_actions_from_inbox_items": 1,
+            "evidence_backed_suspicion_or_ignore_labels": 1
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-important-emails-this-morning",
+      "intent": "source_lookup",
+      "prompt": "What important emails have I received this morning?",
+      "selectedProjectId": null,
+      "sessionId": "72bd951b-1126-465c-ade2-034464f4d573",
+      "sessionLabel": "eval-2026-06-09T09-49-09-129Z-09b31494-realworld-important-emails-this-morning",
+      "startedAt": "2026-06-09T09:49:34.400Z",
+      "finishedAt": "2026-06-09T09:49:37.911Z",
+      "durationMs": 945,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "judge email_operator score 1 < 4: The answer does not identify any important emails, does not separate urgent from normal, and provides only a tool failure explanation. It contains no inbox evidence, no thread summaries, no response recommendations, and no actionable judgment about what Brandon should do."
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: fail (1/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 852,
+        "finalText": "I could not complete the live Microsoft inbox check. Failed capability: consultMicrosoftExecutiveAssistant. Cause: The Microsoft Executive Assistant could not complete this request. Failed capability: deepagents_microsoft_executive_assistant_runtime. Detail: Error code: 402 - {'error': {'message': 'A positive credit balance is required for all requests, including BYOK, so fallback providers remain available. Add credits at https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dtop-up to continue.', 'type': 'insufficient_funds'}} Detection gap: this request reached the Microsoft delegation path, but the specialist failure was previously collapsing into a generic provider fallback with no tool evidence. Prevention step: persist the Microsoft tool failure explicitly so Outlook/Brandon assistant regressions fail loudly and stay diagnosable.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 945
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 1,
+          "minScore": 4,
+          "summary": "The answer does not identify any important emails, does not separate urgent from normal, and provides only a tool failure explanation. It contains no inbox evidence, no thread summaries, no response recommendations, and no actionable judgment about what Brandon should do.",
+          "strengths": [
+            "It is honest about the tool failure and does not pretend to have accessed the inbox.",
+            "It does not invent email content or claim a message was sent."
+          ],
+          "weaknesses": [
+            "Fails the core task: no emails are identified as important.",
+            "No separation of urgent/critical items from routine inbox noise.",
+            "No explanation of who needs a response, why it matters, or consequences of ignoring it.",
+            "No concise thread summary or concrete action path is provided.",
+            "Does not distinguish confirmed user-owned actions from mere inbox items."
+          ],
+          "dimensionScores": {
+            "separates_urgent_from_normal": 1,
+            "identifies_who_needs_response_why_it_matters_consequences": 1,
+            "summarizes_threads_efficiently": 1,
+            "recommends_concrete_response_path": 1,
+            "draft_quality_short_direct_practical": 1,
+            "no_false_claims_or_invented_details": 5,
+            "separates_user_owned_actions_from_inbox_items": 1,
+            "evidence_backed_suspicious_or_ignore_judgments": 1
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-outlook-arrived-today",
+      "intent": "source_lookup",
+      "prompt": "What came in through Outlook today that needs my attention?",
+      "selectedProjectId": null,
+      "sessionId": "eb02e795-d8f9-4145-bd51-7d24ebef5723",
+      "sessionLabel": "eval-2026-06-09T09-49-09-129Z-09b31494-realworld-outlook-arrived-today",
+      "startedAt": "2026-06-09T09:49:37.912Z",
+      "finishedAt": "2026-06-09T09:49:41.597Z",
+      "durationMs": 827,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "judge email_operator score 1 < 4: The answer does not inspect Outlook content at all. It only reports a tool/runtime failure and a billing error, so it fails the core task of identifying what needs attention. There is no inbox triage, no urgency assessment, no owner/action mapping, and no evidence-backed recommendation for Brandon."
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: fail (1/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 852,
+        "finalText": "I could not complete the live Microsoft inbox check. Failed capability: consultMicrosoftExecutiveAssistant. Cause: The Microsoft Executive Assistant could not complete this request. Failed capability: deepagents_microsoft_executive_assistant_runtime. Detail: Error code: 402 - {'error': {'message': 'A positive credit balance is required for all requests, including BYOK, so fallback providers remain available. Add credits at https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dtop-up to continue.', 'type': 'insufficient_funds'}} Detection gap: this request reached the Microsoft delegation path, but the specialist failure was previously collapsing into a generic provider fallback with no tool evidence. Prevention step: persist the Microsoft tool failure explicitly so Outlook/Brandon assistant regressions fail loudly and stay diagnosable.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 827
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 1,
+          "minScore": 4,
+          "summary": "The answer does not inspect Outlook content at all. It only reports a tool/runtime failure and a billing error, so it fails the core task of identifying what needs attention. There is no inbox triage, no urgency assessment, no owner/action mapping, and no evidence-backed recommendation for Brandon.",
+          "strengths": [
+            "It is honest about the failure and does not falsely claim to have read or sent anything.",
+            "It avoids inventing email/thread details that were not available."
+          ],
+          "weaknesses": [
+            "Does not separate urgent/critical email from normal inbox noise.",
+            "Does not identify who needs a response, why it matters, or consequences of ignoring it.",
+            "Does not summarize any email threads because none were actually retrieved.",
+            "Does not recommend a concrete response path for any inbox item.",
+            "Does not provide a usable draft or practical next step for Brandon."
+          ],
+          "dimensionScores": {
+            "separates_urgent_from_noise": 1,
+            "identifies_who_needs_response_and_impact": 1,
+            "summarizes_threads_efficiently": 1,
+            "recommends_concrete_response_path": 1,
+            "draft_is_short_direct_practical": 1,
+            "never_claims_sent_or_invents_details": 5,
+            "separates_user_owned_actions_from_inbox_items": 1,
+            "labels_judgments_as_evidence_backed": 1
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-email-reply-triage",
+      "intent": "source_lookup",
+      "prompt": "Show me any emails from today that need a reply.",
+      "selectedProjectId": null,
+      "sessionId": "22ff210c-6300-436e-ae21-15747055c029",
+      "sessionLabel": "eval-2026-06-09T09-49-09-129Z-09b31494-realworld-email-reply-triage",
+      "startedAt": "2026-06-09T09:49:41.599Z",
+      "finishedAt": "2026-06-09T09:49:45.272Z",
+      "durationMs": 971,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "mustIncludeAny missing one of: \"email\", \"reply\", \"received\", \"today\", \"no emails\"",
+          "judge email_operator score 2 < 4: The assistant did not answer the user’s email question. It reported a tool/runtime failure and internal debugging notes instead of identifying today’s emails needing replies, prioritizing them, or recommending actions. No inbox evidence was provided."
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: fail (2/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 852,
+        "finalText": "I could not complete the live Microsoft inbox check. Failed capability: consultMicrosoftExecutiveAssistant. Cause: The Microsoft Executive Assistant could not complete this request. Failed capability: deepagents_microsoft_executive_assistant_runtime. Detail: Error code: 402 - {'error': {'message': 'A positive credit balance is required for all requests, including BYOK, so fallback providers remain available. Add credits at https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dtop-up to continue.', 'type': 'insufficient_funds'}} Detection gap: this request reached the Microsoft delegation path, but the specialist failure was previously collapsing into a generic provider fallback with no tool evidence. Prevention step: persist the Microsoft tool failure explicitly so Outlook/Brandon assistant regressions fail loudly and stay diagnosable.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 971
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 2,
+          "minScore": 4,
+          "summary": "The assistant did not answer the user’s email question. It reported a tool/runtime failure and internal debugging notes instead of identifying today’s emails needing replies, prioritizing them, or recommending actions. No inbox evidence was provided.",
+          "strengths": [
+            "It did not falsely claim to have read or sent email.",
+            "It explicitly surfaced that the live inbox check failed rather than pretending success."
+          ],
+          "weaknesses": [
+            "Did not separate urgent/critical emails from normal inbox noise because no emails were actually summarized.",
+            "Did not identify who needs a response, why it matters, or consequences of ignoring anything.",
+            "Did not summarize any thread content efficiently; it only returned failure diagnostics.",
+            "Did not recommend a concrete response path such as reply now, delegate, watch, draft, or ignore.",
+            "Did not provide a draft or any Brandon-ready response."
+          ],
+          "dimensionScores": {
+            "separates_urgent_from_noise": 1,
+            "identifies_who_needs_response_and_why": 1,
+            "summarizes_threads_efficiently": 1,
+            "recommends_concrete_response_path": 1,
+            "draft_is_short_direct_practical": 1,
+            "never_claims_sent_or_invents_details": 4,
+            "separates_confirmed_actions_from_inbox_items": 1,
+            "labels_suspicious_or_urgent_as_evidence_backed": 1
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    }
+  ]
+}

@@ -19,7 +19,7 @@ module.exports = {
     },
     messages: {
       rawButton:
-        'Use <Button> from "@/components/ui/button" instead of raw <button>. See docs/design/DESIGN.md.',
+        'Use <Button> from "@/components/ui/button" instead of raw <button>. See docs/archive/2026-06-22-docs-migration/design/DESIGN.md.',
     },
     schema: [],
   },

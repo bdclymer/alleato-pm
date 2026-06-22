@@ -1,0 +1,51 @@
+{
+  "id": "data-route-discovered-boundary",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 8069,
+  "question": "What should the assistant say if a route exists but there is no help article?",
+  "mustInclude": [
+    "route",
+    "help article"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "If a route exists but there is no help article, the assistant should not invent user-facing behavior. It should say:\n\n- the route is present in the implementation,\n- no curated help article was found,\n- the behavior is therefore uncertain or only implementation-backed,\n- and it should name the exact route and source file.\n\nChecked:\n- Artifact status: fresh and available for both generated files.\n- Curated help: `docs/help/articles/app-feature-status-and-limitations.md`\n- Feature registry evidence: route-discovered entries can have `helpArticle: null` and are explicitly labeled “User-facing help article not yet linked.”\n\nRecommended phrasing:\n> I found the route in the implementation, but no curated help article is linked to it. That means I can confirm the route exists, but I can’t confirm the intended user-facing behavior from documentation. Implementation evidence: `<route>` from `<source file>`.\n\nIf you want, I can look up a specific route and tell you exactly whether it has a help article or only route-discovered evidence.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 7982,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

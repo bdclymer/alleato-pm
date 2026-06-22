@@ -1,0 +1,226 @@
+{
+  "id": "ceo-decisions-should-i-bid",
+  "intent": "brainstorming",
+  "prompt": "Owner just sent over an RFP for a $7M cold-storage build in Ohio. Should we go after it? What do you think?",
+  "selectedProjectId": null,
+  "sessionId": "f58f0d23-20a9-4b70-abb0-c609339ff93c",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-ceo-decisions-should-i-bid",
+  "startedAt": "2026-05-12T20:09:22.181Z",
+  "finishedAt": "2026-05-12T20:11:07.708Z",
+  "durationMs": 90002,
+  "httpStatus": 200,
+  "streamError": "stream read error: This operation was aborted",
+  "streamEventCount": 19,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: This operation was aborted",
+      "assistant message was not persisted to chat_history",
+      "mustIncludeAny missing one of: \"tradeoff\", \"consider\", \"depends\", \"risk\", \"fit\", \"capacity\"",
+      "answer length 0 < min 300"
+    ],
+    "warnings": [],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T20:09:34.316Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-decision-packet",
+      "data": {
+        "widget": {
+          "type": "decision_packet",
+          "id": "decision-packet",
+          "title": "Decision packet",
+          "recommendation": "Treat this as a review item until the assistant confirms the supporting project evidence.",
+          "confidence": "medium",
+          "impacts": [
+            {
+              "label": "Financial impact",
+              "value": "Needs source-backed amount"
+            },
+            {
+              "label": "Schedule impact",
+              "value": "Needs current project context"
+            },
+            {
+              "label": "Owner action",
+              "value": "Confirm responsible party before executing"
+            }
+          ],
+          "risks": [
+            "Missing source evidence could lead to the wrong owner or cost treatment.",
+            "A write action should stay preview-only until the final fields are confirmed."
+          ],
+          "nextActions": [
+            "Ask the assistant to pull source evidence for this decision.",
+            "Convert the decision into an RFI, change event, task, or email draft once the fields are confirmed."
+          ]
+        }
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-feature-request-8429c11b-3f99-4c2d-8a49-040df844cffe",
+      "data": {
+        "widget": {
+          "type": "feature_request_packet",
+          "id": "feature-request-8429c11b-3f99-4c2d-8a49-040df844cffe",
+          "title": "Owner just sent over an RFP for a $7M cold-storage build in Ohio. Should we go af...",
+          "requestId": "8429c11b-3f99-4c2d-8a49-040df844cffe",
+          "status": "needs_clarification",
+          "readinessLabel": "Needs clarification",
+          "readyForBuild": false,
+          "openQuestions": [
+            "Which users, pages, workflows, and acceptance criteria define success for this request?"
+          ],
+          "acceptanceCriteriaCount": 0,
+          "linearIssueUrl": null,
+          "linearSyncStatus": "not_started",
+          "handoffPath": null,
+          "detailHref": "/ai-assistant/feature-requests/8429c11b-3f99-4c2d-8a49-040df844cffe"
+        }
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "Z1iyt9N1bZdaZ2Ul"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_VHL0x698Ev2bs0frmhPv1k6N",
+      "toolName": "consultCFO"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VHL0x698Ev2bs0frmhPv1k6N",
+      "inputTextDelta": "{\"question\":\"Should we pursue a $7M cold-storage build in Ohio? Assess from a financial standpoint what we should consider when deciding whether to bid, including project size fit, margin considerations, cash flow implications, and risk areas typical for this type of work. We do not yet have project-specific financials; this is an opportunity-stage go/no-go question.\",\"context\":\"Owner just sent an RFP for a $7M cold-storage build in Ohio. Need a go/no-go recommendation framework grounded in our business realities.\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_VHL0x698Ev2bs0frmhPv1k6N",
+      "toolName": "consultCFO",
+      "input": {
+        "question": "Should we pursue a $7M cold-storage build in Ohio? Assess from a financial standpoint what we should consider when deciding whether to bid, including project size fit, margin considerations, cash flow implications, and risk areas typical for this type of work. We do not yet have project-specific financials; this is an opportunity-stage go/no-go question.",
+        "context": "Owner just sent an RFP for a $7M cold-storage build in Ohio. Need a go/no-go recommendation framework grounded in our business realities."
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_fGSV1f1O8qIDyP87H5yAh54p",
+      "toolName": "consultVPBD"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fGSV1f1O8qIDyP87H5yAh54p",
+      "inputTextDelta": "{\"question\":\"Should we pursue a $7M cold-storage build in Ohio? Assess strategic fit, client/market implications, sector attractiveness, likely competition, and what would make this opportunity worth pursuing.\",\"context\":\"Owner just sent an RFP for a $7M cold-storage build in Ohio. Need strategic business development view on whether to go after it.\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_fGSV1f1O8qIDyP87H5yAh54p",
+      "toolName": "consultVPBD",
+      "input": {
+        "question": "Should we pursue a $7M cold-storage build in Ohio? Assess strategic fit, client/market implications, sector attractiveness, likely competition, and what would make this opportunity worth pursuing.",
+        "context": "Owner just sent an RFP for a $7M cold-storage build in Ohio. Need strategic business development view on whether to go after it."
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_xZZEbiSpHyOmCq5WHZXImkdE",
+      "toolName": "consultCHRO"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_xZZEbiSpHyOmCq5WHZXImkdE",
+      "inputTextDelta": "{\"question\":\"Should we pursue a $7M cold-storage build in Ohio? Assess likely capacity and staffing considerations for taking on this type of project, including operational burden of cold-storage work and whether this would stretch the team based on known capacity patterns.\",\"context\":\"Opportunity-stage go/no-go. No project record yet; need people/capacity perspective.\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_xZZEbiSpHyOmCq5WHZXImkdE",
+      "toolName": "consultCHRO",
+      "input": {
+        "question": "Should we pursue a $7M cold-storage build in Ohio? Assess likely capacity and staffing considerations for taking on this type of project, including operational burden of cold-storage work and whether this would stretch the team based on known capacity patterns.",
+        "context": "Opportunity-stage go/no-go. No project record yet; need people/capacity perspective."
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_VHL0x698Ev2bs0frmhPv1k6N",
+      "output": {
+        "agent": "cfo",
+        "analysis": "The CFO encountered an error while analyzing: Sub-agent cfo exceeded 15000ms timeout",
+        "confidence": "low",
+        "toolsUsed": [],
+        "durationMs": 15016,
+        "alerts": [
+          {
+            "severity": "warning",
+            "message": "CFO agent error: Sub-agent cfo exceeded 15000ms timeout"
+          }
+        ]
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_fGSV1f1O8qIDyP87H5yAh54p",
+      "output": {
+        "agent": "vpbd",
+        "analysis": "The VP of Business Development encountered an error while analyzing: Sub-agent vpbd exceeded 15000ms timeout",
+        "confidence": "low",
+        "toolsUsed": [],
+        "durationMs": 15008,
+        "alerts": [
+          {
+            "severity": "warning",
+            "message": "VP of Business Development agent error: Sub-agent vpbd exceeded 15000ms timeout"
+          }
+        ]
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_xZZEbiSpHyOmCq5WHZXImkdE",
+      "output": {
+        "agent": "chro",
+        "analysis": "The CHRO encountered an error while analyzing: Sub-agent chro exceeded 15000ms timeout",
+        "confidence": "low",
+        "toolsUsed": [],
+        "durationMs": 15006,
+        "alerts": [
+          {
+            "severity": "warning",
+            "message": "CHRO agent error: Sub-agent chro exceeded 15000ms timeout"
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    }
+  ],
+  "persistedMetadata": null
+}

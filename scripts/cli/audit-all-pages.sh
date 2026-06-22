@@ -3,7 +3,7 @@
 # Comprehensive page layout audit
 # Generates detailed tracking document
 
-OUTPUT_FILE="documentation/docs/development/PAGE-MIGRATION-TRACKER.md"
+OUTPUT_FILE="documentation/docs/archive/2026-06-22-docs-migration/development/PAGE-MIGRATION-TRACKER.md"
 
 cat > "$OUTPUT_FILE" << 'HEADER'
 # Page Layout Migration Tracker

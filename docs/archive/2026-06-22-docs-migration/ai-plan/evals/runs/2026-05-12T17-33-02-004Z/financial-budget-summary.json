@@ -1,0 +1,47 @@
+{
+  "id": "financial-budget-summary",
+  "intent": "financial_analysis",
+  "prompt": "What does the budget look like on Westfield? Are we tracking under or over?",
+  "selectedProjectId": 43,
+  "sessionId": "1b6e775f-8f66-4d7d-85f2-7908e13a8db1",
+  "sessionLabel": "eval-2026-05-12T17-33-02-004Z-financial-budget-summary",
+  "startedAt": "2026-05-12T17:34:16.711Z",
+  "finishedAt": "2026-05-12T17:34:33.366Z",
+  "durationMs": 1167,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"eda493cc-67e9-4f52-9522-0e6cb558abc4\",\"timestamp\":\"2026-05-12T17:34:17.874Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"eda493cc-67e9-4f52-9522-0e6cb558abc4\",\"timestamp\":\"2026-05-12T17:34:17.874Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getProjectBudgetSummary, queryBudgetData, getBudgetLineItems] to fire — none did",
+      "mustInclude missing: \"budget\""
+    ],
+    "warnings": [
+      "expected family 'financial' not represented",
+      "expected family 'structured' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"eda493cc-67e9-4f52-9522-0e6cb558abc4\",\"timestamp\":\"2026-05-12T17:34:17.874Z\"}"
+  },
+  "expectedToolNames": [
+    "getProjectBudgetSummary",
+    "queryBudgetData",
+    "getBudgetLineItems"
+  ],
+  "expectedToolFamilies": [
+    "financial",
+    "structured"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

@@ -1,0 +1,58 @@
+{
+  "id": "appnav-budget-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4837,
+  "question": "Where should I go to review project budget line items?",
+  "mustInclude": [
+    "/[projectId]/budget",
+    "budget"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "Go to the project **Budget** page:\n\n- **Route:** `/[projectId]/budget`\n- **Help article:** `docs/help/articles/budget-line-items.md`\n\nThat help article says budget line items are reviewed in **Budget for the project**, where each line item is a row tied to a cost code and cost type. It also says you can open the budget page, then click a line item row to review or edit it.\n\nWhat I checked:\n- App Expert artifact status: current and available\n- Feature registry: found documented **Budget Line Items** and **Budget Overview**\n- App sitemap: confirmed the project budget route\n- Help article: confirmed line-item behavior and workflow\n\nIf you want, I can also point you to the exact route for adding a new line item or for the budget setup page.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/budget",
+        "sourceType": "sitemap",
+        "route": "/budget",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/budget-line-items.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/budget-line-items.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 4734,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

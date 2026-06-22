@@ -1,0 +1,78 @@
+{
+  "id": "troubleshooting-stale-docs",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 16243,
+  "question": "What should Ask Alleato say if documentation and the route map disagree?",
+  "mustInclude": [
+    "conflict"
+  ],
+  "preferredTools": [
+    "get_app_expert_artifact_status",
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "If documentation and the route map disagree, Ask Alleato should defer to the documented help article for user-facing behavior and explicitly call out the mismatch instead of guessing.\n\nWhat I checked\n- Artifact freshness/status:\n  - `app-sitemap.generated.json` — ok, generated `2026-05-21T18:31:24.877Z`\n  - `feature-registry.generated.json` — ok, generated `2026-05-21T18:31:24.877Z`\n- Curated feature metadata:\n  - `app-navigation-and-feature-map`\n  - `ai-assistant-overview`\n  - `ask-the-ai-assistant`\n  - `app-feature-status-and-limitations`\n- Help articles:\n  - `docs/help/articles/app-feature-status-and-limitations.md`\n  - `docs/help/articles/ai-assistant-overview.md`\n  - `docs/help/articles/app-navigation-and-feature-map.md`\n  - `docs/help/articles/ask-the-ai-assistant.md`\n\nWhat the docs say\n- `docs/help/articles/app-feature-status-and-limitations.md`:\n  - Ask Alleato should check curated help docs, feature registry, related actions, known limitations, and source references before answering.\n  - If the answer is not fully known, it should say what it checked and what remains uncertain.\n- `docs/help/articles/app-navigation-and-feature-map.md`:\n  - The sitemap and feature registry are generated from the codebase and help-article metadata.\n  - If a route exists but does not have a curated help article yet, Ask Alleato should say it found the route from the app inventory and that user-facing documentation still needs to be filled in.\n\nSo the behavior should be:\n- prefer curated documentation for user-facing truth\n- use route-map evidence as implementation evidence only\n- if they conflict, say there is a mismatch and do not invent a merged answer\n- include the exact route, help article path, or source file when available\n\nBest concise answer Ask Alleato should give:\n> The documentation and route map disagree. I checked the curated help article(s) and the generated route inventory; the documented behavior is the current user-facing guidance, while the route map is implementation evidence. I can’t confirm the exact behavior from both sources, so treat this as unresolved until the docs or route metadata are updated.\n\nIf you want, I can also turn that into a tighter product-facing policy line for Ask Alleato responses.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/status:",
+        "sourceType": "sitemap",
+        "route": "/status:",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ai-assistant-overview.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-assistant-overview.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-navigation-and-feature-map.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-navigation-and-feature-map.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ask-the-ai-assistant.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ask-the-ai-assistant.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 16134,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "get_app_expert_artifact_status",
+    "search_feature_registry"
+  ]
+}

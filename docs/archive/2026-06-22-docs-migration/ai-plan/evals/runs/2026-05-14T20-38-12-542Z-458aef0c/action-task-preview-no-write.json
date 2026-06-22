@@ -1,0 +1,47 @@
+{
+  "id": "action-task-preview-no-write",
+  "intent": "action_preview",
+  "prompt": "Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm.",
+  "selectedProjectId": null,
+  "sessionId": "16a2b98c-1dff-4e13-91d2-4a5cc48dfef3",
+  "sessionLabel": "eval-2026-05-14T20-38-12-542Z-458aef0c-action-task-preview-no-write",
+  "startedAt": "2026-05-14T20:38:45.913Z",
+  "finishedAt": "2026-05-14T20:39:10.501Z",
+  "durationMs": 9130,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "assistant message was not persisted to chat_history",
+      "expected required tool 'createGeneratedTask' to fire",
+      "mustInclude missing: \"Preview\"",
+      "mustInclude missing: \"confirm\"",
+      "mustInclude missing: \"AC1\"",
+      "mustIncludeAny missing one of: \"not created\", \"No task was created\", \"Reply confirm\", \"confirmed: false\"",
+      "answer length 0 < min 180",
+      "required metadata missing: tool_trace",
+      "required metadata missing: provider_decision",
+      "required metadata missing: response_quality"
+    ],
+    "warnings": [
+      "expected family 'action_write' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "action_write"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

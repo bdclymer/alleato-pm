@@ -1,0 +1,61 @@
+{
+  "id": "troubleshooting-missing-button",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6151,
+  "question": "Why might a button be missing on a page?",
+  "response": {
+    "answer": "A button can be missing for a few documented reasons:\n\n- the user is not assigned to the project,\n- the page is admin-only,\n- the action requires a stronger permission level,\n- the record is intentionally private or employee-sensitive,\n- the source system has not synced the expected record yet.\n\nChecked evidence:\n- Artifact status: `docs/architecture/generated/app-sitemap.generated.json` and `docs/architecture/generated/feature-registry.generated.json` are both present and fresh, generated `2026-05-21T18:22:40.598Z`.\n- Feature registry: `Understand Permissions And Visibility` (`app-permissions-and-visibility`) points to help article `docs/help/articles/app-permissions-and-visibility.md`.\n- Help article confirms that Alleato PM uses role, project membership, and admin checks to decide what a person can see or change.\n\nRelevant routes from the help article:\n- `/user-management`\n- `/[projectId]/user-management`\n- `/settings`\n\nWhat remains uncertain:\n- I can’t determine the exact reason for your missing button without the current route or project context, because access can vary by page, role, and project membership.\n\nIf you share the current route, I can narrow this to the specific page and check route-backed evidence.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-permissions-and-visibility.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-permissions-and-visibility.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/user-management",
+        "sourceType": "sitemap",
+        "route": "/user-management",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6149,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

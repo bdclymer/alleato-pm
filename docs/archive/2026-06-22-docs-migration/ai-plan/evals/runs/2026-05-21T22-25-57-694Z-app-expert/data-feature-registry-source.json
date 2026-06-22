@@ -1,0 +1,55 @@
+{
+  "id": "data-feature-registry-source",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6670,
+  "question": "What source should the assistant cite for whether a feature is documented?",
+  "mustInclude": [
+    "feature registry"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "The assistant should cite the **curated help article first**, and only use route/source-file evidence as backup.\n\nFor “whether a feature is documented,” the best source is:\n\n- **Help article:** `docs/help/articles/app-feature-status-and-limitations.md`\n  - It explicitly says Ask Alleato should check “curated help docs, the generated feature registry, related actions, known limitations, and source references” before answering.\n  - It also says that if the answer is uncertain, the assistant should say what it checked and what remains uncertain rather than guessing.\n\nIf you need a more feature-specific citation, the assistant should also cite the **feature registry entry** when available. In the registry, the most relevant evidence type is:\n\n- `source: \"help_article\"`\n- `helpArticle: <path>`\n- `status: \"documented\"`\n\nExample from the registry:\n- **Feature:** `Understand Feature Status`\n- **Help article:** `docs/help/articles/app-feature-status-and-limitations.md`\n- **Routes:** `/ai-assistant`, `/docs`\n\nSo the citation hierarchy should be:\n\n1. **Curated help article** — primary source for documented behavior\n2. **Feature registry entry** — to show the feature is documented and point to the help article\n3. **Route-discovered source files** — only as implementation evidence, clearly labeled as such\n\nIf you want, I can also give you a one-line citation template the assistant should use.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/source-file",
+        "sourceType": "sitemap",
+        "route": "/source-file",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6585,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

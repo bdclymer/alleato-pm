@@ -127,7 +127,7 @@ function isBrandonDaily(message: string): boolean {
 // may only fire when they are genuinely asking about the freshness / sync /
 // trustworthiness of the DATA itself — never on the common adjective "current"
 // (as in "current AR aging", "current phase", "current market price") or bare
-// "status"/"latest". See docs/ai-plan/evals/TOOL-COVERAGE-RUN-RESULTS.md.
+// "status"/"latest". See docs/archive/2026-06-22-docs-migration/ai-plan/evals/TOOL-COVERAGE-RUN-RESULTS.md.
 function isSourceHealthRequest(
   message: string,
   selectedProjectId?: number,

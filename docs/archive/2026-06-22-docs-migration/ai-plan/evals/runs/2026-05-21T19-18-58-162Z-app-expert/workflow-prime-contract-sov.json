@@ -1,0 +1,47 @@
+{
+  "id": "workflow-prime-contract-sov",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 3166,
+  "question": "Where does schedule of values fit into prime contracts?",
+  "response": {
+    "answer": "I can’t answer this reliably from App Expert artifacts because the generated docs are missing.\n\nChecked:\n- App sitemap artifact: missing at `docs/architecture/generated/app-sitemap.generated.json`\n- Feature registry artifact: missing at `docs/architecture/generated/feature-registry.generated.json`\n\nBecause those artifacts are unavailable, I can’t verify whether “schedule of values” is documented under prime contracts, nor can I safely cite a route or help article.\n\nIf you want, I can still help in one of two ways:\n1. You regenerate the App Expert artifacts and I’ll answer from the curated docs.\n2. I inspect the codebase directly for implementation evidence of where schedule of values appears in prime contract workflows.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3061,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

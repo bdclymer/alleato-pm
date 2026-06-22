@@ -1,0 +1,45 @@
+{
+  "id": "schedule-analysis",
+  "intent": "operations_analysis",
+  "prompt": "Where are we against the schedule on Westfield? Any tasks slipping?",
+  "selectedProjectId": 43,
+  "sessionId": "f52d89ec-b12c-41d2-9776-55b304583320",
+  "sessionLabel": "eval-2026-05-02T10-17-07-154Z-schedule-analysis",
+  "startedAt": "2026-05-02T10:19:50.170Z",
+  "finishedAt": "2026-05-02T10:20:05.576Z",
+  "durationMs": 95,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"e9303ffa-1d88-419a-ab9c-b8620fca5266\",\"timestamp\":\"2026-05-02T10:19:50.263Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"e9303ffa-1d88-419a-ab9c-b8620fca5266\",\"timestamp\":\"2026-05-02T10:19:50.263Z\"}",
+      "HTTP 401",
+      "expected at least one of [getScheduleAnalysis, queryScheduleTasks] to fire — none did",
+      "mustInclude missing: \"schedule\""
+    ],
+    "warnings": [
+      "expected family 'schedule' not represented",
+      "expected family 'structured' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"e9303ffa-1d88-419a-ab9c-b8620fca5266\",\"timestamp\":\"2026-05-02T10:19:50.263Z\"}"
+  },
+  "expectedToolNames": [
+    "getScheduleAnalysis",
+    "queryScheduleTasks"
+  ],
+  "expectedToolFamilies": [
+    "schedule",
+    "structured"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

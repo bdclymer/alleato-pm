@@ -1,6 +1,6 @@
 import { PageShell } from "@/components/layout";
 import { createServiceClient } from "@/lib/supabase/service";
-import { requireAdmin } from "@/app/api/admin/intelligence-compiler/_shared";
+import { requireAdmin } from "@/app/api/admin/_shared";
 
 import { AiLearningPromotionsClient } from "../../ai-learning-promotions/promotions-client";
 

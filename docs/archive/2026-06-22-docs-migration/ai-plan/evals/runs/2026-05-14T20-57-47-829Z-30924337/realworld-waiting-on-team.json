@@ -1,0 +1,593 @@
+{
+  "id": "realworld-waiting-on-team",
+  "intent": "task_management",
+  "prompt": "What am I waiting on from my team?",
+  "selectedProjectId": null,
+  "sessionId": "cecec31d-ea30-446b-9242-6d2cc053a373",
+  "sessionLabel": "eval-2026-05-14T20-57-47-829Z-30924337-realworld-waiting-on-team",
+  "startedAt": "2026-05-14T20:58:17.034Z",
+  "finishedAt": "2026-05-14T20:58:49.993Z",
+  "durationMs": 32520,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 32,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [],
+    "observations": [
+      "tools fired: intentPlanner, promptContextReducer, messageDrivenToolRouter, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "promptContextReducer",
+      "messageDrivenToolRouter",
+      "backendDeepAgentExecutiveBriefing",
+      "mcpToolDiscoverySkipped",
+      "streamingToolPolicy",
+      "noToolRetry"
+    ],
+    "familiesHit": [
+      "project",
+      "financial",
+      "risk",
+      "actions",
+      "task_management",
+      "source_health"
+    ],
+    "finalTextLength": 1742,
+    "finalText": "You are currently waiting on the following from your team:\n\n1. **Pay Application Review/Approval**  \n   - There is an outstanding invoice (**Invoice RI-8628-0003**) linked to “Union Collective: Design Pay App 1”. This suggests action is pending on either review, approval, or processing for this pay app. This can impact project cash flow and progress if delayed.\n\n2. **Accounting/Administrative Cleanup and Issue List**  \n   - A recent meeting (“Questions Accounting Indy”) established that accounting is responsible for sending a detailed list of outstanding admin issues and clearing the backlog of mail and tax documents. Timely follow-up from accounting is critical to maintain compliance and audit readiness.\n\n3. **Design Milestone Coordination**  \n   - The latest design milestone schedule was just issued (“Union Collective - Design Milestone Schedule - 05-09-2026”). The team likely needs to coordinate upcoming deliverables and align resources against this schedule to avoid slipping key design targets.\n\n4. **Marketing Report Preparation**  \n   - The marketing team is in the process of finalizing the February 2026 marketing performance report. Timely delivery here enables informed leadership decisions and stakeholder updates.\n\n**Most important right now:**  \n- The pay app review and accounting backlog cleanup—both directly affect your project’s financial health and operational momentum.\n\n**First action:**  \n- Follow up with the accounting/finance team to confirm the pay app status and request the promised outstanding-issues list if not yet received. This will unlock further downstream decisions and workflows.\n\nIf you want a detailed breakdown by function (finance, operations, marketing, project delivery), let me know."
+  },
+  "expectedToolNames": [
+    "backendDeepAgentExecutiveBriefing",
+    "getMyTasks",
+    "getActionItemsAndInsights",
+    "getPeopleAndRoles"
+  ],
+  "expectedToolFamilies": [
+    "task_management",
+    "actions"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T20:58:19.547Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-14T20:58:19.548Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking backend Deep Agents executive packet",
+        "status": "loading",
+        "timestamp": "2026-05-14T20:58:19.737Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-deep-agent-executive-briefing-evidence",
+      "data": {
+        "widget": {
+          "type": "source_evidence_drawer",
+          "id": "deep-agent-executive-briefing-evidence",
+          "title": "Alleato source coverage",
+          "sources": [
+            {
+              "id": "f33dd236-bf0c-473c-af72-440edeb2b577",
+              "title": "meeting_digest",
+              "sourceType": "project_record",
+              "date": "2026-05-13T22:11:49.517876+00:00",
+              "snippet": "Read-only executive_briefing source row.",
+              "confidence": "medium"
+            },
+            {
+              "id": "f964ba76-b413-4d12-b2c8-3635736d2b06",
+              "title": "executive_briefing",
+              "sourceType": "project_record",
+              "date": "2026-05-14T10:03:40.155+00:00",
+              "snippet": "Read-only executive_briefing source row.",
+              "confidence": "medium"
+            },
+            {
+              "id": "3",
+              "title": "QA change event audit verification 004",
+              "sourceType": "email",
+              "date": "2026-04-30T10:45:23.416743+00:00",
+              "snippet": "Read-only emails source row.",
+              "confidence": "medium"
+            },
+            {
+              "id": "1",
+              "title": "001 - PC-1010-001",
+              "sourceType": "email",
+              "date": "2026-04-29T16:32:55.415156+00:00",
+              "snippet": "Read-only emails source row.",
+              "confidence": "medium"
+            },
+            {
+              "id": "teamsdm_1772143245868",
+              "title": "Teams DM: Alleato Marketing",
+              "sourceType": "teams",
+              "date": "2026-03-24T18:27:43.169345",
+              "snippet": "**Summary of Teams DM: Alleato Marketing**\n\nThe document is a direct message from a team member, Aisun Mamedova, regarding the marketing performance report for February 2026. The purpose of this communication is to inform the team about the upcoming report that will detail the marketing metrics for the month, specifically focusing on the increase in reach and interactions.\n\nKey topics discussed in the message include the preparation of the February report, which highlights the growth in engageme",
+              "confidence": "medium"
+            },
+            {
+              "id": "teamsdm_1761841192977",
+              "title": "Teams DM: 19:c4beb912-",
+              "sourceType": "teams",
+              "date": "2026-03-24T17:47:18.016643",
+              "snippet": "### Summary of Document: Teams DM: 19:c4beb912-\n\nThe document is a direct message from a Teams chat, specifically dated October 30, 2025, and contains a link to a YouTube video shared by Kebba Mass. The purpose of this message appears to be to share informational content, likely related to a project or topic of interest among team members.\n\nThe key topic of the message revolves around the shared video, which is accessible via the provided link. While the content of the video is not detailed in t",
+              "confidence": "medium"
+            },
+            {
+              "id": "3b3384f4-a9ce-4724-87b4-12e38eb5c22f",
+              "title": "Questions Accounting Indy",
+              "sourceType": "meeting",
+              "date": "2026-03-23T05:58:10.655046",
+              "snippet": "The team focused on improving mail processing and tax document organization to eliminate backlog and prepare for audits. Shania scanned and sorted months of mail, helping to find overlooked items for Brandon's review. Misty committed to sending a detailed list of outstanding issues for efficient follow-ups, with Maria and Shania sharing outreach responsibilities. A structured weekly check processing schedule was established, designating Thursdays for regular checks and Fridays for overflow, aime",
+              "confidence": "medium"
+            },
+            {
+              "id": "28635304-76ff-4e33-931f-4247d1d30cde",
+              "title": "Videography/Goodwill unboxed",
+              "sourceType": "meeting",
+              "date": "2026-03-23T05:58:37.817714",
+              "snippet": "The team planned a 1 to 1.5-minute video highlighting Alito’s collaboration with Goodwill, featuring interviews with Brandon Clymer and Jesse Dawson. Filming will occur in June in Indianapolis, with visual backdrops created in Alito’s conference room and new foundation office. B-roll will showcase job sites and project progress, using horizontal filming and drone footage for quality. The aim is to emphasize the impact of their partnership and generate content for social media. Schedules were coo",
+              "confidence": "medium"
+            },
+            {
+              "id": "outlook_attachment_955f23d5e3f6f3d40eb2ebbb_346584960520de16eb6240fd",
+              "title": "Invoice RI-8628-0003 (1).pdf",
+              "sourceType": "document",
+              "date": "2026-05-14T19:54:00.435104+00:00",
+              "snippet": "Attachment from Outlook email: Union Collective: Design Pay App 1",
+              "confidence": "medium"
+            },
+            {
+              "id": "114",
+              "title": "Union Collective - Design Milestone Schedule - 05-09-2026",
+              "sourceType": "document",
+              "date": "2026-05-12T21:25:51.897366+00:00",
+              "snippet": "Read-only documents source row.",
+              "confidence": "medium"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Loaded backend Deep Agents executive packet",
+        "status": "success",
+        "timestamp": "2026-05-14T20:58:40.230Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "DKBFj3mdk9RB2f4r"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-failure-response"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "You are currently waiting on the following from your team:\n\n1. **Pay Application "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "Review/Approval**  \n   - There is an outstanding invoice (**Invoice RI-8628-0003**) linked "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "to “Union Collective: Design Pay App 1”. This suggests action is pending on either review, "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "approval, or processing for this pay app. This can impact project cash flow and progress "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "if delayed.\n\n2. **Accounting/Administrative Cleanup and Issue List**  \n   - A recent "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "meeting (“Questions Accounting Indy”) established that accounting is responsible for "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "sending a detailed list of outstanding admin issues and clearing the backlog of mail and "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "tax documents. Timely follow-up from accounting is critical to maintain compliance and "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "audit readiness.\n\n3. **Design Milestone Coordination**  \n   - The latest design milestone "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "schedule was just issued (“Union Collective - Design Milestone Schedule - 05-09-2026”). "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "The team likely needs to coordinate upcoming deliverables and align resources against this "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "schedule to avoid slipping key design targets.\n\n4. **Marketing Report Preparation**  \n   - "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "The marketing team is in the process of finalizing the February 2026 marketing performance "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "report. Timely delivery here enables informed leadership decisions and stakeholder "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "updates.\n\n**Most important right now:**  \n- The pay app review and accounting backlog "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "cleanup—both directly affect your project’s financial health and operational momentum.\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "**First action:**  \n- Follow up with the accounting/finance team to confirm the pay app "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "status and request the promised outstanding-issues list if not yet received. This will "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "unlock further downstream decisions and workflows.\n\nIf you want a detailed breakdown by "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "function (finance, operations, marketing, project delivery), let me know."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-failure-response"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 0,
+      "totalTokens": 0,
+      "outputTokens": 0,
+      "cacheHitRatio": 0,
+      "cachedInputTokens": 0
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "What am I waiting on from my team?",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "task_followup",
+          "sourceSpecificRagKind": null,
+          "messageDrivenToolNames": [
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getPeopleAndRoles"
+          ],
+          "recentEmailInboxRequest": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "task_followup",
+          "planner": "model",
+          "rationale": "The user is asking to read existing follow-ups/dependencies from their team—i.e., what items are pending from others. This is a task/follow-up status question, not a request to create a new task.",
+          "confidence": "high",
+          "responseMode": "answer_directly",
+          "requiredTools": [],
+          "deterministicIntent": "task_followup",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T20:58:19.546Z"
+      },
+      {
+        "tool": "promptContextReducer",
+        "input": {
+          "intent": "task_followup",
+          "message": "What am I waiting on from my team?"
+        },
+        "output": {
+          "promptMode": "lean_advisor",
+          "skippedGeneralMemory": true,
+          "skippedExecutivePacket": true,
+          "skippedWorkspaceArtifacts": true,
+          "retainedPacketFirstRetrieval": true
+        },
+        "timestamp": "2026-05-14T20:58:19.548Z"
+      },
+      {
+        "tool": "messageDrivenToolRouter",
+        "input": {
+          "intent": "task_followup",
+          "message": "What am I waiting on from my team?"
+        },
+        "output": {
+          "requiredToolNames": [
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getPeopleAndRoles"
+          ]
+        },
+        "timestamp": "2026-05-14T20:58:19.548Z"
+      },
+      {
+        "tool": "backendDeepAgentExecutiveBriefing",
+        "input": {
+          "query": "What am I waiting on from my team?",
+          "intent": "task_followup",
+          "resolvedProjectId": null
+        },
+        "output": {
+          "mode": "deep_agents",
+          "confidence": "low",
+          "sourceCount": 9,
+          "runtimeTrace": {
+            "tool": "deepagents_runtime",
+            "agent": "executive-intelligence-orchestrator",
+            "detail": "Deep Agents runtime produced an executive synthesis from checked source coverage.",
+            "status": "success",
+            "durationMs": 9364
+          },
+          "dataPartCount": 1,
+          "evidenceCount": 14
+        },
+        "timestamp": "2026-05-14T20:58:40.230Z"
+      },
+      {
+        "tool": "mcpToolDiscoverySkipped",
+        "input": {
+          "intent": "task_followup",
+          "message": "What am I waiting on from my team?"
+        },
+        "output": {
+          "reason": "Known local tools or injected source context cover this route; skipping generic MCP discovery for latency."
+        },
+        "timestamp": "2026-05-14T20:58:40.230Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "promptMode": "lean_advisor",
+          "toolChoice": {
+            "type": "tool",
+            "toolName": "getActionItemsAndInsights"
+          },
+          "fullToolCount": 94,
+          "modelToolCount": 10,
+          "modelToolNames": [
+            "getActionItemsAndInsights",
+            "getProjectBriefingSnapshot",
+            "searchMeetingsByTopic",
+            "searchEmails",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "findProject",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getPeopleAndRoles"
+          ],
+          "streamMaxSteps": 10,
+          "scopedToolCount": 10,
+          "streamMaxOutputTokens": 4000,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": false
+        },
+        "timestamp": "2026-05-14T20:58:40.230Z"
+      },
+      {
+        "tool": "noToolRetry",
+        "input": {
+          "reason": "The model/tool run completed without returning final assistant text.",
+          "retryModel": "openai/gpt-4.1",
+          "primaryModel": "openai/gpt-5.4"
+        },
+        "output": {
+          "succeeded": true,
+          "contentLength": 1742
+        },
+        "timestamp": "2026-05-14T20:58:48.214Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": null,
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": null,
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "finishReason": "other",
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getActionItemsAndInsights\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getActionItemsAndInsights",
+            "getProjectBriefingSnapshot",
+            "searchMeetingsByTopic",
+            "searchEmails",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "findProject",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getPeopleAndRoles"
+          ]
+        }
+      ],
+      "totalStepCount": 1,
+      "finalFinishReason": "other",
+      "preparedStepCount": 1,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

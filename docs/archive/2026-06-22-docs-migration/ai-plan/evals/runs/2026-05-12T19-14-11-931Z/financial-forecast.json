@@ -1,0 +1,67 @@
+{
+  "id": "financial-forecast",
+  "intent": "financial_analysis",
+  "prompt": "How is our forecast tracking against the original budget on Westfield?",
+  "selectedProjectId": 43,
+  "sessionId": "9a70fbc3-8907-43e5-a322-913139c15e3b",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-financial-forecast",
+  "startedAt": "2026-05-12T19:23:47.632Z",
+  "finishedAt": "2026-05-12T19:24:13.675Z",
+  "durationMs": 10838,
+  "httpStatus": 200,
+  "streamError": "stream read error: terminated",
+  "streamEventCount": 2,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: terminated",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getForecastComparison, getCostTrends] to fire — none did",
+      "mustInclude missing: \"forecast\"",
+      "answer length 0 < min 120"
+    ],
+    "warnings": [
+      "expected family 'financial' not represented",
+      "expected family 'forecast' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getForecastComparison",
+    "getCostTrends"
+  ],
+  "expectedToolFamilies": [
+    "financial",
+    "forecast"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:23:52.819Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:23:54.526Z"
+      }
+    }
+  ],
+  "persistedMetadata": null
+}

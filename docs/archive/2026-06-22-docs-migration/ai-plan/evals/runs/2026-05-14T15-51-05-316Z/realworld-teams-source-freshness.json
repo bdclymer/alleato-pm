@@ -1,0 +1,4436 @@
+{
+  "id": "realworld-teams-source-freshness",
+  "intent": "source_health",
+  "prompt": "Are Teams messages current enough to trust today, or is source sync stale?",
+  "selectedProjectId": null,
+  "sessionId": "5bf9f799-f379-4fae-ad5c-f810986cca2c",
+  "sessionLabel": "eval-2026-05-14T15-51-05-316Z-realworld-teams-source-freshness",
+  "startedAt": "2026-05-14T15:55:42.796Z",
+  "finishedAt": "2026-05-14T15:56:35.126Z",
+  "durationMs": 51764,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 600,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [],
+    "observations": [
+      "tools fired: intentPlanner, assistantSourceHealth, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, searchTeamsMessages, noToolRetry"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "assistantSourceHealth",
+      "messageDrivenToolRouter",
+      "mcpToolDiscovery",
+      "streamingToolPolicy",
+      "searchTeamsMessages",
+      "noToolRetry"
+    ],
+    "familiesHit": [
+      "communications",
+      "source_health"
+    ],
+    "finalTextLength": 1005,
+    "finalText": "Teams message source sync is not fully current today. There are critical source sync issues for multiple Teams DM exports (specifically users jdawson@alleatogroup.com and acannon@alleatogroup.com), according to the latest sync health report as of May 14, 2026. This means some recent Teams messages, especially direct messages from these users, may not be captured or searchable right now.\n\nPipeline status: 1,063 items are stuck unembedded, and 11,376 are uncompiled. That’s a big backlog — so any analysis based on Teams messages is at risk of being incomplete. When you ask for the latest Teams communications, treat any gaps or silence as possibly caused by sync lag, not necessarily by a lack of activity.\n\nBottom line: Teams messages are only partially reliable today. If you need a complete, up-to-the-minute communication picture, use email and meetings as primary sources and assume there may be fresh but unseen Teams data. If you need critical confirmation, request it directly from the person."
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "source_health"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T15:55:47.326Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "V09O4apJpw9GhvB5"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "toolName": "searchTeamsMessages"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": "source"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": " Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": " current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": " stale"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": " today"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": " trust"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": "\","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": " \""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": "match"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": "Count"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "toolName": "searchTeamsMessages",
+      "input": {
+        "query": "source sync Teams current stale today trust",
+        "matchCount": 5
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_vOBW1ipDz2S0fvgKQyxXKKPV",
+      "output": {
+        "query": "source sync Teams current stale today trust",
+        "sourceType": "Teams message",
+        "resultCount": 5,
+        "fallback": true,
+        "rpcError": "vector search timed out — returning keyword-matched results instead",
+        "results": [
+          {
+            "title": "Teams DM Conversation: 19:33249ce6-",
+            "content": "[Teams DM Conversation: 19:33249ce6-]\n\n[Teams Direct Message Conversation: 19:33249ce6-]\nDate: 2026-03-23\n\n[message:1774287499473] [2026-03-23 17:38:19] Ty Inman: Do you have a point of contact for kooren?\n[message:1774286825486] [2026-03-23 17:27:05] Ty Inman: Got you my computer is keeps having me sign out of teams ans sometimes it wont let me back in also on job planner Chad and i couldnt figure out why i cant get this allisonville project to pull up on here.\n[message:1774279776128] [2026-03-23 15:29:36] Andrew Cannon: All good. Thank you sir. Mostly just checking on the subs that are onsite today, tomorrow, and in the near future. We always need to know who is going to be onsite working and what time. That way we can plan to notify our client and make sure the subcontractors are getting into the building.\n[message:1774279710950] [2026-03-23 15:28:30] Ty Inman: My fault just saw this sounds good I got you.\n[message:1774279673929] [2026-03-23 15:27:53] Andrew Cannon: Westfield Collective\n[message:1774279663525] [2026-03-23 15:27:43] Andrew Cannon: Good morning Ty. Please open this excel document that I created with some remaining items for Westfield Collective. Please read each task as I put times for when you need to call. Make sure to take notes in the note column when you call. All numbers for the subcontractors should be in Job Planner. If a subcontractor doesn't answer make sure to leave a voicemail, call back in 30-45 minutes, and or send a email on why you were calling.&nbsp;\n[message:1774279566277] [2026-03-23 15:26:06] Ty Inman: Is this for Allisonville?",
+            "similarity": null,
+            "date": "2026-03-23T00:00:00+00:00",
+            "participants": "Ty Inman",
+            "source": "microsoft_graph",
+            "type": "teams_dm_conversation",
+            "projectId": 43,
+            "documentId": "teamsdm_3d859253eed7ca08_2026-03-23",
+            "sourceDocumentId": "teamsdm_3d859253eed7ca08_2026-03-23",
+            "sourceChunkId": "teamsdm_3d859253eed7ca08_2026-03-23__chunk_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, Mar 23, 2026: \"Teams DM Conversation: 19:33249ce6-\""
+          },
+          {
+            "title": "Teams DM: 19:c4beb912-",
+            "content": "### Summary of Teams Direct Message: 19:c4beb912-\n\n**Document Purpose and Type**  \nThe document is a direct message exchanged on a team communication platform, specifically Microsoft Teams. It serves as a query from Brandon Clymer regarding a budget modification related to project management (PM) finances. This informal communication highlights concerns about financial allocations within a project.\n\n**Key Topics and Sections**  \nThe primary focus of the message is the budget modification that involved reallocating funds from PM labor to PM expenses. This indicates a shift in how resources are being utilized within the project, suggesting a need for clarification on the reasoning behind this decision. The message does not contain multiple sections or topics but is centered solely on this financial adjustment.\n\n**Important Details, Numbers, Dates, or Requirements**  \nThe date of the message is October 1, 2025. While specific numbers regarding the amounts involved in the budget modification are not provided, the mention of \"PM labor money\" and \"PM Expense\" implies a significant financial decision that could impact project execution and resource management.\n\n**Action Items or Next Steps**  \nThe immediate action item is for the recipient of the message to respond to Brandon Clymer's inquiry, providing clarity on the rationale behind the budget modification. This response will likely involve discussing the implications of the reallocation and how it aligns with project goals and financial management strategies. Further discussions may be necessary to ensure all team members understand the changes and their impact on project operations.",
+            "similarity": null,
+            "date": "2025-10-01T00:00:00+00:00",
+            "participants": "[\"Brandon Clymer\"]",
+            "source": "microsoft_graph",
+            "type": "teams_dm",
+            "projectId": null,
+            "documentId": "teamsdm_1759284429932",
+            "sourceDocumentId": "teamsdm_1759284429932",
+            "sourceChunkId": "teamsdm_1759284429932__ff_meeting_summary_-1_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, Oct 1, 2025: \"Teams DM: 19:c4beb912-\""
+          },
+          {
+            "title": "Teams DM Conversation: 19:meeting_Y",
+            "content": "[Teams DM Conversation: 19:meeting_Y]\n\n[Teams Direct Message Conversation: 19:meeting_Y]\nDate: 2026-05-04\n\n[message:1777923021304] [2026-05-04 19:30:21] TeamsMaestro | AI notetaker: To help take notes, this meeting is being recorded and processed by MaestroLabs using AI. By staying, you're giving consent. A summary might automatically be shared, depending on the users' settings. See our Privacy Policy &nbsp; Brandon Clymer invited TeamsMaestro\n[message:1777923090544] [2026-05-04 19:31:30] Fireflies.ai Notetaker Jesse: Fireflies invited Fireflies.ai here to record &amp; take notes. View Security &amp; Privacy info: https://fireflies.ai/policy &nbsp; Type: '/ff leave' - Remove Fireflies&nbsp; By continuing, you agree to https://fireflies.ai/privacy &nbsp; View Realtime notes here: https://app.fireflies.ai/live/01KQ7GPMQJSFVKWG3GWWD2BCMN?ref=live_chat\n[message:1777923121303] [2026-05-04 19:32:01] read.ai meeting notes: La' Kisha and Nick added read.ai meeting notes to the meeting (recording enabled). View Privacy Policy: https://www.read.ai/pp . To opt out and delete this recording, click here: https://app.read.ai/analytics/opt-out/01KQT71D007SHKQSQ4DDN8CM2D",
+            "similarity": null,
+            "date": "2026-05-04T00:00:00+00:00",
+            "participants": "bclymer@alleatogroup.com, read.ai meeting notes",
+            "source": "microsoft_graph",
+            "type": "teams_dm_conversation",
+            "projectId": null,
+            "documentId": "teamsdm_a6ac779edda25b3f_2026-05-04",
+            "sourceDocumentId": "teamsdm_a6ac779edda25b3f_2026-05-04",
+            "sourceChunkId": "teamsdm_a6ac779edda25b3f_2026-05-04__chunk_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, May 4, 2026: \"Teams DM Conversation: 19:meeting_Y\""
+          },
+          {
+            "title": "Teams DM Conversation: 19:meeting_Z",
+            "content": "The document is a transcript of a Teams Direct Message conversation from a meeting labeled \"19:meeting_Z,\" held on May 4, 2026. The primary purpose of this document is to record the proceedings of the meeting, facilitated by an AI notetaker called TeamsMaestro, which captures and processes the conversation for note-taking purposes. Participants are informed that the meeting is being recorded and that their consent is implied by their presence.\n\nKey topics discussed in the meeting are not explicitly detailed in the provided excerpt, but the mention of an AI notetaker indicates that the meeting likely involved discussions that required documentation and follow-up. The date of the meeting, May 4, 2026, is significant as it marks the specific time when the conversation took place. The document also includes a note about privacy policies, suggesting that participants were made aware of how their data would be handled.\n\nWhile the excerpt does not specify any action items or next steps, the presence of an AI notetaker implies that summaries or follow-up tasks may be generated automatically after the meeting concludes. Participants might expect to receive a summary based on their settings, which could outline key decisions or assignments made during the discussion. Overall, the document serves as a formal record of the meeting's proceedings, emphasizing the integration of technology in modern communication and documentation practices.",
+            "similarity": null,
+            "date": "2026-05-04T00:00:00+00:00",
+            "participants": "Fireflies.ai Notetaker Maria, bclymer@alleatogroup.com",
+            "source": "microsoft_graph",
+            "type": "teams_dm_conversation",
+            "projectId": null,
+            "documentId": "teamsdm_ac3b106bba4ccb60_2026-05-04",
+            "sourceDocumentId": "teamsdm_ac3b106bba4ccb60_2026-05-04",
+            "sourceChunkId": "teamsdm_ac3b106bba4ccb60_2026-05-04__ff_meeting_summary_-1_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, May 4, 2026: \"Teams DM Conversation: 19:meeting_Z\""
+          },
+          {
+            "title": "Teams DM Conversation: 19:meeting_Z",
+            "content": "The document is a transcript of a Teams Direct Message conversation from a meeting labeled \"19:meeting_Z,\" held on May 4, 2026. The primary purpose of this document is to record the proceedings of the meeting, facilitated by an AI notetaker called TeamsMaestro, which captures and processes the conversation for note-taking purposes. Participants are informed that the meeting is being recorded and that their consent is implied by their presence.\n\nKey topics discussed in the meeting are not explici",
+            "similarity": null,
+            "date": "2026-05-04T00:00:00+00:00",
+            "participants": "Fireflies.ai Notetaker Maria, bclymer@alleatogroup.com",
+            "source": "microsoft_graph",
+            "type": "teams_dm_conversation",
+            "projectId": null,
+            "documentId": "teamsdm_ac3b106bba4ccb60_2026-05-04",
+            "sourceDocumentId": "teamsdm_ac3b106bba4ccb60_2026-05-04",
+            "sourceChunkId": "teamsdm_ac3b106bba4ccb60_2026-05-04__ff_segment_summary_0_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, May 4, 2026: \"Teams DM Conversation: 19:meeting_Z\""
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "toolName": "searchTeamsMessages"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": "Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": " freshness"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": " current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": " today"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": " stale"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": " source"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": " May"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": "match"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": "Count"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "toolName": "searchTeamsMessages",
+      "input": {
+        "query": "Teams sync freshness current today stale source sync May 14 2026",
+        "matchCount": 5
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_PYKzxXM1sKA1GqwwdvSaAeHJ",
+      "output": {
+        "results": [],
+        "message": "No Teams messages found for \"Teams sync freshness current today stale source sync May 14 2026\". The sync may not have run yet, or no matching content exists."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confirm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " health"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "de"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "graded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "critical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " DM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " export"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " least"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "jd"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "aw"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "son"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "annon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " broader"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pipeline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "106"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "embedded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "113"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "76"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "compiled"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " even"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " when"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exists"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " some"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " likely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hasn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " been"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " processed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reliable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " searchable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " yet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " My"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "vector"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " timeout"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " keyword"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matches"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " another"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sign"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " should"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " treat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " partial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " complete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " messages"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " may"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exist"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reflected"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Anything"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " involving"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "direct"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " messages"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " especially"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Dawson"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cannon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "st"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " incomplete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " For"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " channel"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-level"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-level"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " updates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " give"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " useful"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " would"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " use"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alone"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " truth"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cautiously"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " older"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " messages"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " already"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " indexed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " show"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " consistently"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "nothing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " came"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " through"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " said"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " anything"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " X"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " any"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " conclusion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " depends"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " complete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " DM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Best"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " move"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decision"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-quality"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cross"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-check"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " records"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alone"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " quick"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " triang"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ulated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/topic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " using"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " +"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " notes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " +"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " documents"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " versus"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " missing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "toolName": "searchTeamsMessages"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": "Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": " freshness"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": " current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": " today"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": " stale"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": " source"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": " May"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": "match"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": "Count"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "toolName": "searchTeamsMessages",
+      "input": {
+        "query": "Teams sync freshness current today stale source sync May 14 2026",
+        "matchCount": 5
+      }
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_BWdQku11ydOQ1NBWl4bugTCA",
+      "output": {
+        "results": [],
+        "message": "No Teams messages found for \"Teams sync freshness current today stale source sync May 14 2026\". The sync may not have run yet, or no matching content exists."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "toolName": "searchTeamsMessages"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": "Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": " source"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": " current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": " trust"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": " today"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": " stale"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": "match"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": "Count"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "toolName": "searchTeamsMessages",
+      "input": {
+        "query": "Teams source sync current trust today stale",
+        "matchCount": 5
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_CLlPl5RJECRcHUJ89vLp1qeZ",
+      "output": {
+        "results": [],
+        "message": "No Teams messages found for \"Teams source sync current trust today stale\". The sync may not have run yet, or no matching content exists."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "toolName": "searchTeamsMessages"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": "Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": " stale"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": " current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": " trust"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": " today"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": " May"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": "match"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": "Count"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": "3"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "toolName": "searchTeamsMessages",
+      "input": {
+        "query": "Teams sync stale current trust today May 14 2026",
+        "matchCount": 3
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_GKuvk8CqzmjqLWWnAfPfHHzY",
+      "output": {
+        "results": [],
+        "message": "No Teams messages found for \"Teams sync stale current trust today May 14 2026\". The sync may not have run yet, or no matching content exists."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "toolName": "searchTeamsMessages"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": "Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": " source"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": " stale"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": " current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": " trust"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": " today"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": "match"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": "Count"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "toolName": "searchTeamsMessages",
+      "input": {
+        "query": "Teams source sync stale current trust today",
+        "matchCount": 5
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_hdqAOdEfvlnwRLq6cqiRtm2t",
+      "output": {
+        "results": [],
+        "message": "No Teams messages found for \"Teams source sync stale current trust today\". The sync may not have run yet, or no matching content exists."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "toolName": "searchTeamsMessages"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": "today"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": " current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": " stale"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": " source"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": " trust"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": " teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": "\","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": " \""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": "match"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": "Count"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": "3"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "toolName": "searchTeamsMessages",
+      "input": {
+        "query": "today current stale source sync trust teams",
+        "matchCount": 3
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_LltupX6lUW0haJ1WYDlOMrz4",
+      "output": {
+        "results": [],
+        "message": "No Teams messages found for \"today current stale source sync trust teams\". The sync may not have run yet, or no matching content exists."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "toolName": "searchTeamsMessages"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": "Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": " current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": " today"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": " source"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": " stale"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": " trust"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": "match"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": "Count"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": "3"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "toolName": "searchTeamsMessages",
+      "input": {
+        "query": "Teams current today source sync stale trust",
+        "matchCount": 3
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_bN1Yi87rHB1nNi9igKBkUWoD",
+      "output": {
+        "results": [],
+        "message": "No Teams messages found for \"Teams current today source sync stale trust\". The sync may not have run yet, or no matching content exists."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "toolName": "searchTeamsMessages"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": "Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": " health"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": " current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": " today"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": " stale"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": " trust"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": "match"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": "Count"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "toolName": "searchTeamsMessages",
+      "input": {
+        "query": "Teams sync health current today stale trust",
+        "matchCount": 5
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_RoPO5tR4VU5IGczAy5cLwCZ4",
+      "output": {
+        "query": "Teams sync health current today stale trust",
+        "sourceType": "Teams message",
+        "resultCount": 1,
+        "results": [
+          {
+            "title": "Teams DM: Westfield Collective",
+            "content": "[Teams DM: Westfield Collective]\n\n[Teams Direct Message: Westfield Collective]\n\n[2026-02-26] Brandon Clymer: I thought health was already set up for Tomorrow? What happened?&nbsp;",
+            "similarity": 0.471,
+            "date": "2026-02-26T00:00:00+00:00",
+            "participants": "[\"Brandon Clymer\"]",
+            "source": "microsoft_graph",
+            "type": "teams_message",
+            "projectId": 43,
+            "documentId": "teamsdm_1772130803630",
+            "sourceDocumentId": "teamsdm_1772130803630",
+            "sourceChunkId": "teamsdm_1772130803630__chunk_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, Feb 26, 2026: \"Teams DM: Westfield Collective\""
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "toolName": "searchTeamsMessages"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": "Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": " current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": " stale"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": " trust"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": " today"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": "\","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": " \""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": "match"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": "Count"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": "3"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "toolName": "searchTeamsMessages",
+      "input": {
+        "query": "Teams sync current stale trust today",
+        "matchCount": 3
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_Ri0MBCVP9K65WssT0ilCpeUD",
+      "output": {
+        "query": "Teams sync current stale trust today",
+        "sourceType": "Teams message",
+        "resultCount": 1,
+        "results": [
+          {
+            "title": "Teams DM: oneOnOne",
+            "content": "[Teams DM: oneOnOne]\n\n[Teams Direct Message: oneOnOne]\n\n[2026-03-11] Brandon Clymer: Did the successor trust get updated.&nbsp;",
+            "similarity": 0.466,
+            "date": "2026-03-11T00:00:00+00:00",
+            "participants": "[\"Brandon Clymer\"]",
+            "source": "microsoft_graph",
+            "type": "teams_message",
+            "projectId": null,
+            "documentId": "teamsdm_1773251168837",
+            "sourceDocumentId": "teamsdm_1773251168837",
+            "sourceChunkId": "teamsdm_1773251168837__chunk_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, Mar 11, 2026: \"Teams DM: oneOnOne\""
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-failure-response"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "Teams message source sync is not fully current today. There are critical source sync "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "issues for multiple Teams DM exports (specifically users jdawson@alleatogroup.com and "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "acannon@alleatogroup.com), according to the latest sync health report as of May 14, 2026. "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "This means some recent Teams messages, especially direct messages from these users, may "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "not be captured or searchable right now.\n\nPipeline status: 1,063 items are stuck "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "unembedded, and 11,376 are uncompiled. That’s a big backlog — so any analysis based on "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "Teams messages is at risk of being incomplete. When you ask for the latest Teams "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "communications, treat any gaps or silence as possibly caused by sync lag, not necessarily "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "by a lack of activity.\n\nBottom line: Teams messages are only partially reliable today. If "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "you need a complete, up-to-the-minute communication picture, use email and meetings as "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "primary sources and assume there may be fresh but unseen Teams data. If you need critical "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "confirmation, request it directly from the person."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-failure-response"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 89944,
+      "totalTokens": 90665,
+      "outputTokens": 721,
+      "cacheHitRatio": 0.864,
+      "cachedInputTokens": 77696
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Are Teams messages current enough to trust today, or is source sync stale?",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "source_lookup",
+          "sourceSpecificRagKind": null,
+          "messageDrivenToolNames": [
+            "searchTeamsMessages",
+            "semanticSearch"
+          ],
+          "recentEmailInboxRequest": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "app_help",
+          "planner": "model",
+          "rationale": "The user is asking about the freshness/reliability of Teams message syncing in the app ('current enough to trust today' vs 'source sync stale'), which is a product/workflow question about data currency rather than a request to retrieve project evidence. This fits app_help focused on explaining sync status behavior and trustworthiness of source recency.",
+          "confidence": "medium",
+          "responseMode": "explain_app_workflow",
+          "requiredTools": [],
+          "deterministicIntent": "source_lookup",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T15:55:47.315Z"
+      },
+      {
+        "tool": "assistantSourceHealth",
+        "input": {
+          "reason": "source_status_request"
+        },
+        "output": {
+          "alerts": [
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: jdawson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:jdawson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: acannon@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:acannon@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: njepson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "njepson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: mparsons@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "mparsons@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: jdawson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "jdawson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "ctragesser@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: crusin@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "crusin@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: awehner@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "awehner@alleatogroup.com"
+            }
+          ],
+          "counts": {
+            "sources": 30,
+            "uncompiled": 11376,
+            "unembedded": 1063,
+            "warningSources": 0,
+            "criticalSources": 30,
+            "failedSubscriptions": 0,
+            "expiringSubscriptions": 0
+          },
+          "reason": "source_status_request",
+          "sources": [
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-14T08:40:46.370016+00:00",
+              "resourceId": "user:jdawson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: jdawson@alleatogroup.com",
+              "staleMinutes": 425,
+              "lastSuccessAt": "2026-05-14T08:40:46.370016+00:00",
+              "uncompiledCount": 937,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-14T11:40:22.34886+00:00",
+              "resourceId": "user:acannon@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: acannon@alleatogroup.com",
+              "staleMinutes": 245,
+              "lastSuccessAt": "2026-05-14T11:40:22.34886+00:00",
+              "uncompiledCount": 937,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+              "resourceId": "njepson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: njepson@alleatogroup.com",
+              "staleMinutes": 20307,
+              "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+              "resourceId": "mparsons@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: mparsons@alleatogroup.com",
+              "staleMinutes": 20308,
+              "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+              "resourceId": "jdawson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: jdawson@alleatogroup.com",
+              "staleMinutes": 20309,
+              "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+              "resourceId": "ctragesser@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: ctragesser@alleatogroup.com",
+              "staleMinutes": 4186,
+              "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+              "resourceId": "crusin@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: crusin@alleatogroup.com",
+              "staleMinutes": 20310,
+              "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+              "resourceId": "awehner@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: awehner@alleatogroup.com",
+              "staleMinutes": 20311,
+              "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+              "resourceId": "accounting@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: accounting@alleatogroup.com",
+              "staleMinutes": 20310,
+              "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T18:14:44.817404+00:00",
+              "resourceId": "acannon@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: acannon@alleatogroup.com",
+              "staleMinutes": 1291,
+              "lastSuccessAt": "2026-05-13T18:14:44.817404+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T20:06:20.616839+00:00",
+              "resourceId": "38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: 38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+              "staleMinutes": 1179,
+              "lastSuccessAt": "2026-05-13T20:06:20.616839+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T00:00:00+00:00",
+              "resourceId": "document_metadata",
+              "lastErrorAt": null,
+              "resourceName": "Outlook email",
+              "staleMinutes": 2385,
+              "lastSuccessAt": "2026-05-13T00:00:00+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            }
+          ],
+          "generatedAt": "2026-05-14T15:55:49.588Z",
+          "missingStage": "embedding_backlog",
+          "overallStatus": "degraded"
+        },
+        "timestamp": "2026-05-14T15:55:49.588Z"
+      },
+      {
+        "tool": "messageDrivenToolRouter",
+        "input": {
+          "intent": "app_help",
+          "message": "Are Teams messages current enough to trust today, or is source sync stale?"
+        },
+        "output": {
+          "requiredToolNames": [
+            "searchTeamsMessages",
+            "semanticSearch"
+          ]
+        },
+        "timestamp": "2026-05-14T15:55:49.758Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.excalidraw.com/mcp",
+          "server": "excalidraw"
+        },
+        "output": {
+          "allowedTools": [
+            "read_me",
+            "create_view",
+            "export_to_excalidraw",
+            "save_checkpoint",
+            "read_checkpoint"
+          ],
+          "enabledTools": [
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "enabledToolCount": 5,
+          "discoveredToolCount": 5
+        },
+        "timestamp": "2026-05-14T15:55:49.891Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.supabase.com/mcp?project_ref=lgveqfnpkxvzbnnwuled",
+          "server": "supabase"
+        },
+        "output": {
+          "error": "MCP HTTP Transport Error: POSTing to endpoint (HTTP 401): {\"message\":\"JWT could not be decoded\"}"
+        },
+        "timestamp": "2026-05-14T15:55:49.933Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "promptMode": "full_strategist",
+          "toolChoice": {
+            "type": "tool",
+            "toolName": "searchTeamsMessages"
+          },
+          "fullToolCount": 99,
+          "modelToolCount": 8,
+          "modelToolNames": [
+            "searchAppHelp",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "streamMaxSteps": 10,
+          "scopedToolCount": 8,
+          "streamMaxOutputTokens": 4000,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": false
+        },
+        "timestamp": "2026-05-14T15:55:49.934Z"
+      },
+      {
+        "tool": "searchTeamsMessages",
+        "input": {
+          "query": "source sync Teams current stale today trust",
+          "matchCount": 5
+        },
+        "output": {
+          "query": "source sync Teams current stale today trust",
+          "results": [
+            {
+              "date": "2026-03-23T00:00:00+00:00",
+              "type": "teams_dm_conversation",
+              "title": "Teams DM Conversation: 19:33249ce6-",
+              "source": "microsoft_graph",
+              "content": "[Teams DM Conversation: 19:33249ce6-]\n\n[Teams Direct Message Conversation: 19:33249ce6-]\nDate: 2026-03-23\n\n[message:1774287499473] [2026-03-23 17:38:19] Ty Inman: Do you have a point of contact for kooren?\n[message:1774286825486] [2026-03-23 17:27:05] Ty Inman: Got you my computer is keeps having me sign out of teams ans sometimes it wont let me back in also on job planner Chad and i couldnt figure out why i cant get this allisonville project to pull up on here.\n[message:1774279776128] [2026-03-23 15:29:36] Andrew Cannon: All good. Thank you sir. Mostly just checking on the subs that are onsite today, tomorrow, and in the near future. We always need to know who is going to be onsite working and what time. That way we can plan to notify our client and make sure the subcontractors are getting into the building.\n[message:1774279710950] [2026-03-23 15:28:30] Ty Inman: My fault just saw this sounds good I got you.\n[message:1774279673929] [2026-03-23 15:27:53] Andrew Cannon: Westfield Collective\n[message:1774279663525] [2026-03-23 15:27:43] Andrew Cannon: Good morning Ty. Please open this excel document that I created with some remaining items for Westfield Collective. Please read each task as I put times for when you need to call. Make sure to take notes in the note column when you call. All numbers for the subcontractors should be in Job Planner. If a subcontractor doesn't answer make sure to leave a voicemail, call back in 30-45 minutes, and or send a email on why you were calling.&nbsp;\n[message:1774279566277] [2026-03-23 15:26:06] Ty Inman: Is this for Allisonville?",
+              "citation": "Teams message in microsoft_graph, Mar 23, 2026: \"Teams DM Conversation: 19:33249ce6-\"",
+              "projectId": 43,
+              "chunkIndex": 0,
+              "documentId": "teamsdm_3d859253eed7ca08_2026-03-23",
+              "similarity": null,
+              "participants": "Ty Inman",
+              "sourceChunkId": "teamsdm_3d859253eed7ca08_2026-03-23__chunk_0",
+              "sourceDocumentId": "teamsdm_3d859253eed7ca08_2026-03-23"
+            },
+            {
+              "date": "2025-10-01T00:00:00+00:00",
+              "type": "teams_dm",
+              "title": "Teams DM: 19:c4beb912-",
+              "source": "microsoft_graph",
+              "content": "### Summary of Teams Direct Message: 19:c4beb912-\n\n**Document Purpose and Type**  \nThe document is a direct message exchanged on a team communication platform, specifically Microsoft Teams. It serves as a query from Brandon Clymer regarding a budget modification related to project management (PM) finances. This informal communication highlights concerns about financial allocations within a project.\n\n**Key Topics and Sections**  \nThe primary focus of the message is the budget modification that involved reallocating funds from PM labor to PM expenses. This indicates a shift in how resources are being utilized within the project, suggesting a need for clarification on the reasoning behind this decision. The message does not contain multiple sections or topics but is centered solely on this financial adjustment.\n\n**Important Details, Numbers, Dates, or Requirements**  \nThe date of the message is October 1, 2025. While specific numbers regarding the amounts involved in the budget modification are not provided, the mention of \"PM labor money\" and \"PM Expense\" implies a significant financial decision that could impact project execution and resource management.\n\n**Action Items or Next Steps**  \nThe immediate action item is for the recipient of the message to respond to Brandon Clymer's inquiry, providing clarity on the rationale behind the budget modification. This response will likely involve discussing the implications of the reallocation and how it aligns with project goals and financial management strategies. Further discussions may be necessary to ensure all team members understand the changes and their impact on project operations.",
+              "citation": "Teams message in microsoft_graph, Oct 1, 2025: \"Teams DM: 19:c4beb912-\"",
+              "projectId": null,
+              "chunkIndex": 0,
+              "documentId": "teamsdm_1759284429932",
+              "similarity": null,
+              "participants": "[\"Brandon Clymer\"]",
+              "sourceChunkId": "teamsdm_1759284429932__ff_meeting_summary_-1_0",
+              "sourceDocumentId": "teamsdm_1759284429932"
+            },
+            {
+              "date": "2026-05-04T00:00:00+00:00",
+              "type": "teams_dm_conversation",
+              "title": "Teams DM Conversation: 19:meeting_Y",
+              "source": "microsoft_graph",
+              "content": "[Teams DM Conversation: 19:meeting_Y]\n\n[Teams Direct Message Conversation: 19:meeting_Y]\nDate: 2026-05-04\n\n[message:1777923021304] [2026-05-04 19:30:21] TeamsMaestro | AI notetaker: To help take notes, this meeting is being recorded and processed by MaestroLabs using AI. By staying, you're giving consent. A summary might automatically be shared, depending on the users' settings. See our Privacy Policy &nbsp; Brandon Clymer invited TeamsMaestro\n[message:1777923090544] [2026-05-04 19:31:30] Fireflies.ai Notetaker Jesse: Fireflies invited Fireflies.ai here to record &amp; take notes. View Security &amp; Privacy info: https://fireflies.ai/policy &nbsp; Type: '/ff leave' - Remove Fireflies&nbsp; By continuing, you agree to https://fireflies.ai/privacy &nbsp; View Realtime notes here: https://app.fireflies.ai/live/01KQ7GPMQJSFVKWG3GWWD2BCMN?ref=live_chat\n[message:1777923121303] [2026-05-04 19:32:01] read.ai meeting notes: La' Kisha and Nick added read.ai meeting notes to the meeting (recording enabled). View Privacy Policy: https://www.read.ai/pp . To opt out and delete this recording, click here: https://app.read.ai/analytics/opt-out/01KQT71D007SHKQSQ4DDN8CM2D",
+              "citation": "Teams message in microsoft_graph, May 4, 2026: \"Teams DM Conversation: 19:meeting_Y\"",
+              "projectId": null,
+              "chunkIndex": 0,
+              "documentId": "teamsdm_a6ac779edda25b3f_2026-05-04",
+              "similarity": null,
+              "participants": "bclymer@alleatogroup.com, read.ai meeting notes",
+              "sourceChunkId": "teamsdm_a6ac779edda25b3f_2026-05-04__chunk_0",
+              "sourceDocumentId": "teamsdm_a6ac779edda25b3f_2026-05-04"
+            },
+            {
+              "date": "2026-05-04T00:00:00+00:00",
+              "type": "teams_dm_conversation",
+              "title": "Teams DM Conversation: 19:meeting_Z",
+              "source": "microsoft_graph",
+              "content": "The document is a transcript of a Teams Direct Message conversation from a meeting labeled \"19:meeting_Z,\" held on May 4, 2026. The primary purpose of this document is to record the proceedings of the meeting, facilitated by an AI notetaker called TeamsMaestro, which captures and processes the conversation for note-taking purposes. Participants are informed that the meeting is being recorded and that their consent is implied by their presence.\n\nKey topics discussed in the meeting are not explicitly detailed in the provided excerpt, but the mention of an AI notetaker indicates that the meeting likely involved discussions that required documentation and follow-up. The date of the meeting, May 4, 2026, is significant as it marks the specific time when the conversation took place. The document also includes a note about privacy policies, suggesting that participants were made aware of how their data would be handled.\n\nWhile the excerpt does not specify any action items or next steps, the presence of an AI notetaker implies that summaries or follow-up tasks may be generated automatically after the meeting concludes. Participants might expect to receive a summary based on their settings, which could outline key decisions or assignments made during the discussion. Overall, the document serves as a formal record of the meeting's proceedings, emphasizing the integration of technology in modern communication and documentation practices.",
+              "citation": "Teams message in microsoft_graph, May 4, 2026: \"Teams DM Conversation: 19:meeting_Z\"",
+              "projectId": null,
+              "chunkIndex": 0,
+              "documentId": "teamsdm_ac3b106bba4ccb60_2026-05-04",
+              "similarity": null,
+              "participants": "Fireflies.ai Notetaker Maria, bclymer@alleatogroup.com",
+              "sourceChunkId": "teamsdm_ac3b106bba4ccb60_2026-05-04__ff_meeting_summary_-1_0",
+              "sourceDocumentId": "teamsdm_ac3b106bba4ccb60_2026-05-04"
+            },
+            {
+              "date": "2026-05-04T00:00:00+00:00",
+              "type": "teams_dm_conversation",
+              "title": "Teams DM Conversation: 19:meeting_Z",
+              "source": "microsoft_graph",
+              "content": "The document is a transcript of a Teams Direct Message conversation from a meeting labeled \"19:meeting_Z,\" held on May 4, 2026. The primary purpose of this document is to record the proceedings of the meeting, facilitated by an AI notetaker called TeamsMaestro, which captures and processes the conversation for note-taking purposes. Participants are informed that the meeting is being recorded and that their consent is implied by their presence.\n\nKey topics discussed in the meeting are not explici",
+              "citation": "Teams message in microsoft_graph, May 4, 2026: \"Teams DM Conversation: 19:meeting_Z\"",
+              "projectId": null,
+              "chunkIndex": 0,
+              "documentId": "teamsdm_ac3b106bba4ccb60_2026-05-04",
+              "similarity": null,
+              "participants": "Fireflies.ai Notetaker Maria, bclymer@alleatogroup.com",
+              "sourceChunkId": "teamsdm_ac3b106bba4ccb60_2026-05-04__ff_segment_summary_0_0",
+              "sourceDocumentId": "teamsdm_ac3b106bba4ccb60_2026-05-04"
+            }
+          ],
+          "fallback": true,
+          "rpcError": "vector search timed out — returning keyword-matched results instead",
+          "sourceType": "Teams message",
+          "resultCount": 5
+        },
+        "timestamp": "2026-05-14T15:55:55.721Z"
+      },
+      {
+        "tool": "searchTeamsMessages",
+        "input": {
+          "query": "Teams sync freshness current today stale source sync May 14 2026",
+          "matchCount": 5
+        },
+        "output": {
+          "message": "No Teams messages found for \"Teams sync freshness current today stale source sync May 14 2026\". The sync may not have run yet, or no matching content exists.",
+          "results": []
+        },
+        "timestamp": "2026-05-14T15:55:59.007Z"
+      },
+      {
+        "tool": "searchTeamsMessages",
+        "input": {
+          "query": "Teams sync freshness current today stale source sync May 14 2026",
+          "matchCount": 5
+        },
+        "output": {
+          "message": "No Teams messages found for \"Teams sync freshness current today stale source sync May 14 2026\". The sync may not have run yet, or no matching content exists.",
+          "results": []
+        },
+        "timestamp": "2026-05-14T15:56:06.841Z"
+      },
+      {
+        "tool": "searchTeamsMessages",
+        "input": {
+          "query": "Teams source sync current trust today stale",
+          "matchCount": 5
+        },
+        "output": {
+          "message": "No Teams messages found for \"Teams source sync current trust today stale\". The sync may not have run yet, or no matching content exists.",
+          "results": []
+        },
+        "timestamp": "2026-05-14T15:56:10.569Z"
+      },
+      {
+        "tool": "searchTeamsMessages",
+        "input": {
+          "query": "Teams sync stale current trust today May 14 2026",
+          "matchCount": 3
+        },
+        "output": {
+          "message": "No Teams messages found for \"Teams sync stale current trust today May 14 2026\". The sync may not have run yet, or no matching content exists.",
+          "results": []
+        },
+        "timestamp": "2026-05-14T15:56:12.786Z"
+      },
+      {
+        "tool": "searchTeamsMessages",
+        "input": {
+          "query": "Teams source sync stale current trust today",
+          "matchCount": 5
+        },
+        "output": {
+          "message": "No Teams messages found for \"Teams source sync stale current trust today\". The sync may not have run yet, or no matching content exists.",
+          "results": []
+        },
+        "timestamp": "2026-05-14T15:56:17.092Z"
+      },
+      {
+        "tool": "searchTeamsMessages",
+        "input": {
+          "query": "today current stale source sync trust teams",
+          "matchCount": 3
+        },
+        "output": {
+          "message": "No Teams messages found for \"today current stale source sync trust teams\". The sync may not have run yet, or no matching content exists.",
+          "results": []
+        },
+        "timestamp": "2026-05-14T15:56:21.108Z"
+      },
+      {
+        "tool": "searchTeamsMessages",
+        "input": {
+          "query": "Teams current today source sync stale trust",
+          "matchCount": 3
+        },
+        "output": {
+          "message": "No Teams messages found for \"Teams current today source sync stale trust\". The sync may not have run yet, or no matching content exists.",
+          "results": []
+        },
+        "timestamp": "2026-05-14T15:56:24.572Z"
+      },
+      {
+        "tool": "searchTeamsMessages",
+        "input": {
+          "query": "Teams sync health current today stale trust",
+          "matchCount": 5
+        },
+        "output": {
+          "query": "Teams sync health current today stale trust",
+          "results": [
+            {
+              "date": "2026-02-26T00:00:00+00:00",
+              "type": "teams_message",
+              "title": "Teams DM: Westfield Collective",
+              "source": "microsoft_graph",
+              "content": "[Teams DM: Westfield Collective]\n\n[Teams Direct Message: Westfield Collective]\n\n[2026-02-26] Brandon Clymer: I thought health was already set up for Tomorrow? What happened?&nbsp;",
+              "citation": "Teams message in microsoft_graph, Feb 26, 2026: \"Teams DM: Westfield Collective\"",
+              "projectId": 43,
+              "chunkIndex": 0,
+              "documentId": "teamsdm_1772130803630",
+              "similarity": 0.471,
+              "participants": "[\"Brandon Clymer\"]",
+              "sourceChunkId": "teamsdm_1772130803630__chunk_0",
+              "sourceDocumentId": "teamsdm_1772130803630"
+            }
+          ],
+          "sourceType": "Teams message",
+          "resultCount": 1
+        },
+        "timestamp": "2026-05-14T15:56:26.604Z"
+      },
+      {
+        "tool": "searchTeamsMessages",
+        "input": {
+          "query": "Teams sync current stale trust today",
+          "matchCount": 3
+        },
+        "output": {
+          "query": "Teams sync current stale trust today",
+          "results": [
+            {
+              "date": "2026-03-11T00:00:00+00:00",
+              "type": "teams_message",
+              "title": "Teams DM: oneOnOne",
+              "source": "microsoft_graph",
+              "content": "[Teams DM: oneOnOne]\n\n[Teams Direct Message: oneOnOne]\n\n[2026-03-11] Brandon Clymer: Did the successor trust get updated.&nbsp;",
+              "citation": "Teams message in microsoft_graph, Mar 11, 2026: \"Teams DM: oneOnOne\"",
+              "projectId": null,
+              "chunkIndex": 0,
+              "documentId": "teamsdm_1773251168837",
+              "similarity": 0.466,
+              "participants": "[\"Brandon Clymer\"]",
+              "sourceChunkId": "teamsdm_1773251168837__chunk_0",
+              "sourceDocumentId": "teamsdm_1773251168837"
+            }
+          ],
+          "sourceType": "Teams message",
+          "resultCount": 1
+        },
+        "timestamp": "2026-05-14T15:56:29.563Z"
+      },
+      {
+        "tool": "noToolRetry",
+        "input": {
+          "reason": "The model/tool run completed without returning final assistant text.",
+          "retryModel": "openai/gpt-4.1",
+          "primaryModel": "openai/gpt-5.4"
+        },
+        "output": {
+          "succeeded": true,
+          "contentLength": 1005
+        },
+        "timestamp": "2026-05-14T15:56:32.733Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": {
+      "alerts": [
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: jdawson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:jdawson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: acannon@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:acannon@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: njepson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "njepson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: mparsons@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "mparsons@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: jdawson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "jdawson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "ctragesser@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: crusin@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "crusin@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: awehner@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "awehner@alleatogroup.com"
+        }
+      ],
+      "counts": {
+        "sources": 30,
+        "uncompiled": 11376,
+        "unembedded": 1063,
+        "warningSources": 0,
+        "criticalSources": 30,
+        "failedSubscriptions": 0,
+        "expiringSubscriptions": 0
+      },
+      "reason": "source_status_request",
+      "sources": [
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-14T08:40:46.370016+00:00",
+          "resourceId": "user:jdawson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: jdawson@alleatogroup.com",
+          "staleMinutes": 425,
+          "lastSuccessAt": "2026-05-14T08:40:46.370016+00:00",
+          "uncompiledCount": 937,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-14T11:40:22.34886+00:00",
+          "resourceId": "user:acannon@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: acannon@alleatogroup.com",
+          "staleMinutes": 245,
+          "lastSuccessAt": "2026-05-14T11:40:22.34886+00:00",
+          "uncompiledCount": 937,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+          "resourceId": "njepson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: njepson@alleatogroup.com",
+          "staleMinutes": 20307,
+          "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+          "resourceId": "mparsons@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: mparsons@alleatogroup.com",
+          "staleMinutes": 20308,
+          "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+          "resourceId": "jdawson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: jdawson@alleatogroup.com",
+          "staleMinutes": 20309,
+          "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+          "resourceId": "ctragesser@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: ctragesser@alleatogroup.com",
+          "staleMinutes": 4186,
+          "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+          "resourceId": "crusin@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: crusin@alleatogroup.com",
+          "staleMinutes": 20310,
+          "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+          "resourceId": "awehner@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: awehner@alleatogroup.com",
+          "staleMinutes": 20311,
+          "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+          "resourceId": "accounting@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: accounting@alleatogroup.com",
+          "staleMinutes": 20310,
+          "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T18:14:44.817404+00:00",
+          "resourceId": "acannon@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: acannon@alleatogroup.com",
+          "staleMinutes": 1291,
+          "lastSuccessAt": "2026-05-13T18:14:44.817404+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T20:06:20.616839+00:00",
+          "resourceId": "38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: 38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+          "staleMinutes": 1179,
+          "lastSuccessAt": "2026-05-13T20:06:20.616839+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T00:00:00+00:00",
+          "resourceId": "document_metadata",
+          "lastErrorAt": null,
+          "resourceName": "Outlook email",
+          "staleMinutes": 2385,
+          "lastSuccessAt": "2026-05-13T00:00:00+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        }
+      ],
+      "generatedAt": "2026-05-14T15:55:49.588Z",
+      "missingStage": "embedding_backlog",
+      "overallStatus": "degraded"
+    },
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 6202,
+          "finishReason": "tool-calls",
+          "outputTokens": 32,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "searchTeamsMessages"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 8668,
+          "finishReason": "tool-calls",
+          "outputTokens": 37,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "searchTeamsMessages"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 2,
+          "inputTokens": 8760,
+          "finishReason": "tool-calls",
+          "outputTokens": 398,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "searchTeamsMessages"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 3,
+          "inputTokens": 9207,
+          "finishReason": "tool-calls",
+          "outputTokens": 30,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "searchTeamsMessages"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 4,
+          "inputTokens": 9285,
+          "finishReason": "tool-calls",
+          "outputTokens": 41,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "searchTeamsMessages"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 5,
+          "inputTokens": 9373,
+          "finishReason": "tool-calls",
+          "outputTokens": 36,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "searchTeamsMessages"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 6,
+          "inputTokens": 9451,
+          "finishReason": "tool-calls",
+          "outputTokens": 38,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "searchTeamsMessages"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 7,
+          "inputTokens": 9529,
+          "finishReason": "tool-calls",
+          "outputTokens": 36,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "searchTeamsMessages"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 8,
+          "inputTokens": 9607,
+          "finishReason": "tool-calls",
+          "outputTokens": 36,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "searchTeamsMessages"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 9,
+          "inputTokens": 9862,
+          "finishReason": "tool-calls",
+          "outputTokens": 37,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "searchTeamsMessages"
+          ]
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"searchTeamsMessages\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchAppHelp",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"searchTeamsMessages\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchAppHelp",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 2,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"searchTeamsMessages\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchAppHelp",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 3,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"searchTeamsMessages\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchAppHelp",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 4,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"searchTeamsMessages\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchAppHelp",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 5,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"searchTeamsMessages\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchAppHelp",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 6,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"searchTeamsMessages\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchAppHelp",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 7,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"searchTeamsMessages\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchAppHelp",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 8,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"searchTeamsMessages\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchAppHelp",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 9,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"searchTeamsMessages\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchAppHelp",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        }
+      ],
+      "totalStepCount": 10,
+      "finalFinishReason": "tool-calls",
+      "preparedStepCount": 10,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 10
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "retrieval trace included 7 source-bearing record(s) without inline citations"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

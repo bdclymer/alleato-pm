@@ -44,7 +44,7 @@ function createdOutlookDraftWidget(
     outlookDraftId: "draft-message-id",
     outlookWebLink: "https://outlook.office.com/mail/deeplink/compose/draft-message-id",
     voiceProfile: {
-      path: "docs/ai-plan/brandon-email-voice-profile.md",
+      path: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md",
       version: "2026-05-13",
     },
     adaptiveCard: {},
@@ -90,7 +90,7 @@ describe("AssistantWidgetRenderer Outlook draft feedback", () => {
       subject: "RE: Brookville Road Goodwill",
       signal: "good",
       reasonCategory: "good_tone",
-      voiceProfilePath: "docs/ai-plan/brandon-email-voice-profile.md",
+      voiceProfilePath: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md",
       voiceProfileVersion: "2026-05-13",
     });
     expect(screen.getByText("Draft feedback recorded")).toBeInTheDocument();

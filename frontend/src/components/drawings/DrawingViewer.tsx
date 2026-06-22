@@ -1172,7 +1172,7 @@ export function DrawingViewer({
                 </div>
               )}
 
-              {/* Liveblocks comment pins overlay */}
+              {/* Comment pins overlay */}
               {commentOverlay}
 
               {/* Link/markup pins overlay */}

@@ -1,0 +1,84 @@
+{
+  "id": "permissions-employee-email-privacy",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 8111,
+  "question": "What if someone can see another employee's emails?",
+  "mustInclude": [
+    "email",
+    "permission"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Yes — if someone can see another employee’s emails, that’s a permissions/privacy issue.\n\nWhat I checked:\n- Artifact status: both generated artifacts are current and available.\n- Feature registry:\n  - **Understand Permissions And Visibility** → `docs/help/articles/app-permissions-and-visibility.md`\n  - **Manage User Access** → `docs/help/articles/manage-permissions.md`\n- Help articles:\n  - `docs/help/articles/app-permissions-and-visibility.md`\n  - `docs/help/articles/manage-permissions.md`\n\nDocumented behavior:\n- Employee email and inbox content are sensitive.\n- Ask Alleato should not expose another employee’s email surface just because synced data exists.\n- If a user can see another employee’s emails, the likely cause is overly broad permissions or a sensitive surface that is not tightly gated.\n\nRelevant routes:\n- `/user-management`\n- `/[projectId]/user-management`\n- `/settings`\n\nWhat to do:\n- Review the person’s company/project role and overrides in User Management.\n- Remove or tightly gate the email/inbox surface for non-authorized users.\n\nUncertainty:\n- I can confirm the app’s documented privacy guidance, but I cannot verify the exact access of a specific employee without the current user/project context.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/privacy",
+        "sourceType": "sitemap",
+        "route": "/privacy",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-permissions-and-visibility.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-permissions-and-visibility.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/manage-permissions.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/manage-permissions.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/user-management",
+        "sourceType": "sitemap",
+        "route": "/user-management",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/project",
+        "sourceType": "sitemap",
+        "route": "/project",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/inbox",
+        "sourceType": "sitemap",
+        "route": "/inbox",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 8006,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

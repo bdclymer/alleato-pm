@@ -1,0 +1,54 @@
+{
+  "id": "troubleshooting-no-current-route",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6764,
+  "question": "Can the App Expert answer without knowing my current page?",
+  "response": {
+    "answer": "Yes — but only for general app-capability questions.\n\nWhat I checked:\n- Artifact status: both generated artifacts are available and fresh\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Curated help article:\n  - `docs/help/articles/app-feature-status-and-limitations.md`\n\nWhat the docs say:\n- Ask Alleato should answer questions about what the app can do without needing your current page when the question is about documented workflows, feature status, permissions, or general capabilities.\n- It should use route lookup only for page-specific or current-route questions.\n- It should not guess if behavior is uncertain; it must say what was checked and what remains unclear.\n\nSo:\n- **No, your current page is not required** for general “can the app do X?” questions.\n- **Yes, it is required or strongly helpful** for page-specific questions like “what actions are available here?” or “why don’t I see this on this screen?”\n\nIf you want, I can answer a specific app-capability question now without your current route.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6762,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

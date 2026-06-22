@@ -179,7 +179,7 @@ function emailDraftFeedbackEvent(
     source_context: {
       mailboxUserId: "bclymer@alleatogroup.com",
       graphDraftMessageId: "draft-message-id",
-      voiceProfilePath: "docs/ai-plan/brandon-email-voice-profile.md",
+      voiceProfilePath: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md",
       voiceProfileVersion: "2026-05-19",
     },
     metadata: {
@@ -899,7 +899,7 @@ describe("feedback event service retrieval promotions", () => {
           source_context: {
             mailboxUserId: "bclymer@alleatogroup.com",
             graphDraftMessageId: "draft-message-id-2",
-            voiceProfilePath: "docs/ai-plan/brandon-email-voice-profile.md",
+            voiceProfilePath: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md",
             voiceProfileVersion: "2026-05-19",
           },
           free_text: "Still too polished.",
@@ -919,8 +919,8 @@ describe("feedback event service retrieval promotions", () => {
     expect(result.candidates[0]).toMatchObject({
       promotionType: "user_preference",
       projectId: null,
-      destinationTable: "docs/ai-plan/brandon-email-voice-profile.md",
-      destinationRecordId: "docs/ai-plan/brandon-email-voice-profile.md",
+      destinationTable: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md",
+      destinationRecordId: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md",
       sourceEventIds: [
         "11111111-1111-4111-8111-111111111111",
         "22222222-2222-4222-8222-222222222222",
@@ -928,7 +928,7 @@ describe("feedback event service retrieval promotions", () => {
     });
     expect(result.candidates[0]?.proposedLearning).toMatchObject({
       ruleKind: "email_voice_profile_update",
-      profilePath: "docs/ai-plan/brandon-email-voice-profile.md",
+      profilePath: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md",
       profileSection: "Avoid",
       reasonCategory: "too_formal",
       signal: "corrected",

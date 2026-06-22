@@ -1,0 +1,45 @@
+{
+  "id": "financial-forecast",
+  "intent": "financial_analysis",
+  "prompt": "How is our forecast tracking against the original budget on Westfield?",
+  "selectedProjectId": 43,
+  "sessionId": "b40ac878-4bf2-4056-be07-8a659ae43ecf",
+  "sessionLabel": "eval-2026-05-02T10-17-07-154Z-financial-forecast",
+  "startedAt": "2026-05-02T10:19:34.735Z",
+  "finishedAt": "2026-05-02T10:19:50.169Z",
+  "durationMs": 99,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"58d2a7ef-3f7d-4f0f-a3fb-264c16aed06d\",\"timestamp\":\"2026-05-02T10:19:34.833Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"58d2a7ef-3f7d-4f0f-a3fb-264c16aed06d\",\"timestamp\":\"2026-05-02T10:19:34.833Z\"}",
+      "HTTP 401",
+      "expected at least one of [getForecastComparison, getCostTrends] to fire — none did",
+      "mustInclude missing: \"forecast\""
+    ],
+    "warnings": [
+      "expected family 'financial' not represented",
+      "expected family 'forecast' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"58d2a7ef-3f7d-4f0f-a3fb-264c16aed06d\",\"timestamp\":\"2026-05-02T10:19:34.833Z\"}"
+  },
+  "expectedToolNames": [
+    "getForecastComparison",
+    "getCostTrends"
+  ],
+  "expectedToolFamilies": [
+    "financial",
+    "forecast"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

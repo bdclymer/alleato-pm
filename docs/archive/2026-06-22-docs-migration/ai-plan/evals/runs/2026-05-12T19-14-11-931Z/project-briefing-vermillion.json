@@ -1,0 +1,56 @@
+{
+  "id": "project-briefing-vermillion",
+  "intent": "project_briefing",
+  "prompt": "Give me a current read on Vermillion Rise Warehouse.",
+  "selectedProjectId": 67,
+  "sessionId": "605f0236-6929-454f-ac54-9a612cbb27f8",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-project-briefing-vermillion",
+  "startedAt": "2026-05-12T19:15:56.986Z",
+  "finishedAt": "2026-05-12T19:16:27.758Z",
+  "durationMs": 15180,
+  "httpStatus": 200,
+  "streamError": "stream read error: terminated",
+  "streamEventCount": 1,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: terminated",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getProjectBriefingSnapshot] to fire — none did",
+      "mustInclude missing: \"Vermillion\"",
+      "answer length 0 < min 200"
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'semantic' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getProjectBriefingSnapshot"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "semantic"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:16:09.042Z"
+      }
+    }
+  ],
+  "persistedMetadata": null
+}

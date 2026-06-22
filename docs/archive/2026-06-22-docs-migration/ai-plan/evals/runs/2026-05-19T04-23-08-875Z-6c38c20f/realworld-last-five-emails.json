@@ -1,0 +1,918 @@
+{
+  "id": "realworld-last-five-emails",
+  "intent": "source_lookup",
+  "prompt": "Can you tell me my last five emails?",
+  "selectedProjectId": null,
+  "sessionId": "5b18ef4c-bb78-4833-8ce9-00c36276abc1",
+  "sessionLabel": "eval-2026-05-19T04-23-08-875Z-6c38c20f-realworld-last-five-emails",
+  "startedAt": "2026-05-19T04:23:08.883Z",
+  "finishedAt": "2026-05-19T04:23:24.414Z",
+  "durationMs": 11725,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 154,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "judge email_operator score 2 < 4: The answer does not satisfy the request because it never provides the last five emails and instead reports no emails in 30 days. It is cautious about sync gaps, but it does not answer the source lookup with the requested email list or a concrete path to retrieve it."
+    ],
+    "warnings": [],
+    "observations": [
+      "tools fired: getRecentEmails",
+      "judge email_operator: fail (2/4)"
+    ],
+    "toolNames": [
+      "getRecentEmails"
+    ],
+    "familiesHit": [
+      "communications",
+      "email_action"
+    ],
+    "finalTextLength": 499,
+    "finalText": "I checked your synced Outlook inbox and there aren’t any emails showing in the last 30 days for **test1@mail.com**.\n\nWhat that means:\n- I can’t give you a “last five emails” list from the synced data because none were returned.\n- There’s a sync gap risk here: **emails received since the last completed Outlook sync may not appear**.\n\nIf you want, I can try a different angle:\n- check a different mailbox\n- search by sender or topic\n- inspect Outlook sync status to see if intake is working properly",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 120000,
+      "durationMs": 11725
+    },
+    "judge": {
+      "status": "fail",
+      "rubric": "email_operator",
+      "score": 2,
+      "minScore": 4,
+      "summary": "The answer does not satisfy the request because it never provides the last five emails and instead reports no emails in 30 days. It is cautious about sync gaps, but it does not answer the source lookup with the requested email list or a concrete path to retrieve it.",
+      "strengths": [
+        "Does not claim an email was sent.",
+        "Flags a possible Outlook sync gap instead of inventing email details.",
+        "Avoids dumping raw thread data."
+      ],
+      "weaknesses": [
+        "Fails the core task: the user asked for the last five emails, but none are listed.",
+        "No separation of urgent vs normal email because no actual emails are summarized.",
+        "Does not identify who needs a response, why it matters, or consequences if ignored.",
+        "No concrete response path specific to the email content; only generic next steps are offered.",
+        "Mentions synced inbox and 30 days, but does not explain whether this is from the tool result or inferentially broadens beyond the prompt."
+      ],
+      "dimensionScores": {
+        "separates_urgent_from_normal": 1,
+        "identifies_who_needs_response_and_impact": 1,
+        "summarizes_threads_efficiently": 1,
+        "recommends_concrete_response_path": 2,
+        "draft_short_direct_practical": 1,
+        "never_claims_sent_or_invents_details": 4
+      },
+      "provider": "vercel_gateway",
+      "model": "openai/gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "getRecentEmails",
+    "getRecentOutlookEmails"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: structured_outlook_inbox_query",
+        "status": "loading",
+        "timestamp": "2026-05-19T04:23:09.064Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (1 sources, 0 warnings)",
+        "status": "success",
+        "durations": {
+          "recent_emails": 1969
+        },
+        "timestamp": "2026-05-19T04:23:11.287Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "CWpmLZKLZf5s4cuC"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "toolName": "getRecentEmails"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "days"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "Back"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "30"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "direction"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "mail"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "box"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "time"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "Zone"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "America"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "/New"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "_Y"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "ork"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "group"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "By"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "Thread"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "limit"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "toolName": "getRecentEmails",
+      "input": {
+        "daysBack": 30,
+        "direction": "mailbox",
+        "timeZone": "America/New_York",
+        "groupByThread": false,
+        "limit": 5
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_cKEHiHXg9JaOiHZEEhrdKAAa",
+      "output": {
+        "emails": [],
+        "threads": [],
+        "summary": "No emails received the last 30 days for test1@mail.com (mailbox).",
+        "dataCutoffNote": "Outlook email sync time is unknown, so emails received since the last completed sync may not appear.",
+        "appliedFilter": {
+          "email": "test1@mail.com",
+          "direction": "mailbox",
+          "since": "2026-04-19T04:00:00.000Z",
+          "timeZone": "America/New_York"
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " checked"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " your"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " inbox"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " aren"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " any"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " emails"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " showing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "30"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " days"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "test"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@mail"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " give"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " five"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " emails"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " none"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " were"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " returned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " here"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "emails"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " received"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " since"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " may"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " appear"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " try"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " different"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " angle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " check"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " different"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mailbox"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sender"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " topic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " inspect"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " see"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " intake"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " working"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " properly"
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "finish",
+      "finishReason": "stop"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 53209,
+      "totalTokens": 53368,
+      "outputTokens": 159
+    },
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "retrieval-complete",
+          "status": "success",
+          "message": "Retrieved (1 sources, 0 warnings)",
+          "durations": {
+            "recent_emails": 1969
+          },
+          "timestamp": "2026-05-19T04:23:11.287Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": 2,
+    "tool_trace": [
+      {
+        "tool": "getRecentEmails",
+        "input": {
+          "message": "Can you tell me my last five emails?",
+          "selectedProjectId": null
+        },
+        "timestamp": "2026-05-19T04:23:20.485Z"
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "finish_reason": "stop",
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "structured_outlook_inbox_query",
+      "sources": [
+        "recentEmails"
+      ],
+      "responseFormat": "recent_email_inbox"
+    },
+    "response_message_id": "CWpmLZKLZf5s4cuC",
+    "empty_model_response": false
+  }
+}

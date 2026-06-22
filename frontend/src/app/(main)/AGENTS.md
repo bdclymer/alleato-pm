@@ -57,4 +57,4 @@ The page canvas should stay open by default.
 
 ## Full reference
 
-`docs/design/DESIGN.md`
+`docs/archive/2026-06-22-docs-migration/design/DESIGN.md`

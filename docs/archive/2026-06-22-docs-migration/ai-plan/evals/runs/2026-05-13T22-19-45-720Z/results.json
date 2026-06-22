@@ -1,0 +1,67 @@
+{
+  "generatedAt": "2026-05-13T22:20:03.846Z",
+  "baseUrl": "http://localhost:3001",
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "emailActionIntentRouter": 1,
+    "getRecentOutlookEmails": 1,
+    "readOutlookEmailThread": 1,
+    "draftOutlookEmail": 1,
+    "emailActionFastPath": 1
+  },
+  "intentDistribution": {
+    "email_action": 1
+  },
+  "results": [
+    {
+      "id": "realworld-draft-email-response",
+      "intent": "email_action",
+      "prompt": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+      "selectedProjectId": null,
+      "sessionId": "dd0ec08d-e919-4c68-bbf6-e1500cfe9353",
+      "sessionLabel": "eval-2026-05-13T22-19-45-720Z-realworld-draft-email-response",
+      "startedAt": "2026-05-13T22:19:45.722Z",
+      "finishedAt": "2026-05-13T22:20:03.845Z",
+      "durationMs": 17654,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 11,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, emailActionIntentRouter, getRecentOutlookEmails, readOutlookEmailThread, draftOutlookEmail, emailActionFastPath"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "emailActionIntentRouter",
+          "getRecentOutlookEmails",
+          "readOutlookEmailThread",
+          "draftOutlookEmail",
+          "emailActionFastPath"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 527,
+        "finalText": "I found the latest matching email thread and prepared a short Outlook reply draft.\n\nSubject: Re: B-roll Alleato/Goodwill event confirmation (June 19th)\n\nDraft:\nThank you for your message. We can provide field videos on a regular basis if that is preferred, or hold them and share all at once closer to the event—please let us know your preference. I will send the upload link shortly.\n\nReply **confirm** and I will save this reply draft to Outlook. If this is the wrong thread, tell me which email to use and I will redraft it."
+      },
+      "expectedToolNames": [
+        "draftOutlookEmail",
+        "getRecentEmails",
+        "getRecentOutlookEmails",
+        "readOutlookEmailThread"
+      ],
+      "expectedToolFamilies": [
+        "email_action",
+        "communications"
+      ]
+    }
+  ]
+}

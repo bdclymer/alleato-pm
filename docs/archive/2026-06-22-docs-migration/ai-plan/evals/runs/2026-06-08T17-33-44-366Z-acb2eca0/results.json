@@ -1,0 +1,354 @@
+{
+  "generatedAt": "2026-06-08T17:42:52.153Z",
+  "baseUrl": "http://localhost:3001",
+  "bundle": {
+    "name": "project-document-intelligence-regression",
+    "description": "Agentic-eval guardrail for selected-project document intelligence. The assistant must preload the project operating packet/snapshot, use document/source lookup only as drilldown, and disclose stale or missing context layers instead of answering from a cold search.",
+    "criteria": [
+      "Selected-project document questions must preload clientProjectIntelligencePacket and getProjectBriefingSnapshot.",
+      "Exact document/spec questions must also use semanticSearch, sourceSpecificRagRetrieval, searchDocuments, or another document-capable lookup.",
+      "Answers must separate the project operating baseline from exact source proof.",
+      "Answers must disclose stale, missing, or thin packet/snapshot/document coverage when relevant."
+    ]
+  },
+  "filter": "project-document-(broad-briefing|exact-spec-lookup|stale-packet-check|missing-context-disclosure)$",
+  "totalCases": 4,
+  "passed": 0,
+  "failed": 4,
+  "warningCount": 11,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": true,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 0,
+    "passed": 0,
+    "failed": 0,
+    "errors": 0,
+    "averageScore": null
+  },
+  "slowestCases": [
+    {
+      "id": "project-document-stale-packet-check",
+      "intent": "source_health",
+      "durationMs": 122106,
+      "status": "fail",
+      "warnings": [
+        "expected family 'project' not represented",
+        "expected family 'source_health' not represented",
+        "duration 122106ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "project-document-exact-spec-lookup",
+      "intent": "document_question",
+      "durationMs": 120073,
+      "status": "fail",
+      "warnings": [
+        "expected family 'documents' not represented",
+        "duration 120073ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "project-document-missing-context-disclosure",
+      "intent": "document_question",
+      "durationMs": 120059,
+      "status": "fail",
+      "warnings": [
+        "expected family 'project' not represented",
+        "expected family 'documents' not represented",
+        "expected family 'semantic' not represented",
+        "duration 120059ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "project-document-broad-briefing",
+      "intent": "document_question",
+      "durationMs": 120013,
+      "status": "fail",
+      "warnings": [
+        "expected family 'documents' not represented",
+        "duration 120013ms exceeded warning budget 30000ms"
+      ]
+    }
+  ],
+  "toolCoverage": {
+    "semanticSearch": 2,
+    "getProjectBriefingSnapshot": 2,
+    "loadIntelligencePacket": 2
+  },
+  "intentDistribution": {
+    "document_question": 3,
+    "source_health": 1
+  },
+  "results": [
+    {
+      "id": "project-document-broad-briefing",
+      "intent": "document_question",
+      "prompt": "For Westfield, give me the document intelligence baseline before we drill into exact files: latest docs, document risks, obligations, conflicts, and what matters to the PM.",
+      "selectedProjectId": 43,
+      "sessionId": "2e3a0b80-4dcd-4571-9ef2-e2677b0955ba",
+      "sessionLabel": "eval-2026-06-08T17-33-44-366Z-acb2eca0-project-document-broad-briefing",
+      "startedAt": "2026-06-08T17:33:44.405Z",
+      "finishedAt": "2026-06-08T17:36:01.134Z",
+      "durationMs": 120013,
+      "httpStatus": 200,
+      "streamError": "stream read error: This operation was aborted",
+      "streamEventCount": 3,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: stream read error: This operation was aborted",
+          "assistant message was not persisted to chat_history",
+          "expected required tool 'clientProjectIntelligencePacket' to fire",
+          "mustInclude missing: \"Westfield\"",
+          "mustIncludeAny missing one of: \"document\", \"documents\", \"drawing\", \"spec\", \"RFI\", \"submittal\"",
+          "mustIncludeAny missing one of: \"obligation\", \"required\", \"approval\", \"due\", \"conflict\", \"revision\"",
+          "mustIncludeAny missing one of: \"PM\", \"risk\", \"action\", \"impact\", \"matters\"",
+          "answer length 0 < min 220",
+          "duration 120013ms exceeded max budget 90000ms",
+          "required metadata missing: tool_trace",
+          "required metadata missing: retrieval_plan",
+          "required metadata missing: source_debug"
+        ],
+        "warnings": [
+          "expected family 'documents' not represented",
+          "duration 120013ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: semanticSearch, getProjectBriefingSnapshot, loadIntelligencePacket"
+        ],
+        "toolNames": [
+          "semanticSearch",
+          "getProjectBriefingSnapshot",
+          "loadIntelligencePacket"
+        ],
+        "familiesHit": [
+          "project",
+          "communications",
+          "semantic"
+        ],
+        "finalTextLength": 0,
+        "finalText": "",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 90000,
+          "durationMs": 120013
+        }
+      },
+      "expectedToolNames": [
+        "semanticSearch",
+        "searchDocuments",
+        "sourceSpecificRagRetrieval",
+        "queryDocumentRows"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "documents",
+        "semantic"
+      ]
+    },
+    {
+      "id": "project-document-exact-spec-lookup",
+      "intent": "document_question",
+      "prompt": "For Westfield, find the exact spec or document evidence behind any current door, finish, warranty, closeout, or submittal obligation. Start with the project operating context, then drill into the source.",
+      "selectedProjectId": 43,
+      "sessionId": "5c72d25f-2987-4a48-88ea-a8def07723c5",
+      "sessionLabel": "eval-2026-06-08T17-33-44-366Z-acb2eca0-project-document-exact-spec-lookup",
+      "startedAt": "2026-06-08T17:36:01.278Z",
+      "finishedAt": "2026-06-08T17:38:16.798Z",
+      "durationMs": 120073,
+      "httpStatus": 200,
+      "streamError": "stream read error: This operation was aborted",
+      "streamEventCount": 3,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: stream read error: This operation was aborted",
+          "assistant message was not persisted to chat_history",
+          "expected at least one of [searchDocuments, sourceSpecificRagRetrieval, queryDocumentRows] to fire — none did",
+          "expected required tool 'clientProjectIntelligencePacket' to fire",
+          "mustInclude missing: \"Westfield\"",
+          "mustIncludeAny missing one of: \"spec\", \"document\", \"source\", \"evidence\", \"clause\", \"excerpt\"",
+          "mustIncludeAny missing one of: \"door\", \"finish\", \"warranty\", \"closeout\", \"submittal\"",
+          "mustIncludeAny missing one of: \"packet\", \"context\", \"baseline\", \"operating\"",
+          "answer length 0 < min 220",
+          "duration 120073ms exceeded max budget 90000ms",
+          "required metadata missing: tool_trace",
+          "required metadata missing: retrieval_plan",
+          "required metadata missing: source_debug"
+        ],
+        "warnings": [
+          "expected family 'documents' not represented",
+          "duration 120073ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: semanticSearch, getProjectBriefingSnapshot, loadIntelligencePacket"
+        ],
+        "toolNames": [
+          "semanticSearch",
+          "getProjectBriefingSnapshot",
+          "loadIntelligencePacket"
+        ],
+        "familiesHit": [
+          "project",
+          "communications",
+          "semantic"
+        ],
+        "finalTextLength": 0,
+        "finalText": "",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 90000,
+          "durationMs": 120073
+        }
+      },
+      "expectedToolNames": [
+        "searchDocuments",
+        "sourceSpecificRagRetrieval",
+        "queryDocumentRows"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "documents",
+        "semantic"
+      ]
+    },
+    {
+      "id": "project-document-stale-packet-check",
+      "intent": "source_health",
+      "prompt": "For Westfield document intelligence, before I trust the AI readout, tell me whether the project packet, snapshot, and document sources look stale, missing, thin, or current enough.",
+      "selectedProjectId": 43,
+      "sessionId": "1f4f445f-25c4-43e3-b72e-f896cb440fe4",
+      "sessionLabel": "eval-2026-06-08T17-33-44-366Z-acb2eca0-project-document-stale-packet-check",
+      "startedAt": "2026-06-08T17:38:16.809Z",
+      "finishedAt": "2026-06-08T17:40:35.950Z",
+      "durationMs": 122106,
+      "httpStatus": 0,
+      "streamError": "This operation was aborted",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: This operation was aborted",
+          "assistant message was not persisted to chat_history",
+          "expected at least one of [clientProjectIntelligencePacket, getProjectBriefingSnapshot] to fire — none did",
+          "expected required tool 'assistantSourceHealth' to fire",
+          "mustInclude missing: \"Westfield\"",
+          "mustIncludeAny missing one of: \"packet\", \"snapshot\", \"document\", \"source\"",
+          "mustIncludeAny missing one of: \"stale\", \"missing\", \"thin\", \"fresh\", \"current\", \"coverage\"",
+          "answer length 0 < min 180",
+          "duration 122106ms exceeded max budget 90000ms",
+          "required metadata missing: tool_trace",
+          "required metadata missing: response_quality",
+          "required metadata missing: source_debug"
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'source_health' not represented",
+          "duration 122106ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 0,
+        "finalText": "",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 90000,
+          "durationMs": 122106
+        }
+      },
+      "expectedToolNames": [
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "source_health"
+      ]
+    },
+    {
+      "id": "project-document-missing-context-disclosure",
+      "intent": "document_question",
+      "prompt": "For Westfield, answer from the operating packet if it exists. If the current packet, structured snapshot, or document intelligence is missing or thin, say exactly which layer is missing before giving the best available document read.",
+      "selectedProjectId": 43,
+      "sessionId": "1602e7b5-6268-4f98-b14d-b687192e2ae0",
+      "sessionLabel": "eval-2026-06-08T17-33-44-366Z-acb2eca0-project-document-missing-context-disclosure",
+      "startedAt": "2026-06-08T17:40:35.956Z",
+      "finishedAt": "2026-06-08T17:42:52.135Z",
+      "durationMs": 120059,
+      "httpStatus": 0,
+      "streamError": "This operation was aborted",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: This operation was aborted",
+          "assistant message was not persisted to chat_history",
+          "expected at least one of [semanticSearch, searchDocuments, sourceSpecificRagRetrieval, queryDocumentRows] to fire — none did",
+          "expected required tool 'clientProjectIntelligencePacket' to fire",
+          "expected required tool 'getProjectBriefingSnapshot' to fire",
+          "mustInclude missing: \"Westfield\"",
+          "mustIncludeAny missing one of: \"packet\", \"snapshot\", \"document intelligence\", \"operating context\"",
+          "mustIncludeAny missing one of: \"missing\", \"thin\", \"available\", \"loaded\", \"coverage\"",
+          "answer length 0 < min 200",
+          "duration 120059ms exceeded max budget 90000ms",
+          "required metadata missing: tool_trace",
+          "required metadata missing: retrieval_plan",
+          "required metadata missing: source_debug"
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'documents' not represented",
+          "expected family 'semantic' not represented",
+          "duration 120059ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 0,
+        "finalText": "",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 90000,
+          "durationMs": 120059
+        }
+      },
+      "expectedToolNames": [
+        "semanticSearch",
+        "searchDocuments",
+        "sourceSpecificRagRetrieval",
+        "queryDocumentRows"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "documents",
+        "semantic"
+      ]
+    }
+  ]
+}

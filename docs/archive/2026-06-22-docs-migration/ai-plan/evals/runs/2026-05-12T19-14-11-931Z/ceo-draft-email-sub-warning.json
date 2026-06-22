@@ -1,0 +1,40 @@
+{
+  "id": "ceo-draft-email-sub-warning",
+  "intent": "action_preview",
+  "prompt": "Write a note to Acme Roofing letting them know we're at the wall on their submittal turnaround — politely firm.",
+  "selectedProjectId": null,
+  "sessionId": "b1ed810c-9366-48e1-8a1a-167ffcfaeed3",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-ceo-draft-email-sub-warning",
+  "startedAt": "2026-05-12T20:13:53.628Z",
+  "finishedAt": "2026-05-12T20:14:32.989Z",
+  "durationMs": 24301,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"75176e5d-7fbc-424a-97f0-45538e0a0961\",\"timestamp\":\"2026-05-12T20:14:17.926Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"75176e5d-7fbc-424a-97f0-45538e0a0961\",\"timestamp\":\"2026-05-12T20:14:17.926Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "mustIncludeAny missing one of: \"Acme\", \"submittal\", \"draft\", \"subject\""
+    ],
+    "warnings": [
+      "expected family 'communications' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"75176e5d-7fbc-424a-97f0-45538e0a0961\",\"timestamp\":\"2026-05-12T20:14:17.926Z\"}"
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

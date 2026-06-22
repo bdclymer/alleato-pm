@@ -6,7 +6,7 @@
 
 const SUPABASE_URL = "https://lgveqfnpkxvzbnnwuled.supabase.co";
 const SUPABASE_SERVICE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndmVxZm5wa3h2emJubnd1bGVkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTI1NDE2NiwiZXhwIjoyMDcwODMwMTY2fQ.kIFo_ZSwO1uwpttYXxjSnYbBpUhwZhkW-ZGaiQLhKmA";
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
 
 const sbHeaders = {
   apikey: SUPABASE_SERVICE_KEY,
@@ -29,7 +29,8 @@ async function sbUpsert(table, body, onConflict) {
 }
 
 const TEAMS_APP_ID = "e7af03cc-fe26-4e4d-bf63-425733fdb905";
-const TEAMS_APP_PASSWORD = "fFk8Q~AdgqTVznN3Ke1~Fz7JCBIxO9zvHh.20cIP";
+const TEAMS_APP_PASSWORD =
+  process.env.TEAMS_APP_PASSWORD || process.env.MICROSOFT_BOT_PASSWORD;
 const TENANT_ID = "4998a178-5591-4354-811e-d0d6c7994f75";
 const SERVICE_URL = "https://smba.trafficmanager.net/amer/";
 
@@ -38,6 +39,19 @@ const teamsEmail = process.argv[3] || email; // Microsoft/Teams email (for Graph
 
 if (!email) {
   console.error("Usage: node scripts/send-teams-proactive.mjs <alleato-email> [teams-email]");
+  process.exit(1);
+}
+
+const missingEnv = [];
+if (!SUPABASE_SERVICE_KEY) {
+  missingEnv.push("SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_KEY");
+}
+if (!TEAMS_APP_PASSWORD) {
+  missingEnv.push("TEAMS_APP_PASSWORD or MICROSOFT_BOT_PASSWORD");
+}
+
+if (missingEnv.length > 0) {
+  console.error(`Missing required environment variable(s): ${missingEnv.join(", ")}`);
   process.exit(1);
 }
 

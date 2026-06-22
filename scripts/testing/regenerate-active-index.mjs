@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Regenerate docs/testing/active/test-scenarios-active-v1.md as a live index
+ * Regenerate docs/archive/2026-06-22-docs-migration/testing/active/test-scenarios-active-v1.md as a live index
  * over the per-tool consolidated scenarios and the Supabase test_suites table.
  *
  * Usage:
@@ -15,8 +15,8 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..", "..");
-const scenariosDir = resolve(repoRoot, "docs/testing/scenarios");
-const outFile = resolve(repoRoot, "docs/testing/active/test-scenarios-active-v1.md");
+const scenariosDir = resolve(repoRoot, "docs/archive/2026-06-22-docs-migration/testing/scenarios");
+const outFile = resolve(repoRoot, "docs/archive/2026-06-22-docs-migration/testing/active/test-scenarios-active-v1.md");
 
 // Load env from frontend/.env.local if not already set.
 function loadEnv() {
@@ -143,7 +143,7 @@ function render(suitesByTool, mdTools) {
 _Auto-generated index over the new per-tool consolidated scenarios. Regenerate with \`node scripts/testing/regenerate-active-index.mjs\`._
 
 **Source of truth:** Supabase \`test_suites\` + \`test_cases\` (project \`lgveqfnpkxvzbnnwuled\`).
-**Per-tool detail:** \`docs/testing/scenarios/<tool>.md\` (one file per tool, with \`## Smoke\` + \`## Feature\` sections).
+**Per-tool detail:** \`docs/archive/2026-06-22-docs-migration/testing/scenarios/<tool>.md\` (one file per tool, with \`## Smoke\` + \`## Feature\` sections).
 **Regenerate a tool's suites:** \`/test-scenario-audit <tool>\`.
 **Run a suite:** \`/test-scenario-run <tool> [smoke|feature]\`.
 
@@ -173,7 +173,7 @@ ${pending.length ? pending.map((t) => `- \`${t}\``).join("\n") : "_(none — all
 
 The old flat scenario layout is retired:
 
-- \`docs/testing/*-scenarios.md\` — **deprecated**, do not edit. Use \`docs/testing/scenarios/<tool>.md\` instead.
+- \`docs/archive/2026-06-22-docs-migration/testing/*-scenarios.md\` — **deprecated**, do not edit. Use \`docs/archive/2026-06-22-docs-migration/testing/scenarios/<tool>.md\` instead.
 
 ## Schema reminder
 

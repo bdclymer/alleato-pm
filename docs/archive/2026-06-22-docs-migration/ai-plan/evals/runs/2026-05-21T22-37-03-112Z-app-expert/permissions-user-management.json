@@ -1,0 +1,93 @@
+{
+  "id": "permissions-user-management",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6621,
+  "question": "Where should user management questions point?",
+  "mustInclude": [
+    "user",
+    "management"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "User management questions should point to the company-level **User Management** area, not the project-level Project Directory.\n\nEvidence checked:\n- Curated help article: `docs/help/articles/user-management.md`\n  - Says User Management is the company-level admin area for adding, editing, and removing platform users.\n  - Related routes: `/admin/users`, `/user-management`\n- Feature registry entry:\n  - **User Management** (`id: user-management`) with routes `[/admin/users, /user-management]`\n  - Related action metadata: `invite_user`, `assign_permissions`\n\nIf you meant a specific user-management subtask, the documented pointers are:\n- **Create or Invite a User** → `/docs/create-or-invite-a-user`\n- **Manage User Access** → `/docs/manage-permissions`\n- **Permissions and Access Control** → `/docs/permissions-admin`\n\nIf you want, I can also map which exact user-management question should route to which article or page.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/user-management.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/user-management.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/users",
+        "sourceType": "sitemap",
+        "route": "/users",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/admin/users,",
+        "sourceType": "sitemap",
+        "route": "/admin/users,",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/user-management",
+        "sourceType": "sitemap",
+        "route": "/user-management",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/create-or-invite-a-user",
+        "sourceType": "sitemap",
+        "route": "/create-or-invite-a-user",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/manage-permissions",
+        "sourceType": "sitemap",
+        "route": "/manage-permissions",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/permissions-admin",
+        "sourceType": "sitemap",
+        "route": "/permissions-admin",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6535,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

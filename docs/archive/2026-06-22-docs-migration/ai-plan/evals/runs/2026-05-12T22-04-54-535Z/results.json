@@ -1,0 +1,56 @@
+{
+  "generatedAt": "2026-05-12T22:05:38.870Z",
+  "baseUrl": "http://localhost:3000",
+  "totalCases": 1,
+  "passed": 0,
+  "failed": 1,
+  "toolCoverage": {},
+  "intentDistribution": {
+    "risk_review": 1
+  },
+  "results": [
+    {
+      "id": "risk-review-single-project",
+      "intent": "risk_review",
+      "prompt": "What could bite us on Westfield right now? Rank the risks and tell me what I should do first.",
+      "selectedProjectId": 43,
+      "sessionId": "3951b88e-26f4-4972-9dd4-3228ec616c09",
+      "sessionLabel": "eval-2026-05-12T22-04-54-535Z-risk-review-single-project",
+      "startedAt": "2026-05-12T22:04:54.538Z",
+      "finishedAt": "2026-05-12T22:05:38.869Z",
+      "durationMs": 28688,
+      "httpStatus": 200,
+      "streamError": "stream read error: terminated",
+      "streamEventCount": 3,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: stream read error: terminated",
+          "assistant message was not persisted to chat_history",
+          "expected at least one of [getProjectRiskAnalysis] to fire — none did",
+          "mustInclude missing: \"risk\"",
+          "answer length 0 < min 200"
+        ],
+        "warnings": [
+          "expected family 'risk' not represented",
+          "expected family 'project' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 0,
+        "finalText": ""
+      },
+      "expectedToolNames": [
+        "getProjectRiskAnalysis"
+      ],
+      "expectedToolFamilies": [
+        "risk",
+        "project"
+      ]
+    }
+  ]
+}

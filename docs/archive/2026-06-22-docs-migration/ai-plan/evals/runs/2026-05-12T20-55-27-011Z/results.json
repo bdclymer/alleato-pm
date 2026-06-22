@@ -1,0 +1,55 @@
+{
+  "generatedAt": "2026-05-12T20:57:42.809Z",
+  "baseUrl": "http://localhost:3000",
+  "totalCases": 1,
+  "passed": 0,
+  "failed": 1,
+  "toolCoverage": {},
+  "intentDistribution": {
+    "risk_review": 1
+  },
+  "results": [
+    {
+      "id": "risk-review-single-project",
+      "intent": "risk_review",
+      "prompt": "What are the biggest risks on Westfield Collective right now?",
+      "selectedProjectId": 43,
+      "sessionId": "62cd2d31-9fdc-4843-97ea-a98fee98899c",
+      "sessionLabel": "eval-2026-05-12T20-55-27-011Z-risk-review-single-project",
+      "startedAt": "2026-05-12T20:55:27.014Z",
+      "finishedAt": "2026-05-12T20:57:42.808Z",
+      "durationMs": 120003,
+      "httpStatus": 200,
+      "streamError": "stream read error: This operation was aborted",
+      "streamEventCount": 1083,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: stream read error: This operation was aborted",
+          "assistant message was not persisted to chat_history",
+          "expected at least one of [getProjectRiskAnalysis] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'risk' not represented",
+          "expected family 'project' not represented",
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 4989,
+        "finalText": "The biggest risk on Westfield Collective right now is closeout drag turning into owner dissatisfaction and margin erosion.\n\nWhat’s driving that:\n\n- **Warranty / building performance issues are active right now.** Today’s email thread on warranty and O&M manuals calls out **air infiltration through doors** and specifically notes a door rated **R2** where controlled-environment commercial doors should be closer to **R8**. That’s not paperwork noise — that’s a real building-performance problem with owner visibility.  \n  Source: today’s warranty email thread.\n\n- **Punchlist / warranty follow-through is slipping.** There are **15 open action items** tied to the project, and **14 are overdue**. The ones that matter:\n  - dumpster gate work still open\n  - patio pricing and product submittals still outstanding\n  - casework glue cleanup / chip repair / piano hinge fixes still open\n  - bar bulkhead light visit confirmations still open  \n  Most of those were due **May 5–7** and are still sitting open. That says the job may be “operational,” but the owner is still living with unresolved issues.\n\n- **Change order exposure is still heavy.** The snapshot shows:\n  - **25 pending change orders**\n  - **$2,329,102.80 pending amount**\n  - **$1,204,203.55 pending contract changes**\n  - **0 approved change orders** in the snapshot  \n  That’s too much unresolved commercial exposure for a project this far along. Even if some are admin noise or duplicates, the volume alone is a control problem.\n\n- **Schedule data is dirty enough to be a risk by itself.** The system shows **144 incomplete tasks with finish dates before today** out of **150 total tasks**. I do **not** believe the project is literally that far behind operationally, because the meeting and email trail clearly shows the building opened and moved into warranty/closeout. But stale schedule data is a real risk:\n  - leadership can’t trust the schedule\n  - closeout accountability gets fuzzy\n  - claims/change conversations get harder to defend\n\n- **Commitment status looks unreliable / unfinished.** The snapshot flags **36 commitments as “not executed,”** but the status list includes **28 complete** and **7 approved**, so that field is probably misclassified. Still, if commitment execution/closeout data is inconsistent, that’s another control weakness at the exact point where retainage, final billing, and warranty fights matter most.\n\n- **Cash collection friction is showing up in the communications.** Recent email references include:\n  - **overdue invoices more than 60 days late** tied to Craving Crapes\n  - payment-status questions on **App 7**\n  - retainage release friction tied to unreleased bills in Acumatica  \n  That doesn’t prove a cash crisis on the whole job, but it does say closeout cash is not clean.\n\nWhat that means:\n\nWestfield doesn’t look like a classic “construction execution” risk anymore. It looks like a **late-stage closeout and commercial cleanup risk**:\n- unresolved owner-facing defects\n- overdue follow-ups\n- pending CO backlog\n- messy schedule/commitment records\n- collection/retainage friction\n\nThat combination is how a basically finished job stays on your back for months and gives back margin.\n\nWhat I’d do next:\n\n1. **Run a 7-day closeout war room on this project.**  \n   One list, one owner, one deadline per item. Start with:\n   - door air infiltration / insulation fix path\n   - lighting defects / vendor claim status\n   - patio pricing + submittals\n   - casework repairs\n   - dumpster gate completion\n\n2. **Triage the 25 pending COs immediately.**  \n   Split them into:\n   - real recoverable owner changes\n   - admin cleanup / duplicates\n   - dead items to void  \n   Right now the backlog is too large to manage casually.\n\n3. **Clean the schedule record.**  \n   If the project is in closeout, the schedule should say that. Leaving 144 overdue tasks in place makes the whole job look uncontrolled.\n\n4. **Have accounting/project management reconcile retainage and outstanding billing this week.**  \n   The email traffic suggests money is getting stuck in process, not just in owner hands.\n\n5. **Put one person in charge of owner confidence.**  \n   This project needs a single face coordinating all warranty/punchlist communication so the owner sees progress, not scattered follow-up.\n\nConfidence / gaps:\n\n- Strong confidence on the **closeout, warranty, and overdue follow-through** risk — that’s supported by current emails and open task data.\n- Moderate confidence on the **change order exposure** — the dollar volume is real in the snapshot, but it likely needs cleanup and categorization.\n- Low confidence in theLet’s get straight to it. I’ll pull the structured risk signals, current exposure drivers, and any high-severity issues identified on Westfield Collective. This means calling the project’s risks scorecard directly—no guesswork or recycled action item lists.\n\nGive me a second while I fetch the hard data. I’ll be back with what actually needs attention right now."
+      },
+      "expectedToolNames": [
+        "getProjectRiskAnalysis"
+      ],
+      "expectedToolFamilies": [
+        "risk",
+        "project"
+      ]
+    }
+  ]
+}

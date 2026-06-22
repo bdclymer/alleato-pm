@@ -1,0 +1,62 @@
+{
+  "id": "status-live-feature",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 8152,
+  "question": "How should Ask Alleato answer when a feature is live?",
+  "mustInclude": [
+    "live"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Ask Alleato should answer live-feature questions in a direct status format:\n\n- **Live**: the workflow is available in the app today.\n- If it is not fully live, it should say whether it is **partially implemented**, **planned**, **blocked**, or **deprecated**.\n- If the answer is uncertain, it should say what it checked and what remains uncertain rather than guessing.\n\nEvidence checked:\n- Help article: `docs/help/articles/app-feature-status-and-limitations.md`\n- Help article: `docs/help/articles/ai-assistant-overview.md`\n- Help article: `docs/help/articles/ask-the-ai-assistant.md`\n\nRelevant behavior from the docs:\n- “Live means the workflow is available in the app today.”\n- “Ask Alleato should be direct about those differences.”\n- “If the answer is not fully known, the assistant should say what it checked and what remains uncertain instead of guessing.”\n- It should not claim it performed a write action unless routed through an approved preview-and-confirm tool.\n\nIf you want, I can also give you the exact wording Ask Alleato should use for:\n1. a live feature,\n2. a partially implemented feature, or\n3. a blocked feature.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ai-assistant-overview.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-assistant-overview.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ask-the-ai-assistant.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ask-the-ai-assistant.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 7900,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

@@ -1,0 +1,205 @@
+{
+  "id": "realworld-teams-this-week-signal",
+  "intent": "source_lookup",
+  "prompt": "Using Teams messages from this past week, what are people actually worried about?",
+  "selectedProjectId": null,
+  "sessionId": "75b60e62-d0d9-4567-ac2f-b08a76ed934b",
+  "sessionLabel": "eval-2026-06-09T10-06-51-214Z-0f7a1d89-realworld-teams-this-week-signal",
+  "startedAt": "2026-06-09T10:07:11.398Z",
+  "finishedAt": "2026-06-09T10:07:22.003Z",
+  "durationMs": 10412,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 6,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "expected family 'communications' not represented"
+    ],
+    "observations": [
+      "tools fired: sourceSpecificRagRetrieval"
+    ],
+    "toolNames": [
+      "sourceSpecificRagRetrieval"
+    ],
+    "familiesHit": [],
+    "finalTextLength": 3385,
+    "finalText": "**Main Teams Discussions (2026-06-02 to 2026-06-09)**\n\n1. **Live Teams: 19:5f9d3daf-aef3** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: mparsons@alleatogroup.com Chat: 19:5f9d3daf-aef3 Participants: Maria Calcetero, mparsons@alleatogroup.com Maria Calcetero: Hi Mike, th... [Sources: live-teams:mparsons@alleatogroup.com:1780947317628]\n2. **Live Teams: 19:362f7b90-76f8** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: awehner@alleatogroup.com Chat: 19:362f7b90-76f8 Participants: Alec Wehner, awehner@alleatogroup.com Alec Wehner: Please take a look at... [Sources: live-teams:awehner@alleatogroup.com:1780943685592]\n3. **Live Teams: 19:12bce93d-7b47** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: bclymer@alleatogroup.com Chat: 19:12bce93d-7b47 Participants: Tony Courtney, bclymer@alleatogroup.com Tony Courtney: The current drawi... [Live Microsoft Graph Teams message] Mailbox: bclymer@alleatogroup.com Chat: 19:12bce93d-7b47 Participants: Tony Courtney, bclymer@alleatogroup.com Tony Courtney: Sir we got the nu... [Sources: live-teams:bclymer@alleatogroup.com:1780938933147, live-teams:bclymer@alleatogroup.com:1780938581258]\n4. **Live Teams: Accounting Team** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: accounting@alleatogroup.com Chat: Accounting Team Participants: Brandon Clymer, accounting@alleatogroup.com Brandon Clymer: If we don'... [Sources: live-teams:accounting@alleatogroup.com:1780934762661]\n5. **Live Teams: 19:0be8d10de6aa4** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: njepson@alleatogroup.com Chat: 19:0be8d10de6aa4 Participants: Nick Jepson, njepson@alleatogroup.com Nick Jepson: This is a surveyor th... [Sources: live-teams:njepson@alleatogroup.com:1780930504878]\n6. **Live Teams: 19:b67486b1adc44** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: awehner@alleatogroup.com Chat: 19:b67486b1adc44 Participants: Alec Wehner, awehner@alleatogroup.com Alec Wehner: Good morning Misty, w... [Sources: live-teams:awehner@alleatogroup.com:1780926823900]\n7. **Live Teams: 19:2c91f58c-9339** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: crusin@alleatogroup.com Chat: 19:2c91f58c-9339 Participants: Candon Rusin, crusin@alleatogroup.com Candon Rusin: Hey Jesse could you p... [Live Microsoft Graph Teams message] Mailbox: jdawson@alleatogroup.com Chat: 19:2c91f58c-9339 Participants: Candon Rusin, jdawson@alleatogroup.com Candon Rusin: Hey Jesse could you... [Sources: live-teams:crusin@alleatogroup.com:1780926186944, live-teams:jdawson@alleatogroup.com:1780926186944]\n8. **Live Teams: 19:0772770445704** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: bclymer@alleatogroup.com Chat: 19:0772770445704 Participants: Douglas Franklin, bclymer@alleatogroup.com Douglas Franklin: Looks inter... [Sources: live-teams:bclymer@alleatogroup.com:1780922739621]\n\n**Observability**\n- Source checked: live Microsoft Graph Teams messages first, then Supabase document_metadata/document_chunks-backed Teams index.\n- Live Microsoft Graph Teams check checked 9 mailbox(es) and returned 10 live row(s).\n- Pulled 10 Teams row(s), grouped into 8 conversation/day bucket(s), and answered from concrete Teams snippets/titles.\n\n**Next Step**\n- Use these grouped conversations as the audit sample and compare them against graph_sync_state errors for any inaccessible chats.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 60000,
+      "durationMs": 10412
+    }
+  },
+  "expectedToolNames": [
+    "sourceSpecificRagRetrieval",
+    "searchTeamsMessages",
+    "semanticSearch"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: source_specific_rag_recent_teams_discussions",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:07:11.456Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (1 sources, 0 warnings)",
+        "status": "success",
+        "durations": {
+          "source_specific_rag": 10117
+        },
+        "timestamp": "2026-06-09T10:07:21.662Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-direct-recent-teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-direct-recent-teams",
+      "delta": "**Main Teams Discussions (2026-06-02 to 2026-06-09)**\n\n1. **Live Teams: 19:5f9d3daf-aef3** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: mparsons@alleatogroup.com Chat: 19:5f9d3daf-aef3 Participants: Maria Calcetero, mparsons@alleatogroup.com Maria Calcetero: Hi Mike, th... [Sources: live-teams:mparsons@alleatogroup.com:1780947317628]\n2. **Live Teams: 19:362f7b90-76f8** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: awehner@alleatogroup.com Chat: 19:362f7b90-76f8 Participants: Alec Wehner, awehner@alleatogroup.com Alec Wehner: Please take a look at... [Sources: live-teams:awehner@alleatogroup.com:1780943685592]\n3. **Live Teams: 19:12bce93d-7b47** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: bclymer@alleatogroup.com Chat: 19:12bce93d-7b47 Participants: Tony Courtney, bclymer@alleatogroup.com Tony Courtney: The current drawi... [Live Microsoft Graph Teams message] Mailbox: bclymer@alleatogroup.com Chat: 19:12bce93d-7b47 Participants: Tony Courtney, bclymer@alleatogroup.com Tony Courtney: Sir we got the nu... [Sources: live-teams:bclymer@alleatogroup.com:1780938933147, live-teams:bclymer@alleatogroup.com:1780938581258]\n4. **Live Teams: Accounting Team** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: accounting@alleatogroup.com Chat: Accounting Team Participants: Brandon Clymer, accounting@alleatogroup.com Brandon Clymer: If we don'... [Sources: live-teams:accounting@alleatogroup.com:1780934762661]\n5. **Live Teams: 19:0be8d10de6aa4** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: njepson@alleatogroup.com Chat: 19:0be8d10de6aa4 Participants: Nick Jepson, njepson@alleatogroup.com Nick Jepson: This is a surveyor th... [Sources: live-teams:njepson@alleatogroup.com:1780930504878]\n6. **Live Teams: 19:b67486b1adc44** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: awehner@alleatogroup.com Chat: 19:b67486b1adc44 Participants: Alec Wehner, awehner@alleatogroup.com Alec Wehner: Good morning Misty, w... [Sources: live-teams:awehner@alleatogroup.com:1780926823900]\n7. **Live Teams: 19:2c91f58c-9339** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: crusin@alleatogroup.com Chat: 19:2c91f58c-9339 Participants: Candon Rusin, crusin@alleatogroup.com Candon Rusin: Hey Jesse could you p... [Live Microsoft Graph Teams message] Mailbox: jdawson@alleatogroup.com Chat: 19:2c91f58c-9339 Participants: Candon Rusin, jdawson@alleatogroup.com Candon Rusin: Hey Jesse could you... [Sources: live-teams:crusin@alleatogroup.com:1780926186944, live-teams:jdawson@alleatogroup.com:1780926186944]\n8. **Live Teams: 19:0772770445704** - 2026-06-08. [Live Microsoft Graph Teams message] Mailbox: bclymer@alleatogroup.com Chat: 19:0772770445704 Participants: Douglas Franklin, bclymer@alleatogroup.com Douglas Franklin: Looks inter... [Sources: live-teams:bclymer@alleatogroup.com:1780922739621]\n\n**Observability**\n- Source checked: live Microsoft Graph Teams messages first, then Supabase document_metadata/document_chunks-backed Teams index.\n- Live Microsoft Graph Teams check checked 9 mailbox(es) and returned 10 live row(s).\n- Pulled 10 Teams row(s), grouped into 8 conversation/day bucket(s), and answered from concrete Teams snippets/titles.\n\n**Next Step**\n- Use these grouped conversations as the audit sample and compare them against graph_sync_state errors for any inaccessible chats."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-direct-recent-teams"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Recent Teams source answer returned",
+        "status": "success",
+        "timestamp": "2026-06-09T10:07:21.798Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "tool_trace": [
+      {
+        "tool": "sourceSpecificRagRetrieval",
+        "agent": "retrieval-planner-v2",
+        "input": {
+          "kind": "recent_teams_discussions",
+          "message": "Using Teams messages from this past week, what are people actually worried about?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "rowCount": 10
+        },
+        "status": "success",
+        "toolName": "sourceSpecificRagRetrieval",
+        "timestamp": "2026-06-09T10:07:21.662Z",
+        "durationMs": 10117
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "source_debug": {
+      "memory": {
+        "memories": [
+          {
+            "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+            "type": "preference",
+            "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+            "type": "preference",
+            "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+            "type": "preference",
+            "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly.",
+            "projectId": null,
+            "visibility": "private"
+          }
+        ],
+        "teamUsed": 0,
+        "retrieved": {
+          "team": 0,
+          "relevant": 0,
+          "preferences": 3
+        },
+        "totalUsed": 3,
+        "relevantUsed": 0,
+        "preferencesUsed": 3,
+        "recentConversationsUsed": 3
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "sourceSpecificRagRetrieval",
+              "agent": "retrieval-planner-v2",
+              "status": "success",
+              "durationMs": 10117
+            }
+          ],
+          "failedCount": 0,
+          "totalMeasuredMs": 10117
+        },
+        "toolNames": [
+          "sourceSpecificRagRetrieval"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 1,
+        "sourceCoverage": []
+      },
+      "orchestrator": "retrieval-planner-v2-direct-recent-teams",
+      "outputPolicy": null,
+      "retrievalPlan": {
+        "intent": "source_lookup",
+        "reason": "source_specific_rag_recent_teams_discussions",
+        "sources": [
+          "sourceSpecificRag"
+        ],
+        "responseFormat": "source_specific_rag"
+      }
+    },
+    "provider_path": "direct-source-specific-rag",
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "source_specific_rag_recent_teams_discussions",
+      "sources": [
+        "sourceSpecificRag"
+      ],
+      "responseFormat": "source_specific_rag"
+    },
+    "synthesis_model": "openai/gpt-5.4",
+    "response_quality": {
+      "score": 62,
+      "reasons": [
+        "at least one successful tool call",
+        "retrieval trace included 10 source-bearing record(s) without inline citations"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "id": "status-live-feature",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4712,
+  "question": "How should Ask Alleato answer when a feature is live?",
+  "response": {
+    "answer": "I can’t answer that reliably right now because the required App Expert artifacts are missing.\n\nWhat I checked:\n- App Expert artifact status: failed\n- Feature registry search: failed\n\nMissing artifacts:\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nBecause of that, I can’t verify whether Ask Alleato has documented live-feature behavior, any help article, or any implementation-backed route/source file.\n\nWhat remains uncertain:\n- The exact user-facing response when a feature is live\n- Whether there is a documented help article for this behavior\n- Whether any route-specific implementation exists that differs from docs\n\nTo proceed, the App Expert docs need regeneration:\n- `npm run docs:generate-app-expert`\n\nAfter that, I can search the feature registry, open any linked help article, and answer with exact routes or source references if available.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/source",
+        "sourceType": "sitemap",
+        "route": "/source",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 4628,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

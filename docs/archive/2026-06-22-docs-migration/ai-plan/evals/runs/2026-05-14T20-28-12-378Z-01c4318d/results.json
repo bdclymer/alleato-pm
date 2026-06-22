@@ -1,0 +1,246 @@
+{
+  "generatedAt": "2026-05-14T20:30:23.119Z",
+  "baseUrl": "http://localhost:3000",
+  "bundle": null,
+  "filter": "owner-strategy|action-task|task-register|source-freshness",
+  "totalCases": 5,
+  "passed": 4,
+  "failed": 1,
+  "toolCoverage": {
+    "intentPlanner": 5,
+    "streamingToolPolicy": 4,
+    "noToolRetry": 4,
+    "promptContextReducer": 3,
+    "mcpToolDiscovery": 3,
+    "assistantSourceHealth": 2,
+    "messageDrivenToolRouter": 2,
+    "clientProjectIntelligencePacket": 1,
+    "taskWriteIntentRouter": 1,
+    "mcpToolDiscoverySkipped": 1,
+    "getMyTasks": 1,
+    "semanticSearch": 1,
+    "sourceLookupIntentRouter": 1
+  },
+  "intentDistribution": {
+    "project_briefing": 1,
+    "action_preview": 1,
+    "task_management": 1,
+    "source_health": 2
+  },
+  "results": [
+    {
+      "id": "owner-strategy-ulta-action-plan",
+      "intent": "project_briefing",
+      "prompt": "I am Brandon. For 25-127 Ulta Beauty Fresno, what is most likely to cost us money this week, what is blocked, and what do I personally need to do today?",
+      "selectedProjectId": null,
+      "sessionId": "80275136-9063-4569-b8ec-aafccad30cce",
+      "sessionLabel": "eval-2026-05-14T20-28-12-378Z-01c4318d-owner-strategy-ulta-action-plan",
+      "startedAt": "2026-05-14T20:28:12.384Z",
+      "finishedAt": "2026-05-14T20:28:39.213Z",
+      "durationMs": 26438,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 39,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'semantic' not represented",
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "clientProjectIntelligencePacket",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 2503,
+        "finalText": "**Brandon, here’s your focused briefing for 25-127 Ulta Beauty Fresno:**\n\n---\n\n### 1. Most Likely to Cost Us Money This Week\n- **Insurance Premium Increases & Code Violations:** The inspector flagged that ductwork is blocking fire sprinklers. If not addressed immediately, we risk increased insurance premiums and a potential code violation/fine.\n- **HVAC Schedule Delays:** The AC1 relocation is still stalled due to waiting on approval from the solar company. Any further delay could trigger change order claims or create HVAC downtime penalties if occupancy is impacted.\n\n**Primary Exposure:** Ductwork remediation to resolve insurance and code issues. If this is not corrected now, associated costs could quickly escalate.\n\n---\n\n### 2. What Is Blocked\n- **AC1 Relocation:** Completely blocked, still pending a response or approval from the solar company. All downstream work tied to AC1 is stalled until this resolves.\n- **Final Roof and Duct Sock Work:** Cleanup and insurance sign-off for the roof area can’t proceed until the fire suppression/ductwork issue is cleared.\n\n---\n\n### 3. What You Personally Need to Do Today\n\n**Priority Actions:**\n1. **Push Solar Company for Immediate Approval**  \n   - Contact your counterpart at the solar company—escalate if needed—to get written clearance for the AC1 relocation. This is the highest-impact unlock for the schedule.\n2. **Confirm Ductwork Remediation Progress**  \n   - Directly confirm with the field team or trade partner that the flagged duct blocking the sprinkler is being corrected *today*. Demand a status photo or sign-off from whoever is responsible.\n3. **Coordinate with Insurance Contact**  \n   - After confirming remediation, notify your insurance or risk contact to ensure the inspector will revisit and clear the issue—preventing any premium hike.\n\n---\n\n**Summary Table**\n\n| Item                               | Status           | Immediate Action                       |\n|-------------------------------------|------------------|----------------------------------------|\n| AC1 Relocation                     | BLOCKED          | Escalate with solar co.                |\n| Duct/Sprinkler Insurance Issue      | AT RISK          | Verify fix/submit proof to inspector   |\n| Roof Cleanup & Final Sign-off       | BLOCKED          | Unblock via above two actions          |\n\n---\n\n**If either of these stays open by week’s end, costs and schedule risk multiply quickly. Your personal leverage and escalation will be most effective today.**"
+      },
+      "expectedToolNames": [
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot",
+        "semanticSearch",
+        "searchMeetingsByTopic",
+        "searchEmails",
+        "searchTeamsMessages"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic",
+        "communications"
+      ]
+    },
+    {
+      "id": "action-task-preview-no-write",
+      "intent": "action_preview",
+      "prompt": "Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm.",
+      "selectedProjectId": null,
+      "sessionId": "05408f3e-e171-4488-a827-875806472f1d",
+      "sessionLabel": "eval-2026-05-14T20-28-12-378Z-01c4318d-action-task-preview-no-write",
+      "startedAt": "2026-05-14T20:28:39.214Z",
+      "finishedAt": "2026-05-14T20:29:01.262Z",
+      "durationMs": 21638,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 16,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected required tool 'createTask' to fire",
+          "forbidden tool fired: 'noToolRetry'"
+        ],
+        "warnings": [
+          "expected family 'action_write' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, taskWriteIntentRouter, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "taskWriteIntentRouter",
+          "mcpToolDiscoverySkipped",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 622,
+        "finalText": "createGeneratedTask intent: Creating a preview for a task.\n\nTask details inferred:\n- Task: Confirm the AC1 solar approval owner and committed approval date\n- Assignee: PM (Project Manager)\n- Due date: 2026-05-15 at 9:00 AM\n- Confirmation: Waiting for user before actual creation\n\nProceeding to create the preview now.\n\n```plaintext\ncreateGeneratedTask({\n  title: \"Confirm AC1 solar approval owner and committed approval date\",\n  description: \"PM to confirm the owner responsible for AC1 solar approval, as well as the committed approval date.\",\n  assignee: \"PM\",\n  dueDate: \"2026-05-15T09:00:00\",\n  confirmed: false\n})\n```"
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "action_write"
+      ]
+    },
+    {
+      "id": "task-register-source-grounded",
+      "intent": "task_management",
+      "prompt": "Show me my real task list from actual records. Split it into overdue, due soon, blocked, and unclear if you can.",
+      "selectedProjectId": null,
+      "sessionId": "0ca91813-5794-4c1e-80f6-7f8de5c07bac",
+      "sessionLabel": "eval-2026-05-14T20-28-12-378Z-01c4318d-task-register-source-grounded",
+      "startedAt": "2026-05-14T20:29:01.265Z",
+      "finishedAt": "2026-05-14T20:29:12.497Z",
+      "durationMs": 10845,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 9,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, getMyTasks"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "getMyTasks"
+        ],
+        "familiesHit": [
+          "task_management"
+        ],
+        "finalTextLength": 281,
+        "finalText": "I checked the task register for Test User.\n\nI did not find any open task rows directly assigned to you in the checked task sources.\n\n**Sources Checked**\n- tasks.assignee_person_id / assignee_email / assignee_name\n- schedule_tasks.assignee text\n- executive_briefing_follow_ups.owner"
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "task_management"
+      ]
+    },
+    {
+      "id": "source-freshness-rag-health",
+      "intent": "source_health",
+      "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+      "selectedProjectId": null,
+      "sessionId": "f3465534-70a6-4ee5-be8c-85783ed11d19",
+      "sessionLabel": "eval-2026-05-14T20-28-12-378Z-01c4318d-source-freshness-rag-health",
+      "startedAt": "2026-05-14T20:29:12.498Z",
+      "finishedAt": "2026-05-14T20:29:57.456Z",
+      "durationMs": 44467,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 33,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "semanticSearch",
+          "sourceLookupIntentRouter",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "semantic",
+          "source_health"
+        ],
+        "finalTextLength": 1915,
+        "finalText": "Here’s where things stand as of now:\n\n**1. Teams and Outlook Sync Status**\n- Multiple critical sync issues are active:\n    - Teams DM export for acannon@alleatogroup.com is flagged critical.\n    - Outlook inboxes for njepson@alleatogroup.com, mparsons@alleatogroup.com, mharrison@alleatogroup.com, jdawson@alleatogroup.com, ctragesser@alleatogroup.com are all showing critical sync problems.\n- Translation: If these users are central to recent decisions, there’s a risk recent emails or messages from them are not in the system.\n\n**2. Source Processing Pipeline**\n- The system reports over 1,000 unembedded and more than 11,500 uncompiled sources.\n- This means recent or bulk-imported emails, meetings, and documents may not be included in AI-driven search and analysis yet. If the data you’re looking for was created or received recently, coverage is incomplete.\n- Intelligence packets (project briefing data) depend on this processing — so packet contents could be stale or missing important recent events.\n\n**3. Meeting Data**\n- No explicit errors on meetings sync, but since meetings are dependent on this same pipeline, any new or recently updated meetings might also be missing from search and analysis.\n\n**Bottom Line**\n- Your data is currently degraded. For critical decisions, do not assume every recent email, Teams chat, or meeting is reflected in the AI readout.\n- Specifically, communications from the affected Outlook users and those tied to uncompiled or unembedded sources are at highest risk of being left out.\n- If you need confirmation on a recent decision, task, or conversation, do a manual check in Inbox or Teams until the sync backlog is resolved.\n\n**Next Step**\nIf there’s a specific timeframe, person, or decision you’re worried about missing, name it. I’ll call out whether it’s represented in the available data. Otherwise, you’re working with partial coverage until the pipeline clears."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "source_health"
+      ]
+    },
+    {
+      "id": "realworld-teams-source-freshness",
+      "intent": "source_health",
+      "prompt": "Are Teams messages current enough to trust today, or is source sync stale?",
+      "selectedProjectId": null,
+      "sessionId": "df241422-1869-4919-b72a-c93dbcfa2371",
+      "sessionLabel": "eval-2026-05-14T20-28-12-378Z-01c4318d-realworld-teams-source-freshness",
+      "startedAt": "2026-05-14T20:29:57.457Z",
+      "finishedAt": "2026-05-14T20:30:23.118Z",
+      "durationMs": 25153,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 17,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "source_health"
+        ],
+        "finalTextLength": 778,
+        "finalText": "Teams message sync is not fully current today — there’s a critical source sync issue for Teams DM export on acannon@alleatogroup.com. That means messages involving that user may be outdated or missing. Overall, the system shows a degraded state with over 1,000 items unembedded and 11,500+ uncompiled, so recent Teams activity—especially DMs—could be incomplete. \n\nIf you’re relying on the latest Teams messages for critical decisions, don’t assume you have the full picture. For high-stakes or time-sensitive topics, double-check with the people involved directly.\n\nNext step: If you need verification on a specific conversation or channel, name it and I’ll check its sync status directly. Otherwise, treat recent Teams activity as potentially stale until sync health improves."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "source_health"
+      ]
+    }
+  ]
+}

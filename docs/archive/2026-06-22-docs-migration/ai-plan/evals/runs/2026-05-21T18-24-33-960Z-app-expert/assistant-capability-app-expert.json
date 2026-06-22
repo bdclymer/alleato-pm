@@ -1,0 +1,68 @@
+{
+  "id": "assistant-capability-app-expert",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4734,
+  "question": "What is the App Expert supposed to answer?",
+  "response": {
+    "answer": "App Expert is supposed to answer questions about the app itself, using curated help and generated artifacts first.\n\nWhat it should cover:\n- navigation and routes\n- features and workflow behavior\n- permissions and visibility\n- assistant action status\n- implementation-backed source references\n\nWhat it should use first:\n- curated help articles\n- feature registry metadata\n- route metadata / lookup for page-specific questions\n\nWhat it should distinguish:\n- documented user-facing behavior vs. implementation evidence from routes/source files\n- confirmed write-capable actions vs. assumptions\n\nWhat was checked:\n- artifact status: current and available\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- feature registry search for `App Expert`\n  - found documented entries such as:\n    - `docs/help/articles/app-feature-status-and-limitations.md`\n    - `docs/help/articles/app-permissions-and-visibility.md`\n\nIf you want, I can answer a specific App Expert question next, or look up a route or help article.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/source",
+        "sourceType": "sitemap",
+        "route": "/source",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-permissions-and-visibility.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-permissions-and-visibility.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 4729,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

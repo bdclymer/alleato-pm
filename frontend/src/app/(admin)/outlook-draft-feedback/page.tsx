@@ -1,5 +1,5 @@
 import { PageShell } from "@/components/layout";
-import { requireAdmin } from "@/app/api/admin/intelligence-compiler/_shared";
+import { requireAdmin } from "@/app/api/admin/_shared";
 import { generateEmailVoicePromotionCandidates } from "@/lib/ai/services/feedback-event-service";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database, Json } from "@/types/database.types";

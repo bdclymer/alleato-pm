@@ -1,0 +1,105 @@
+# AI Assistant Eval Suite — 2026-05-14T21-01-03-786Z-9b88fdcb
+
+- Endpoint: `https://projects.alleatogroup.com/api/ai-assistant/chat`
+- Filter: `^source-lookup-teams$`
+- Total: 1
+- Passed: 0
+- Failed: 1
+
+## Per-case results
+
+| Case | Intent | Status | Duration | Tools fired | Failures |
+|---|---|---|---|---|---|
+| source-lookup-teams | source_lookup | ❌ | 31839ms | intentPlanner, promptContextReducer, assistantSourceHealth, messageDrivenToolRouter, backendDeepAgentProjectStatus, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, noToolRetry | expected at least one of [sourceSpecificRagRetrieval, searchTeamsMessages, semanticSearch] to fire — none did |
+
+## Tool coverage across the suite
+
+| Tool | Hits |
+|---|---|
+| `intentPlanner` | 1 |
+| `promptContextReducer` | 1 |
+| `assistantSourceHealth` | 1 |
+| `messageDrivenToolRouter` | 1 |
+| `backendDeepAgentProjectStatus` | 1 |
+| `clientProjectIntelligencePacket` | 1 |
+| `mcpToolDiscovery` | 1 |
+| `streamingToolPolicy` | 1 |
+| `noToolRetry` | 1 |
+
+## Tools defined but never fired in this run
+
+- `backendDeepAgentExecutiveBriefing`
+- `captureFeatureRequest`
+- `createChangeEvent`
+- `createChangeOrder`
+- `createCommitment`
+- `createGeneratedTask`
+- `createInitiativeCard`
+- `createOutlookCalendarInvite`
+- `createRFI`
+- `createTask`
+- `deleteGeneratedTask`
+- `draftOutlookEmail`
+- `findProject`
+- `getAPAgingReport`
+- `getARAgingReport`
+- `getActionItemsAndInsights`
+- `getAcumaticaProjectBudget`
+- `getAcumaticaProjectList`
+- `getBudgetLineItems`
+- `getCashPositionReport`
+- `getChangeOrderDetails`
+- `getCommitmentsOverview`
+- `getCompanyKnowledge`
+- `getCostTrends`
+- `getCrossProjectComparison`
+- `getDirectCostsSummary`
+- `getFinancialAnalysis`
+- `getForecastComparison`
+- `getGeneratedTasksToday`
+- `getHistoricalTrends`
+- `getMarginAnalysis`
+- `getMeetingDetails`
+- `getMeetingsByDate`
+- `getMyTasks`
+- `getPeopleAndRoles`
+- `getPortfolioOverview`
+- `getProjectBriefingSnapshot`
+- `getProjectBudgetSummary`
+- `getProjectDetails`
+- `getProjectRiskAnalysis`
+- `getProjectsWithRisks`
+- `getRFIStatus`
+- `getRecentBills`
+- `getRecentEmails`
+- `getRecentInvoices`
+- `getRecentOutlookEmails`
+- `getScheduleAnalysis`
+- `getSubmittalStatus`
+- `getVendorPerformance`
+- `getVendorSpendReport`
+- `queryBudgetData`
+- `queryChangeOrders`
+- `queryCommitments`
+- `queryDirectCosts`
+- `queryDocumentRows`
+- `queryScheduleTasks`
+- `readOutlookEmailThread`
+- `recallPastConversations`
+- `researchCompany`
+- `saveInsight`
+- `saveToKnowledgeBase`
+- `searchAppHelp`
+- `searchConstructionMarket`
+- `searchDocuments`
+- `searchEmails`
+- `searchExternalDocuments`
+- `searchMeetingsByTopic`
+- `searchMemories`
+- `searchStructuredFinancialRows`
+- `searchTeamsMessages`
+- `searchWeb`
+- `semanticSearch`
+- `sourceLookupIntentRouter`
+- `updateGeneratedTask`
+- `writeMemory`

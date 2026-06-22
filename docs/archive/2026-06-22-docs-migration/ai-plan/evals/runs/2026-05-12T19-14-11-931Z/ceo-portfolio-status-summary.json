@@ -1,0 +1,41 @@
+{
+  "id": "ceo-portfolio-status-summary",
+  "intent": "portfolio_briefing",
+  "prompt": "Give me the 30-second version of where we are across all active jobs.",
+  "selectedProjectId": null,
+  "sessionId": "76550341-5803-44ab-9a71-dd718395658f",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-ceo-portfolio-status-summary",
+  "startedAt": "2026-05-12T20:15:37.007Z",
+  "finishedAt": "2026-05-12T20:16:01.818Z",
+  "durationMs": 9076,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d3ea25eb-ce14-4fba-8f1e-9a6750140de9\",\"timestamp\":\"2026-05-12T20:15:46.080Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d3ea25eb-ce14-4fba-8f1e-9a6750140de9\",\"timestamp\":\"2026-05-12T20:15:46.080Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected required tool 'getPortfolioOverview' to fire",
+      "mustIncludeAny missing one of: \"project\", \"active\", \"status\", \"summary\""
+    ],
+    "warnings": [
+      "expected family 'project' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d3ea25eb-ce14-4fba-8f1e-9a6750140de9\",\"timestamp\":\"2026-05-12T20:15:46.080Z\"}"
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "project"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

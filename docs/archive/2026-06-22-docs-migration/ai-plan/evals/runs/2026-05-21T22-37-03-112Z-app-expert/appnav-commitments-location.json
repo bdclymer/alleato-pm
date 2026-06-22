@@ -1,0 +1,100 @@
+{
+  "id": "appnav-commitments-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6198,
+  "question": "Where are subcontract commitments managed?",
+  "mustInclude": [
+    "/[projectId]/commitments",
+    "commitment"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "Subcontract commitments are managed in the project-level **Commitments** tool.\n\nEvidence:\n- Help article: `docs/help/articles/commitments.md`\n- Related route: `/[projectId]/commitments`\n\nThe article says Commitments are where you manage **subcontracts and purchase orders**, including vendor, SOV, change orders, and invoices. It also says to open **Commitments** from the sidebar after selecting a project.\n\nRelated documented routes from the feature registry:\n- `/[projectId]/commitments`\n- `/[projectId]/commitments/new`\n- `/[projectId]/commitments/[commitmentId]`\n- `/[projectId]/commitments/[commitmentId]/edit`\n\nThere are also implementation-discovered routes that appear related:\n- `/[projectId]/commitments/configure`\n- `/[projectId]/commitments/recycle-bin`\n- `/[projectId]/commitments/settings`\n\nIf you want, I can also map the exact screens inside Commitments for creating, editing, and approving subcontract commitments.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/commitments.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/commitments.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/commitments",
+        "sourceType": "sitemap",
+        "route": "/commitments",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/commitments/new",
+        "sourceType": "sitemap",
+        "route": "/commitments/new",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/commitments/[commitmentId]",
+        "sourceType": "sitemap",
+        "route": "/commitments/[commitmentId]",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/commitments/[commitmentId]/edit",
+        "sourceType": "sitemap",
+        "route": "/commitments/[commitmentId]/edit",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/commitments/configure",
+        "sourceType": "sitemap",
+        "route": "/commitments/configure",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/commitments/recycle-bin",
+        "sourceType": "sitemap",
+        "route": "/commitments/recycle-bin",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/commitments/settings",
+        "sourceType": "sitemap",
+        "route": "/commitments/settings",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6118,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

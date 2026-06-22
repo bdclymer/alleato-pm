@@ -1,0 +1,70 @@
+{
+  "id": "permissions-hidden-page",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 5330,
+  "question": "Why might I not see a project page?",
+  "mustInclude": [
+    "permission",
+    "project"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "You might not see a project page for a few documented reasons:\n\n- You’re on a global page, not a project-scoped route.\n- No project is currently selected.\n- You don’t have membership for that project.\n- You don’t have the permission level required for that page.\n- The page is admin-only, so it stays hidden from standard project users.\n\nWhat I checked:\n- Artifact status: both generated artifacts are present and fresh enough to use:\n  - `/app/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json`\n  - `/app/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json`\n- Curated help article:\n  - `docs/help/articles/app-navigation-and-feature-map.md`\n\nDocumented route evidence from the help article:\n- Global pages: `/`, `/site-map`, `/ai-assistant`\n- Project-scoped page example: `/[projectId]/home`\n\nThe help article explicitly says that if a project page is missing or hidden, the first checks are project context and permission scope.\n\nIf you want, I can also look up the exact route for a specific project page type, like documents, RFIs, change events, or schedule.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-navigation-and-feature-map.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-navigation-and-feature-map.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/home",
+        "sourceType": "sitemap",
+        "route": "/home",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 5215,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

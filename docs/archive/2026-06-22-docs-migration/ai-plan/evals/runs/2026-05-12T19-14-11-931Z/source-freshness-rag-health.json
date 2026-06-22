@@ -1,0 +1,48 @@
+{
+  "id": "source-freshness-rag-health",
+  "intent": "source_health",
+  "prompt": "Before giving me strategy, tell me whether Teams, Outlook/email, meetings, and packets are up to date enough to trust. If anything is stale or unembedded, say exactly what stage is missing and how that changes confidence.",
+  "selectedProjectId": null,
+  "sessionId": "f86f3f40-db9c-4462-9323-21e324c7c532",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-source-freshness-rag-health",
+  "startedAt": "2026-05-12T19:38:56.795Z",
+  "finishedAt": "2026-05-12T19:39:12.118Z",
+  "durationMs": 1,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "assistant message was not persisted to chat_history",
+      "expected required tool 'assistantSourceHealth' to fire",
+      "mustInclude missing: \"Teams\"",
+      "mustInclude missing: \"Outlook\"",
+      "mustInclude missing: \"meeting\"",
+      "mustInclude missing: \"packet\"",
+      "mustIncludeAny missing one of: \"stale\", \"fresh\", \"up to date\", \"unembedded\", \"uncompiled\", \"source health\"",
+      "answer length 0 < min 250",
+      "required metadata missing: source_health",
+      "required metadata missing: tool_trace",
+      "required metadata missing: response_quality"
+    ],
+    "warnings": [
+      "expected family 'source_health' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "source_health"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

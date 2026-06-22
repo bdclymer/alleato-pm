@@ -1,0 +1,47 @@
+{
+  "id": "permissions-admin-page",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4053,
+  "question": "How should the assistant explain admin-only pages?",
+  "response": {
+    "answer": "I can’t answer this reliably from App Expert artifacts right now.\n\nChecked:\n- App Expert artifact status: both generated artifacts are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search: failed because the registry artifact is missing\n- App sitemap search: failed because the sitemap artifact is missing\n\nBecause the required curated sources are unavailable, I can’t verify:\n- whether admin-only pages are documented\n- what exact routes they use\n- whether there is a help article for the behavior\n- whether the assistant should describe them as hidden, restricted, or role-gated\n\nWhat remains uncertain:\n- documented user-facing behavior\n- route-level implementation evidence\n- any help article or feature registry entry for admin pages\n\nIf you want, I can help once the generated artifacts are available, or you can run:\n`npm run docs:generate-app-expert`",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3969,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

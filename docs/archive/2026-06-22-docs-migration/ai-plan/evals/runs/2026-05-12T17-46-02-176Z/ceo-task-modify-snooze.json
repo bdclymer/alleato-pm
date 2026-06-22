@@ -1,0 +1,3177 @@
+{
+  "id": "ceo-task-modify-snooze",
+  "intent": "action_preview",
+  "prompt": "Snooze the COI chase task — Vermillion already sent it over.",
+  "selectedProjectId": 67,
+  "sessionId": "68b98f6a-43a2-4bbd-8359-459066379511",
+  "sessionLabel": "eval-2026-05-12T17-46-02-176Z-ceo-task-modify-snooze",
+  "startedAt": "2026-05-12T18:33:19.822Z",
+  "finishedAt": "2026-05-12T18:34:03.035Z",
+  "durationMs": 42591,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 224,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [getMyTasks, updateGeneratedTask, deleteGeneratedTask] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'action_write' not represented"
+    ],
+    "observations": [
+      "tools fired: intentPlanner, clientProjectIntelligencePacket, streamingToolPolicy, getActionItemsAndInsights"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "clientProjectIntelligencePacket",
+      "streamingToolPolicy",
+      "getActionItemsAndInsights"
+    ],
+    "familiesHit": [
+      "actions",
+      "task_management"
+    ],
+    "finalTextLength": 595,
+    "finalText": "I don’t see a verified Tasks-page item for **“COI chase”** in Vermillion’s current open task list.\n\nWhat I *can* do right now:\n- if this was a real Tasks-page item and you know the title was slightly different, I can search narrower and update it\n- if you want it out of the way regardless, I can mark the matching task **done/completed** once we identify the right row\n- if this came from email/meeting chatter and not the task register, I shouldn’t pretend it’s a verified task\n\nFastest move: send me **the task title or assignee**, or paste the task text, and I’ll close/snooze the exact row."
+  },
+  "expectedToolNames": [
+    "getMyTasks",
+    "updateGeneratedTask",
+    "deleteGeneratedTask"
+  ],
+  "expectedToolFamilies": [
+    "task_management",
+    "action_write"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T18:33:30.121Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-12T18:33:34.994Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Loaded project intelligence packet — synthesizing strategist response",
+        "status": "success",
+        "timestamp": "2026-05-12T18:33:36.668Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "rtsyBAZ5mll341TT"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actual"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " task"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " row"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " first"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " don"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " touch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " wrong"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’m"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " going"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pull"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " task"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "V"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "erm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "illion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rise"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Warehouse"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " chase"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " item"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": "67"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": "20"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "projectId": 67,
+        "assigneeName": "",
+        "maxResults": 20
+      }
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_4Wybi8rPORin1z1afurVzPtd",
+      "output": {
+        "sourceRef": "[Source: Action Items & Insights]",
+        "openTasks": [
+          {
+            "id": "edceede9-29b2-4344-be92-57d9c6ec2b6e",
+            "title": "Await client direction on structural base versus alternate designs before proceeding with structural",
+            "description": "Await client direction on structural base versus alternate designs before proceeding with structural work",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": null,
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "7e4baa5e-8764-4459-b0bf-b2427ffda922",
+            "title": "Visit Grand Rapids facility",
+            "description": "Visit the Grand Rapids facility to identify design improvements, enhance design clarity and safety, and avoid replicating outdated infrastructure.",
+            "status": "open",
+            "priority": null,
+            "dueDate": null,
+            "assignee": "Brandon Clymer",
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "meeting",
+            "overdue": false
+          },
+          {
+            "id": "f0529bbc-2291-4a68-a847-622c07942191",
+            "title": "Review and incorporate electrical drop locations and additional valve inclusion into drawings per cl",
+            "description": "Review and incorporate electrical drop locations and additional valve inclusion into drawings per client instructions",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": null,
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "f146a96c-24fc-4625-8222-5ca04d089c72",
+            "title": "Obtain client direction regarding whether to reduce square footage or increase budget to manage risi",
+            "description": "Obtain client direction regarding whether to reduce square footage or increase budget to manage rising structural design costs due to scope changes",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": null,
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "93874683-bafc-436e-8c21-954224a84fc0",
+            "title": "Provide further details on lab mechanical tests and electrical equipment specifics as needed for des",
+            "description": "Provide further details on lab mechanical tests and electrical equipment specifics as needed for design accuracy",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": null,
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "d2e1f2c0-b2da-4e73-8db8-7355b920d2ad",
+            "title": "Package all final drawings from all disciplines for the May 15 permit submittal deadline, ensuring c",
+            "description": "Package all final drawings from all disciplines for the May 15 permit submittal deadline, ensuring completeness and coordination",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": null,
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "6d287e8c-65ae-4b79-9d48-4f35934d4d17",
+            "title": "Clarify mezzanine size and bathroom relocation details with client and communicate changes to all re",
+            "description": "Clarify mezzanine size and bathroom relocation details with client and communicate changes to all relevant trades to ensure coordinated design updates",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": null,
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "4636d134-a2c3-46f3-be92-9be388013d4c",
+            "title": "Send revised proposals and meeting notes to stakeholders to facilitate informed decision-making on b",
+            "description": "Send revised proposals and meeting notes to stakeholders to facilitate informed decision-making on budget and design changes",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": null,
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "b5f78207-7b77-4c9b-97c1-e357fba84d34",
+            "title": "Send formal documentation",
+            "description": "Send the formal documentation for Andrew Harpenau's paperwork on the units that are in production.",
+            "status": "open",
+            "priority": null,
+            "dueDate": null,
+            "assignee": "Bob Wright",
+            "assignedBy": "Andrew Harpenau",
+            "projectId": 67,
+            "sourceSystem": "outlook_email",
+            "overdue": false
+          },
+          {
+            "id": "66b4d15a-aedc-4a90-9686-2293e7aabfaa",
+            "title": "Adjust permit cost reimbursement language to clearly exclude permit costs from contract sum and addr",
+            "description": "Adjust permit cost reimbursement language to clearly exclude permit costs from contract sum and address reimbursement",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": null,
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "c42dbfda-c702-447b-865d-091fba230f47",
+            "title": "Incorporate agreed changes related to breach cure period and notify Grant and Brandon accordingly (0",
+            "description": "Incorporate agreed changes related to breach cure period and notify Grant and Brandon accordingly (01:09:00)",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": "Brandon Clymer",
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "3ce66085-bab9-4271-abf0-f8d48a301456",
+            "title": "Modify punch list completion timing language to include “commence within” and diligence clauses addr",
+            "description": "Modify punch list completion timing language to include “commence within” and diligence clauses addressing lead times",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": null,
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "26674597-acab-44a6-ad75-041581969790",
+            "title": "Confirm spill containment strategy using proposed epoxy coating or concrete options and finalize spe",
+            "description": "Confirm spill containment strategy using proposed epoxy coating or concrete options and finalize specifications",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": null,
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "757b456a-93e9-430b-a6da-b63a525a82a9",
+            "title": "Complete electrical plans including addition of valves per client instructions and ensure all equipm",
+            "description": "Complete electrical plans including addition of valves per client instructions and ensure all equipment is properly represented",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": null,
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "80902cdd-2845-41ef-8cc4-32e273d388c0",
+            "title": "Resolve HVAC and exhaust details for lab spaces and chemical treatment areas based on clarifications",
+            "description": "Resolve HVAC and exhaust details for lab spaces and chemical treatment areas based on clarifications received during the meeting",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": null,
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "04a2d173-6fa8-4302-90d9-ccb5159550bb",
+            "title": "Confirm duct mounting specifications and coordinate with structural and HVAC teams to ensure proper ",
+            "description": "Confirm duct mounting specifications and coordinate with structural and HVAC teams to ensure proper installation",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": null,
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "aa86ae6a-b2ea-4fa7-8dc9-0b38bf07422d",
+            "title": "Support identification and documentation of electrical drop locations during team absence to maintai",
+            "description": "Support identification and documentation of electrical drop locations during team absence to maintain project progress",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": "identification",
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "50a8601e-b0df-4c94-add0-d924f53aa22e",
+            "title": "Coordinate with structural team to review precast wall penetrations related to HVAC and mechanical s",
+            "description": "Coordinate with structural team to review precast wall penetrations related to HVAC and mechanical systems for permit submittal",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": "structural",
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "a4d01e52-4e45-4caa-88d1-c58396e32911",
+            "title": "Update drawings to correct Make-Up Air (MUA) orientation and other noted issues from the meeting",
+            "description": "Update drawings to correct Make-Up Air (MUA) orientation and other noted issues from the meeting",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": null,
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          },
+          {
+            "id": "7d950786-2242-45e9-9f9d-4b0dad4f1299",
+            "title": "Coordinate with structural team on curb detail around chemical treatment area and slab integration t",
+            "description": "Coordinate with structural team on curb detail around chemical treatment area and slab integration to meet design and safety requirements",
+            "status": "open",
+            "priority": "medium",
+            "dueDate": null,
+            "assignee": "structural",
+            "assignedBy": null,
+            "projectId": 67,
+            "sourceSystem": "fireflies",
+            "overdue": false
+          }
+        ],
+        "priorityItems": [],
+        "structuredActionItems": [
+          {
+            "title": "⏱️ Client Demands Prompt Responsive Pricing Efforts: Urgent pricing update requested despite scope changes",
+            "detail": "⏱️ Client Demands Prompt Responsive Pricing Efforts: Urgent pricing update requested despite scope changes",
+            "assignee": null,
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "priority": 70
+          },
+          {
+            "title": "critical for construction timelines.",
+            "detail": "critical for construction timelines.",
+            "assignee": null,
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2026-02-10T15:00:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-10T15:00:00+00:00]",
+            "priority": 70
+          },
+          {
+            "title": "Coordinate with Tommy and others to open and review CAD files sent by Brandon (06:09)",
+            "detail": "Coordinate with Tommy and others to open and review CAD files sent by Brandon (06:09)",
+            "assignee": "Brandon",
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "priority": 55
+          },
+          {
+            "title": "💰 Pricing Update Expected by Mid to End Next Week: Anticipates minimal price changes due to reduced ductwork",
+            "detail": "💰 Pricing Update Expected by Mid to End Next Week: Anticipates minimal price changes due to reduced ductwork",
+            "assignee": "Mid to End Next Week",
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "priority": 55
+          },
+          {
+            "title": "⏸️ Project Status On Hold: Development paused pending ownership decision regarding project direction.",
+            "detail": "⏸️ Project Status On Hold: Development paused pending ownership decision regarding project direction.",
+            "assignee": "ship decision regarding project direction",
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2026-03-10T14:00:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-03-10T14:00:00+00:00]",
+            "priority": 55
+          },
+          {
+            "title": "Prepare to submit drawings by Friday, moving forward with or without the mechanical openings received (02:54)",
+            "detail": "Prepare to submit drawings by Friday, moving forward with or without the mechanical openings received (02:54)",
+            "assignee": "Friday",
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2026-02-17T15:00:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-17T15:00:00+00:00]",
+            "priority": 55
+          },
+          {
+            "title": "⏳ Delayed Submission: Awaiting owner approval while internal progress continues",
+            "detail": "⏳ Delayed Submission: Awaiting owner approval while internal progress continues",
+            "assignee": "approval while internal progress",
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2026-02-17T15:00:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-17T15:00:00+00:00]",
+            "priority": 55
+          },
+          {
+            "title": "⚙️ Mechanical Openings Delivery: Plans expected by Friday",
+            "detail": "⚙️ Mechanical Openings Delivery: Plans expected by Friday",
+            "assignee": "Friday",
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2026-02-17T15:00:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-17T15:00:00+00:00]",
+            "priority": 55
+          },
+          {
+            "title": "Provide comments on precast shop drawings to Ozzie by next morning (03:35)",
+            "detail": "Provide comments on precast shop drawings to Ozzie by next morning (03:35)",
+            "assignee": "next morning",
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2026-02-10T15:00:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-10T15:00:00+00:00]",
+            "priority": 55
+          },
+          {
+            "title": "Forward CAD files of current building layout and shell to Clay Robinson and team for review (02:14)",
+            "detail": "Forward CAD files of current building layout and shell to Clay Robinson and team for review (02:14)",
+            "assignee": null,
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "priority": 50
+          },
+          {
+            "title": "Obtain and provide shop drawings from structural engineer or county/ATMI for precast panel penetrations (04:22)",
+            "detail": "Obtain and provide shop drawings from structural engineer or county/ATMI for precast panel penetrations (04:22)",
+            "assignee": null,
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "priority": 50
+          },
+          {
+            "title": "Communicate with client to clarify the scope and timing for pricing and order confirmation (33:16)",
+            "detail": "Communicate with client to clarify the scope and timing for pricing and order confirmation (33:16)",
+            "assignee": null,
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "priority": 50
+          },
+          {
+            "title": "Request and distribute base building CAD files to Enviro-Max team (31:46)",
+            "detail": "Request and distribute base building CAD files to Enviro-Max team (31:46)",
+            "assignee": null,
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "priority": 50
+          },
+          {
+            "title": "Plan the layout of HVAC units on-site, considering expansion zones and physical constraints (09:27)",
+            "detail": "Plan the layout of HVAC units on-site, considering expansion zones and physical constraints (09:27)",
+            "assignee": null,
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "priority": 50
+          },
+          {
+            "title": "Ensure duct routing accommodates racking and structural elements, adjusting door placement with Brandon (17:00)",
+            "detail": "Ensure duct routing accommodates racking and structural elements, adjusting door placement with Brandon (17:00)",
+            "assignee": null,
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "priority": 50
+          },
+          {
+            "title": "Initiate pricing process upon layout finalization, targeting mid to late next week delivery (31:46)",
+            "detail": "Initiate pricing process upon layout finalization, targeting mid to late next week delivery (31:46)",
+            "assignee": null,
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "priority": 50
+          },
+          {
+            "title": "Request full project pricing broken out between office and warehouse with Brandon (34:00)",
+            "detail": "Request full project pricing broken out between office and warehouse with Brandon (34:00)",
+            "assignee": null,
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "priority": 50
+          },
+          {
+            "title": "Assist in opening CAD files and facilitating layout discussions (06:41)",
+            "detail": "Assist in opening CAD files and facilitating layout discussions (06:41)",
+            "assignee": null,
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "priority": 50
+          },
+          {
+            "title": "Support structural review on joists and girders for duct clearance (19:24)",
+            "detail": "Support structural review on joists and girders for duct clearance (19:24)",
+            "assignee": null,
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "priority": 50
+          },
+          {
+            "title": "Provide technical input on exhaust and fan placement and mechanical room use (25:00)",
+            "detail": "Provide technical input on exhaust and fan placement and mechanical room use (25:00)",
+            "assignee": null,
+            "dueDate": null,
+            "overdue": false,
+            "project": "Vermillion Rise Warehouse",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "priority": 50
+          }
+        ],
+        "unresolvedInsights": [],
+        "meetingInsights": [
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - null]",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": null,
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team discussed adjustments to the HVAC layout for a newly assigned 50,000 sq ft building, which is set to improve duct routing and production area flexibility. All HVAC units will be placed on the ground level in specified corners to align with future expansions, while ductwork will be positioned outside to avoid obstruction by tall racking. Structural engineering collaboration is crucial for determining wall penetrations, ensuring compliance with precast panel constraints. Pricing updates are anticipated soon, with a separation between office and warehouse costs to enhance budget clarity. The team aims to accommodate urgent client requests for responsive pricing while continuing layout refinements to minimize costs and maintain the project schedule."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Hillsdale Holdings // Alleato Weekly\" - null]",
+            "meeting": "Hillsdale Holdings // Alleato Weekly",
+            "date": null,
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team discussed vital design aspects and demolition strategies to ensure operational efficiency and cost management. Significant points included retaining existing roof drains to avoid a costly rebuild estimated at $500,000, while ensuring controlled risk. The air recovery unit will be dismantled and reused elsewhere, minimizing new equipment costs. Gas piping's location was clarified, with controlled access to the site for verification. Decisions on HVAC unit sizes aimed to optimize current equipment despite an increase in building volume, with air changes adjusted accordingly. Moreover, plans for electrical service upgrades and compactor placements were evaluated, and compliance with sprinkler standards was confirmed to streamline design approval. The next steps include site verificat"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"A141 Discussion\" - 2026-05-11T18:30:00+00:00]",
+            "meeting": "A141 Discussion",
+            "date": "2026-05-11T18:30:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team made substantial progress in negotiating contract terms, particularly emphasizing a preference for litigation over arbitration for dispute resolution, due to flexibility and control concerns. Subcontractor approval thresholds were discussed, with proposals ranging from $10,000 to $300,000 while avoiding 'thin subbing' practices. Indemnification language was clarified to protect Hillsdale from liability arising from the design builder's actions. For payments, partial payments during disputes were agreed upon, with timelines for notification and resolution set at 15 days and 45 days respectively. Next steps involve Logan integrating the agreed changes for final review before contract execution following upcoming closing."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion design weekly call\" - 2026-05-07T17:00:00+00:00]",
+            "meeting": "Vermillion design weekly call",
+            "date": "2026-05-07T17:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team discussed managing rising project costs due to expanded square footage and layout changes, leading to a nearly doubled cost estimate. They targeted a permit submittal by May 15, emphasizing the need for timely drawing completions. Clarifications on lab functions indicated low HVAC complexity, pivoting from chemical to mechanical testing, which impacts equipment needs. Electrical load specifications were addressed to ensure proper breaker sizing, while clear communication among team members regarding design changes and drawing submissions was vital to avoid delays. Ongoing coordination around structural details and materials aimed to enhance construction efficacy and prevent design conflicts."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Hillsdale Holdings // Alleato Weekly\" - 2026-05-06T15:00:00+00:00]",
+            "meeting": "Hillsdale Holdings // Alleato Weekly",
+            "date": "2026-05-06T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "During the meeting, the team confirmed the contract close date for April 13th, emphasizing that signing will not affect project timelines, with long lead items set to begin post-signing. Early orders for steel and equipment to secure leading items were discussed, with a focus on a mid-June construction start and late July steel erection. Cost adjustments regarding electrical scope were addressed, with a revised estimate and deductive change orders proposed to return savings to the client. The importance of design coordination was highlighted, particularly with regards to fire protection and HVAC systems, and a site visit by Brandon Clymer was planned to enhance design clarity and safety."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion design weekly call\" - 2026-04-30T17:00:00+00:00]",
+            "meeting": "Vermillion design weekly call",
+            "date": "2026-04-30T17:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team discussed critical updates regarding HVAC and plumbing coordination ahead of slab pouring, emphasizing the decision to route the main water line underground to prevent hanging pipes and facilitate maintenance. A request for a plumbing valve addition near the sump was acknowledged for enhancing fluid control. HVAC coordination with electrical systems was also highlighted, with revised drawings due next Wednesday. Structural plan updates were necessary to align column placements with the second-floor build-out, which requires timely sharing to prevent rework. Detailed electrical drawings are expected early next week for owner review, including specific drop locations. Lastly, the team agreed to consolidate questions for clearer communication with the owner's representative during an"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion design weekly call\" - 2026-04-23T17:00:00+00:00]",
+            "meeting": "Vermillion design weekly call",
+            "date": "2026-04-23T17:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team reviewed the project design progress, confirming they are on track to meet the May 15 submission deadline. Key focuses included finalizing architectural finishes and interior elevations, with Jerome ensuring schedules align with the main plan. Mechanical drawings are mostly complete, requiring minor adjustments for fan and door placements, while plumbing layout needs just one remaining connection. Electrical work is ongoing, with a need for prior project plans to minimize repeated inquiries. Documentation sharing is essential for consistency, and all teams are expected to deliver full progress drawings by next Wednesday, alongside a commitment to streamline communication regarding the project scope."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion design weekly call\" - 2026-04-16T17:00:00+00:00]",
+            "meeting": "Vermillion design weekly call",
+            "date": "2026-04-16T17:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The meeting addressed important aspects of plumbing system compliance, focusing on the sump pump design to manage sprinkler discharge and ensure fire code adherence. Electrical vault placement was confirmed to centralize 480V feeds while considering load distribution for efficiency and corrosion control. Adjustments in HVAC unit positioning were discussed to minimize duct complexity and noise levels, alongside wall treatments to reduce heat loss. Communication enhancements were emphasized, particularly the use of Autodesk Construction Cloud for streamlined document access. Key project schedule checkpoints were established, including specific deadlines for plumbing layouts, electrical drawings, and fire protection calculations."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise structural coordination\" - 2026-04-13T15:00:00+00:00]",
+            "meeting": "Vermillion Rise structural coordination",
+            "date": "2026-04-13T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team convened to enhance project coordination through direct communication, overseen by Keith Fisher, to expedite decision-making. Jerome will directly manage engineering communications, ensuring Keith is updated on all correspondence. A proposal was made to limit the initial contract solely to engineering services for quicker integration, with Keith tasked to revise this proposal. The preference for CAD files over Revit for deliverables was articulated to optimize workflow and costs. There's a pressing need to confirm the permit schedule and finalize the project timeline to prevent delays. Additionally, the importance of sharing accurate existing building documentation was emphasized, along with plans for Jerome to provide Keith access to BIM360 for timely collaboration and transparen"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion design weekly call\" - 2026-04-09T17:00:00+00:00]",
+            "meeting": "Vermillion design weekly call",
+            "date": "2026-04-09T17:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The meeting covered essential design and layout adjustments, particularly the finalized mezzanine height of 13'4” for mechanical system accommodation. Changes were agreed for the break room ceiling, while structural coordination with Steel Services is in progress, with Bob Wright tasked to follow up on details. The compactor's final design was established, requiring coordination with the fire protection system. Mechanical and plumbing needs were discussed, especially regarding containment requirements for the Class 2 Oxidizer Room, emphasizing integration with fire alarms. The electrical system needs an upgrade from 400 amps to 2400 amps, and the project's permit submission deadline is set for May 15, with weekly coordination calls established to ensure progress."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion layout call\" - 2026-04-08T20:00:00+00:00]",
+            "meeting": "Vermillion layout call",
+            "date": "2026-04-08T20:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The discussion centered on improving the facility layout, particularly around bathrooms and vestibules, with Mark Ferderer suggesting moving bathrooms west to maximize usable space despite a slight impact on women's locker availability. Updates to corridor access included installing an airlock vestibule to manage airflow and separation between office and staff areas. The mezzanine layout faced limitations from structural elements, necessitating flexibility in hallway widths. Adjustments to wall heights were considered, aiming for a balance between daylight and privacy. Water fountains will be replaced with bottle fillers for modern hydration needs, and the break room is designed for occupancy up to 50. Enhancements to employee entrances aim to streamline access while maintaining security. "
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Hillsdale Holdings // Alleato Weekly\" - 2026-03-25T15:00:00+00:00]",
+            "meeting": "Hillsdale Holdings // Alleato Weekly",
+            "date": "2026-03-25T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The meeting addressed several key areas including payment processing delays with vendors, where the team noted that initial payments must be live checks to enable automatic payments that help reduce future delays. In design and structural planning, updated base plans and CAD confirmations were confirmed, with specific focus on concrete work to support equipment loads. The sprinkler system was also discussed, emphasizing ESFR K25 heads for the warehouse and compliance with fire codes. Additionally, the project schedule targeting June slab pours and July equipment staging was outlined, alongside the need for cost clarity ahead of a significant review. Lastly, the team emphasized open communication to facilitate quick problem-solving and project momentum."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Hillsdale Holdings // Alleato Weekly\" - 2026-03-18T18:00:00+00:00]",
+            "meeting": "Hillsdale Holdings // Alleato Weekly",
+            "date": "2026-03-18T18:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team discussed vital design aspects and demolition strategies to ensure operational efficiency and cost management. Significant points included retaining existing roof drains to avoid a costly rebuild estimated at $500,000, while ensuring controlled risk. The air recovery unit will be dismantled and reused elsewhere, minimizing new equipment costs. Gas piping's location was clarified, with controlled access to the site for verification. Decisions on HVAC unit sizes aimed to optimize current equipment despite an increase in building volume, with air changes adjusted accordingly. Moreover, plans for electrical service upgrades and compactor placements were evaluated, and compliance with sprinkler standards was confirmed to streamline design approval. The next steps include site verificat"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": "2026-03-17T14:30:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "🏗️ Revised Building Layout Optimizes HVAC Setup: New layout is 50,000 sq ft, simplifies duct routing, and improves production area flexibility.\n🛠️ HVAC Units Placement Confirmed on Ground Level: Units will remain on the ground, in northwest, northeast, and west corners, aligning with future expansions.\n📏 Duct and Louver Positioning Adjusted: Ductwork outside walls avoids racking, maintaining 68-inch clearance; structural engineering needed for wall penetrations.\n💰 Pricing Update Expected by Mid to End Next Week: Anticipates minimal price changes due to reduced ductwork; pricing will separate office and warehouse costs.\n⏱️ Client Demands Prompt Responsive Pricing Efforts: Urgent pricing update requested despite scope changes; close communication necessary for accurate estimates."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-03-10T14:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2026-03-10T14:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "⏸️ Project Status On Hold: Development paused pending ownership decision regarding project direction.\n🚫 No Progress Updates: Grant attending meetings but has no active tasks or updates to report.\n⚠️ Communication Bottleneck: Next steps depend on input from Brandon; uncertainty is hindering progress.\n📧 Monitoring for Updates: Jerome will look out for emails from Brandon and others for further information.\n🆗 Support Readiness: Grant is on standby to assist once project direction is clarified."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-17T15:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2026-02-17T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "✅ Updated Drawings Ready: All team members received latest updated drawings and CAD files for review; AJ to distribute access link.\n⏳ Delayed Submission: Awaiting owner approval while internal progress continues; AJ following up on contract finalization.\n📐 Structural Drawings Progress: Minor changes being made; team aligned with AJ to maintain schedule despite contract hold.\n⚙️ Mechanical Openings Delivery: Plans expected by Friday; approach ensures production deadlines remain unaffected.\n🗂️ Civil Submission Near Completion: Need updated architectural CAD for verification; AJ to add files for civil team's accuracy.\n🤝 Streamlined Collaboration: File sharing maintains accuracy among disciplines, reducing errors and supporting on-time project milestones."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-10T15:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2026-02-10T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "🚧 Permit Submission Status: Submissions on hold until board and client approvals are received; critical for construction timelines.\n📄 Preparation for CDR Applications: Documents ready to expedite submission once approval is granted; minimizes downtime and supports project timeline.\n⚙️ Civil and Structural Coordination: Teams aligned on minor clarifications; quick resolutions will keep submissions on track post-permit release.\n🏗️ Precast Shop Drawings Feedback: Rapid review expected; quick feedback from AJ will avoid delays in precast fabrication and delivery.\n📞 Open Communication Channels: AJ will follow up with team members after return; ensures timely address of pending issues and project momentum."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-03T15:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2026-02-03T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "🏗️ Structural Revisions: Wall and ceiling specifications are updated for fire rating compliance in key rooms and mechanical areas.\n🧱 Slab Removal: Thickened slab on the north end removed; pending architectural design to avoid premature concrete pricing.\n✅ Approval Timeline: Full owner approval expected soon, enabling contract issuance and rapid processing of design services invoices.\n💰 Cost Efficiency: Preference for cost-effective 6-inch CMU walls to meet fire rating, balancing budget and safety requirements.\n🤝 Coordination Needs: Enhanced collaboration among architecture, interiors, and MEP to prevent design errors and costly rework.\n📅 Production Schedule: Mid-March production start on track; timely structural details and communication critical for project timeline."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Office Pricing Rundown\" - 2026-01-27T18:30:00+00:00]",
+            "meeting": "Vermillion Rise Office Pricing Rundown",
+            "date": "2026-01-27T18:30:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The meeting centered around the preparation and distribution of bid packages for the Vermillion project, with a focus on essential trades like framing, drywall, and flooring to meet a mid-March start date. AJ Taylor confirmed responsibilities for electrical and other scopes while delegating framing and drywall tasks to Enzo Andrade. Bid packages are due by March 5, allowing subcontractors about a week to respond. The project size has been reduced significantly from 500,000 to 50,000 sq ft, necessitating updated pricing from previous bidders. AJ and Enzo emphasized the importance of using current drawings and engaging subcontractors with prior budget pricing to ensure clarity and accuracy in bids. They are utilizing tools like Notion and Building Connected to streamline the bid management p"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-01-27T15:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2026-01-27T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team is preparing to submit updated plans for drainage and erosion control to the county by Friday, aiming for prompt construction permit approvals. Alex McDaniel confirmed that the plans and drainage reports will be submitted to the appropriate reviewers, with no expected issues after county approval. They tentatively set the construction timeline for March to March, allowing a full year for completion. Updated CAD files reflecting wall type changes will be sent by Noah Porter, while AJ emphasized the need for consistency in openings. Early submission of foundation plans is planned, with AJ coordinating with Jerome for permit details. AJ is also focusing on finalizing contracts and billing documentation, prioritizing POS documents for billing post-approval. The team confirmed clear ow"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-01-20T15:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2026-01-20T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team discussed several key adjustments to building design and site layout to improve functionality and compliance. They agreed to raise the mezzanine finished floor height from 10 feet 8 inches to 12 feet to provide adequate ceiling clearance in office areas and the break room. Structural foundation inconsistencies were addressed, particularly regarding footing types and placements, ensuring proper load distribution. Site layout revisions included adding a new man door for improved egress and redesigning sump pump locations for better drainage and future access. Pond sizing was optimized, and grading plans were refined to facilitate future expansion while maintaining drainage efficiency. The team also considered cost-effective grading solutions to reduce the need for retaining walls wh"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-01-13T15:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2026-01-13T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team discussed the completion of the updated CAD layout, ensuring it aligns with client needs, including maintaining a 12x14 ft overhead door for operational efficiency. Structural drawings are nearing completion, with preliminary versions expected by week's end to facilitate timely material orders. The urgency of contract finalization was highlighted, with expectations for a signed contract in one to two weeks to secure material procurement and maintain the schedule for steel erection planned for May 20. Mechanical design constraints were addressed, emphasizing the need for duct work to exit through side walls due to safety concerns. The team recognized external pressures from rising material costs, necessitating proactive measures in procurement and scheduling."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - D/B Project\" - 2026-01-09T13:30:00+00:00]",
+            "meeting": "Vermillion Rise - D/B Project",
+            "date": "2026-01-09T13:30:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team discussed the configuration of three HVAC units to effectively balance cost and coverage. Andrew Harpenau and Clay Robinson confirmed that one unit could serve combined class one and two areas, achieving 22,000 CFM at 70% humidity and 75°F design criteria. This consolidation aims to reduce costs by minimizing the number of units and ductwork. For the production area, which requires four air changes due to gases, two smaller units will be installed to avoid oversizing. Exhaust fans will be strategically placed to prevent cross-contamination, with maintenance planned every six months. The team also emphasized cost optimization by using fabric ducting instead of stainless steel, along with a timeline for design updates and pricing, aiming for a follow-up meeting mid-next week."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-01-06T15:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2026-01-06T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The meeting focused on establishing a clear project timeline with earthwork starting in February and precast production by mid-March. Alex McDaniel confirmed that check set plans will be sent by the end of the week and a final permitting set will follow next week to secure required approvals, including an IDEM erosion control permit. The team agreed to size storm infrastructure for the full master plan to prevent future costly replacements, with AJ Taylor to confirm plans with the owner. Utility routing was finalized to minimize costs and avoid road crossings, with two fire hydrants installed to meet Indiana fire code. Key design updates were approved to enhance cost efficiency, including simplified structural elements and adjustments to the maintenance area slab. Improved communication an"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-12-30T15:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2025-12-30T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The meeting addressed critical project timelines, confirming that layout updates are due by January 8th, with Jerome Daksiewicz affirming that the adjustments to wall elevations are manageable. AJ Taylor requested a code review on updated quantities from Mark, emphasizing the impact of occupancy thresholds on HVAC requirements, which will guide necessary design changes. Despite Jerome's upcoming PTO, he committed to delivering the updates and code review early next week to minimize delays. Discussion on resource availability highlighted challenges during the holiday season, but both participants stressed the importance of maintaining momentum and open communication to avoid bottlenecks. Personal updates provided context to their availability, with AJ sharing parenting constraints and Jerom"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-12-23T15:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2025-12-23T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team discussed significant adjustments to the building design, primarily reducing its size by approximately 50,000 square feet as mandated by the owner, which has implications for design costs and project timelines. AJ Taylor emphasized the importance of clear communication regarding added costs to the owner and indicated a slight delay in the construction schedule, with earthwork anticipated to start in February or March. The revised layout maintains essential operational areas while removing some storage and shipping sections. Coordination among structural and civil teams is crucial, particularly regarding the demising wall's support for future expansions. To maintain alignment, AJ committed to updating and distributing CAD files promptly, ensuring all stakeholders are informed and e"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-12-16T15:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2025-12-16T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team discussed key architectural adjustments, including reinstating the original bathroom entrance layout and adding a second door for dust control, with AJ Taylor leading this effort. Keith Fisher confirmed the structural set was emailed and reviewed, noting minor changes without major delays. Budget considerations were addressed, with AJ Taylor and Brandon Clymer requesting credits for a potential building size reduction while maintaining flexibility for phased construction. In civil engineering, Alex McDaniel reported progress on grading and stormwater designs, aiming for a full civil review set by week's end. Utility infrastructure plans were also discussed, focusing on efficient wastewater handling. The team agreed to maintain weekly meetings through the holidays to ensure project"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Update\" - 2025-12-12T19:30:00+00:00]",
+            "meeting": "Vermillion Rise Update",
+            "date": "2025-12-12T19:30:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team discussed a revised plant layout that reduces the facility size by 60,000 square feet while preserving essential areas such as the office and shipping dock. Mark presented this design to lower initial costs and risks, while still allowing for future expansion. Brandon is tasked with providing a cost estimate for the reduced scope by next Thursday's board meeting, focusing on major cost drivers like precast concrete and HVAC systems. The potential downsizing may delay the project start by 1 to 1.5 months, and a six-week buffer is recommended to account for redesign efforts. The client is taking a cautious stance regarding capital investments due to economic uncertainties in the luxury pool market, aiming to mitigate risks without compromising the ability to scale production later. "
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"25-1799R1 Vermillion Rise HVAC\" - 2025-12-11T18:30:00+00:00]",
+            "meeting": "25-1799R1 Vermillion Rise HVAC",
+            "date": "2025-12-11T18:30:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team met to address a critical budget issue, needing to reduce project costs from $1.3 million to $416,000 to avoid a $900,000 overrun. AJ Taylor emphasized the importance of explaining this cost gap to ownership and finding more cost-effective solutions. Extensive ductwork currently drives up costs, particularly with the warehouse space contributing an $800,000 delta. The team agreed to urgently review the ductwork design to optimize materials and labor while ensuring safety and code compliance. Discussions also centered on interpreting code requirements for air exchange to prevent hazardous conditions, with suggestions for less costly design alternatives. The team plans to consult with engineers and code consultants to clarify interpretations and explore cost-efficient design options"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-12-09T15:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2025-12-09T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The meeting addressed critical deliverables including the architectural team’s commitment to deliver a full review set by Thursday, the 11th, with minimal expected changes. Alex McDaniel is preparing the initial civil review set, emphasizing the need to relocate roof downspouts outside truck dock areas and confirming structural details for retaining walls, with Keith Fisher tasked for these details. Mechanical cost tracking was highlighted, with AJ Taylor requesting a breakdown between warehouse and office spaces for budget discussions. The precast team aims to submit shop drawings by December 19th, with RFIs expected soon to resolve ongoing queries. The emphasis on shared document management and timely updates was discussed to streamline communication and ensure the project stays on sched"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-12-02T15:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2025-12-02T15:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The meeting addressed critical updates on architectural design adjustments, emphasizing the importance of finalizing window sizing and layout to maintain project timelines. AJ Taylor confirmed the structural constraints for the mezzanine and clarified the flexibility of window panel legs with DKGR. Jerome committed to finalizing window sizes to facilitate AJ’s meeting with Mark. Canopy specifications were discussed, focusing on budget-friendly options to avoid delays associated with custom fabrication. The timeline for architectural deliverables was confirmed, targeting a complete set by January 11th, with structural submissions due by January 9th. Civil layout progress depends on imminent survey data, while mechanical systems are being designed with attention to air quality in the process"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-11-18T00:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2025-11-18T00:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "- **Survey Data Complete:** Boundary issue resolved, moving forward with civil tasks, and six-week deadline emphasized.  \n- **Office Space Adjusted:** Reduced from 4,000 to 2,600 square feet; layouts in progress for owner approval.  \n- **Structural Drawings Progressing:** Targeting 80% completion today to initiate precast work, despite pending geotech data.  \n- **MEP Coordination Required:** Revit and CAD files needed for ductwork alignment; life safety zoning meeting scheduled.  \n- **County Documentation Shared:** CAD and Revit files sent to county for review; proactive communication to avoid delays.  \n- **Project Timeline Urgency:** Six-week target stressed for civil and structural packages; meetings planned for coordinated decisions."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-11-11T00:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2025-11-11T00:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "- **Column Grid Adjustments:** Finalize column grid changes and cost impacts before foundation drawings can proceed.\n\n- **Building Footprint Status:** Maintain footprint at approximately 111,153 square feet to prevent additional costs.\n\n- **Pond Relocation:** Shift detention pond to the west side for effective water management and align with site topography.\n\n- **Foundation Coordination:** Ensure soil reports and topo data align with foundation plans to avoid rework.\n\n- **Precast Production Schedule:** Deliver 80% structural drawings by November 17 to keep precast production on track.\n\n- **MEP Code Compliance:** Align MEP design with building requirements to mitigate costly adjustments and optimize opening placements."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Plumbing and Electrical Scope Meeting\" - 2025-11-06T00:00:00+00:00]",
+            "meeting": "Vermillion Rise Plumbing and Electrical Scope Meeting",
+            "date": "2025-11-06T00:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "- **Plumbing Design:** Basic utilities for restrooms, wash down pads, and break room with cost-control measures in design.  \n- **Electrical Requirements:** 2400 amp main service with three subpanels; lighting needs 75 foot candles for safety in chemical areas.  \n- **Project Timeline:** 80% architectural drawings due January 17; completion targeted for first week of October 2024.  \n- **Code Compliance:** Facilities classified as H3; strict adherence to safety, venting, and moisture control necessary.  \n- **Site Utilities:** Utilities will enter from the northeast; site is a repurposed chemical depot with full utility access.  \n- **Collaboration Focus:** Emphasis on clear communication and rapid feedback to meet project timelines and budget constraints."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Plumbing Scope Review\" - 2025-11-04T00:00:00+00:00]",
+            "meeting": "Vermillion Rise Plumbing Scope Review",
+            "date": "2025-11-04T00:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "- **Project Scope Confirmed:** Plumbing for 100,000 sq ft warehouse; includes two men's restrooms, women's restrooms, and one unisex bathroom.  \n- **Plumbing Design Details:** Includes two wash down pads, a single 6-inch sanitary line, and showers in locker rooms.  \n- **Material Choices:** Using PEX piping and stainless steel exhaust fans; small-capacity water heaters for main and shipping areas.  \n- **Ventilation Strategy:** 100% outside air intake and five air changes per hour ensure safety from chemical exposure.  \n- **Timeline Established:** Earthwork starts in January; underground plumbing slated for May; coordination for cost confirmation is key.  \n- **Cost Control Focus:** Design-build simplifies plumbing installation, minimizing surprises by keeping costs and materials aligned."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-11-04T00:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2025-11-04T00:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "- **Architectural Framework:** Complete architectural elevations and openings needed by October 17 to meet installation schedules. \n\n- **Structural Coordination:** 50 by 54-foot column grid finalized for steel framing, with building dimensions set at 434 feet 2 1/4 inches by 253 feet 3 inches.\n\n- **Topographic Delays:** Topographic survey delays could compress design timelines; internal resources will shift to keep project on track.\n\n- **Critical Milestones:** Structural and architectural drawings for precast fabrication due by October 17 to avoid installation delays.\n\n- **Mechanical Planning:** Five HVAC pass-through locations identified; structural prep will allow for later mechanical integration without roof penetrations.\n\n- **Cost Efficiency:** Decisions made to use simpler roofing and"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-10-28T00:00:00+00:00]",
+            "meeting": "Vermillion Rise - Weekly Design Meeting",
+            "date": "2025-10-28T00:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "- **Project Timeline:** Dirt work starts in January; foundation permit submission is targeted before Christmas for timely progress.  \n- **Structural Details:** 64-inch girder height provides 20-foot 4-inch clearance, suitable for H3 occupancy under dry sprinkler system constraints.  \n- **Building Design:** 232 by 452-foot precast structure includes 5,000 square feet of office space for 32 employees, ensuring functional use.  \n- **Civil Engineering Start:** Civil work commences after December 31 survey; finalizing door and dock locations is crucial for efficient grading.  \n- **Documentation Standards:** All submittals will follow a uniform 42 by 30-inch format; finalized drawings to be delivered by week's end.  \n- **Safety Focus:** Design meets NFPA standards for chemical storage, emphasizi"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Huddle\" - 2025-08-12T00:00:00+00:00]",
+            "meeting": "Vermillion Rise Huddle",
+            "date": "2025-08-12T00:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "### Executive Summary of the Vermillion Rise Huddle\n\n**Meeting Purpose and Key Participants**  \nThe Vermillion Rise Huddle was convened to discuss project updates and coordinate efforts among team members involved in the Vermillion Rise project. Key participants included Alex Awehner, Jesse Dawson, and Brendan Clymer, among others. The meeting aimed to ensure that all team members were aligned on project estimates, scope definitions, and next steps in the bidding process.\n\n**Main Topics Discussed**  \nThe discussion primarily revolved around project estimates and scope clarifications. Awehner reported that he had begun creating a new estimate based on the initial design estimate provided by Dawson. They reviewed the existing budget documents, specifically the \"Vermillion Rise edition budget"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Addition Budget Review\" - 2025-06-20T00:00:00+00:00]",
+            "meeting": "Vermillion Addition Budget Review",
+            "date": "2025-06-20T00:00:00+00:00",
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "### Executive Summary: Vermillion Addition Budget Review Meeting\n\n**Meeting Purpose and Key Participants**  \nThe Vermillion Addition Budget Review meeting was convened to assess and finalize the budget for the upcoming construction project. Key participants included **Bclymer** and **Jdawson**, who engaged in a detailed discussion regarding the financial aspects of the project, including cost estimates and budget allocations.\n\n**Main Topics Discussed**  \nThe primary focus of the meeting was on the budget calculations for the project, specifically the costs associated with the interior build-out of the existing warehouse. Jdawson presented a preliminary budget estimate of approximately **$1.43 million**, which included **$135 per square foot** for the build-out and additional costs for othe"
+          }
+        ],
+        "overdueRFIs": [
+          {
+            "number": 2,
+            "subject": "Specified fire rating for north wall assembly",
+            "status": "open",
+            "dueDate": "2026-04-10",
+            "ballInCourt": "Brandon"
+          }
+        ],
+        "summary": {
+          "openTaskCount": 20,
+          "overdueTaskCount": 0,
+          "insightCount": 0,
+          "structuredActionItemCount": 60,
+          "overdueRFICount": 1,
+          "sourceErrorCount": 0
+        },
+        "sourceErrors": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " don"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " see"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " verified"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Tasks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-page"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " item"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " chase"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Verm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "illion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " task"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " *"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "*"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Tasks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-page"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " item"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " know"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " title"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " slightly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " different"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " narrower"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " update"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " way"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " regardless"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mark"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matching"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " task"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "done"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "pleted"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " once"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " we"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " identify"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " row"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " came"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " chatter"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " task"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " register"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shouldn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pretend"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " verified"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " task"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Fast"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "est"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " move"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " send"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " me"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " task"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " title"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ass"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ignee"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " paste"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " task"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " text"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’ll"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "oze"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " row"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 70956,
+      "totalTokens": 71193,
+      "outputTokens": 237,
+      "cacheHitRatio": 0.787,
+      "cachedInputTokens": 55808
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Snooze the COI chase task — Vermillion already sent it over.",
+          "selectedProjectId": 67,
+          "deterministicIntent": "task_followup",
+          "sourceSpecificRagKind": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "task_followup",
+          "planner": "model",
+          "rationale": "The user wants an operational task update: snoozing or pausing a follow-up task because the requested COI has reportedly been received. This is a task-management action rather than a request for status, source evidence, or app guidance. Because they are asking to perform or draft a record/action in the system, the safest route is draft_safe_action under task_followup.",
+          "confidence": "high",
+          "responseMode": "draft_safe_action",
+          "requiredTools": [],
+          "deterministicIntent": "task_followup",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-12T18:33:30.120Z"
+      },
+      {
+        "tool": "clientProjectIntelligencePacket",
+        "input": {
+          "query": "Snooze the COI chase task — Vermillion already sent it over.",
+          "intent": "task_followup",
+          "selectedProjectId": 67
+        },
+        "output": {
+          "mode": "additive-context",
+          "packetId": "2e4264d3-56f2-4c3a-a1fa-1db34c0b47d2",
+          "cardCount": 27,
+          "packetAgeDays": 0,
+          "resolvedTarget": {
+            "id": "cc335677-58c6-4144-8e91-6d2fcc024bf8",
+            "slug": "25-126-vermillion-rise-warehouse",
+            "source": "selected_project",
+            "projectId": 67
+          },
+          "freshnessStatus": "fresh",
+          "operatingSummaryLoaded": false
+        },
+        "timestamp": "2026-05-12T18:33:36.668Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "streamingModelToolsEnabled": true
+        },
+        "timestamp": "2026-05-12T18:33:36.668Z"
+      },
+      {
+        "tool": "getActionItemsAndInsights",
+        "input": {
+          "projectId": 67,
+          "maxResults": 20,
+          "assigneeName": ""
+        },
+        "output": {
+          "summary": {
+            "insightCount": 0,
+            "openTaskCount": 20,
+            "overdueRFICount": 1,
+            "overdueTaskCount": 0,
+            "sourceErrorCount": 0,
+            "structuredActionItemCount": 60
+          },
+          "openTasks": [
+            {
+              "id": "edceede9-29b2-4344-be92-57d9c6ec2b6e",
+              "title": "Await client direction on structural base versus alternate designs before proceeding with structural",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": null,
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Await client direction on structural base versus alternate designs before proceeding with structural work",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "7e4baa5e-8764-4459-b0bf-b2427ffda922",
+              "title": "Visit Grand Rapids facility",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": "Brandon Clymer",
+              "priority": null,
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Visit the Grand Rapids facility to identify design improvements, enhance design clarity and safety, and avoid replicating outdated infrastructure.",
+              "sourceSystem": "meeting"
+            },
+            {
+              "id": "f0529bbc-2291-4a68-a847-622c07942191",
+              "title": "Review and incorporate electrical drop locations and additional valve inclusion into drawings per cl",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": null,
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Review and incorporate electrical drop locations and additional valve inclusion into drawings per client instructions",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "f146a96c-24fc-4625-8222-5ca04d089c72",
+              "title": "Obtain client direction regarding whether to reduce square footage or increase budget to manage risi",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": null,
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Obtain client direction regarding whether to reduce square footage or increase budget to manage rising structural design costs due to scope changes",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "93874683-bafc-436e-8c21-954224a84fc0",
+              "title": "Provide further details on lab mechanical tests and electrical equipment specifics as needed for des",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": null,
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Provide further details on lab mechanical tests and electrical equipment specifics as needed for design accuracy",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "d2e1f2c0-b2da-4e73-8db8-7355b920d2ad",
+              "title": "Package all final drawings from all disciplines for the May 15 permit submittal deadline, ensuring c",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": null,
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Package all final drawings from all disciplines for the May 15 permit submittal deadline, ensuring completeness and coordination",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "6d287e8c-65ae-4b79-9d48-4f35934d4d17",
+              "title": "Clarify mezzanine size and bathroom relocation details with client and communicate changes to all re",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": null,
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Clarify mezzanine size and bathroom relocation details with client and communicate changes to all relevant trades to ensure coordinated design updates",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "4636d134-a2c3-46f3-be92-9be388013d4c",
+              "title": "Send revised proposals and meeting notes to stakeholders to facilitate informed decision-making on b",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": null,
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Send revised proposals and meeting notes to stakeholders to facilitate informed decision-making on budget and design changes",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "b5f78207-7b77-4c9b-97c1-e357fba84d34",
+              "title": "Send formal documentation",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": "Bob Wright",
+              "priority": null,
+              "projectId": 67,
+              "assignedBy": "Andrew Harpenau",
+              "description": "Send the formal documentation for Andrew Harpenau's paperwork on the units that are in production.",
+              "sourceSystem": "outlook_email"
+            },
+            {
+              "id": "66b4d15a-aedc-4a90-9686-2293e7aabfaa",
+              "title": "Adjust permit cost reimbursement language to clearly exclude permit costs from contract sum and addr",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": null,
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Adjust permit cost reimbursement language to clearly exclude permit costs from contract sum and address reimbursement",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "c42dbfda-c702-447b-865d-091fba230f47",
+              "title": "Incorporate agreed changes related to breach cure period and notify Grant and Brandon accordingly (0",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": "Brandon Clymer",
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Incorporate agreed changes related to breach cure period and notify Grant and Brandon accordingly (01:09:00)",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "3ce66085-bab9-4271-abf0-f8d48a301456",
+              "title": "Modify punch list completion timing language to include “commence within” and diligence clauses addr",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": null,
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Modify punch list completion timing language to include “commence within” and diligence clauses addressing lead times",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "26674597-acab-44a6-ad75-041581969790",
+              "title": "Confirm spill containment strategy using proposed epoxy coating or concrete options and finalize spe",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": null,
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Confirm spill containment strategy using proposed epoxy coating or concrete options and finalize specifications",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "757b456a-93e9-430b-a6da-b63a525a82a9",
+              "title": "Complete electrical plans including addition of valves per client instructions and ensure all equipm",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": null,
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Complete electrical plans including addition of valves per client instructions and ensure all equipment is properly represented",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "80902cdd-2845-41ef-8cc4-32e273d388c0",
+              "title": "Resolve HVAC and exhaust details for lab spaces and chemical treatment areas based on clarifications",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": null,
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Resolve HVAC and exhaust details for lab spaces and chemical treatment areas based on clarifications received during the meeting",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "04a2d173-6fa8-4302-90d9-ccb5159550bb",
+              "title": "Confirm duct mounting specifications and coordinate with structural and HVAC teams to ensure proper ",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": null,
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Confirm duct mounting specifications and coordinate with structural and HVAC teams to ensure proper installation",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "aa86ae6a-b2ea-4fa7-8dc9-0b38bf07422d",
+              "title": "Support identification and documentation of electrical drop locations during team absence to maintai",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": "identification",
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Support identification and documentation of electrical drop locations during team absence to maintain project progress",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "50a8601e-b0df-4c94-add0-d924f53aa22e",
+              "title": "Coordinate with structural team to review precast wall penetrations related to HVAC and mechanical s",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": "structural",
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Coordinate with structural team to review precast wall penetrations related to HVAC and mechanical systems for permit submittal",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "a4d01e52-4e45-4caa-88d1-c58396e32911",
+              "title": "Update drawings to correct Make-Up Air (MUA) orientation and other noted issues from the meeting",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": null,
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Update drawings to correct Make-Up Air (MUA) orientation and other noted issues from the meeting",
+              "sourceSystem": "fireflies"
+            },
+            {
+              "id": "7d950786-2242-45e9-9f9d-4b0dad4f1299",
+              "title": "Coordinate with structural team on curb detail around chemical treatment area and slab integration t",
+              "status": "open",
+              "dueDate": null,
+              "overdue": false,
+              "assignee": "structural",
+              "priority": "medium",
+              "projectId": 67,
+              "assignedBy": null,
+              "description": "Coordinate with structural team on curb detail around chemical treatment area and slab integration to meet design and safety requirements",
+              "sourceSystem": "fireflies"
+            }
+          ],
+          "sourceRef": "[Source: Action Items & Insights]",
+          "overdueRFIs": [
+            {
+              "number": 2,
+              "status": "open",
+              "dueDate": "2026-04-10",
+              "subject": "Specified fire rating for north wall assembly",
+              "ballInCourt": "Brandon"
+            }
+          ],
+          "sourceErrors": [],
+          "priorityItems": [],
+          "meetingInsights": [
+            {
+              "date": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team discussed adjustments to the HVAC layout for a newly assigned 50,000 sq ft building, which is set to improve duct routing and production area flexibility. All HVAC units will be placed on the ground level in specified corners to align with future expansions, while ductwork will be positioned outside to avoid obstruction by tall racking. Structural engineering collaboration is crucial for determining wall penetrations, ensuring compliance with precast panel constraints. Pricing updates are anticipated soon, with a separation between office and warehouse costs to enhance budget clarity. The team aims to accommodate urgent client requests for responsive pricing while continuing layout refinements to minimize costs and maintain the project schedule.",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - null]"
+            },
+            {
+              "date": null,
+              "meeting": "Hillsdale Holdings // Alleato Weekly",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team discussed vital design aspects and demolition strategies to ensure operational efficiency and cost management. Significant points included retaining existing roof drains to avoid a costly rebuild estimated at $500,000, while ensuring controlled risk. The air recovery unit will be dismantled and reused elsewhere, minimizing new equipment costs. Gas piping's location was clarified, with controlled access to the site for verification. Decisions on HVAC unit sizes aimed to optimize current equipment despite an increase in building volume, with air changes adjusted accordingly. Moreover, plans for electrical service upgrades and compactor placements were evaluated, and compliance with sprinkler standards was confirmed to streamline design approval. The next steps include site verificat",
+              "sourceRef": "[Source: Meeting - \"Hillsdale Holdings // Alleato Weekly\" - null]"
+            },
+            {
+              "date": "2026-05-11T18:30:00+00:00",
+              "meeting": "A141 Discussion",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team made substantial progress in negotiating contract terms, particularly emphasizing a preference for litigation over arbitration for dispute resolution, due to flexibility and control concerns. Subcontractor approval thresholds were discussed, with proposals ranging from $10,000 to $300,000 while avoiding 'thin subbing' practices. Indemnification language was clarified to protect Hillsdale from liability arising from the design builder's actions. For payments, partial payments during disputes were agreed upon, with timelines for notification and resolution set at 15 days and 45 days respectively. Next steps involve Logan integrating the agreed changes for final review before contract execution following upcoming closing.",
+              "sourceRef": "[Source: Meeting - \"A141 Discussion\" - 2026-05-11T18:30:00+00:00]"
+            },
+            {
+              "date": "2026-05-07T17:00:00+00:00",
+              "meeting": "Vermillion design weekly call",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team discussed managing rising project costs due to expanded square footage and layout changes, leading to a nearly doubled cost estimate. They targeted a permit submittal by May 15, emphasizing the need for timely drawing completions. Clarifications on lab functions indicated low HVAC complexity, pivoting from chemical to mechanical testing, which impacts equipment needs. Electrical load specifications were addressed to ensure proper breaker sizing, while clear communication among team members regarding design changes and drawing submissions was vital to avoid delays. Ongoing coordination around structural details and materials aimed to enhance construction efficacy and prevent design conflicts.",
+              "sourceRef": "[Source: Meeting - \"Vermillion design weekly call\" - 2026-05-07T17:00:00+00:00]"
+            },
+            {
+              "date": "2026-05-06T15:00:00+00:00",
+              "meeting": "Hillsdale Holdings // Alleato Weekly",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "During the meeting, the team confirmed the contract close date for April 13th, emphasizing that signing will not affect project timelines, with long lead items set to begin post-signing. Early orders for steel and equipment to secure leading items were discussed, with a focus on a mid-June construction start and late July steel erection. Cost adjustments regarding electrical scope were addressed, with a revised estimate and deductive change orders proposed to return savings to the client. The importance of design coordination was highlighted, particularly with regards to fire protection and HVAC systems, and a site visit by Brandon Clymer was planned to enhance design clarity and safety.",
+              "sourceRef": "[Source: Meeting - \"Hillsdale Holdings // Alleato Weekly\" - 2026-05-06T15:00:00+00:00]"
+            },
+            {
+              "date": "2026-04-30T17:00:00+00:00",
+              "meeting": "Vermillion design weekly call",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team discussed critical updates regarding HVAC and plumbing coordination ahead of slab pouring, emphasizing the decision to route the main water line underground to prevent hanging pipes and facilitate maintenance. A request for a plumbing valve addition near the sump was acknowledged for enhancing fluid control. HVAC coordination with electrical systems was also highlighted, with revised drawings due next Wednesday. Structural plan updates were necessary to align column placements with the second-floor build-out, which requires timely sharing to prevent rework. Detailed electrical drawings are expected early next week for owner review, including specific drop locations. Lastly, the team agreed to consolidate questions for clearer communication with the owner's representative during an",
+              "sourceRef": "[Source: Meeting - \"Vermillion design weekly call\" - 2026-04-30T17:00:00+00:00]"
+            },
+            {
+              "date": "2026-04-23T17:00:00+00:00",
+              "meeting": "Vermillion design weekly call",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team reviewed the project design progress, confirming they are on track to meet the May 15 submission deadline. Key focuses included finalizing architectural finishes and interior elevations, with Jerome ensuring schedules align with the main plan. Mechanical drawings are mostly complete, requiring minor adjustments for fan and door placements, while plumbing layout needs just one remaining connection. Electrical work is ongoing, with a need for prior project plans to minimize repeated inquiries. Documentation sharing is essential for consistency, and all teams are expected to deliver full progress drawings by next Wednesday, alongside a commitment to streamline communication regarding the project scope.",
+              "sourceRef": "[Source: Meeting - \"Vermillion design weekly call\" - 2026-04-23T17:00:00+00:00]"
+            },
+            {
+              "date": "2026-04-16T17:00:00+00:00",
+              "meeting": "Vermillion design weekly call",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The meeting addressed important aspects of plumbing system compliance, focusing on the sump pump design to manage sprinkler discharge and ensure fire code adherence. Electrical vault placement was confirmed to centralize 480V feeds while considering load distribution for efficiency and corrosion control. Adjustments in HVAC unit positioning were discussed to minimize duct complexity and noise levels, alongside wall treatments to reduce heat loss. Communication enhancements were emphasized, particularly the use of Autodesk Construction Cloud for streamlined document access. Key project schedule checkpoints were established, including specific deadlines for plumbing layouts, electrical drawings, and fire protection calculations.",
+              "sourceRef": "[Source: Meeting - \"Vermillion design weekly call\" - 2026-04-16T17:00:00+00:00]"
+            },
+            {
+              "date": "2026-04-13T15:00:00+00:00",
+              "meeting": "Vermillion Rise structural coordination",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team convened to enhance project coordination through direct communication, overseen by Keith Fisher, to expedite decision-making. Jerome will directly manage engineering communications, ensuring Keith is updated on all correspondence. A proposal was made to limit the initial contract solely to engineering services for quicker integration, with Keith tasked to revise this proposal. The preference for CAD files over Revit for deliverables was articulated to optimize workflow and costs. There's a pressing need to confirm the permit schedule and finalize the project timeline to prevent delays. Additionally, the importance of sharing accurate existing building documentation was emphasized, along with plans for Jerome to provide Keith access to BIM360 for timely collaboration and transparen",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise structural coordination\" - 2026-04-13T15:00:00+00:00]"
+            },
+            {
+              "date": "2026-04-09T17:00:00+00:00",
+              "meeting": "Vermillion design weekly call",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The meeting covered essential design and layout adjustments, particularly the finalized mezzanine height of 13'4” for mechanical system accommodation. Changes were agreed for the break room ceiling, while structural coordination with Steel Services is in progress, with Bob Wright tasked to follow up on details. The compactor's final design was established, requiring coordination with the fire protection system. Mechanical and plumbing needs were discussed, especially regarding containment requirements for the Class 2 Oxidizer Room, emphasizing integration with fire alarms. The electrical system needs an upgrade from 400 amps to 2400 amps, and the project's permit submission deadline is set for May 15, with weekly coordination calls established to ensure progress.",
+              "sourceRef": "[Source: Meeting - \"Vermillion design weekly call\" - 2026-04-09T17:00:00+00:00]"
+            },
+            {
+              "date": "2026-04-08T20:00:00+00:00",
+              "meeting": "Vermillion layout call",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The discussion centered on improving the facility layout, particularly around bathrooms and vestibules, with Mark Ferderer suggesting moving bathrooms west to maximize usable space despite a slight impact on women's locker availability. Updates to corridor access included installing an airlock vestibule to manage airflow and separation between office and staff areas. The mezzanine layout faced limitations from structural elements, necessitating flexibility in hallway widths. Adjustments to wall heights were considered, aiming for a balance between daylight and privacy. Water fountains will be replaced with bottle fillers for modern hydration needs, and the break room is designed for occupancy up to 50. Enhancements to employee entrances aim to streamline access while maintaining security. ",
+              "sourceRef": "[Source: Meeting - \"Vermillion layout call\" - 2026-04-08T20:00:00+00:00]"
+            },
+            {
+              "date": "2026-03-25T15:00:00+00:00",
+              "meeting": "Hillsdale Holdings // Alleato Weekly",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The meeting addressed several key areas including payment processing delays with vendors, where the team noted that initial payments must be live checks to enable automatic payments that help reduce future delays. In design and structural planning, updated base plans and CAD confirmations were confirmed, with specific focus on concrete work to support equipment loads. The sprinkler system was also discussed, emphasizing ESFR K25 heads for the warehouse and compliance with fire codes. Additionally, the project schedule targeting June slab pours and July equipment staging was outlined, alongside the need for cost clarity ahead of a significant review. Lastly, the team emphasized open communication to facilitate quick problem-solving and project momentum.",
+              "sourceRef": "[Source: Meeting - \"Hillsdale Holdings // Alleato Weekly\" - 2026-03-25T15:00:00+00:00]"
+            },
+            {
+              "date": "2026-03-18T18:00:00+00:00",
+              "meeting": "Hillsdale Holdings // Alleato Weekly",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team discussed vital design aspects and demolition strategies to ensure operational efficiency and cost management. Significant points included retaining existing roof drains to avoid a costly rebuild estimated at $500,000, while ensuring controlled risk. The air recovery unit will be dismantled and reused elsewhere, minimizing new equipment costs. Gas piping's location was clarified, with controlled access to the site for verification. Decisions on HVAC unit sizes aimed to optimize current equipment despite an increase in building volume, with air changes adjusted accordingly. Moreover, plans for electrical service upgrades and compactor placements were evaluated, and compliance with sprinkler standards was confirmed to streamline design approval. The next steps include site verificat",
+              "sourceRef": "[Source: Meeting - \"Hillsdale Holdings // Alleato Weekly\" - 2026-03-18T18:00:00+00:00]"
+            },
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "meeting": "Vermillion Rise Existing building discussions",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "🏗️ Revised Building Layout Optimizes HVAC Setup: New layout is 50,000 sq ft, simplifies duct routing, and improves production area flexibility.\n🛠️ HVAC Units Placement Confirmed on Ground Level: Units will remain on the ground, in northwest, northeast, and west corners, aligning with future expansions.\n📏 Duct and Louver Positioning Adjusted: Ductwork outside walls avoids racking, maintaining 68-inch clearance; structural engineering needed for wall penetrations.\n💰 Pricing Update Expected by Mid to End Next Week: Anticipates minimal price changes due to reduced ductwork; pricing will separate office and warehouse costs.\n⏱️ Client Demands Prompt Responsive Pricing Efforts: Urgent pricing update requested despite scope changes; close communication necessary for accurate estimates.",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            },
+            {
+              "date": "2026-03-10T14:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "⏸️ Project Status On Hold: Development paused pending ownership decision regarding project direction.\n🚫 No Progress Updates: Grant attending meetings but has no active tasks or updates to report.\n⚠️ Communication Bottleneck: Next steps depend on input from Brandon; uncertainty is hindering progress.\n📧 Monitoring for Updates: Jerome will look out for emails from Brandon and others for further information.\n🆗 Support Readiness: Grant is on standby to assist once project direction is clarified.",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-03-10T14:00:00+00:00]"
+            },
+            {
+              "date": "2026-02-17T15:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "✅ Updated Drawings Ready: All team members received latest updated drawings and CAD files for review; AJ to distribute access link.\n⏳ Delayed Submission: Awaiting owner approval while internal progress continues; AJ following up on contract finalization.\n📐 Structural Drawings Progress: Minor changes being made; team aligned with AJ to maintain schedule despite contract hold.\n⚙️ Mechanical Openings Delivery: Plans expected by Friday; approach ensures production deadlines remain unaffected.\n🗂️ Civil Submission Near Completion: Need updated architectural CAD for verification; AJ to add files for civil team's accuracy.\n🤝 Streamlined Collaboration: File sharing maintains accuracy among disciplines, reducing errors and supporting on-time project milestones.",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-17T15:00:00+00:00]"
+            },
+            {
+              "date": "2026-02-10T15:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "🚧 Permit Submission Status: Submissions on hold until board and client approvals are received; critical for construction timelines.\n📄 Preparation for CDR Applications: Documents ready to expedite submission once approval is granted; minimizes downtime and supports project timeline.\n⚙️ Civil and Structural Coordination: Teams aligned on minor clarifications; quick resolutions will keep submissions on track post-permit release.\n🏗️ Precast Shop Drawings Feedback: Rapid review expected; quick feedback from AJ will avoid delays in precast fabrication and delivery.\n📞 Open Communication Channels: AJ will follow up with team members after return; ensures timely address of pending issues and project momentum.",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-10T15:00:00+00:00]"
+            },
+            {
+              "date": "2026-02-03T15:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "🏗️ Structural Revisions: Wall and ceiling specifications are updated for fire rating compliance in key rooms and mechanical areas.\n🧱 Slab Removal: Thickened slab on the north end removed; pending architectural design to avoid premature concrete pricing.\n✅ Approval Timeline: Full owner approval expected soon, enabling contract issuance and rapid processing of design services invoices.\n💰 Cost Efficiency: Preference for cost-effective 6-inch CMU walls to meet fire rating, balancing budget and safety requirements.\n🤝 Coordination Needs: Enhanced collaboration among architecture, interiors, and MEP to prevent design errors and costly rework.\n📅 Production Schedule: Mid-March production start on track; timely structural details and communication critical for project timeline.",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-03T15:00:00+00:00]"
+            },
+            {
+              "date": "2026-01-27T18:30:00+00:00",
+              "meeting": "Vermillion Rise Office Pricing Rundown",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The meeting centered around the preparation and distribution of bid packages for the Vermillion project, with a focus on essential trades like framing, drywall, and flooring to meet a mid-March start date. AJ Taylor confirmed responsibilities for electrical and other scopes while delegating framing and drywall tasks to Enzo Andrade. Bid packages are due by March 5, allowing subcontractors about a week to respond. The project size has been reduced significantly from 500,000 to 50,000 sq ft, necessitating updated pricing from previous bidders. AJ and Enzo emphasized the importance of using current drawings and engaging subcontractors with prior budget pricing to ensure clarity and accuracy in bids. They are utilizing tools like Notion and Building Connected to streamline the bid management p",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Office Pricing Rundown\" - 2026-01-27T18:30:00+00:00]"
+            },
+            {
+              "date": "2026-01-27T15:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team is preparing to submit updated plans for drainage and erosion control to the county by Friday, aiming for prompt construction permit approvals. Alex McDaniel confirmed that the plans and drainage reports will be submitted to the appropriate reviewers, with no expected issues after county approval. They tentatively set the construction timeline for March to March, allowing a full year for completion. Updated CAD files reflecting wall type changes will be sent by Noah Porter, while AJ emphasized the need for consistency in openings. Early submission of foundation plans is planned, with AJ coordinating with Jerome for permit details. AJ is also focusing on finalizing contracts and billing documentation, prioritizing POS documents for billing post-approval. The team confirmed clear ow",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-01-27T15:00:00+00:00]"
+            },
+            {
+              "date": "2026-01-20T15:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team discussed several key adjustments to building design and site layout to improve functionality and compliance. They agreed to raise the mezzanine finished floor height from 10 feet 8 inches to 12 feet to provide adequate ceiling clearance in office areas and the break room. Structural foundation inconsistencies were addressed, particularly regarding footing types and placements, ensuring proper load distribution. Site layout revisions included adding a new man door for improved egress and redesigning sump pump locations for better drainage and future access. Pond sizing was optimized, and grading plans were refined to facilitate future expansion while maintaining drainage efficiency. The team also considered cost-effective grading solutions to reduce the need for retaining walls wh",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-01-20T15:00:00+00:00]"
+            },
+            {
+              "date": "2026-01-13T15:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team discussed the completion of the updated CAD layout, ensuring it aligns with client needs, including maintaining a 12x14 ft overhead door for operational efficiency. Structural drawings are nearing completion, with preliminary versions expected by week's end to facilitate timely material orders. The urgency of contract finalization was highlighted, with expectations for a signed contract in one to two weeks to secure material procurement and maintain the schedule for steel erection planned for May 20. Mechanical design constraints were addressed, emphasizing the need for duct work to exit through side walls due to safety concerns. The team recognized external pressures from rising material costs, necessitating proactive measures in procurement and scheduling.",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-01-13T15:00:00+00:00]"
+            },
+            {
+              "date": "2026-01-09T13:30:00+00:00",
+              "meeting": "Vermillion Rise - D/B Project",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team discussed the configuration of three HVAC units to effectively balance cost and coverage. Andrew Harpenau and Clay Robinson confirmed that one unit could serve combined class one and two areas, achieving 22,000 CFM at 70% humidity and 75°F design criteria. This consolidation aims to reduce costs by minimizing the number of units and ductwork. For the production area, which requires four air changes due to gases, two smaller units will be installed to avoid oversizing. Exhaust fans will be strategically placed to prevent cross-contamination, with maintenance planned every six months. The team also emphasized cost optimization by using fabric ducting instead of stainless steel, along with a timeline for design updates and pricing, aiming for a follow-up meeting mid-next week.",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - D/B Project\" - 2026-01-09T13:30:00+00:00]"
+            },
+            {
+              "date": "2026-01-06T15:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The meeting focused on establishing a clear project timeline with earthwork starting in February and precast production by mid-March. Alex McDaniel confirmed that check set plans will be sent by the end of the week and a final permitting set will follow next week to secure required approvals, including an IDEM erosion control permit. The team agreed to size storm infrastructure for the full master plan to prevent future costly replacements, with AJ Taylor to confirm plans with the owner. Utility routing was finalized to minimize costs and avoid road crossings, with two fire hydrants installed to meet Indiana fire code. Key design updates were approved to enhance cost efficiency, including simplified structural elements and adjustments to the maintenance area slab. Improved communication an",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-01-06T15:00:00+00:00]"
+            },
+            {
+              "date": "2025-12-30T15:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The meeting addressed critical project timelines, confirming that layout updates are due by January 8th, with Jerome Daksiewicz affirming that the adjustments to wall elevations are manageable. AJ Taylor requested a code review on updated quantities from Mark, emphasizing the impact of occupancy thresholds on HVAC requirements, which will guide necessary design changes. Despite Jerome's upcoming PTO, he committed to delivering the updates and code review early next week to minimize delays. Discussion on resource availability highlighted challenges during the holiday season, but both participants stressed the importance of maintaining momentum and open communication to avoid bottlenecks. Personal updates provided context to their availability, with AJ sharing parenting constraints and Jerom",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-12-30T15:00:00+00:00]"
+            },
+            {
+              "date": "2025-12-23T15:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team discussed significant adjustments to the building design, primarily reducing its size by approximately 50,000 square feet as mandated by the owner, which has implications for design costs and project timelines. AJ Taylor emphasized the importance of clear communication regarding added costs to the owner and indicated a slight delay in the construction schedule, with earthwork anticipated to start in February or March. The revised layout maintains essential operational areas while removing some storage and shipping sections. Coordination among structural and civil teams is crucial, particularly regarding the demising wall's support for future expansions. To maintain alignment, AJ committed to updating and distributing CAD files promptly, ensuring all stakeholders are informed and e",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-12-23T15:00:00+00:00]"
+            },
+            {
+              "date": "2025-12-16T15:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team discussed key architectural adjustments, including reinstating the original bathroom entrance layout and adding a second door for dust control, with AJ Taylor leading this effort. Keith Fisher confirmed the structural set was emailed and reviewed, noting minor changes without major delays. Budget considerations were addressed, with AJ Taylor and Brandon Clymer requesting credits for a potential building size reduction while maintaining flexibility for phased construction. In civil engineering, Alex McDaniel reported progress on grading and stormwater designs, aiming for a full civil review set by week's end. Utility infrastructure plans were also discussed, focusing on efficient wastewater handling. The team agreed to maintain weekly meetings through the holidays to ensure project",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-12-16T15:00:00+00:00]"
+            },
+            {
+              "date": "2025-12-12T19:30:00+00:00",
+              "meeting": "Vermillion Rise Update",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team discussed a revised plant layout that reduces the facility size by 60,000 square feet while preserving essential areas such as the office and shipping dock. Mark presented this design to lower initial costs and risks, while still allowing for future expansion. Brandon is tasked with providing a cost estimate for the reduced scope by next Thursday's board meeting, focusing on major cost drivers like precast concrete and HVAC systems. The potential downsizing may delay the project start by 1 to 1.5 months, and a six-week buffer is recommended to account for redesign efforts. The client is taking a cautious stance regarding capital investments due to economic uncertainties in the luxury pool market, aiming to mitigate risks without compromising the ability to scale production later. ",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Update\" - 2025-12-12T19:30:00+00:00]"
+            },
+            {
+              "date": "2025-12-11T18:30:00+00:00",
+              "meeting": "25-1799R1 Vermillion Rise HVAC",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The team met to address a critical budget issue, needing to reduce project costs from $1.3 million to $416,000 to avoid a $900,000 overrun. AJ Taylor emphasized the importance of explaining this cost gap to ownership and finding more cost-effective solutions. Extensive ductwork currently drives up costs, particularly with the warehouse space contributing an $800,000 delta. The team agreed to urgently review the ductwork design to optimize materials and labor while ensuring safety and code compliance. Discussions also centered on interpreting code requirements for air exchange to prevent hazardous conditions, with suggestions for less costly design alternatives. The team plans to consult with engineers and code consultants to clarify interpretations and explore cost-efficient design options",
+              "sourceRef": "[Source: Meeting - \"25-1799R1 Vermillion Rise HVAC\" - 2025-12-11T18:30:00+00:00]"
+            },
+            {
+              "date": "2025-12-09T15:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The meeting addressed critical deliverables including the architectural team’s commitment to deliver a full review set by Thursday, the 11th, with minimal expected changes. Alex McDaniel is preparing the initial civil review set, emphasizing the need to relocate roof downspouts outside truck dock areas and confirming structural details for retaining walls, with Keith Fisher tasked for these details. Mechanical cost tracking was highlighted, with AJ Taylor requesting a breakdown between warehouse and office spaces for budget discussions. The precast team aims to submit shop drawings by December 19th, with RFIs expected soon to resolve ongoing queries. The emphasis on shared document management and timely updates was discussed to streamline communication and ensure the project stays on sched",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-12-09T15:00:00+00:00]"
+            },
+            {
+              "date": "2025-12-02T15:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "The meeting addressed critical updates on architectural design adjustments, emphasizing the importance of finalizing window sizing and layout to maintain project timelines. AJ Taylor confirmed the structural constraints for the mezzanine and clarified the flexibility of window panel legs with DKGR. Jerome committed to finalizing window sizes to facilitate AJ’s meeting with Mark. Canopy specifications were discussed, focusing on budget-friendly options to avoid delays associated with custom fabrication. The timeline for architectural deliverables was confirmed, targeting a complete set by January 11th, with structural submissions due by January 9th. Civil layout progress depends on imminent survey data, while mechanical systems are being designed with attention to air quality in the process",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-12-02T15:00:00+00:00]"
+            },
+            {
+              "date": "2025-11-18T00:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "- **Survey Data Complete:** Boundary issue resolved, moving forward with civil tasks, and six-week deadline emphasized.  \n- **Office Space Adjusted:** Reduced from 4,000 to 2,600 square feet; layouts in progress for owner approval.  \n- **Structural Drawings Progressing:** Targeting 80% completion today to initiate precast work, despite pending geotech data.  \n- **MEP Coordination Required:** Revit and CAD files needed for ductwork alignment; life safety zoning meeting scheduled.  \n- **County Documentation Shared:** CAD and Revit files sent to county for review; proactive communication to avoid delays.  \n- **Project Timeline Urgency:** Six-week target stressed for civil and structural packages; meetings planned for coordinated decisions.",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-11-18T00:00:00+00:00]"
+            },
+            {
+              "date": "2025-11-11T00:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "- **Column Grid Adjustments:** Finalize column grid changes and cost impacts before foundation drawings can proceed.\n\n- **Building Footprint Status:** Maintain footprint at approximately 111,153 square feet to prevent additional costs.\n\n- **Pond Relocation:** Shift detention pond to the west side for effective water management and align with site topography.\n\n- **Foundation Coordination:** Ensure soil reports and topo data align with foundation plans to avoid rework.\n\n- **Precast Production Schedule:** Deliver 80% structural drawings by November 17 to keep precast production on track.\n\n- **MEP Code Compliance:** Align MEP design with building requirements to mitigate costly adjustments and optimize opening placements.",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-11-11T00:00:00+00:00]"
+            },
+            {
+              "date": "2025-11-06T00:00:00+00:00",
+              "meeting": "Vermillion Rise Plumbing and Electrical Scope Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "- **Plumbing Design:** Basic utilities for restrooms, wash down pads, and break room with cost-control measures in design.  \n- **Electrical Requirements:** 2400 amp main service with three subpanels; lighting needs 75 foot candles for safety in chemical areas.  \n- **Project Timeline:** 80% architectural drawings due January 17; completion targeted for first week of October 2024.  \n- **Code Compliance:** Facilities classified as H3; strict adherence to safety, venting, and moisture control necessary.  \n- **Site Utilities:** Utilities will enter from the northeast; site is a repurposed chemical depot with full utility access.  \n- **Collaboration Focus:** Emphasis on clear communication and rapid feedback to meet project timelines and budget constraints.",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Plumbing and Electrical Scope Meeting\" - 2025-11-06T00:00:00+00:00]"
+            },
+            {
+              "date": "2025-11-04T00:00:00+00:00",
+              "meeting": "Vermillion Rise Plumbing Scope Review",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "- **Project Scope Confirmed:** Plumbing for 100,000 sq ft warehouse; includes two men's restrooms, women's restrooms, and one unisex bathroom.  \n- **Plumbing Design Details:** Includes two wash down pads, a single 6-inch sanitary line, and showers in locker rooms.  \n- **Material Choices:** Using PEX piping and stainless steel exhaust fans; small-capacity water heaters for main and shipping areas.  \n- **Ventilation Strategy:** 100% outside air intake and five air changes per hour ensure safety from chemical exposure.  \n- **Timeline Established:** Earthwork starts in January; underground plumbing slated for May; coordination for cost confirmation is key.  \n- **Cost Control Focus:** Design-build simplifies plumbing installation, minimizing surprises by keeping costs and materials aligned.",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Plumbing Scope Review\" - 2025-11-04T00:00:00+00:00]"
+            },
+            {
+              "date": "2025-11-04T00:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "- **Architectural Framework:** Complete architectural elevations and openings needed by October 17 to meet installation schedules. \n\n- **Structural Coordination:** 50 by 54-foot column grid finalized for steel framing, with building dimensions set at 434 feet 2 1/4 inches by 253 feet 3 inches.\n\n- **Topographic Delays:** Topographic survey delays could compress design timelines; internal resources will shift to keep project on track.\n\n- **Critical Milestones:** Structural and architectural drawings for precast fabrication due by October 17 to avoid installation delays.\n\n- **Mechanical Planning:** Five HVAC pass-through locations identified; structural prep will allow for later mechanical integration without roof penetrations.\n\n- **Cost Efficiency:** Decisions made to use simpler roofing and",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-11-04T00:00:00+00:00]"
+            },
+            {
+              "date": "2025-10-28T00:00:00+00:00",
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "- **Project Timeline:** Dirt work starts in January; foundation permit submission is targeted before Christmas for timely progress.  \n- **Structural Details:** 64-inch girder height provides 20-foot 4-inch clearance, suitable for H3 occupancy under dry sprinkler system constraints.  \n- **Building Design:** 232 by 452-foot precast structure includes 5,000 square feet of office space for 32 employees, ensuring functional use.  \n- **Civil Engineering Start:** Civil work commences after December 31 survey; finalizing door and dock locations is crucial for efficient grading.  \n- **Documentation Standards:** All submittals will follow a uniform 42 by 30-inch format; finalized drawings to be delivered by week's end.  \n- **Safety Focus:** Design meets NFPA standards for chemical storage, emphasizi",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2025-10-28T00:00:00+00:00]"
+            },
+            {
+              "date": "2025-08-12T00:00:00+00:00",
+              "meeting": "Vermillion Rise Huddle",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "### Executive Summary of the Vermillion Rise Huddle\n\n**Meeting Purpose and Key Participants**  \nThe Vermillion Rise Huddle was convened to discuss project updates and coordinate efforts among team members involved in the Vermillion Rise project. Key participants included Alex Awehner, Jesse Dawson, and Brendan Clymer, among others. The meeting aimed to ensure that all team members were aligned on project estimates, scope definitions, and next steps in the bidding process.\n\n**Main Topics Discussed**  \nThe discussion primarily revolved around project estimates and scope clarifications. Awehner reported that he had begun creating a new estimate based on the initial design estimate provided by Dawson. They reviewed the existing budget documents, specifically the \"Vermillion Rise edition budget",
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Huddle\" - 2025-08-12T00:00:00+00:00]"
+            },
+            {
+              "date": "2025-06-20T00:00:00+00:00",
+              "meeting": "Vermillion Addition Budget Review",
+              "project": "Vermillion Rise Warehouse",
+              "keyPoints": "### Executive Summary: Vermillion Addition Budget Review Meeting\n\n**Meeting Purpose and Key Participants**  \nThe Vermillion Addition Budget Review meeting was convened to assess and finalize the budget for the upcoming construction project. Key participants included **Bclymer** and **Jdawson**, who engaged in a detailed discussion regarding the financial aspects of the project, including cost estimates and budget allocations.\n\n**Main Topics Discussed**  \nThe primary focus of the meeting was on the budget calculations for the project, specifically the costs associated with the interior build-out of the existing warehouse. Jdawson presented a preliminary budget estimate of approximately **$1.43 million**, which included **$135 per square foot** for the build-out and additional costs for othe",
+              "sourceRef": "[Source: Meeting - \"Vermillion Addition Budget Review\" - 2025-06-20T00:00:00+00:00]"
+            }
+          ],
+          "unresolvedInsights": [],
+          "structuredActionItems": [
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "title": "⏱️ Client Demands Prompt Responsive Pricing Efforts: Urgent pricing update requested despite scope changes",
+              "detail": "⏱️ Client Demands Prompt Responsive Pricing Efforts: Urgent pricing update requested despite scope changes",
+              "dueDate": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": null,
+              "priority": 70,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            },
+            {
+              "date": "2026-02-10T15:00:00+00:00",
+              "title": "critical for construction timelines.",
+              "detail": "critical for construction timelines.",
+              "dueDate": null,
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": null,
+              "priority": 70,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-10T15:00:00+00:00]"
+            },
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "title": "Coordinate with Tommy and others to open and review CAD files sent by Brandon (06:09)",
+              "detail": "Coordinate with Tommy and others to open and review CAD files sent by Brandon (06:09)",
+              "dueDate": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": "Brandon",
+              "priority": 55,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            },
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "title": "💰 Pricing Update Expected by Mid to End Next Week: Anticipates minimal price changes due to reduced ductwork",
+              "detail": "💰 Pricing Update Expected by Mid to End Next Week: Anticipates minimal price changes due to reduced ductwork",
+              "dueDate": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": "Mid to End Next Week",
+              "priority": 55,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            },
+            {
+              "date": "2026-03-10T14:00:00+00:00",
+              "title": "⏸️ Project Status On Hold: Development paused pending ownership decision regarding project direction.",
+              "detail": "⏸️ Project Status On Hold: Development paused pending ownership decision regarding project direction.",
+              "dueDate": null,
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": "ship decision regarding project direction",
+              "priority": 55,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-03-10T14:00:00+00:00]"
+            },
+            {
+              "date": "2026-02-17T15:00:00+00:00",
+              "title": "Prepare to submit drawings by Friday, moving forward with or without the mechanical openings received (02:54)",
+              "detail": "Prepare to submit drawings by Friday, moving forward with or without the mechanical openings received (02:54)",
+              "dueDate": null,
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": "Friday",
+              "priority": 55,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-17T15:00:00+00:00]"
+            },
+            {
+              "date": "2026-02-17T15:00:00+00:00",
+              "title": "⏳ Delayed Submission: Awaiting owner approval while internal progress continues",
+              "detail": "⏳ Delayed Submission: Awaiting owner approval while internal progress continues",
+              "dueDate": null,
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": "approval while internal progress",
+              "priority": 55,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-17T15:00:00+00:00]"
+            },
+            {
+              "date": "2026-02-17T15:00:00+00:00",
+              "title": "⚙️ Mechanical Openings Delivery: Plans expected by Friday",
+              "detail": "⚙️ Mechanical Openings Delivery: Plans expected by Friday",
+              "dueDate": null,
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": "Friday",
+              "priority": 55,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-17T15:00:00+00:00]"
+            },
+            {
+              "date": "2026-02-10T15:00:00+00:00",
+              "title": "Provide comments on precast shop drawings to Ozzie by next morning (03:35)",
+              "detail": "Provide comments on precast shop drawings to Ozzie by next morning (03:35)",
+              "dueDate": null,
+              "meeting": "Vermillion Rise - Weekly Design Meeting",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": "next morning",
+              "priority": 55,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise - Weekly Design Meeting\" - 2026-02-10T15:00:00+00:00]"
+            },
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "title": "Forward CAD files of current building layout and shell to Clay Robinson and team for review (02:14)",
+              "detail": "Forward CAD files of current building layout and shell to Clay Robinson and team for review (02:14)",
+              "dueDate": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": null,
+              "priority": 50,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            },
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "title": "Obtain and provide shop drawings from structural engineer or county/ATMI for precast panel penetrations (04:22)",
+              "detail": "Obtain and provide shop drawings from structural engineer or county/ATMI for precast panel penetrations (04:22)",
+              "dueDate": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": null,
+              "priority": 50,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            },
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "title": "Communicate with client to clarify the scope and timing for pricing and order confirmation (33:16)",
+              "detail": "Communicate with client to clarify the scope and timing for pricing and order confirmation (33:16)",
+              "dueDate": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": null,
+              "priority": 50,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            },
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "title": "Request and distribute base building CAD files to Enviro-Max team (31:46)",
+              "detail": "Request and distribute base building CAD files to Enviro-Max team (31:46)",
+              "dueDate": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": null,
+              "priority": 50,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            },
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "title": "Plan the layout of HVAC units on-site, considering expansion zones and physical constraints (09:27)",
+              "detail": "Plan the layout of HVAC units on-site, considering expansion zones and physical constraints (09:27)",
+              "dueDate": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": null,
+              "priority": 50,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            },
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "title": "Ensure duct routing accommodates racking and structural elements, adjusting door placement with Brandon (17:00)",
+              "detail": "Ensure duct routing accommodates racking and structural elements, adjusting door placement with Brandon (17:00)",
+              "dueDate": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": null,
+              "priority": 50,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            },
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "title": "Initiate pricing process upon layout finalization, targeting mid to late next week delivery (31:46)",
+              "detail": "Initiate pricing process upon layout finalization, targeting mid to late next week delivery (31:46)",
+              "dueDate": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": null,
+              "priority": 50,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            },
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "title": "Request full project pricing broken out between office and warehouse with Brandon (34:00)",
+              "detail": "Request full project pricing broken out between office and warehouse with Brandon (34:00)",
+              "dueDate": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": null,
+              "priority": 50,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            },
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "title": "Assist in opening CAD files and facilitating layout discussions (06:41)",
+              "detail": "Assist in opening CAD files and facilitating layout discussions (06:41)",
+              "dueDate": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": null,
+              "priority": 50,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            },
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "title": "Support structural review on joists and girders for duct clearance (19:24)",
+              "detail": "Support structural review on joists and girders for duct clearance (19:24)",
+              "dueDate": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": null,
+              "priority": 50,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            },
+            {
+              "date": "2026-03-17T14:30:00+00:00",
+              "title": "Provide technical input on exhaust and fan placement and mechanical room use (25:00)",
+              "detail": "Provide technical input on exhaust and fan placement and mechanical room use (25:00)",
+              "dueDate": null,
+              "meeting": "Vermillion Rise Existing building discussions",
+              "overdue": false,
+              "project": "Vermillion Rise Warehouse",
+              "assignee": null,
+              "priority": 50,
+              "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - 2026-03-17T14:30:00+00:00]"
+            }
+          ]
+        },
+        "timestamp": "2026-05-12T18:33:54.199Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 28753,
+          "finishReason": "tool-calls",
+          "outputTokens": 86,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getActionItemsAndInsights"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 42203,
+          "finishReason": "stop",
+          "outputTokens": 151,
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "extractStructuredActionBrief",
+            "createChangeOrder",
+            "createChangeEvent",
+            "updateProjectStatus",
+            "createRFI",
+            "createTask",
+            "createGeneratedTask",
+            "createProjectCompany",
+            "createProjectContact",
+            "updateGeneratedTask",
+            "deleteGeneratedTask",
+            "flagProjectRisk",
+            "updateRFIStatus",
+            "createMeetingNote",
+            "createSubmittal",
+            "logDailyReport",
+            "generateProjectSummary",
+            "createInitiativeCard",
+            "createCommitment",
+            "submitFeedback",
+            "addBoardItem",
+            "sendTeamsMessage",
+            "findRelatedFeatureRequests",
+            "captureFeatureRequestPacket",
+            "updateFeatureRequestPacket",
+            "scoreFeatureRequestReadiness",
+            "generateImplementationPlan",
+            "generateClaudeCodeHandoff",
+            "draftLinearIssueFromFeatureRequest",
+            "draftLinearSubIssuesFromImplementationPlan",
+            "attachLinearIssueToFeatureRequest",
+            "attachLinearSubIssueToFeatureRequest",
+            "recordLinearStatusUpdateForFeatureRequest",
+            "createWeeklyProgressReportDraft",
+            "updateProgressReportSections",
+            "listProgressReportPhotos",
+            "selectProgressReportPhotos",
+            "generateProgressReportPdf",
+            "listWorkspaceArtifacts",
+            "getDraftArtifact",
+            "saveWorkspaceArtifact",
+            "promoteWorkspaceArtifact",
+            "getSubmittalLog",
+            "getSpecRequirements",
+            "detectMissingSubmittals",
+            "logFeedback",
+            "reviewDocument",
+            "consultCFO",
+            "consultCOO",
+            "consultCRO",
+            "consultCHRO",
+            "consultVPBD",
+            "consultCMO",
+            "getCommitmentsOverview",
+            "getChangeOrderDetails",
+            "getDirectCostsSummary",
+            "getBudgetLineItems",
+            "getCostTrends",
+            "getMarginAnalysis",
+            "getAPAgingReport",
+            "getARAgingReport",
+            "getCashPositionReport",
+            "getVendorSpendReport",
+            "getRecentBills",
+            "getRecentInvoices",
+            "getAcumaticaProjectBudget",
+            "getAcumaticaProjectList",
+            "getPurchaseOrderSummary",
+            "getPeopleAndRoles",
+            "getVendorPerformance",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getCrossProjectComparison",
+            "getHistoricalTrends",
+            "semanticSearch",
+            "getCompanyKnowledge",
+            "recallPastConversations",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "saveToKnowledgeBase",
+            "saveInsight",
+            "searchMemories",
+            "writeMemory",
+            "findProject",
+            "getRecentEmails",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchExternalDocuments",
+            "queryBudgetData",
+            "queryChangeOrders",
+            "queryCommitments",
+            "queryDirectCosts",
+            "queryScheduleTasks",
+            "queryDocumentRows",
+            "searchStructuredFinancialRows",
+            "getScheduleAnalysis",
+            "searchAppHelp",
+            "getForecastComparison",
+            "getMeetingIntelligence",
+            "getProjectBriefingSnapshot",
+            "getFinancialAnalysis",
+            "getProjectBudgetSummary",
+            "getActionItemsAndInsights",
+            "getMeetingsByDate",
+            "searchDocuments",
+            "getProjectDetails"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "extractStructuredActionBrief",
+            "createChangeOrder",
+            "createChangeEvent",
+            "updateProjectStatus",
+            "createRFI",
+            "createTask",
+            "createGeneratedTask",
+            "createProjectCompany",
+            "createProjectContact",
+            "updateGeneratedTask",
+            "deleteGeneratedTask",
+            "flagProjectRisk",
+            "updateRFIStatus",
+            "createMeetingNote",
+            "createSubmittal",
+            "logDailyReport",
+            "generateProjectSummary",
+            "createInitiativeCard",
+            "createCommitment",
+            "submitFeedback",
+            "addBoardItem",
+            "sendTeamsMessage",
+            "findRelatedFeatureRequests",
+            "captureFeatureRequestPacket",
+            "updateFeatureRequestPacket",
+            "scoreFeatureRequestReadiness",
+            "generateImplementationPlan",
+            "generateClaudeCodeHandoff",
+            "draftLinearIssueFromFeatureRequest",
+            "draftLinearSubIssuesFromImplementationPlan",
+            "attachLinearIssueToFeatureRequest",
+            "attachLinearSubIssueToFeatureRequest",
+            "recordLinearStatusUpdateForFeatureRequest",
+            "createWeeklyProgressReportDraft",
+            "updateProgressReportSections",
+            "listProgressReportPhotos",
+            "selectProgressReportPhotos",
+            "generateProgressReportPdf",
+            "listWorkspaceArtifacts",
+            "getDraftArtifact",
+            "saveWorkspaceArtifact",
+            "promoteWorkspaceArtifact",
+            "getSubmittalLog",
+            "getSpecRequirements",
+            "detectMissingSubmittals",
+            "logFeedback",
+            "reviewDocument",
+            "consultCFO",
+            "consultCOO",
+            "consultCRO",
+            "consultCHRO",
+            "consultVPBD",
+            "consultCMO",
+            "getCommitmentsOverview",
+            "getChangeOrderDetails",
+            "getDirectCostsSummary",
+            "getBudgetLineItems",
+            "getCostTrends",
+            "getMarginAnalysis",
+            "getAPAgingReport",
+            "getARAgingReport",
+            "getCashPositionReport",
+            "getVendorSpendReport",
+            "getRecentBills",
+            "getRecentInvoices",
+            "getAcumaticaProjectBudget",
+            "getAcumaticaProjectList",
+            "getPurchaseOrderSummary",
+            "getPeopleAndRoles",
+            "getVendorPerformance",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getCrossProjectComparison",
+            "getHistoricalTrends",
+            "semanticSearch",
+            "getCompanyKnowledge",
+            "recallPastConversations",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "saveToKnowledgeBase",
+            "saveInsight",
+            "searchMemories",
+            "writeMemory",
+            "findProject",
+            "getRecentEmails",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchExternalDocuments",
+            "queryBudgetData",
+            "queryChangeOrders",
+            "queryCommitments",
+            "queryDirectCosts",
+            "queryScheduleTasks",
+            "queryDocumentRows",
+            "searchStructuredFinancialRows",
+            "getScheduleAnalysis",
+            "searchAppHelp",
+            "getForecastComparison",
+            "getMeetingIntelligence",
+            "getProjectBriefingSnapshot",
+            "getFinancialAnalysis",
+            "getProjectBudgetSummary",
+            "getActionItemsAndInsights",
+            "getMeetingsByDate",
+            "searchDocuments",
+            "getProjectDetails"
+          ]
+        }
+      ],
+      "totalStepCount": 2,
+      "finalFinishReason": "stop",
+      "preparedStepCount": 2,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 1
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "compiled intelligence packet with multiple evidence cards",
+        "retrieval trace included 27 source-bearing record(s) without inline citations"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

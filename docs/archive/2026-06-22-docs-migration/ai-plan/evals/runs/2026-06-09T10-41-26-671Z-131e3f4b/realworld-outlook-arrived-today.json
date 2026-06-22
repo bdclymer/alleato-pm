@@ -1,0 +1,473 @@
+{
+  "id": "realworld-outlook-arrived-today",
+  "intent": "source_lookup",
+  "prompt": "What came in through Outlook today that needs my attention?",
+  "selectedProjectId": null,
+  "sessionId": "9df57cd9-ac41-4cb3-969e-2fe725551dd0",
+  "sessionLabel": "eval-2026-06-09T10-41-26-671Z-131e3f4b-realworld-outlook-arrived-today",
+  "startedAt": "2026-06-09T10:42:35.046Z",
+  "finishedAt": "2026-06-09T10:43:42.246Z",
+  "durationMs": 63253,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 26,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "judge email_operator score 3 < 4: The answer does a decent job separating likely actionable emails from low-priority notifications and gives concrete next steps. However, it has a major evidence-handling problem: it invents or overstates details not clearly supported by the prompt, and it does not cleanly distinguish confirmed inbox items from inferred urgency. It also mixes in unsupported operational context like Teams draft preparation and specific technical scope language without showing the underlying evidence trail."
+    ],
+    "warnings": [
+      "duration 63253ms exceeded warning budget 30000ms"
+    ],
+    "observations": [
+      "tools fired: consultMicrosoftExecutiveAssistant",
+      "judge email_operator: fail (3/4)"
+    ],
+    "toolNames": [
+      "consultMicrosoftExecutiveAssistant"
+    ],
+    "familiesHit": [
+      "communications",
+      "email_action"
+    ],
+    "finalTextLength": 2432,
+    "finalText": "Today’s inbox items that need Megan’s attention:\n\n1. Ulta Beauty — Walter Allen\n- Subject: RE: ULTA update needed.\n- Received: 09:59 UTC\n- Why it matters: client-facing and time-sensitive.\n- Request: “Can you confirm by Thursday afternoon on the roof penetration?”\n- Action needed: confirm status of the roof penetration or reply with the missing detail needed to confirm.\n- Escalation: Teams draft prepared for review only.\n\n2. Exol — Steve Fischer\n- Subject: RE: Exol Morrisville PA\n- Received: 02:59 UTC\n- Why it matters: project scope clarification and technical requirements.\n- Content includes: MDF room dry fire suppression system (FM200 style), anti-static VCT floor, UPS power requirements.\n- Action needed: review and respond with scope alignment / confirm these requirements.\n\n3. Exol — Steve Fischer\n- Subject: RE: Exol Morrisville PA\n- Received: 02:20 UTC\n- Why it matters: follow-up on scope alignment and cost.\n- Content includes: “Will review asap and provide feedback… need some better alignment of exactly what is included in the scope…”\n- Action needed: review for consistency with the latest scope and determine if a reply is needed.\n\nLower-priority or likely non-actionable:\n- Perplexity sign-in code email: authentication/verification email; no business action unless Megan requested it.\n- ERP Integrations Daily Summary: notification-only summary; likely informational.\n- Payment due reminder from ThriveCart: likely billing/admin only unless this subscription needs attention.\n\nContext checked:\n- Live Outlook inbox read completed.\n- Teams search: no matching context found for the Ulta roof-penetration item.\n- Microsoft file search: no matching context found.\n- Calendar read: no direct conflict or clarifying context for the Ulta item.\n\nExact capability notes:\n- No Microsoft capability failed.\n- Evidence missing for a fuller triage: no supporting Teams thread or file context was found for the Ulta item, so I could not confirm whether there is already an internal decision or latest spec.\n\nRecommended next steps for Megan:\n- Confirm the Ulta roof-penetration status before Thursday afternoon.\n- Review the Exol scope comments and decide whether a consolidated reply is needed.\n- Ignore or delegate the verification/billing notifications unless she wants them handled.\n\nApprovals needed:\n- None for review/triage.\n- Approval required only if you want me to prepare a reply draft for any of these items.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 63253
+    },
+    "judge": {
+      "status": "fail",
+      "rubric": "email_operator",
+      "score": 3,
+      "minScore": 4,
+      "summary": "The answer does a decent job separating likely actionable emails from low-priority notifications and gives concrete next steps. However, it has a major evidence-handling problem: it invents or overstates details not clearly supported by the prompt, and it does not cleanly distinguish confirmed inbox items from inferred urgency. It also mixes in unsupported operational context like Teams draft preparation and specific technical scope language without showing the underlying evidence trail.",
+      "strengths": [
+        "Separates some urgent/client-facing items from lower-priority notifications.",
+        "Identifies likely action paths for each main email item.",
+        "Avoids dumping raw thread text and gives concise summaries.",
+        "Flags that some items are informational or likely non-actionable."
+      ],
+      "weaknesses": [
+        "Uses unsupported certainty in places, especially around urgency and scope details.",
+        "Does not clearly distinguish confirmed inbox items from inferred interpretations.",
+        "Mentions a Teams draft prepared for review without evidence in the prompt.",
+        "Fails to explicitly state who must respond for each item and the consequence of ignoring it.",
+        "Does not provide a clean, evidence-backed phishing/ignore judgment framework for the lower-priority items."
+      ],
+      "dimensionScores": {
+        "separates_urgent_critical_email_from_normal_inbox_noise": 4,
+        "identifies_who_needs_a_response_why_it_matters_and_what_could_happen_if_ignored": 3,
+        "summarizes_email_threads_efficiently_without_dumping_raw_message_data": 4,
+        "recommends_a_concrete_response_path_reply_now_delegate_watch_draft_or_ignore": 4,
+        "for_draft_requests_sounds_short_direct_and_practical_enough_for_Brandon_to_review_and_send": 2,
+        "never_claims_an_email_was_sent_and_never_invents_thread_details_not_present_in_the_answer": 2,
+        "separates_confirmed_user_owned_actions_from_inbox_items_that_merely_exist_or_look_interesting": 3,
+        "labels_suspicious_phishing_urgency_or_ignore_recommendations_as_evidence_backed_judgments_instead_of_unsupported_certainty": 2
+      },
+      "provider": "openai",
+      "model": "gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "consultMicrosoftExecutiveAssistant"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:35.180Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Delegating Microsoft operator work",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:35.229Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:38.230Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:41.229Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:44.229Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:47.230Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:50.230Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:53.231Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:56.230Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:59.231Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:43:02.230Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:43:05.231Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:43:08.231Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:43:11.231Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:43:14.231Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:43:17.231Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:43:20.232Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:43:23.232Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:43:26.232Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:43:29.233Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:43:32.234Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:43:35.234Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-microsoft-executive-assistant"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-microsoft-executive-assistant",
+      "delta": "Today’s inbox items that need Megan’s attention:\n\n1. Ulta Beauty — Walter Allen\n- Subject: RE: ULTA update needed.\n- Received: 09:59 UTC\n- Why it matters: client-facing and time-sensitive.\n- Request: “Can you confirm by Thursday afternoon on the roof penetration?”\n- Action needed: confirm status of the roof penetration or reply with the missing detail needed to confirm.\n- Escalation: Teams draft prepared for review only.\n\n2. Exol — Steve Fischer\n- Subject: RE: Exol Morrisville PA\n- Received: 02:59 UTC\n- Why it matters: project scope clarification and technical requirements.\n- Content includes: MDF room dry fire suppression system (FM200 style), anti-static VCT floor, UPS power requirements.\n- Action needed: review and respond with scope alignment / confirm these requirements.\n\n3. Exol — Steve Fischer\n- Subject: RE: Exol Morrisville PA\n- Received: 02:20 UTC\n- Why it matters: follow-up on scope alignment and cost.\n- Content includes: “Will review asap and provide feedback… need some better alignment of exactly what is included in the scope…”\n- Action needed: review for consistency with the latest scope and determine if a reply is needed.\n\nLower-priority or likely non-actionable:\n- Perplexity sign-in code email: authentication/verification email; no business action unless Megan requested it.\n- ERP Integrations Daily Summary: notification-only summary; likely informational.\n- Payment due reminder from ThriveCart: likely billing/admin only unless this subscription needs attention.\n\nContext checked:\n- Live Outlook inbox read completed.\n- Teams search: no matching context found for the Ulta roof-penetration item.\n- Microsoft file search: no matching context found.\n- Calendar read: no direct conflict or clarifying context for the Ulta item.\n\nExact capability notes:\n- No Microsoft capability failed.\n- Evidence missing for a fuller triage: no supporting Teams thread or file context was found for the Ulta item, so I could not confirm whether there is already an internal decision or latest spec.\n\nRecommended next steps for Megan:\n- Confirm the Ulta roof-penetration status before Thursday afternoon.\n- Review the Exol scope comments and decide whether a consolidated reply is needed.\n- Ignore or delegate the verification/billing notifications unless she wants them handled.\n\nApprovals needed:\n- None for review/triage.\n- Approval required only if you want me to prepare a reply draft for any of these items."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-microsoft-executive-assistant"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Microsoft Executive Assistant answer returned",
+        "status": "success",
+        "timestamp": "2026-06-09T10:43:38.294Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "tool_trace": [
+      {
+        "tool": "consultMicrosoftExecutiveAssistant",
+        "error": null,
+        "input": {
+          "message": "What came in through Outlook today that needs my attention?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": "deep_agents",
+          "count": null,
+          "error": null,
+          "source": "microsoft_graph_live",
+          "summary": "Today’s inbox items that need Megan’s attention:\n\n1. Ulta Beauty — Walter Allen\n- Subject: RE: ULTA update needed.\n- Received: 09:59 UTC\n- Why it matters: client-facing and time-sensitive.\n- Request: “Can you confirm by Thursday afternoon on the roof penetration?”\n- Action needed: confirm status of the roof penetration or reply with the missing detail needed to confirm.\n- Escalation: Teams draft prepared for review only.\n\n2. Exol — Steve Fischer\n- Subject: RE: Exol Morrisville PA\n- Received: 02:",
+          "toolTrace": [
+            {
+              "tool": "read_live_outlook_inbox",
+              "agent": "microsoft-executive-assistant",
+              "detail": "read_live_outlook_inbox completed.",
+              "output": {
+                "ok": true,
+                "count": 6,
+                "source": "microsoft_graph_live",
+                "fetchedAt": "2026-06-09T10:43:12.923938+00:00",
+                "truncated": false,
+                "mailboxUserId": "bclymer@alleatogroup.com"
+              },
+              "source": "microsoft_graph_live",
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "search_microsoft_teams_messages",
+              "agent": "microsoft-executive-assistant",
+              "detail": "search_microsoft_teams_messages completed.",
+              "output": {},
+              "source": null,
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "search_microsoft_files",
+              "agent": "microsoft-executive-assistant",
+              "detail": "search_microsoft_files completed.",
+              "output": {},
+              "source": null,
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "list_outlook_calendar_events",
+              "agent": "microsoft-executive-assistant",
+              "detail": "list_outlook_calendar_events completed.",
+              "output": {
+                "ok": true,
+                "count": 8,
+                "source": "microsoft_graph_calendar"
+              },
+              "source": "microsoft_graph_calendar",
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "draft_teams_message_for_review",
+              "agent": "microsoft-executive-assistant",
+              "detail": "draft_teams_message_for_review completed.",
+              "output": {},
+              "source": null,
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "deepagents_microsoft_executive_assistant_runtime",
+              "agent": "microsoft-executive-assistant",
+              "detail": "Microsoft Executive Assistant produced an answer.",
+              "output": null,
+              "source": null,
+              "status": "success",
+              "durationMs": 27265
+            }
+          ],
+          "actionCount": 0,
+          "orchestrator": "microsoft-executive-assistant"
+        },
+        "status": "success",
+        "toolName": "consultMicrosoftExecutiveAssistant",
+        "timestamp": "2026-06-09T10:43:37.215Z",
+        "durationMs": 61986
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "source_debug": {
+      "memory": {
+        "reason": "This answer was produced by a delegated specialist/direct Deep Agents path; inspect delegated trace and backend memory metadata for specialist-side context.",
+        "status": "not_loaded_in_frontend"
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "consultMicrosoftExecutiveAssistant",
+              "agent": "unknown-agent",
+              "status": "success",
+              "durationMs": 61986
+            }
+          ],
+          "failedCount": 0,
+          "totalMeasuredMs": 61986
+        },
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 1,
+        "sourceCoverage": []
+      },
+      "orchestrator": "microsoft-executive-assistant",
+      "outputPolicy": null,
+      "retrievalPlan": {
+        "intent": "source_lookup",
+        "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "sources": [],
+        "responseFormat": "conversational"
+      }
+    },
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+      "sources": [],
+      "responseFormat": "conversational"
+    },
+    "response_quality": {
+      "score": 62,
+      "reasons": [
+        "at least one successful tool call",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "delegated_orchestrator": "microsoft-executive-assistant"
+  }
+}

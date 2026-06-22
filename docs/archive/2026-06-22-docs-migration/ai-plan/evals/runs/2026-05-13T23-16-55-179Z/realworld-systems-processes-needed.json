@@ -1,0 +1,49 @@
+{
+  "id": "realworld-systems-processes-needed",
+  "intent": "implementation_planning",
+  "prompt": "What systems and processes do you think we need to put in place?",
+  "selectedProjectId": null,
+  "sessionId": "95123abe-2f01-47c8-9eec-a73f0919a197",
+  "sessionLabel": "eval-2026-05-13T23-16-55-179Z-realworld-systems-processes-needed",
+  "startedAt": "2026-05-13T23:18:20.336Z",
+  "finishedAt": "2026-05-13T23:18:35.699Z",
+  "durationMs": 2,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getPortfolioOverview, getActionItemsAndInsights, assistantSourceHealth] to fire — none did",
+      "mustIncludeAny missing one of: \"process\", \"system\", \"workflow\", \"cadence\", \"accountability\"",
+      "answer length 0 < min 250"
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'actions' not represented",
+      "expected family 'source_health' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getPortfolioOverview",
+    "getActionItemsAndInsights",
+    "assistantSourceHealth"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "actions",
+    "source_health"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

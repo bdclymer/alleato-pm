@@ -1,0 +1,135 @@
+{
+  "generatedAt": "2026-05-19T11:11:43.904Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": null,
+  "filter": null,
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "warningCount": 1,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": true,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 1,
+    "passed": 1,
+    "failed": 0,
+    "errors": 0,
+    "averageScore": 4
+  },
+  "slowestCases": [
+    {
+      "id": "strategic-rag-asrs-sprinkler-time-sink",
+      "intent": "strategic_rag",
+      "durationMs": 60177,
+      "status": "pass",
+      "warnings": [
+        "duration 60177ms exceeded warning budget 30000ms"
+      ]
+    }
+  ],
+  "toolCoverage": {
+    "searchMeetingsByTopic": 1,
+    "searchDocuments": 1,
+    "semanticSearch": 1,
+    "findProjectDocuments": 1
+  },
+  "intentDistribution": {
+    "strategic_rag": 1
+  },
+  "results": [
+    {
+      "id": "strategic-rag-asrs-sprinkler-time-sink",
+      "intent": "strategic_rag",
+      "prompt": "For Exol Wilmer / 26-103 specifically, what is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages? If the direct Exol Wilmer ASRS sprinkler evidence is missing, say that clearly instead of using another project as proof.",
+      "selectedProjectId": 760,
+      "sessionId": "2fe0fb03-387f-4a34-8ddc-a175316b0e89",
+      "sessionLabel": "eval-2026-05-19T11-10-39-734Z-88222626-strategic-rag-asrs-sprinkler-time-sink",
+      "startedAt": "2026-05-19T11:10:39.831Z",
+      "finishedAt": "2026-05-19T11:11:43.903Z",
+      "durationMs": 60177,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 519,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "duration 60177ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: searchMeetingsByTopic, searchDocuments, semanticSearch, findProjectDocuments",
+          "judge strategic_advisor: pass (4/4)"
+        ],
+        "toolNames": [
+          "searchMeetingsByTopic",
+          "searchDocuments",
+          "semanticSearch",
+          "findProjectDocuments"
+        ],
+        "familiesHit": [
+          "meetings",
+          "communications",
+          "documents",
+          "semantic"
+        ],
+        "finalTextLength": 2084,
+        "finalText": "I can’t prove that from direct **Exol Wilmer / 26-103 ASRS sprinkler** evidence.\n\nWhat I found for **Exol Wilmer** is fire alarm work, electrical coordination, inspections, and closeout activity — not meeting/email/message evidence that spells out **which part of ASRS sprinkler system design is the most time-consuming**.\n\nWhat the Exol Wilmer record does show:\n- **Fire alarm design was completed** by the week of Feb. 15–21, with wire installation starting and permitting planned next. That’s fire alarm scope, not ASRS sprinkler design. [Source: **Exol Wilmer Weekly Report 022026**, indexed OneDrive doc]\n- A Mar. 3 meeting covered **fire alarm diagnosis** and broader electrical redesign, not ASRS sprinkler engineering. [Source: **Meeting – “Exol Wilmer Electrical” – 2026-03-03**]\n- Mid-May emails are about **electrical inspection, fire alarm inspection, closeout docs, and an electrical RFI**, again not ASRS sprinkler design. [Sources: **Email: RE: Exol Wilmer – 2026-05-14**; **Email: Exol Wilmer – 2026-05-14**]\n- I also searched Exol Wilmer-specific semantic/document results for **ASRS sprinkler / hydraulic calculations / FM Global / rack elevations**, and the returned items were still fire alarm proposals and weekly reports, not sprinkler-design discussions.\n\nSo the answer is: **the direct Exol Wilmer evidence is missing**. I’m not going to use another project as proof.\n\nWhat I can say with confidence:\n- There is **not enough Exol Wilmer-specific meeting/email/message evidence** in the current search results to identify the bottleneck in **ASRS sprinkler design**.\n- If that work happened, it’s either **not indexed under Exol Wilmer**, buried in attachments not surfaced by these searches, or discussed under a different project/topic label.\n\nNext move:\n- I can do a broader evidence pull using alternate terms tied to the system itself — things like **Exotec, Hy-Tek, FM Global, in-rack sprinkler, hydraulic calc, IRAS, rack elevations** — but I’d still keep the answer fenced to **Exol Wilmer only** unless the source explicitly links back to this project.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 60177
+        },
+        "judge": {
+          "status": "pass",
+          "rubric": "strategic_advisor",
+          "score": 4,
+          "minScore": 4,
+          "summary": "The answer is honest and appropriately refuses to overstate evidence. It clearly says direct Exol Wilmer / 26-103 ASRS sprinkler evidence is missing, avoids using another project as proof, and keeps claims anchored to the project. The main limitation is that it does not provide a real strategic conclusion about the most time-consuming design step because the evidence gap prevents it.",
+          "strengths": [
+            "Directly answers the evidence constraint instead of fabricating a conclusion.",
+            "Clearly distinguishes Exol Wilmer-specific evidence from adjacent fire alarm/electrical material.",
+            "Uses project-specific sourcing language and repeatedly fences off non-qualifying evidence.",
+            "States plausible reasons for the missing evidence without pretending certainty.",
+            "Includes a reasonable next step to broaden the search while preserving project boundaries."
+          ],
+          "weaknesses": [
+            "Does not identify the most time-consuming part of ASRS sprinkler design, so it cannot fully satisfy the business question.",
+            "The response is more evidence-status report than executive strategic analysis.",
+            "Some cited items are useful only as negative evidence and do not advance the core decision.",
+            "Could have been more explicit about what would be needed to answer the question definitively from meetings/emails/messages."
+          ],
+          "dimensionScores": {
+            "1. Leads with a clear executive point of view instead of a neutral data recap.": 4,
+            "2. Connects evidence into business implications, tradeoffs, or second-order risks.": 4,
+            "3. Gives specific, operational next steps with owners/timing when supported.": 4,
+            "4. Surfaces what the user did not ask but should be thinking about.": 4,
+            "5. Sounds like a high-level strategist who knows the business, not a document retriever.": 4,
+            "6. Stays honest about missing or weak evidence and does not fabricate details.": 5,
+            "7. Keeps project-specific claims anchored to the requested project and labels adjacent-project or generic source material as background only.": 5
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "semanticSearch",
+        "searchMeetingsByTopic",
+        "searchEmails",
+        "searchTeamsMessages",
+        "sourceLookupIntentRouter",
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "meetings",
+        "communications",
+        "semantic"
+      ]
+    }
+  ]
+}

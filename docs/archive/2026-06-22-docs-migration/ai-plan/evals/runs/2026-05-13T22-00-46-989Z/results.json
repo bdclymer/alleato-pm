@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-05-13T22:01:03.986Z",
+  "baseUrl": "http://localhost:3001",
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "sourceSpecificRagRetrieval": 1
+  },
+  "intentDistribution": {
+    "source_lookup": 1
+  },
+  "results": [
+    {
+      "id": "realworld-last-five-emails",
+      "intent": "source_lookup",
+      "prompt": "Can you tell me my last five emails?",
+      "selectedProjectId": null,
+      "sessionId": "ef0ecdd2-3960-4221-a384-b1dc856397bc",
+      "sessionLabel": "eval-2026-05-13T22-00-46-989Z-realworld-last-five-emails",
+      "startedAt": "2026-05-13T22:00:46.992Z",
+      "finishedAt": "2026-05-13T22:01:03.985Z",
+      "durationMs": 16465,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 26,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'communications' not represented",
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: intentPlanner, sourceSpecificRagRetrieval"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "sourceSpecificRagRetrieval"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 1618,
+        "finalText": "**Last Five Emails in Supabase**\n\n1. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXIAAA=]\n2. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXKAAA=]\n3. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXOAAA=]\n4. **Email: Re: Fire Supression Deckers** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQmLY4sAAA=]\n5. **Email: Re: Superior Beverage Product on Tray** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQmLY4tAAA=]\n\n**Observability**\n- Source checked: Outlook emails in Supabase document_metadata/document_chunks-backed RAG index.\n- Retrieved 5 row(s) from Outlook emails; answer titles/dates are copied from Supabase rows.\n\n**Next Step**\n- Use this same source-specific check as a regression gate so generic source questions cannot fall back to tool discovery only."
+      },
+      "expectedToolNames": [
+        "sourceSpecificRagRetrieval",
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    }
+  ]
+}

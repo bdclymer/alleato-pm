@@ -1,0 +1,5555 @@
+{
+  "id": "historical-trends",
+  "intent": "financial_analysis",
+  "prompt": "Show me cost trends on Westfield over the last six months.",
+  "selectedProjectId": 43,
+  "sessionId": "5b463743-c1bb-448f-9175-a4fd72a3c8d4",
+  "sessionLabel": "eval-2026-05-12T17-46-02-176Z-historical-trends",
+  "startedAt": "2026-05-12T18:03:44.633Z",
+  "finishedAt": "2026-05-12T18:04:36.489Z",
+  "durationMs": 51311,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 946,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "global forbidden phrase: \"RAG\""
+    ],
+    "observations": [
+      "tools fired: intentPlanner, clientProjectIntelligencePacket, streamingToolPolicy, getCostTrends, getCostTrends"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "clientProjectIntelligencePacket",
+      "streamingToolPolicy",
+      "getCostTrends",
+      "getCostTrends"
+    ],
+    "familiesHit": [
+      "financial"
+    ],
+    "finalTextLength": 3811,
+    "finalText": "Westfield’s cost pattern is volatile, and the last month needs a hard look.\n\nOver the last six months, total direct-cost spend was **$4.32M** with an average of about **$720K/month**. The trend line technically shows as **accelerating**, but that’s not a clean upward burn — it’s a spike-and-correction pattern, not steady production. [Source: Cost Trends - Westfield Collective]\n\n### What happened month by month\n- **Nov 2025:** **$2.294M**  \n- **Dec 2025:** **$618K**  \n- **Jan 2026:** **$194K**  \n- **Feb 2026:** **$1.081M**  \n- **Mar 2026:** **$600K**  \n- **Apr 2026:** **-$468K**  \n\nThat tells me three things:\n\n1. **November was a major front-loaded spend month.**  \n   That’s more than half the six-month total in one month.\n\n2. **February was the second major surge.**  \n   Spend jumped **459%** from January, so something hit hard there — likely invoice timing, a catch-up billing cycle, or a package landing all at once.\n\n3. **April is not normal.**  \n   A **negative $468K** month means reversals, credits, reclasses, or corrections — not actual negative field production. That needs explanation before anyone trusts the recent trend line.\n\n### By cost type\nThe pattern is being driven mostly by **Invoices**, with **Expenses** showing large negative adjustments in several months:\n\n- **Nov:** Invoice **$2.267M**, Expense **$27K**\n- **Dec:** Invoice **$1.548M**, Expense **-$930K**\n- **Jan:** Invoice **$657K**, Expense **-$464K**\n- **Feb:** Invoice **$1.214M**, Expense **-$133K**\n- **Mar:** Invoice **$637K**, Expense **-$36K**\n- **Apr:** Invoice **$177K**, Expense **-$645K**\n\nThat’s the real signal: **invoice volume is substantial, but expense-side adjustments are distorting the month-to-month picture**. [Source: Cost Trends - Westfield Collective]\n\n### Change-order signal\nThere’s also meaningful CO movement:\n- **March 2026:** **$1.085M**\n- **April 2026:** **-$38K**\n- Six-month total CO value in the trend set: **$1.047M**\n\nThat suggests March was a major change-management month, and part of April may reflect cleanup or reversal activity tied to prior entries. [Source: Cost Trends - Westfield Collective]\n\n### What it means\nThe issue is **not just spend level** — it’s **cost clarity**.\n\nRight now, Westfield does **not** read like a job with smooth cost flow. It reads like:\n- large billing batches,\n- adjustment-heavy accounting activity,\n- and at least one major CO month.\n\nThat makes forecasting harder and can hide whether the job is actually tightening up or just getting recoded after the fact.\n\n### What I’d do next\n1. **Drill into the April negative month immediately.**  \n   Find out which vendors, cost types, or corrections drove the **-$468K**. If that was cleanup, fine. If it was timing noise, leadership should know that before using April as a trend indicator.\n\n2. **Break February and March by vendor/cost code.**  \n   Those are your key movement months. That will show whether the spike was one trade package, owner-driven change, or delayed billings landing together.\n\n3. **Tie March CO activity to revised forecast.**  \n   If **$1.085M** in CO movement hit in March, make sure budget revisions and margin assumptions actually moved with it.\n\n4. **Don’t present this as a stable six-month burn curve.**  \n   Present it as a volatile spend profile with accounting adjustments affecting comparability.\n\n### Data gap\nI pulled the cost-trend data successfully, but the financial specialist analysis timed out, so I’m not going to pretend I got a deeper forensic read from finance. What I can say confidently is the trend data itself shows abnormal volatility, especially in April.\n\nIf you want, I can go one level deeper and break this down by **cost code**, **vendor**, or **invoice detail** so we can identify exactly what caused the February spike and April reversal."
+  },
+  "expectedToolNames": [
+    "getHistoricalTrends",
+    "getCostTrends"
+  ],
+  "expectedToolFamilies": [
+    "financial"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T18:03:50.713Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-12T18:03:52.889Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Loaded project intelligence packet — synthesizing strategist response",
+        "status": "success",
+        "timestamp": "2026-05-12T18:03:56.543Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "C9Me7mTKLvJ6ILF0"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_HZamBhFaFv1U8BUkFSCKYdyZ",
+      "toolName": "getCostTrends"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_HZamBhFaFv1U8BUkFSCKYdyZ",
+      "inputTextDelta": "{\"projectId\":43,\"projectName\":\"Westfield Collective\",\"months\":6}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_HZamBhFaFv1U8BUkFSCKYdyZ",
+      "toolName": "getCostTrends",
+      "input": {
+        "projectId": 43,
+        "projectName": "Westfield Collective",
+        "months": 6
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_HEjzxsx7hCyUIG5MogYxmIHN",
+      "toolName": "consultCFO"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_HEjzxsx7hCyUIG5MogYxmIHN",
+      "inputTextDelta": "{\"question\":\"Analyze cost trends on Westfield Collective over the last six months. Focus on monthly spend pattern, acceleration/deceleration, major cost drivers if visible, and what it means for financial control.\",\"context\":\"Pinned project is Westfield Collective (project 43). User wants cost trends over the last six months.\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_HEjzxsx7hCyUIG5MogYxmIHN",
+      "toolName": "consultCFO",
+      "input": {
+        "question": "Analyze cost trends on Westfield Collective over the last six months. Focus on monthly spend pattern, acceleration/deceleration, major cost drivers if visible, and what it means for financial control.",
+        "context": "Pinned project is Westfield Collective (project 43). User wants cost trends over the last six months."
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_HZamBhFaFv1U8BUkFSCKYdyZ",
+      "output": {
+        "sourceRef": "[Source: Cost Trends - Westfield Collective]",
+        "project": {
+          "id": 43,
+          "name": "Westfield Collective"
+        },
+        "summary": {
+          "analysisWindow": "6 months",
+          "totalDirectCostSpend": 4319030.529999994,
+          "avgMonthlySpend": 719838,
+          "monthsWithData": 6,
+          "spendTrend": "accelerating",
+          "totalChangeOrderValue": 1046523.6299999993
+        },
+        "spendVelocity": [
+          {
+            "month": "2025-11",
+            "spend": 2294056.43,
+            "changeFromPrior": null,
+            "changePct": null
+          },
+          {
+            "month": "2025-12",
+            "spend": 618436.3900000002,
+            "changeFromPrior": -1675620.04,
+            "changePct": -73
+          },
+          {
+            "month": "2026-01",
+            "spend": 193539.54000000015,
+            "changeFromPrior": -424896.8500000001,
+            "changePct": -69
+          },
+          {
+            "month": "2026-02",
+            "spend": 1081007.95,
+            "changeFromPrior": 887468.4099999998,
+            "changePct": 459
+          },
+          {
+            "month": "2026-03",
+            "spend": 600184.7300000001,
+            "changeFromPrior": -480823.21999999986,
+            "changePct": -44
+          },
+          {
+            "month": "2026-04",
+            "spend": -468194.50999999995,
+            "changeFromPrior": -1068379.24,
+            "changePct": -178
+          }
+        ],
+        "cumulativeSpend": [
+          {
+            "month": "2025-11",
+            "monthlySpend": 2294056.43,
+            "cumulativeSpend": 2294056.43
+          },
+          {
+            "month": "2025-12",
+            "monthlySpend": 618436.3900000002,
+            "cumulativeSpend": 2912492.8200000003
+          },
+          {
+            "month": "2026-01",
+            "monthlySpend": 193539.54000000015,
+            "cumulativeSpend": 3106032.3600000003
+          },
+          {
+            "month": "2026-02",
+            "monthlySpend": 1081007.95,
+            "cumulativeSpend": 4187040.3100000005
+          },
+          {
+            "month": "2026-03",
+            "monthlySpend": 600184.7300000001,
+            "cumulativeSpend": 4787225.040000001
+          },
+          {
+            "month": "2026-04",
+            "monthlySpend": -468194.50999999995,
+            "cumulativeSpend": 4319030.530000001
+          }
+        ],
+        "monthlyBreakdownByCostType": {
+          "2025-11": {
+            "Invoice": 2266748.73,
+            "Expense": 27307.700000000004
+          },
+          "2025-12": {
+            "Expense": -929817.95,
+            "Invoice": 1548254.3400000003
+          },
+          "2026-01": {
+            "Invoice": 657252.33,
+            "Expense": -463712.7899999999
+          },
+          "2026-02": {
+            "Expense": -132563.11,
+            "Invoice": 1213571.0599999998
+          },
+          "2026-03": {
+            "Invoice": 636533.8600000001,
+            "Expense": -36349.12999999999
+          },
+          "2026-04": {
+            "Expense": -644748.6699999999,
+            "Invoice": 176554.16
+          }
+        },
+        "monthlyChangeOrderAmounts": {
+          "2026-03": 1084613.9199999995,
+          "2026-04": -38090.28999999999
+        },
+        "budgetSnapshots": []
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_HEjzxsx7hCyUIG5MogYxmIHN",
+      "output": {
+        "agent": "cfo",
+        "analysis": "The CFO encountered an error while analyzing: Sub-agent cfo exceeded 15000ms timeout",
+        "confidence": "low",
+        "toolsUsed": [],
+        "durationMs": 15003,
+        "alerts": [
+          {
+            "severity": "warning",
+            "message": "CFO agent error: Sub-agent cfo exceeded 15000ms timeout"
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pattern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " volatile"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hard"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Over"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " six"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " months"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " total"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " direct"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " spend"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "4"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "32"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " average"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "720"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trend"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " technically"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "acceler"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ating"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " upward"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " burn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " spike"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-c"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "orrection"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pattern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " steady"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " production"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Trends"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " happened"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Nov"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "294"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Dec"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "618"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Jan"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "194"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Feb"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "081"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Mar"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "600"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Apr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "468"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tells"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " me"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " three"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " things"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "November"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " major"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " front"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-loaded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " spend"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " more"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " than"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " half"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " six"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " total"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "February"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " second"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " major"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " surge"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Spend"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " jumped"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "459"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "%"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " January"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " something"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hard"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " likely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " invoice"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " timing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " catch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " billing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cycle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " package"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " landing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " all"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " once"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "April"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " normal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " A"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "negative"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " $"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "468"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " revers"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "als"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " credits"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "classes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " corrections"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actual"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " negative"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " production"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " explanation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " before"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " anyone"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trusts"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trend"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " By"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " type"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pattern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " driven"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mostly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Invoices"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Expenses"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " showing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " large"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " negative"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " adjustments"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " several"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " months"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Nov"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Invoice"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "267"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Expense"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "27"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Dec"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Invoice"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "548"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Expense"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "930"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Jan"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Invoice"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "657"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Expense"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "464"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Feb"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Invoice"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "214"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Expense"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "133"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Mar"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Invoice"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "637"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Expense"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "36"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Apr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Invoice"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "177"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Expense"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "645"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "invoice"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " volume"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " substantial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " expense"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-side"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " adjustments"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dist"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "orting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " picture"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Trends"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-order"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meaningful"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " movement"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "March"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "085"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "April"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "38"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Six"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " total"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " value"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trend"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " set"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "047"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " suggests"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " March"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " major"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-management"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " part"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " April"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " may"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reflect"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cleanup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reversal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " activity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tied"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " prior"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " entries"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Trends"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " just"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " spend"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " level"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clarity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " does"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " like"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " job"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " smooth"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " flow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " It"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reads"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " like"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " large"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " billing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " batches"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " adjustment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-heavy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " accounting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " activity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " least"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " major"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " makes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " forecasting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " harder"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hide"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " job"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tightening"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " just"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " getting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rec"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "oded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " after"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Dr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ill"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " April"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " negative"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " immediately"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Find"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vendors"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " types"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " corrections"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " drove"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "468"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "K"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cleanup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fine"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " timing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " noise"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " leadership"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " should"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " know"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " before"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " using"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " April"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trend"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " indicator"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Break"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " February"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " March"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vendor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/c"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " code"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Those"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " your"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " key"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " movement"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " months"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " show"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " spike"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trade"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " package"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-driven"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " delayed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bill"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " landing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " together"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Tie"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " March"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " activity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " revised"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " forecast"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "085"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " movement"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " March"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " make"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " revisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " margin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " assumptions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " moved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "4"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Don"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " present"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " six"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-month"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " burn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " curve"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Present"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " volatile"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " spend"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " profile"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " accounting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " adjustments"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " affecting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " compar"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ability"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pulled"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-tr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "end"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " successfully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " financial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " specialist"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " analysis"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " timed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’m"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " going"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pretend"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " got"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " deeper"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " forensic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " finance"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " say"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confidently"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trend"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " itself"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " abnormal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " volatility"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " especially"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " April"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " go"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " level"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " deeper"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " break"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " down"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " code"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "vendor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "invoice"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " detail"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " we"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " identify"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exactly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " caused"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " February"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " spike"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " April"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reversal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 59141,
+      "totalTokens": 60197,
+      "outputTokens": 1056,
+      "cacheHitRatio": 0.983,
+      "cachedInputTokens": 58112
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Show me cost trends on Westfield over the last six months.",
+          "selectedProjectId": 43,
+          "deterministicIntent": "financial_analysis",
+          "sourceSpecificRagKind": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "financial_analysis",
+          "planner": "model",
+          "rationale": "The user wants a financial view of a specific project ('Westfield') over a defined recent period ('last six months'). This is a project financial analysis request about cost trends, not a source-evidence lookup or app-help question. The selected project id is already provided, and the time range is specific enough to proceed without clarification.",
+          "confidence": "high",
+          "responseMode": "answer_directly",
+          "requiredTools": [],
+          "deterministicIntent": "financial_analysis",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-12T18:03:50.713Z"
+      },
+      {
+        "tool": "clientProjectIntelligencePacket",
+        "input": {
+          "query": "Show me cost trends on Westfield over the last six months.",
+          "intent": "financial_analysis",
+          "selectedProjectId": 43
+        },
+        "output": {
+          "mode": "additive-context",
+          "packetId": "75216a3a-3684-46f9-813f-05cc3e9a7163",
+          "cardCount": 491,
+          "packetAgeDays": 0,
+          "resolvedTarget": {
+            "id": "0b2bd1aa-c36d-4910-b82e-90958d430036",
+            "slug": "westfield-collective",
+            "source": "selected_project",
+            "projectId": 43
+          },
+          "freshnessStatus": "fresh",
+          "operatingSummaryLoaded": false
+        },
+        "timestamp": "2026-05-12T18:03:56.543Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "streamingModelToolsEnabled": true
+        },
+        "timestamp": "2026-05-12T18:03:56.543Z"
+      },
+      {
+        "tool": "getCostTrends",
+        "input": {
+          "months": 6,
+          "projectId": 43,
+          "projectName": "Westfield Collective"
+        },
+        "output": {
+          "project": {
+            "id": 43,
+            "name": "Westfield Collective"
+          },
+          "summary": {
+            "spendTrend": "accelerating",
+            "analysisWindow": "6 months",
+            "monthsWithData": 6,
+            "avgMonthlySpend": 719838,
+            "totalDirectCostSpend": 4319030.529999994,
+            "totalChangeOrderValue": 1046523.6299999993
+          },
+          "sourceRef": "[Source: Cost Trends - Westfield Collective]",
+          "spendVelocity": [
+            {
+              "month": "2025-11",
+              "spend": 2294056.43,
+              "changePct": null,
+              "changeFromPrior": null
+            },
+            {
+              "month": "2025-12",
+              "spend": 618436.3900000002,
+              "changePct": -73,
+              "changeFromPrior": -1675620.04
+            },
+            {
+              "month": "2026-01",
+              "spend": 193539.54000000015,
+              "changePct": -69,
+              "changeFromPrior": -424896.8500000001
+            },
+            {
+              "month": "2026-02",
+              "spend": 1081007.95,
+              "changePct": 459,
+              "changeFromPrior": 887468.4099999998
+            },
+            {
+              "month": "2026-03",
+              "spend": 600184.7300000001,
+              "changePct": -44,
+              "changeFromPrior": -480823.21999999986
+            },
+            {
+              "month": "2026-04",
+              "spend": -468194.50999999995,
+              "changePct": -178,
+              "changeFromPrior": -1068379.24
+            }
+          ],
+          "budgetSnapshots": [],
+          "cumulativeSpend": [
+            {
+              "month": "2025-11",
+              "monthlySpend": 2294056.43,
+              "cumulativeSpend": 2294056.43
+            },
+            {
+              "month": "2025-12",
+              "monthlySpend": 618436.3900000002,
+              "cumulativeSpend": 2912492.8200000003
+            },
+            {
+              "month": "2026-01",
+              "monthlySpend": 193539.54000000015,
+              "cumulativeSpend": 3106032.3600000003
+            },
+            {
+              "month": "2026-02",
+              "monthlySpend": 1081007.95,
+              "cumulativeSpend": 4187040.3100000005
+            },
+            {
+              "month": "2026-03",
+              "monthlySpend": 600184.7300000001,
+              "cumulativeSpend": 4787225.040000001
+            },
+            {
+              "month": "2026-04",
+              "monthlySpend": -468194.50999999995,
+              "cumulativeSpend": 4319030.530000001
+            }
+          ],
+          "monthlyChangeOrderAmounts": {
+            "2026-03": 1084613.9199999995,
+            "2026-04": -38090.28999999999
+          },
+          "monthlyBreakdownByCostType": {
+            "2025-11": {
+              "Expense": 27307.700000000004,
+              "Invoice": 2266748.73
+            },
+            "2025-12": {
+              "Expense": -929817.95,
+              "Invoice": 1548254.3400000003
+            },
+            "2026-01": {
+              "Expense": -463712.7899999999,
+              "Invoice": 657252.33
+            },
+            "2026-02": {
+              "Expense": -132563.11,
+              "Invoice": 1213571.0599999998
+            },
+            "2026-03": {
+              "Expense": -36349.12999999999,
+              "Invoice": 636533.8600000001
+            },
+            "2026-04": {
+              "Expense": -644748.6699999999,
+              "Invoice": 176554.16
+            }
+          }
+        },
+        "timestamp": "2026-05-12T18:04:03.710Z"
+      },
+      {
+        "tool": "getCostTrends",
+        "input": {
+          "months": 6,
+          "projectId": 43,
+          "projectName": "Westfield Collective"
+        },
+        "output": {
+          "project": {
+            "id": 43,
+            "name": "Westfield Collective"
+          },
+          "summary": {
+            "spendTrend": "accelerating",
+            "analysisWindow": "6 months",
+            "monthsWithData": 6,
+            "avgMonthlySpend": 719838,
+            "totalDirectCostSpend": 4319030.529999994,
+            "totalChangeOrderValue": 1046523.6299999993
+          },
+          "sourceRef": "[Source: Cost Trends - Westfield Collective]",
+          "spendVelocity": [
+            {
+              "month": "2025-11",
+              "spend": 2294056.43,
+              "changePct": null,
+              "changeFromPrior": null
+            },
+            {
+              "month": "2025-12",
+              "spend": 618436.3900000002,
+              "changePct": -73,
+              "changeFromPrior": -1675620.04
+            },
+            {
+              "month": "2026-01",
+              "spend": 193539.54000000015,
+              "changePct": -69,
+              "changeFromPrior": -424896.8500000001
+            },
+            {
+              "month": "2026-02",
+              "spend": 1081007.95,
+              "changePct": 459,
+              "changeFromPrior": 887468.4099999998
+            },
+            {
+              "month": "2026-03",
+              "spend": 600184.7300000001,
+              "changePct": -44,
+              "changeFromPrior": -480823.21999999986
+            },
+            {
+              "month": "2026-04",
+              "spend": -468194.50999999995,
+              "changePct": -178,
+              "changeFromPrior": -1068379.24
+            }
+          ],
+          "budgetSnapshots": [],
+          "cumulativeSpend": [
+            {
+              "month": "2025-11",
+              "monthlySpend": 2294056.43,
+              "cumulativeSpend": 2294056.43
+            },
+            {
+              "month": "2025-12",
+              "monthlySpend": 618436.3900000002,
+              "cumulativeSpend": 2912492.8200000003
+            },
+            {
+              "month": "2026-01",
+              "monthlySpend": 193539.54000000015,
+              "cumulativeSpend": 3106032.3600000003
+            },
+            {
+              "month": "2026-02",
+              "monthlySpend": 1081007.95,
+              "cumulativeSpend": 4187040.3100000005
+            },
+            {
+              "month": "2026-03",
+              "monthlySpend": 600184.7300000001,
+              "cumulativeSpend": 4787225.040000001
+            },
+            {
+              "month": "2026-04",
+              "monthlySpend": -468194.50999999995,
+              "cumulativeSpend": 4319030.530000001
+            }
+          ],
+          "monthlyChangeOrderAmounts": {
+            "2026-03": 1084613.9199999995,
+            "2026-04": -38090.28999999999
+          },
+          "monthlyBreakdownByCostType": {
+            "2025-11": {
+              "Expense": 27307.700000000004,
+              "Invoice": 2266748.73
+            },
+            "2025-12": {
+              "Expense": -929817.95,
+              "Invoice": 1548254.3400000003
+            },
+            "2026-01": {
+              "Expense": -463712.7899999999,
+              "Invoice": 657252.33
+            },
+            "2026-02": {
+              "Expense": -132563.11,
+              "Invoice": 1213571.0599999998
+            },
+            "2026-03": {
+              "Expense": -36349.12999999999,
+              "Invoice": 636533.8600000001
+            },
+            "2026-04": {
+              "Expense": -644748.6699999999,
+              "Invoice": 176554.16
+            }
+          }
+        },
+        "timestamp": "2026-05-12T18:04:07.083Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 29130,
+          "finishReason": "tool-calls",
+          "outputTokens": 124,
+          "warningCount": 0,
+          "toolCallCount": 2,
+          "toolCallNames": [
+            "getCostTrends",
+            "consultCFO"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 30011,
+          "finishReason": "stop",
+          "outputTokens": 932,
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "extractStructuredActionBrief",
+            "createChangeOrder",
+            "createChangeEvent",
+            "updateProjectStatus",
+            "createRFI",
+            "createTask",
+            "createGeneratedTask",
+            "createProjectCompany",
+            "createProjectContact",
+            "updateGeneratedTask",
+            "deleteGeneratedTask",
+            "flagProjectRisk",
+            "updateRFIStatus",
+            "createMeetingNote",
+            "createSubmittal",
+            "logDailyReport",
+            "generateProjectSummary",
+            "createInitiativeCard",
+            "createCommitment",
+            "submitFeedback",
+            "addBoardItem",
+            "sendTeamsMessage",
+            "findRelatedFeatureRequests",
+            "captureFeatureRequestPacket",
+            "updateFeatureRequestPacket",
+            "scoreFeatureRequestReadiness",
+            "generateImplementationPlan",
+            "generateClaudeCodeHandoff",
+            "draftLinearIssueFromFeatureRequest",
+            "draftLinearSubIssuesFromImplementationPlan",
+            "attachLinearIssueToFeatureRequest",
+            "attachLinearSubIssueToFeatureRequest",
+            "recordLinearStatusUpdateForFeatureRequest",
+            "createWeeklyProgressReportDraft",
+            "updateProgressReportSections",
+            "listProgressReportPhotos",
+            "selectProgressReportPhotos",
+            "generateProgressReportPdf",
+            "listWorkspaceArtifacts",
+            "getDraftArtifact",
+            "saveWorkspaceArtifact",
+            "promoteWorkspaceArtifact",
+            "getSubmittalLog",
+            "getSpecRequirements",
+            "detectMissingSubmittals",
+            "logFeedback",
+            "reviewDocument",
+            "consultCFO",
+            "consultCOO",
+            "consultCRO",
+            "consultCHRO",
+            "consultVPBD",
+            "consultCMO",
+            "getCommitmentsOverview",
+            "getChangeOrderDetails",
+            "getDirectCostsSummary",
+            "getBudgetLineItems",
+            "getCostTrends",
+            "getMarginAnalysis",
+            "getAPAgingReport",
+            "getARAgingReport",
+            "getCashPositionReport",
+            "getVendorSpendReport",
+            "getRecentBills",
+            "getRecentInvoices",
+            "getAcumaticaProjectBudget",
+            "getAcumaticaProjectList",
+            "getPurchaseOrderSummary",
+            "getPeopleAndRoles",
+            "getVendorPerformance",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getCrossProjectComparison",
+            "getHistoricalTrends",
+            "semanticSearch",
+            "getCompanyKnowledge",
+            "recallPastConversations",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "saveToKnowledgeBase",
+            "saveInsight",
+            "searchMemories",
+            "writeMemory",
+            "findProject",
+            "getRecentEmails",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchExternalDocuments",
+            "queryBudgetData",
+            "queryChangeOrders",
+            "queryCommitments",
+            "queryDirectCosts",
+            "queryScheduleTasks",
+            "queryDocumentRows",
+            "searchStructuredFinancialRows",
+            "getScheduleAnalysis",
+            "searchAppHelp",
+            "getForecastComparison",
+            "getMeetingIntelligence",
+            "getProjectBriefingSnapshot",
+            "getFinancialAnalysis",
+            "getProjectBudgetSummary",
+            "getActionItemsAndInsights",
+            "getMeetingsByDate",
+            "searchDocuments",
+            "getProjectDetails"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "extractStructuredActionBrief",
+            "createChangeOrder",
+            "createChangeEvent",
+            "updateProjectStatus",
+            "createRFI",
+            "createTask",
+            "createGeneratedTask",
+            "createProjectCompany",
+            "createProjectContact",
+            "updateGeneratedTask",
+            "deleteGeneratedTask",
+            "flagProjectRisk",
+            "updateRFIStatus",
+            "createMeetingNote",
+            "createSubmittal",
+            "logDailyReport",
+            "generateProjectSummary",
+            "createInitiativeCard",
+            "createCommitment",
+            "submitFeedback",
+            "addBoardItem",
+            "sendTeamsMessage",
+            "findRelatedFeatureRequests",
+            "captureFeatureRequestPacket",
+            "updateFeatureRequestPacket",
+            "scoreFeatureRequestReadiness",
+            "generateImplementationPlan",
+            "generateClaudeCodeHandoff",
+            "draftLinearIssueFromFeatureRequest",
+            "draftLinearSubIssuesFromImplementationPlan",
+            "attachLinearIssueToFeatureRequest",
+            "attachLinearSubIssueToFeatureRequest",
+            "recordLinearStatusUpdateForFeatureRequest",
+            "createWeeklyProgressReportDraft",
+            "updateProgressReportSections",
+            "listProgressReportPhotos",
+            "selectProgressReportPhotos",
+            "generateProgressReportPdf",
+            "listWorkspaceArtifacts",
+            "getDraftArtifact",
+            "saveWorkspaceArtifact",
+            "promoteWorkspaceArtifact",
+            "getSubmittalLog",
+            "getSpecRequirements",
+            "detectMissingSubmittals",
+            "logFeedback",
+            "reviewDocument",
+            "consultCFO",
+            "consultCOO",
+            "consultCRO",
+            "consultCHRO",
+            "consultVPBD",
+            "consultCMO",
+            "getCommitmentsOverview",
+            "getChangeOrderDetails",
+            "getDirectCostsSummary",
+            "getBudgetLineItems",
+            "getCostTrends",
+            "getMarginAnalysis",
+            "getAPAgingReport",
+            "getARAgingReport",
+            "getCashPositionReport",
+            "getVendorSpendReport",
+            "getRecentBills",
+            "getRecentInvoices",
+            "getAcumaticaProjectBudget",
+            "getAcumaticaProjectList",
+            "getPurchaseOrderSummary",
+            "getPeopleAndRoles",
+            "getVendorPerformance",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getCrossProjectComparison",
+            "getHistoricalTrends",
+            "semanticSearch",
+            "getCompanyKnowledge",
+            "recallPastConversations",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "saveToKnowledgeBase",
+            "saveInsight",
+            "searchMemories",
+            "writeMemory",
+            "findProject",
+            "getRecentEmails",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchExternalDocuments",
+            "queryBudgetData",
+            "queryChangeOrders",
+            "queryCommitments",
+            "queryDirectCosts",
+            "queryScheduleTasks",
+            "queryDocumentRows",
+            "searchStructuredFinancialRows",
+            "getScheduleAnalysis",
+            "searchAppHelp",
+            "getForecastComparison",
+            "getMeetingIntelligence",
+            "getProjectBriefingSnapshot",
+            "getFinancialAnalysis",
+            "getProjectBudgetSummary",
+            "getActionItemsAndInsights",
+            "getMeetingsByDate",
+            "searchDocuments",
+            "getProjectDetails"
+          ]
+        }
+      ],
+      "totalStepCount": 2,
+      "finalFinishReason": "stop",
+      "preparedStepCount": 2,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 2
+    },
+    "response_quality": {
+      "score": 90,
+      "reasons": [
+        "compiled intelligence packet with multiple evidence cards",
+        "multiple source citations"
+      ],
+      "confidence": "high",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

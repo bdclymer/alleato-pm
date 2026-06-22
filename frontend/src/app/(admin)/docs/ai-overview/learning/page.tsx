@@ -137,8 +137,8 @@ export default async function LearningPage() {
           <LoopCard
             number={5}
             title="Contextual retrieval pilot"
-            adminHref="/admin/intelligence-compiler"
-            adminLabel="View compiler runs"
+            adminHref="/ai-system-health"
+            adminLabel="View AI system health"
             explanation="Added 2026-05-17. Before embedding, each chunk gets a one-sentence context prepended ('This is from the May 12th OAC meeting about retainage...'). This improves recall on ambiguous queries. Currently running as an A/B against the baseline. Metrics are accumulating."
             metrics={[
               "Recall@5 lift vs baseline",

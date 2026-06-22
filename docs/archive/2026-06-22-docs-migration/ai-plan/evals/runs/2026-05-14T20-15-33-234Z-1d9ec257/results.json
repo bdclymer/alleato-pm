@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-05-14T20:17:08.673Z",
+  "baseUrl": "http://localhost:3100",
+  "bundle": null,
+  "filter": null,
+  "totalCases": 1,
+  "passed": 0,
+  "failed": 1,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "assistantSourceHealth": 1,
+    "semanticSearch": 1,
+    "sourceLookupIntentRouter": 1,
+    "messageDrivenToolRouter": 1,
+    "mcpToolDiscovery": 1,
+    "streamingToolPolicy": 1,
+    "getMeetingsByDate": 1,
+    "noToolRetry": 1
+  },
+  "intentDistribution": {
+    "source_health": 1
+  },
+  "results": [
+    {
+      "id": "source-freshness-rag-health",
+      "intent": "source_health",
+      "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+      "selectedProjectId": null,
+      "sessionId": "3a405868-54c5-4cd2-a52f-85c0f3ad437d",
+      "sessionLabel": "eval-2026-05-14T20-15-33-234Z-1d9ec257-source-freshness-rag-health",
+      "startedAt": "2026-05-14T20:15:33.261Z",
+      "finishedAt": "2026-05-14T20:17:08.672Z",
+      "durationMs": 90003,
+      "httpStatus": 200,
+      "streamError": "stream read error: This operation was aborted",
+      "streamEventCount": 431,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: stream read error: This operation was aborted"
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, getMeetingsByDate, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "semanticSearch",
+          "sourceLookupIntentRouter",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getMeetingsByDate",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "meetings",
+          "semantic",
+          "source_health"
+        ],
+        "finalTextLength": 2527,
+        "finalText": "Bottom line: Source sync is degraded. You should not treat the AI's readouts as complete or fully reliable right now.\n\nHere’s what’s current, and what isn’t:\n\n**1. Teams messages:**  \nTeams DMs and chats are only as fresh as the last ingest. There’s a backlog on several channels, including acannon@alleatogroup.com, flagged as critical. If you’re looking for the absolute latest conversations or decisions, they may be missing.\n\n**2. Outlook emails:**  \nInbox coverage is partial. Outlook sync is critical/missing for multiple high-volume users: njepson@alleatogroup.com, mparsons@alleatogroup.com, mharrison@alleatogroup.com, jdawson@alleatogroup.com, ctragesser@alleatogroup.com. Any update from those accounts in the last 48–72 hours may not be visible in your results.\n\n**3. Meeting records:**  \nMeetings are as current as the last ingest for calendar events that have been synced into the Alleato system — but I do not have live access to your Outlook calendar or real-time feeds unless the event was specifically imported. Some meetings may not be captured if they weren’t logged or synced.\n\n**4. Packets/Project intelligence:**  \nThere is a significant backlog in packet compilation: 1,065 unembedded sources, 11,509 uncompiled. This means that “intelligence packets” or summary briefings likely miss part of the recent data. If packets appear thin or out of date, it’s a reflection of these pipeline lags.\n\n**What’s missing or at risk:**  \n- Anything sent or decided in the last 1–3 days on affected Teams/Outlook channels could be missing.\n- Executive and project briefings (“packets”) may not reflect final change orders, new schedule risks, or the latest owner/client communications if those haven’t been embedded.\n- The overall risk: If you’re relying on a summary only, you may miss exposure that sits in unsynced conversations or uncompiled packets.\n\n**What you CAN trust:**  \n- Explicitly retrieved, quoted meeting records, Teams messages, or emails shown in your query window are real — if the record is shown, it exists in the system.\n- For the absolute latest on a critical issue, always have someone verify with a manual inbox or chat check. If you need a critical document or email, ask for the source for confirmation before taking action.\n\n**Action:**  \nIf you need full confidence in a project’s status, don’t rely exclusively on the AI readout until sync/packet health is restored. Call out if you want a refresher as soon as the pipeline clears, or request manual confirmation from the involved owner."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "source_health"
+      ]
+    }
+  ]
+}

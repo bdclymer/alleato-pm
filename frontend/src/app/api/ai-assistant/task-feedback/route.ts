@@ -4,7 +4,7 @@ import { z } from "zod";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
-import { requireAdmin } from "@/app/api/admin/intelligence-compiler/_shared";
+import { requireAdmin } from "@/app/api/admin/_shared";
 import { logger } from "@/lib/logger";
 import {
   recordTaskFeedback,

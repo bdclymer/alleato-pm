@@ -1,0 +1,47 @@
+{
+  "id": "ceo-context-aware-blocked",
+  "intent": "operations_analysis",
+  "prompt": "Anything blocked waiting on me?",
+  "selectedProjectId": null,
+  "sessionId": "2d37608b-4375-4ff7-862a-6cf33b4180f1",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-ceo-context-aware-blocked",
+  "startedAt": "2026-05-12T20:16:19.958Z",
+  "finishedAt": "2026-05-12T20:16:39.558Z",
+  "durationMs": 4191,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"78a7b7ea-3221-4fd4-8bb9-50849a43a25c\",\"timestamp\":\"2026-05-12T20:16:24.147Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"78a7b7ea-3221-4fd4-8bb9-50849a43a25c\",\"timestamp\":\"2026-05-12T20:16:24.147Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getActionItemsAndInsights, getRFIStatus, getSubmittalStatus] to fire — none did",
+      "mustIncludeAny missing one of: \"blocked\", \"waiting\", \"approval\", \"you\", \"open\""
+    ],
+    "warnings": [
+      "expected family 'actions' not represented",
+      "expected family 'operations' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"78a7b7ea-3221-4fd4-8bb9-50849a43a25c\",\"timestamp\":\"2026-05-12T20:16:24.147Z\"}"
+  },
+  "expectedToolNames": [
+    "getActionItemsAndInsights",
+    "getRFIStatus",
+    "getSubmittalStatus"
+  ],
+  "expectedToolFamilies": [
+    "actions",
+    "operations"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

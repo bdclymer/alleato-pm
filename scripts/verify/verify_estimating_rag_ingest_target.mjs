@@ -15,7 +15,7 @@ import process from "node:process";
 
 const repoRoot = process.cwd();
 const packageJsonPath = path.join(repoRoot, "package.json");
-const defaultEstimatingDir = path.join(repoRoot, "docs/PRPs/estimates");
+const defaultEstimatingDir = path.join(repoRoot, "docs/archive/2026-06-22-docs-migration/PRPs/estimates");
 const ingestScript = path.join(repoRoot, "scripts/ingestion/ingest_local_documents.py");
 
 function fail(message) {
@@ -30,7 +30,7 @@ function assert(condition, message) {
 }
 
 assert(existsSync(packageJsonPath), "package.json was not found");
-assert(existsSync(defaultEstimatingDir), "default estimating source folder docs/PRPs/estimates was not found");
+assert(existsSync(defaultEstimatingDir), "default estimating source folder docs/archive/2026-06-22-docs-migration/PRPs/estimates was not found");
 assert(existsSync(ingestScript), "scripts/ingestion/ingest_local_documents.py was not found");
 
 const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));

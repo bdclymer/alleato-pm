@@ -25,7 +25,7 @@
 - [x] Change Render cron cadence to every 2h
 - [x] Add drift-prevention triggers on `acumatica_*` tables → `acumatica_sync_runs`
 - [x] Delete `frontend/src/lib/acumatica/sync/` (broken TS sync)
-- [x] Update `docs/patterns/integration-errors.md` to mark TS sync removed
+- [x] Update `docs/archive/2026-06-22-docs-migration/patterns/integration-errors.md` to mark TS sync removed
 - [x] Verify all 4 newly-Python entities have non-zero row counts
 - [x] Verify `acumatica_sync_runs` shows runs every 2h
 
@@ -116,7 +116,7 @@
 - [x] DATABASE-ARCHITECTURE.md — Pattern C section
 - [x] AI-RAG-ARCHITECTURE.md — `findProjectDocuments` references `document_type` enum
 - [x] COMMUNICATIONS-DATA-PIPELINE.md — Outlook attachment promotion subsection
-- [x] `docs/deployment/AUTH-MIGRATION-RUNBOOK.md` written
+- [x] `docs/archive/2026-06-22-docs-migration/deployment/AUTH-MIGRATION-RUNBOOK.md` written
 
 ## Other Outstanding (from §12)
 

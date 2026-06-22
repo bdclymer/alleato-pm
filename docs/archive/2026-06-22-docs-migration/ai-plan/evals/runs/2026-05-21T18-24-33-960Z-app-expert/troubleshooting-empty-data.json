@@ -1,0 +1,54 @@
+{
+  "id": "troubleshooting-empty-data",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 12202,
+  "question": "Why might a page be empty even though the route exists?",
+  "response": {
+    "answer": "A page can exist as a route but still appear empty if the app only has a route shell or if the route inventory exists before user-facing content is implemented.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are current and available.\n- Curated help article: `docs/help/articles/app-navigation-and-feature-map.md`\n- Feature registry / sitemap evidence for route discovery\n\nWhat the docs say:\n- The app has two kinds of pages: global and project-scoped.\n- If a route exists but does not have a curated help article yet, Ask Alleato should treat it as route inventory evidence, not as fully documented user-facing behavior.\n- That means a route can be present in the codebase while still lacking meaningful page content or published guidance.\n\nImplementation-backed evidence:\n- The sitemap contains many routes discovered from source files, including pages with no linked help article.\n- Example pattern from the inventory: route-discovered pages often point to a `frontend/src/app/.../page.tsx` file with `helpArticle: null` or no curated article yet.\n\nSo the most likely reasons are:\n1. The route exists in the app inventory but the page content is not implemented yet.\n2. The page is implemented as a placeholder/shell with no rendered content.\n3. The page is conditionally empty due to permissions, feature flags, or missing data — but I cannot claim that without route-specific evidence.\n4. The route may be valid but not the intended user-facing page for the task.\n\nUncertainty:\n- No current route or project ID was supplied, so I cannot confirm a page-specific reason.\n- I did not find route-specific documentation for the exact empty page scenario.\n\nIf you give me the route, I can check the exact source file and tell you whether it is documented behavior or just implementation evidence.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/app-navigation-and-feature-map.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-navigation-and-feature-map.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/.../page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/.../page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/shell",
+        "sourceType": "sitemap",
+        "route": "/shell",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 12199,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

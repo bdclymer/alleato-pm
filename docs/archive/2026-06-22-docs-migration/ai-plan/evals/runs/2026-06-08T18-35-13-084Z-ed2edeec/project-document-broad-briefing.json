@@ -1,0 +1,139 @@
+{
+  "id": "project-document-broad-briefing",
+  "intent": "document_question",
+  "prompt": "For Westfield, give me the document intelligence baseline before we drill into exact files: latest docs, document risks, obligations, conflicts, and what matters to the PM.",
+  "selectedProjectId": 43,
+  "sessionId": "a73fb734-00b6-42ae-a74a-e0ae90142f26",
+  "sessionLabel": "eval-2026-06-08T18-35-13-084Z-ed2edeec-project-document-broad-briefing",
+  "startedAt": "2026-06-08T18:35:14.135Z",
+  "finishedAt": "2026-06-08T18:37:18.651Z",
+  "durationMs": 120012,
+  "httpStatus": 0,
+  "streamError": "This operation was aborted",
+  "streamEventCount": 0,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: This operation was aborted",
+      "expected at least one of [semanticSearch, searchDocuments, sourceSpecificRagRetrieval, queryDocumentRows] to fire — none did",
+      "expected required tool 'clientProjectIntelligencePacket' to fire",
+      "expected required tool 'getProjectBriefingSnapshot' to fire",
+      "mustInclude missing: \"Westfield\"",
+      "mustIncludeAny missing one of: \"document\", \"documents\", \"drawing\", \"spec\", \"RFI\", \"submittal\"",
+      "mustIncludeAny missing one of: \"obligation\", \"required\", \"approval\", \"due\", \"conflict\", \"revision\"",
+      "mustIncludeAny missing one of: \"PM\", \"risk\", \"action\", \"impact\", \"matters\"",
+      "duration 120012ms exceeded max budget 90000ms"
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'documents' not represented",
+      "expected family 'semantic' not represented",
+      "duration 120012ms exceeded warning budget 30000ms"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 293,
+    "finalText": "The assistant could not get a usable response from the AI provider. This usually means the provider account is out of credits, over quota, or blocked by billing. I saved your question so it is not lost; after the provider billing issue is fixed, retry this message or choose a different model.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 90000,
+      "durationMs": 120012
+    }
+  },
+  "expectedToolNames": [
+    "semanticSearch",
+    "searchDocuments",
+    "sourceSpecificRagRetrieval",
+    "queryDocumentRows"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "documents",
+    "semantic"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": null,
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "planning",
+          "status": "loading",
+          "message": "Plan: packet_first_with_project",
+          "timestamp": "2026-06-08T18:37:15.282Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": null,
+    "tool_trace": [],
+    "architecture": "retrieval-planner-v2",
+    "source_debug": {
+      "memory": {
+        "reason": "This answer was produced by a delegated specialist/direct Deep Agents path; inspect delegated trace and backend memory metadata for specialist-side context.",
+        "status": "not_loaded_in_frontend"
+      },
+      "sources": {
+        "timing": {
+          "slowest": [],
+          "failedCount": 0,
+          "totalMeasuredMs": 0
+        },
+        "toolNames": [],
+        "evidenceCount": null,
+        "toolCallCount": 0,
+        "sourceCoverage": []
+      },
+      "orchestrator": "retrieval-planner-v2",
+      "outputPolicy": {
+        "stopWhen": "stepCountIs(10)",
+        "maxOutputTokens": 8000
+      },
+      "retrievalPlan": {
+        "intent": "latest_status",
+        "reason": "packet_first_with_project",
+        "sources": [
+          "intelligencePacket",
+          "projectSnapshot",
+          "semanticVectorSearch"
+        ],
+        "responseFormat": "briefing_template"
+      }
+    },
+    "finish_reason": null,
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "latest_status",
+      "reason": "packet_first_with_project",
+      "sources": [
+        "intelligencePacket",
+        "projectSnapshot",
+        "semanticVectorSearch"
+      ],
+      "responseFormat": "briefing_template"
+    },
+    "synthesis_model": "openai/gpt-5.4",
+    "response_quality": {
+      "score": 50,
+      "reasons": [
+        "no successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "low",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "response_message_id": "6waJ0Gd3ApsyeEyu",
+    "empty_model_response": true
+  }
+}

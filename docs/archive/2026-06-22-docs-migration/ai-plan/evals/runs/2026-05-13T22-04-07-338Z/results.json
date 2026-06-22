@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-05-13T22:05:32.560Z",
+  "baseUrl": "http://localhost:3001",
+  "totalCases": 1,
+  "passed": 0,
+  "failed": 1,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "mcpToolDiscovery": 1,
+    "streamingToolPolicy": 1,
+    "getCompanyKnowledge": 1,
+    "semanticSearch": 1
+  },
+  "intentDistribution": {
+    "implementation_planning": 1
+  },
+  "results": [
+    {
+      "id": "realworld-systems-processes-needed",
+      "intent": "implementation_planning",
+      "prompt": "What systems and processes do you think we need to put in place?",
+      "selectedProjectId": null,
+      "sessionId": "9d39175a-e45b-4346-9884-2a510ae2232c",
+      "sessionLabel": "eval-2026-05-13T22-04-07-338Z-realworld-systems-processes-needed",
+      "startedAt": "2026-05-13T22:04:07.342Z",
+      "finishedAt": "2026-05-13T22:05:32.559Z",
+      "durationMs": 84708,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1626,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getPortfolioOverview, getActionItemsAndInsights, assistantSourceHealth] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'actions' not represented",
+          "expected family 'source_health' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, mcpToolDiscovery, streamingToolPolicy, getCompanyKnowledge, semanticSearch"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getCompanyKnowledge",
+          "semanticSearch"
+        ],
+        "familiesHit": [
+          "semantic",
+          "knowledge"
+        ],
+        "finalTextLength": 7093,
+        "finalText": "You need a tighter operating system, not more activity.\n\nI couldn’t get reliable internal knowledge on this — the company knowledge base was unavailable, and semantic search timed out — so I’m not going to pretend I found a documented Alleato standard. This is my straight read on what a company in your position should put in place first if the goal is fewer surprises, cleaner handoffs, and faster decisions.\n\n## The point\n\nThe biggest gap on most growing construction teams isn’t effort. It’s inconsistent execution. People are probably solving the same problems differently across projects, which means commitments get lost, risk shows up late, and leadership finds out by accident.\n\nWhat you need is a small set of non-negotiable systems that force clarity at the project level and visibility at the portfolio level.\n\n## Put these in place first\n\n### 1. Weekly project operating cadence\nEvery active job should run the same weekly review, same agenda, same outputs.\n\nMinimum standard:\n- Financial snapshot: contract value, approved COs, pending COs, exposure, forecast margin\n- Operations snapshot: 2-week lookahead, procurement status, critical RFIs, submittals, schedule slips\n- Risk snapshot: top 3 risks, owner, mitigation, decision date\n- Action log: what was committed last week, what moved, what didn’t\n\nWhy it matters:\n- This is how you stop “we talked about it” from replacing ownership.\n- It gives leadership one clean way to compare jobs without rebuilding the story every time.\n\n### 2. Single action-item system with named owner and due date\nNo action item should exist only in a meeting transcript, email chain, or someone’s head.\n\nRequired fields:\n- Project\n- Exact task\n- Owner\n- Due date\n- Source meeting/email\n- Status\n- Escalation date if overdue\n\nWhy it matters:\n- Most project drift starts as unmanaged follow-up.\n- If nobody owns it and it has no date, it is not real.\n\n### 3. Risk register that is actually used\nNot a dead spreadsheet. A live list reviewed weekly.\n\nTrack:\n- Scope risk\n- Buyout/procurement risk\n- Schedule risk\n- Design/RFI risk\n- Financial exposure\n- Owner decision risk\n- Subcontractor performance risk\n\nEach risk needs:\n- Description\n- Impact\n- Likelihood\n- Owner\n- Mitigation step\n- Date of next decision/checkpoint\n\nWhy it matters:\n- Problems are rarely surprises. They’re usually ignored signals.\n\n### 4. Standard preconstruction-to-operations handoff\nThis is where teams lose context and inherit avoidable damage.\n\nBefore a PM/super takes a job, require:\n- Final estimate assumptions\n- Scope gaps/exclusions list\n- Bid leveling summary\n- VE log\n- Allowances/contingencies\n- Long-lead procurement list\n- Permit/logistics assumptions\n- Client commitments already made\n\nWhy it matters:\n- If the field team doesn’t know what was assumed to win the job, they can’t manage the risk correctly.\n\n### 5. Change management discipline\nMost margin erosion lives here.\n\nEvery project needs a standard process for:\n- Identifying scope change immediately\n- Logging change event same day\n- Assigning pricing owner\n- Tracking status: ROM / submitted / pending / approved\n- Flagging aging unpriced exposure\n- Tying schedule impact to cost impact\n\nWhy it matters:\n- Unpriced work becomes donated work faster than people admit.\n\n### 6. Procurement tracking for long-lead and mission-critical scopes\nYou need one view that answers: what has to be bought, by when, and what slips the job if it doesn’t happen?\n\nTrack:\n- Spec package\n- Responsible buyer/PM\n- Bid due date\n- Award target\n- Submittal target\n- Fabrication lead time\n- On-site need date\n- Risk level\n\nWhy it matters:\n- A lot of “schedule issues” are really procurement issues that were visible 6 weeks earlier.\n\n### 7. RFI and submittal aging thresholds with escalation\nNot all open items matter equally. Some need automatic escalation.\n\nSet hard rules like:\n- RFIs older than X days on critical path scopes escalate to PM + PX\n- Submittals not returned by design team within X days get owner/architect follow-up\n- Any design ambiguity affecting procurement gets highlighted in weekly review\n\nWhy it matters:\n- Teams normalize open items until they become schedule damage.\n\n### 8. Portfolio-level leadership dashboard built around exceptions\nLeadership does not need every data point. They need to know where intervention is required.\n\nPortfolio review should show:\n- Projects with declining margin\n- Projects with large pending change exposure\n- Projects with critical procurement misses\n- Projects with overdue owner decisions\n- Projects with repeated action-item slippage\n- Projects with subcontractor performance concerns\n\nWhy it matters:\n- Leadership should spend time where the signal is red, not where reporting is clean.\n\n### 9. Decision log for owner/architect/GC commitments\nA lot of pain comes from informal decisions nobody can prove later.\n\nLog:\n- What was decided\n- Who made the decision\n- Date\n- Cost/schedule implication\n- Follow-up required\n- Supporting meeting/email reference\n\nWhy it matters:\n- This protects the team when memory gets selective later.\n\n### 10. Postmortem / lessons-learned loop\nYou need a way to turn repeated pain into institutional memory.\n\nAt minimum, after each major phase or project closeout:\n- What hurt margin?\n- What delayed procurement?\n- What scopes were underbought?\n- What owner behaviors created churn?\n- Which subcontractors performed well or poorly?\n- What would we change in estimating, contracting, or execution?\n\nWhy it matters:\n- If the same issue shows up on three jobs, it’s not a project issue anymore. It’s a company process issue.\n\n## If I were prioritizing this for you\n\nI’d do it in this order:\n\n1. **Action item system**\n2. **Weekly project operating cadence**\n3. **Risk register**\n4. **Change management workflow**\n5. **Procurement tracker**\n6. **Precon-to-ops handoff**\n7. **RFI/submittal escalation rules**\n8. **Portfolio exception review**\n9. **Decision log**\n10. **Lessons-learned capture**\n\nThat order matters. If you try to build dashboards before you enforce ownership, you’ll just get cleaner-looking confusion.\n\n## What this probably looks like in practice\n\nYou do not need a massive process overhaul first. You need a few standards everybody actually follows:\n\n- One standard weekly project review template\n- One task/action log structure\n- One risk register format\n- One change event log\n- One procurement log\n- One project handoff checklist\n\nSame fields. Same definitions. Same review rhythm.\n\nThat’s the difference between a company that “has data” and a company that can actually run off it.\n\n## My recommendation\n\nStart by defining the 5 things every PM must update weekly:\n- top risks\n- pending cost exposure\n- overdue decisions\n- procurement misses\n- overdue action items\n\nThen make that the basis of a Monday leadership review across all active jobs.\n\nIf you want, I can turn this into a concrete Alleato operating system:\n- weekly meeting cadence\n- required project controls\n- role ownership by PM / super / PX / precon\n- templates for risk log, procurement log, and action tracker\n\nThat would be the useful next move."
+      },
+      "expectedToolNames": [
+        "getPortfolioOverview",
+        "getActionItemsAndInsights",
+        "assistantSourceHealth"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "actions",
+        "source_health"
+      ]
+    }
+  ]
+}

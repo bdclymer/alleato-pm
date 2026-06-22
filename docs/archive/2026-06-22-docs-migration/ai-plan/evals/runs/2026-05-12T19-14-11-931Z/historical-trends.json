@@ -1,0 +1,559 @@
+{
+  "id": "historical-trends",
+  "intent": "financial_analysis",
+  "prompt": "Show me cost trends on Westfield over the last six months.",
+  "selectedProjectId": 43,
+  "sessionId": "4af7546d-7f74-44f7-bf31-a0b5d5af716e",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-historical-trends",
+  "startedAt": "2026-05-12T19:34:30.743Z",
+  "finishedAt": "2026-05-12T19:35:52.262Z",
+  "durationMs": 66477,
+  "httpStatus": 200,
+  "streamError": "stream read error: terminated",
+  "streamEventCount": 97,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: terminated",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getHistoricalTrends, getCostTrends] to fire — none did",
+      "mustInclude missing: \"trend\"",
+      "answer length 0 < min 100"
+    ],
+    "warnings": [
+      "expected family 'financial' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getHistoricalTrends",
+    "getCostTrends"
+  ],
+  "expectedToolFamilies": [
+    "financial"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:34:38.967Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:34:48.494Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Loaded project intelligence packet — synthesizing strategist response",
+        "status": "success",
+        "timestamp": "2026-05-12T19:35:11.099Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "vCVYyByil7LJnU7L"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "toolName": "consultCFO"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "question"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "Show"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " me"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " cost"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " trends"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " on"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " West"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " Collective"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " over"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " last"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " six"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " months"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "context"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "Pinned"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " is"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " West"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " Collective"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " ("
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "43"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": ")."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " User"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " wants"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " spend"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "/c"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "ost"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " trends"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " over"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " last"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " six"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " months"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " Focus"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " on"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " monthly"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " spend"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " trajectory"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": ","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " acceleration"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "/de"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "celer"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "ation"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": ","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " burn"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " rate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": ","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " category"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " shifts"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": ","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " any"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " implications"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " for"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " financial"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": " health"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": ".\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "toolName": "consultCFO",
+      "input": {
+        "question": "Show me cost trends on Westfield Collective over the last six months.",
+        "context": "Pinned project is Westfield Collective (project 43). User wants spend/cost trends over the last six months. Focus on monthly spend trajectory, acceleration/deceleration, burn rate, category shifts, and any implications for project financial health."
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_8qbDktQwCwgRNHfVDfCEgViR",
+      "output": {
+        "agent": "cfo",
+        "analysis": "The CFO encountered an error while analyzing: Sub-agent cfo exceeded 15000ms timeout",
+        "confidence": "low",
+        "toolsUsed": [],
+        "durationMs": 15011,
+        "alerts": [
+          {
+            "severity": "warning",
+            "message": "CFO agent error: Sub-agent cfo exceeded 15000ms timeout"
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "toolName": "getCostTrends"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "43"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "West"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": " Collective"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "months"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_dLK89DXbJaMwMxpGodVRK7ti",
+      "toolName": "getCostTrends",
+      "input": {
+        "projectId": 43,
+        "projectName": "Westfield Collective",
+        "months": 6
+      }
+    }
+  ],
+  "persistedMetadata": null
+}

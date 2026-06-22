@@ -1,0 +1,42 @@
+{
+  "id": "accounting-ap-aging",
+  "intent": "financial_analysis",
+  "prompt": "What's our AP aging look like right now?",
+  "selectedProjectId": null,
+  "sessionId": "d8276943-8722-4516-acd8-a9cd6e4f96f4",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-accounting-ap-aging",
+  "startedAt": "2026-05-12T19:37:04.508Z",
+  "finishedAt": "2026-05-12T19:37:19.840Z",
+  "durationMs": 1,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getAPAgingReport] to fire — none did",
+      "answer length 0 < min 80"
+    ],
+    "warnings": [
+      "expected family 'accounting' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getAPAgingReport"
+  ],
+  "expectedToolFamilies": [
+    "accounting"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

@@ -1,0 +1,812 @@
+{
+  "generatedAt": "2026-06-09T14:44:02.852Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "tool-coverage-read-regression",
+    "description": "Direct per-tool coverage for runtime READ tools that no other case asserts (getProjectDetails, searchStructuredFinancialRows, getCompanyKnowledge, the Acumatica AR/vendor/bills/invoices/project-list/project-budget reads, web search/research/market, getGeneratedTasksToday). Safe to run against prod — no state is mutated. Each case passes only if its single target tool fires and the answer is grounded.",
+    "criteria": [
+      "Every case must fire its single expectedToolName — the prompt must route to that exact tool, not a sibling.",
+      "Acumatica cases must hit the live ERP read path, not a cached/structured fallback.",
+      "Answers must reflect the tool's output (real numbers / names / facts), not a generic deferral."
+    ]
+  },
+  "filter": "^toolcov-read-",
+  "totalCases": 13,
+  "passed": 5,
+  "failed": 8,
+  "warningCount": 9,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": false,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 0,
+    "passed": 0,
+    "failed": 0,
+    "errors": 0,
+    "averageScore": null
+  },
+  "slowestCases": [
+    {
+      "id": "toolcov-read-construction-market",
+      "intent": "web_research",
+      "durationMs": 87874,
+      "status": "fail",
+      "warnings": [
+        "expected family 'web' not represented",
+        "duration 87874ms exceeded warning budget 45000ms"
+      ]
+    },
+    {
+      "id": "toolcov-read-vendor-spend",
+      "intent": "accounting",
+      "durationMs": 33930,
+      "status": "pass",
+      "warnings": []
+    },
+    {
+      "id": "toolcov-read-structured-financial-rows",
+      "intent": "structured_financial",
+      "durationMs": 33185,
+      "status": "fail",
+      "warnings": [
+        "expected family 'structured' not represented"
+      ]
+    },
+    {
+      "id": "toolcov-read-acumatica-project-list",
+      "intent": "accounting",
+      "durationMs": 26780,
+      "status": "pass",
+      "warnings": []
+    },
+    {
+      "id": "toolcov-read-recent-invoices",
+      "intent": "accounting",
+      "durationMs": 26044,
+      "status": "pass",
+      "warnings": []
+    },
+    {
+      "id": "toolcov-read-acumatica-project-budget",
+      "intent": "accounting",
+      "durationMs": 23181,
+      "status": "fail",
+      "warnings": [
+        "expected family 'accounting' not represented"
+      ]
+    },
+    {
+      "id": "toolcov-read-research-company",
+      "intent": "web_research",
+      "durationMs": 18325,
+      "status": "fail",
+      "warnings": [
+        "expected family 'web' not represented"
+      ]
+    },
+    {
+      "id": "toolcov-read-recent-bills",
+      "intent": "accounting",
+      "durationMs": 17373,
+      "status": "pass",
+      "warnings": []
+    },
+    {
+      "id": "toolcov-read-project-details",
+      "intent": "project_details",
+      "durationMs": 1531,
+      "status": "fail",
+      "warnings": [
+        "expected family 'project' not represented"
+      ]
+    },
+    {
+      "id": "toolcov-read-generated-tasks-today",
+      "intent": "task_management",
+      "durationMs": 900,
+      "status": "pass",
+      "warnings": []
+    }
+  ],
+  "toolCoverage": {
+    "assistantSourceHealth": 4,
+    "backendDeepAgentProjectStatus": 2,
+    "project_lookup": 2,
+    "packet_reader": 2,
+    "teams_reader": 2,
+    "meetings_reader": 2,
+    "emails_reader": 2,
+    "documents_reader": 2,
+    "financials_reader": 2,
+    "schedule_reader": 2,
+    "rfi_reader": 2,
+    "submittal_reader": 2,
+    "deepagents_runtime": 2,
+    "getVendorSpendReport": 1,
+    "getRecentBills": 1,
+    "getRecentInvoices": 1,
+    "getAcumaticaProjectList": 1,
+    "backendDeepAgentResearch": 1,
+    "deepagents_research_runtime": 1,
+    "searchDocuments": 1,
+    "semanticSearch": 1,
+    "searchMeetingsByTopic": 1,
+    "getCompanyKnowledge": 1,
+    "getGeneratedTasksToday": 1
+  },
+  "intentDistribution": {
+    "project_details": 1,
+    "structured_financial": 1,
+    "company_knowledge": 1,
+    "accounting": 6,
+    "web_research": 3,
+    "task_management": 1
+  },
+  "results": [
+    {
+      "id": "toolcov-read-project-details",
+      "intent": "project_details",
+      "prompt": "Quick facts on Westfield — contract value, current phase, and project address.",
+      "selectedProjectId": 43,
+      "sessionId": "10d6eee0-7685-499d-a044-23375d1e932f",
+      "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-project-details",
+      "startedAt": "2026-06-09T14:39:29.501Z",
+      "finishedAt": "2026-06-09T14:39:31.254Z",
+      "durationMs": 1531,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getProjectDetails] to fire — none did",
+          "mustInclude missing: \"Westfield\""
+        ],
+        "warnings": [
+          "expected family 'project' not represented"
+        ],
+        "observations": [
+          "tools fired: assistantSourceHealth"
+        ],
+        "toolNames": [
+          "assistantSourceHealth"
+        ],
+        "familiesHit": [
+          "source_health"
+        ],
+        "finalTextLength": 1480,
+        "finalText": "Source health is degraded right now.\n\nCoverage read: 30 tracked source rows, 30 critical, 0 warning, 779 unembedded items, 3890 uncompiled items, 0 failed Microsoft subscriptions, and 1 expiring subscriptions.\nLikely weak point: embedding_backlog.\n\nTop alerts:\n- CRITICAL: onedrive_file — OneDrive: acannon@alleatogroup.com/Alleato Group/2025 Jobs is critical.\n- CRITICAL: outlook_email — Outlook: cgillespie@alleatogroup.com is critical.\n- CRITICAL: onedrive_file — OneDrive: cgillespie@alleatogroup.com/Alleato Group/2026 Jobs is critical.\n- CRITICAL: teams_chat_export — Teams DM export: bclymer@alleatogroup.com is critical.\n- CRITICAL: teams_chat_export — Teams direct messages is critical.\n\nHighest-risk sources:\n- OneDrive: acannon@alleatogroup.com/Alleato Group/2025 Jobs (onedrive_file) — critical | stale 515 min\n- Outlook: cgillespie@alleatogroup.com (outlook_email) — critical | stale 28325 min\n- OneDrive: cgillespie@alleatogroup.com/Alleato Group/2026 Jobs (onedrive_file) — critical | stale 28325 min\n- Teams DM export: bclymer@alleatogroup.com (teams_chat_export) — critical | stale 267 min | backlog 221 unembedded / 917 uncompiled\n- Teams direct messages (teams_chat_export) — critical | stale 4597 min | backlog 364 unembedded / 1116 uncompiled\n\nOperational read: use this health view to decide whether Teams, Outlook, meeting, and OneDrive evidence is trustworthy enough for packet summaries or whether you should drill into exact source records before acting.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 1531
+        }
+      },
+      "expectedToolNames": [
+        "getProjectDetails"
+      ],
+      "expectedToolFamilies": [
+        "project"
+      ]
+    },
+    {
+      "id": "toolcov-read-structured-financial-rows",
+      "intent": "structured_financial",
+      "prompt": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+      "selectedProjectId": 43,
+      "sessionId": "33e566d6-062c-478a-acda-022e831622e8",
+      "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-structured-financial-rows",
+      "startedAt": "2026-06-09T14:39:31.255Z",
+      "finishedAt": "2026-06-09T14:40:04.758Z",
+      "durationMs": 33185,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 18,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [searchStructuredFinancialRows] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'structured' not represented"
+        ],
+        "observations": [
+          "tools fired: backendDeepAgentProjectStatus, project_lookup, packet_reader, teams_reader, meetings_reader, emails_reader, documents_reader, financials_reader, schedule_reader, rfi_reader, submittal_reader, deepagents_runtime",
+          "backend Deep Agents memory candidates: 0"
+        ],
+        "toolNames": [
+          "backendDeepAgentProjectStatus",
+          "project_lookup",
+          "packet_reader",
+          "teams_reader",
+          "meetings_reader",
+          "emails_reader",
+          "documents_reader",
+          "financials_reader",
+          "schedule_reader",
+          "rfi_reader",
+          "submittal_reader",
+          "deepagents_runtime"
+        ],
+        "familiesHit": [
+          "project",
+          "risk"
+        ],
+        "finalTextLength": 2374,
+        "finalText": "Direct answer\n\nWestfield has three structured budget line rows that mention concrete, totaling $818,612 in original budget. The line items are Foundations, Concrete Subbase, and Concrete Unit Masonry-Block.\n\nEvidence\n\n- Foundations — cost code 03-2000, description “Foundations.Subcontract,” original_amount $652,762.00. Source: `budget_lines` query on Westfield Collective (project 43).\n- Concrete Subbase — cost code 03-2500, description “Concrete Subbase.Subcontract,” original_amount $38,350.00. Source: `budget_lines` query on Westfield Collective (project 43).\n- Concrete Unit Masonry-Block — cost code 04-2200, description “Concrete Unit Masonry-Block.Subcontract,” original_amount $127,500.00. Source: `budget_lines` query on Westfield Collective (project 43).\n- These are the only concrete-related rows returned from the structured financial line search I ran on the budget lines table. Source: `budget_lines` query on Westfield Collective (project 43).\n- Broader project context: Westfield shows $1,204,204 in pending owner change orders and 181 overdue schedule tasks. Source: project budget summary and risk snapshot for Westfield Collective.\n\nWhat this means\n\nThe concrete scope is real and material, but the direct line-item read is still just original budget. I do not have revised, committed, or actual line-level exposure from this table, so this is not a cost overrun read yet. The bigger issue is execution pressure: Westfield is carrying a heavy overdue task load, so any concrete-related field changes or rework could turn into schedule drag fast.\n\nRecommended next steps\n\n- PM / cost lead: pull the concrete cost codes against commitments, change events, and actuals before using these numbers in an owner update.\n- PM: verify whether any of the concrete scope sits inside the $1,204,204 pending owner changes before the next billing or update cycle.\n- Project team: keep an eye on schedule impacts tied to concrete work, because the project’s overdue task stack is already high.\n\nUncertainty\n\n- The `budget_lines` table gives original amounts, not revised/actual/committed line-level exposure.\n- I did not find additional concrete rows beyond the three listed above in the structured line search I ran.\n\nSource coverage note: meetings: missing; rfi: missing; submittal: missing. I did not use unavailable or stale source categories as factual support.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 33185
+        }
+      },
+      "expectedToolNames": [
+        "searchStructuredFinancialRows"
+      ],
+      "expectedToolFamilies": [
+        "structured"
+      ]
+    },
+    {
+      "id": "toolcov-read-company-knowledge",
+      "intent": "company_knowledge",
+      "prompt": "What is Alleato's mission and what are the current strategic goals for the company?",
+      "selectedProjectId": null,
+      "sessionId": "cf565ce4-7560-436b-9a26-7045edfb6788",
+      "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-company-knowledge",
+      "startedAt": "2026-06-09T14:40:04.759Z",
+      "finishedAt": "2026-06-09T14:40:05.241Z",
+      "durationMs": 402,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getCompanyKnowledge] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'knowledge' not represented"
+        ],
+        "observations": [
+          "tools fired: assistantSourceHealth"
+        ],
+        "toolNames": [
+          "assistantSourceHealth"
+        ],
+        "familiesHit": [
+          "source_health"
+        ],
+        "finalTextLength": 1480,
+        "finalText": "Source health is degraded right now.\n\nCoverage read: 30 tracked source rows, 30 critical, 0 warning, 779 unembedded items, 3890 uncompiled items, 0 failed Microsoft subscriptions, and 1 expiring subscriptions.\nLikely weak point: embedding_backlog.\n\nTop alerts:\n- CRITICAL: onedrive_file — OneDrive: acannon@alleatogroup.com/Alleato Group/2025 Jobs is critical.\n- CRITICAL: outlook_email — Outlook: cgillespie@alleatogroup.com is critical.\n- CRITICAL: onedrive_file — OneDrive: cgillespie@alleatogroup.com/Alleato Group/2026 Jobs is critical.\n- CRITICAL: teams_chat_export — Teams DM export: bclymer@alleatogroup.com is critical.\n- CRITICAL: teams_chat_export — Teams direct messages is critical.\n\nHighest-risk sources:\n- OneDrive: acannon@alleatogroup.com/Alleato Group/2025 Jobs (onedrive_file) — critical | stale 515 min\n- Outlook: cgillespie@alleatogroup.com (outlook_email) — critical | stale 28325 min\n- OneDrive: cgillespie@alleatogroup.com/Alleato Group/2026 Jobs (onedrive_file) — critical | stale 28325 min\n- Teams DM export: bclymer@alleatogroup.com (teams_chat_export) — critical | stale 267 min | backlog 221 unembedded / 917 uncompiled\n- Teams direct messages (teams_chat_export) — critical | stale 4597 min | backlog 364 unembedded / 1116 uncompiled\n\nOperational read: use this health view to decide whether Teams, Outlook, meeting, and OneDrive evidence is trustworthy enough for packet summaries or whether you should drill into exact source records before acting.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 402
+        }
+      },
+      "expectedToolNames": [
+        "getCompanyKnowledge"
+      ],
+      "expectedToolFamilies": [
+        "knowledge"
+      ]
+    },
+    {
+      "id": "toolcov-read-ar-aging",
+      "intent": "accounting",
+      "prompt": "Pull our current AR aging from Acumatica — who owes us and how overdue are they?",
+      "selectedProjectId": null,
+      "sessionId": "355c6a38-0723-42f6-bc8a-cca67c3ed76a",
+      "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-ar-aging",
+      "startedAt": "2026-06-09T14:40:05.242Z",
+      "finishedAt": "2026-06-09T14:40:05.610Z",
+      "durationMs": 284,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getARAgingReport] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'accounting' not represented"
+        ],
+        "observations": [
+          "tools fired: assistantSourceHealth"
+        ],
+        "toolNames": [
+          "assistantSourceHealth"
+        ],
+        "familiesHit": [
+          "source_health"
+        ],
+        "finalTextLength": 1480,
+        "finalText": "Source health is degraded right now.\n\nCoverage read: 30 tracked source rows, 30 critical, 0 warning, 779 unembedded items, 3890 uncompiled items, 0 failed Microsoft subscriptions, and 1 expiring subscriptions.\nLikely weak point: embedding_backlog.\n\nTop alerts:\n- CRITICAL: onedrive_file — OneDrive: acannon@alleatogroup.com/Alleato Group/2025 Jobs is critical.\n- CRITICAL: outlook_email — Outlook: cgillespie@alleatogroup.com is critical.\n- CRITICAL: onedrive_file — OneDrive: cgillespie@alleatogroup.com/Alleato Group/2026 Jobs is critical.\n- CRITICAL: teams_chat_export — Teams DM export: bclymer@alleatogroup.com is critical.\n- CRITICAL: teams_chat_export — Teams direct messages is critical.\n\nHighest-risk sources:\n- OneDrive: acannon@alleatogroup.com/Alleato Group/2025 Jobs (onedrive_file) — critical | stale 515 min\n- Outlook: cgillespie@alleatogroup.com (outlook_email) — critical | stale 28325 min\n- OneDrive: cgillespie@alleatogroup.com/Alleato Group/2026 Jobs (onedrive_file) — critical | stale 28325 min\n- Teams DM export: bclymer@alleatogroup.com (teams_chat_export) — critical | stale 267 min | backlog 221 unembedded / 917 uncompiled\n- Teams direct messages (teams_chat_export) — critical | stale 4597 min | backlog 364 unembedded / 1116 uncompiled\n\nOperational read: use this health view to decide whether Teams, Outlook, meeting, and OneDrive evidence is trustworthy enough for packet summaries or whether you should drill into exact source records before acting.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 284
+        }
+      },
+      "expectedToolNames": [
+        "getARAgingReport"
+      ],
+      "expectedToolFamilies": [
+        "accounting"
+      ]
+    },
+    {
+      "id": "toolcov-read-vendor-spend",
+      "intent": "accounting",
+      "prompt": "Which vendors have we spent the most with this year? Pull it from Acumatica.",
+      "selectedProjectId": null,
+      "sessionId": "cec56494-c48b-4f04-b27e-32e0511a3a7a",
+      "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-vendor-spend",
+      "startedAt": "2026-06-09T14:40:05.610Z",
+      "finishedAt": "2026-06-09T14:40:39.889Z",
+      "durationMs": 33930,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 609,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: getVendorSpendReport"
+        ],
+        "toolNames": [
+          "getVendorSpendReport"
+        ],
+        "familiesHit": [
+          "accounting"
+        ],
+        "finalTextLength": 1852,
+        "finalText": "Top vendor spend in Acumatica this year is heavily concentrated at the top — and one line looks unusual enough that I would not treat it as normal trade/vendor spend without checking it.\n\nTop vendors by total invoiced/paid this year:\n1. **CLYMERB** — $21,510,000 across 3 bills\n2. **DEEM** — $1,855,027 across 26 bills\n3. **RJSKELD** — $1,086,589 across 11 bills\n4. **WATERFRONT** — $977,545 across 2 bills\n5. **ADELPHIA** — $329,377 across 12 bills\n6. **PROOUT** — $296,250 across 5 bills\n7. **SIEMENS** — $286,650 across 3 bills\n8. **ROGERSMECH** — $269,812 across 2 bills\n9. **ACCU-FIRE** — $262,365 across 1 bill\n10. **DALMATION** — $236,762 across 6 bills\n\nNext tier:\n- **AGAVE** — $209,940\n- **GLENMARK** — $192,798\n- **JF BRAKE** — $176,289\n- **LEMSTE** — $168,300\n- **AIR** — $141,923\n- **R&M** — $140,058\n- **TSS** — $131,398\n- **DAVID ELEC** — $119,579\n- **FORUM** — $100,000\n- **ML STEEL** — $91,580\n\nWhat matters:\n- **CLYMERB at $21.51M dwarfs everything else**. That is an outlier and could be an internal/related-party/vendor-code issue, pass-through, or a special accounting setup. It needs validation before anyone uses this as a true vendor ranking.\n- After that, the real highest-spend vendors appear to be **DEEM, RJSKELD, and WATERFRONT**.\n- Acumatica shows **$0 outstanding** on these returned top vendors, so this list is currently fully paid based on the tool output.\n\nTotal across the top 20 returned vendors:\n- **Total invoiced:** $28,582,240.69\n- **Total paid:** $28,582,240.69\n- **Total outstanding:** $0\n\nSource: **Acumatica ERP live** `[Source: Acumatica Vendor Spend - Top Vendors]`\n\nNext move:\nIf you want a clean operating view, I should **re-run this excluding CLYMERB** and give you the actual top external vendors, or break the spend down by **project** so you can see where DEEM, RJSKELD, and WATERFRONT are hitting.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 33930
+        }
+      },
+      "expectedToolNames": [
+        "getVendorSpendReport"
+      ],
+      "expectedToolFamilies": [
+        "accounting"
+      ]
+    },
+    {
+      "id": "toolcov-read-recent-bills",
+      "intent": "accounting",
+      "prompt": "Show me the most recent AP bills we've received in Acumatica.",
+      "selectedProjectId": null,
+      "sessionId": "9c50dd2b-8cee-437f-849b-6e5f159b40d3",
+      "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-recent-bills",
+      "startedAt": "2026-06-09T14:40:39.889Z",
+      "finishedAt": "2026-06-09T14:40:57.594Z",
+      "durationMs": 17373,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 505,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: getRecentBills"
+        ],
+        "toolNames": [
+          "getRecentBills"
+        ],
+        "familiesHit": [
+          "accounting"
+        ],
+        "finalTextLength": 1533,
+        "finalText": "Most recent AP bills showing in live Acumatica are below. One issue: the raw result is not sorted cleanly by bill date across all records, so I’m listing the newest-dated items from what came back and calling out that the feed looks noisy.\n\n| Bill # | Vendor | Bill Date | Due Date | Amount | Status | Description |\n|---|---|---:|---:|---:|---|---|\n| 002815 | GARDOOR | 2025-12-17 | 2525-01-02 | $1,189.39 | Closed | Backcharge for cost to repair dock leveler conduit damaged by dock leveler installers. 10 hours |\n| 002462 | LLUM | 2025-09-24 | 2025-10-24 | $1.25 | Closed | Controller Services for Sept 2025 adj |\n| 002463 | LLUM | 2025-09-24 | 2025-10-24 | $1.25 | Closed | Controller Services for Sept 2025 adj |\n| 002109 | CHRISTIAN | 2025-06-30 | 2025-06-30 | $900.00 | Closed | Goodwill Foundations |\n| 003436 | KIMHOR | 2026-03-01 | 2026-03-01 | $13,550.00 | Closed | 170569001-0126 For Services Rendered through Jan 31, 2026 |\n| 003469 | KIMHOR | 2026-03-01 | 2026-03-01 | $14,350.00 | Closed | Credit for double payment - Original payment ref 002397 |\n\nWhat stands out:\n- Everything returned is **Closed** with **$0 balance**.\n- There’s at least one obvious data anomaly: **GARDOOR due date = 2525-01-02**, which is wrong.\n- The returned set also mixes in older 2022–2024 records, so this is not a clean “latest first” stream.\n\nIf you want, I can tighten this up one of two ways:\n1. show only **open/recent AP bills**, or  \n2. pull a **clean vendor-focused AP view** for someone like Kimley-Horn, ProOut, or another vendor.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 17373
+        }
+      },
+      "expectedToolNames": [
+        "getRecentBills"
+      ],
+      "expectedToolFamilies": [
+        "accounting"
+      ]
+    },
+    {
+      "id": "toolcov-read-recent-invoices",
+      "intent": "accounting",
+      "prompt": "What customer invoices went out of Acumatica recently?",
+      "selectedProjectId": null,
+      "sessionId": "be39251c-18d5-4f1c-abf6-b62c82495a15",
+      "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-recent-invoices",
+      "startedAt": "2026-06-09T14:40:57.595Z",
+      "finishedAt": "2026-06-09T14:41:23.828Z",
+      "durationMs": 26044,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 674,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: getRecentInvoices"
+        ],
+        "toolNames": [
+          "getRecentInvoices"
+        ],
+        "familiesHit": [
+          "accounting"
+        ],
+        "finalTextLength": 2025,
+        "finalText": "Here’s what came back from **recent customer invoices in Acumatica**.\n\nThe problem is the feed does **not look recent in a practical sense** — the 20 invoices returned are dated **2022-09-30 through 2023-10-01**. So either the dataset is limited, stale, or “recent” in this endpoint is just the latest records currently available in that ERP connection.\n\nTop invoices returned:\n- **000142** — **CART.COM** — **2023-10-01** — **$4,084.95** — Closed — Project 23:108 Pay Application 002\n- **000146** — **CART.COM** — **2023-10-01** — **$77,614.05** — Closed — Project 23:108 Pay Application 002\n- **000131** — **PURRS** — **2023-09-30** — **$18,565.20** — Closed — Write off balance\n- **000143** — **CART.COM** — **2023-09-01** — **$16,315.05** — Closed — Project 23:108 Pay Application 001\n- **000147** — **CART.COM** — **2023-09-01** — **$309,985.95** — Closed — Project 23:108 Pay Application 001\n- **000152** — **BELLA** — **2023-07-12** — **$97,888.50** — Closed — PCO 003R1 and PCO 005\n\nLargest invoices in the returned set:\n- **000059** — **BELLA** — **$1,126,470.99** — 2022-12-22\n- **000055** — **BELLA** — **$1,093,784.00** — 2022-12-19\n- **000061** — **SPECTOR** — **$852,382.90** — 2022-12-22\n- **000081** — **CEVA** — **$220,422.26** — 2023-05-12\n- **000101** — **CEVA** — **$220,422.26** — 2023-05-12\n\nWhat this means:\n- The AR feed returned **20 invoices totaling $4,622,031.17**\n- **All balances are zero**\n- **All statuses are Closed**\n- Nothing in this result set appears to be a currently open receivable or a truly recent billing batch\n\nWhat I’d do next:\n- If you want **actual latest billings**, I should pull **open invoices only** and compare that against this feed.\n- If you want **the last invoices sent by date**, I can give you a clean table sorted by invoice date and customer.\n- If you’re checking whether the **Acumatica connection is stale**, this result is a red flag.\n\nIf you want, I can next pull:\n1. **open AR invoices only**, or  \n2. **AR aging**, so we can see what customers currently owe.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 26044
+        }
+      },
+      "expectedToolNames": [
+        "getRecentInvoices"
+      ],
+      "expectedToolFamilies": [
+        "accounting"
+      ]
+    },
+    {
+      "id": "toolcov-read-acumatica-project-list",
+      "intent": "accounting",
+      "prompt": "List all the projects we have set up in Acumatica.",
+      "selectedProjectId": null,
+      "sessionId": "bb46f058-0b9c-44e6-94e4-7868f4704183",
+      "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-acumatica-project-list",
+      "startedAt": "2026-06-09T14:41:23.829Z",
+      "finishedAt": "2026-06-09T14:41:50.888Z",
+      "durationMs": 26780,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1664,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: getAcumaticaProjectList"
+        ],
+        "toolNames": [
+          "getAcumaticaProjectList"
+        ],
+        "familiesHit": [
+          "accounting"
+        ],
+        "finalTextLength": 5116,
+        "finalText": "Acumatica currently has **94 projects** set up.\n\nHere they are, by **project ID — description — status**:\n\n- **24115** — 24-115 Westfield Collective — Active\n- **23101** — Ulta Dallas — Active\n- **22112** — Bella Vegas — Completed\n- **24101** — Crate Escapes — Active\n- **25109** — 25-109 Uniqlo Phillipsburg NJ — Active\n- **24109** — 24-109 Goodwill Bloomington — Active\n- **25127** — 25-127 Ulta Beauty — Active\n- **25114** — 25- 114 Radial Avon IN — Active\n- **25125** — 25-125 Goodwill Noblesville — Active\n- **23114** — Goodwill Excel Center #114 — Active\n- **22109** — Spector Vegas — Completed\n- **22101** — Ulta Beauty Sprinkler/Electrical — Completed\n- **24106** — Cart Cold Storage — Active\n- **22102** — Radial Allentown — Completed\n- **24104** — Goodwill Bart — Active\n- **23102** — CEVA Memphis — Completed\n- **22103** — Radial MD — Completed\n- **26113** — 26-113 GW Allisonville Rd IN — Active\n- **24103** — Lakeshore Temp Power — Active\n- **25113** — 25- 113 Radial Martinsville VA — Active\n- **23106** — Radial Avon — Completed\n- **24111** — 24-111 CEVA Bernville Consulting — Active\n- **25103** — 25-103 Niemann Foods TI — Active\n- **25120** — 25-120 GPC Hai Robotic — Active\n- **25105** — 25-105 Applied Engineering — Active\n- **23104** — AHS Moorsville — Completed\n- **26104** — 26-104 - CEVA Bernville ASRS Phase 2 Bernville, PA — Active\n- **26103** — 26-103 Exol Wilmer — Active\n- **23111** — Cart Hebron — Active\n- **24102** — Wesleyan Office — Active\n- **23112** — Zion Pratt Whitney — Active\n- **24107** — Core Mark — Completed\n- **22108** — Lasik Center — Completed\n- **25111** — 25-111 Goodwill Foundations — Active\n- **25101** — 25-101 Core Mark Atlanta — Active\n- **25108** — 25-108 Goodwill Tremont — Active\n- **26102** — 26-102 Goodwill Commons — Active\n- **23108** — Cart Memphis — Completed\n- **26105** — 26-105 GW Pioneer PKWY — Active\n- **25110** — 25-110 Memphis Cold Storage Phase 2 — Active\n- **22104** — Cooper Road — Completed\n- **26106** — 26-106 GW Washington-IL — Active\n- **25112** — 25-112 Coram Deo Academy — Active\n- **25118** — 25-118 - Radial Brownsburg Indy 1 (Indianapolis, IN) — Active\n- **24108** — 24 -108 Aspire Ridge Haven — Active\n- **22111** — Craig St office — Completed\n- **23113** — Macomb Group Indianapolis — Active\n- **26116** — 26-116 Exol Morrisville — Active\n- **25104** — 25-104 Royal Theatre Apartments — Active\n- **25126** — 25-126 Vermillion Rise Warehouse — Active\n- **25117** — 25-117 Aspire Kissimmee Gardens — Active\n- **23103** — Goodwill Store #25 — Active\n- **23105** — Outreach Lawrence UMC — Completed\n- **25121** — 25-121 The Roebling Homes — Active\n- **26101** — 26-101 Paradise Isle Geotech — Active\n- **23109** — Turning Pointe Academy — Active\n- **25119** — Goodwill- Decatur — Active\n- **24105** — 24-105 Forza Dayton — Active\n- **24112** — 24-112 Goodwill Curb Cut — Active\n- **22107** — Purrs and Gurrs — Completed\n- **22113** — Great Clips Columbus — Completed\n- **23110** — Brennan Pittsburgh — Active\n- **26107** — 26-107 GW Canton IL — Active\n- **25124** — 25-124 Goodwill Bloomington Excel — Active\n- **25116** — 25-116 Hiro Space Split — Active\n- **26112** — 26-112 - McLane Jazz Salt Lake City, UT — Active\n- **25102** — 25-102 Aspire at St. Lucie — Active\n- **24114** — 24-114 Zion Door Dash — Active\n- **23107** — TECOVA DALLAS — Active\n- **26117** — 26-117 - Superior Beverage Exotec — Active\n- **22105** — Vargo Permitting — Completed\n- **26118** — 26-118 Champagne Ace Addition IL — Active\n- **25107** — 25-107 Port Collective — Active\n- **26119** — 26-119 Union Collective KY — Active\n- **26115** — 26-115 Vargo Greenwood Permitting — Active\n- **24113** — 24-113 Aspire Oak Tree Daytona LS Plans — Active\n- **22110** — Pepsi Co — Completed\n- **25115** — 25-115 Zion Arkansas Permit — Active\n- **26114** — 26-114 GW Brookville Rd Retail Store — Active\n- **26111** — 26-111 GW Morris IL — Active\n- **12131** — 25-117 Aspire Kissimmee Gardens — Canceled\n- **21231** — 25-121 The Roebling Homes — Canceled\n- **2401A** — Temporary project code for Forza Cincinnati project - since we don't have the job in Procore yet. — Active\n- **25122** — 25-122 Goodwill Shadeland Ave — Active\n- **25123** — 25-123 Goodwill Shelbyville — Active\n- **25128** — 25-128 Vargo Permitting (Fort Worth, TX) — Active\n- **26108** — 26-108 GW Galesburg IL — Active\n- **26109** — 26-109 GW Macomb IL — Active\n- **26110** — 26-110 GW Peru IL — Active\n- **26120** — 26-120 - NEXCOM SEDC Pensacola, FL — Active\n- **26121** — 26-121 - Varsity Brands — Active\n- **26122** — 26-122 Goodwill Kokomo — Active\n- **26123** — 26-123 Playmakers — Active\n- **8530** — 26-118 Champagne Ace Addition IL — Closed\n\nA couple things worth noticing:\n- There are **duplicate/carryover-looking records** for **Aspire Kissimmee Gardens**, **The Roebling Homes**, and **Champagne Ace Addition IL**.\n- There’s also a **temporary code**: **2401A** for the Forza Cincinnati project.\n\nIf you want, I can clean this up into:\n1. **Active only**\n2. **CSV-style table with customer/income/expenses/net**\n3. **A shortlist of projects that look duplicated, canceled, or suspect**",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 26780
+        }
+      },
+      "expectedToolNames": [
+        "getAcumaticaProjectList"
+      ],
+      "expectedToolFamilies": [
+        "accounting"
+      ]
+    },
+    {
+      "id": "toolcov-read-acumatica-project-budget",
+      "intent": "accounting",
+      "prompt": "Pull the Acumatica project budget for Westfield.",
+      "selectedProjectId": 43,
+      "sessionId": "aacc5e84-951e-46c0-841b-09957fd35c21",
+      "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-acumatica-project-budget",
+      "startedAt": "2026-06-09T14:41:50.890Z",
+      "finishedAt": "2026-06-09T14:42:14.385Z",
+      "durationMs": 23181,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 15,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getAcumaticaProjectBudget] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'accounting' not represented"
+        ],
+        "observations": [
+          "tools fired: backendDeepAgentProjectStatus, project_lookup, packet_reader, teams_reader, meetings_reader, emails_reader, documents_reader, financials_reader, schedule_reader, rfi_reader, submittal_reader, deepagents_runtime",
+          "backend Deep Agents memory candidates: 0"
+        ],
+        "toolNames": [
+          "backendDeepAgentProjectStatus",
+          "project_lookup",
+          "packet_reader",
+          "teams_reader",
+          "meetings_reader",
+          "emails_reader",
+          "documents_reader",
+          "financials_reader",
+          "schedule_reader",
+          "rfi_reader",
+          "submittal_reader",
+          "deepagents_runtime"
+        ],
+        "familiesHit": [
+          "project",
+          "risk"
+        ],
+        "finalTextLength": 2908,
+        "finalText": "Westfield Collective’s Acumatica budget record is effectively empty right now: original budget, revised budget, approved changes, contract value, invoicing, and payments all show $0. That means I can’t give you a real financial read from the ERP yet; the structured budget data is not populated enough to trust as a project control baseline.\n\nEvidence\n- Budget summary shows original budget $0, revised budget $0, budget delta $0, and approved budget changes $0. Source: PM database `v_budget_lines` / `prime_contract_financial_summary` via Westfield Collective budget summary.\n- Prime contract summary shows original contract $0, revised contract $0, approved owner COs $0, pending owner COs $0, invoiced $0, payments received $0, and remaining balance $0. Source: PM database `prime_contract_financial_summary` via Westfield Collective budget summary.\n- The latest packet says Westfield is in closeout / activation mode, with grand opening completed or imminent, but warranty, punch-list, and payment workflow issues still need resolution. Source: packet, 2026-06-09.\n- Recent email traffic is still active around roll-up counter doors and related closeout items, which matches an active closeout phase rather than a finished financial close. Source: email thread dated 2026-06-08.\n- Document traffic also shows a Contract Change Order attachment and a counter shutter drawing, which suggests change management is still in play. Source: documents dated 2026-06-08.\n\nWhat this means\nOperationally, the job is not dead; it’s in late-stage closeout with open workflow risk. Financially, the system is not giving you a usable budget picture yet, so any margin or exposure read would be fiction until the budget/contract fields are populated. The real risk here is not a blown number — it’s that the financial control record is too thin to manage the closeout cleanly.\n\nRecommended next steps\n- PM / cost lead: reconcile the Acumatica project setup and confirm whether Westfield Collective is missing budget import, contract setup, or both.\n- PM: verify approved change orders and open change events against the closeout package before relying on any zeroed ERP totals.\n- Admin / accounting: confirm whether invoicing and payments have been pushed into the project record or are sitting outside it.\n- Project team: continue pushing warranty, punch-list, and payment workflow items to closure since those are the live execution risks.\n\nUncertainty\n- I could not confirm any real budget dollars because the structured project finance summary returned all zeros.\n- Source coverage notes financials are checked, but the latest structured finance ingest is older than the current emails/documents, so the ERP view may be incomplete or not yet configured for this job.\n\nSource coverage note: meetings: missing; rfi: missing; submittal: missing. I did not use unavailable or stale source categories as factual support.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 23181
+        }
+      },
+      "expectedToolNames": [
+        "getAcumaticaProjectBudget"
+      ],
+      "expectedToolFamilies": [
+        "accounting"
+      ]
+    },
+    {
+      "id": "toolcov-read-web-search",
+      "intent": "web_research",
+      "prompt": "What's the current market price trend for structural steel right now? Check the web.",
+      "selectedProjectId": null,
+      "sessionId": "4102095e-be49-475a-ac22-d396d18862d3",
+      "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-web-search",
+      "startedAt": "2026-06-09T14:42:14.386Z",
+      "finishedAt": "2026-06-09T14:42:14.915Z",
+      "durationMs": 450,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [searchWeb] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'web' not represented"
+        ],
+        "observations": [
+          "tools fired: assistantSourceHealth"
+        ],
+        "toolNames": [
+          "assistantSourceHealth"
+        ],
+        "familiesHit": [
+          "source_health"
+        ],
+        "finalTextLength": 1480,
+        "finalText": "Source health is degraded right now.\n\nCoverage read: 30 tracked source rows, 30 critical, 0 warning, 779 unembedded items, 3890 uncompiled items, 0 failed Microsoft subscriptions, and 1 expiring subscriptions.\nLikely weak point: embedding_backlog.\n\nTop alerts:\n- CRITICAL: onedrive_file — OneDrive: acannon@alleatogroup.com/Alleato Group/2025 Jobs is critical.\n- CRITICAL: outlook_email — Outlook: cgillespie@alleatogroup.com is critical.\n- CRITICAL: onedrive_file — OneDrive: cgillespie@alleatogroup.com/Alleato Group/2026 Jobs is critical.\n- CRITICAL: teams_chat_export — Teams DM export: bclymer@alleatogroup.com is critical.\n- CRITICAL: teams_chat_export — Teams direct messages is critical.\n\nHighest-risk sources:\n- OneDrive: acannon@alleatogroup.com/Alleato Group/2025 Jobs (onedrive_file) — critical | stale 515 min\n- Outlook: cgillespie@alleatogroup.com (outlook_email) — critical | stale 28325 min\n- OneDrive: cgillespie@alleatogroup.com/Alleato Group/2026 Jobs (onedrive_file) — critical | stale 28325 min\n- Teams DM export: bclymer@alleatogroup.com (teams_chat_export) — critical | stale 267 min | backlog 221 unembedded / 917 uncompiled\n- Teams direct messages (teams_chat_export) — critical | stale 4597 min | backlog 364 unembedded / 1116 uncompiled\n\nOperational read: use this health view to decide whether Teams, Outlook, meeting, and OneDrive evidence is trustworthy enough for packet summaries or whether you should drill into exact source records before acting.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 450
+        }
+      },
+      "expectedToolNames": [
+        "searchWeb"
+      ],
+      "expectedToolFamilies": [
+        "web"
+      ]
+    },
+    {
+      "id": "toolcov-read-research-company",
+      "intent": "web_research",
+      "prompt": "Research Turner Construction for me — size, market focus, and reputation.",
+      "selectedProjectId": null,
+      "sessionId": "449185c8-430a-491b-94d5-58a5ab905ad4",
+      "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-research-company",
+      "startedAt": "2026-06-09T14:42:14.916Z",
+      "finishedAt": "2026-06-09T14:42:33.506Z",
+      "durationMs": 18325,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 12,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [researchCompany] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'web' not represented"
+        ],
+        "observations": [
+          "tools fired: backendDeepAgentResearch, deepagents_research_runtime",
+          "backend Deep Agents memory candidates: 0"
+        ],
+        "toolNames": [
+          "backendDeepAgentResearch",
+          "deepagents_research_runtime"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 3192,
+        "finalText": "Plan:\n1. Identify Turner Construction’s company size and footprint from current public sources.\n2. Confirm market focus from Turner’s own site and compare with industry coverage.\n3. Use reputation indicators from credible public rankings/awards.\n4. Keep Alleato internal sources separate; none were needed because this is a public-company research question.\n\nWhat I found\n\nPublic web sources\n- Size:\n  - Turner is the #1 contractor in ENR’s 2024 Top 400 Contractors list. ENR ranks it first by construction revenue. URL: https://www.enr.com/toplists/2024-Top-400-Contractors-1-preview\n  - HOCHTIEF’s 2025 press release says Turner generated over $20 billion in revenue in 2024 and secured more than $26 billion in new contracts, with backlog above $39 billion in 2025. URL: https://www.hochtief.com/news-media/press-releases/press-release/turners-growth-recognized-with-leadership-across-key-market-sectors\n  - Turner’s company size on LinkedIn is listed as 10,001+ employees. URL: https://www.linkedin.com/company/turner-construction-company\n- Market focus:\n  - Turner describes itself as a North America-based, international construction services company and a leading builder in diverse market segments. URL: https://www.turnerconstruction.com/market-sectors\n  - Turner says its major market segments include healthcare, education, commercial, sports, aviation, pharmaceutical, retail, and green building. URL: https://www.turnerconstruction.com/market-sectors\n  - Turner’s market-segment page also lists aviation & transportation, federal, sports & public assembly, healthcare, pharmaceutical & biotech, industrial & advanced manufacturing, and global critical facilities. URL: https://www.turnerconstruction.com/market-sectors\n- Reputation:\n  - ENR ranks Turner #1 in the U.S. contractor list for 2024. URL: https://www.enr.com/toplists/2024-Top-400-Contractors-1-preview\n  - Turner says ENR ranked it #1 Green Builder in the U.S. for the 18th consecutive year. URL: https://www.turnerconstruction.com/insights/turner-named-1-green-builder-by-engineering-news-record-for-the-18th-consecutive-year\n  - HOCHTIEF says Turner was ranked first in General Building, Healthcare, and Sports, and in the top five across 13 sectors including Education, Aviation, and Data Centers. URL: https://www.hochtief.com/news-media/press-releases/press-release/turners-growth-recognized-with-leadership-across-key-market-sectors\n\nBottom line\n- Turner Construction is a very large, top-tier U.S. contractor with 10,001+ employees and roughly $20B+ annual revenue.\n- Its core market focus is broad, but especially strong in healthcare, education, sports, aviation/transportation, commercial, pharma/biotech, industrial/advanced manufacturing, and critical facilities/data centers.\n- Reputation-wise, it is widely regarded as one of the leading U.S. general contractors, with repeated ENR #1 rankings and sustained recognition in green building and multiple specialty sectors.\n\nAlleato internal evidence\n- None used. No project/vendor/contract/context lookup was needed.\n\nIf you want, I can turn this into a one-paragraph client-facing brief or a competitive comparison versus DPR, Whiting-Turner, and Skanska.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 18325
+        }
+      },
+      "expectedToolNames": [
+        "researchCompany"
+      ],
+      "expectedToolFamilies": [
+        "web"
+      ]
+    },
+    {
+      "id": "toolcov-read-construction-market",
+      "intent": "web_research",
+      "prompt": "What's happening in the US commercial construction market this quarter?",
+      "selectedProjectId": null,
+      "sessionId": "155e6fd9-9dfe-42f1-b414-c9b1c1345540",
+      "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-construction-market",
+      "startedAt": "2026-06-09T14:42:33.511Z",
+      "finishedAt": "2026-06-09T14:44:01.909Z",
+      "durationMs": 87874,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 973,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [searchConstructionMarket] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'web' not represented",
+          "duration 87874ms exceeded warning budget 45000ms"
+        ],
+        "observations": [
+          "tools fired: searchDocuments, semanticSearch, searchMeetingsByTopic, getCompanyKnowledge"
+        ],
+        "toolNames": [
+          "searchDocuments",
+          "semanticSearch",
+          "searchMeetingsByTopic",
+          "getCompanyKnowledge"
+        ],
+        "familiesHit": [
+          "meetings",
+          "communications",
+          "documents",
+          "semantic",
+          "knowledge"
+        ],
+        "finalTextLength": 3914,
+        "finalText": "The quarter reads as **active but tight**. Work is still moving, but the pressure points are financing, permitting, and decision speed — not just raw demand.\n\nWhat I can support from the system is thinner than I’d like for a national market call. I searched internal docs, semantic results, and meeting intelligence. There’s **no dedicated market report** in the knowledge base, and the company market-intel library came back unavailable. So this is a read based on the signals we do have from current deal and project conversations, not a quoted third-party macro report.\n\nWhat’s showing up consistently:\n\n- **Financing is gating starts.**  \n  In the Union Collective kickoff, the team was waiting on lending options and a term sheet before full mobilization. That’s the pattern: projects aren’t necessarily dead, but they’re getting sequenced around capital certainty. When money gets slower, starts get slower.\n\n- **Permitting and regulatory friction are still real.**  \n  Multiple meetings flagged permit delays and jurisdiction-specific issues. Union Collective had fire sprinkler permit rejection risk and a phased-permit discussion just to keep early work moving. That tells you owners and GCs are still trying to break projects into executable pieces because full approvals are taking too long.\n\n- **Preconstruction is more value-engineering-heavy than momentum-heavy.**  \n  The PEMB vs. structural steel discussion is a good example: teams are actively comparing systems, lead times, and fee impacts, not just pushing CDs forward. That usually means the market is still price-sensitive and owners want optionality.\n\n- **Lead times are better in some packages, but that’s not the whole story.**  \n  One meeting explicitly leaned toward conventional steel because lead times looked favorable relative to complexity. That suggests supply chain panic has eased versus peak disruption years. But improved lead times don’t solve slow decisions, financing drag, or permit bottlenecks.\n\n- **Commercial work is still getting done where there’s a clear business case.**  \n  The internal pipeline signals point to continued activity in mixed-use/hospitality-style concepts, warehouse/industrial-related work, tenant improvements, and specialty systems. So this is not a frozen market. It’s a selective market.\n\nWhat that means in plain English:\n\n- **Industrial / light industrial / warehouse-adjacent work** still looks more resilient than pure speculative office.\n- **Adaptive reuse, phased buildouts, and mixed-use concepts** are getting attention because they can be structured around financing and permitting realities.\n- **Owners are asking for faster pricing and more scenario analysis** before they commit.\n- **Execution discipline matters more this quarter than broad market optimism.** If a team can price quickly, phase permits, and keep lenders confident, work moves. If not, it stalls.\n\nThe biggest market risk this quarter:\n- **Not cost escalation by itself — uncertainty drag.**  \n  Projects lose time in the handoff between concept, funding, permit strategy, and owner decisions. That’s the real tax on the market right now.\n\nThe practical takeaway for Alleato:\n- Win work by being the team that can **price fast, VE intelligently, break permitting into phases, and show owners a finance-aware path to start**.\n- Don’t rely on “market recovery” language. Right now the edge is operational: **certainty beats optimism**.\n\nConfidence / gap:\n- Strongest evidence is from live project and pursuit conversations in the system.\n- Weakest area is national external benchmark data because I **did not find a current quarter market report** in the knowledge base.\n\nIf you want, I can do the next pass two ways:\n1. **internal-only market read by sector** based on Alleato’s pipeline and conversations, or  \n2. **external market scan** using web research for a true Q2 2026 U.S. commercial construction briefing.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 87874
+        }
+      },
+      "expectedToolNames": [
+        "searchConstructionMarket"
+      ],
+      "expectedToolFamilies": [
+        "web"
+      ]
+    },
+    {
+      "id": "toolcov-read-generated-tasks-today",
+      "intent": "task_management",
+      "prompt": "What action items got generated today across my projects?",
+      "selectedProjectId": null,
+      "sessionId": "795e3e6b-3bcc-46fd-a8b3-fa44cae7c269",
+      "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-generated-tasks-today",
+      "startedAt": "2026-06-09T14:44:01.911Z",
+      "finishedAt": "2026-06-09T14:44:02.852Z",
+      "durationMs": 900,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 7,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: getGeneratedTasksToday"
+        ],
+        "toolNames": [
+          "getGeneratedTasksToday"
+        ],
+        "familiesHit": [
+          "task_management"
+        ],
+        "finalTextLength": 231,
+        "finalText": "I checked the Tasks page source of truth: `public.tasks.created_at` for Tue, Jun 9, 2026.\n\nNo task rows were created today in the Tasks table.\n\nThis answer is not inferred from meeting transcripts. It is a direct task-table lookup.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 45000,
+          "maxDurationMs": 120000,
+          "durationMs": 900
+        }
+      },
+      "expectedToolNames": [
+        "getGeneratedTasksToday"
+      ],
+      "expectedToolFamilies": [
+        "task_management"
+      ]
+    }
+  ]
+}

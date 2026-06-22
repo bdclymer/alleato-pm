@@ -70,7 +70,7 @@ if (!allowedEmails.has(email)) {
   console.error("  git config user.email \"109628141+MeganHarrison@users.noreply.github.com\"");
   console.error("  git config user.name  \"MeganHarrison\"");
   console.error("");
-  console.error("Background: docs/patterns/vercel-hobby-author-gate.md");
+  console.error("Background: docs/archive/2026-06-22-docs-migration/patterns/vercel-hobby-author-gate.md");
   console.error("");
   process.exit(1);
 }

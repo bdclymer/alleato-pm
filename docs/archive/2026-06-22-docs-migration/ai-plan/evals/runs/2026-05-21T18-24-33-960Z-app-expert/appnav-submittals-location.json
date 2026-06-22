@@ -1,0 +1,75 @@
+{
+  "id": "appnav-submittals-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4737,
+  "question": "Which page owns submittals?",
+  "response": {
+    "answer": "The app’s **submittals page is owned by**:\n\n- **Route:** `/[projectId]/submittals`\n- **Source file:** `frontend/src/app/(main)/[projectId]/submittals/page.tsx`\n- **Feature registry entry:** **Submittals** (`id: submittals`)\n- **Help article:** `docs/help/articles/submittals.md`\n\nWhat I checked:\n- App artifact status: **fresh and available**\n- Feature registry: found a documented **Submittals** feature\n- App sitemap: confirmed the route ownership\n\nRelevant related routes:\n- `/[projectId]/submittals/new` — create form\n- `/[projectId]/submittals/[submittalId]` — submittal detail page\n- `/[projectId]/submittals/[submittalId]/edit` — edit form\n\nIf you meant a different “owns” question, such as **which page links to submittals from another workflow**, say which route you’re on and I can trace that exact ownership path.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/submittals",
+        "sourceType": "sitemap",
+        "route": "/submittals",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/submittals/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/submittals/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/submittals.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/submittals.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/submittals/new",
+        "sourceType": "sitemap",
+        "route": "/submittals/new",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/submittals/[submittalId]",
+        "sourceType": "sitemap",
+        "route": "/submittals/[submittalId]",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/submittals/[submittalId]/edit",
+        "sourceType": "sitemap",
+        "route": "/submittals/[submittalId]/edit",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 4732,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

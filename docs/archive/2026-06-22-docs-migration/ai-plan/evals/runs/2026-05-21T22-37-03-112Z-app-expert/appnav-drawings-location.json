@@ -1,0 +1,93 @@
+{
+  "id": "appnav-drawings-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6534,
+  "question": "Where are drawings viewed?",
+  "mustInclude": [
+    "/[projectId]/drawings",
+    "drawing"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "Drawings are viewed in the project **Drawings** page:\n\n- Route: `/[projectId]/drawings`\n- Help article: `docs/help/articles/drawings-viewer.md`\n\nDocumented behavior says:\n- Open **Drawings**\n- Select a drawing from the log\n- The viewer opens the current revision as a full-screen PDF with annotation, measurement, and pin tools\n\nRelated implementation evidence:\n- `frontend/src/app/(main)/[projectId]/drawings/page.tsx`\n\nAlso discovered routes under drawings:\n- `/[projectId]/drawings/[drawingId]`\n- `/[projectId]/drawings/areas`\n- `/[projectId]/drawings/board`\n- `/[projectId]/drawings/recycle-bin`\n\nIf you want, I can also tell you where revisions, areas, or the board are viewed.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/drawings",
+        "sourceType": "sitemap",
+        "route": "/drawings",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/drawings-viewer.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/drawings-viewer.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/drawings/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/drawings/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/drawings/[drawingId]",
+        "sourceType": "sitemap",
+        "route": "/drawings/[drawingId]",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/drawings/areas",
+        "sourceType": "sitemap",
+        "route": "/drawings/areas",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/drawings/board",
+        "sourceType": "sitemap",
+        "route": "/drawings/board",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/drawings/recycle-bin",
+        "sourceType": "sitemap",
+        "route": "/drawings/recycle-bin",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6393,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

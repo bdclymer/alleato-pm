@@ -1,0 +1,312 @@
+{
+  "generatedAt": "2026-05-14T21:24:25.565Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "deep-agents-executive-regression",
+    "description": "Agentic-eval guardrail for broad business prompts. The assistant must use the backend executive Deep Agents packet for no-project executive questions while keeping deterministic write tools out of read-only synthesis.",
+    "criteria": [
+      "Every broad no-project executive prompt must fire backendDeepAgentExecutiveBriefing.",
+      "The assistant must still use source-backed task/action/source-health tools where appropriate.",
+      "No read-only executive prompt may fire email, calendar, or task write tools.",
+      "Answers must be specific and operational, not generic best-practice advice."
+    ]
+  },
+  "filter": "realworld-(most-important-tasks|waiting-on-team|business-risks|systems-processes-needed)$",
+  "totalCases": 4,
+  "passed": 4,
+  "failed": 0,
+  "warningCount": 4,
+  "slowestCases": [
+    {
+      "id": "realworld-most-important-tasks",
+      "intent": "task_management",
+      "durationMs": 40922,
+      "status": "pass",
+      "warnings": [
+        "duration 40922ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "realworld-business-risks",
+      "intent": "risk_review",
+      "durationMs": 38469,
+      "status": "pass",
+      "warnings": [
+        "duration 38469ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "realworld-systems-processes-needed",
+      "intent": "implementation_planning",
+      "durationMs": 38190,
+      "status": "pass",
+      "warnings": [
+        "duration 38190ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "realworld-waiting-on-team",
+      "intent": "task_management",
+      "durationMs": 34258,
+      "status": "pass",
+      "warnings": [
+        "duration 34258ms exceeded warning budget 30000ms"
+      ]
+    }
+  ],
+  "toolCoverage": {
+    "intentPlanner": 4,
+    "backendDeepAgentExecutiveBriefing": 4,
+    "mcpToolDiscoverySkipped": 4,
+    "streamingToolPolicy": 4,
+    "noToolRetry": 4,
+    "promptContextReducer": 3,
+    "messageDrivenToolRouter": 1,
+    "assistantWidgetPlanner": 1,
+    "assistantSourceHealth": 1
+  },
+  "intentDistribution": {
+    "task_management": 2,
+    "risk_review": 1,
+    "implementation_planning": 1
+  },
+  "results": [
+    {
+      "id": "realworld-most-important-tasks",
+      "intent": "task_management",
+      "prompt": "What are my most important tasks right now?",
+      "selectedProjectId": null,
+      "sessionId": "cf5bae36-1b7c-4d38-a3f0-f39e3ed33275",
+      "sessionLabel": "eval-2026-05-14T21-21-51-954Z-54058cc1-realworld-most-important-tasks",
+      "startedAt": "2026-05-14T21:21:51.973Z",
+      "finishedAt": "2026-05-14T21:22:33.350Z",
+      "durationMs": 40922,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 27,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "duration 40922ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "backendDeepAgentExecutiveBriefing",
+          "mcpToolDiscoverySkipped",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 1340,
+        "finalText": "Your most important tasks right now are:\n\n1. **Finalize and Submit the Updated Cost Forecast**  \n   *Why it matters:* The latest project review flagged several cost discrepancies and highlighted an approaching budget submission deadline (due in 3 days). This is critical for maintaining client trust and preventing funding delays.\n   *Action:* Review the project team's pending cost inputs and consolidate them for submission.\n\n2. **Resolve the Change Order Log Backlog**  \n   *Why it matters:* There are three high-impact change orders awaiting your approval, each affecting the mechanical and façade packages. Delays in processing these could disrupt the procurement schedule and affect critical path milestones.\n   *Action:* Prioritize your review/approval with supporting documentation from the contracts team.\n\n3. **Prepare for Tomorrow’s Coordination Meeting with C&W Engineering**  \n   *Why it matters:* Outstanding RFI responses (RFI-062 and RFI-063) are still open, and these are tied to site logistics and safety. Finalizing these before the meeting will facilitate decision-making and keep the current phase on track.\n   *Action:* Coordinate with your site PM to ensure inputs are ready for tomorrow.\n\nThese tasks are high-impact and time-sensitive, directly affecting budget alignment, schedule integrity, and team coordination.",
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 60000,
+          "durationMs": 40922
+        }
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getMyTasks",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions"
+      ]
+    },
+    {
+      "id": "realworld-waiting-on-team",
+      "intent": "task_management",
+      "prompt": "What am I waiting on from my team?",
+      "selectedProjectId": null,
+      "sessionId": "65d7fea6-d899-4ab0-9a61-89bf67d2d03e",
+      "sessionLabel": "eval-2026-05-14T21-21-51-954Z-54058cc1-realworld-waiting-on-team",
+      "startedAt": "2026-05-14T21:22:33.351Z",
+      "finishedAt": "2026-05-14T21:23:07.984Z",
+      "durationMs": 34258,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 28,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "duration 34258ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, messageDrivenToolRouter, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "messageDrivenToolRouter",
+          "backendDeepAgentExecutiveBriefing",
+          "mcpToolDiscoverySkipped",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 1344,
+        "finalText": "You are currently waiting on your team for the following key items:\n\n1. **February Marketing Performance Report**: The marketing team is preparing a report summarizing February’s metrics, with focus on increased reach and engagement. This appears to be an outstanding deliverable mentioned in recent Teams messages.\n\n2. **Accounting and Admin Backlog Cleanup**: The accounting/admin team was still processing mail, organizing tax documents, and cleaning up outstanding issues. A commitment was made to send a detailed list of unresolved items for your review. Await this compilation for next step follow-ups and audit readiness.\n\n3. **Design Milestone Review and Payment Coordination**: There is a pending review relating to a recent invoice (Design Pay App 1) and associated milestone documentation for the Union Collective project. Internal review/approval or confirmation is likely needed before payment or sign-off.\n\n**First action:**  \nRequest a same-day status update from each functional lead (Marketing, Accounting/Admin, Project Coordination) specifically on outstanding reports, unresolved admin issues, and any approvals or sign-offs blocking progress.\n\n**Note:**  \nNo comprehensive project task board or unified tracker is currently available due to system limitations, so some team deliverables not listed here may also be pending.",
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 60000,
+          "durationMs": 34258
+        }
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getMyTasks",
+        "getActionItemsAndInsights",
+        "getPeopleAndRoles"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions"
+      ]
+    },
+    {
+      "id": "realworld-business-risks",
+      "intent": "risk_review",
+      "prompt": "What risks exist in the business right now?",
+      "selectedProjectId": null,
+      "sessionId": "8557d0c5-bf89-48eb-a6bc-cbdfb65f37a3",
+      "sessionLabel": "eval-2026-05-14T21-21-51-954Z-54058cc1-realworld-business-risks",
+      "startedAt": "2026-05-14T21:23:07.985Z",
+      "finishedAt": "2026-05-14T21:23:46.811Z",
+      "durationMs": 38469,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 35,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "duration 38469ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, assistantWidgetPlanner, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "assistantWidgetPlanner",
+          "backendDeepAgentExecutiveBriefing",
+          "mcpToolDiscoverySkipped",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 1906,
+        "finalText": "**The key business risks right now are:**\n\n### 1. **Active Issues Incoming via Email**\n- **Why it matters:** With current email flows covered and task/project systems down, unresolved client/vendor requests, blockers, and deadline-driven follow-ups in the inbox are the highest probability for missed commitments or fires.\n- **First action:** Triage the latest emails for urgent or escalated issues. Assign clear ownership and due dates for any requiring action.\n\n### 2. **Coordination and Execution Blind Spots**\n- **Why it matters:** Team and meeting records are outdated, and the task/project systems are down. This means:\n  - Cross-group handoffs may be slipping.\n  - Decisions or action items from older meetings may not be current or acted upon.\n  - There’s no reliable list of open or overdue deliverables, so duplicate work or dropped balls are likely.\n- **First action:** Directly confirm open action items and due dates with responsible teams or project leads—do not assume meeting notes or earlier plans are up to date.\n\n### 3. **Project Oversight and Operational Control Risks**\n- **Why it matters:** Financial and schedule data exist but aren’t linked to project or task status, so:\n  - Budget or schedule overruns may be brewing without visibility at the executive level.\n  - Any existing operational problems are unlikely to be flagged automatically.\n- **First action:** Treat project and task status as unknown. For any current major project, request a direct status check from leads.\n\n---\n\n**Summary Statement:**  \nThe single biggest risk is a lack of visibility and confirmation for critical deliverables due to missing and stale source systems. Actively seek out urgent items in email, verify cross-team handoffs, and do not rely on old meeting or system data until the information flow is restored. This will prevent missed deadlines, duplicate efforts, and unrecognized project issues.",
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 60000,
+          "durationMs": 38469
+        }
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getProjectsWithRisks",
+        "getPortfolioOverview",
+        "getFinancialAnalysis",
+        "assistantSourceHealth"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "risk",
+        "financial",
+        "source_health"
+      ]
+    },
+    {
+      "id": "realworld-systems-processes-needed",
+      "intent": "implementation_planning",
+      "prompt": "What systems and processes do you think we need to put in place?",
+      "selectedProjectId": null,
+      "sessionId": "ae35956e-644a-4e44-ac72-391729e6a960",
+      "sessionLabel": "eval-2026-05-14T21-21-51-954Z-54058cc1-realworld-systems-processes-needed",
+      "startedAt": "2026-05-14T21:23:46.812Z",
+      "finishedAt": "2026-05-14T21:24:25.564Z",
+      "durationMs": 38190,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 45,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "duration 38190ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "backendDeepAgentExecutiveBriefing",
+          "mcpToolDiscoverySkipped",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 2839,
+        "finalText": "Start with what’s breaking down:\n\n**1. Weekly Work-Intake and Follow-Up**\nYou’re losing track of open items, owner assignments, and due dates. Fragmented follow-through is the biggest risk. You need a single, disciplined work intake and follow-up process. Every item—admin or client—goes into a common list, with today’s actions at the top and next week’s planned right below. Assign owners and deadlines for each. Separate urgent items (cash flow, compliance, client reversals) from general work.\n\n**2. Mail, Document, and Audit Workflow**\nProcessing is too ad hoc—mail, invoices, and tax documents stack up and get missed. Establish intake > scan > sort > escalate as a daily routine. There must be a regular check and overflow mechanism (i.e., Thursdays for regular processing, Fridays catch overflow), and everything time-sensitive gets flagged. Audit exposure and overlooked required docs are the cost of not owning this now.\n\n**3. Document Control for Projects**\nToo many versions, approvals, and milestones are floating without a single source of truth. Institute a project document control system—every milestone schedule, pay app, and major approval lives in a central spot, clearly named and version-controlled. Rework and confusion drop; project status is transparent at a glance.\n\n**4. Cross-Team Reporting Cadence**\nEvery function (ops, finance, BD, marketing) is reporting to someone—rarely at the same pace or with the same rigor. Set a recurring, organization-wide reporting rhythm. Use a unified template that shows progress, blockers, decisions needed, and next steps. Assign owners for collecting and distributing these updates.\n\n**5. Inbox Triage and Escalation**\nCritical emails/documents (finance, deadlines, customer-sensitive) must be triaged same-day. If something impacts cash flow, compliance, or a client deadline, escalate it inside 24 hours. Everything else hits the intake queue and gets worked according to standard schedule.\n\n**6. Operational Risk Register**\nTrack operational bottlenecks—backlog, audit issues, incomplete follow-ups, schedule drift—on a central risk register. Review it in weekly leadership meetings, not only in audits or fire drills.\n\n**Bottom line:**  \nActivity isn’t your problem—fragmentation and lack of follow-through are. These are process control issues, not effort issues. Systems fix this: centralize task tracking, enforce document flow, and run a real cadence on reporting and escalation.\n\n**First moves:**  \n- Today: Name a central place for intake/follow-up.  \n- This week: Assign owners for mail/document workflow and cross-team report collection.  \n- Next leadership meeting: Establish standing review of risk register and overdue actions.\n\nYou get more leverage fixing these touchpoints than chasing one-off problems. This is how you grow without spinning up more chaos.",
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 60000,
+          "durationMs": 38190
+        }
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getPortfolioOverview",
+        "getActionItemsAndInsights",
+        "assistantSourceHealth"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "actions",
+        "source_health"
+      ]
+    }
+  ]
+}

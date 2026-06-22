@@ -1,0 +1,112 @@
+{
+  "id": "data-documents-rag-boundary",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 10257,
+  "question": "What is the difference between project documents and RAG knowledge?",
+  "mustInclude": [
+    "document",
+    "RAG"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Project documents and RAG knowledge are different layers:\n\n- **Project Documents** are the user-facing file repository for a project: contracts, reports, photos, meeting minutes, owner correspondence, and other files. They live at **`/[projectId]/documents`**. The help article says this tool stores files in folders, supports upload/download, versions, nested folders, and folder-level permissions. Source: **`docs/help/articles/documents.md`**.\n\n- **RAG knowledge** is the retrieval layer behind AI answers. The internal architecture article says the system should keep **source truth** separate from **project intelligence** and **promoted learning**, and that **vectors are recall infrastructure, not the source of truth**. It explicitly lists **`document_metadata`** and **`document_chunks`** as raw knowledge/retrieval tables. Source: **`docs/help/articles/self-learning-intelligence-architecture.md`**.\n\nWhat this means in practice:\n\n1. **Project Documents = where files live and are managed.**\n2. **RAG knowledge = indexed/chunked retrieval data used by AI to find and cite relevant content.**\n3. A document can feed RAG, but the document itself is not the same thing as the retrieval store.\n\nAlso relevant:\n- **Project Intelligence** at **`/[projectId]/intelligence`** is a compiled AI packet with KPIs, insight cards, freshness status, and citations, and it is explicitly described as different from the chat assistant. Source: **`docs/help/articles/project-intelligence.md`**.\n- The **AI Capabilities Index** groups these as separate capabilities: documents on one side, intelligence and AI assistant on the other. Source: **`docs/help/articles/ai-capabilities-index.md`**.\n\nChecked:\n- artifact status: current/generated artifacts are present and OK\n- feature metadata: found Documents, Project Intelligence, and the internal RAG architecture article\n- help articles: read all three before answering\n\nUncertainty:\n- There is no curated article that uses the exact phrase “RAG knowledge,” so the distinction above is inferred from the internal architecture doc plus the user-facing docs.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/documents",
+        "sourceType": "sitemap",
+        "route": "/documents",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/download,",
+        "sourceType": "sitemap",
+        "route": "/download,",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/documents.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/documents.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/retrieval",
+        "sourceType": "sitemap",
+        "route": "/retrieval",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/self-learning-intelligence-architecture.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/self-learning-intelligence-architecture.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/chunked",
+        "sourceType": "sitemap",
+        "route": "/chunked",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/intelligence",
+        "sourceType": "sitemap",
+        "route": "/intelligence",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/project-intelligence.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/project-intelligence.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ai-capabilities-index.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-capabilities-index.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/generated",
+        "sourceType": "sitemap",
+        "route": "/generated",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 10165,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

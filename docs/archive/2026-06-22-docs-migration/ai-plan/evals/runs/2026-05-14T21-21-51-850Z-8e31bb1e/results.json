@@ -1,0 +1,86 @@
+{
+  "generatedAt": "2026-05-14T21:22:05.864Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": null,
+  "filter": null,
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "warningCount": 0,
+  "slowestCases": [
+    {
+      "id": "realworld-draft-email-response",
+      "intent": "email_action",
+      "durationMs": 13199,
+      "status": "pass",
+      "warnings": []
+    }
+  ],
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "messageDrivenToolRouter": 1,
+    "emailActionIntentRouter": 1,
+    "getRecentOutlookEmails": 1,
+    "readOutlookEmailThread": 1,
+    "draftOutlookEmail": 1,
+    "emailActionFastPath": 1
+  },
+  "intentDistribution": {
+    "email_action": 1
+  },
+  "results": [
+    {
+      "id": "realworld-draft-email-response",
+      "intent": "email_action",
+      "prompt": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+      "selectedProjectId": null,
+      "sessionId": "f5d7e750-490d-4e17-972a-6574165ba7b1",
+      "sessionLabel": "eval-2026-05-14T21-21-51-850Z-8e31bb1e-realworld-draft-email-response",
+      "startedAt": "2026-05-14T21:21:51.924Z",
+      "finishedAt": "2026-05-14T21:22:05.859Z",
+      "durationMs": 13199,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, messageDrivenToolRouter, emailActionIntentRouter, getRecentOutlookEmails, readOutlookEmailThread, draftOutlookEmail, emailActionFastPath"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "messageDrivenToolRouter",
+          "emailActionIntentRouter",
+          "getRecentOutlookEmails",
+          "readOutlookEmailThread",
+          "draftOutlookEmail",
+          "emailActionFastPath"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 406,
+        "finalText": "I found the latest matching email thread and prepared a short Outlook reply draft.\n\nSubject: Re: BSG Investor Update\n\nDraft:\nThank you for your message. We have received the update letter and will review the information. If any questions arise, we will reach out.\n\nReply **confirm** and I will save this reply draft to Outlook. If this is the wrong thread, tell me which email to use and I will redraft it.",
+        "latencyBudget": {
+          "warnDurationMs": 15000,
+          "maxDurationMs": 30000,
+          "durationMs": 13199
+        }
+      },
+      "expectedToolNames": [
+        "draftOutlookEmail",
+        "getRecentEmails",
+        "getRecentOutlookEmails",
+        "readOutlookEmailThread"
+      ],
+      "expectedToolFamilies": [
+        "email_action",
+        "communications"
+      ]
+    }
+  ]
+}

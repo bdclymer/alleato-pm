@@ -1,0 +1,46 @@
+{
+  "id": "financial-budget-summary",
+  "intent": "financial_analysis",
+  "prompt": "What does the budget look like on Westfield? Are we tracking under or over?",
+  "selectedProjectId": 43,
+  "sessionId": "7d860c30-c14f-4e7c-9c3e-62404dcf2acd",
+  "sessionLabel": "eval-2026-05-02T10-17-07-154Z-financial-budget-summary",
+  "startedAt": "2026-05-02T10:18:15.963Z",
+  "finishedAt": "2026-05-02T10:18:33.179Z",
+  "durationMs": 2026,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"48acb16d-8b34-42ff-a24a-701ec01399c2\",\"timestamp\":\"2026-05-02T10:18:17.988Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"48acb16d-8b34-42ff-a24a-701ec01399c2\",\"timestamp\":\"2026-05-02T10:18:17.988Z\"}",
+      "HTTP 401",
+      "expected at least one of [getProjectBudgetSummary, queryBudgetData, getBudgetLineItems] to fire — none did",
+      "mustInclude missing: \"budget\""
+    ],
+    "warnings": [
+      "expected family 'financial' not represented",
+      "expected family 'structured' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"48acb16d-8b34-42ff-a24a-701ec01399c2\",\"timestamp\":\"2026-05-02T10:18:17.988Z\"}"
+  },
+  "expectedToolNames": [
+    "getProjectBudgetSummary",
+    "queryBudgetData",
+    "getBudgetLineItems"
+  ],
+  "expectedToolFamilies": [
+    "financial",
+    "structured"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

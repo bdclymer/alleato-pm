@@ -1,0 +1,67 @@
+{
+  "id": "ceo-task-create-schedule-activity",
+  "intent": "action_preview",
+  "prompt": "Add a Gantt task on Westfield for site mobilization starting June 3rd, 5 days, assigned to the field super.",
+  "selectedProjectId": 43,
+  "sessionId": "f1984206-f933-4711-aeaa-e8396397c5f0",
+  "sessionLabel": "eval-2026-05-14T15-11-06-939Z-ceo-task-create-schedule-activity",
+  "startedAt": "2026-05-14T15:26:39.154Z",
+  "finishedAt": "2026-05-14T15:26:57.265Z",
+  "durationMs": 2806,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 3,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "assistant message was not persisted to chat_history",
+      "expected required tool 'createTask' to fire",
+      "mustInclude missing: \"Preview\"",
+      "mustInclude missing: \"confirm\"",
+      "mustIncludeAny missing one of: \"mobilization\", \"June\", \"Gantt\", \"schedule\"",
+      "answer length 0 < min 160"
+    ],
+    "warnings": [
+      "expected family 'action_write' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "action_write"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T15:26:41.688Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Creating task preview",
+        "status": "loading",
+        "timestamp": "2026-05-14T15:26:41.836Z"
+      }
+    },
+    {
+      "type": "error",
+      "errorText": "I hit a retrieval/generation failure before I could give you a trustworthy strategist answer.\n\nWhat happened: Task-write prompt budget exceeded before calling the AI SDK. Cause: promptApproxTokens=456, modelToolCount=8. Detection gap: lightweight task writes previously reused the full strategist prompt/tool registry. Prevention: keep task_write on the lean prompt and scoped task tool policy.\nWhat I could confirm: I checked 5 sources successfully.\nWhat that means: The pinned project context was included, so the failure is in retrieval or generation rather than project selection.\nI still need a successful retrieval pass before I can give a sourced strategic read on: \"Add a Gantt task on Westfield for site mobilization starting June 3rd, 5 days, assigned to the field super.\".\n\nThe right next move is to retry the same question with the project or decision you care about most. If this repeats, the persisted tool trace now shows exactly which source failed instead of leaving the chat blank."
+    }
+  ],
+  "persistedMetadata": null
+}

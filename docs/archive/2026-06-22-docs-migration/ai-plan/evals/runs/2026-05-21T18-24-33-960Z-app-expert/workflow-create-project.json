@@ -1,0 +1,47 @@
+{
+  "id": "workflow-create-project",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 3837,
+  "question": "How do I start a new project?",
+  "response": {
+    "answer": "The app exposes a global **Create Project** page at:\n\n- Route: `/create-project`\n- Source file: `frontend/src/app/(main)/create-project/page.tsx`\n\nWhat I checked:\n- App Expert artifact status: current and available\n- Feature registry searches for:\n  - `start new project`\n  - `new project`\n  - `project create`\n\nWhat’s documented:\n- The feature registry has a route-discovered entry for **Create Project**\n- It does **not** link to a help article, so I can’t confirm any richer documented workflow beyond the route itself\n\nWhat remains uncertain:\n- The exact step-by-step behavior on that page, because no curated help article is attached\n- Whether project creation requires any permissions or special fields, since that’s not documented in the registry result\n\nIf you want, I can next inspect the route metadata or implementation evidence for `/create-project` to describe the actual form/workflow.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/src/app/(main)/create-project/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/create-project/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/workflow.",
+        "sourceType": "sitemap",
+        "route": "/workflow.",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3835,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

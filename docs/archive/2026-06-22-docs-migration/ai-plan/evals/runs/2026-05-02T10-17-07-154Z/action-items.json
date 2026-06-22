@@ -1,0 +1,44 @@
+{
+  "id": "action-items",
+  "intent": "operations_analysis",
+  "prompt": "What action items came out of recent Westfield meetings and who owns them?",
+  "selectedProjectId": 43,
+  "sessionId": "947636a5-28e0-4cdb-b71c-5c302e9a68eb",
+  "sessionLabel": "eval-2026-05-02T10-17-07-154Z-action-items",
+  "startedAt": "2026-05-02T10:22:25.226Z",
+  "finishedAt": "2026-05-02T10:22:40.540Z",
+  "durationMs": 81,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"32d42826-f0ab-46fb-8f38-4ea9fb63b3b4\",\"timestamp\":\"2026-05-02T10:22:25.306Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"32d42826-f0ab-46fb-8f38-4ea9fb63b3b4\",\"timestamp\":\"2026-05-02T10:22:25.306Z\"}",
+      "HTTP 401",
+      "expected at least one of [getActionItemsAndInsights] to fire — none did",
+      "mustInclude missing: \"action\""
+    ],
+    "warnings": [
+      "expected family 'actions' not represented",
+      "expected family 'meetings' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"32d42826-f0ab-46fb-8f38-4ea9fb63b3b4\",\"timestamp\":\"2026-05-02T10:22:25.306Z\"}"
+  },
+  "expectedToolNames": [
+    "getActionItemsAndInsights"
+  ],
+  "expectedToolFamilies": [
+    "actions",
+    "meetings"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

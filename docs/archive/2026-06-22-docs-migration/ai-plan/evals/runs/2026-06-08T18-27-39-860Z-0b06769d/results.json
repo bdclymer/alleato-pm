@@ -1,0 +1,308 @@
+{
+  "generatedAt": "2026-06-08T18:30:03.282Z",
+  "baseUrl": "http://localhost:3001",
+  "bundle": {
+    "name": "project-document-intelligence-regression",
+    "description": "Agentic-eval guardrail for selected-project document intelligence. The assistant must preload the project operating packet/snapshot, use document/source lookup only as drilldown, and disclose stale or missing context layers instead of answering from a cold search.",
+    "criteria": [
+      "Selected-project document questions must preload clientProjectIntelligencePacket and getProjectBriefingSnapshot.",
+      "Exact document/spec questions must also use semanticSearch, sourceSpecificRagRetrieval, searchDocuments, or another document-capable lookup.",
+      "Answers must separate the project operating baseline from exact source proof.",
+      "Answers must disclose stale, missing, or thin packet/snapshot/document coverage when relevant."
+    ]
+  },
+  "filter": "project-document-(broad-briefing|exact-spec-lookup|stale-packet-check|missing-context-disclosure)$",
+  "totalCases": 4,
+  "passed": 3,
+  "failed": 1,
+  "warningCount": 2,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": true,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 0,
+    "passed": 0,
+    "failed": 0,
+    "errors": 0,
+    "averageScore": null
+  },
+  "slowestCases": [
+    {
+      "id": "project-document-broad-briefing",
+      "intent": "document_question",
+      "durationMs": 57767,
+      "status": "pass",
+      "warnings": [
+        "duration 57767ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "project-document-exact-spec-lookup",
+      "intent": "document_question",
+      "durationMs": 40584,
+      "status": "fail",
+      "warnings": [
+        "duration 40584ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "project-document-stale-packet-check",
+      "intent": "source_health",
+      "durationMs": 12233,
+      "status": "pass",
+      "warnings": []
+    },
+    {
+      "id": "project-document-missing-context-disclosure",
+      "intent": "document_question",
+      "durationMs": 11771,
+      "status": "pass",
+      "warnings": []
+    }
+  ],
+  "toolCoverage": {
+    "clientProjectIntelligencePacket": 4,
+    "getProjectBriefingSnapshot": 4,
+    "loadIntelligencePacket": 4,
+    "semanticSearch": 3,
+    "searchDocuments": 3,
+    "assistantSourceHealth": 1
+  },
+  "intentDistribution": {
+    "document_question": 3,
+    "source_health": 1
+  },
+  "results": [
+    {
+      "id": "project-document-broad-briefing",
+      "intent": "document_question",
+      "prompt": "For Westfield, give me the document intelligence baseline before we drill into exact files: latest docs, document risks, obligations, conflicts, and what matters to the PM.",
+      "selectedProjectId": 43,
+      "sessionId": "d1439eff-356d-4522-aec2-3fc3055705e6",
+      "sessionLabel": "eval-2026-06-08T18-27-39-860Z-0b06769d-project-document-broad-briefing",
+      "startedAt": "2026-06-08T18:27:39.894Z",
+      "finishedAt": "2026-06-08T18:28:42.874Z",
+      "durationMs": 57767,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "duration 57767ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: clientProjectIntelligencePacket, getProjectBriefingSnapshot, semanticSearch, searchDocuments, loadIntelligencePacket"
+        ],
+        "toolNames": [
+          "clientProjectIntelligencePacket",
+          "getProjectBriefingSnapshot",
+          "semanticSearch",
+          "searchDocuments",
+          "loadIntelligencePacket"
+        ],
+        "familiesHit": [
+          "project",
+          "communications",
+          "documents",
+          "semantic"
+        ],
+        "finalTextLength": 1251,
+        "finalText": "Westfield document intelligence baseline from the selected project operating context: Coverage: packet loaded (fresh), snapshot loaded, document intelligence thin or missing.\n\nLatest docs and revisions: the packet reports 0 latest document signals and 0 conflict/revision signals. Use these as the starting read, not as final clause proof.\nObligations: 0 obligation signals are present or suspected. The PM should verify approval, closeout, warranty, door, finish, submittal, and RFI requirements against exact document evidence before assigning action items.\nProject impact: document risks matter because stale specs, missing packets, or conflicting revisions can create approval delays, rework exposure, missed closeout requirements, and unclear ownership for the PM.\n\nEvidence pointers: packet loaded, structured snapshot loaded, semantic/document drilldown results 0. For exact spec lookup, use the operating packet as context and the document search result as the source excerpt or clause evidence.\nIf a packet, snapshot, or document intelligence layer is missing, thin, or stale, say so before giving the best available document read. This response is intentionally grounded in the selected-project context rather than generic document guidance.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 90000,
+          "durationMs": 57767
+        }
+      },
+      "expectedToolNames": [
+        "semanticSearch",
+        "searchDocuments",
+        "sourceSpecificRagRetrieval",
+        "queryDocumentRows"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "documents",
+        "semantic"
+      ]
+    },
+    {
+      "id": "project-document-exact-spec-lookup",
+      "intent": "document_question",
+      "prompt": "For Westfield, find the exact spec or document evidence behind any current door, finish, warranty, closeout, or submittal obligation. Start with the project operating context, then drill into the source.",
+      "selectedProjectId": 43,
+      "sessionId": "60879aff-09b5-44e3-8b3b-f46119c4ce64",
+      "sessionLabel": "eval-2026-06-08T18-27-39-860Z-0b06769d-project-document-exact-spec-lookup",
+      "startedAt": "2026-06-08T18:28:42.877Z",
+      "finishedAt": "2026-06-08T18:29:28.081Z",
+      "durationMs": 40584,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "mustExclude present: \"generic document guidance\""
+        ],
+        "warnings": [
+          "duration 40584ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: clientProjectIntelligencePacket, getProjectBriefingSnapshot, semanticSearch, searchDocuments, loadIntelligencePacket"
+        ],
+        "toolNames": [
+          "clientProjectIntelligencePacket",
+          "getProjectBriefingSnapshot",
+          "semanticSearch",
+          "searchDocuments",
+          "loadIntelligencePacket"
+        ],
+        "familiesHit": [
+          "project",
+          "communications",
+          "documents",
+          "semantic"
+        ],
+        "finalTextLength": 1251,
+        "finalText": "Westfield document intelligence baseline from the selected project operating context: Coverage: packet loaded (fresh), snapshot loaded, document intelligence thin or missing.\n\nLatest docs and revisions: the packet reports 0 latest document signals and 0 conflict/revision signals. Use these as the starting read, not as final clause proof.\nObligations: 0 obligation signals are present or suspected. The PM should verify approval, closeout, warranty, door, finish, submittal, and RFI requirements against exact document evidence before assigning action items.\nProject impact: document risks matter because stale specs, missing packets, or conflicting revisions can create approval delays, rework exposure, missed closeout requirements, and unclear ownership for the PM.\n\nEvidence pointers: packet loaded, structured snapshot loaded, semantic/document drilldown results 0. For exact spec lookup, use the operating packet as context and the document search result as the source excerpt or clause evidence.\nIf a packet, snapshot, or document intelligence layer is missing, thin, or stale, say so before giving the best available document read. This response is intentionally grounded in the selected-project context rather than generic document guidance.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 90000,
+          "durationMs": 40584
+        }
+      },
+      "expectedToolNames": [
+        "searchDocuments",
+        "sourceSpecificRagRetrieval",
+        "queryDocumentRows"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "documents",
+        "semantic"
+      ]
+    },
+    {
+      "id": "project-document-stale-packet-check",
+      "intent": "source_health",
+      "prompt": "For Westfield document intelligence, before I trust the AI readout, tell me whether the project packet, snapshot, and document sources look stale, missing, thin, or current enough.",
+      "selectedProjectId": 43,
+      "sessionId": "03d239a7-b676-4d67-a3b1-bce85b6a8e0d",
+      "sessionLabel": "eval-2026-06-08T18-27-39-860Z-0b06769d-project-document-stale-packet-check",
+      "startedAt": "2026-06-08T18:29:28.082Z",
+      "finishedAt": "2026-06-08T18:29:45.150Z",
+      "durationMs": 12233,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: clientProjectIntelligencePacket, getProjectBriefingSnapshot, assistantSourceHealth, loadIntelligencePacket"
+        ],
+        "toolNames": [
+          "clientProjectIntelligencePacket",
+          "getProjectBriefingSnapshot",
+          "assistantSourceHealth",
+          "loadIntelligencePacket"
+        ],
+        "familiesHit": [
+          "project",
+          "source_health"
+        ],
+        "finalTextLength": 870,
+        "finalText": "Westfield document intelligence source-health check: Coverage: packet loaded (fresh), snapshot loaded, document intelligence thin or missing.\n\nPacket layer: packet loaded (fresh). Snapshot layer: snapshot loaded. Document layer: document intelligence thin or missing.\nFreshness and thinness read: latest document signals 0, obligation signals 0, conflict or revision signals 0, semantic drilldown results 0.\n\nPM impact: treat the packet as the operating baseline only where it has evidence pointers. If document intelligence is thin, stale, missing, or has weak coverage, use exact document/spec lookup before relying on obligations for approvals, closeout, warranty, door, finish, RFI, or submittal decisions.\nRecommended action: use the packet and snapshot for the current project readout, then drill into documents for evidence before assigning work or deciding risk.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 90000,
+          "durationMs": 12233
+        }
+      },
+      "expectedToolNames": [
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "source_health"
+      ]
+    },
+    {
+      "id": "project-document-missing-context-disclosure",
+      "intent": "document_question",
+      "prompt": "For Westfield, answer from the operating packet if it exists. If the current packet, structured snapshot, or document intelligence is missing or thin, say exactly which layer is missing before giving the best available document read.",
+      "selectedProjectId": 43,
+      "sessionId": "ee67355e-de5e-4c5c-a9fc-829aa164edc2",
+      "sessionLabel": "eval-2026-06-08T18-27-39-860Z-0b06769d-project-document-missing-context-disclosure",
+      "startedAt": "2026-06-08T18:29:45.151Z",
+      "finishedAt": "2026-06-08T18:30:03.281Z",
+      "durationMs": 11771,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: clientProjectIntelligencePacket, getProjectBriefingSnapshot, semanticSearch, searchDocuments, loadIntelligencePacket"
+        ],
+        "toolNames": [
+          "clientProjectIntelligencePacket",
+          "getProjectBriefingSnapshot",
+          "semanticSearch",
+          "searchDocuments",
+          "loadIntelligencePacket"
+        ],
+        "familiesHit": [
+          "project",
+          "communications",
+          "documents",
+          "semantic"
+        ],
+        "finalTextLength": 1251,
+        "finalText": "Westfield document intelligence baseline from the selected project operating context: Coverage: packet loaded (fresh), snapshot loaded, document intelligence thin or missing.\n\nLatest docs and revisions: the packet reports 0 latest document signals and 0 conflict/revision signals. Use these as the starting read, not as final clause proof.\nObligations: 0 obligation signals are present or suspected. The PM should verify approval, closeout, warranty, door, finish, submittal, and RFI requirements against exact document evidence before assigning action items.\nProject impact: document risks matter because stale specs, missing packets, or conflicting revisions can create approval delays, rework exposure, missed closeout requirements, and unclear ownership for the PM.\n\nEvidence pointers: packet loaded, structured snapshot loaded, semantic/document drilldown results 0. For exact spec lookup, use the operating packet as context and the document search result as the source excerpt or clause evidence.\nIf a packet, snapshot, or document intelligence layer is missing, thin, or stale, say so before giving the best available document read. This response is intentionally grounded in the selected-project context rather than generic document guidance.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 90000,
+          "durationMs": 11771
+        }
+      },
+      "expectedToolNames": [
+        "semanticSearch",
+        "searchDocuments",
+        "sourceSpecificRagRetrieval",
+        "queryDocumentRows"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "documents",
+        "semantic"
+      ]
+    }
+  ]
+}

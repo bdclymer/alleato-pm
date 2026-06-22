@@ -1,0 +1,99 @@
+{
+  "id": "feature-daily-log",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 5904,
+  "question": "Where do daily logs live?",
+  "mustInclude": [
+    "daily log"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "Daily logs live in the project area at:\n\n- `/[projectId]/daily-log` — documented help article: `docs/help/articles/daily-log.md`\n- `/[projectId]/daily-log/new` — new log form, route-discovered implementation evidence from `frontend/src/app/(main)/[projectId]/daily-log/new/page.tsx`\n\nAlso present are global table routes:\n- `/daily-logs` — `frontend/src/app/(tables)/daily-logs/page.tsx`\n- `/daily-logs/[dailyLogId]` — `frontend/src/app/(tables)/daily-logs/[dailyLogId]/page.tsx`\n\nWhat’s documented vs implementation-backed:\n- Documented user behavior: select a project, open **Daily Log** from the sidebar, then create/view logs there. Source: `docs/help/articles/daily-log.md`\n- Implementation evidence only: the global `/daily-logs` table routes. They have no linked help article, so I can’t claim user-facing behavior beyond their existence.\n\nIf you meant “where are they stored conceptually,” the help article says the Daily Log is the source record for jobsite field reporting, delay claims, and productivity analysis.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/daily-log",
+        "sourceType": "sitemap",
+        "route": "/daily-log",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/daily-log.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/daily-log.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/daily-log/new",
+        "sourceType": "sitemap",
+        "route": "/daily-log/new",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/daily-log/new/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/daily-log/new/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(tables)/daily-logs/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(tables)/daily-logs/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/[dailyLogId]",
+        "sourceType": "sitemap",
+        "route": "/[dailyLogId]",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(tables)/daily-logs/[dailyLogId]/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(tables)/daily-logs/[dailyLogId]/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/view",
+        "sourceType": "sitemap",
+        "route": "/view",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 5824,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "id": "troubleshooting-stale-docs",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4432,
+  "question": "What should Ask Alleato say if documentation and the route map disagree?",
+  "response": {
+    "answer": "I can’t verify a documented answer because the App Expert artifacts are missing.\n\nChecked:\n- `docs/architecture/generated/app-sitemap.generated.json` — missing\n- `docs/architecture/generated/feature-registry.generated.json` — missing\n\nBecause of that, I can’t safely claim what Ask Alleato should say when documentation and the route map disagree.\n\nWhat remains uncertain:\n- The exact user-facing wording for this conflict\n- Whether there is a curated help article for this behavior\n- Whether route-discovered implementation evidence overrides the docs\n\nIf you want, I can help once the generated artifacts are available, or I can inspect the source files directly if you provide the relevant route or docs path.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 4331,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

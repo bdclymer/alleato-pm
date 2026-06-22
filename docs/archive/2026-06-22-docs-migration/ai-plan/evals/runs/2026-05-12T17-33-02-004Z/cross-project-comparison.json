@@ -1,0 +1,45 @@
+{
+  "id": "cross-project-comparison",
+  "intent": "portfolio_briefing",
+  "prompt": "Compare budget burn-rate across our three largest active projects.",
+  "selectedProjectId": null,
+  "sessionId": "851aca48-13eb-47ad-89b4-990b21e929dc",
+  "sessionLabel": "eval-2026-05-12T17-33-02-004Z-cross-project-comparison",
+  "startedAt": "2026-05-12T17:39:23.114Z",
+  "finishedAt": "2026-05-12T17:39:39.139Z",
+  "durationMs": 615,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"f64b0d74-3afc-4959-92cb-25a233e39f76\",\"timestamp\":\"2026-05-12T17:39:23.728Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"f64b0d74-3afc-4959-92cb-25a233e39f76\",\"timestamp\":\"2026-05-12T17:39:23.728Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getCrossProjectComparison, getPortfolioOverview] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'financial' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"f64b0d74-3afc-4959-92cb-25a233e39f76\",\"timestamp\":\"2026-05-12T17:39:23.728Z\"}"
+  },
+  "expectedToolNames": [
+    "getCrossProjectComparison",
+    "getPortfolioOverview"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "financial"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

@@ -108,6 +108,28 @@ function latestLifecycleFor(row, lifecycleByDocumentId) {
   return jobs[0] ?? null;
 }
 
+const terminalEmbeddingCodes = new Set([
+  "graph_content_missing",
+  "graph_content_empty",
+  "skipped_low_content",
+  "no_chunks",
+  "interview_title_excluded",
+  "ocr_failed",
+]);
+
+const terminalDocumentStatuses = new Set([
+  "intentionally_excluded",
+  "deleted_no_transcript",
+  "metadata_only",
+  "not_vectorizable",
+  "skipped",
+  "skipped_low_content",
+  "graph_content_missing",
+  "graph_content_empty",
+  "no_chunks",
+  "ocr_failed",
+]);
+
 function applicabilityFor(row, lifecycleByDocumentId) {
   const metadata = latestLifecycleFor(row, lifecycleByDocumentId)?.metadata ?? {};
   const storedApplicability = metadata?.project_applicability;
@@ -122,18 +144,39 @@ function applicabilityFor(row, lifecycleByDocumentId) {
   return classifyProjectApplicability(row);
 }
 
-function hasTerminalEmbeddingFailure(row, lifecycleByDocumentId) {
-  const terminalCodes = new Set([
-    "graph_content_missing",
-    "graph_content_empty",
-    "skipped_low_content",
-    "no_chunks",
-    "interview_title_excluded",
-    "ocr_failed",
-  ]);
-  return (lifecycleByDocumentId.get(String(row.id)) ?? []).some((job) =>
-    job.status === "failed_permanent" && terminalCodes.has(String(job.error_code ?? "")),
+function terminalEmbeddingReason(row, lifecycleByDocumentId, ragMetadataByDocumentId) {
+  if (terminalDocumentStatuses.has(String(row.status ?? ""))) {
+    return {
+      source: "document_metadata.status",
+      code: String(row.status),
+      message: null,
+    };
+  }
+
+  const ragMetadata = ragMetadataByDocumentId.get(String(row.id));
+  for (const field of ["embedding_status", "parsing_status"]) {
+    const status = String(ragMetadata?.[field] ?? "");
+    if (terminalDocumentStatuses.has(status)) {
+      return {
+        source: `rag_document_metadata.${field}`,
+        code: status,
+        message: null,
+      };
+    }
+  }
+
+  const terminalJob = (lifecycleByDocumentId.get(String(row.id)) ?? []).find((job) =>
+    job.status === "failed_permanent" && terminalEmbeddingCodes.has(String(job.error_code ?? "")),
   );
+  if (terminalJob) {
+    return {
+      source: "source_processing_jobs.error_code",
+      code: terminalJob.error_code,
+      message: terminalJob.error_message,
+    };
+  }
+
+  return null;
 }
 
 function pushFailure(failures, message, details) {
@@ -226,6 +269,18 @@ try {
     : [];
   const chunkByDocumentId = new Map(chunkRows.map((row) => [String(row.document_id), row]));
 
+  const ragMetadataRows = sourceIds.length
+    ? (await ragClient.query(
+        `
+          select id, embedding_status, parsing_status
+          from public.rag_document_metadata
+          where id = any($1::text[])
+        `,
+        [sourceIds],
+      )).rows
+    : [];
+  const ragMetadataByDocumentId = new Map(ragMetadataRows.map((row) => [String(row.id), row]));
+
   const lifecycleRows = (await ragClient.query(
     `
       select source_system, source_item_id, source_document_id, content_hash, project_id,
@@ -295,8 +350,11 @@ try {
       row.project_applicability.project_required === true,
     );
     const withProject = projectRequiredRows.filter((row) => row.project_id !== null && row.project_id !== undefined).length;
-    const terminalEmbeddingFailures = rows.filter((row) => hasTerminalEmbeddingFailure(row, lifecycleByDocumentId));
-    const embeddingRequiredRows = rows.filter((row) => !hasTerminalEmbeddingFailure(row, lifecycleByDocumentId));
+    const terminalEmbeddingFailures = rows
+      .map((row) => ({ row, reason: terminalEmbeddingReason(row, lifecycleByDocumentId, ragMetadataByDocumentId) }))
+      .filter((item) => item.reason);
+    const terminalEmbeddingFailureIds = new Set(terminalEmbeddingFailures.map((item) => String(item.row.id)));
+    const embeddingRequiredRows = rows.filter((row) => !terminalEmbeddingFailureIds.has(String(row.id)));
     const withChunks = rows.filter((row) => Number(chunkByDocumentId.get(String(row.id))?.chunks ?? 0) > 0).length;
     const withEmbeddings = embeddingRequiredRows.filter((row) =>
       Number(chunkByDocumentId.get(String(row.id))?.embedded_chunks ?? 0) > 0,
@@ -376,7 +434,7 @@ try {
       unembedded_samples: rows
         .filter((row) =>
           Number(chunkByDocumentId.get(String(row.id))?.embedded_chunks ?? 0) === 0 &&
-          !hasTerminalEmbeddingFailure(row, lifecycleByDocumentId)
+          !terminalEmbeddingFailureIds.has(String(row.id))
         )
         .slice(0, 5)
         .map((row) => compactRow({
@@ -388,17 +446,15 @@ try {
         })),
       terminal_unembeddable_samples: terminalEmbeddingFailures
         .slice(0, 5)
-        .map((row) => {
-          const job = (lifecycleByDocumentId.get(String(row.id)) ?? []).find((item) =>
-            item.status === "failed_permanent",
-          );
+        .map(({ row, reason }) => {
           return compactRow({
             id: row.id,
             title: row.title,
             category: row.category,
             type: row.type,
-            error_code: job?.error_code,
-            error_message: job?.error_message,
+            terminal_source: reason.source,
+            terminal_code: reason.code,
+            terminal_message: reason.message,
             created_at: row.created_at,
           });
         }),

@@ -1,0 +1,890 @@
+{
+  "id": "project-briefing-westfield",
+  "intent": "project_briefing",
+  "prompt": "Westfield just came up again. Give me the real current read: what changed, what is stuck, and what should I be worried about?",
+  "selectedProjectId": 43,
+  "sessionId": "892d490d-1d36-4fde-9961-900ff8030b7a",
+  "sessionLabel": "eval-2026-05-12T22-11-25-335Z-project-briefing-westfield",
+  "startedAt": "2026-05-12T22:11:25.338Z",
+  "finishedAt": "2026-05-12T22:13:10.426Z",
+  "durationMs": 90003,
+  "httpStatus": 200,
+  "streamError": "stream read error: This operation was aborted",
+  "streamEventCount": 22,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: This operation was aborted",
+      "assistant message was not persisted to chat_history",
+      "mustInclude missing: \"Westfield\"",
+      "answer length 0 < min 200"
+    ],
+    "warnings": [
+      "expected family 'semantic' not represented"
+    ],
+    "observations": [
+      "tools fired: searchEmails, searchTeamsMessages, searchMeetingsByTopic, getProjectBriefingSnapshot"
+    ],
+    "toolNames": [
+      "searchEmails",
+      "searchTeamsMessages",
+      "searchMeetingsByTopic",
+      "getProjectBriefingSnapshot"
+    ],
+    "familiesHit": [
+      "project",
+      "meetings",
+      "communications"
+    ],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getProjectBriefingSnapshot",
+    "semanticSearch"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "semantic",
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T22:12:02.003Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-12T22:12:06.707Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Loaded project intelligence packet — synthesizing strategist response",
+        "status": "success",
+        "timestamp": "2026-05-12T22:12:14.618Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "9kAAl6Y4ljLX8EDO"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_TpPYzIinFutmbyWejWsLMGAb",
+      "toolName": "searchEmails"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TpPYzIinFutmbyWejWsLMGAb",
+      "inputTextDelta": "{\"query\":\"Westfield Collective\",\"matchCount\":8}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_TpPYzIinFutmbyWejWsLMGAb",
+      "toolName": "searchEmails",
+      "input": {
+        "query": "Westfield Collective",
+        "matchCount": 8
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_R41SisGmQZQMs6c4aByLkMLb",
+      "toolName": "searchTeamsMessages"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_R41SisGmQZQMs6c4aByLkMLb",
+      "inputTextDelta": "{\"query\":\"Westfield Collective\",\"matchCount\":8}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_R41SisGmQZQMs6c4aByLkMLb",
+      "toolName": "searchTeamsMessages",
+      "input": {
+        "query": "Westfield Collective",
+        "matchCount": 8
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_rQzOvmADhymA6FYJ2YjdFyMh",
+      "toolName": "searchMeetingsByTopic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_rQzOvmADhymA6FYJ2YjdFyMh",
+      "inputTextDelta": "{\"topic\":\"Westfield Collective\",\"projectId\":43,\"projectName\":\"Westfield Collective\",\"maxResults\":8}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_rQzOvmADhymA6FYJ2YjdFyMh",
+      "toolName": "searchMeetingsByTopic",
+      "input": {
+        "topic": "Westfield Collective",
+        "projectId": 43,
+        "projectName": "Westfield Collective",
+        "maxResults": 8
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_XAxRzAG2V8gKRMjUDTDPUHpG",
+      "toolName": "getProjectBriefingSnapshot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_XAxRzAG2V8gKRMjUDTDPUHpG",
+      "inputTextDelta": "{\"projectId\":43,\"projectName\":\"Westfield Collective\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_XAxRzAG2V8gKRMjUDTDPUHpG",
+      "toolName": "getProjectBriefingSnapshot",
+      "input": {
+        "projectId": 43,
+        "projectName": "Westfield Collective"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_XAxRzAG2V8gKRMjUDTDPUHpG",
+      "output": {
+        "sourceRef": "[Source: Project Briefing Snapshot - Westfield Collective]",
+        "project": {
+          "id": 43,
+          "name": "Westfield Collective",
+          "projectNumber": "24-115",
+          "client": "Collective Group",
+          "phase": "Current",
+          "healthStatus": null,
+          "completionPct": 0,
+          "summary": null
+        },
+        "hardFacts": {
+          "budget": {
+            "originalBudget": 9255275,
+            "revisedBudget": 9255275,
+            "budgetDelta": 0,
+            "approvedBudgetChanges": 0,
+            "forecastVariance": 0,
+            "status": "on budget"
+          },
+          "contract": {
+            "originalContractValue": 9255275,
+            "revisedContractValue": 9255275,
+            "approvedContractChanges": 0,
+            "pendingContractChanges": 1204203.55,
+            "invoicedAmount": 0,
+            "paymentsReceived": 8722803.63
+          },
+          "changeOrders": {
+            "recentCount": 25,
+            "pendingCount": 25,
+            "approvedCount": 0,
+            "pendingAmount": 2329102.8,
+            "approvedAmount": 0,
+            "statusBreakdown": {
+              "proposed": 25
+            },
+            "recent": [
+              {
+                "number": "001877",
+                "title": "PCCO-2403-0073 - Price to demo\n - (2) Two front walls of the dumpster enclosure \n - (2) Two front gates \n - (2) Two front gate posts\n - And dispose demoed block, gates, and metal posts.  \n\nPrice does not include\n - Toothing back in cut block or repairing c",
+                "status": "Proposed",
+                "amount": 3898.13,
+                "dueDate": null
+              },
+              {
+                "number": "001884",
+                "title": "PCCO-2403-0070 - Alleato ordered new faucets for the WOK in Fork and Fire. Daniel Stewart did not have the right faucets and we needed to overnight ship faucets in order to pass health inspection.",
+                "status": "Proposed",
+                "amount": 495.91,
+                "dueDate": null
+              },
+              {
+                "number": "001885",
+                "title": "PCCO-2403-0071 - Bobby requested day laborers to help unloaded and organize owner provided furniture.",
+                "status": "Proposed",
+                "amount": 755.77,
+                "dueDate": null
+              },
+              {
+                "number": "001886",
+                "title": "PCCO-2403-0075 - Recalled change order from last months billing. Andrew made a mistake and wrote a deductive change order. 2 M-07 high tops at the second floor landing ($11,861,44)\nBoth M-07 high top tables were provided and installed by Alleato",
+                "status": "Proposed",
+                "amount": 11861.44,
+                "dueDate": null
+              },
+              {
+                "number": "001887",
+                "title": "PCCO-2403-0059 - Deduct for partition rails and high top tables that are provided by ownership.",
+                "status": "Proposed",
+                "amount": -66226.37,
+                "dueDate": null
+              },
+              {
+                "number": "001875",
+                "title": "PCCO-2403-0072 - Deem to furnish and install 6 additional dedicated circuits\n\n- (1) One for the added Co2 machine in the back commissary. Outlet to be installed 8' AFF, and to the right of the hot water heater. Outlet to be installed out of the way of the",
+                "status": "Proposed",
+                "amount": 11124.83,
+                "dueDate": null
+              },
+              {
+                "number": "000479",
+                "title": "PCO-001 - Resurfacing 181st- City of Westfield increased the amount of resurfacing required on 181st St. by just over double.\nCitizens required ductile iron pipe in lieu of our proposed PVC water line to the fire hydrant. \nFire Marshall required the FDC to",
+                "status": "Proposed",
+                "amount": 47005.83,
+                "dueDate": null
+              },
+              {
+                "number": "000480",
+                "title": "PCO-004 - Existing drain tile across iBeach property and neighboring farm from 2023 agreement with the County",
+                "status": "Proposed",
+                "amount": 17511.42,
+                "dueDate": null
+              }
+            ]
+          },
+          "changeEvents": {
+            "openCount": 0,
+            "statusBreakdown": {},
+            "recent": []
+          },
+          "rfis": {
+            "openCount": 0,
+            "overdueCount": 0,
+            "scheduleSensitiveCount": 0,
+            "statusBreakdown": {},
+            "open": []
+          },
+          "submittals": {
+            "openCount": 0,
+            "overdueCount": 0,
+            "longLeadOpenCount": 0,
+            "statusBreakdown": {},
+            "open": []
+          },
+          "schedule": {
+            "totalTasks": 150,
+            "incompleteCount": 144,
+            "overdueCount": 144,
+            "upcomingMilestoneCount": 0,
+            "upcomingMilestones": [],
+            "overdueTasks": [
+              {
+                "name": "Prepare and submit project schedule",
+                "finishDate": "2025-02-03",
+                "status": "not_started",
+                "percentComplete": 0
+              },
+              {
+                "name": "Receive notice to proceed and sign contract",
+                "finishDate": "2025-02-03",
+                "status": "not_started",
+                "percentComplete": 0
+              },
+              {
+                "name": "Complete Structural Design Parameters",
+                "finishDate": "2025-02-05",
+                "status": "not_started",
+                "percentComplete": 0
+              },
+              {
+                "name": "Structural Design For Permit",
+                "finishDate": "2025-02-21",
+                "status": "not_started",
+                "percentComplete": 0
+              },
+              {
+                "name": "Civil Plans for Permit",
+                "finishDate": "2025-02-24",
+                "status": "not_started",
+                "percentComplete": 0
+              },
+              {
+                "name": "Submit Site & Structural Foundation Permit",
+                "finishDate": "2025-02-25",
+                "status": "not_started",
+                "percentComplete": 0
+              },
+              {
+                "name": "Water Service",
+                "finishDate": "2025-03-10",
+                "status": "not_started",
+                "percentComplete": 0
+              },
+              {
+                "name": "Mechanical Design Drawings",
+                "finishDate": "2025-03-14",
+                "status": "not_started",
+                "percentComplete": 0
+              }
+            ]
+          },
+          "commitments": {
+            "totalCount": 36,
+            "unexecutedCount": 36,
+            "statusBreakdown": {
+              "complete": 28,
+              "approved": 7,
+              "terminated": 1
+            },
+            "unexecuted": [
+              {
+                "title": "Cost to provide inspection with tagging of all fire extingui",
+                "type": "purchase_order",
+                "contractNumber": "000085",
+                "status": "Complete"
+              },
+              {
+                "title": "Price includes \n- (32) 1\" x 4\" x 16' Kebony Boards\n- Flat Be",
+                "type": "purchase_order",
+                "contractNumber": "000084",
+                "status": "Complete"
+              },
+              {
+                "title": "SC-000318",
+                "type": "subcontract",
+                "contractNumber": "SC-000318",
+                "status": "Complete"
+              },
+              {
+                "title": "SC-000230",
+                "type": "subcontract",
+                "contractNumber": "SC-000230",
+                "status": "Complete"
+              },
+              {
+                "title": "SC-000300",
+                "type": "subcontract",
+                "contractNumber": "SC-000300",
+                "status": "Complete"
+              },
+              {
+                "title": "Aggregate Piers",
+                "type": "subcontract",
+                "contractNumber": "SC-000188",
+                "status": "Complete"
+              },
+              {
+                "title": "Temp Electrical Hookups",
+                "type": "subcontract",
+                "contractNumber": "SC-000185",
+                "status": "Complete"
+              },
+              {
+                "title": "Asphalt Parking lot\nMill and resurface 181st St.\nThermoplast",
+                "type": "subcontract",
+                "contractNumber": "SC-000195",
+                "status": "Approved"
+              }
+            ]
+          },
+          "notifications": {
+            "openCount": 0,
+            "open": []
+          }
+        },
+        "recentMovement": [
+          {
+            "sourceRef": "[Source: Email - \"Email: RE: Westfield Collective: Warranty and O&M Manuals\" - 2026-05-12T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4VaUAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: RE: Westfield Collective: Warranty and O&M Manuals ",
+            "date": "2026-05-12T00:00:00+00:00",
+            "summary": "The document is an email correspondence regarding the Westfield Collective project, specifically focusing on warranty and operation & maintenance (O&M) manuals. The exchange involves Mike Ewers from Medella Springs and Andrew Cannon from Alleato Group, along with several other stakeholders. The purpose of the communication is to address issues related to air infiltration through doors and to provide updates on corrective actions being taken.\n\nKey topics include the inadequacy of a specific door's insulation rating, which is noted to be R2, while commercial doors for controlled environments should ideally be rated R8. Mike Ewers highlights that cold weather has revealed significant air leakage, prompting a need for immediate attention. Andrew Cannon responds by detailing actions taken to mitigate the issue, including the installation of brush seals around the doors and plans for a smoke ...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Re: Westfield Collective: Warranty and O&M Manuals\" - 2026-05-12T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4VaQAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Re: Westfield Collective: Warranty and O&M Manuals ",
+            "date": "2026-05-12T00:00:00+00:00",
+            "summary": null,
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Fwd: RE: [External] 247 Morrissey\" - 2026-05-11T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4VZ6AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Fwd: RE: [External] 247 Morrissey",
+            "date": "2026-05-11T00:00:00+00:00",
+            "summary": "The document is an email correspondence regarding the property at 247 Morrissey, forwarded by Philip Johnson from Michael Visser. The email serves as a communication between various stakeholders involved in the real estate transaction, including representatives from IBEX Development and Advantage CRE. It includes references to multiple attached documents related to the Letter of Intent (LOI) and Purchase and Sale Agreement for properties in Comstock Park, MI.\n\nKey topics discussed in the email include the ongoing negotiations for the property at 247 Morrissey and related documentation that outlines the terms of the sale and development plans. The attachments mentioned include a Letter of Intent for the property, as well as several documents related to the sale of another property in Comstock Park, indicating a broader context of real estate transactions being handled by the involved par...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Re: TAG 02/25/26 Westfield Collective - Craving Crapes Proof of Funds\" - 2026-05-11T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEJAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4X%2ByAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Re: TAG 02/25/26 Westfield Collective - Craving Crapes Proof of Funds",
+            "date": "2026-05-11T00:00:00+00:00",
+            "summary": "The document is an email correspondence regarding overdue invoices related to the Westfield Collective project, specifically for \"Craving Crapes.\" It serves as a reminder from Brandon Clymer, the CEO of Alleato Group, to Katie Conner, highlighting the financial status of their transactions. The email indicates a professional relationship between the two parties, with a focus on resolving outstanding payments.\n\nKey topics include the overdue invoices, which are noted to be over 60 days late, prompting Clymer to inquire about their payment status. The email also includes contact information for Clymer, including his mobile number and the addresses of Alleato Group's offices in Indianapolis and St. Petersburg. The initial email from Conner, dated February 25, 2026, suggests ongoing discussions related to the project and potential financial arrangements.\n\nThe important detail in this corres...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"FW: Space Coast OTP Review\" - 2026-05-07T19:00:00+00:00]",
+            "sourceType": "Meeting",
+            "sourceUrl": "https://app.fireflies.ai/view/01KQZ4A9RX639KHY4866N5EMPX",
+            "title": "FW: Space Coast OTP Review",
+            "date": "2026-05-07T19:00:00+00:00",
+            "summary": "The team discussed strategies for land acquisition and pricing, aiming to negotiate lower costs for parcels, particularly focusing on parcel 33. They highlighted comparable land sales with an average price of $1,019,562 per acre, and noted the need for negotiation flexibility based on parcel qualities. The group plans to explore shared parking to reduce costs and intends to downsize parcel 33 for better financial viability. They also addressed contract terms, including an aggressive 12-month construction commencement clause, and proposed extending the inspection period for better risk management. Strategic partnerships, particularly involving solar technology implementation, were identified as potential avenues for enhancing project appeal and efficiency.",
+            "notes": "## **Land Acquisition and Pricing Strategy**\n\nThe team focused on negotiating land prices with a goal to optimize acreage and cost per acre for the development.\n\n- **Comparable land sales average $1,019,562 per acre with a range from $758,000 to $1.3 million**; parcel 33 offers the most negotiation flexibility due to its lesser prime status compared to parcel 28 (06:02)  \n    - Parcel 28 is considered prime, especially for vertical development, limiting pricing flexibility  \n    - Rhett Batanides emphasized the importance of leveraging comps and Cooper’s insights for realistic pricing guidance  \n    - The group plans to push for a reduced acreage of approximately 2 acres on parcel 33 to lower total acquisition cost  \n    - Expected impact includes improved project feasibility by aligning land costs with development plans\n\n- **Recent sales at nearby locations show significant price variation, with Chick-fil-A at $2,050,000 for 1.7 acres and Dutch Brothers at $1 million per acre** (11:06)  \n    - Removing outliers like the storage facility and highest-priced sales drops average to $968,214 per acre, giving room to negotiate  \n    - Mike Ewers and Brandon Clymer agree to aggressively...",
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [
+              "Parcel 33",
+              "Repurchase Clause",
+              "Land Comps",
+              "Due Diligence",
+              "Food Hall",
+              "Renewable Energy"
+            ],
+            "sentiment": {
+              "neutral_pct": 64,
+              "negative_pct": 5,
+              "positive_pct": 31
+            }
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Westfield Collective\" - 2026-05-07T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHM71P%2FAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Westfield Collective",
+            "date": "2026-05-07T00:00:00+00:00",
+            "summary": "The document is an email correspondence from Pam Francis of Schott Design to Andrew Cannon of Alleato Group, dated May 7, 2026. The primary purpose of this email is to express interest in collaborating on a new location for the Westfield Collective team, indicating a potential partnership or project development.\n\nIn the email, Pam acknowledges Andrew's outreach and expresses a willingness to learn more about the project. She notes that while they do not have specific information to share at this time due to the lack of details regarding the project scope, they are eager to engage further. Pam requests that Andrew provide a couple of available times for a discussion to facilitate the next steps in the collaboration process.\n\nThe email does not contain specific numbers, deadlines, or contractual requirements, but it emphasizes the importance of establishing communication to clarify the pr...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: FW: Westfield Collective patio\" - 2026-05-07T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHOP9ZGAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: FW: Westfield Collective patio",
+            "date": "2026-05-07T00:00:00+00:00",
+            "summary": "The document is a series of email exchanges related to a proposal for the Westfield Collective patio project. It primarily serves as a communication thread between Gordon Chapman, Vice President of Browning Chapman, and Andrew Cannon, Assistant Project Manager at Alleato Group. The emails discuss the specifications and pricing for exterior concrete work required for the patio, highlighting the collaborative nature of the project.\n\nKey topics include the request for pricing on specific patio work, including spot patching and applying deck coating. Andrew Cannon outlines two pricing options: one for spot patching the North and West patios and another for applying a cost-effective deck coating. He also requests submittals of the products being quoted and examples of previous installations. The emails indicate a sense of urgency, with Cannon asking for the pricing and product details to be ...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Re:[## 2381 ##] Westfield Collective: Merritt Retainage\" - 2026-05-07T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHOP9ZKAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Re:[## 2381 ##] Westfield Collective: Merritt Retainage",
+            "date": "2026-05-07T00:00:00+00:00",
+            "summary": "The document is an email correspondence regarding the Merritt Retainage associated with the Westfield Collective project. It is a communication from JobPlanner Support, specifically from Kristen Wiginton, to Andrew Cannon of Alleato Group, addressing an issue related to invoice processing within the Acumatica system.\n\nThe key topic of the email revolves around an error message indicating that there are outstanding bills linked to the retainage that have not yet been released. Kristen is seeking confirmation from Andrew regarding the status of all current invoices for the subcontractor in question, specifically asking if they have all been released on the Acumatica side. This highlights the importance of ensuring that all financial documents are properly processed to avoid delays in the retainage release.\n\nThe email is dated May 7, 2026, and includes a request for Andrew to verify the st...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Re: Quick Books Adoption\" - 2026-05-07T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEJAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQiHeatAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Re: Quick Books Adoption",
+            "date": "2026-05-07T00:00:00+00:00",
+            "summary": "The document is an email correspondence between Brandon Clymer, the CEO of Alleato Group, and Kristen Wiginton, an Account Manager at JobPlanner, regarding the adoption of QuickBooks. The purpose of this email exchange is to schedule a meeting to discuss the transition to QuickBooks and to ensure that all necessary information is communicated before the switch is made.\n\nKey topics in the email include the scheduling of a meeting to discuss QuickBooks adoption, with specific time slots proposed by Kristen. Brandon emphasizes the urgency of the meeting, indicating that it needs to be completed by the following week at the latest. The email chain reflects a series of communications where Brandon inquires about the status of the meeting and expresses his need for timely information.\n\nImportant details include the proposed meeting times: Monday from 12 PM to 3 PM CST, Tuesday from 1 PM to 2 ...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Re: Quick Books Adoption\" - 2026-05-07T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEJAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQiHeaoAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Re: Quick Books Adoption",
+            "date": "2026-05-07T00:00:00+00:00",
+            "summary": "The document is an email correspondence regarding the adoption of QuickBooks between Brandon Clymer, the CEO of Alleato Group, and Kristen Wiginton, an Account Manager at JobPlanner. The purpose of this email exchange is to coordinate a meeting to discuss the transition to QuickBooks, ensuring all necessary information is shared before the switch is made.\n\nKey topics in the email include the urgency of scheduling a meeting to discuss QuickBooks adoption, with Brandon expressing concern over the lack of communication since their last discussion. He emphasizes that the meeting needs to be arranged by the following week at the latest. Kristen responds by indicating that she is in the process of coordinating with a colleague, Bart, to finalize the meeting times and will update Brandon once she has more information.\n\nImportant details include the date of the correspondence, May 7, 2026, and ...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Re: 25033 Westfield Collective App 7 payment\" - 2026-05-07T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHOQDZyAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Re: 25033 Westfield Collective App 7 payment",
+            "date": "2026-05-07T00:00:00+00:00",
+            "summary": "The document is an email correspondence between Andrew Cannon, an Assistant Project Manager at Alleato Group, and Andrea McClaine, an Accounting Specialist at Merritt Contracting. The purpose of the email is to discuss the payment status of Application 7 related to the 25033 Westfield Collective project, specifically inquiring about the billing period for an invoice that Andrea referenced.\n\nKey topics in the email include the payment amount of $3,932.99 that Andrea is following up on, and Andrew's question regarding whether the billing period for this invoice occurred in January. This exchange indicates ongoing communication about financial matters related to the project, highlighting the importance of clarity in billing periods and payment timelines.\n\nImportant details include the specific payment amount and the date of the email correspondence, which is May 7, 2026. Additionally, Andr...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Re: Westfield Collective patio\" - 2026-05-07T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHOQDZ6AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Re: Westfield Collective patio",
+            "date": "2026-05-07T00:00:00+00:00",
+            "summary": "The document is a series of email communications primarily concerning pricing proposals for work on the Westfield Collective patio. The emails involve Andrew Cannon, Assistant Project Manager at Alleato Group, and Gordon Chapman, Vice President and COO at Browning Chapman, along with Brandon Perkins, a Project Coordinator. The purpose of these emails is to clarify pricing requests for two specific tasks related to the patio: spot patching certain areas and applying a deck coating.\n\nKey topics include the request for two different pricing options: one for spot patching the North and West patios, and another for applying a deck coating across the entire patio. Andrew Cannon emphasizes the need for detailed submittals of the products to be used, along with images of previous installations. The emails also highlight the urgency of the request, with Andrew asking for the pricing to be return...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          }
+        ],
+        "sourceCoverage": {
+          "Email": 11,
+          "Meeting": 1
+        },
+        "riskSignals": [
+          "25 pending change order(s) need pricing/approval discipline.",
+          "144 incomplete schedule task(s) have finish dates before today.",
+          "36 commitment(s) are not executed."
+        ],
+        "recommendedQuestions": [
+          "What budget number has leadership committed to: original budget, revised budget, or latest forecast?",
+          "Which pending change orders need owner approval, pricing backup, or a go/no-go decision this week?",
+          "Which RFIs or submittals can move the schedule if they sit another week?",
+          "What long-lead/procurement items are not bought out or fully released?",
+          "What decision can the CEO, owner, or PM make now that would reduce risk fastest?",
+          "What open actions have no clear owner or due date?"
+        ],
+        "responseContract": {
+          "order": [
+            "Hard Facts",
+            "What Changed",
+            "Insider Analysis",
+            "Recommended Actions",
+            "Confidence and Data Gaps",
+            "Next Step"
+          ],
+          "hardFactsFirst": true,
+          "alwaysEndWithForwardMotion": true
+        },
+        "dataGaps": [
+          "Budget lines came from the budget_lines fallback because v_budget_lines is unavailable."
+        ]
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_TpPYzIinFutmbyWejWsLMGAb",
+      "output": {
+        "query": "Westfield Collective",
+        "sourceType": "email",
+        "resultCount": 2,
+        "results": [
+          {
+            "title": "Email: Re: Westfield Collective: 03/17/2026 OAC Update",
+            "content": "decision: Mike Ewers and Katie Conner successfully welcomed customers to both sides of the Westfield Collective building. (Owner: Mike Ewers, Katie Conner)",
+            "similarity": 0.506,
+            "date": "2026-03-20T00:00:00+00:00",
+            "participants": "[\"Katie Conner\"]",
+            "source": "microsoft_graph",
+            "type": "email",
+            "projectId": 43,
+            "documentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQDg5HnAAA=",
+            "sourceDocumentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQDg5HnAAA=",
+            "sourceChunkId": "insight_8c8b5893-c0ec-4620-b3e5-3642e2e438fd",
+            "chunkIndex": 0,
+            "citation": "Email from [\"Katie Conner\"], Mar 19, 2026: \"Email: Re: Westfield Collective: 03/17/2026 OAC Update\""
+          },
+          {
+            "title": "Email: Re: Westfield Collective",
+            "content": "Brant Fowler provides information related to the Westfield Collective project, indicating that he has sent the necessary details to Nick Bigler. This section serves as the source of the information being discussed.",
+            "similarity": 0.481,
+            "date": "2025-10-31T00:00:00+00:00",
+            "participants": "[\"Brandon Clymer\"]",
+            "source": "microsoft_graph",
+            "type": "email",
+            "projectId": 43,
+            "documentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAOlpD7WAAA=",
+            "sourceDocumentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAOlpD7WAAA=",
+            "sourceChunkId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAOlpD7WAAA=__ff_segment_summary_3_0",
+            "chunkIndex": 0,
+            "citation": "Email from [\"Brandon Clymer\"], Oct 30, 2025: \"Email: Re: Westfield Collective\""
+          }
+        ]
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_R41SisGmQZQMs6c4aByLkMLb",
+      "output": {
+        "query": "Westfield Collective",
+        "sourceType": "Teams message",
+        "resultCount": 8,
+        "results": [
+          {
+            "title": "Teams DM: 19:81e9018c-",
+            "content": "[Teams DM: 19:81e9018c-]\n\n[Teams Direct Message: 19:81e9018c-]\n\n[2025-01-08] Andrew Cannon: For Westfield Collective&nbsp;",
+            "similarity": 0.626,
+            "date": "2025-01-08T00:00:00+00:00",
+            "participants": "[\"Andrew Cannon\"]",
+            "source": "microsoft_graph",
+            "type": "teams_dm",
+            "projectId": 43,
+            "documentId": "teamsdm_1736348330980",
+            "sourceDocumentId": "teamsdm_1736348330980",
+            "sourceChunkId": "teamsdm_1736348330980__chunk_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, Jan 7, 2025: \"Teams DM: 19:81e9018c-\""
+          },
+          {
+            "title": "Teams DM: Westfield Collective",
+            "content": "[Teams DM: Westfield Collective]\n\n[Teams Direct Message: Westfield Collective]\n\n[2025-12-10] Andrew Cannon: &nbsp;Liberty vs Collective",
+            "similarity": 0.617,
+            "date": "2025-12-10T00:00:00+00:00",
+            "participants": "[\"Andrew Cannon\"]",
+            "source": "microsoft_graph",
+            "type": "teams_dm",
+            "projectId": 43,
+            "documentId": "teamsdm_1765380769783",
+            "sourceDocumentId": "teamsdm_1765380769783",
+            "sourceChunkId": "teamsdm_1765380769783__chunk_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, Dec 9, 2025: \"Teams DM: Westfield Collective\""
+          },
+          {
+            "title": "Teams DM: Westfield Collective",
+            "content": "[Teams DM: Westfield Collective]\n\n[Teams Direct Message: Westfield Collective]\n\n[2026-03-19] Andrew Cannon: https://youtu.be/CMU4rUbVqhI?si=HSR53oGX6LwQqA3W",
+            "similarity": 0.563,
+            "date": "2026-03-19T00:00:00+00:00",
+            "participants": "[\"Andrew Cannon\"]",
+            "source": "microsoft_graph",
+            "type": "teams_dm",
+            "projectId": 43,
+            "documentId": "teamsdm_1773924107525",
+            "sourceDocumentId": "teamsdm_1773924107525",
+            "sourceChunkId": "teamsdm_1773924107525__chunk_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, Mar 18, 2026: \"Teams DM: Westfield Collective\""
+          },
+          {
+            "title": "Teams DM: 19:362f7b90-",
+            "content": "[Teams DM: 19:362f7b90-]\n\n[Teams Direct Message: 19:362f7b90-]\n\n[2025-09-16] Brandon Clymer: This is for Westfield Collective.&nbsp;",
+            "similarity": 0.557,
+            "date": "2025-09-16T00:00:00+00:00",
+            "participants": "[\"Brandon Clymer\"]",
+            "source": "microsoft_graph",
+            "type": "teams_dm",
+            "projectId": 43,
+            "documentId": "teamsdm_1758045911205",
+            "sourceDocumentId": "teamsdm_1758045911205",
+            "sourceChunkId": "teamsdm_1758045911205__chunk_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, Sep 15, 2025: \"Teams DM: 19:362f7b90-\""
+          },
+          {
+            "title": "Teams DM: 19:c4beb912-",
+            "content": "[Teams DM: 19:c4beb912-]\n\n[Teams Direct Message: 19:c4beb912-]\n\n[2025-02-24] Brandon Clymer: for westfield collective.&nbsp;",
+            "similarity": 0.552,
+            "date": "2025-02-24T00:00:00+00:00",
+            "participants": "[\"Brandon Clymer\"]",
+            "source": "microsoft_graph",
+            "type": "teams_dm",
+            "projectId": 43,
+            "documentId": "teamsdm_1740401267358",
+            "sourceDocumentId": "teamsdm_1740401267358",
+            "sourceChunkId": "teamsdm_1740401267358__chunk_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, Feb 23, 2025: \"Teams DM: 19:c4beb912-\""
+          },
+          {
+            "title": "Teams DM: Westfield Collective",
+            "content": "[Teams DM: Westfield Collective]\n\n[Teams Direct Message: Westfield Collective]\n\n[2025-12-01] Jesse Dawson: together with the VB side it is 9M",
+            "similarity": 0.538,
+            "date": "2025-12-01T00:00:00+00:00",
+            "participants": "[\"Jesse Dawson\"]",
+            "source": "microsoft_graph",
+            "type": "teams_dm",
+            "projectId": 43,
+            "documentId": "teamsdm_1764617194735",
+            "sourceDocumentId": "teamsdm_1764617194735",
+            "sourceChunkId": "teamsdm_1764617194735__chunk_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, Nov 30, 2025: \"Teams DM: Westfield Collective\""
+          },
+          {
+            "title": "Teams DM: Westfield Collective",
+            "content": "[Teams DM: Westfield Collective]\n\n[Teams Direct Message: Westfield Collective]\n\n[2025-12-10] Andrew Cannon: We are providing tops",
+            "similarity": 0.536,
+            "date": "2025-12-10T00:00:00+00:00",
+            "participants": "[\"Andrew Cannon\"]",
+            "source": "microsoft_graph",
+            "type": "teams_dm",
+            "projectId": 43,
+            "documentId": "teamsdm_1765378338141",
+            "sourceDocumentId": "teamsdm_1765378338141",
+            "sourceChunkId": "teamsdm_1765378338141__chunk_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, Dec 9, 2025: \"Teams DM: Westfield Collective\""
+          },
+          {
+            "title": "Teams DM: Westfield Collective",
+            "content": "[Teams DM: Westfield Collective]\n\n[Teams Direct Message: Westfield Collective]\n\n[2026-03-03] Andrew Cannon: Will this be our last OAC for Westfield Collective?&nbsp;",
+            "similarity": 0.529,
+            "date": "2026-03-03T00:00:00+00:00",
+            "participants": "[\"Andrew Cannon\"]",
+            "source": "microsoft_graph",
+            "type": "teams_dm",
+            "projectId": 43,
+            "documentId": "teamsdm_1772541404887",
+            "sourceDocumentId": "teamsdm_1772541404887",
+            "sourceChunkId": "teamsdm_1772541404887__chunk_0",
+            "chunkIndex": 0,
+            "citation": "Teams message in microsoft_graph, Mar 2, 2026: \"Teams DM: Westfield Collective\""
+          }
+        ]
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_rQzOvmADhymA6FYJ2YjdFyMh",
+      "output": {
+        "searchScope": "Filtered to project 43",
+        "topic": "Westfield Collective",
+        "totalResults": 5,
+        "results": [
+          {
+            "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-02-10T16:00:00+00:00]",
+            "id": "01KGJGA87S8YMZEZJ0GW8ZQ4WC",
+            "title": "OAC- Westfield Collective",
+            "date": "2026-02-10T16:00:00+00:00",
+            "project": "Westfield Collective",
+            "projectId": 43,
+            "participants": "acannon@alleatogroup.com, bclymer@alleatogroup.com, jdawson@alleatogroup.com, mewers@medellasprings.com, katie@ibeach31.com, e@damngoodinteriors.com, g@damngoodinteriors.com, nick@pourmybeer.com, tim.stuever@pourmybeer.com, ctragesser@alleatogroup.com, gdesmit@studioaxis.com, fireflies@alleatogroup.com, nick@pourmybev.com, m@damngoodinteriors.com, bclymer@alleatogroup.com, jdawson@alleatogroup.com, mewers@medellasprings.com, katie@ibeach31.com, e@damngoodinteriors.com, g@damngoodinteriors.com, nick@pourmybeer.com, tim.stuever@pourmybeer.com, ctragesser@alleatogroup.com, gdesmit@studioaxis.com, fireflies@alleatogroup.com, nick@pourmybev.com, m@damngoodinteriors.com",
+            "summary": "✅ Finish Work Completion: Casework and door installations in commissary hall to finish this week, with tile work nearly done.\n🛑 Signage Approval: Permits approved for Westfield Collective signs; installation planned this weekend if weather permits.\n📅 TCO Target Date: Final turnover certificate (TCO) expected week of February 23 due to kitchen equipment delays.\n📦 Equipment Deliveries: Micromatic equipment shipment on track for arrival between Friday and Monday, with installation next week.\n🛠️ Safety Measures: Mezzanine railing safety cap design pending approval, aiming to prevent falls and contain objects.\n📢 Communication Update: Andrew Cannon to share meeting notes and change order pricing by week’s end to keep everyone informed.",
+            "actionItems": "Send full meeting notes and updated pricing for changes to Mike and Katie by end of day (03:33)\nEmail health department documentation to Mike for kitchen compliance (05:01)\nProvide confirmed shelving dimensions for front reception to DGI team (04:30)\nFollow up with Daniel Stewart for kitchen equipment installation date and confirm schedule (07:53)\nCoordinate with Pour My Beer team to confirm if earlier first floor work is possible and schedule accordingly (14:40)\nOversee and communicate updates regarding signage permit and installation timeline (03:33)\nCoordinate picking up palletized extra materials; communicate confirmed date for staging (05:29)\nMove kitchen equipment installation up for Thursday next week if possible to maintain schedule (11:52)\nConfirm understanding and approval on mezzanine rail cap installed by casework subcontractor (09:32)\nWrap up casework installations and roof rails verification (02:12)\nObtain and review latest sketches and pricing for mezzanine railing cap addition (09:14)\nEnsure suitable treatment of gaps under banquettes using caulk rather than vinyl base wrap to maintain aesthetics (10:20)\nPlan delivery of Micromatic equipment for the week following shipment and schedule installation crew accordingly, aiming for Thursday completion (12:58)\nEvaluate possibility of starting first floor work earlier and communicate availability of crew (14:13)"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-01-20T16:00:00+00:00]",
+            "id": "01KF15DX2JEFGRJEM8JMYWV9C0",
+            "title": "OAC- Westfield Collective",
+            "date": "2026-01-20T16:00:00+00:00",
+            "project": "Westfield Collective",
+            "projectId": 43,
+            "participants": "{\"acannon@alleatogroup.com,bclymer@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,katie@ibeach31.com,e@damngoodinteriors.com,g@damngoodinteriors.com,nick@pourmybeer.com,tim.stuever@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,fireflies@alleatogroup.com,nick@pourmybev.com,m@damngoodinteriors.com\",bclymer@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,katie@ibeach31.com,e@damngoodinteriors.com,g@damngoodinteriors.com,nick@pourmybeer.com,tim.stuever@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,fireflies@alleatogroup.com,nick@pourmybev.com,m@damngoodinteriors.com}",
+            "summary": "Construction progress is on track with FRP installation at 95% and key tasks such as beer wall tiling and kitchen equipment installation scheduled for next week. The project timeline includes a final punch walk on February 5 and aims for final inspections in March, aligning cleaning efforts with these milestones. Electrical compliance remains critical, with lights expected by the end of January and fire alarm setups needing completion by January 31 to meet inspection deadlines. Design changes include reduced seating for better flow and commissioned murals for $7,500-$8,000, targeted for completion by early March. Vendor coordination is essential, with Pepsi installation beginning next week and signage installation planned to enhance brand visibility. Continuous communication and collaborat",
+            "actionItems": "{}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-01-13T16:00:00+00:00]",
+            "id": "01KEHQVTVYR108KY4V0Z3XW7MR",
+            "title": "OAC- Westfield Collective",
+            "date": "2026-01-13T16:00:00+00:00",
+            "project": "Westfield Collective",
+            "projectId": 43,
+            "participants": "{\"acannon@alleatogroup.com,fireflies@alleatogroup.com,bclymer@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,katie@ibeach31.com,e@damngoodinteriors.com,g@damngoodinteriors.com,nick@pourmybeer.com,tim.stuever@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,m@damngoodinteriors.com\",fireflies@alleatogroup.com,bclymer@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,katie@ibeach31.com,e@damngoodinteriors.com,g@damngoodinteriors.com,nick@pourmybeer.com,tim.stuever@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,m@damngoodinteriors.com}",
+            "summary": "Construction is advancing into the finishing phase, with key installations like Lemur wallpaper and tile work currently underway. The installation of wall-mounted toilets and FRP panels in the kitchen commissary is planned, alongside significant electrical work, including outlet installations. Critical equipment deliveries, particularly for draft beer systems, depend on timely payment processing, with upcoming inspections and a Temporary Certificate of Occupancy targeted by February 11. Design adjustments aim to balance aesthetics and functionality, such as using white FRP panels to reduce costs. The team is also managing excess materials for future job sites to minimize waste and ensure budget control.",
+            "actionItems": "{}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Westfield Collective: ERP Issues\" - 2025-12-03T14:00:00+00:00]",
+            "id": "01KBJ3WZC2ZHF1VZA04ECS9NSZ",
+            "title": "Westfield Collective: ERP Issues",
+            "date": "2025-12-03T14:00:00+00:00",
+            "project": "Westfield Collective",
+            "projectId": 43,
+            "participants": "{\"fnjie@llum.com,jdawson@alleatogroup.com,acannon@alleatogroup.com\",fnjie@llum.com,jdawson@alleatogroup.com}",
+            "summary": "The team discussed several critical issues affecting invoice exports and financial accuracy. Key problems identified included failures in invoice exports largely due to unsynced change orders in the ERP system, particularly affecting vendors like Superior and projects such as Westfield Collective. Andrew Cannon highlighted that some change orders remained in draft status, blocking exports, while Accounting recommended pushing change items to ERP and approving them. Duplicate vendor contacts also complicated invoice processing, leading to proposed merging strategies. Furthermore, it was noted that once approved, invoice contacts cannot be changed, causing processing delays. Escalation of unresolved sync errors to Kristen was deemed necessary, and specific deductive change orders were also c",
+            "actionItems": "{}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Westfield Collective Design Review Meeting\" - 2025-05-01T00:00:00+00:00]",
+            "id": "8d69d0a3-674e-40d9-b3a0-96f7bfcf6b08",
+            "title": "Westfield Collective Design Review Meeting",
+            "date": "2025-05-01T00:00:00+00:00",
+            "project": "Westfield Collective",
+            "projectId": 43,
+            "participants": null,
+            "summary": "**Executive Summary of the Westfield Collective Design Review Meeting**\n\n**Meeting Purpose and Key Participants**  \nThe Westfield Collective Design Review Meeting was convened on October 15, 2023, to evaluate and finalize design proposals for the upcoming Westfield Collective project. Key participants included Sarah Thompson, the Project Manager; David Lee, the Lead Architect; and Emily Chen, the Marketing Director. The meeting aimed to ensure that all design elements align with the project's vision and stakeholder expectations while addressing any potential challenges.\n\n**Main Topics Discussed**  \nDuring the meeting, the team reviewed several critical design components, including the layout of communal spaces, aesthetic elements, and sustainability features. David Lee presented the archit",
+            "actionItems": null
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    }
+  ],
+  "persistedMetadata": null
+}

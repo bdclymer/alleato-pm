@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useParams, usePathname } from "next/navigation";
 
-import type { CommentableEntityType } from "@/lib/liveblocks/rooms";
+import type { CommentableEntityType } from "@/lib/collaboration/rooms";
 
 interface EntityContext {
   entityType: CommentableEntityType;
@@ -27,7 +27,7 @@ function getPageEntityContext(pathname: string): EntityContext {
 /**
  * Map the current URL path to an entity context for collaboration features.
  * Kept outside comments-sidebar so non-comment UI can derive route context
- * without importing the Liveblocks client runtime.
+ * without importing the collaboration runtime.
  */
 export function useEntityContext(): EntityContext | null {
   const params = useParams()! ?? {};

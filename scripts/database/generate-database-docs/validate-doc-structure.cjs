@@ -181,16 +181,16 @@ class DocValidator {
       return 'documentation/docs/plans/[category]/';
     }
     if (lower.includes('complete') || lower.includes('summary') || lower.includes('report')) {
-      return 'documentation/docs/development/completion-reports/';
+      return 'documentation/docs/archive/2026-06-22-docs-migration/development/completion-reports/';
     }
     if (lower.includes('cleanup')) {
-      return 'documentation/docs/development/completion-reports/';
+      return 'documentation/docs/archive/2026-06-22-docs-migration/development/completion-reports/';
     }
     if (lower.includes('architecture') || lower.includes('schema')) {
       return 'documentation/docs/database/';
     }
     if (lower.includes('api')) {
-      return 'documentation/docs/api/';
+      return 'documentation/docs/archive/2026-06-22-docs-migration/api/';
     }
     if (lower.includes('form')) {
       return 'documentation/forms/';

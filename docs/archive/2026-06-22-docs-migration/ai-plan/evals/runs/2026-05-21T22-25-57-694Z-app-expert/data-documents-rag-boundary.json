@@ -1,0 +1,84 @@
+{
+  "id": "data-documents-rag-boundary",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 11688,
+  "question": "What is the difference between project documents and RAG knowledge?",
+  "mustInclude": [
+    "document",
+    "RAG"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Project documents and RAG knowledge are not the same thing.\n\n- **Project Documents** are the user-facing file storage area for a specific project: contracts, reports, photos, meeting minutes, correspondence, etc. They live at **`/[projectId]/documents`** and the help article is **`docs/help/articles/documents.md`**.\n- **RAG knowledge** is part of the AI retrieval and intelligence layer. The curated evidence says retrieval is built from **source truth** like `document_metadata`, `document_chunks`, emails, Teams, and related intelligence tables. The architecture explicitly says vectors are **“recall infrastructure, not the source of truth.”** That is from **`docs/help/articles/self-learning-intelligence-architecture.md`**.\n\nWhat this means in practice:\n- **Project Documents** = where files are stored, versioned, uploaded, downloaded, and organized in folders.\n- **RAG knowledge** = what the AI searches over to answer questions; it can use documents, chunks, emails, Teams, and intelligence packets as evidence.\n\nImportant route distinction:\n- **`/[projectId]/documents`** = documented project document management.\n- **`/[projectId]/intelligence`** = AI-generated project intelligence, including KPIs, insight cards, freshness, and citations.\n- There is also a route-discovered global page **`/project-documents`** in the tables area, but it has **no linked help article**, so its exact user-facing behavior is only implementation evidence.\n\nWhat I checked:\n- Artifact status: both sitemap and feature registry are current and available.\n- Feature registry and sitemap for “project documents” / “RAG knowledge”.\n- Help articles:\n  - **`docs/help/articles/documents.md`**\n  - **`docs/help/articles/ai-capabilities-index.md`**\n  - **`docs/help/articles/self-learning-intelligence-architecture.md`**\n\nUncertainty:\n- The curated docs do **not** define a standalone user-facing feature literally named “RAG knowledge.” That term appears in AI architecture/docs, not as a separate end-user document area.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/documents",
+        "sourceType": "sitemap",
+        "route": "/documents",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/documents.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/documents.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/self-learning-intelligence-architecture.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/self-learning-intelligence-architecture.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/intelligence",
+        "sourceType": "sitemap",
+        "route": "/intelligence",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ai-capabilities-index.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-capabilities-index.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/docs,",
+        "sourceType": "sitemap",
+        "route": "/docs,",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 11574,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

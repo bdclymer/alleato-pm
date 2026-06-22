@@ -86,11 +86,11 @@ const commitmentLineItemSchema = z.object({
 });
 
 const BRANDON_EMAIL_VOICE_PROFILE = {
-  path: "docs/ai-plan/brandon-email-voice-profile.md",
+  path: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md",
   version: "2026-05-19",
   companionResources: [
-    "docs/ai-plan/brandon-operating-profile.md",
-    "docs/ai-plan/brandon-email-drafting-playbook.md",
+    "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-operating-profile.md",
+    "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-drafting-playbook.md",
   ],
   summary:
     "For Brandon's Outlook drafts, write short, direct, action-oriented replies grounded in the current thread. Start with the ask or answer, preserve cost/scope/schedule facts, use plain construction/business language, and turn weak evidence into a direct confirmation question.",
@@ -3875,7 +3875,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
 
     draftOutlookEmail: tool({
       description:
-        "Create a draft email in Outlook through Microsoft Graph. Use when the user asks to draft an email, draft a reply, prepare an Outlook response, or write a message for later review. Always preview first and never send. For reply drafts, ground the response through the Microsoft Executive Assistant specialist or a live Graph message/thread lookup before calling this tool. When drafting from Brandon's mailbox, apply the Brandon communication resources: docs/ai-plan/brandon-email-voice-profile.md for voice, docs/ai-plan/brandon-operating-profile.md for owner/operator judgment, and docs/ai-plan/brandon-email-drafting-playbook.md for reply patterns. Drafts must be short, direct, action-oriented, grounded in the current thread, and must ask for confirmation when cost, scope, schedule, owner, or attachment evidence is missing.",
+        "Create a draft email in Outlook through Microsoft Graph. Use when the user asks to draft an email, draft a reply, prepare an Outlook response, or write a message for later review. Always preview first and never send. For reply drafts, ground the response through the Microsoft Executive Assistant specialist or a live Graph message/thread lookup before calling this tool. When drafting from Brandon's mailbox, apply the Brandon communication resources: docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md for voice, docs/archive/2026-06-22-docs-migration/ai-plan/brandon-operating-profile.md for owner/operator judgment, and docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-drafting-playbook.md for reply patterns. Drafts must be short, direct, action-oriented, grounded in the current thread, and must ask for confirmation when cost, scope, schedule, owner, or attachment evidence is missing.",
       inputSchema: z.object({
         mailboxUserId: z
           .string()

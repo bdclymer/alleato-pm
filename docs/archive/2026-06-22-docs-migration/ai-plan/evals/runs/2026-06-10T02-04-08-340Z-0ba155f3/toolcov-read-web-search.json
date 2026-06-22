@@ -1,0 +1,346 @@
+{
+  "id": "toolcov-read-web-search",
+  "intent": "web_research",
+  "prompt": "What's the current market price trend for structural steel right now? Check the web.",
+  "selectedProjectId": null,
+  "sessionId": "184ac0b7-308f-4173-a599-2797892166e8",
+  "sessionLabel": "eval-2026-06-10T02-04-08-340Z-0ba155f3-toolcov-read-web-search",
+  "startedAt": "2026-06-10T02:04:08.449Z",
+  "finishedAt": "2026-06-10T02:04:30.333Z",
+  "durationMs": 21539,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 13,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "expected family 'web' not represented"
+    ],
+    "observations": [
+      "tools fired: backendDeepAgentResearch, deepagents_research_runtime",
+      "backend Deep Agents memory candidates: 0"
+    ],
+    "toolNames": [
+      "backendDeepAgentResearch",
+      "deepagents_research_runtime"
+    ],
+    "familiesHit": [],
+    "finalTextLength": 2317,
+    "finalText": "Research plan:\n1. Check a few current public sources for structural steel or closely related steel benchmarks.\n2. Extract the most recent price direction and any stated month-over-month / year-over-year movement.\n3. Synthesize the trend, noting that structural steel pricing can vary by region and product type.\n\nPublic web findings:\n- Trading Economics’ HRC steel page says HRC steel was **1,192.03 USD/T on June 9, 2026**, **up 5.03% over the past month** and **up 35.00% year over year**; it also says the page was last updated June 10, 2026. URL: https://tradingeconomics.com/commodity/hrc-steel\n- Gordian’s April 13, 2026 update says **structural steel cost was $2,519.61/ton in April 2026**, **up 7.50% from Q1 to Q2**, while **down 3.27% year over year**. It also says January 2026 was **$2,343.93/ton**, down 5.38% from the prior quarter. URL: https://www.gordian.com/resources/steel-price-updates\n- Procurement Resource’s 2026 steel trend page says **US steel was $1,572/MT in April 2026** versus **$1,294.82/MT in March 2026**, and describes **global steel prices as mixed and range-bound in Q1 2026**, with cost support from inputs/logistics but weak demand and high inventories capping upside. URL: https://www.procurementresource.com/resource-center/steel-price-trends\n\nCurrent trend summary:\n- **Short version:** structural steel appears to be **firming / rising in the near term**, but **still below some year-ago levels** depending on the benchmark.\n- The clearest recent signal is **upward momentum in Q2 2026**: Gordian reports a **7.5% quarter-over-quarter increase** in structural steel costs.\n- At the same time, the market is **not uniformly in a sustained bull run**: Gordian still shows structural steel **down 3.27% YoY**, and Procurement Resource describes the broader steel market as **mixed and range-bound**, with demand weakness and inventories limiting stronger gains.\n- So the best read is: **near-term prices are trending upward, but the market remains volatile and not decisively broken out to the upside across all regions/products**.\n\nAlleato internal evidence:\n- None used. This was a public-web-only research question.\n\nIf you want, I can also narrow this to **U.S. structural beams**, **rebar**, or **fabricated structural steel** specifically, since those can move differently.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 21539
+    }
+  },
+  "expectedToolNames": [
+    "searchWeb",
+    "backendDeepAgentResearch"
+  ],
+  "expectedToolFamilies": [
+    "web"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: conversational_fallback",
+        "status": "loading",
+        "timestamp": "2026-06-10T02:04:09.921Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Checking Render Deep Agents research",
+        "status": "loading",
+        "timestamp": "2026-06-10T02:04:11.155Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents research…",
+        "status": "loading",
+        "timestamp": "2026-06-10T02:04:14.156Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents research…",
+        "status": "loading",
+        "timestamp": "2026-06-10T02:04:17.156Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents research…",
+        "status": "loading",
+        "timestamp": "2026-06-10T02:04:20.156Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents research…",
+        "status": "loading",
+        "timestamp": "2026-06-10T02:04:23.156Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents research…",
+        "status": "loading",
+        "timestamp": "2026-06-10T02:04:26.161Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents research…",
+        "status": "loading",
+        "timestamp": "2026-06-10T02:04:29.161Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-deep-agent-research",
+      "data": {
+        "widget": {
+          "type": "source_evidence_drawer",
+          "id": "deep-agent-research-evidence",
+          "title": "Research sources",
+          "sources": [
+            {
+              "id": "https://tradingeconomics.com/commodity/hrc-steel",
+              "title": "https://tradingeconomics.com/commodity/hrc-steel",
+              "sourceType": "knowledge",
+              "href": "https://tradingeconomics.com/commodity/hrc-steel",
+              "snippet": "Public web source",
+              "confidence": "medium"
+            },
+            {
+              "id": "https://www.gordian.com/resources/steel-price-updates",
+              "title": "https://www.gordian.com/resources/steel-price-updates",
+              "sourceType": "knowledge",
+              "href": "https://www.gordian.com/resources/steel-price-updates",
+              "snippet": "Public web source",
+              "confidence": "medium"
+            },
+            {
+              "id": "https://www.procurementresource.com/resource-center/steel-price-trends",
+              "title": "https://www.procurementresource.com/resource-center/steel-price-trends",
+              "sourceType": "knowledge",
+              "href": "https://www.procurementresource.com/resource-center/steel-price-trends",
+              "snippet": "Public web source",
+              "confidence": "medium"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-deep-agent-research"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-deep-agent-research",
+      "delta": "Research plan:\n1. Check a few current public sources for structural steel or closely related steel benchmarks.\n2. Extract the most recent price direction and any stated month-over-month / year-over-year movement.\n3. Synthesize the trend, noting that structural steel pricing can vary by region and product type.\n\nPublic web findings:\n- Trading Economics’ HRC steel page says HRC steel was **1,192.03 USD/T on June 9, 2026**, **up 5.03% over the past month** and **up 35.00% year over year**; it also says the page was last updated June 10, 2026. URL: https://tradingeconomics.com/commodity/hrc-steel\n- Gordian’s April 13, 2026 update says **structural steel cost was $2,519.61/ton in April 2026**, **up 7.50% from Q1 to Q2**, while **down 3.27% year over year**. It also says January 2026 was **$2,343.93/ton**, down 5.38% from the prior quarter. URL: https://www.gordian.com/resources/steel-price-updates\n- Procurement Resource’s 2026 steel trend page says **US steel was $1,572/MT in April 2026** versus **$1,294.82/MT in March 2026**, and describes **global steel prices as mixed and range-bound in Q1 2026**, with cost support from inputs/logistics but weak demand and high inventories capping upside. URL: https://www.procurementresource.com/resource-center/steel-price-trends\n\nCurrent trend summary:\n- **Short version:** structural steel appears to be **firming / rising in the near term**, but **still below some year-ago levels** depending on the benchmark.\n- The clearest recent signal is **upward momentum in Q2 2026**: Gordian reports a **7.5% quarter-over-quarter increase** in structural steel costs.\n- At the same time, the market is **not uniformly in a sustained bull run**: Gordian still shows structural steel **down 3.27% YoY**, and Procurement Resource describes the broader steel market as **mixed and range-bound**, with demand weakness and inventories limiting stronger gains.\n- So the best read is: **near-term prices are trending upward, but the market remains volatile and not decisively broken out to the upside across all regions/products**.\n\nAlleato internal evidence:\n- None used. This was a public-web-only research question.\n\nIf you want, I can also narrow this to **U.S. structural beams**, **rebar**, or **fabricated structural steel** specifically, since those can move differently."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-deep-agent-research"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Render Deep Agents research answer returned",
+        "status": "success",
+        "timestamp": "2026-06-10T02:04:29.967Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": null,
+    "data_parts": [
+      {
+        "id": "assistant-widget-deep-agent-research",
+        "data": {
+          "widget": {
+            "id": "deep-agent-research-evidence",
+            "type": "source_evidence_drawer",
+            "title": "Research sources",
+            "sources": [
+              {
+                "id": "https://tradingeconomics.com/commodity/hrc-steel",
+                "href": "https://tradingeconomics.com/commodity/hrc-steel",
+                "title": "https://tradingeconomics.com/commodity/hrc-steel",
+                "snippet": "Public web source",
+                "confidence": "medium",
+                "sourceType": "knowledge"
+              },
+              {
+                "id": "https://www.gordian.com/resources/steel-price-updates",
+                "href": "https://www.gordian.com/resources/steel-price-updates",
+                "title": "https://www.gordian.com/resources/steel-price-updates",
+                "snippet": "Public web source",
+                "confidence": "medium",
+                "sourceType": "knowledge"
+              },
+              {
+                "id": "https://www.procurementresource.com/resource-center/steel-price-trends",
+                "href": "https://www.procurementresource.com/resource-center/steel-price-trends",
+                "title": "https://www.procurementresource.com/resource-center/steel-price-trends",
+                "snippet": "Public web source",
+                "confidence": "medium",
+                "sourceType": "knowledge"
+              }
+            ]
+          }
+        },
+        "type": "data-assistant-widget"
+      }
+    ],
+    "tool_trace": [
+      {
+        "tool": "backendDeepAgentResearch",
+        "agent": "frontend-ai-assistant",
+        "input": {
+          "message": "What's the current market price trend for structural steel right now? Check the web.",
+          "selectedProjectId": null
+        },
+        "detail": null,
+        "status": "success",
+        "toolName": "backendDeepAgentResearch",
+        "timestamp": "2026-06-10T02:04:29.495Z",
+        "durationMs": 18340
+      },
+      {
+        "tool": "deepagents_research_runtime",
+        "agent": "alleato-research-orchestrator",
+        "input": {
+          "message": "What's the current market price trend for structural steel right now? Check the web.",
+          "selectedProjectId": null
+        },
+        "detail": "Deep Agents research runtime produced an answer with durable memory.",
+        "status": "success",
+        "toolName": "deepagents_research_runtime",
+        "timestamp": "2026-06-10T02:04:29.495Z",
+        "durationMs": 18206
+      }
+    ],
+    "architecture": "render-backend-deep-agents-v1",
+    "source_debug": {
+      "memory": {
+        "reason": "This answer was produced by a delegated specialist/direct Deep Agents path; inspect delegated trace and backend memory metadata for specialist-side context.",
+        "status": "not_loaded_in_frontend"
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "backendDeepAgentResearch",
+              "agent": "frontend-ai-assistant",
+              "status": "success",
+              "durationMs": 18340
+            },
+            {
+              "tool": "deepagents_research_runtime",
+              "agent": "alleato-research-orchestrator",
+              "status": "success",
+              "durationMs": 18206
+            }
+          ],
+          "failedCount": 0,
+          "totalMeasuredMs": 36546
+        },
+        "toolNames": [
+          "backendDeepAgentResearch",
+          "deepagents_research_runtime"
+        ],
+        "evidenceCount": 3,
+        "toolCallCount": 2,
+        "sourceCoverage": [
+          {
+            "url": "https://tradingeconomics.com/commodity/hrc-steel",
+            "title": "https://tradingeconomics.com/commodity/hrc-steel",
+            "sourceType": "web"
+          },
+          {
+            "url": "https://www.gordian.com/resources/steel-price-updates",
+            "title": "https://www.gordian.com/resources/steel-price-updates",
+            "sourceType": "web"
+          },
+          {
+            "url": "https://www.procurementresource.com/resource-center/steel-price-trends",
+            "title": "https://www.procurementresource.com/resource-center/steel-price-trends",
+            "sourceType": "web"
+          }
+        ]
+      },
+      "orchestrator": "backend-deep-agent-research",
+      "outputPolicy": null,
+      "retrievalPlan": {
+        "intent": "external_research",
+        "reason": "conversational_fallback",
+        "sources": [],
+        "responseFormat": "conversational"
+      }
+    },
+    "provider_path": "render-backend-ai-gateway",
+    "retrieval_plan": {
+      "intent": "external_research",
+      "reason": "conversational_fallback",
+      "sources": [],
+      "responseFormat": "conversational"
+    },
+    "response_quality": {
+      "score": 62,
+      "reasons": [
+        "at least one successful tool call",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "backend_deep_agent": {
+      "mode": "deep_agents",
+      "endpoint": "research",
+      "orchestrator": "alleato-research-orchestrator",
+      "source_count": 3,
+      "skills_loaded": [
+        "web-research",
+        "deep-agents-core"
+      ]
+    }
+  }
+}

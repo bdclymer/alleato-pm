@@ -1,0 +1,44 @@
+{
+  "id": "financial-margin",
+  "intent": "financial_analysis",
+  "prompt": "What's the projected margin on Westfield Collective?",
+  "selectedProjectId": 43,
+  "sessionId": "abcadfe1-8418-47d3-b75c-e051f148c4f1",
+  "sessionLabel": "eval-2026-05-12T17-33-02-004Z-financial-margin",
+  "startedAt": "2026-05-12T17:35:23.734Z",
+  "finishedAt": "2026-05-12T17:35:39.559Z",
+  "durationMs": 523,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"41cfb8e2-6365-439c-80e4-af4101fb2909\",\"timestamp\":\"2026-05-12T17:35:24.255Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"41cfb8e2-6365-439c-80e4-af4101fb2909\",\"timestamp\":\"2026-05-12T17:35:24.255Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getMarginAnalysis, getFinancialAnalysis] to fire — none did",
+      "mustInclude missing: \"margin\""
+    ],
+    "warnings": [
+      "expected family 'financial' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"41cfb8e2-6365-439c-80e4-af4101fb2909\",\"timestamp\":\"2026-05-12T17:35:24.255Z\"}"
+  },
+  "expectedToolNames": [
+    "getMarginAnalysis",
+    "getFinancialAnalysis"
+  ],
+  "expectedToolFamilies": [
+    "financial"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

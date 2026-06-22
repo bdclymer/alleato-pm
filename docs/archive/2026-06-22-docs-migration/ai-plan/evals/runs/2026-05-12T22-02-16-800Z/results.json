@@ -1,0 +1,93 @@
+{
+  "generatedAt": "2026-05-12T22:03:24.237Z",
+  "baseUrl": "http://localhost:3000",
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "assistantWidgetPlanner": 1,
+    "streamingToolPolicy": 1,
+    "getProjectRiskAnalysis": 1,
+    "getProjectBriefingSnapshot": 1,
+    "getRFIStatus": 1,
+    "getChangeOrderDetails": 1,
+    "getSubmittalStatus": 1,
+    "getProjectBudgetSummary": 1,
+    "getScheduleAnalysis": 1,
+    "searchTeamsMessages": 1,
+    "getActionItemsAndInsights": 1,
+    "searchEmails": 1,
+    "semanticSearch": 1,
+    "consultCRO": 1,
+    "consultCOO": 1
+  },
+  "intentDistribution": {
+    "risk_review": 1
+  },
+  "results": [
+    {
+      "id": "risk-review-single-project",
+      "intent": "risk_review",
+      "prompt": "What could bite us on Westfield right now? Rank the risks and tell me what I should do first.",
+      "selectedProjectId": 43,
+      "sessionId": "70aa561e-73f9-43be-8225-fbce976cd96b",
+      "sessionLabel": "eval-2026-05-12T22-02-16-800Z-risk-review-single-project",
+      "startedAt": "2026-05-12T22:02:16.803Z",
+      "finishedAt": "2026-05-12T22:03:24.235Z",
+      "durationMs": 66529,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1213,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: intentPlanner, assistantWidgetPlanner, streamingToolPolicy, getProjectRiskAnalysis, getProjectBriefingSnapshot, getRFIStatus, getChangeOrderDetails, getSubmittalStatus, getProjectBudgetSummary, getScheduleAnalysis, searchTeamsMessages, getActionItemsAndInsights, searchEmails, semanticSearch, consultCRO, consultCOO"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantWidgetPlanner",
+          "streamingToolPolicy",
+          "getProjectRiskAnalysis",
+          "getProjectBriefingSnapshot",
+          "getRFIStatus",
+          "getChangeOrderDetails",
+          "getSubmittalStatus",
+          "getProjectBudgetSummary",
+          "getScheduleAnalysis",
+          "searchTeamsMessages",
+          "getActionItemsAndInsights",
+          "searchEmails",
+          "semanticSearch",
+          "consultCRO",
+          "consultCOO"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "schedule",
+          "operations",
+          "risk",
+          "communications",
+          "semantic",
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 5366,
+        "finalText": "Westfield can bite you in three places right now, and the schedule data is the biggest one.\n\n### Ranked risks\n\n**1. Schedule/record integrity risk — highest priority**  \nThis is the real problem. The system shows **144 incomplete tasks already past finish date** on a **150-task schedule**, with early items like **NTP/sign contract, project schedule submission, structural design, civil permit plans, and permit submission** still sitting at **0%** with 2025 finish dates.  \nThat does **not** read like normal field slippage. It reads like the schedule is stale, not maintained, or not reflecting actual project status.\n\nWhy it matters:\n- Leadership loses the ability to trust the schedule.\n- Real risks get buried under bad data.\n- You can’t manage closeout, warranty, or next-phase decisions off a dead schedule.\n\n**What to do first:**  \nGet **Andrew Cannon** or the current PM to do a **same-day schedule scrub**:\n- close anything complete\n- update active work with real finish dates\n- isolate the true remaining critical items\n- identify anything actually blocking revenue, retainage, or owner handoff\n\nIf you do nothing else today, do that. Right now the schedule is throwing too much noise to steer the project.\n\n---\n\n**2. Change order exposure / commercial cleanup risk**  \nThere are **25 pending change orders** totaling about **$2.33M proposed**, and the risk view also shows **20 items of pending CO exposure**. Some are small cleanup items, but the volume is the issue. One of the listed changes is a **-$66,226.37 deductive change**, another is **$47,005.83** tied to 181st Street resurfacing and utility/fire requirements.\n\nWhy it matters:\n- Too many open proposed COs creates billing friction and muddies final project economics.\n- It increases dispute risk if backup, owner alignment, or final disposition lags.\n- On a project this far along, unresolved CO volume usually becomes a closeout drag.\n\n**What to do second:**  \nRun a **CO triage list this week**:\n- **Group A:** ready to submit/approve now\n- **Group B:** needs pricing backup\n- **Group C:** needs internal correction or withdrawal\n- **Group D:** owner decision required\n\nThe move here is not “review change orders.” It’s **cut the list down fast** and assign owners by item.\n\n---\n\n**3. Warranty / closeout liability risk**  \nRecent email traffic shows active issues around **warranty and O&M manuals**, including **air infiltration through doors** and concern that a door’s rating is inadequate for the environment. Earlier OAC notes also flagged **defective sconce lights**, with a formal vendor claim needed because units were reportedly non-functional since December.\n\nWhy it matters:\n- These are post-completion credibility issues, not just punch list annoyances.\n- If warranty claims aren’t documented and chased now, the owner ends up remembering the problem instead of the project.\n- This is exactly the kind of thing that slows retainage release and creates avoidable owner frustration.\n\n**What to do third:**  \nCreate a **single warranty log** for Westfield immediately:\n- issue\n- responsible vendor\n- corrective action promised\n- date reported\n- status\n- proof of closeout\n\nStart with:\n- **door air infiltration**\n- **defective sconce lights**\n- any related O&M/manual gaps\n\n---\n\n### What changed recently\n\nThe freshest signal is not RFIs or submittals — those are showing **zero open** right now. The recent movement is coming from **emails**, and it’s pointing to:\n- **warranty/O&M follow-up**\n- **retainage/invoice processing questions**\n- **patio pricing/proposal activity**\n- **tenant/payment follow-up**, including an email noting **overdue invoices over 60 days late** tied to “Craving Crapes”\n\nThat tells me Westfield’s main risk is **not active construction execution anymore**. It’s **commercial closeout, collections, and warranty cleanup**.\n\n---\n\n### What I’d focus on first\n\n1. **Fix the schedule data today** so you can see the real job.  \n2. **Cut down the pending CO pile this week** with owner-by-owner disposition.  \n3. **Stand up a warranty/retainage closeout log** so small issues stop dragging cash and reputation.\n\n---\n\n### The evidence behind that call\n\n- **144 overdue incomplete schedule tasks**  \n- **25 pending change orders / $2.329M proposed**\n- **36 commitments flagged as unexecuted** in the snapshot, but the status mix includes many marked **Complete/Approved**, so that metric likely needs cleanup too\n- Recent email activity on:\n  - **Warranty and O&M manuals**\n  - **door air infiltration**\n  - **Merritt retainage**\n  - **App 7 payment**\n  - **patio pricing**\n\n---\n\n### Data gaps you should know about\n\nThe risk engine labeled overall risk as **LOW**, but I would not trust that at face value. The underlying records show too much stale schedule and commercial clutter for a clean “low-risk” read. Also, the ops and risk specialist calls timed out, so this answer is coming from the direct project risk and briefing data that did return.\n\nSo the clean read is:\n\n**Westfield does not look like a field-execution emergency. It looks like a closeout/commercial-control problem with dirty schedule data.** That’s fixable, but only if someone owns cleanup now.\n\nIf you want, I can turn this into a **one-page Westfield priority brief** with:\n- top 10 pending COs,\n- the warranty issues,\n- and the exact items that need owner assignment this week."
+      },
+      "expectedToolNames": [
+        "getProjectRiskAnalysis"
+      ],
+      "expectedToolFamilies": [
+        "risk",
+        "project"
+      ]
+    }
+  ]
+}

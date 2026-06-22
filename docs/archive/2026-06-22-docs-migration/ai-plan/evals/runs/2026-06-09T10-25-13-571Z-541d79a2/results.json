@@ -1,0 +1,496 @@
+{
+  "generatedAt": "2026-06-09T10:28:12.058Z",
+  "baseUrl": "https://alleato-hub.vercel.app",
+  "bundle": {
+    "name": "inbox-outlook-regression",
+    "description": "Agentic-eval guardrail for live inbox/date/triage prompts. The Strategist must delegate Microsoft operator work to consultMicrosoftExecutiveAssistant, the specialist must expose microsoft_graph_live in its trace, and the assistant must avoid direct/stale Outlook tools and source-specific RAG fallback.",
+    "criteria": [
+      "Every case must fire consultMicrosoftExecutiveAssistant and its nested trace must include microsoft_graph_live.",
+      "No case may fire sourceSpecificRagRetrieval, getRecentEmails, getRecentOutlookEmails, or readOutlookEmailThread.",
+      "No tool trace's source may be outlook_email_intake or outlook_email_intake_fallback - Microsoft operator inbox reads must hit live Microsoft Graph through the specialist.",
+      "Answers must not tell the user to wait for live Outlook tools.",
+      "Answers must be long enough to explain the inbox result or failure clearly."
+    ]
+  },
+  "filter": "realworld-(last-five-emails|urgent-inbox|important-emails-this-morning|outlook-arrived-today|email-reply-triage)$",
+  "totalCases": 5,
+  "passed": 2,
+  "failed": 3,
+  "warningCount": 3,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": true,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 5,
+    "passed": 2,
+    "failed": 3,
+    "errors": 0,
+    "averageScore": 3.4
+  },
+  "slowestCases": [
+    {
+      "id": "realworld-email-reply-triage",
+      "intent": "source_lookup",
+      "durationMs": 49368,
+      "status": "fail",
+      "warnings": [
+        "duration 49368ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "realworld-important-emails-this-morning",
+      "intent": "source_lookup",
+      "durationMs": 44989,
+      "status": "pass",
+      "warnings": [
+        "duration 44989ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "realworld-outlook-arrived-today",
+      "intent": "source_lookup",
+      "durationMs": 32676,
+      "status": "fail",
+      "warnings": [
+        "duration 32676ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "realworld-urgent-inbox",
+      "intent": "source_lookup",
+      "durationMs": 18525,
+      "status": "pass",
+      "warnings": []
+    },
+    {
+      "id": "realworld-last-five-emails",
+      "intent": "source_lookup",
+      "durationMs": 12027,
+      "status": "fail",
+      "warnings": []
+    }
+  ],
+  "toolCoverage": {
+    "consultMicrosoftExecutiveAssistant": 5
+  },
+  "intentDistribution": {
+    "source_lookup": 5
+  },
+  "results": [
+    {
+      "id": "realworld-last-five-emails",
+      "intent": "source_lookup",
+      "prompt": "Can you tell me my last five emails?",
+      "selectedProjectId": null,
+      "sessionId": "e17b8cdf-fd01-4320-a552-ff00b6c0c77c",
+      "sessionLabel": "eval-2026-06-09T10-25-13-571Z-541d79a2-realworld-last-five-emails",
+      "startedAt": "2026-06-09T10:25:13.594Z",
+      "finishedAt": "2026-06-09T10:25:29.655Z",
+      "durationMs": 12027,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 9,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "judge email_operator score 3 < 4: The answer is mostly a mailbox listing, but it does not fully satisfy the rubric for email operator quality. It identifies some urgency and gives a few next steps, yet it misses the user’s actual request framing, includes unsupported capability claims, and contains a likely name mismatch in the recommendation section. It also does not clearly separate confirmed user-owned actions from merely observed inbox items."
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: fail (3/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 1996,
+        "finalText": "Last five emails in bclymer@alleatogroup.com:\n\n1. Walter Allen <wallen@ulta.com>\n   - Subject: RE: ULTA update needed.\n   - Received: 2026-06-09 09:59 UTC\n   - Urgency: Medium\n   - Note: Requests confirmation by Thursday afternoon on roof penetration.\n\n2. Perplexity <team@mail.perplexity.ai>\n   - Subject: Sign in to Perplexity\n   - Received: 2026-06-09 09:37 UTC\n   - Urgency: Low\n   - Note: Verification/login email.\n\n3. Alleato Group <alleato_group_notifications@us02.procoretech.com>\n   - Subject: Alleato Group: ERP Integrations Daily Summary\n   - Received: 2026-06-09 06:15 UTC\n   - Urgency: Low\n   - Note: System summary notification.\n\n4. Ryan Niddel <notifications@thrivecart.email>\n   - Subject: [Reminder] Your payment is due in 1 day\n   - Received: 2026-06-09 03:54 UTC\n   - Urgency: Medium\n   - Note: Payment reminder; could affect access if card details are outdated.\n\n5. Steve Fischer <steve.fischer@exol.com>\n   - Subject: RE: Exol Morrisville PA\n   - Received: 2026-06-09 02:59 UTC\n   - Urgency: Medium\n   - Note: Follow-up on MDF room, dry fire suppression, antistatic VCT floor, and UPS power requirements.\n\nUrgent items worth attention:\n- ULTA update needed: time-sensitive client reply requested by Thursday afternoon.\n- Payment reminder: administrative/financial follow-up if this subscription matters.\n- Microsoft 365 security quarantine notice also appears in the inbox, but it was not in the last five.\n\nCapability check:\n- Live Outlook inbox read succeeded.\n- No mailbox/calendar/file/Teams capability failures occurred.\n- No draft escalation was created because none of the last five messages rose to a true emergency/security/legal/client-critical escalation threshold.\n\nRecommended next steps for Megan:\n- Reply to Walter Allen with a Thursday confirmation on the roof penetration.\n- Review the ThriveCart payment reminder if the subscription should stay active.\n- If you want, I can also pull the next five messages, or draft a response to the ULTA email for review.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 12027
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 3,
+          "minScore": 4,
+          "summary": "The answer is mostly a mailbox listing, but it does not fully satisfy the rubric for email operator quality. It identifies some urgency and gives a few next steps, yet it misses the user’s actual request framing, includes unsupported capability claims, and contains a likely name mismatch in the recommendation section. It also does not clearly separate confirmed user-owned actions from merely observed inbox items.",
+          "strengths": [
+            "Lists five emails with sender, subject, timestamp, and a brief note instead of dumping raw thread data.",
+            "Flags some items as more urgent than others, especially the ULTA reply and payment reminder.",
+            "Provides concrete next steps for a couple of items rather than only summarizing.",
+            "Avoids claiming that any email was sent."
+          ],
+          "weaknesses": [
+            "Does not answer the user’s request in a clean source-lookup style; it adds operational commentary instead of simply presenting the last five emails.",
+            "Includes an unsupported capability check and claims about live Outlook access that are not needed and may be unverifiable from the response.",
+            "Uses a different recipient name in the recommendation section ('Megan') despite the mailbox being bclymer@alleatogroup.com, which is a credibility issue.",
+            "Does not clearly distinguish confirmed user-owned actions from inbox items that merely exist.",
+            "Urgency labels are somewhat arbitrary and not strongly evidence-backed; no explicit reasoning is given for why each item matters or what happens if ignored."
+          ],
+          "dimensionScores": {
+            "separates_urgent_from_noise": 3,
+            "identifies_who_needs_response_why_it_matters_what_happens_if_ignored": 3,
+            "summarizes_threads_efficiently": 4,
+            "recommends_concrete_response_path": 3,
+            "drafts_short_direct_practical": 2,
+            "never_claims_sent_or_invents_details": 3,
+            "separates_confirmed_actions_from_inbox_items": 2,
+            "labels_suspicious_phishing_urgency_ignore_as_evidence_backed": 2
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-urgent-inbox",
+      "intent": "source_lookup",
+      "prompt": "Is there anything urgent in my inbox?",
+      "selectedProjectId": null,
+      "sessionId": "a89c801d-8522-4996-b45f-09941f752ce2",
+      "sessionLabel": "eval-2026-06-09T10-25-13-571Z-541d79a2-realworld-urgent-inbox",
+      "startedAt": "2026-06-09T10:25:29.664Z",
+      "finishedAt": "2026-06-09T10:25:52.222Z",
+      "durationMs": 18525,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 12,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: pass (4/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 2550,
+        "finalText": "Yes — there are a few items that look urgent or time-sensitive:\n\n1. **ULTA update needed** — Walter Allen asked: “Can you confirm by Thursday afternoon on the roof penetration?”\n   - This is the clearest client deadline in the inbox.\n   - **Urgency:** high, because it requests confirmation by Thursday afternoon.\n   - **Suggested escalation:** notify the project owner immediately.\n\n2. **Microsoft 365 security quarantine notice**\n   - “1 messages are being held for you to review” and it says the quarantined item is a **prevented phish**.\n   - **Urgency:** moderate/high, because security-related items should be reviewed promptly.\n   - **Action needed:** review quarantine in Security Center if you want to confirm legitimacy.\n\n3. **Capital One Business — approaching spend limit**\n   - This is a finance/billing alert and may need attention if the card is used for active subscriptions.\n   - **Urgency:** moderate, depending on whether that card is active.\n\n4. **Payment due in 1 day**\n   - ThriveCart reminder says a payment is due in 1 day.\n   - **Urgency:** moderate, but it’s likely a personal/subscription reminder rather than a business emergency.\n\n5. **Project follow-ups that are time-sensitive but not clearly urgent**\n   - Exol Morrisville / Marr Rd. Renovations / Champaign Pay App / Ulta coordination messages all look active, but the ULTA deadline is the only explicit near-term ask.\n\n### Concise escalation draft for Teams\n**Recipient:** Megan or the appropriate project owner  \n**Urgency:** high  \n**Draft message:**\n> Urgent inbox item: Walter Allen (Ulta) asked for confirmation by Thursday afternoon on the roof penetration. Needs a response ASAP to stay aligned with the deadline.\n\n### What I did not find\n- No obvious true emergency, legal escalation, or security breach beyond the quarantine notice.\n- No calendar or file evidence was needed to identify the urgent items from the inbox.\n- The live inbox result was **truncated at 25 messages**, so this is based on the most recent messages returned.\n\n### Recommended next steps for Megan\n1. Confirm who owns the ULTA roof penetration reply and respond before Thursday afternoon.\n2. Review the Microsoft quarantine item in Security Center.\n3. Check whether the Capital One spend-limit alert affects any active business spending.\n4. If you want, I can draft a Teams escalation for the ULTA item for review.\n\n### Approval needed\n- No approval needed to **draft** a Teams escalation.\n- I would need explicit approval before **sending** any message or taking any calendar action.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 18525
+        },
+        "judge": {
+          "status": "pass",
+          "rubric": "email_operator",
+          "score": 4,
+          "minScore": 4,
+          "summary": "The answer identifies several potentially urgent inbox items and gives a concrete escalation draft. It is strongest on urgency triage and response path, but it overstates certainty on the phishing/quarantine item and mixes business and personal alerts without clearly separating confirmed owner actions from merely interesting inbox noise.",
+          "strengths": [
+            "Separates a clearly time-sensitive client request (Ulta roof penetration confirmation by Thursday afternoon) from lower-priority items.",
+            "Recommends concrete next steps, including who should be notified and a short draft message for escalation.",
+            "Avoids claiming any email was sent and does not invent a completed action.",
+            "Notes that the inbox result was truncated, which is honest evidence handling.",
+            "Provides a practical urgency ranking rather than dumping raw thread content."
+          ],
+          "weaknesses": [
+            "Does not clearly separate confirmed user-owned actions from inbox items that merely exist or may be irrelevant to Brandon/Megan.",
+            "The Microsoft 365 quarantine item is treated as a likely phishing issue with moderate/high urgency, but the evidence only supports a quarantine notice; the judgment is stronger than the evidence.",
+            "The Capital One and ThriveCart items are mentioned without clearly explaining whether they are business-critical, personal, or owned by the user.",
+            "The response says 'notify the project owner immediately' but does not identify the owner from evidence, which weakens specificity.",
+            "The summary is decent but still somewhat generic and could be tighter about what actually needs a response now versus what can be watched."
+          ],
+          "dimensionScores": {
+            "separates_urgent_critical_email_from_normal_inbox_noise": 4,
+            "identifies_who_needs_a_response_why_it_matters_and_what_could_happen_if_ignored": 4,
+            "summarizes_email_threads_efficiently_without_dumping_raw_message_data": 4,
+            "recommends_a_concrete_response_path_reply_now_delegate_watch_draft_or_ignore": 5,
+            "for_draft_requests_sounds_short_direct_and_practical_enough_for_Brandon_to_review_and_send": 4,
+            "never_claims_an_email_was_sent_and_never_invents_thread_details_not_present_in_the_answer": 4,
+            "separates_confirmed_user_owned_actions_from_inbox_items_that_merely_exist_or_look_interesting": 3,
+            "labels_suspicious_phishing_urgency_or_ignore_recommendations_as_evidence_backed_judgments_instead_of_unsupported_certainty": 3
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-important-emails-this-morning",
+      "intent": "source_lookup",
+      "prompt": "What important emails have I received this morning?",
+      "selectedProjectId": null,
+      "sessionId": "e0db2d9a-d1dc-4c53-9eb9-f28e90de1f94",
+      "sessionLabel": "eval-2026-06-09T10-25-13-571Z-541d79a2-realworld-important-emails-this-morning",
+      "startedAt": "2026-06-09T10:25:52.244Z",
+      "finishedAt": "2026-06-09T10:26:40.766Z",
+      "durationMs": 44989,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 20,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "duration 44989ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: pass (4/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 2065,
+        "finalText": "This morning’s inbox for bclymer@alleatogroup.com shows 6 messages. The important items are:\n\n1. RE: ULTA update needed. — Walter Allen, Ulta Beauty  \n   - Received: 9:59 AM UTC  \n   - Why it matters: client-facing, time-sensitive request  \n   - Content: Walter asks to confirm by Thursday afternoon on the roof penetration.  \n   - Suggested priority: high\n\n2. RE: Exol Morrisville PA — Steve Fischer, Exol  \n   - Received: 2:59 AM UTC  \n   - Why it matters: project coordination with scope/technical details  \n   - Content: notes include MDF room dry fire suppression, anti-static VCT floor, and UPS power requirements.  \n   - Suggested priority: medium-high\n\n3. RE: Exol Morrisville PA — Steve Fischer, Exol  \n   - Received: 2:20 AM UTC  \n   - Why it matters: same project thread, action pending review  \n   - Content: Bob says he’ll review ASAP and provide feedback; mentions scope alignment.  \n   - Suggested priority: medium-high\n\nOther messages:\n- Alleato Group: ERP Integrations Daily Summary — operational notification, likely informational\n- [Reminder] Your payment is due in 1 day — billing reminder, not client-critical unless you want payment reviewed\n- Sign in to Perplexity — login verification email, not business-critical\n\nUrgent escalation assessment:\n- No true emergency, legal, or security incident found.\n- No Teams escalation draft is necessary from the evidence available.\n- The Ulta item is the clearest time-sensitive client response needed.\n\nRecommended next steps for Megan:\n- Reply to Walter Allen confirming the roof penetration by Thursday afternoon, or delegate that confirmation to the project lead.\n- Review the Exol Morrisville PA comments for scope impacts and whether they require internal follow-up.\n- Ignore or archive the Perplexity login email unless you requested it.\n- Check the payment reminder only if you want me to assess whether it needs action.\n\nApprovals needed:\n- None to summarize inbox.\n- If you want me to draft a reply to Ulta or a Teams escalation note, I need explicit approval to prepare the draft for review.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 44989
+        },
+        "judge": {
+          "status": "pass",
+          "rubric": "email_operator",
+          "score": 4,
+          "minScore": 4,
+          "summary": "The answer does a decent job separating the clearly important client email from routine inbox noise and gives a practical next step for the Ulta item. It also avoids claiming anything was sent. However, it is weaker on evidence handling and thread summarization: the Exol thread is summarized somewhat, but the response does not clearly distinguish confirmed user-owned actions from merely interesting inbox items, and it introduces a likely wrong name (“Megan”) instead of the user context. The urgency assessment is mostly cautious and evidence-based, but some recommendations are generic rather than tightly tied to consequences if ignored.",
+          "strengths": [
+            "Separates the most time-sensitive client email from routine messages.",
+            "Identifies why the Ulta email matters and recommends a concrete action path.",
+            "Does not claim any email was sent.",
+            "Flags non-critical items like login verification and billing reminder as lower priority.",
+            "Uses cautious language on urgency/escalation instead of inventing a crisis."
+          ],
+          "weaknesses": [
+            "Introduces an apparent name mismatch ('Megan') that is not supported by the prompt.",
+            "Does not clearly distinguish confirmed user-owned actions from inbox items that merely exist.",
+            "Thread summary for Exol is somewhat repetitive and not especially efficient.",
+            "Does not explicitly state what could happen if the Ulta email is ignored beyond generic time sensitivity.",
+            "Some recommendations are broad ('review comments') rather than sharply tied to a specific response path."
+          ],
+          "dimensionScores": {
+            "urgent_vs_noise": 4,
+            "who_needs_response_why_consequence": 4,
+            "thread_summarization": 3,
+            "concrete_response_path": 4,
+            "draft_quality": 4,
+            "no_false_claims_or_inventions": 4,
+            "user_owned_vs_inbox_items": 3,
+            "evidence_backed_suspicion_and_urgency": 4
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-outlook-arrived-today",
+      "intent": "source_lookup",
+      "prompt": "What came in through Outlook today that needs my attention?",
+      "selectedProjectId": null,
+      "sessionId": "d2e7f32f-6b7e-471c-a65c-dcf98a56d436",
+      "sessionLabel": "eval-2026-06-09T10-25-13-571Z-541d79a2-realworld-outlook-arrived-today",
+      "startedAt": "2026-06-09T10:26:40.780Z",
+      "finishedAt": "2026-06-09T10:27:17.469Z",
+      "durationMs": 32676,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 16,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "judge email_operator score 3 < 4: The answer does a decent job separating urgent from non-urgent items and gives concrete next steps, but it overstates certainty in places, mixes inbox items with inferred ownership, and includes thread details that are not clearly evidenced. It is useful operationally, but not strong enough on evidence discipline and response-path precision to pass."
+        ],
+        "warnings": [
+          "duration 32676ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: fail (3/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 4239,
+        "finalText": "Today’s Outlook items that need attention from the 25-message live inbox read:\n\nHighest-priority\n- Ulta / roof penetration follow-up\n  - From: Walter Allen, Ulta Beauty\n  - Received: 9:59 AM UTC\n  - Ask: “Can you confirm by Thursday afternoon on the roof penetration?”\n  - Why it matters: active client follow-up with a deadline.\n  - Recommended action: respond with confirmation/status and ETA.\n\n- Exol Morrisville PA / scope clarification\n  - From: Steve Fischer\n  - Received: 2:59 AM UTC\n  - Ask: notes that MDF room needs dry fire suppression (FM200 style), anti-static VCT floor, and UPS power requirements are being discussed.\n  - Why it matters: project scope/spec clarification that may affect design and pricing.\n  - Recommended action: review with project team and reply with consolidated scope response.\n\n- Exol Morrisville PA / proposal and structural items\n  - From: Bob Wright and related thread\n  - Received: 8:57 PM / 8:18 PM UTC yesterday, but still likely active work\n  - Ask: proposal sent, compressed air system vendor selected, stamped structural drawings attached, budget/proposal follow-up in progress.\n  - Why it matters: ongoing project execution with attachments and pricing decisions.\n  - Recommended action: review attachments and coordinate response if you own the thread.\n\n- Re: Champaign Pay App\n  - From: Glendon Griesbaum\n  - Received: 8:39 PM UTC yesterday\n  - Ask: confirms they want to ensure timely payment and has a question about the pay app.\n  - Why it matters: payment-related operational follow-up.\n  - Recommended action: check billing/pay app status and reply if needed.\n\nPotentially important, but not urgent\n- Microsoft 365 security quarantine notice\n  - From: quarantine@messaging.microsoft.com\n  - Received: 10:46 PM UTC yesterday\n  - Says 1 message is held in quarantine and needs review within 15 days.\n  - Why it matters: security/admin attention required.\n  - Recommended action: review quarantine in Security Center when available.\n\n- Capital One Business “approaching spend limit”\n  - From: Capital One Business\n  - Received: 7:56 PM UTC yesterday\n  - Why it matters: could require finance attention, but no immediate crisis indicated.\n  - Recommended action: check card spend against limits.\n\n- “Action Required: Welcome to Innovative Private Wealth”\n  - From: Info & Compliance\n  - Received: 7:59 PM UTC yesterday\n  - Why it matters: appears financial/compliance-related and says action required regarding share transfer.\n  - Recommended action: verify legitimacy before acting; likely needs finance/legal review.\n\n- Acumatica scheduled maintenance\n  - From: Revive Support\n  - Received: 6:47 PM UTC yesterday\n  - Why it matters: operational notice, not urgent unless tied to a live business process.\n  - Recommended action: note maintenance window.\n\nUrgent escalation assessment\n- I do not see a true emergency, legal emergency, or clear security incident in today’s live inbox read.\n- The only item that warrants concise escalation as a client-action item is the Ulta roof penetration confirmation.\n\nDraft Teams escalation for review\n- Recipient: Megan / project lead for Ulta\n- Message:\n  - Urgent client follow-up: Ulta asked for confirmation by Thursday afternoon on the roof penetration. We should confirm status/ETA today so they’re not left waiting.\n\nCapability check\n- Live Outlook inbox read: succeeded.\n- Teams search: succeeded, no matching urgent messages found.\n- Microsoft file search: succeeded, no matching urgent files found.\n- Calendar review: not run because no calendar-linked action rose above the inbox items and no meeting request needed verification.\n\nRecommended next steps for Megan\n1. Confirm who owns the Ulta roof penetration response and send a same-day status update.\n2. Review the Exol Morrisville scope changes and decide whether a consolidated reply is needed.\n3. Check the quarantine item in Security Center.\n4. Review the Capital One spend-limit alert if finance oversight is yours.\n5. Decide whether you want me to draft a reply for the Ulta thread or the Exol thread.\n\nApprovals needed\n- None to review and prioritize.\n- Approval would be needed if you want me to prepare an email draft or Teams message payload for a specific recipient/thread.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 32676
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 3,
+          "minScore": 4,
+          "summary": "The answer does a decent job separating urgent from non-urgent items and gives concrete next steps, but it overstates certainty in places, mixes inbox items with inferred ownership, and includes thread details that are not clearly evidenced. It is useful operationally, but not strong enough on evidence discipline and response-path precision to pass.",
+          "strengths": [
+            "Clearly separates highest-priority items from potentially important but not urgent items.",
+            "Identifies why several emails matter, especially the Ulta deadline and payment/scope-related threads.",
+            "Provides concrete recommended actions instead of just listing messages.",
+            "Includes a short draft escalation message for review, which is practical and concise.",
+            "Avoids claiming any email was sent."
+          ],
+          "weaknesses": [
+            "Uses unsupported certainty in places, such as calling the Ulta item the only client-action escalation and labeling some items as likely active without enough evidence.",
+            "Mixes confirmed inbox items with inferred user-owned actions, especially in the 'Recommended next steps' section.",
+            "Thread summaries sometimes include extra detail that may not be necessary and could be interpreted as thread reconstruction beyond the prompt.",
+            "Does not consistently distinguish between what Brandon/Megan owns versus what merely exists in the inbox.",
+            "Suspicious/security-related items are labeled as needing review, but the phishing/compliance judgment is not strongly evidence-backed."
+          ],
+          "dimensionScores": {
+            "separates_urgent_from_noise": 4,
+            "identifies_who_needs_response_and_impact": 4,
+            "summarizes_threads_efficiently": 3,
+            "recommends_concrete_response_path": 4,
+            "draft_is_short_direct_practical": 4,
+            "no_false_sent_or_invented_details": 2,
+            "separates_owned_actions_from_inbox_items": 2,
+            "evidence_backed_suspicious_or_ignore_judgments": 3
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-email-reply-triage",
+      "intent": "source_lookup",
+      "prompt": "Show me any emails from today that need a reply.",
+      "selectedProjectId": null,
+      "sessionId": "648b2666-fb1e-430d-81cd-4b8061c76cf2",
+      "sessionLabel": "eval-2026-06-09T10-25-13-571Z-541d79a2-realworld-email-reply-triage",
+      "startedAt": "2026-06-09T10:27:17.524Z",
+      "finishedAt": "2026-06-09T10:28:12.057Z",
+      "durationMs": 49368,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 22,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "judge email_operator score 3 < 4: Good triage on the urgent Ulta email, but the answer overstates certainty on several thread details and mixes inbox items with reply-needed judgments without enough evidence. It also includes a likely fabricated or unsupported Teams draft/action framing, which hurts trust for an email operator task."
+        ],
+        "warnings": [
+          "duration 49368ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: fail (3/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 2312,
+        "finalText": "Today’s inbox shows these reply-needed emails from today for bclymer@alleatogroup.com:\n\n### Needs reply\n1. **RE: ULTA update needed.** — Walter Allen <wallen@ulta.com>  \n   - Received: 2026-06-09 09:59 UTC  \n   - Request: “Can you confirm by Thursday afternoon on the roof penetration?”\n   - Priority: **Urgent**\n   - Why: direct client ask with a deadline tied to execution\n\n### Likely reply-needed / follow-up items\n2. **RE: Exol Morrisville PA** — Steve Fischer <steve.fischer@exol.com>  \n   - Received: 2026-06-09 02:59 UTC  \n   - Content: additional scope comments and request for review\n   - Priority: Medium\n\n3. **RE: Exol Morrisville PA** — Steve Fischer <steve.fischer@exol.com>  \n   - Received: 2026-06-09 02:20 UTC  \n   - Content: “Will review asap and provide feedback…”  \n   - Priority: Medium\n\n4. **RE: ULTA update needed.** — Alec Wehner <awehner@alleatogroup.com>  \n   - Received: 2026-06-08 22:10 UTC  \n   - Content: operational update on AC1 install / roof penetration timing\n   - Priority: Medium\n\n5. **RE: TAG 5-28-26 Ulta Beauty Frenso: AC-1 Solar Raceway Relocation – Coordination & Contract Setup** — Alec Wehner <awehner@alleatogroup.com>  \n   - Received: 2026-06-08 18:56 UTC  \n   - Content: asks for review/signature and manpower timing\n   - Priority: Medium\n\n### Urgent escalation draft prepared\n- **Teams private message draft for Megan** created for the Ulta item:\n  - “Urgent client follow-up needed: Walter Allen (Ulta) emailed today asking to confirm the roof penetration by Thursday afternoon. This is a live client dependency and needs a response today.”\n\n### Notes\n- Live Outlook inbox read succeeded.\n- Outlook/Teams/file searches did **not** surface additional evidence beyond the live inbox for today’s reply-needed items.\n- No calendar mutation or message send was performed.\n\n### Recommended next steps for Megan\n- Reply to **Walter Allen / Ulta** today with a firm confirmation or a realistic updated date.\n- Review whether the **Exol Morrisville** thread needs a technical response from Bob/Jake today.\n- If you want, I can draft the reply email for the Ulta thread and any other priority reply.\n\n### Approvals needed\n- **None** to review this inbox triage.\n- **Approval required** only if you want me to prepare/send additional email or Teams draft payloads for review.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 49368
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 3,
+          "minScore": 4,
+          "summary": "Good triage on the urgent Ulta email, but the answer overstates certainty on several thread details and mixes inbox items with reply-needed judgments without enough evidence. It also includes a likely fabricated or unsupported Teams draft/action framing, which hurts trust for an email operator task.",
+          "strengths": [
+            "Separates one clearly urgent client email from lower-priority items.",
+            "Explains why the Ulta item matters and gives a concrete next step.",
+            "Avoids claiming an email was sent.",
+            "Notes that no additional evidence was found beyond the live inbox and that no send/mutation occurred."
+          ],
+          "weaknesses": [
+            "Uses unsupported certainty on several items labeled 'likely reply-needed' without showing enough evidence for why they need a reply.",
+            "Includes thread details and operational interpretations that may not be fully grounded in the provided inbox evidence.",
+            "The Teams private message draft for Megan is an extra action not requested by the user and is not clearly tied to a confirmed inbox item.",
+            "Does not cleanly separate confirmed user-owned actions from merely interesting inbox items.",
+            "Some summaries are too vague ('additional scope comments and request for review') to justify reply-needed status."
+          ],
+          "dimensionScores": {
+            "separates_urgent_from_noise": 4,
+            "identifies_who_needs_response_why_what_if_ignored": 4,
+            "summarizes_threads_efficiently": 3,
+            "recommends_concrete_response_path": 4,
+            "drafts_short_direct_practical": 3,
+            "never_claims_sent_or_invents_details": 2,
+            "separates_confirmed_actions_from_inbox_items": 2,
+            "labels_suspicious_phishing_urgency_ignore_as_evidence_backed": 3
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    }
+  ]
+}

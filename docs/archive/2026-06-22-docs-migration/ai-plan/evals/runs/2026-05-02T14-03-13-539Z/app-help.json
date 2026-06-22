@@ -1,0 +1,42 @@
+{
+  "id": "app-help",
+  "intent": "app_help",
+  "prompt": "How do I create a commitment in this app?",
+  "selectedProjectId": null,
+  "sessionId": "4688cd89-9fe7-4d69-9991-f1488d604ebb",
+  "sessionLabel": "eval-2026-05-02T14-03-13-539Z-app-help",
+  "startedAt": "2026-05-02T14:15:17.775Z",
+  "finishedAt": "2026-05-02T14:15:32.966Z",
+  "durationMs": 2,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "expected at least one of [searchAppHelp] to fire — none did",
+      "mustInclude missing: \"commitment\"",
+      "answer length 0 < min 80"
+    ],
+    "warnings": [
+      "expected family 'app_help' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "searchAppHelp"
+  ],
+  "expectedToolFamilies": [
+    "app_help"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

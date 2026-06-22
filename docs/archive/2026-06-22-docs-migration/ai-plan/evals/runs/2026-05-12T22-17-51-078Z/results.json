@@ -1,0 +1,68 @@
+{
+  "generatedAt": "2026-05-12T22:18:43.102Z",
+  "baseUrl": "http://localhost:3000",
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "assistantWidgetPlanner": 1,
+    "clientProjectIntelligencePacket": 1,
+    "streamingToolPolicy": 1,
+    "getProjectRiskAnalysis": 1,
+    "getProjectBriefingSnapshot": 1,
+    "getActionItemsAndInsights": 1
+  },
+  "intentDistribution": {
+    "risk_review": 1
+  },
+  "results": [
+    {
+      "id": "risk-review-single-project",
+      "intent": "risk_review",
+      "prompt": "What could bite us on Westfield right now? Rank the risks and tell me what I should do first.",
+      "selectedProjectId": 43,
+      "sessionId": "e0bfdcd2-2e2d-4401-9080-1526fc5624c3",
+      "sessionLabel": "eval-2026-05-12T22-17-51-078Z-risk-review-single-project",
+      "startedAt": "2026-05-12T22:17:51.080Z",
+      "finishedAt": "2026-05-12T22:18:43.100Z",
+      "durationMs": 51440,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1387,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantWidgetPlanner, clientProjectIntelligencePacket, streamingToolPolicy, getProjectRiskAnalysis, getProjectBriefingSnapshot, getActionItemsAndInsights"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantWidgetPlanner",
+          "clientProjectIntelligencePacket",
+          "streamingToolPolicy",
+          "getProjectRiskAnalysis",
+          "getProjectBriefingSnapshot",
+          "getActionItemsAndInsights"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 6112,
+        "finalText": "Westfield’s biggest risk is **closeout and warranty exposure masquerading as “small punch items.”** The project is operational, but the open issues are now the kind that turn into owner frustration, withheld money, and avoidable backcharge fights if they sit.\n\n## Ranked risks\n\n### 1. Warranty / owner confidence risk\nThis is the one that can bite fastest.\n\n- Today’s email says the door at Westfield is **not rated for the controlled environment**. Mike Ewers called out that it appears to be **R2**, while he says the application should be **R8**. He also said outside air was coming through the entire door, not just the perimeter.\n- That is not a cosmetic complaint. It’s a **performance failure** with a clear owner-facing narrative: wrong product, known issue, still unresolved.\n- Separate from that, the 4/14 OAC flagged **defective sconce lights** with a need for a **formal claim to the vendor**, and said the units had been non-functional since December.\n\nWhy it matters: once the owner believes Alleato is slow-walking warranty fixes, every remaining closeout item gets harder — including retainage, cooperation, and future work.\n\n### 2. Change order and commercial exposure\nThe paper is messy enough to become a financial problem.\n\n- Snapshot shows **25 pending change orders totaling $2,329,102.80**, all still in **proposed** status.\n- Contract snapshot also shows **$1,204,203.55 pending contract changes**.\n- Risk analysis reports **20 change orders** and a weird **negative pending exposure of -$1,112,916.18**.\n\nThat mismatch tells me the system data is not clean enough to trust at face value. The real risk is not just the amount — it’s that **the team may not have one defensible, current change log**. On a project this far along, that’s how money gets lost.\n\n### 3. Collections / cash pressure from tenant or owner-side receivables\n- On 5/11, Brandon emailed that **the last two invoices are over 60 days late** and asked for status on payment for Craving Crapes.\n- Payments received show **$8,722,803.63** against a revised contract of **$9,255,275**, so there is still money not in.\n\nWhy it matters: late receivables plus unresolved closeout issues is a bad combination. Owners and tenants use open warranty items as leverage. If you don’t clean up the technical issues, AR gets slower.\n\n### 4. Patio and exterior repair scope still lacks a decision\n- Andrew was still asking on 5/7 for **two separate prices** before making a decision on the patio repair approach.\n- There are multiple overdue tasks tied to this:\n  - spot patch pricing\n  - full patio/deck coating pricing\n  - product submittals and prior-install photos  \n  all due **5/6** and still open.\n\nWhy it matters: unresolved exterior repair scope becomes a warranty dispute if conditions worsen, and it’s already overdue. This is exactly the kind of item that lingers until someone gets a callback with a bigger bill.\n\n### 5. Closeout execution discipline is weak in the live data\n- The snapshot shows **144 overdue schedule tasks out of 150 total** and **36 commitments marked unexecuted**.\n- I do **not** think that reflects actual field reality, because the meetings clearly show the project near completion and already opened.\n- But it does reflect a real risk: **the systems are not being closed out cleanly**.\n\nWhy it matters: even if the work is done, bad project hygiene creates disputes, missed billing, incomplete warranty logs, and confusion over who owns final fixes.\n\n## What to do first\n\n### First move: run a 30-minute Westfield closeout war room today\nOwner: **Andrew Cannon**, with **Jesse Dawson** and whoever owns accounting/collections support.\n\nAgenda should be brutally short:\n\n1. **Door issue**\n   - Confirm whether the installed door is in fact the wrong spec.\n   - Decide whether this is a **vendor warranty claim, subcontractor correction, or Alleato self-perform fix/backcharge**.\n   - Set a site verification date and owner response date **today**.\n\n2. **Lighting warranty claim**\n   - Confirm whether the formal vendor claim for defective sconces has actually been submitted.\n   - If not, submit it immediately.\n   - Put one person on recovery/replacement dates.\n\n3. **Patio repair decision**\n   - Chase Browning Chapman pricing and submittals now.\n   - If pricing is still not in, set a hard deadline or replace the bidder.\n   - Pick a direction instead of letting it sit.\n\n4. **A/R and retainage**\n   - Build a one-page list of what money is still outstanding, who owes it, and what open issue they could use to delay payment.\n   - Pair each receivable with the operational blocker preventing collection.\n\n5. **Change order cleanup**\n   - Reconcile the proposed CO log against accounting.\n   - You need one number, not three competing versions.\n\n## My operating view\n\nIf you only do one thing, do **issue ownership and closeout cleanup**, not another general status meeting.\n\nWestfield does **not** read like a schedule-collapse job right now. It reads like a project that can get nickeled and dimed in the final 5% because:\n- warranty items are still active,\n- money is aging,\n- proposed changes are unresolved,\n- and the system record is messy.\n\nThat’s how “mostly done” turns into “still dealing with this three months later.”\n\n## Data gaps you should know\nTwo important ones:\n\n- The schedule data looks stale or structurally unreliable: **144 overdue tasks** on a project that has clearly progressed beyond that.\n- Change exposure is inconsistent across tools: **$2.33M pending COs** in the snapshot vs **-$1.11M pending exposure** in risk analysis. That needs reconciliation before anyone uses it in a real financial discussion.\n\n## Priority order\n1. **Door and lighting warranty issues**\n2. **Collect overdue money tied to closeout**\n3. **Force patio pricing and decision**\n4. **Reconcile pending change orders**\n5. **Clean the schedule/commitment records so the file matches reality**\n\nThe first call I’d make is to **Andrew**:  \n“By end of day, I need one list: door issue owner, sconce claim status, patio pricing status, and every dollar outstanding that could be held up by closeout.”"
+      },
+      "expectedToolNames": [
+        "getProjectRiskAnalysis"
+      ],
+      "expectedToolFamilies": [
+        "risk",
+        "project"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,959 @@
+{
+  "id": "realworld-draft-email-response",
+  "intent": "email_action",
+  "prompt": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+  "selectedProjectId": null,
+  "sessionId": "c5e61cbf-553c-4edc-9938-0ace943f5d3b",
+  "sessionLabel": "eval-2026-05-13T21-51-11-516Z-realworld-draft-email-response",
+  "startedAt": "2026-05-13T21:54:39.445Z",
+  "finishedAt": "2026-05-13T21:55:03.989Z",
+  "durationMs": 23957,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 33,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [draftOutlookEmail, getRecentEmails, getRecentOutlookEmails, readOutlookEmailThread] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'email_action' not represented",
+      "expected family 'communications' not represented",
+      "global forbidden phrase: \"RAG\""
+    ],
+    "observations": [
+      "tools fired: intentPlanner, assistantSourceHealth, assistantWidgetPlanner, sourceSpecificRagRetrieval"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "assistantSourceHealth",
+      "assistantWidgetPlanner",
+      "sourceSpecificRagRetrieval"
+    ],
+    "familiesHit": [
+      "source_health"
+    ],
+    "finalTextLength": 2117,
+    "finalText": "**Last Five Emails in Supabase**\n\n1. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXIAAA=]\n2. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXKAAA=]\n3. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXOAAA=]\n4. **Email: Re: Fire Supression Deckers** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQmLY4sAAA=]\n5. **Email: Re: Superior Beverage Product on Tray** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQmLY4tAAA=]\n\n**Observability**\n- Source checked: Outlook emails in Supabase document_metadata/document_chunks-backed RAG index.\n- Retrieved 5 row(s) from Outlook emails; answer titles/dates are copied from Supabase rows.\n\n**Next Step**\n- Use this same source-specific check as a regression gate so generic source questions cannot fall back to tool discovery only.\n\n**Current Source Health**\n- Overall status: degraded\n- Likely gap if evidence is missing: embedding_backlog\n- Backlog: 1075 unembedded, 11606 uncompiled\n- critical source_sync_critical: Teams DM export: njepson@alleatogroup.com is critical.\n- critical source_sync_critical: Teams DM export: mparsons@alleatogroup.com is critical.\n- critical source_sync_critical: Teams DM export: jdawson@alleatogroup.com is critical.\n- critical source_sync_critical: Outlook: njepson@alleatogroup.com is critical."
+  },
+  "expectedToolNames": [
+    "draftOutlookEmail",
+    "getRecentEmails",
+    "getRecentOutlookEmails",
+    "readOutlookEmailThread"
+  ],
+  "expectedToolFamilies": [
+    "email_action",
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-13T21:54:46.808Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-draft-email",
+      "data": {
+        "widget": {
+          "type": "draft_email",
+          "id": "draft-email",
+          "title": "Draft email",
+          "defaultTo": "",
+          "defaultSubject": "a response in my email to the latest message asking for an update. Keep it shor...",
+          "defaultBody": "Hi,\n\nI wanted to follow up on the item below:\n\nDraft a response in my email to the latest message asking for an update. Keep it short and professional.\n\nPlease let me know what you need from our side.\n\nThanks,"
+        }
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Searching Outlook emails in Supabase RAG",
+        "status": "loading",
+        "timestamp": "2026-05-13T21:54:57.637Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "synthesis",
+        "message": "Writing sourced Outlook emails answer",
+        "status": "loading",
+        "timestamp": "2026-05-13T21:55:00.590Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-source-specific-rag"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Last Five Emails in Supabase**\n\n1. **Email: Re: B-roll Alleato/Goodwill event "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "confirmation (June 19th)** — 2026-05-13 [Source: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXIAAA=]\n2. **Email: Re: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXKAAA=]\n3. **Email: Re: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXOAAA=]\n4. **Email: Re: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Fire Supression Deckers** — 2026-05-13 [Source: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQmLY4sAAA=]\n5. **Email: Re: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Superior Beverage Product on Tray** — 2026-05-13 [Source: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQmLY4tAAA=]\n\n**Observability**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "- Source checked: Outlook emails in Supabase document_metadata/document_chunks-backed RAG "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "index.\n- Retrieved 5 row(s) from Outlook emails; answer titles/dates are copied from "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Supabase rows.\n\n**Next Step**\n- Use this same source-specific check as a regression gate "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "so generic source questions cannot fall back to tool discovery only.\n\n**Current Source "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Health**\n- Overall status: degraded\n- Likely gap if evidence is missing: embedding_backlog\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "- Backlog: 1075 unembedded, 11606 uncompiled\n- critical source_sync_critical: Teams DM "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "export: njepson@alleatogroup.com is critical.\n- critical source_sync_critical: Teams DM "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "export: mparsons@alleatogroup.com is critical.\n- critical source_sync_critical: Teams DM "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "export: jdawson@alleatogroup.com is critical.\n- critical source_sync_critical: Outlook: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "njepson@alleatogroup.com is critical."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-source-specific-rag"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Outlook emails check complete",
+        "status": "success",
+        "timestamp": "2026-05-13T21:55:03.392Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": null,
+    "data_parts": [
+      {
+        "id": "assistant-widget-draft-email",
+        "data": {
+          "widget": {
+            "id": "draft-email",
+            "type": "draft_email",
+            "title": "Draft email",
+            "defaultTo": "",
+            "defaultBody": "Hi,\n\nI wanted to follow up on the item below:\n\nDraft a response in my email to the latest message asking for an update. Keep it short and professional.\n\nPlease let me know what you need from our side.\n\nThanks,",
+            "defaultSubject": "a response in my email to the latest message asking for an update. Keep it shor..."
+          }
+        },
+        "type": "data-assistant-widget"
+      }
+    ],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "email_action",
+          "sourceSpecificRagKind": "recent_emails",
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "email_action",
+          "planner": "deterministic_fallback",
+          "rationale": "Model planner unavailable; using deterministic fallback intent.",
+          "confidence": "low",
+          "responseMode": "draft_safe_action",
+          "requiredTools": [],
+          "deterministicIntent": "email_action",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-13T21:54:46.808Z"
+      },
+      {
+        "tool": "assistantSourceHealth",
+        "input": {
+          "reason": "source_status_request"
+        },
+        "output": {
+          "alerts": [
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: njepson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:njepson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: mparsons@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:mparsons@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: jdawson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:jdawson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: njepson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "njepson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: mparsons@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "mparsons@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: jdawson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "jdawson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "ctragesser@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: crusin@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "crusin@alleatogroup.com"
+            }
+          ],
+          "counts": {
+            "sources": 30,
+            "uncompiled": 11606,
+            "unembedded": 1075,
+            "warningSources": 0,
+            "criticalSources": 30,
+            "failedSubscriptions": 0,
+            "expiringSubscriptions": 0
+          },
+          "reason": "source_status_request",
+          "sources": [
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-12T17:18:19.527823+00:00",
+              "resourceId": "user:njepson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: njepson@alleatogroup.com",
+              "staleMinutes": 1572,
+              "lastSuccessAt": "2026-05-12T17:18:19.527823+00:00",
+              "uncompiledCount": 938,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-12T17:17:24.491381+00:00",
+              "resourceId": "user:mparsons@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: mparsons@alleatogroup.com",
+              "staleMinutes": 1573,
+              "lastSuccessAt": "2026-05-12T17:17:24.491381+00:00",
+              "uncompiledCount": 938,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-12T17:17:09.099678+00:00",
+              "resourceId": "user:jdawson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: jdawson@alleatogroup.com",
+              "staleMinutes": 1573,
+              "lastSuccessAt": "2026-05-12T17:17:09.099678+00:00",
+              "uncompiledCount": 938,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+              "resourceId": "njepson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: njepson@alleatogroup.com",
+              "staleMinutes": 19092,
+              "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+              "uncompiledCount": 89,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+              "resourceId": "mparsons@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: mparsons@alleatogroup.com",
+              "staleMinutes": 19093,
+              "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+              "uncompiledCount": 89,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+              "resourceId": "jdawson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: jdawson@alleatogroup.com",
+              "staleMinutes": 19093,
+              "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+              "uncompiledCount": 89,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+              "resourceId": "ctragesser@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: ctragesser@alleatogroup.com",
+              "staleMinutes": 2970,
+              "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+              "uncompiledCount": 89,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+              "resourceId": "crusin@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: crusin@alleatogroup.com",
+              "staleMinutes": 19094,
+              "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+              "uncompiledCount": 89,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+              "resourceId": "awehner@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: awehner@alleatogroup.com",
+              "staleMinutes": 19095,
+              "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+              "uncompiledCount": 89,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+              "resourceId": "accounting@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: accounting@alleatogroup.com",
+              "staleMinutes": 19094,
+              "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+              "uncompiledCount": 89,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T00:00:00+00:00",
+              "resourceId": "document_metadata",
+              "lastErrorAt": null,
+              "resourceName": "Outlook email",
+              "staleMinutes": 4050,
+              "lastSuccessAt": "2026-05-11T00:00:00+00:00",
+              "uncompiledCount": 89,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "onedrive_file",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T17:56:15.051467+00:00",
+              "resourceId": "sharepoint:AlleatoGroup:/SOP",
+              "lastErrorAt": null,
+              "resourceName": "SharePoint: AlleatoGroup/SOP",
+              "staleMinutes": 2974,
+              "lastSuccessAt": "2026-05-11T17:56:15.051467+00:00",
+              "uncompiledCount": 347,
+              "unembeddedCount": 16
+            }
+          ],
+          "generatedAt": "2026-05-13T21:54:56.695Z",
+          "missingStage": "embedding_backlog",
+          "overallStatus": "degraded"
+        },
+        "timestamp": "2026-05-13T21:54:56.695Z"
+      },
+      {
+        "tool": "assistantWidgetPlanner",
+        "input": {
+          "message": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+          "selectedProjectId": null
+        },
+        "output": {
+          "widgets": [
+            {
+              "id": "draft-email",
+              "type": "draft_email"
+            }
+          ]
+        },
+        "timestamp": "2026-05-13T21:54:57.637Z"
+      },
+      {
+        "tool": "sourceSpecificRagRetrieval",
+        "input": {
+          "kind": "recent_emails",
+          "label": "Outlook emails",
+          "limit": 5
+        },
+        "output": {
+          "rows": [
+            {
+              "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXIAAA=",
+              "date": "2026-05-13T00:00:00+00:00",
+              "type": "email",
+              "title": "Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)",
+              "source": "microsoft_graph",
+              "category": "email",
+              "projectId": 754,
+              "documentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXIAAA="
+            },
+            {
+              "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXKAAA=",
+              "date": "2026-05-13T00:00:00+00:00",
+              "type": "email",
+              "title": "Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)",
+              "source": "microsoft_graph",
+              "category": "email",
+              "projectId": 754,
+              "documentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXKAAA="
+            },
+            {
+              "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXOAAA=",
+              "date": "2026-05-13T00:00:00+00:00",
+              "type": "email",
+              "title": "Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)",
+              "source": "microsoft_graph",
+              "category": "email",
+              "projectId": 754,
+              "documentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXOAAA="
+            },
+            {
+              "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQmLY4sAAA=",
+              "date": "2026-05-13T00:00:00+00:00",
+              "type": "email",
+              "title": "Email: Re: Fire Supression Deckers",
+              "source": "microsoft_graph",
+              "category": "email",
+              "projectId": 814,
+              "documentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQmLY4sAAA="
+            },
+            {
+              "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQmLY4tAAA=",
+              "date": "2026-05-13T00:00:00+00:00",
+              "type": "email",
+              "title": "Email: Re: Superior Beverage Product on Tray",
+              "source": "microsoft_graph",
+              "category": "email",
+              "projectId": 178,
+              "documentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQmLY4tAAA="
+            }
+          ],
+          "rowCount": 5
+        },
+        "timestamp": "2026-05-13T21:55:00.589Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": {
+      "alerts": [
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: njepson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:njepson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: mparsons@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:mparsons@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: jdawson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:jdawson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: njepson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "njepson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: mparsons@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "mparsons@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: jdawson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "jdawson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "ctragesser@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: crusin@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "crusin@alleatogroup.com"
+        }
+      ],
+      "counts": {
+        "sources": 30,
+        "uncompiled": 11606,
+        "unembedded": 1075,
+        "warningSources": 0,
+        "criticalSources": 30,
+        "failedSubscriptions": 0,
+        "expiringSubscriptions": 0
+      },
+      "reason": "source_status_request",
+      "sources": [
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-12T17:18:19.527823+00:00",
+          "resourceId": "user:njepson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: njepson@alleatogroup.com",
+          "staleMinutes": 1572,
+          "lastSuccessAt": "2026-05-12T17:18:19.527823+00:00",
+          "uncompiledCount": 938,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-12T17:17:24.491381+00:00",
+          "resourceId": "user:mparsons@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: mparsons@alleatogroup.com",
+          "staleMinutes": 1573,
+          "lastSuccessAt": "2026-05-12T17:17:24.491381+00:00",
+          "uncompiledCount": 938,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-12T17:17:09.099678+00:00",
+          "resourceId": "user:jdawson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: jdawson@alleatogroup.com",
+          "staleMinutes": 1573,
+          "lastSuccessAt": "2026-05-12T17:17:09.099678+00:00",
+          "uncompiledCount": 938,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+          "resourceId": "njepson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: njepson@alleatogroup.com",
+          "staleMinutes": 19092,
+          "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+          "uncompiledCount": 89,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+          "resourceId": "mparsons@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: mparsons@alleatogroup.com",
+          "staleMinutes": 19093,
+          "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+          "uncompiledCount": 89,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+          "resourceId": "jdawson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: jdawson@alleatogroup.com",
+          "staleMinutes": 19093,
+          "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+          "uncompiledCount": 89,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+          "resourceId": "ctragesser@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: ctragesser@alleatogroup.com",
+          "staleMinutes": 2970,
+          "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+          "uncompiledCount": 89,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+          "resourceId": "crusin@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: crusin@alleatogroup.com",
+          "staleMinutes": 19094,
+          "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+          "uncompiledCount": 89,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+          "resourceId": "awehner@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: awehner@alleatogroup.com",
+          "staleMinutes": 19095,
+          "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+          "uncompiledCount": 89,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+          "resourceId": "accounting@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: accounting@alleatogroup.com",
+          "staleMinutes": 19094,
+          "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+          "uncompiledCount": 89,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T00:00:00+00:00",
+          "resourceId": "document_metadata",
+          "lastErrorAt": null,
+          "resourceName": "Outlook email",
+          "staleMinutes": 4050,
+          "lastSuccessAt": "2026-05-11T00:00:00+00:00",
+          "uncompiledCount": 89,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "onedrive_file",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T17:56:15.051467+00:00",
+          "resourceId": "sharepoint:AlleatoGroup:/SOP",
+          "lastErrorAt": null,
+          "resourceName": "SharePoint: AlleatoGroup/SOP",
+          "staleMinutes": 2974,
+          "lastSuccessAt": "2026-05-11T17:56:15.051467+00:00",
+          "uncompiledCount": 347,
+          "unembeddedCount": 16
+        }
+      ],
+      "generatedAt": "2026-05-13T21:54:56.695Z",
+      "missingStage": "embedding_backlog",
+      "overallStatus": "degraded"
+    },
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [],
+      "stepStarts": [],
+      "totalStepCount": 0,
+      "finalFinishReason": "unknown",
+      "preparedStepCount": 0,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 90,
+      "reasons": [
+        "multiple successful tool calls",
+        "multiple source citations"
+      ],
+      "confidence": "high",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

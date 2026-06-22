@@ -1,0 +1,62 @@
+{
+  "id": "status-planned-feature",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 5687,
+  "question": "How should Ask Alleato explain a planned feature?",
+  "mustInclude": [
+    "planned"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Ask Alleato should explain a planned feature as **planned but not yet available**, not as something the app can do today.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are current and available.\n- Feature registry:\n  - **Understand Feature Status** → `docs/help/articles/app-feature-status-and-limitations.md`\n  - **Ask the AI Assistant for Help** → `docs/help/articles/ask-the-ai-assistant.md`\n  - **AI Assistant Overview** → `docs/help/articles/ai-assistant-overview.md`\n- Help article read:\n  - `docs/help/articles/app-feature-status-and-limitations.md`\n\nDocumented behavior:\n- **Planned** means “the intended workflow is documented but not built yet.”\n- Ask Alleato should be **direct** about that distinction.\n- If the answer is not fully known, it should say what it checked and what remains uncertain instead of guessing.\n\nSo the right phrasing is something like:\n- “This feature is planned, but it isn’t available yet.”\n- “The intended workflow is documented, but I can’t confirm it’s live.”\n- “I checked the help docs and feature registry; current evidence shows this is planned, not a current assistant action.”\n\nImportant boundary:\n- Do **not** claim a write action is executable unless the feature registry, help article, or action metadata explicitly says so.\n\nExact references:\n- Help article: `docs/help/articles/app-feature-status-and-limitations.md`\n- Relevant routes: `/ai-assistant`, `/docs`\n- Related feature titles: **Understand Feature Status**, **Ask the AI Assistant for Help**, **AI Assistant Overview**",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ask-the-ai-assistant.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ask-the-ai-assistant.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ai-assistant-overview.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-assistant-overview.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 5563,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

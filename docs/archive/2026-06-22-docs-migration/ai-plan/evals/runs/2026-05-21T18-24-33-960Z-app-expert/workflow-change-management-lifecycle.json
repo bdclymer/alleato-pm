@@ -1,0 +1,89 @@
+{
+  "id": "workflow-change-management-lifecycle",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 7106,
+  "question": "Explain the change management lifecycle in the app.",
+  "response": {
+    "answer": "Here’s the documented lifecycle I found for change management in the app, based on the closest curated feature/help evidence.\n\nWhat I checked\n- Artifact status: current and available\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry:\n  - `Change Management` at route `/[projectId]/change-management` is only route-discovered; no help article is linked.\n  - `Change Events` is documented and links to help article `docs/help/articles/change-events.md`.\n- Help article read:\n  - `docs/help/articles/change-events.md`\n\nWhat is documented\n- The app’s change-management flow is centered on **Change Events**.\n- Change Events are used to capture potential project scope, schedule, or cost changes before they become approved change orders.\n- The status lifecycle is:\n  1. **Open** — newly created, no pricing or decision yet\n  2. **Pending** — pricing collected, awaiting internal review\n  3. **In Review** — under owner or design team review\n  4. **Approved** — owner approved; ready to roll into a change order\n  5. **Rejected** — declined or withdrawn\n  6. **Void** — cancelled with no impact\n- Documented actions in the workflow:\n  - Create a change event with title, description, type, originator, date\n  - Add cost line items by cost code/cost type\n  - Attach supporting documents\n  - Optionally link pricing lines to a vendor or commitment\n  - Convert an approved change event into a **Change Order**\n\nExact routes / docs\n- Route discovered for the page:\n  - `/[projectId]/change-management`\n  - source file: `frontend/src/app/(main)/[projectId]/change-management/page.tsx`\n- Documented related route:\n  - `/[projectId]/change-events`\n  - help article: `docs/help/articles/change-events.md`\n\nWhat remains uncertain\n- The specific behavior of the `Change Management` page itself is not documented yet.\n- I could not confirm whether `/[projectId]/change-management` is just a wrapper, dashboard, or workflow hub because there is no linked help article and the route is only route-discovered.\n- I also could not verify any write actions or permissions for change-management beyond what the `Change Events` article documents.\n\nIf you want, I can next inspect the implementation of `frontend/src/app/(main)/[projectId]/change-management/page.tsx` to give you implementation evidence for that page specifically.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help",
+        "sourceType": "sitemap",
+        "route": "/help",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/change-management",
+        "sourceType": "sitemap",
+        "route": "/change-management",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/change-events.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/change-events.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/cost",
+        "sourceType": "sitemap",
+        "route": "/cost",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/change-management/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/change-management/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/change-events",
+        "sourceType": "sitemap",
+        "route": "/change-events",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 7102,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

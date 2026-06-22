@@ -1,0 +1,67 @@
+{
+  "id": "rfis-open",
+  "intent": "operations_analysis",
+  "prompt": "What RFIs are still open on Westfield and who owes a response?",
+  "selectedProjectId": 43,
+  "sessionId": "d6716ba2-47cb-4775-814d-09182dd757e1",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-rfis-open",
+  "startedAt": "2026-05-12T19:25:03.431Z",
+  "finishedAt": "2026-05-12T19:25:32.928Z",
+  "durationMs": 13709,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 3,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getRFIStatus] to fire — none did",
+      "mustInclude missing: \"RFI\"",
+      "answer length 0 < min 100"
+    ],
+    "warnings": [
+      "expected family 'operations' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getRFIStatus"
+  ],
+  "expectedToolFamilies": [
+    "operations"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:25:09.912Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:25:16.034Z"
+      }
+    },
+    {
+      "type": "error",
+      "errorText": "I hit a retrieval/generation failure before I could give you a trustworthy strategist answer.\n\nWhat happened: Failed to resolve selected intelligence project: Could not query the database for the schema cache. Retrying.\nWhat I could confirm: I checked 1 source successfully.\nWhat that means: The pinned project context was included, so the failure is in retrieval or generation rather than project selection.\nI still need a successful retrieval pass before I can give a sourced strategic read on: \"What RFIs are still open on Westfield and who owes a response?\".\n\nThe right next move is to retry the same question with the project or decision you care about most. If this repeats, the persisted tool trace now shows exactly which source failed instead of leaving the chat blank."
+    }
+  ],
+  "persistedMetadata": null
+}

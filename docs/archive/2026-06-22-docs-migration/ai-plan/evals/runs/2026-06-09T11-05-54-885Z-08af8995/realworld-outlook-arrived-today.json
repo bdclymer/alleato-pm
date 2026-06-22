@@ -1,0 +1,330 @@
+{
+  "id": "realworld-outlook-arrived-today",
+  "intent": "source_lookup",
+  "prompt": "What came in through Outlook today that needs my attention?",
+  "selectedProjectId": null,
+  "sessionId": "e5f772cb-2aeb-402d-87ed-4ebfdaa5044e",
+  "sessionLabel": "eval-2026-06-09T11-05-54-885Z-08af8995-realworld-outlook-arrived-today",
+  "startedAt": "2026-06-09T11:06:40.287Z",
+  "finishedAt": "2026-06-09T11:07:12.798Z",
+  "durationMs": 29160,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 15,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "judge email_operator score 3 < 4: The answer does separate some actionable emails from informational ones and gives a response path for each. However, it includes weak evidence handling, overstates urgency in places, and does not clearly distinguish confirmed user-owned actions from merely interesting inbox items. It also uses generic reasoning for several items instead of showing why they matter or what happens if ignored."
+    ],
+    "warnings": [],
+    "observations": [
+      "tools fired: consultMicrosoftExecutiveAssistant",
+      "judge email_operator: fail (3/4)"
+    ],
+    "toolNames": [
+      "consultMicrosoftExecutiveAssistant"
+    ],
+    "familiesHit": [
+      "communications",
+      "email_action"
+    ],
+    "finalTextLength": 1737,
+    "finalText": "Messages that arrived today for bclymer@alleatogroup.com:\n\nAction needed\n- Payment creation process — Misty Rogers — 2026-06-09 11:05 UTC\n  Response path: Delegate\n  Why: This looks like an internal follow-up that needs ownership or routing.\n  Evidence: Hello, Attached is the SOP I created for the payment making process.\n- RE: ULTA update needed. — Allen, Walter — 2026-06-09 09:59 UTC\n  Response path: Reply now\n  Why: The email contains a direct external ask with explicit timing.\n  Evidence: Thank you for the update.\n- RE: Exol Morrisville PA — Steve Fischer — 2026-06-09 02:59 UTC\n  Thread activity: 2 messages in this subject thread.\n  Response path: Reply\n  Why: The sender appears to be asking for a direct response.\n  Evidence: Sorry for the follow up email.\n\nWatch / informational\n- Sign in to Perplexity — Perplexity — 2026-06-09 09:37 UTC\n  Response path: Ignore\n  Why: Authentication message; usually ignorable unless the sign-in was requested.\n  Evidence: Sign in to your account Sign in This link and code will only be valid for the next 5 minutes.\n- Alleato Group: ERP Integrations Daily Summary — Alleato Group — 2026-06-09 06:15 UTC\n  Response path: Ignore\n  Why: Operational summary or digest; no direct action is shown in the email itself.\n  Evidence: Alleato Group DO NOT REPLY TO THIS EMAIL This is a notification sent from an unmonitored email address.\n- [Reminder] Your payment is due in 1 day — Ryan Niddel — 2026-06-09 03:54 UTC\n  Response path: Watch\n  Why: Admin reminder; time-sensitive, but not clearly an immediate reply item from the email alone.\n  Evidence: Your payment is due in 1 day Hi Brandon Clymer, Reminder! Your payment for Executive Growth Network 2025 (sold by Ryan Niddel ) is due in 1 day.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 29160
+    },
+    "judge": {
+      "status": "fail",
+      "rubric": "email_operator",
+      "score": 3,
+      "minScore": 4,
+      "summary": "The answer does separate some actionable emails from informational ones and gives a response path for each. However, it includes weak evidence handling, overstates urgency in places, and does not clearly distinguish confirmed user-owned actions from merely interesting inbox items. It also uses generic reasoning for several items instead of showing why they matter or what happens if ignored.",
+      "strengths": [
+        "Separates inbox items into action needed vs watch/informational.",
+        "Provides a response path for each listed email.",
+        "Avoids claiming any email was sent.",
+        "Includes some evidence snippets from the messages."
+      ],
+      "weaknesses": [
+        "Does not clearly identify the consequence of ignoring each actionable email.",
+        "Several judgments are unsupported or too generic, especially 'Reply now' and 'Delegate.'",
+        "Does not clearly separate confirmed user-owned actions from items that merely exist in the inbox.",
+        "Thread summary is thin and sometimes just repeats subject lines without efficient context.",
+        "No explicit handling of suspicious/phishing beyond a generic sign-in note; evidence-backed caution is limited."
+      ],
+      "dimensionScores": {
+        "separates_urgent_from_noise": 3,
+        "identifies_who_needs_response_why_what_if_ignored": 2,
+        "summarizes_threads_efficiently": 3,
+        "recommends_concrete_response_path": 4,
+        "drafts_short_direct_practical": 1,
+        "never_claims_sent_or_invents_details": 4,
+        "separates_user_owned_actions_from_inbox_items": 2,
+        "labels_suspicious_or_ignore_as_evidence_backed": 3
+      },
+      "provider": "openai",
+      "model": "gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "consultMicrosoftExecutiveAssistant"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:06:40.428Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Delegating Microsoft operator work",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:06:40.503Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:06:43.503Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:06:46.503Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:06:49.503Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:06:52.504Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:06:55.504Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:06:58.504Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:07:01.504Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:07:04.504Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:07:07.504Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-microsoft-executive-assistant"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-microsoft-executive-assistant",
+      "delta": "Messages that arrived today for bclymer@alleatogroup.com:\n\nAction needed\n- Payment creation process — Misty Rogers — 2026-06-09 11:05 UTC\n  Response path: Delegate\n  Why: This looks like an internal follow-up that needs ownership or routing.\n  Evidence: Hello, Attached is the SOP I created for the payment making process.\n- RE: ULTA update needed. — Allen, Walter — 2026-06-09 09:59 UTC\n  Response path: Reply now\n  Why: The email contains a direct external ask with explicit timing.\n  Evidence: Thank you for the update.\n- RE: Exol Morrisville PA — Steve Fischer — 2026-06-09 02:59 UTC\n  Thread activity: 2 messages in this subject thread.\n  Response path: Reply\n  Why: The sender appears to be asking for a direct response.\n  Evidence: Sorry for the follow up email.\n\nWatch / informational\n- Sign in to Perplexity — Perplexity — 2026-06-09 09:37 UTC\n  Response path: Ignore\n  Why: Authentication message; usually ignorable unless the sign-in was requested.\n  Evidence: Sign in to your account Sign in This link and code will only be valid for the next 5 minutes.\n- Alleato Group: ERP Integrations Daily Summary — Alleato Group — 2026-06-09 06:15 UTC\n  Response path: Ignore\n  Why: Operational summary or digest; no direct action is shown in the email itself.\n  Evidence: Alleato Group DO NOT REPLY TO THIS EMAIL This is a notification sent from an unmonitored email address.\n- [Reminder] Your payment is due in 1 day — Ryan Niddel — 2026-06-09 03:54 UTC\n  Response path: Watch\n  Why: Admin reminder; time-sensitive, but not clearly an immediate reply item from the email alone.\n  Evidence: Your payment is due in 1 day Hi Brandon Clymer, Reminder! Your payment for Executive Growth Network 2025 (sold by Ryan Niddel ) is due in 1 day."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-microsoft-executive-assistant"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Microsoft Executive Assistant answer returned",
+        "status": "success",
+        "timestamp": "2026-06-09T11:07:09.440Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "tool_trace": [
+      {
+        "tool": "consultMicrosoftExecutiveAssistant",
+        "error": null,
+        "input": {
+          "message": "What came in through Outlook today that needs my attention?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": "deep_agents",
+          "count": null,
+          "error": null,
+          "source": "microsoft_graph_live",
+          "summary": "Messages that arrived today for bclymer@alleatogroup.com:\n\nAction needed\n- Payment creation process — Misty Rogers — 2026-06-09 11:05 UTC\n  Response path: Delegate\n  Why: This looks like an internal follow-up that needs ownership or routing.\n  Evidence: Hello, Attached is the SOP I created for the payment making process.\n- RE: ULTA update needed. — Allen, Walter — 2026-06-09 09:59 UTC\n  Response path: Reply now\n  Why: The email contains a direct external ask with explicit timing.\n  Evidence: Tha",
+          "toolTrace": [
+            {
+              "tool": "read_live_outlook_inbox",
+              "agent": "microsoft-executive-assistant",
+              "detail": "read_live_outlook_inbox completed.",
+              "output": {
+                "ok": true,
+                "count": 25,
+                "source": "microsoft_graph_live",
+                "fetchedAt": "2026-06-09T11:06:45.080791+00:00",
+                "truncated": true,
+                "mailboxUserId": "bclymer@alleatogroup.com"
+              },
+              "source": "microsoft_graph_live",
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "search_microsoft_teams_messages",
+              "agent": "microsoft-executive-assistant",
+              "detail": "search_microsoft_teams_messages completed.",
+              "output": {},
+              "source": null,
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "deepagents_microsoft_executive_assistant_runtime",
+              "agent": "microsoft-executive-assistant",
+              "detail": "Microsoft Executive Assistant produced an answer.",
+              "output": null,
+              "source": null,
+              "status": "success",
+              "durationMs": 28612
+            }
+          ],
+          "actionCount": 0,
+          "orchestrator": "microsoft-executive-assistant"
+        },
+        "status": "success",
+        "toolName": "consultMicrosoftExecutiveAssistant",
+        "timestamp": "2026-06-09T11:07:09.243Z",
+        "durationMs": 28740
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "source_debug": {
+      "memory": {
+        "reason": "This answer was produced by a delegated specialist/direct Deep Agents path; inspect delegated trace and backend memory metadata for specialist-side context.",
+        "status": "not_loaded_in_frontend"
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "consultMicrosoftExecutiveAssistant",
+              "agent": "unknown-agent",
+              "status": "success",
+              "durationMs": 28740
+            }
+          ],
+          "failedCount": 0,
+          "totalMeasuredMs": 28740
+        },
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 1,
+        "sourceCoverage": []
+      },
+      "orchestrator": "microsoft-executive-assistant",
+      "outputPolicy": null,
+      "retrievalPlan": {
+        "intent": "source_lookup",
+        "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "sources": [],
+        "responseFormat": "conversational"
+      }
+    },
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+      "sources": [],
+      "responseFormat": "conversational"
+    },
+    "response_quality": {
+      "score": 62,
+      "reasons": [
+        "at least one successful tool call",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "delegated_orchestrator": "microsoft-executive-assistant"
+  }
+}

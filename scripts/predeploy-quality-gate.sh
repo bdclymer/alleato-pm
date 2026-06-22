@@ -104,8 +104,7 @@ fi
 
 echo "7) AI intelligence compiler health"
 if [ -n "${DATABASE_URL:-}" ] || [ -n "${SUPABASE_DB_URL:-}" ]; then
-  npm run rag:repair:intelligence-current-packets
-  npm run rag:verify:intelligence-compiler
+  npm run rag:verify:project-intelligence-live-paths
 else
   echo "Skipping: DATABASE_URL / SUPABASE_DB_URL not set. Intelligence compiler health runs via cron job."
 fi

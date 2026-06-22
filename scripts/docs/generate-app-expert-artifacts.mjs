@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), "../..");
 const appRoot = path.join(repoRoot, "frontend/src/app");
-const helpRoot = path.join(repoRoot, "docs/help/articles");
+const helpRoot = path.join(repoRoot, "docs/archive/2026-06-22-docs-migration/help/articles");
 const outputRoot = path.join(repoRoot, "docs/architecture/generated");
 const runtimeRoot = path.join(repoRoot, "backend/src/services/agents/app_expert/runtime");
 const runtimeGeneratedRoot = path.join(runtimeRoot, "generated");

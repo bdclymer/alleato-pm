@@ -18,9 +18,9 @@ from src.services.agents.alleato_ai_tools import (
     think_tool,
 )
 from src.services.agents.alleato_ai_tools.subagents import ALL_SUBAGENTS
-from src.services.agents.deep_project_intelligence import (
-    _extract_agent_text,
-    _resolve_deep_agents_model,
+from src.services.agents.runtime_common import (
+    extract_agent_text as _extract_agent_text,
+    resolve_deep_agents_model as _resolve_deep_agents_model,
 )
 from src.services.agents.research_agent.contracts import (
     ResearchRequest,

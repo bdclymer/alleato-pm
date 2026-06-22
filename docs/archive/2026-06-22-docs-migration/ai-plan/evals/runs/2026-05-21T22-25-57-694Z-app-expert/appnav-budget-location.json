@@ -1,0 +1,58 @@
+{
+  "id": "appnav-budget-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 5478,
+  "question": "Where should I go to review project budget line items?",
+  "mustInclude": [
+    "/[projectId]/budget",
+    "budget"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "Go to the project’s **Budget** page:\n\n- **Route:** `/[projectId]/budget`\n- **Help article:** `docs/help/articles/budget-line-items.md`\n\nThat article says budget line items are reviewed from **Budget** for the project, and the page is the place to add, edit, and modify line items.\n\nWhat I checked:\n- Artifact status: current and available\n- Feature registry: found documented entry **Budget Line Items**\n- Help article: confirmed the workflow on `docs/help/articles/budget-line-items.md`\n\nUncertainty:\n- You didn’t provide a project ID, so I can’t give the exact concrete URL for your project. Use the pattern `/<yourProjectId>/budget`.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/budget",
+        "sourceType": "sitemap",
+        "route": "/budget",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/budget-line-items.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/budget-line-items.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 5388,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

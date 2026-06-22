@@ -26,7 +26,7 @@ module.exports = {
     },
     messages: {
       numberInputCurrency:
-        '<NumberInput currency> is not allowed. Use <MoneyField> or <RHFMoneyField> for all currency inputs. See docs/design/DESIGN.md.',
+        '<NumberInput currency> is not allowed. Use <MoneyField> or <RHFMoneyField> for all currency inputs. See docs/archive/2026-06-22-docs-migration/design/DESIGN.md.',
       manualDollarPrefix:
         'Manual "$" prefix on input groups is not allowed. Use <MoneyField> or <RHFMoneyField> which handle the $ prefix internally.',
       rawDecimalInput:

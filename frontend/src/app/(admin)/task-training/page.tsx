@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { PageShell } from "@/components/layout";
 import { TaskTrainingClient } from "./TaskTrainingClient";
 import { getAllTaskFeedback } from "@/lib/ai/services/task-training-service";
-import { requireAdmin } from "@/app/api/admin/intelligence-compiler/_shared";
+import { requireAdmin } from "@/app/api/admin/_shared";
 
 export default async function TaskTrainingPage() {
   await requireAdmin("task-training-page");

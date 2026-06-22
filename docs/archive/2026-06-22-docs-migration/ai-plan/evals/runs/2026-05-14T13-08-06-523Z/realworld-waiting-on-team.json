@@ -1,0 +1,1026 @@
+{
+  "id": "realworld-waiting-on-team",
+  "intent": "task_management",
+  "prompt": "What am I waiting on from my team?",
+  "selectedProjectId": null,
+  "sessionId": "973081c7-a35a-49d9-968c-f3aa8f6de393",
+  "sessionLabel": "eval-2026-05-14T13-08-06-523Z-realworld-waiting-on-team",
+  "startedAt": "2026-05-14T13:49:12.709Z",
+  "finishedAt": "2026-05-14T13:49:20.474Z",
+  "durationMs": 7704,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 129,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "expected family 'people' not represented"
+    ],
+    "observations": [
+      "tools fired: intentPlanner, promptContextReducer, mcpToolDiscovery, streamingToolPolicy, getActionItemsAndInsights"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "promptContextReducer",
+      "mcpToolDiscovery",
+      "streamingToolPolicy",
+      "getActionItemsAndInsights"
+    ],
+    "familiesHit": [
+      "actions",
+      "task_management"
+    ],
+    "finalTextLength": 438,
+    "finalText": "Right now, I’m not seeing any tracked outstanding items from your team.\n\n- Open tasks: 0\n- Priority action items: 0\n- Unresolved insights: 0\n- Overdue RFIs: 0\n\nWhat that means: there’s nothing currently surfaced in the action-item and insight tracker that indicates you’re waiting on a team follow-up.\n\nSource note: this is based on the current action items/insights packet, and it’s empty rather than showing incomplete team-owned items."
+  },
+  "expectedToolNames": [
+    "getMyTasks",
+    "getActionItemsAndInsights",
+    "getPeopleAndRoles"
+  ],
+  "expectedToolFamilies": [
+    "task_management",
+    "actions",
+    "people"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:49:15.136Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:49:15.137Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "9GdqvFbGt81WY4Kc"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": "20"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "projectId": 0,
+        "assigneeName": "",
+        "maxResults": 20
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_YJasdqM5KH3pZ4bPQew3rKct",
+      "output": {
+        "sourceRef": "[Source: Action Items & Insights]",
+        "openTasks": [],
+        "priorityItems": [],
+        "structuredActionItems": [],
+        "unresolvedInsights": [],
+        "meetingInsights": [],
+        "overdueRFIs": [],
+        "summary": {
+          "openTaskCount": 0,
+          "overdueTaskCount": 0,
+          "insightCount": 0,
+          "structuredActionItemCount": 0,
+          "overdueRFICount": 0,
+          "sourceErrorCount": 0
+        },
+        "sourceErrors": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’m"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " seeing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " any"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tracked"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " outstanding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " your"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tasks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Priority"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "resolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " insights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Over"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "due"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " RF"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " nothing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " currently"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " surfaced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-item"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " insight"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tracker"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " indicates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " waiting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " follow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " note"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " based"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ins"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " empty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rather"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " than"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " showing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " incomplete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-owned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 3490,
+      "totalTokens": 3627,
+      "outputTokens": 137,
+      "cacheHitRatio": 0.917,
+      "cachedInputTokens": 3200
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "What am I waiting on from my team?",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "task_followup",
+          "sourceSpecificRagKind": null,
+          "recentEmailInboxRequest": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "task_followup",
+          "planner": "model",
+          "rationale": "The user is asking to read existing follow-ups/tasks owed by their team ('what am I waiting on'), not to create a new task. This maps to task_followup.",
+          "confidence": "high",
+          "responseMode": "answer_directly",
+          "requiredTools": [],
+          "deterministicIntent": "task_followup",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T13:49:15.136Z"
+      },
+      {
+        "tool": "promptContextReducer",
+        "input": {
+          "intent": "task_followup",
+          "message": "What am I waiting on from my team?"
+        },
+        "output": {
+          "promptMode": "lean_advisor",
+          "skippedGeneralMemory": true,
+          "skippedExecutivePacket": true,
+          "skippedWorkspaceArtifacts": true,
+          "retainedPacketFirstRetrieval": true
+        },
+        "timestamp": "2026-05-14T13:49:15.137Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.excalidraw.com/mcp",
+          "server": "excalidraw"
+        },
+        "output": {
+          "allowedTools": [
+            "read_me",
+            "create_view",
+            "export_to_excalidraw",
+            "save_checkpoint",
+            "read_checkpoint"
+          ],
+          "enabledTools": [
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "enabledToolCount": 5,
+          "discoveredToolCount": 5
+        },
+        "timestamp": "2026-05-14T13:49:15.400Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.supabase.com/mcp?project_ref=lgveqfnpkxvzbnnwuled",
+          "server": "supabase"
+        },
+        "output": {
+          "error": "MCP HTTP Transport Error: POSTing to endpoint (HTTP 401): {\"message\":\"JWT could not be decoded\"}"
+        },
+        "timestamp": "2026-05-14T13:49:15.436Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "promptMode": "lean_advisor",
+          "toolChoice": "auto",
+          "fullToolCount": 99,
+          "modelToolCount": 12,
+          "modelToolNames": [
+            "getActionItemsAndInsights",
+            "getProjectBriefingSnapshot",
+            "searchMeetingsByTopic",
+            "searchEmails",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "findProject",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "streamMaxSteps": 10,
+          "scopedToolCount": 12,
+          "streamMaxOutputTokens": 4000,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": false
+        },
+        "timestamp": "2026-05-14T13:49:15.436Z"
+      },
+      {
+        "tool": "getActionItemsAndInsights",
+        "input": {
+          "projectId": 0,
+          "maxResults": 20,
+          "assigneeName": ""
+        },
+        "output": {
+          "summary": {
+            "insightCount": 0,
+            "openTaskCount": 0,
+            "overdueRFICount": 0,
+            "overdueTaskCount": 0,
+            "sourceErrorCount": 0,
+            "structuredActionItemCount": 0
+          },
+          "openTasks": [],
+          "sourceRef": "[Source: Action Items & Insights]",
+          "overdueRFIs": [],
+          "sourceErrors": [],
+          "priorityItems": [],
+          "meetingInsights": [],
+          "unresolvedInsights": [],
+          "structuredActionItems": []
+        },
+        "timestamp": "2026-05-14T13:49:17.433Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": null,
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": null,
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 1679,
+          "finishReason": "tool-calls",
+          "outputTokens": 31,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getActionItemsAndInsights"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 1811,
+          "finishReason": "stop",
+          "outputTokens": 106,
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getActionItemsAndInsights",
+            "getProjectBriefingSnapshot",
+            "searchMeetingsByTopic",
+            "searchEmails",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "findProject",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getActionItemsAndInsights",
+            "getProjectBriefingSnapshot",
+            "searchMeetingsByTopic",
+            "searchEmails",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "findProject",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        }
+      ],
+      "totalStepCount": 2,
+      "finalFinishReason": "stop",
+      "preparedStepCount": 2,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 1
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

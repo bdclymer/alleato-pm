@@ -1,0 +1,1289 @@
+{
+  "id": "app-help",
+  "intent": "app_help",
+  "prompt": "Where do I go in this app to set up a commitment, and what are the steps?",
+  "selectedProjectId": null,
+  "sessionId": "46a08ac9-a570-4b5a-b5c5-8e6337ac8fc1",
+  "sessionLabel": "eval-2026-05-14T13-08-06-523Z-app-help",
+  "startedAt": "2026-05-14T13:30:19.321Z",
+  "finishedAt": "2026-05-14T13:30:35.410Z",
+  "durationMs": 15699,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 190,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [],
+    "observations": [
+      "tools fired: intentPlanner, mcpToolDiscovery, streamingToolPolicy, searchAppHelp"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "mcpToolDiscovery",
+      "streamingToolPolicy",
+      "searchAppHelp"
+    ],
+    "familiesHit": [
+      "app_help"
+    ],
+    "finalTextLength": 674,
+    "finalText": "I checked the app help and there isn’t a published help article for commitments yet.\n\nWhat I can tell you: if you mean creating a subcontract or PO commitment in Alleato, that’s handled through the commitment creation flow, but I can’t verify the exact click path in the UI from help content right now.\n\nBest next move:\n- Tell me which kind of commitment you’re trying to set up: **subcontract** or **purchase order**\n- If you want, I can also help you **create the commitment draft** from here and walk you through the fields you’ll need before you confirm it\n\nIf you were asking about a different “commitment” feature, name the page you’re on and I’ll narrow it down fast."
+  },
+  "expectedToolNames": [
+    "searchAppHelp"
+  ],
+  "expectedToolFamilies": [
+    "app_help"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:30:21.582Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "T9UsMUjrTV7h5CNz"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "toolName": "searchAppHelp"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": "where"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " do"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " I"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " go"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " in"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " this"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " app"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " set"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " a"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " commitment"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " what"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " are"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " steps"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": "\","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " \""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": "category"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": "\","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": " \""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": "limit"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "toolName": "searchAppHelp",
+      "input": {
+        "query": "where do I go in this app to set up a commitment and what are the steps",
+        "category": "",
+        "limit": 5
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_mfuA8otomaDINz4ZEpqOF1qO",
+      "output": {
+        "query": "where do I go in this app to set up a commitment and what are the steps",
+        "category": "",
+        "resultCount": 0,
+        "results": [],
+        "message": "No AI-visible help article matched that question yet."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " checked"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " app"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " help"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " isn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " published"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " help"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " article"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitments"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " yet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " creating"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " subcontract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " PO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ato"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " handled"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " through"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " creation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " flow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " verify"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " click"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " path"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " UI"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " help"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " content"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Best"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " move"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " me"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " kind"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trying"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " set"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "sub"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "purchase"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " order"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " help"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "create"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " draft"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " here"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " walk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " through"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fields"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’ll"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " before"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confirm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " were"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " asking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " different"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "commit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " feature"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " name"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " page"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’ll"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " narrow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " down"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fast"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 10859,
+      "totalTokens": 11056,
+      "outputTokens": 197,
+      "cacheHitRatio": 0.483,
+      "cachedInputTokens": 5248
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Where do I go in this app to set up a commitment, and what are the steps?",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "app_help",
+          "sourceSpecificRagKind": null,
+          "recentEmailInboxRequest": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "app_help",
+          "planner": "model",
+          "rationale": "The user is asking how to use the app to create a commitment and wants the navigation path and steps, which is an application workflow/help request rather than project intelligence or record drafting.",
+          "confidence": "high",
+          "responseMode": "explain_app_workflow",
+          "requiredTools": [],
+          "deterministicIntent": "app_help",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T13:30:21.581Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.excalidraw.com/mcp",
+          "server": "excalidraw"
+        },
+        "output": {
+          "allowedTools": [
+            "read_me",
+            "create_view",
+            "export_to_excalidraw",
+            "save_checkpoint",
+            "read_checkpoint"
+          ],
+          "enabledTools": [
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "enabledToolCount": 5,
+          "discoveredToolCount": 5
+        },
+        "timestamp": "2026-05-14T13:30:22.846Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.supabase.com/mcp?project_ref=lgveqfnpkxvzbnnwuled",
+          "server": "supabase"
+        },
+        "output": {
+          "error": "MCP HTTP Transport Error: POSTing to endpoint (HTTP 401): {\"message\":\"JWT could not be decoded\"}"
+        },
+        "timestamp": "2026-05-14T13:30:22.881Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "promptMode": "full_strategist",
+          "toolChoice": "auto",
+          "fullToolCount": 99,
+          "modelToolCount": 6,
+          "modelToolNames": [
+            "searchAppHelp",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "streamMaxSteps": 10,
+          "scopedToolCount": 6,
+          "streamMaxOutputTokens": 4000,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": false
+        },
+        "timestamp": "2026-05-14T13:30:22.881Z"
+      },
+      {
+        "tool": "searchAppHelp",
+        "input": {
+          "limit": 5,
+          "query": "where do I go in this app to set up a commitment and what are the steps",
+          "category": ""
+        },
+        "output": {
+          "query": "where do I go in this app to set up a commitment and what are the steps",
+          "message": "No AI-visible help article matched that question yet.",
+          "results": [],
+          "category": "",
+          "resultCount": 0
+        },
+        "timestamp": "2026-05-14T13:30:25.094Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 5381,
+          "finishReason": "tool-calls",
+          "outputTokens": 44,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "searchAppHelp"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 5478,
+          "finishReason": "stop",
+          "outputTokens": 153,
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchAppHelp",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchAppHelp",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        }
+      ],
+      "totalStepCount": 2,
+      "finalFinishReason": "stop",
+      "preparedStepCount": 2,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 1
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

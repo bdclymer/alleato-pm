@@ -31,14 +31,11 @@ const REQUIRED_SUSPENDED_CRONS = new Set([
   "alleato-domain-packet-compiler",
   "alleato-fireflies-sync",
   "alleato-graph-sync",
-  "alleato-intelligence-compiler-drain",
   "alleato-microsoft-executive-assistant-check",
-  "alleato-packet-refresh-periodic",
   "alleato-project-synthesis-sweep",
   "alleato-rag-health",
   "alleato-source-rag-health",
   "alleato-source-sync-health",
-  "alleato-task-extraction",
   "alleato-teams-channel-sync",
   "alleato-teams-dm-sync",
 ]);
@@ -77,15 +74,6 @@ const SAFE_RESTART_REQUIRED_ENV = new Map([
       ["GRAPH_DELTA_MAX_PAGES", "3"],
       ["GRAPH_DELTA_MAX_ITEMS", "250"],
       ["TEAMS_CHANNEL_SYNC_MAX_CHANNELS", "3"],
-    ]),
-  ],
-  [
-    "alleato-task-extraction",
-    new Map([
-      ["TASK_EXTRACTION_MAX_DOCS", "25"],
-      ["TASK_EXTRACTION_MAX_RUN_DOCS", "25"],
-      ["TASK_EXTRACTION_CANDIDATE_LIMIT", "100"],
-      ["TASK_EXTRACTION_DESCRIPTION_LIMIT", "1000"],
     ]),
   ],
   [

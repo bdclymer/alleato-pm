@@ -1,0 +1,47 @@
+{
+  "id": "appnav-commitments-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 8011,
+  "question": "Where are subcontract commitments managed?",
+  "response": {
+    "answer": "Subcontract commitments are managed in **Commitments**.\n\n- **Route:** `/[projectId]/commitments`\n- **Help article:** `docs/help/articles/commitments.md`\n\nDocumented behavior says this is where you manage **subcontracts and purchase orders** for a project. The article also says each commitment has a vendor, SOV, change orders, and invoices.\n\nRelevant documented actions:\n- Open **Commitments** from the sidebar\n- Create **Subcontract** or **Purchase Order**\n- Manage **Schedule of Values**\n- Create **Commitment Change Orders**\n\nIf you want, I can also summarize the related **commitment detail** and **change order** routes that were found in implementation evidence.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/commitments",
+        "sourceType": "sitemap",
+        "route": "/commitments",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/commitments.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/commitments.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 8009,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

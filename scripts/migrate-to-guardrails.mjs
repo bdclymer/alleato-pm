@@ -26,7 +26,6 @@ const API_DIR = resolve(
 const SKIP_PATTERNS = [
   "/ai-assistant/chat/",
   "/bot/",
-  "/liveblocks/webhook/",
   "/monitoring/websocket/",
   "/procore-docs/chat/",
   "/procore-screenshots/",

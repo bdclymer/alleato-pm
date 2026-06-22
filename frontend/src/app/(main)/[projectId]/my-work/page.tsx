@@ -41,6 +41,7 @@ interface OpenRfi {
   subject: string;
   status: string;
   created_at: string;
+  responsible_contractor: string | null;
 }
 
 interface OpenSubmittal {
@@ -49,6 +50,8 @@ interface OpenSubmittal {
   title: string;
   status: string | null;
   final_due_date: string | null;
+  responsible_contractor_id: string | null;
+  submitter_company: string | null;
 }
 
 const SOV_STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -133,6 +136,24 @@ export default async function MyWorkPage({
 
   const companyId = person?.company_id ?? null;
 
+  // Resolve the viewer's company name so RFIs/submittals can be scoped to their
+  // company. RFIs store the responsible party as a company *name* (not an id);
+  // submittals expose responsible_contractor_id (company id) and submitter_company
+  // (name) — so we match on either. Names can contain commas/parens, so scoping
+  // is applied in JS below rather than via a PostgREST .or() string.
+  let companyName: string | null = null;
+  if (companyId) {
+    const { data: company } = await serviceClient
+      .from("companies")
+      .select("name")
+      .eq("id", companyId)
+      .maybeSingle();
+    companyName = company?.name ?? null;
+  }
+  const normalizedCompanyName = companyName?.trim().toLowerCase() ?? null;
+  const companyOwnsName = (value: string | null | undefined) =>
+    !!normalizedCompanyName && (value ?? "").trim().toLowerCase() === normalizedCompanyName;
+
   // Fetch all data in parallel
   const [sovResult, rfisResult, submittalsResult, projectResult] = await Promise.all([
     // SOV submissions for commitments assigned to this subcontractor.
@@ -158,23 +179,23 @@ export default async function MyWorkPage({
       .eq("project_id", numericProjectId)
       .order("created_at", { ascending: false }),
 
-    // Open RFIs on this project
+    // Open RFIs on this project (scoped to the viewer's company in JS below)
     serviceClient
       .from("rfis")
-      .select("id, number, subject, status, created_at")
+      .select("id, number, subject, status, created_at, responsible_contractor")
       .eq("project_id", numericProjectId)
       .not("status", "in", '("closed","draft")')
       .order("created_at", { ascending: false })
-      .limit(10),
+      .limit(200),
 
-    // Submittals pending action
+    // Submittals pending action (scoped to the viewer's company in JS below)
     serviceClient
       .from("submittals")
-      .select("id, submittal_number, title, status, final_due_date")
+      .select("id, submittal_number, title, status, final_due_date, responsible_contractor_id, submitter_company")
       .eq("project_id", numericProjectId)
       .not("status", "in", '("approved","void")')
       .order("final_due_date", { ascending: true })
-      .limit(10),
+      .limit(200),
 
     // Project name
     serviceClient
@@ -214,8 +235,20 @@ export default async function MyWorkPage({
 
     return isInvoiceContact || hasExplicitSovAccess || isCompanyCommitment;
   });
-  const openRfis = (rfisResult.data ?? []) as OpenRfi[];
-  const openSubmittals = (submittalsResult.data ?? []) as OpenSubmittal[];
+  // Company-scope: a subcontractor must only see RFIs/submittals involving their
+  // own company — never the whole project's. Match RFIs by responsible-contractor
+  // name, submittals by responsible_contractor_id (company id) or submitter_company
+  // (name). With no resolved company, nothing is theirs → show none.
+  const openRfis = ((rfisResult.data ?? []) as OpenRfi[])
+    .filter((rfi) => companyOwnsName(rfi.responsible_contractor))
+    .slice(0, 10);
+  const openSubmittals = ((submittalsResult.data ?? []) as OpenSubmittal[])
+    .filter(
+      (sub) =>
+        (!!companyId && sub.responsible_contractor_id === companyId) ||
+        companyOwnsName(sub.submitter_company),
+    )
+    .slice(0, 10);
   const projectName = projectResult.data?.name ?? `Project #${projectId}`;
 
   const hasPendingSov = sovSubmissions.some(
@@ -308,7 +341,7 @@ export default async function MyWorkPage({
         {/* RFIs Section */}
         <SectionCard icon={MessageCircle} title="Open RFIs">
           {openRfis.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No open RFIs on this project.</p>
+            <p className="text-sm text-muted-foreground">No open RFIs assigned to your company.</p>
           ) : (
             <div className="flex flex-col gap-1">
               {openRfis.map((rfi) => (
@@ -338,7 +371,7 @@ export default async function MyWorkPage({
         {/* Submittals Section */}
         <SectionCard icon={Package} title="Submittals">
           {openSubmittals.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No open submittals on this project.</p>
+            <p className="text-sm text-muted-foreground">No open submittals assigned to your company.</p>
           ) : (
             <div className="flex flex-col gap-1">
               {openSubmittals.map((sub) => (

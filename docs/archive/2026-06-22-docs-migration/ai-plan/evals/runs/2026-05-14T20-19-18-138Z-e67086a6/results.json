@@ -1,0 +1,70 @@
+{
+  "generatedAt": "2026-05-14T20:20:52.603Z",
+  "baseUrl": "http://localhost:3000",
+  "bundle": null,
+  "filter": null,
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "assistantSourceHealth": 1,
+    "semanticSearch": 1,
+    "sourceLookupIntentRouter": 1,
+    "messageDrivenToolRouter": 1,
+    "mcpToolDiscovery": 1,
+    "streamingToolPolicy": 1,
+    "getMeetingsByDate": 1,
+    "noToolRetry": 1
+  },
+  "intentDistribution": {
+    "source_health": 1
+  },
+  "results": [
+    {
+      "id": "source-freshness-rag-health",
+      "intent": "source_health",
+      "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+      "selectedProjectId": null,
+      "sessionId": "82363217-2767-4565-8476-15dc7a93402c",
+      "sessionLabel": "eval-2026-05-14T20-19-18-138Z-e67086a6-source-freshness-rag-health",
+      "startedAt": "2026-05-14T20:19:18.162Z",
+      "finishedAt": "2026-05-14T20:20:52.599Z",
+      "durationMs": 93913,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 365,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, getMeetingsByDate, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "semanticSearch",
+          "sourceLookupIntentRouter",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getMeetingsByDate",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "meetings",
+          "semantic",
+          "source_health"
+        ],
+        "finalTextLength": 1652,
+        "finalText": "You’re right to check before trusting the output. Here’s the reality as of now:\n\n**Critical Gaps in Data Sync (as of 2026-05-14):**\n\n- **Teams chat coverage is degraded.** acannon@alleatogroup.com’s DM export is in critical status. Recent direct message content from this user may not be in the system.\n- **Outlook email is not fully current** for these key mailboxes: njepson@alleatogroup.com, mparsons@alleatogroup.com, mharrison@alleatogroup.com, jdawson@alleatogroup.com, ctragesser@alleatogroup.com. If you’re looking for the latest activity or decisions from these people, there’s risk of missing emails.\n- **Meeting and document packet coverage**: 11,501 items are still “uncompiled”—meaning recent meetings, docs, and knowledge entries may not be included in summarized project packets.\n- **General risk:** When a source is missing or slow to sync, you lose visibility into last-minute changes, quick-turn threads, or commitments made after the last successful sync.\n\n**What’s Still Solid**\n- Search across meetings, Teams, and emails captures what’s embedded and synced—but right now, that coverage is incomplete for the above mailboxes/chats.\n- Source tools are working, but the backlog means recent fast-moving activity may be out of view.\n\n**Bottom line:**  \nThe core sources are not fully current—especially for the people and channels named above. If you need confirmation on the latest decisions, deliverables, or owner actions, double-check with direct outreach or call for manual updates alongside the AI readout.\n\nLet me know if you need a list of last known sync times or want to target a specific project or user for a manual check."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "source_health"
+      ]
+    }
+  ]
+}

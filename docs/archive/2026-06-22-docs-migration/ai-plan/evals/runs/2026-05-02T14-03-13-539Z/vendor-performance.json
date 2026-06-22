@@ -1,0 +1,44 @@
+{
+  "id": "vendor-performance",
+  "intent": "people_or_capacity",
+  "prompt": "How are our top vendors performing across active projects?",
+  "selectedProjectId": null,
+  "sessionId": "889260c7-3a32-4718-93a8-2a8c5f896acf",
+  "sessionLabel": "eval-2026-05-02T14-03-13-539Z-vendor-performance",
+  "startedAt": "2026-05-02T14:12:30.006Z",
+  "finishedAt": "2026-05-02T14:12:45.255Z",
+  "durationMs": 3,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "expected at least one of [getVendorPerformance] to fire — none did",
+      "mustInclude missing: \"vendor\"",
+      "answer length 0 < min 150"
+    ],
+    "warnings": [
+      "expected family 'people' not represented",
+      "expected family 'financial' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getVendorPerformance"
+  ],
+  "expectedToolFamilies": [
+    "people",
+    "financial"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

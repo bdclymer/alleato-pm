@@ -1,0 +1,65 @@
+{
+  "id": "appnav-prime-contracts-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 5126,
+  "question": "Where do owner prime contracts live?",
+  "mustInclude": [
+    "/[projectId]/prime-contracts",
+    "prime contract"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "Owner prime contracts live at:\n\n- `/[projectId]/prime-contracts`\n\nEvidence:\n- Curated help article: `docs/help/articles/prime-contracts.md`\n- Route metadata: `frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx`\n\nBehavior confirmed by the help article:\n- Prime Contracts is where the owner contract is managed.\n- It includes the contract header, schedule of values, modifications log, and attachments.\n\nIf you want, I can also list the related prime-contract subroutes under that page.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/prime-contracts",
+        "sourceType": "sitemap",
+        "route": "/prime-contracts",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/prime-contracts.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/prime-contracts.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/prime-contracts/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/prime-contracts/page.tsx",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 5021,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

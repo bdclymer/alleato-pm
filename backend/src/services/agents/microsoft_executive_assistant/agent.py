@@ -10,9 +10,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from src.services.agents.deep_project_intelligence import (
-    _extract_agent_text,
-    _resolve_deep_agents_model,
+from src.services.agents.runtime_common import (
+    extract_agent_text as _extract_agent_text,
+    resolve_deep_agents_model as _resolve_deep_agents_model,
 )
 from src.services.agents.microsoft_executive_assistant.contracts import (
     MicrosoftAssistantAction,

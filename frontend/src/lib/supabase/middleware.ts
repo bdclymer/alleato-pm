@@ -24,7 +24,6 @@ const DEVELOPER_ONLY_COMPANY_PREFIXES = [
 const DEVELOPER_ONLY_PROJECT_SEGMENTS = new Set([
   "intelligence",
   "hub",
-  "outlook-emails",
   "billing-periods",
   "client-dashboard",
   "email-attachments",

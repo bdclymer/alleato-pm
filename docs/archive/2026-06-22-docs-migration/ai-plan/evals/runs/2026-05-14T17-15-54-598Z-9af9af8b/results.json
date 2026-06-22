@@ -1,0 +1,224 @@
+{
+  "generatedAt": "2026-05-14T17:19:50.018Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "source-sync-teams-regression",
+    "description": "Agentic-eval guardrail for Teams/source-sync prompts. The assistant must distinguish live source-health questions from Teams content lookup and must expose stale source state instead of pretending coverage is complete.",
+    "criteria": [
+      "Source-health trust questions must fire assistantSourceHealth.",
+      "Teams content questions must fire a Teams-capable retrieval path.",
+      "Answers must not claim complete evidence coverage when source freshness is uncertain.",
+      "Answers must give a direct operational read instead of generic AI/RAG caveats."
+    ]
+  },
+  "filter": "(source-lookup-teams|source-freshness-rag-health|realworld-teams-source-freshness|realworld-teams-this-week-signal)$",
+  "totalCases": 4,
+  "passed": 4,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 4,
+    "assistantSourceHealth": 4,
+    "messageDrivenToolRouter": 4,
+    "mcpToolDiscovery": 4,
+    "streamingToolPolicy": 4,
+    "semanticSearch": 3,
+    "sourceLookupIntentRouter": 3,
+    "noToolRetry": 3,
+    "getProjectBriefingSnapshot": 2,
+    "getMeetingsByDate": 1,
+    "searchTeamsMessages": 1
+  },
+  "intentDistribution": {
+    "source_lookup": 2,
+    "source_health": 2
+  },
+  "results": [
+    {
+      "id": "source-lookup-teams",
+      "intent": "source_lookup",
+      "prompt": "Look through Teams for Westfield punch-list chatter. What is the latest real signal?",
+      "selectedProjectId": 43,
+      "sessionId": "9b65ac60-d50a-419d-8832-7b9640867e52",
+      "sessionLabel": "eval-2026-05-14T17-15-54-598Z-9af9af8b-source-lookup-teams",
+      "startedAt": "2026-05-14T17:15:54.601Z",
+      "finishedAt": "2026-05-14T17:16:47.802Z",
+      "durationMs": 51680,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 198,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, getProjectBriefingSnapshot, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "semanticSearch",
+          "sourceLookupIntentRouter",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getProjectBriefingSnapshot",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "semantic",
+          "source_health"
+        ],
+        "finalTextLength": 1036,
+        "finalText": "There are no vectorized Teams messages or chat records available in the current sources related to punch-list activity for Westfield Collective. The search across available Teams, emails, meetings, and documents returned zero relevant results about recent punch-list chatter.\n\n**What this means:**\n- Either there has been no recent punch-list discussion on Teams, or the latest Teams messages have not been embedded and indexed yet. Given the current source sync status — with over 1,000 unembedded items and critical Teams DM export errors flagged — it's likely some recent Teams conversations have not been indexed or are delayed.\n\n**Action:**\n- If you expect recent punch-list activity on Teams, the safest next step is to check in directly with the project Superintendent or whoever owns punch-list closeout on Westfield. If you'd like, I can flag a task to follow up and confirm status directly from the field team.\n\nLet me know if you want this escalated as a follow-up or need coverage in another channel (email, meetings, etc.)."
+      },
+      "expectedToolNames": [
+        "searchTeamsMessages",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-teams-this-week-signal",
+      "intent": "source_lookup",
+      "prompt": "Using Teams messages from this past week, what are people actually worried about?",
+      "selectedProjectId": null,
+      "sessionId": "0b868d98-46ea-454a-91f1-1dc5a4cd299a",
+      "sessionLabel": "eval-2026-05-14T17-15-54-598Z-9af9af8b-realworld-teams-this-week-signal",
+      "startedAt": "2026-05-14T17:16:47.805Z",
+      "finishedAt": "2026-05-14T17:17:39.484Z",
+      "durationMs": 50990,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 201,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, getProjectBriefingSnapshot, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "semanticSearch",
+          "sourceLookupIntentRouter",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getProjectBriefingSnapshot",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "semantic",
+          "source_health"
+        ],
+        "finalTextLength": 921,
+        "finalText": "There are no retrievable Teams messages from this past week that mention specific worries, concerns, or escalation points. The system's Teams chat archive for user DMs is currently in a degraded state (source sync flagged critical), which means direct evidence is missing and recent conversations may not be fully searchable or embedded.\n\nWhat this means for you:  \n- I can’t provide a list of current worries directly from Teams dialogs over the last week.\n- If you have a particular project, team, or individual in mind, specify and I’ll run a more targeted check across emails, meetings, and other sources.\n- For now, all my insights on team sentiment will be based on meetings and emails only—Teams-sourced concerns are unavailable until sync is restored.\n\nNext step: Let me know if you want a deeper read on worries surfaced in recent meetings or email chains, or if there’s a project or person you want to focus on."
+      },
+      "expectedToolNames": [
+        "sourceSpecificRagRetrieval",
+        "searchTeamsMessages",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "source-freshness-rag-health",
+      "intent": "source_health",
+      "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+      "selectedProjectId": null,
+      "sessionId": "2a3f281e-a3f9-41bd-808e-72bf3a5270c5",
+      "sessionLabel": "eval-2026-05-14T17-15-54-598Z-9af9af8b-source-freshness-rag-health",
+      "startedAt": "2026-05-14T17:17:39.487Z",
+      "finishedAt": "2026-05-14T17:18:41.024Z",
+      "durationMs": 60879,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 364,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, getMeetingsByDate, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "semanticSearch",
+          "sourceLookupIntentRouter",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getMeetingsByDate",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "meetings",
+          "semantic",
+          "source_health"
+        ],
+        "finalTextLength": 1511,
+        "finalText": "Data coverage is not fully current. Here’s the reality on each source:\n\n- **Teams**: Critical sync issues for user DMs (awehner@alleatogroup.com, acannon@alleatogroup.com). If you expect signals from those private chats, they may be missing.\n- **Outlook Email**: Critical sync issues for several mailboxes, including njepson, mparsons, jdawson, and ctragesser. If you rely on these users’ sent/received mail for project decisions, that evidence is at risk of being stale or absent.\n- **Meetings**: Meetings are syncing and indexed, but with 1,065 unembedded sources and 11,482 uncompiled items, packet freshness is degraded. Any summary or intelligence packet may be missing recent decisions, especially from the last few days.\n- **AI Readout/Packets**: Because of the above, intelligence packets aren’t 100% up to date, and some facts or decisions may be missing if they’re buried in uncompiled sources.\n\n**Bottom line:**  \nBroad emails and meeting calendars are reasonably covered, but recent or DM/private chat activity, and content from the affected Outlook mailboxes, may not be reflected in readouts or risk summaries. If you need to ground a decision in the absolute latest communications from those surfaces, spot-check recent emails or Teams manually, or specify the sender/conversation you’re concerned about.\n\n**Next step:**  \nIf you name a specific project, person, or source, I can check exactly what’s in or missing from your current readout. If critical, escalate to IT for sync issue resolution."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "source_health"
+      ]
+    },
+    {
+      "id": "realworld-teams-source-freshness",
+      "intent": "source_health",
+      "prompt": "Are Teams messages current enough to trust today, or is source sync stale?",
+      "selectedProjectId": null,
+      "sessionId": "50742e33-8568-4fa0-8ae7-a2364e34d529",
+      "sessionLabel": "eval-2026-05-14T17-15-54-598Z-9af9af8b-realworld-teams-source-freshness",
+      "startedAt": "2026-05-14T17:18:41.025Z",
+      "finishedAt": "2026-05-14T17:19:50.016Z",
+      "durationMs": 68409,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1343,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, searchTeamsMessages"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "searchTeamsMessages"
+        ],
+        "familiesHit": [
+          "communications",
+          "source_health"
+        ],
+        "finalTextLength": 1286,
+        "finalText": "Teams is **not current enough to trust as complete today**.\n\nWhy I’m saying that:\n- Your session health shows **source sync is degraded**.\n- There are **critical Teams DM export issues** for **awehner@alleatogroup.com** and **acannon@alleatogroup.com**.\n- The pipeline is carrying **1,065 unembedded** and **11,482 uncompiled** items. That means searchable Teams coverage can lag even when messages exist upstream.\n- My Teams searches did **not** turn up reliable **May 14, 2026** same-day activity.\n- The freshest usable Teams hits were around **May 11** for content dated **May 7**.\n- Several searches hit **vector timeout** and fell back to **keyword matching**, which lowers confidence further.\n\nSo the operating read:\n- **Good enough for recent context:** yes, cautiously.\n- **Good enough for “what happened in Teams today?”:** no.\n- **Good enough for decision-grade briefing on current DMs:** no, especially for the flagged users.\n\nThe main conclusion: **treat Teams as stale/incomplete today**.\n\nWhat to do with that:\n- If the question matters today, **cross-check with email and meetings before acting**.\n- If you want a live read on a specific project or person, I can check whether the rest of the communication trail is strong enough to brief from despite the Teams sync gap."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "source_health"
+      ]
+    }
+  ]
+}

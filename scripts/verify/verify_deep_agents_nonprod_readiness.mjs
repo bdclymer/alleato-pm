@@ -67,16 +67,16 @@ function verifyManifest(manifestPath) {
     return;
   }
 
-  const expected = {
-    DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED: true,
-    DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME: "deep_agents",
-    DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL: "gpt-5.4-mini",
-  };
+  const retired = [
+    "DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED",
+    "DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME",
+    "DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL",
+  ];
 
-  for (const [key, value] of Object.entries(expected)) {
+  for (const key of retired) {
     const actual = getEnvValue(service, key);
-    if (actual !== value) {
-      fail(`${manifestPath}: expected ${key}=${value}; found ${actual ?? "missing"}`);
+    if (actual !== undefined) {
+      fail(`${manifestPath}: retired ${key} is still configured`);
     }
   }
 }
@@ -170,10 +170,6 @@ async function main() {
     fail("Active backend health does not show Supabase service configured.");
   }
 
-  let endpointState = "not_checked";
-  let endpointMode = null;
-  let executiveEndpointState = "not_checked";
-  let executiveEndpointMode = null;
   let researchEndpointState = "not_checked";
   let researchEndpointMode = null;
   let researchSourceCount = 0;
@@ -247,70 +243,6 @@ async function main() {
       }
     }
 
-    const response = await fetchWithTimeout(
-      "Deep Agents project endpoint probe",
-      `${backendUrl}/api/intelligence/deep-agent/project-status`,
-      {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "content-type": "application/json",
-          "x-admin-api-key": adminApiKey,
-        },
-        body: JSON.stringify({
-          userId: "deep-agents-nonprod-readiness",
-          projectId: 43,
-          sessionId: "deep-agents-nonprod-readiness",
-          question: "What is the current risk/status on this project?",
-          mode: "project_status_risk",
-        }),
-      },
-    );
-    const payload = await response.json().catch(() => ({}));
-    endpointMode = payload.mode ?? null;
-    if (response.status === 503 && String(payload.detail ?? "").includes("Deep Agents project intelligence is disabled")) {
-      endpointState = "disabled";
-    } else if (response.ok && endpointMode === "deep_agents") {
-      endpointState = "deep_agents";
-    } else if (response.ok) {
-      endpointState = endpointMode ?? "enabled_unknown_mode";
-    } else {
-      fail(`Deep Agents endpoint probe failed with HTTP ${response.status}.`);
-    }
-
-    const executiveResponse = await fetchWithTimeout(
-      "Deep Agents executive endpoint probe",
-      `${backendUrl}/api/intelligence/deep-agent/executive-briefing`,
-      {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "content-type": "application/json",
-          "x-admin-api-key": adminApiKey,
-        },
-        body: JSON.stringify({
-          userId: "deep-agents-nonprod-readiness",
-          sessionId: "deep-agents-nonprod-readiness",
-          question: "What business risks need attention and what am I waiting on from the team?",
-          mode: "business_briefing",
-        }),
-      },
-    );
-    const executivePayload = await executiveResponse.json().catch(() => ({}));
-    executiveEndpointMode = executivePayload.mode ?? null;
-    if (
-      executiveResponse.status === 503 &&
-      String(executivePayload.detail ?? "").includes("Deep Agents executive intelligence is disabled")
-    ) {
-      executiveEndpointState = "disabled";
-    } else if (executiveResponse.ok && executiveEndpointMode === "deep_agents") {
-      executiveEndpointState = "deep_agents";
-    } else if (executiveResponse.ok) {
-      executiveEndpointState = executiveEndpointMode ?? "enabled_unknown_mode";
-    } else {
-      fail(`Deep Agents executive endpoint probe failed with HTTP ${executiveResponse.status}.`);
-    }
-
     const researchResponse = await fetchWithTimeout(
       "Deep Agents research endpoint probe",
       `${backendUrl}/api/intelligence/research`,
@@ -347,14 +279,6 @@ async function main() {
     }
   }
 
-  if (expectEnabled && endpointState !== "deep_agents") {
-    fail(`DEEP_AGENTS_EXPECT_ENABLED=true requires endpoint mode deep_agents; found ${endpointState}.`);
-  }
-  if (expectEnabled && executiveEndpointState !== "deep_agents") {
-    fail(
-      `DEEP_AGENTS_EXPECT_ENABLED=true requires executive endpoint mode deep_agents; found ${executiveEndpointState}.`,
-    );
-  }
   if (expectEnabled && researchEndpointState !== "deep_agents") {
     fail(`DEEP_AGENTS_EXPECT_ENABLED=true requires research endpoint mode deep_agents; found ${researchEndpointState}.`);
   }
@@ -369,10 +293,6 @@ async function main() {
       ai_gateway_configured: health.ai_gateway_configured === true,
       supabase_service_configured: health.supabase_service_configured === true,
     },
-    endpointState,
-    endpointMode,
-    executiveEndpointState,
-    executiveEndpointMode,
     researchEndpointState,
     researchEndpointMode,
     researchSourceCount,

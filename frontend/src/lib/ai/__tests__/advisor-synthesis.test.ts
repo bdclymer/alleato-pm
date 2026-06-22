@@ -86,7 +86,7 @@ const packet: ClientProjectIntelligencePacket = {
 const operatingPacket: ClientProjectIntelligencePacket = {
   ...packet,
   freshnessStatus: "fresh",
-  compilerVersion: "project-operating-summary-v1",
+  compilerVersion: "project_intelligence_synthesis_v1",
   packetJson: {
     strategicReport: {
       whatChanged: [

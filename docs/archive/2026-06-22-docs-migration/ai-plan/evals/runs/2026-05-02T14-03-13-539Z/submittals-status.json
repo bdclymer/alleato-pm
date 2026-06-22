@@ -1,0 +1,42 @@
+{
+  "id": "submittals-status",
+  "intent": "operations_analysis",
+  "prompt": "Give me the submittal status on Westfield — anything overdue?",
+  "selectedProjectId": 43,
+  "sessionId": "71c93bbe-6e8b-4ed8-ae77-f19657fd9ce9",
+  "sessionLabel": "eval-2026-05-02T14-03-13-539Z-submittals-status",
+  "startedAt": "2026-05-02T14:11:59.260Z",
+  "finishedAt": "2026-05-02T14:12:14.568Z",
+  "durationMs": 1,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "expected at least one of [getSubmittalStatus] to fire — none did",
+      "mustInclude missing: \"submittal\"",
+      "answer length 0 < min 100"
+    ],
+    "warnings": [
+      "expected family 'operations' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getSubmittalStatus"
+  ],
+  "expectedToolFamilies": [
+    "operations"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

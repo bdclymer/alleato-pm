@@ -1,0 +1,73 @@
+{
+  "generatedAt": "2026-05-14T20:38:07.427Z",
+  "baseUrl": "http://localhost:3000",
+  "bundle": null,
+  "filter": null,
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "promptContextReducer": 1,
+    "clientProjectIntelligencePacket": 1,
+    "mcpToolDiscovery": 1,
+    "streamingToolPolicy": 1,
+    "noToolRetry": 1
+  },
+  "intentDistribution": {
+    "project_briefing": 1
+  },
+  "results": [
+    {
+      "id": "owner-strategy-ulta-action-plan",
+      "intent": "project_briefing",
+      "prompt": "I am Brandon. For 25-127 Ulta Beauty Fresno, what is most likely to cost us money this week, what is blocked, and what do I personally need to do today?",
+      "selectedProjectId": null,
+      "sessionId": "3071ca39-6234-4aeb-8071-98a15e8ddb6e",
+      "sessionLabel": "eval-2026-05-14T20-37-25-776Z-96546f80-owner-strategy-ulta-action-plan",
+      "startedAt": "2026-05-14T20:37:25.824Z",
+      "finishedAt": "2026-05-14T20:38:07.426Z",
+      "durationMs": 41031,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 40,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'semantic' not represented",
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "clientProjectIntelligencePacket",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 2584,
+        "finalText": "For **25-127 Ulta Beauty Fresno**, here’s what matters most for cost, risk, and your action as of today:\n\n---\n\n### What is Most Likely to Cost Money This Week\n\n**Insurance Compliance and Sprinkler Issue:**  \nThe inspector flagged that ductwork is blocking fire sprinklers. If this isn’t corrected quickly, you risk increased insurance premiums and/or being out of compliance with code—both have direct and potentially significant cost impacts. Further, any rework required by insurance or local authorities would drive costs this week.\n\n**AC1 Relocation Delay:**  \nThe relocation of AC1 is still waiting on signoff from the solar company. Prolonged delays could lead to extra labor mobilizations or schedule-related expenses (e.g., idle resources, lost productivity).\n\n---\n\n### What is Blocked\n\n- **AC1 Relocation** is blocked pending **solar company approval**. All other AC units are operational, but this approval is the gating factor for finalizing the mechanical work.\n- **Roof Duct Sock Reinstallation** is on hold because insurance-related issues with the fire sprinklers haven’t been resolved. The temporary removal is causing both insurance exposure and operational delay.\n\n---\n\n### What You (Brandon) Personally Need to Do Today\n\n1. **Push the Solar Company for Immediate Approval:**  \n   Reach out directly to the solar provider contact and demand a definitive timeline and action for AC1 relocation approval. Without this, critical path mechanical/roof work is stalled.\n\n2. **Coordinate With the Superintendent (Candon)** to:\n   - Make sure teams are mobilized and ready for duct adjustments as soon as the solar approval clears.\n   - Confirm that the ductwork correction (to address the sprinkler clearance) is scheduled and someone owns it.\n\n3. **Check With Accounting** to verify status of any payments (esp. to Citadel or key vendors), as previous payment issues with syncing Job Planner were flagged. Any further payment delays could risk liens, loss of service, or further schedule/cost issues.\n\n---\n\n#### Recent Changes / Supporting Evidence\n\n- **Meeting (2026-05-14):** Insurance flagged ductwork conflict with sprinklers; AC1 cannot be relocated until solar approval. Four AC units otherwise operational.\n- **Project finances and payments:** Recent email traffic shows previous payment delays (Citadel, April 29); this could escalate if not resolved.\n\n---\n\n**First Action:**  \nEmail and call the solar contact for AC1 relocation approval. Then follow up with Candon for duct/sprinkler offset scheduling and catch up with accounts on Citadel/vendor payment status."
+      },
+      "expectedToolNames": [
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot",
+        "semanticSearch",
+        "searchMeetingsByTopic",
+        "searchEmails",
+        "searchTeamsMessages"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic",
+        "communications"
+      ]
+    }
+  ]
+}

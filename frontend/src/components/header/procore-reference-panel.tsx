@@ -71,20 +71,6 @@ function serializeArg(arg: unknown): string {
 // ─── Column map inference ────────────────────────────────────────────────────
 
 function inferColumnMappings(pathname: string) {
-  if (pathname === "/database") {
-    return {
-      tableName: "database_tables_catalog",
-      mappings: [
-        { visibleColumnName: "Table Name",   actualColumnOrFormula: "table_name",   notes: "Physical Postgres table name" },
-        { visibleColumnName: "Schema",        actualColumnOrFormula: "schema_name",  notes: "Schema containing the table" },
-        { visibleColumnName: "Category",      actualColumnOrFormula: "category",     notes: "Editable metadata field" },
-        { visibleColumnName: "Row Count",     actualColumnOrFormula: "row_count",    notes: "Estimated from catalog" },
-        { visibleColumnName: "RLS Enabled",   actualColumnOrFormula: "rls_enabled",  notes: "Boolean → enabled/disabled badge" },
-        { visibleColumnName: "Primary Keys",  actualColumnOrFormula: "primary_keys", notes: "String summary of PK columns" },
-      ],
-    };
-  }
-
   const headers = typeof document !== "undefined"
     ? Array.from(document.querySelectorAll("table thead th"))
         .map((el) => el.textContent?.trim() ?? "")

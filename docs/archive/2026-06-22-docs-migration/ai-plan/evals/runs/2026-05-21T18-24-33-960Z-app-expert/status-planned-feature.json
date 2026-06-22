@@ -1,0 +1,54 @@
+{
+  "id": "status-planned-feature",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6614,
+  "question": "How should Ask Alleato explain a planned feature?",
+  "response": {
+    "answer": "Ask Alleato should explain a planned feature as **planned, not currently available**.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are current and available:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry entry: **Understand Feature Status** (`app-feature-status-and-limitations`)\n- Help article: `docs/help/articles/app-feature-status-and-limitations.md`\n\nWhat the docs say:\n- **Planned** means “the intended workflow is documented but not built yet.”\n- Ask Alleato should be direct about whether a workflow is live, partial, planned, blocked, or deprecated.\n- If the answer is uncertain, it should say what it checked and what remains uncertain instead of guessing.\n- It should **not** claim a write action is available unless approved preview-and-confirm tooling or action metadata says so.\n\nSo the correct user-facing explanation for a planned feature is something like:\n- “This feature is planned, but it isn’t available in the app yet.”\n- “The intended workflow is documented, but Ask Alleato shouldn’t present it as a live action.”\n- If helpful, it should point users to the relevant docs or current supported workflow instead.\n\nRelevant source:\n- `docs/help/articles/app-feature-status-and-limitations.md`",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6611,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

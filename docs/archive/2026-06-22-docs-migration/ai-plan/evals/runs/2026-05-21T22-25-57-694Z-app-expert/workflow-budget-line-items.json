@@ -1,0 +1,70 @@
+{
+  "id": "workflow-budget-line-items",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6530,
+  "question": "How should budget line items work?",
+  "mustInclude": [
+    "budget",
+    "line item"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Budget line items are documented as the base unit of the Budget tool.\n\nWhat I checked\n- Artifact status: current and available\n  - `app-sitemap.generated.json` updated `2026-05-21T18:31:24.877Z`\n  - `feature-registry.generated.json` updated `2026-05-21T18:31:24.877Z`\n- Curated feature metadata:\n  - `Budget Line Items` → help article `docs/help/articles/budget-line-items.md`\n  - Related route: `/[projectId]/budget`\n- Curated help article:\n  - `docs/help/articles/budget-line-items.md`\n\nDocumented behavior\n- A budget line item is one row in the budget tied to a cost code and cost type.\n- It is the base unit for tracking budget vs actual on the project.\n- To add one:\n  - Open **Budget**\n  - Select **Add Line Item**\n  - Choose **Cost Code**\n  - Choose **Cost Type**: labor, material, equipment, subcontract, other\n  - Enter **Description** and **Original Budget**\n  - Save\n- If the cost code is missing, an admin must add it to the project cost code list first.\n- To edit one:\n  - Click the row\n  - Update description, quantity, unit cost, or original budget\n  - Save\n- For changes that should be tracked, use a **budget modification** instead of directly editing original budget.\n- A budget modification moves money between line items without changing contract value.\n- Forecast can be:\n  - auto-calculated from actual + remaining committed\n  - manually overridden by the project manager\n- Forecast method is switched from the line item detail panel.\n\nRoute evidence\n- Budget page: `/[projectId]/budget`\n- Related route in sitemap: `/[projectId]/budget/line-item/new`\n\nWhat remains uncertain\n- The article says “submit for approval if your project requires it,” but I did not find action metadata confirming a specific approval workflow or write action from this metadata alone.\n- I did not inspect implementation source files, so anything beyond the help article is not verified here.\n\nIf you want, I can also check the Budget Overview or Budget Reference article for columns, permissions, and how line items flow into forecast/variance.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/budget-line-items.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/budget-line-items.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/budget",
+        "sourceType": "sitemap",
+        "route": "/budget",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/budget/line-item/new",
+        "sourceType": "sitemap",
+        "route": "/budget/line-item/new",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/variance.",
+        "sourceType": "sitemap",
+        "route": "/variance.",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6424,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

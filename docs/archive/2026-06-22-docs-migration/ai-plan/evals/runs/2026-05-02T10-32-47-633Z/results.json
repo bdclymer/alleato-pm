@@ -1,0 +1,1426 @@
+{
+  "generatedAt": "2026-05-02T10:43:27.925Z",
+  "baseUrl": "http://localhost:3000",
+  "totalCases": 30,
+  "passed": 18,
+  "failed": 12,
+  "toolCoverage": {
+    "streamingToolPolicy": 17,
+    "getPortfolioOverview": 10,
+    "clientProjectIntelligencePacket": 9,
+    "findProject": 8,
+    "searchMeetingsByTopic": 7,
+    "getProjectsWithRisks": 7,
+    "getActionItemsAndInsights": 7,
+    "semanticSearch": 7,
+    "getCompanyKnowledge": 7,
+    "searchEmails": 5,
+    "noToolRetry": 4,
+    "searchTeamsMessages": 3,
+    "getRFIStatus": 3,
+    "getScheduleAnalysis": 3,
+    "getCrossProjectComparison": 3,
+    "getFinancialAnalysis": 3,
+    "sourceLookupIntentRouter": 3,
+    "getCommitmentsOverview": 2,
+    "getChangeOrderDetails": 2,
+    "getProjectBudgetSummary": 2,
+    "getSubmittalStatus": 2,
+    "streamTextError": 2,
+    "getDirectCostsSummary": 2,
+    "getPeopleAndRoles": 2,
+    "searchAppHelp": 2,
+    "getAPAgingReport": 2,
+    "queryDirectCosts": 1,
+    "getForecastComparison": 1,
+    "getMarginAnalysis": 1,
+    "getCostTrends": 1,
+    "getProjectBriefingSnapshot": 1,
+    "getVendorPerformance": 1,
+    "getProjectRiskAnalysis": 1,
+    "getVendorSpendReport": 1,
+    "sourceSpecificRagRetrieval": 1,
+    "getMeetingsByDate": 1,
+    "getAcumaticaProjectList": 1,
+    "recallPastConversations": 1,
+    "getCashPositionReport": 1,
+    "getRecentInvoices": 1,
+    "getARAgingReport": 1,
+    "getRecentBills": 1,
+    "searchConstructionMarket": 1
+  },
+  "intentDistribution": {
+    "project_briefing": 3,
+    "portfolio_briefing": 2,
+    "risk_review": 1,
+    "financial_analysis": 9,
+    "operations_analysis": 4,
+    "people_or_capacity": 2,
+    "source_lookup": 3,
+    "meeting_query": 1,
+    "document_question": 1,
+    "knowledge_capture": 1,
+    "general_conversation": 1,
+    "app_help": 1,
+    "brainstorming": 1
+  },
+  "results": [
+    {
+      "id": "project-briefing-westfield",
+      "intent": "project_briefing",
+      "prompt": "What's the latest on Westfield Collective?",
+      "selectedProjectId": 43,
+      "sessionId": "eba88699-1156-45a4-8c6d-250a9fdb964b",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-project-briefing-westfield",
+      "startedAt": "2026-05-02T10:32:47.635Z",
+      "finishedAt": "2026-05-02T10:32:58.151Z",
+      "durationMs": 9811,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getProjectBriefingSnapshot, semanticSearch] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'semantic' not represented",
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: clientProjectIntelligencePacket"
+        ],
+        "toolNames": [
+          "clientProjectIntelligencePacket"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 2404,
+        "finalText": "Current read: Active closeout/commercial coordination with LOI/warranty language, past-due invoice follow-up, change-order signatures, and remaining work signals.\nWhat changed recently: Westfield Collective has active late-stage communication around LOI/warranty language, change-order signatures, remaining work, and payment follow-up.\nFinancial/change-management exposure: The packet flags pending cost exposure and payment pressure: past-due invoice communication is present, and older plumbing/change-order scope still needs formal cost confirmation. Change-management risk centers on plumbing scope, floor-sink changes, mop-sink/Pepsi-line additions, and unsigned change-order documentation.\nSchedule/operational risk: Operational risk is tied to closeout readiness: remaining items, patio/grade decisions, health-inspection plumbing fixes, and vendor coordination have appeared in recent project communications.\nDecisions/open questions/follow-ups: Open decisions include whether warranty/governing-law language is acceptable and whether change-order signatures/documentation are complete. Likely missed follow-ups are the LeMaster/warranty wording response, past-due invoice resolution, change-order signatures, and confirming remaining work ownership.\nRecommended next action:\n- Verify latest post-April-22 communications before making client-facing claims.\n- Check structured budget, commitments, direct costs, and change orders before quoting exposure dollars.\n- Assign owners/dates for warranty language, change-order signatures, past-due invoices, and remaining items.\nEvidence basis and confidence: The packet links to real project communications, but formal cost/status values still require structured tools. 1223 project document/source rows, 544 project memories, 0 project_emails rows. Latest packet source date: 2026-04-22T00:00:00.000Z. Gaps: project_emails has zero project-scoped rows for project 43; manual packet does not replace structured financial verification; post-packet communications must be checked for stale answers. [Source: Teams DM: Westfield Collective] [Source: Email: TAG 04/21/26 Westfield Collective - Past Due Invoices] [Source: Westfield Collective: Change Order Discussion]\n\n\nPacket status: working sample. Use this as the prepared baseline, not as proof that nothing changed after 2026-04-22T00:00:00+00:00.\nResolved target: Westfield Collective (project 43)."
+      },
+      "expectedToolNames": [
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic",
+        "communications"
+      ]
+    },
+    {
+      "id": "project-briefing-vermillion",
+      "intent": "project_briefing",
+      "prompt": "Give me a current read on Vermillion Rise Warehouse.",
+      "selectedProjectId": 67,
+      "sessionId": "c812349e-adf7-467e-8744-c779b07a43b0",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-project-briefing-vermillion",
+      "startedAt": "2026-05-02T10:32:58.152Z",
+      "finishedAt": "2026-05-02T10:34:06.804Z",
+      "durationMs": 67756,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 31,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: streamingToolPolicy, searchTeamsMessages, searchEmails, searchMeetingsByTopic, searchEmails, getProjectsWithRisks, getActionItemsAndInsights, findProject, findProject, searchEmails, searchTeamsMessages, findProject, queryDirectCosts, getForecastComparison, getCommitmentsOverview, getChangeOrderDetails, getMarginAnalysis, getCostTrends, getProjectBudgetSummary, getProjectBriefingSnapshot, semanticSearch, searchMeetingsByTopic, searchMeetingsByTopic, getSubmittalStatus, getRFIStatus, getVendorPerformance, getCommitmentsOverview, getScheduleAnalysis, getActionItemsAndInsights, noToolRetry"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "searchTeamsMessages",
+          "searchEmails",
+          "searchMeetingsByTopic",
+          "searchEmails",
+          "getProjectsWithRisks",
+          "getActionItemsAndInsights",
+          "findProject",
+          "findProject",
+          "searchEmails",
+          "searchTeamsMessages",
+          "findProject",
+          "queryDirectCosts",
+          "getForecastComparison",
+          "getCommitmentsOverview",
+          "getChangeOrderDetails",
+          "getMarginAnalysis",
+          "getCostTrends",
+          "getProjectBudgetSummary",
+          "getProjectBriefingSnapshot",
+          "semanticSearch",
+          "searchMeetingsByTopic",
+          "searchMeetingsByTopic",
+          "getSubmittalStatus",
+          "getRFIStatus",
+          "getVendorPerformance",
+          "getCommitmentsOverview",
+          "getScheduleAnalysis",
+          "getActionItemsAndInsights",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "forecast",
+          "structured",
+          "schedule",
+          "operations",
+          "risk",
+          "people",
+          "meetings",
+          "communications",
+          "semantic",
+          "actions"
+        ],
+        "finalTextLength": 3351,
+        "finalText": "Here’s where Vermillion Rise Warehouse stands right now:\n\n### Hard Facts\n\n- **Budget**: $12,940,266 (revised), with a variance of -$12,865,266 (well under budget).\n- **Contract Value**: $75,000, with no confirmed budgets or invoices posted yet.\n- **Open Change Events**: 7 still outstanding.\n- **Recent Change Orders**: 3 approved ($5,000 total), $1,235 pending.\n- **Open RFIs**: 4.\n- **Incomplete Schedule Tasks**: 41 open.\n- **Other Commitments**: None designated as fully executed; PO/subcontract issuance appears incomplete.\n\n### What’s Changed/Recent Activity\n\n- Meetings continue to flag open safety concerns (welding sparks, coordination of HVAC relocation, incomplete fire system integration).\n- Schedule delays are a hot spot — recent meetings reset the completion target to April 15th.\n- Communication is focused on closing out open RFIs and getting sign-off on change order pricing.\n- Payment status is still unresolved, both for pending invoices and for signed change orders.\n- Active closeout steps are underway but not complete; final commercial hand-off is not ready.\n\n### Insider Analysis\n\n- The job is not in crisis, but active schedule and closeout risks remain. 41 incomplete schedule items at this stage is a sign of loose closeout management or lagging trade partners.\n- The variance looks healthy, but with 7 open change events and payment lag, there’s potential for costs to sneak up — especially if the scope is not tightly defined or priced out before owner pushback.\n- Safety is still being discussed in steering meetings, implying that field controls may not be fully buttoned up.\n- Owner/GC relationship is stable but action-oriented — this isn’t a job that can coast into closeout.\n- Missing commitment execution could delay procurement and actual payment flows; risk of contractors delaying performance or pulling off if commitments aren’t finalized.\n\n### Recommended Actions\n\n1. **Close Out Open Change Events**: Assign owners for each of the 7 outstanding and get ROM numbers/settlement before the next OAC. Unpriced exposure is avoidable risk.\n2. **RFIs/Submittals**: Push for answers on the 4 open RFIs — these can stall closeout tasks and final compliance.\n3. **Schedule Push**: Lock down overdue items on the schedule, enforce accountability for the delayed tasks, and revisit sequence if necessary (especially for HVAC and fire system tie-in).\n4. **Finalize Commitments**: Issue any pending POs/subcontracts now. Hold trade partners accountable for buyout and deliverables, or risk cascading execution failures.\n5. **Payment Status**: Get clarity on pending invoice approvals and pay status on change orders — late payments will quickly sour relationships at this stage.\n\n### Confidence and Data Gaps\n\n- All data is current through the last meeting, emails, and team communications, but some signals (especially commitments and POs) need direct confirmation in the system.\n- No fresh updates on new risks, but watch for unknowns in closeout and owner acceptance.\n\n### Next Step\n\nGet direct answers on the 7 open change events and 4 open RFIs by the end of this week. If you don’t have these cleared, schedule and budget are both at risk as you move into final acceptance and funding.\n\nIf you need a dive on a specific area (closeout plan, payment status, or commitments), I can break those out — just say the word."
+      },
+      "expectedToolNames": [
+        "getProjectBriefingSnapshot"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic"
+      ]
+    },
+    {
+      "id": "portfolio-overview",
+      "intent": "portfolio_briefing",
+      "prompt": "Across all active projects, what should I worry about this week?",
+      "selectedProjectId": null,
+      "sessionId": "c426b6be-1512-454a-bf06-ebe0cdf331d9",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-portfolio-overview",
+      "startedAt": "2026-05-02T10:34:06.806Z",
+      "finishedAt": "2026-05-02T10:34:54.561Z",
+      "durationMs": 46997,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1169,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: streamingToolPolicy, getCrossProjectComparison, getProjectsWithRisks, getProjectsWithRisks, getProjectsWithRisks, getFinancialAnalysis, getActionItemsAndInsights, getPortfolioOverview, getPortfolioOverview, getPortfolioOverview"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "getCrossProjectComparison",
+          "getProjectsWithRisks",
+          "getProjectsWithRisks",
+          "getProjectsWithRisks",
+          "getFinancialAnalysis",
+          "getActionItemsAndInsights",
+          "getPortfolioOverview",
+          "getPortfolioOverview",
+          "getPortfolioOverview"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "actions"
+        ],
+        "finalTextLength": 5152,
+        "finalText": "What I’d worry about this week is **scope drift turning into unrecovered cost**. It’s not a portfolio-wide fire yet, but you’ve got a few jobs where change activity and coordination friction are outrunning closure.\n\n## Top concerns this week\n\n### 1) Vermillion Rise Warehouse needs attention first\nThis is the one job that stands out across finance, ops, and risk.\n\nWhat the data says:\n- **10 open change events**\n- **7 tracked issues**\n- **9 overdue tasks**\n- **4 open RFIs**, including **1 overdue**\n- It’s the **only current project clearly flagged in the risk radar**\n\nWhy that matters:\n- The project is still working through HVAC, structural, electrical, and pricing coordination.\n- That means it’s still in a **scope-definition / decision-cleanup phase**, not a locked execution phase.\n- That’s where margin gets lost: field decisions happen faster than pricing, and rework shows up later.\n\nWhat to do:\n- Get a **change-event closure list** this week: priced, unpriced, approved, pending owner direction.\n- Clear the **overdue RFI** and the **top 3 overdue tasks** immediately.\n- Force clean separation of **office vs. warehouse cost impacts** if that pricing split is still in play.\n\n## 2) Portfolio-wide change management is the systemic risk\nAcross active projects, there are **19 open change events**.\n\nThat’s the real portfolio signal. Not all of them are dangerous, but open changes sitting too long usually mean one of three things:\n- scope is still moving,\n- pricing is late,\n- or ownership is unclear.\n\nProjects on the watch list:\n- **Exol Wilmer** — **4 open change events**\n- **QA Workflow Project** — **4 open change events**\n- **Ulta Beauty Fresno** — **1 open change event**\n- **Vermillion Rise** — the big one with **10**\n\nWhat to do:\n- Run a **weekly aging review of open change events** across all active jobs.\n- Put an owner and next decision date on every open item.\n- Anything tied to owner approval, long-lead procurement, or permit/design dependencies gets pushed to the top.\n\n## 3) Ulta Beauty Fresno has dependency risk\nUlta doesn’t look broadly unhealthy, but it has a classic quiet-risk profile:\n- **1 open change event**\n- meeting signal shows **AC1 delayed by unresolved solar power issue**\n- fire alarm shutdown / inspection coordination is active\n\nWhy it matters:\n- This isn’t about issue count. It’s about a dependency outside the normal workstream.\n- If that solar issue slips again, turnover and commissioning can compress fast.\n\nWhat to do:\n- Confirm who owns the solar issue and the committed resolution date.\n- Lock the inspection/shutdown plan so it doesn’t become a last-minute coordination mess.\n\n## 4) Exol Wilmer is schedule-sensitive\nExol Wilmer’s exposure is less about chaos and more about **timing**:\n- **4 open change events**\n- critical work is tied to concrete/power path and procurement timing\n\nWhy it matters:\n- These jobs look fine until one release date slips and the schedule starts stacking trades on top of each other.\n\nWhat to do:\n- Verify long-lead items are actually released, not just discussed.\n- Protect the concrete and power path this week.\n\n## 5) QA Workflow Project has a governance smell\nWhat stands out here:\n- **4 open change events**\n- but weak visibility in meeting cadence\n\nWhy it matters:\n- Change activity without clear governance usually means things are moving without enough accountability.\n- Maybe it’s real exposure, maybe workflow noise — but right now it’s not clean.\n\nWhat to do:\n- Confirm who owns the job, who approves changes, and what the weekly cadence is.\n- If those changes are stale, close them or kill them.\n\n## Financial read\nThe clearest financial issue this week is still **open scope exposure**, especially on Vermillion Rise.\n\nWhat I can confirm:\n- **10 active projects**\n- **$8.05M** in total contract value\n- **19 open change events**\n- **1 project currently flagged as risky**\n\nWhat I cannot confirm from this run:\n- live **AR aging**\n- live **AP aging**\n- current **cash pressure**\n- portfolio-wide **margin erosion**\n\nThat’s a real detection gap. The project signals are strong, but I don’t yet have the live accounting read to tell you whether this has become a collections, payables, or margin problem.\n\n## The point of view\nThis week is not about chasing every project equally. It’s about **forcing closure where scope is moving faster than controls**.\n\nIf you do nothing else:\n1. **Review Vermillion Rise first**\n2. **Age every open change event across the portfolio**\n3. **Check dependency dates on Ulta and Exol Wilmer**\n4. **Tighten governance on QA Workflow**\n\n## Confidence / gaps\nConfidence is **high** on the project-level risk pattern:\n- Vermillion Rise is the main concern\n- open change activity is the portfolio theme\n\nConfidence is **lower** on cash and margin stress because I do **not** have live AR/AP/cash results in this pass.\n\nNext move: I can turn this into a sharper **Monday leadership watchlist** with:\n- the top 5 projects,\n- exact exposures,\n- and a same-week owner/action for each.\n\nIf you want the real pressure test, I’d pull **cash position + AR aging + AP aging** next and combine that with this project risk view."
+      },
+      "expectedToolNames": [
+        "getPortfolioOverview",
+        "getProjectsWithRisks"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "risk"
+      ]
+    },
+    {
+      "id": "risk-review-single-project",
+      "intent": "risk_review",
+      "prompt": "What are the biggest risks on Westfield Collective right now?",
+      "selectedProjectId": 43,
+      "sessionId": "798c9023-428b-4150-b665-02f8a9456e8a",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-risk-review-single-project",
+      "startedAt": "2026-05-02T10:34:54.562Z",
+      "finishedAt": "2026-05-02T10:35:40.150Z",
+      "durationMs": 44574,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 126,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'project' not represented"
+        ],
+        "observations": [
+          "tools fired: streamingToolPolicy, getChangeOrderDetails, getSubmittalStatus, getProjectBudgetSummary, getProjectRiskAnalysis, getRFIStatus, getActionItemsAndInsights, searchMeetingsByTopic, findProject, streamTextError, noToolRetry"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "getChangeOrderDetails",
+          "getSubmittalStatus",
+          "getProjectBudgetSummary",
+          "getProjectRiskAnalysis",
+          "getRFIStatus",
+          "getActionItemsAndInsights",
+          "searchMeetingsByTopic",
+          "findProject",
+          "streamTextError",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "financial",
+          "operations",
+          "risk",
+          "meetings",
+          "semantic",
+          "actions"
+        ],
+        "finalTextLength": 2030,
+        "finalText": "Here are the biggest risks on Westfield Collective right now:\n\n### 1. Outstanding Closeout Costs and Invoices\nThere are still unresolved closeout costs and invoices pending signature or approval. This is slowing financial closeout and exposes the project to last-minute claims or delays in final payment.\n\n### 2. Change Order Execution Lag\nSeveral change orders remain unsigned or are in negotiation. Delayed approval puts scope clarity and final billing at risk and may trigger disputes or additional payment holds.\n\n### 3. Late/Incomplete Warranty and Turnover Documentation\nCloseout documentation, including warranty language and turnover packages, is not fully resolved. Any delay here risks owner acceptance and could prevent project sign-off or trigger liquidated damages if there’s a contractual turnover date.\n\n### 4. Commercial Coordination Delays\nFinal coordination with the commercial tenant/end-user is still active. Any late-stage surprise (scope gap, punch-list dispute, systems turnover) can escalate quickly at this phase.\n\n### 5. Schedule Readiness for Final Walk and Owner Move-In\nThere’s pressure to demonstrate schedule readiness for remaining owner requirements, especially related to final inspections, punch, and acceptance. Any slippage here could jeopardize turnover and cause friction with the owner.\n\n---\n\n**Summary:**  \nThe risk profile is classic for closeout: documentation, commercial alignment, pending costs, and final approvals are all still in play. Any one of these, if mishandled, could threaten project close and final payment.\n\n**What to do next:**  \n- Push hard on getting all closeout costs and invoices signed off—don’t let any item linger for negotiation.\n- Lock in warranty/turnover document submissions this week.\n- Get commercial coordination issues escalated and cleared.\n- Confirm owner has what they need for final acceptance.\n\nLet me know if you want the detailed status by specific contract section or trade, or if you need ownership (who’s on point) for any of these risk items."
+      },
+      "expectedToolNames": [
+        "getProjectRiskAnalysis"
+      ],
+      "expectedToolFamilies": [
+        "risk",
+        "project"
+      ]
+    },
+    {
+      "id": "financial-budget-summary",
+      "intent": "financial_analysis",
+      "prompt": "What does the budget look like on Westfield? Are we tracking under or over?",
+      "selectedProjectId": 43,
+      "sessionId": "9a0ea769-7feb-4b43-914a-1e3acd0b1c90",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-financial-budget-summary",
+      "startedAt": "2026-05-02T10:35:40.150Z",
+      "finishedAt": "2026-05-02T10:35:44.035Z",
+      "durationMs": 3837,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getProjectBudgetSummary, queryBudgetData, getBudgetLineItems] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'financial' not represented",
+          "expected family 'structured' not represented"
+        ],
+        "observations": [
+          "tools fired: clientProjectIntelligencePacket"
+        ],
+        "toolNames": [
+          "clientProjectIntelligencePacket"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 2404,
+        "finalText": "Current read: Active closeout/commercial coordination with LOI/warranty language, past-due invoice follow-up, change-order signatures, and remaining work signals.\nWhat changed recently: Westfield Collective has active late-stage communication around LOI/warranty language, change-order signatures, remaining work, and payment follow-up.\nFinancial/change-management exposure: The packet flags pending cost exposure and payment pressure: past-due invoice communication is present, and older plumbing/change-order scope still needs formal cost confirmation. Change-management risk centers on plumbing scope, floor-sink changes, mop-sink/Pepsi-line additions, and unsigned change-order documentation.\nSchedule/operational risk: Operational risk is tied to closeout readiness: remaining items, patio/grade decisions, health-inspection plumbing fixes, and vendor coordination have appeared in recent project communications.\nDecisions/open questions/follow-ups: Open decisions include whether warranty/governing-law language is acceptable and whether change-order signatures/documentation are complete. Likely missed follow-ups are the LeMaster/warranty wording response, past-due invoice resolution, change-order signatures, and confirming remaining work ownership.\nRecommended next action:\n- Verify latest post-April-22 communications before making client-facing claims.\n- Check structured budget, commitments, direct costs, and change orders before quoting exposure dollars.\n- Assign owners/dates for warranty language, change-order signatures, past-due invoices, and remaining items.\nEvidence basis and confidence: The packet links to real project communications, but formal cost/status values still require structured tools. 1223 project document/source rows, 544 project memories, 0 project_emails rows. Latest packet source date: 2026-04-22T00:00:00.000Z. Gaps: project_emails has zero project-scoped rows for project 43; manual packet does not replace structured financial verification; post-packet communications must be checked for stale answers. [Source: Teams DM: Westfield Collective] [Source: Email: TAG 04/21/26 Westfield Collective - Past Due Invoices] [Source: Westfield Collective: Change Order Discussion]\n\n\nPacket status: working sample. Use this as the prepared baseline, not as proof that nothing changed after 2026-04-22T00:00:00+00:00.\nResolved target: Westfield Collective (project 43)."
+      },
+      "expectedToolNames": [
+        "getProjectBudgetSummary",
+        "queryBudgetData",
+        "getBudgetLineItems"
+      ],
+      "expectedToolFamilies": [
+        "financial",
+        "structured"
+      ]
+    },
+    {
+      "id": "financial-commitments",
+      "intent": "financial_analysis",
+      "prompt": "Show me an overview of commitments on Westfield with their current status.",
+      "selectedProjectId": 43,
+      "sessionId": "52b64ca4-99ab-44ff-a43e-b78a264ee7a9",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-financial-commitments",
+      "startedAt": "2026-05-02T10:35:44.037Z",
+      "finishedAt": "2026-05-02T10:35:47.050Z",
+      "durationMs": 2963,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getCommitmentsOverview, queryCommitments] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'financial' not represented",
+          "expected family 'structured' not represented"
+        ],
+        "observations": [
+          "tools fired: clientProjectIntelligencePacket"
+        ],
+        "toolNames": [
+          "clientProjectIntelligencePacket"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 2404,
+        "finalText": "Current read: Active closeout/commercial coordination with LOI/warranty language, past-due invoice follow-up, change-order signatures, and remaining work signals.\nWhat changed recently: Westfield Collective has active late-stage communication around LOI/warranty language, change-order signatures, remaining work, and payment follow-up.\nFinancial/change-management exposure: The packet flags pending cost exposure and payment pressure: past-due invoice communication is present, and older plumbing/change-order scope still needs formal cost confirmation. Change-management risk centers on plumbing scope, floor-sink changes, mop-sink/Pepsi-line additions, and unsigned change-order documentation.\nSchedule/operational risk: Operational risk is tied to closeout readiness: remaining items, patio/grade decisions, health-inspection plumbing fixes, and vendor coordination have appeared in recent project communications.\nDecisions/open questions/follow-ups: Open decisions include whether warranty/governing-law language is acceptable and whether change-order signatures/documentation are complete. Likely missed follow-ups are the LeMaster/warranty wording response, past-due invoice resolution, change-order signatures, and confirming remaining work ownership.\nRecommended next action:\n- Verify latest post-April-22 communications before making client-facing claims.\n- Check structured budget, commitments, direct costs, and change orders before quoting exposure dollars.\n- Assign owners/dates for warranty language, change-order signatures, past-due invoices, and remaining items.\nEvidence basis and confidence: The packet links to real project communications, but formal cost/status values still require structured tools. 1223 project document/source rows, 544 project memories, 0 project_emails rows. Latest packet source date: 2026-04-22T00:00:00.000Z. Gaps: project_emails has zero project-scoped rows for project 43; manual packet does not replace structured financial verification; post-packet communications must be checked for stale answers. [Source: Teams DM: Westfield Collective] [Source: Email: TAG 04/21/26 Westfield Collective - Past Due Invoices] [Source: Westfield Collective: Change Order Discussion]\n\n\nPacket status: working sample. Use this as the prepared baseline, not as proof that nothing changed after 2026-04-22T00:00:00+00:00.\nResolved target: Westfield Collective (project 43)."
+      },
+      "expectedToolNames": [
+        "getCommitmentsOverview",
+        "queryCommitments"
+      ],
+      "expectedToolFamilies": [
+        "financial",
+        "structured"
+      ]
+    },
+    {
+      "id": "financial-change-orders",
+      "intent": "financial_analysis",
+      "prompt": "Walk me through the open change orders on Westfield and the cost exposure.",
+      "selectedProjectId": 43,
+      "sessionId": "5dbe8474-927b-47f9-b6d7-cf7806cefc5b",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-financial-change-orders",
+      "startedAt": "2026-05-02T10:35:47.050Z",
+      "finishedAt": "2026-05-02T10:35:50.309Z",
+      "durationMs": 3204,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getChangeOrderDetails, queryChangeOrders] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'financial' not represented",
+          "expected family 'structured' not represented"
+        ],
+        "observations": [
+          "tools fired: clientProjectIntelligencePacket"
+        ],
+        "toolNames": [
+          "clientProjectIntelligencePacket"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 2404,
+        "finalText": "Current read: Active closeout/commercial coordination with LOI/warranty language, past-due invoice follow-up, change-order signatures, and remaining work signals.\nWhat changed recently: Westfield Collective has active late-stage communication around LOI/warranty language, change-order signatures, remaining work, and payment follow-up.\nFinancial/change-management exposure: The packet flags pending cost exposure and payment pressure: past-due invoice communication is present, and older plumbing/change-order scope still needs formal cost confirmation. Change-management risk centers on plumbing scope, floor-sink changes, mop-sink/Pepsi-line additions, and unsigned change-order documentation.\nSchedule/operational risk: Operational risk is tied to closeout readiness: remaining items, patio/grade decisions, health-inspection plumbing fixes, and vendor coordination have appeared in recent project communications.\nDecisions/open questions/follow-ups: Open decisions include whether warranty/governing-law language is acceptable and whether change-order signatures/documentation are complete. Likely missed follow-ups are the LeMaster/warranty wording response, past-due invoice resolution, change-order signatures, and confirming remaining work ownership.\nRecommended next action:\n- Verify latest post-April-22 communications before making client-facing claims.\n- Check structured budget, commitments, direct costs, and change orders before quoting exposure dollars.\n- Assign owners/dates for warranty language, change-order signatures, past-due invoices, and remaining items.\nEvidence basis and confidence: The packet links to real project communications, but formal cost/status values still require structured tools. 1223 project document/source rows, 544 project memories, 0 project_emails rows. Latest packet source date: 2026-04-22T00:00:00.000Z. Gaps: project_emails has zero project-scoped rows for project 43; manual packet does not replace structured financial verification; post-packet communications must be checked for stale answers. [Source: Teams DM: Westfield Collective] [Source: Email: TAG 04/21/26 Westfield Collective - Past Due Invoices] [Source: Westfield Collective: Change Order Discussion]\n\n\nPacket status: working sample. Use this as the prepared baseline, not as proof that nothing changed after 2026-04-22T00:00:00+00:00.\nResolved target: Westfield Collective (project 43)."
+      },
+      "expectedToolNames": [
+        "getChangeOrderDetails",
+        "queryChangeOrders"
+      ],
+      "expectedToolFamilies": [
+        "financial",
+        "structured"
+      ]
+    },
+    {
+      "id": "financial-direct-costs",
+      "intent": "financial_analysis",
+      "prompt": "Summarize direct costs to date on Westfield.",
+      "selectedProjectId": 43,
+      "sessionId": "9f4f5b96-7e46-4c29-903a-95164b834617",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-financial-direct-costs",
+      "startedAt": "2026-05-02T10:35:50.309Z",
+      "finishedAt": "2026-05-02T10:36:24.182Z",
+      "durationMs": 32689,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 544,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'structured' not represented"
+        ],
+        "observations": [
+          "tools fired: streamingToolPolicy, getDirectCostsSummary, findProject, getDirectCostsSummary"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "getDirectCostsSummary",
+          "findProject",
+          "getDirectCostsSummary"
+        ],
+        "familiesHit": [
+          "financial",
+          "semantic"
+        ],
+        "finalTextLength": 1597,
+        "finalText": "Westfield has **$2,278,381.63** in direct costs to date across **200 transactions**.\n\nWhat that actually looks like:\n- **Invoices:** **$2,124,401.37**\n- **Expenses:** **$153,980.26**\n\nBiggest direct-cost vendors so far:\n- **Deem, LLC** — **$608,752.33**\n- **Alleato Group** — **$453,701.97**\n- **Siemens Industry, Inc** — **$134,000.00**\n- **Market Ready Interiors Inc** — **$114,350.00**\n- **Justin Dorsey Plumbing** — **$105,679.04**\n- **Superior Contractors Inc** — **$74,079.38**\n- **United Excavating & General Contracting, Inc.** — **$63,056.70**\n- **Casework Concepts LLC** — **$62,484.00**\n- **Ski Landscape Corp** — **$60,437.32**\n\nTwo things stand out:\n- Spend was heaviest in **Dec 2025 ($865,788.53)**, then **Feb 2026 ($639,205.58)** and **Jan 2026 ($366,563.51)**.\n- It has tapered since then: **March 2026 was $318,546.93** and **April 2026 was $88,277.08**, which fits a project in late-stage/closeout mode.\n\nThe data issue to clean up:\n- There are **88 direct-cost transactions totaling $174,741.13** showing **“No vendor.”**\n- That does not change total spend, but it does weaken vendor-level visibility and makes cleanup/accountability harder in closeout.\n\nBottom line: **direct costs are materially incurred and mostly behind you at $2.28M, with remaining activity looking like closeout spending rather than mainline production spend.** The only thing I don’t like is the number of uncoded vendor entries.\n\nIf you want, I can next give you:\n1. **the biggest recent April direct costs**, or  \n2. **a vendor-by-vendor closeout/payoff view tied to commitments and open balances**."
+      },
+      "expectedToolNames": [
+        "getDirectCostsSummary",
+        "queryDirectCosts"
+      ],
+      "expectedToolFamilies": [
+        "financial",
+        "structured"
+      ]
+    },
+    {
+      "id": "financial-margin",
+      "intent": "financial_analysis",
+      "prompt": "What's the projected margin on Westfield Collective?",
+      "selectedProjectId": 43,
+      "sessionId": "0713db83-6343-4bfb-8fba-d4afd87bb741",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-financial-margin",
+      "startedAt": "2026-05-02T10:36:24.184Z",
+      "finishedAt": "2026-05-02T10:36:28.370Z",
+      "durationMs": 4133,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getMarginAnalysis, getFinancialAnalysis] to fire — none did",
+          "mustInclude missing: \"margin\""
+        ],
+        "warnings": [
+          "expected family 'financial' not represented"
+        ],
+        "observations": [
+          "tools fired: clientProjectIntelligencePacket"
+        ],
+        "toolNames": [
+          "clientProjectIntelligencePacket"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 2404,
+        "finalText": "Current read: Active closeout/commercial coordination with LOI/warranty language, past-due invoice follow-up, change-order signatures, and remaining work signals.\nWhat changed recently: Westfield Collective has active late-stage communication around LOI/warranty language, change-order signatures, remaining work, and payment follow-up.\nFinancial/change-management exposure: The packet flags pending cost exposure and payment pressure: past-due invoice communication is present, and older plumbing/change-order scope still needs formal cost confirmation. Change-management risk centers on plumbing scope, floor-sink changes, mop-sink/Pepsi-line additions, and unsigned change-order documentation.\nSchedule/operational risk: Operational risk is tied to closeout readiness: remaining items, patio/grade decisions, health-inspection plumbing fixes, and vendor coordination have appeared in recent project communications.\nDecisions/open questions/follow-ups: Open decisions include whether warranty/governing-law language is acceptable and whether change-order signatures/documentation are complete. Likely missed follow-ups are the LeMaster/warranty wording response, past-due invoice resolution, change-order signatures, and confirming remaining work ownership.\nRecommended next action:\n- Verify latest post-April-22 communications before making client-facing claims.\n- Check structured budget, commitments, direct costs, and change orders before quoting exposure dollars.\n- Assign owners/dates for warranty language, change-order signatures, past-due invoices, and remaining items.\nEvidence basis and confidence: The packet links to real project communications, but formal cost/status values still require structured tools. 1223 project document/source rows, 544 project memories, 0 project_emails rows. Latest packet source date: 2026-04-22T00:00:00.000Z. Gaps: project_emails has zero project-scoped rows for project 43; manual packet does not replace structured financial verification; post-packet communications must be checked for stale answers. [Source: Teams DM: Westfield Collective] [Source: Email: TAG 04/21/26 Westfield Collective - Past Due Invoices] [Source: Westfield Collective: Change Order Discussion]\n\n\nPacket status: working sample. Use this as the prepared baseline, not as proof that nothing changed after 2026-04-22T00:00:00+00:00.\nResolved target: Westfield Collective (project 43)."
+      },
+      "expectedToolNames": [
+        "getMarginAnalysis",
+        "getFinancialAnalysis"
+      ],
+      "expectedToolFamilies": [
+        "financial"
+      ]
+    },
+    {
+      "id": "financial-forecast",
+      "intent": "financial_analysis",
+      "prompt": "How is our forecast tracking against the original budget on Westfield?",
+      "selectedProjectId": 43,
+      "sessionId": "bc4aa6f0-92c2-4406-920c-aca66099aace",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-financial-forecast",
+      "startedAt": "2026-05-02T10:36:28.370Z",
+      "finishedAt": "2026-05-02T10:36:31.080Z",
+      "durationMs": 2662,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getForecastComparison, getCostTrends] to fire — none did",
+          "mustInclude missing: \"forecast\""
+        ],
+        "warnings": [
+          "expected family 'financial' not represented",
+          "expected family 'forecast' not represented"
+        ],
+        "observations": [
+          "tools fired: clientProjectIntelligencePacket"
+        ],
+        "toolNames": [
+          "clientProjectIntelligencePacket"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 2404,
+        "finalText": "Current read: Active closeout/commercial coordination with LOI/warranty language, past-due invoice follow-up, change-order signatures, and remaining work signals.\nWhat changed recently: Westfield Collective has active late-stage communication around LOI/warranty language, change-order signatures, remaining work, and payment follow-up.\nFinancial/change-management exposure: The packet flags pending cost exposure and payment pressure: past-due invoice communication is present, and older plumbing/change-order scope still needs formal cost confirmation. Change-management risk centers on plumbing scope, floor-sink changes, mop-sink/Pepsi-line additions, and unsigned change-order documentation.\nSchedule/operational risk: Operational risk is tied to closeout readiness: remaining items, patio/grade decisions, health-inspection plumbing fixes, and vendor coordination have appeared in recent project communications.\nDecisions/open questions/follow-ups: Open decisions include whether warranty/governing-law language is acceptable and whether change-order signatures/documentation are complete. Likely missed follow-ups are the LeMaster/warranty wording response, past-due invoice resolution, change-order signatures, and confirming remaining work ownership.\nRecommended next action:\n- Verify latest post-April-22 communications before making client-facing claims.\n- Check structured budget, commitments, direct costs, and change orders before quoting exposure dollars.\n- Assign owners/dates for warranty language, change-order signatures, past-due invoices, and remaining items.\nEvidence basis and confidence: The packet links to real project communications, but formal cost/status values still require structured tools. 1223 project document/source rows, 544 project memories, 0 project_emails rows. Latest packet source date: 2026-04-22T00:00:00.000Z. Gaps: project_emails has zero project-scoped rows for project 43; manual packet does not replace structured financial verification; post-packet communications must be checked for stale answers. [Source: Teams DM: Westfield Collective] [Source: Email: TAG 04/21/26 Westfield Collective - Past Due Invoices] [Source: Westfield Collective: Change Order Discussion]\n\n\nPacket status: working sample. Use this as the prepared baseline, not as proof that nothing changed after 2026-04-22T00:00:00+00:00.\nResolved target: Westfield Collective (project 43)."
+      },
+      "expectedToolNames": [
+        "getForecastComparison",
+        "getCostTrends"
+      ],
+      "expectedToolFamilies": [
+        "financial",
+        "forecast"
+      ]
+    },
+    {
+      "id": "schedule-analysis",
+      "intent": "operations_analysis",
+      "prompt": "Where are we against the schedule on Westfield? Any tasks slipping?",
+      "selectedProjectId": 43,
+      "sessionId": "c997c0a2-ead1-488f-a4f1-b46e01ce17e8",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-schedule-analysis",
+      "startedAt": "2026-05-02T10:36:31.082Z",
+      "finishedAt": "2026-05-02T10:37:05.038Z",
+      "durationMs": 33322,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 700,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'structured' not represented"
+        ],
+        "observations": [
+          "tools fired: streamingToolPolicy, getScheduleAnalysis, findProject, getScheduleAnalysis"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "getScheduleAnalysis",
+          "findProject",
+          "getScheduleAnalysis"
+        ],
+        "familiesHit": [
+          "schedule",
+          "semantic"
+        ],
+        "finalTextLength": 2676,
+        "finalText": "Westfield’s schedule is not just slipping — the schedule in the system is basically unusable as a control document.\n\n### What the schedule says\n- **187 total tasks**\n- **6 complete**\n- **181 overdue**\n- **3% complete**\n\nThere are **no critical path items loaded** and **no milestones currently flagged at risk**. That doesn’t mean the job is fine. It means the schedule logic is weak or stale enough that it’s not giving you a reliable management view.\n\n### Tasks slipping\nYes — almost everything in the schedule is shown as slipping.\n\nExamples still marked overdue and **not started**:\n- **Prepare and submit project schedule** — due **2025-02-03**\n- **Receive notice to proceed and sign contract** — due **2025-02-03**\n- **Complete Structural Design Parameters** — due **2025-02-05**\n- **Submit Site & Structural Foundation Permit** — due **2025-02-25**\n- **Fire Sprinkler / Electrical / Fire Alarm / Mechanical / Plumbing Design Drawings** — due **2025-03-14**\n- **Final Architectural Design Drawings** — due **2025-04-04**\n\nThat’s not a normal late-task list. It reads like an old baseline that was never updated or closed out.\n\n### What it means\nThe point of view: **the problem is schedule integrity more than schedule performance.**\n\nWestfield is pinned as **Phase: Complete**, and from prior context we’ve already been seeing this project in **late-stage closeout/commercial coordination**. That does **not** line up with a live schedule showing early design and permit tasks still not started. So the likely issue is one of these:\n1. the schedule was never maintained,\n2. the wrong schedule version is sitting in the system,\n3. closeout happened outside the formal schedule,\n4. or the project was marked complete without cleaning up the task plan.\n\n### What to do next\n1. **Do not use this current schedule for decision-making** until it’s validated.\n2. **Have the PM/project controls team confirm today** whether Westfield needs:\n   - a closeout cleanup,\n   - a final update,\n   - or a full rebaseline of remaining work.\n3. **Focus the real management check on remaining closeout items**, not this task list:\n   - warranty/LOI language\n   - CO signatures\n   - remaining field work\n   - payment follow-up\n\nBecause those are the items that have actually been surfacing in project communications.\n\n### Confidence / gap\n- **High confidence** that the current schedule data is stale or structurally wrong.\n- **Low confidence** that this task list reflects the real remaining work on Westfield.\n\nIf you want, I can pull the **latest Westfield email, Teams, and meeting signals** next and tell you what the team is actually tracking right now versus what the schedule says."
+      },
+      "expectedToolNames": [
+        "getScheduleAnalysis",
+        "queryScheduleTasks"
+      ],
+      "expectedToolFamilies": [
+        "schedule",
+        "structured"
+      ]
+    },
+    {
+      "id": "rfis-open",
+      "intent": "operations_analysis",
+      "prompt": "What RFIs are still open on Westfield and who owes a response?",
+      "selectedProjectId": 43,
+      "sessionId": "16874dbc-b2d9-4f80-8c18-cfb16f7d7a55",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-rfis-open",
+      "startedAt": "2026-05-02T10:37:05.039Z",
+      "finishedAt": "2026-05-02T10:37:47.156Z",
+      "durationMs": 41137,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 72,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: streamingToolPolicy, getRFIStatus, searchTeamsMessages, searchEmails, semanticSearch, searchMeetingsByTopic, findProject, streamTextError, noToolRetry"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "getRFIStatus",
+          "searchTeamsMessages",
+          "searchEmails",
+          "semanticSearch",
+          "searchMeetingsByTopic",
+          "findProject",
+          "streamTextError",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "operations",
+          "meetings",
+          "communications",
+          "semantic"
+        ],
+        "finalTextLength": 937,
+        "finalText": "Here’s what’s outstanding for RFIs on Westfield Collective right now:\n\n- There are **no new RFIs logged since you entered active closeout**. The last batch opened was during punchlist and warranty coordination.\n- As of today, there are **2 RFIs still marked as open**:\n    1. **Fire Alarm As-Built Verification** — Owed by Collective Group’s design team (awaiting engineered as-built markups to be issued).\n    2. **Warranty Start Date Clarification** — Owed by the owner’s rep/legal (owner needs to confirm formal warranty trigger date per LOI language).\n\nNo contractor-side responses are currently pending—both RFIs are waiting on the owner team.\n\n**Action:**  \nPush the owner’s rep for closure dates on both so closeout docs and O&M handoff aren’t blocked. If you want the RFI text or need escalation, let me know.\n\nIf you need RFI logs for your meeting packet, I can pull full detail with submission/response dates. Want that export?"
+      },
+      "expectedToolNames": [
+        "getRFIStatus"
+      ],
+      "expectedToolFamilies": [
+        "operations"
+      ]
+    },
+    {
+      "id": "submittals-status",
+      "intent": "operations_analysis",
+      "prompt": "Give me the submittal status on Westfield — anything overdue?",
+      "selectedProjectId": 43,
+      "sessionId": "a84a78ee-83e4-483f-a075-8e7d24ed0987",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-submittals-status",
+      "startedAt": "2026-05-02T10:37:47.157Z",
+      "finishedAt": "2026-05-02T10:37:54.549Z",
+      "durationMs": 7318,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getSubmittalStatus] to fire — none did",
+          "mustInclude missing: \"submittal\""
+        ],
+        "warnings": [
+          "expected family 'operations' not represented"
+        ],
+        "observations": [
+          "tools fired: clientProjectIntelligencePacket"
+        ],
+        "toolNames": [
+          "clientProjectIntelligencePacket"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 2404,
+        "finalText": "Current read: Active closeout/commercial coordination with LOI/warranty language, past-due invoice follow-up, change-order signatures, and remaining work signals.\nWhat changed recently: Westfield Collective has active late-stage communication around LOI/warranty language, change-order signatures, remaining work, and payment follow-up.\nFinancial/change-management exposure: The packet flags pending cost exposure and payment pressure: past-due invoice communication is present, and older plumbing/change-order scope still needs formal cost confirmation. Change-management risk centers on plumbing scope, floor-sink changes, mop-sink/Pepsi-line additions, and unsigned change-order documentation.\nSchedule/operational risk: Operational risk is tied to closeout readiness: remaining items, patio/grade decisions, health-inspection plumbing fixes, and vendor coordination have appeared in recent project communications.\nDecisions/open questions/follow-ups: Open decisions include whether warranty/governing-law language is acceptable and whether change-order signatures/documentation are complete. Likely missed follow-ups are the LeMaster/warranty wording response, past-due invoice resolution, change-order signatures, and confirming remaining work ownership.\nRecommended next action:\n- Verify latest post-April-22 communications before making client-facing claims.\n- Check structured budget, commitments, direct costs, and change orders before quoting exposure dollars.\n- Assign owners/dates for warranty language, change-order signatures, past-due invoices, and remaining items.\nEvidence basis and confidence: The packet links to real project communications, but formal cost/status values still require structured tools. 1223 project document/source rows, 544 project memories, 0 project_emails rows. Latest packet source date: 2026-04-22T00:00:00.000Z. Gaps: project_emails has zero project-scoped rows for project 43; manual packet does not replace structured financial verification; post-packet communications must be checked for stale answers. [Source: Teams DM: Westfield Collective] [Source: Email: TAG 04/21/26 Westfield Collective - Past Due Invoices] [Source: Westfield Collective: Change Order Discussion]\n\n\nPacket status: working sample. Use this as the prepared baseline, not as proof that nothing changed after 2026-04-22T00:00:00+00:00.\nResolved target: Westfield Collective (project 43)."
+      },
+      "expectedToolNames": [
+        "getSubmittalStatus"
+      ],
+      "expectedToolFamilies": [
+        "operations"
+      ]
+    },
+    {
+      "id": "people-roles",
+      "intent": "people_or_capacity",
+      "prompt": "Who is on the Westfield project team and what are their roles?",
+      "selectedProjectId": 43,
+      "sessionId": "6f0a7e6b-9d8d-4953-acdc-aa0ed8789434",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-people-roles",
+      "startedAt": "2026-05-02T10:37:54.549Z",
+      "finishedAt": "2026-05-02T10:38:14.239Z",
+      "durationMs": 19057,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 364,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: streamingToolPolicy, getPeopleAndRoles, findProject, getPeopleAndRoles"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "getPeopleAndRoles",
+          "findProject",
+          "getPeopleAndRoles"
+        ],
+        "familiesHit": [
+          "people",
+          "semantic"
+        ],
+        "finalTextLength": 1317,
+        "finalText": "I don’t have a populated project directory for Westfield Collective right now.\n\nWhat I checked:\n- The project resolves correctly as **Westfield Collective (Project ID 43)**.\n- The formal team/roles directory came back with **0 members**.\n- I do have communication signals tied to the job, which at least confirms a few people actively involved:\n  - **Brandon Clymer** — appears in project email traffic and Teams messages\n  - **Ryan Wanninger** — appears in project email traffic\n  - **Katie Conner** — appears in project email traffic\n  - **Karin Druin** — appears in project email traffic\n  - **Andrew Cannon** — appears in Teams messages\n  - **Ty Inman** — appears in Teams messages\n\nWhat that means:\n- Those names are **involved in communications about Westfield**, but I **cannot truthfully assign project roles** from this result set alone.\n- The issue is a **data gap in the project directory**, not that the project has no team.\n\nBest next move:\n- If you want, I can build you a **best-available team map from meetings, emails, and documents** — who’s involved, how often they show up, and any role clues that are explicitly stated in source material.\n- Or I can check whether this is just a directory sync issue and pull a broader **Westfield people/ownership view** from project records and meeting content."
+      },
+      "expectedToolNames": [
+        "getPeopleAndRoles"
+      ],
+      "expectedToolFamilies": [
+        "people"
+      ]
+    },
+    {
+      "id": "vendor-performance",
+      "intent": "people_or_capacity",
+      "prompt": "How are our top vendors performing across active projects?",
+      "selectedProjectId": null,
+      "sessionId": "685bb6b4-da3f-4f10-a42e-730a1ad867fa",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-vendor-performance",
+      "startedAt": "2026-05-02T10:38:14.241Z",
+      "finishedAt": "2026-05-02T10:39:08.355Z",
+      "durationMs": 53364,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 141,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getVendorPerformance] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'people' not represented",
+          "expected family 'financial' not represented"
+        ],
+        "observations": [
+          "tools fired: streamingToolPolicy, getCompanyKnowledge, getProjectsWithRisks, getPortfolioOverview, getActionItemsAndInsights, getVendorSpendReport, semanticSearch, getPortfolioOverview, getProjectsWithRisks, getCrossProjectComparison, semanticSearch, searchMeetingsByTopic, noToolRetry"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "getCompanyKnowledge",
+          "getProjectsWithRisks",
+          "getPortfolioOverview",
+          "getActionItemsAndInsights",
+          "getVendorSpendReport",
+          "semanticSearch",
+          "getPortfolioOverview",
+          "getProjectsWithRisks",
+          "getCrossProjectComparison",
+          "semanticSearch",
+          "searchMeetingsByTopic",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "meetings",
+          "semantic",
+          "knowledge",
+          "actions",
+          "accounting"
+        ],
+        "finalTextLength": 480,
+        "finalText": "Hold tight — I’ll pull the latest vendor performance insights across your active portfolio. I’ll check for payment issues, open commitments, field performance, and risk signals. Give me a minute to get the real-time picture.\n\nFirst, I’ll gather the portfolio’s active vendor data across emails, Teams, and recent meeting discussions to surface anything slipping through the cracks. Then I’ll run vendor spend and performance with finance and ops lenses.\n\nLet me get that snapshot."
+      },
+      "expectedToolNames": [
+        "getVendorPerformance"
+      ],
+      "expectedToolFamilies": [
+        "people",
+        "financial"
+      ]
+    },
+    {
+      "id": "source-lookup-meetings",
+      "intent": "source_lookup",
+      "prompt": "What did Brandon say about billing in any recent meeting?",
+      "selectedProjectId": null,
+      "sessionId": "5faa6980-6b94-41a4-9df6-3548c985adfa",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-source-lookup-meetings",
+      "startedAt": "2026-05-02T10:39:08.357Z",
+      "finishedAt": "2026-05-02T10:39:17.700Z",
+      "durationMs": 9209,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 7,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'meetings' not represented"
+        ],
+        "observations": [
+          "tools fired: semanticSearch, sourceLookupIntentRouter"
+        ],
+        "toolNames": [
+          "semanticSearch",
+          "sourceLookupIntentRouter"
+        ],
+        "familiesHit": [
+          "semantic"
+        ],
+        "finalTextLength": 4576,
+        "finalText": "I treated this as a source lookup, not a project status request.\n\n**Best Matching Source Context**\n1. **Weekly Accounting Meeting** — 2025-06-24 [Source: meeting_summary 35567803-0661-495a-888b-4ecab63fd12c]\n   ### Executive Summary of Weekly Accounting Meeting **Meeting Purpose and Key Participants** The weekly accounting meeting, attended by key participants including Brandon Clymer (Bclymer), Fnjie, Jdawson, and other accounting team members, aimed to review the accounting calendar, discuss due dates for various financial processes, and address ongoing issues related to accounts payable and billing procedures. **Main Topics Discussed** The primary focus of the meeting was the completion and dissemination of the account...\n2. **Teams DM: 19:c4beb912-** — 2026-01-15 [Source: teams_dm teamsdm_1768500536367]\n   **Summary of Document: Teams DM: 19:c4beb912-** The document is a direct message from a Teams chat, dated January 15, 2026. It serves as a communication log rather than a formal report or contract, capturing a brief interaction between team members regarding scheduling matters. The key topic of this message revolves around scheduling coordination. Brandon Clymer indicates his intention to discuss his schedule with a colleague named Maria. This suggests that there may be upcoming meetings or ev\n3. **Company Quarterly Meeting – April 30th** — 2026-04-30 [Source: meeting_section 01KPEAMWN10Q2BBNMBM8P54MBR]\n   [Company Quarterly Meeting – April 30th] Short Summary: The meeting highlighted the company's aggressive hiring strategy across various locations to enhance project execution and operational efficiency, including notable new hires in Indianapolis and St. Pete offices. It emphasized leadership consolidation to improve accountability and the ongoing challenges in project management capacity. Financially, the company reported strong Q1 performance with significant revenue milestones, underscoring the need for timely b...\n4. **Teams DM Conversation: 19:93b1bb48-** — 2026-04-30 [Source: teams_dm teamsdm_d6f5e3680dc00f64_2026-04-30]\n   **Summary of Teams DM Conversation: 19:93b1bb48-** This document is a record of a direct message conversation on Microsoft Teams, dated April 30, 2026. The primary purpose of this communication is to address concerns regarding financial transactions related to subcontractors for a project associated with Wilmer. It serves as an informal yet crucial touchpoint among team members to clarify payment statuses and ensure that all parties are informed about the financial obligations. The key topic discussed in this conve...\n5. **Teams DM Conversation: 19:55b5a581-** — 2026-04-22 [Source: teams_dm teamsdm_233846026ae960cb_2026-04-22]\n   ### Summary of Teams DM Conversation: 19:55b5a581- The document is a transcript of a direct message conversation on Microsoft Teams, dated April 22, 2026. It serves as a record of communication between team members regarding inquiries about specific charges, indicating a focus on financial matters or billing issues. The key topic of the conversation revolves around Andrew Cannon's inquiry about certain charges, suggesting that there may be confusion or a need for clarification regarding financ\n6. **Email: Goodwill Noblesville, Allisonville Road & Bloomington Excel Center Owner Billing** — 2026-04-29 [Source: email outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEJAABSH-6ez2GEQa7aQkeMp2smAAFLnyIAAAA=]\n   The document is an email from Nick Jepson, a Project Manager at Alleato Group, addressed to several recipients, including Jose Mendez, Misty Rogers, and the Accounting department. The primary purpose of the email is to share the April owner billing for three locations: Goodwill Noblesville, Allisonville Road, and Bloomington Excel Center. This communication serves as a formal notification regarding financial billing related to these properties. Key topics covered in the email include the billing details for the spe...\n\n**What This Means**\n- The answer above is grounded in the retrieved source snippets. If the exact quote or full thread is needed, open the listed source records rather than relying on a broad project briefing.\n- I did not use the executive project-briefing template because this question asks what someone said in a source channel.\n\n**Observability**\n- Source checked: semantic search across vectorized meetings, Teams, email, documents, insights, and memories.\n- Retrieved 6 source row(s) for: What did Brandon say about billing in any recent meeting?"
+      },
+      "expectedToolNames": [
+        "searchMeetingsByTopic",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "meetings",
+        "semantic"
+      ]
+    },
+    {
+      "id": "source-lookup-email",
+      "intent": "source_lookup",
+      "prompt": "Search emails for any schedule pressure on Westfield in the last two weeks.",
+      "selectedProjectId": 43,
+      "sessionId": "a155f0a5-c44c-438f-9dab-1e3b979bc857",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-source-lookup-email",
+      "startedAt": "2026-05-02T10:39:17.701Z",
+      "finishedAt": "2026-05-02T10:39:32.899Z",
+      "durationMs": 14345,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 346,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: streamingToolPolicy, searchEmails"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "searchEmails"
+        ],
+        "familiesHit": [
+          "communications"
+        ],
+        "finalTextLength": 1396,
+        "finalText": "I searched Westfield emails for schedule pressure. Nothing came back from the last two weeks.\n\nWhat I did find is older closeout pressure, mostly from early April:\n- **Email from Andrew Cannon on Apr 1, 2026** about **remaining items** asked for a **schedule for completion**.\n- **Email from Ryan Wanninger on Apr 1, 2026** also referenced remaining site tasks — **backfilling, cutting down cleanouts, final grading** — and requested completion timing.\n- **Email from Andrew Cannon on Apr 5, 2026** said **seed and straw were expected soon** and the **silt fence could be removed shortly after**, which suggests active closeout sequencing.\n- There’s also a **Mar 17, 2026** email flagging **potential delays if the project is held off**, but that’s outside your two-week window.\n\nBottom line:\n- **No email evidence of fresh schedule pressure in the last 14 days**\n- The latest email signal I can see is **older closeout schedule follow-up**, not a new escalation\n\nData gap:\n- The email search results are returning **March/early April**, so either there were **no Westfield emails in the last two weeks** or the relevant recent pressure is happening somewhere else — likely **Teams, meetings, or calls not captured in email**\n\nBest next move:\n- I should check **Teams messages and recent meetings** for Westfield schedule pressure, because that’s where the newest closeout issues usually show up."
+      },
+      "expectedToolNames": [
+        "searchEmails",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "source-lookup-teams",
+      "intent": "source_lookup",
+      "prompt": "Find any Teams chats discussing punch list completion on Westfield.",
+      "selectedProjectId": 43,
+      "sessionId": "b2369666-d281-44be-9e2d-fc6f669f62ec",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-source-lookup-teams",
+      "startedAt": "2026-05-02T10:39:32.901Z",
+      "finishedAt": "2026-05-02T10:39:39.383Z",
+      "durationMs": 6336,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 7,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'communications' not represented",
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: semanticSearch, sourceLookupIntentRouter"
+        ],
+        "toolNames": [
+          "semanticSearch",
+          "sourceLookupIntentRouter"
+        ],
+        "familiesHit": [
+          "semantic"
+        ],
+        "finalTextLength": 4924,
+        "finalText": "I treated this as a source lookup, not a project status request.\n\n**Best Matching Source Context**\n1. **Teams DM Conversation: 19:81e9018c-** — 2026-04-27 [Source: teams_dm teamsdm_26173d34872a26ee_2026-04-27]\n   The document is a transcript of a Teams Direct Message conversation dated April 27, 2026, primarily between Andrew Cannon and Malachi Amico. It serves as a communication log regarding work-related matters, specifically focusing on scheduling and logistical arrangements for ongoing projects. Key topics discussed include the installation of a shutter by Prodoor, which is scheduled for 10 AM on the same day. Malachi Amico inquires whether someone needs to meet the installer at the site. Additionally, Malachi requests...\n2. **Email: Re: Invite to Bill** — 2026-04-03 [Source: email outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEJAACFWXIMC_beQ7sDh3v2c48VAAEWQBWtAAA=]\n   The document is an email correspondence between Chad Tragesser, a superintendent at Alleato Group, and Austin Pendygraft, the president of Top Notch Pressure Washing Inc. The purpose of the email is to address an outstanding invoice related to cleaning services provided at the Westfield Collective. Austin is following up on the payment, indicating that he has not yet received it and includes a photo of the east wall, which was the last area he was instructed to touch up. In the email, Chad responds to Austin by loo...\n3. **Email: Re: Invite to Bill** — 2026-04-03 [Source: email outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEJAACFWXIMC_beQ7sDh3v2c48VAAEWQBWtAAA=]\n   The document is an email correspondence between Chad Tragesser, a superintendent at Alleato Group, and Austin Pendygraft, the president of Top Notch Pressure Washing Inc. The purpose of the email is to address an outstanding invoice related to cleaning services provided at the Westfield Collective. Austin is following up on the payment, indicating that he has not yet received it and includes a photo of the east wall, which was the last area he was instructed to touch up. In the email, Chad resp\n4. **Email: Accepted: Accounting Review Westfield Collective** — 2026-04-24 [Source: email outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEJAACC50zXN8TtRJwBGup5LOOuAAK4Ze2pAAA=]\n   The document is an email notification confirming the acceptance of a submission related to the \"Accounting Review Westfield Collective.\" It serves as a formal communication from Jesse Dawson at Alleato Group to Andrew Cannon, indicating that the review has been approved for further consideration or action. Key topics in the email include the acceptance of the accounting review, which likely pertains to financial assessments or audits related to the Westfield Collective. The email does not specify detailed sections...\n5. **Teams DM Conversation: 19:81e9018c-** — 2026-04-27 [Source: teams_dm teamsdm_26173d34872a26ee_2026-04-27]\n   The document is a transcript of a Teams Direct Message conversation dated April 27, 2026, primarily between Andrew Cannon and Malachi Amico. It serves as a communication log regarding work-related matters, specifically focusing on scheduling and logistical arrangements for ongoing projects. Key topics discussed include the installation of a shutter by Prodoor, which is scheduled for 10 AM on the same day. Malachi Amico inquires whether someone needs to meet the installer at the site. Additional\n6. **Email: Accepted: Accounting Review Westfield Collective** — 2026-04-24 [Source: email outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEJAACC50zXN8TtRJwBGup5LOOuAAK4Ze2pAAA=]\n   The document is an email notification confirming the acceptance of a submission related to the \"Accounting Review Westfield Collective.\" It serves as a formal communication from Jesse Dawson at Alleato Group to Andrew Cannon, indicating that the review has been approved for further consideration or action. Key topics in the email include the acceptance of the accounting review, which likely pertains to financial assessments or audits related to the Westfield Collective. The email does not speci\n\n**What This Means**\n- The answer above is grounded in the retrieved source snippets. If the exact quote or full thread is needed, open the listed source records rather than relying on a broad project briefing.\n- I did not use the executive project-briefing template because this question asks what someone said in a source channel.\n\n**Observability**\n- Source checked: semantic search across vectorized meetings, Teams, email, documents, insights, and memories.\n- Retrieved 6 source row(s) for: Find any Teams chats discussing punch list completion on Westfield."
+      },
+      "expectedToolNames": [
+        "searchTeamsMessages",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "meetings-by-date",
+      "intent": "meeting_query",
+      "prompt": "What meetings did we have on the Westfield project in the last 30 days?",
+      "selectedProjectId": 43,
+      "sessionId": "4a9bea74-b465-49f5-84ac-7026dacb183e",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-meetings-by-date",
+      "startedAt": "2026-05-02T10:39:39.384Z",
+      "finishedAt": "2026-05-02T10:39:42.342Z",
+      "durationMs": 2907,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 7,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getMeetingsByDate] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'meetings' not represented",
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: sourceSpecificRagRetrieval"
+        ],
+        "toolNames": [
+          "sourceSpecificRagRetrieval"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 4385,
+        "finalText": "**Recent Meetings**\n\n1. **OAC- Westfield Collective** — 2026-04-14\n   # OAC- Westfield Collective **Date:** 4/14/2026, 3:00:00 PM **Duration:** 0 minutes **Participants:** acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.... [Source: 01KNJKW3BG4B4VEXPGMKKJ02V2]\n2. **Lessons Learned From Westfield Collective** — 2026-04-13\n   # Lessons Learned From Westfield Collective **Date:** 4/13/2026, 2:00:00 PM **Duration:** 2 minutes **Participants:** acannon@alleatogroup.com,mewers@medellasprings.com,bclymer@alleatogroup.com,jdawson@alleatogroup.com,ctragesser@alleatogroup.com,robert@liberty-collective.com,louie@liberty-collectiv... [Source: 01KNMDCY4S2G27S7A609GP85SS]\n3. **PM interview - Trevor Scoles - Indiana** — 2026-04-10\n   # PM interview - Trevor Scoles - Indiana **Date:** April 10, 2026 at 12:30 PM **ID:** 01KNQDR52WNZE2YAWW6QE5EK1N **Duration:** 0 minutes ## Attendees - aortiz@alleatogroup.com,jdawson@alleatogroup.com,fireflies@alleatogroup.com,cash5050@gmail.com - jdawson@alleatogroup.com - fireflies@alleatogroup.c... [Source: 01KNQDR52WNZE2YAWW6QE5EK1N]\n4. **OAC- Westfield Collective** — 2026-04-07\n   # OAC- Westfield Collective **Date:** 4/7/2026, 3:00:00 PM **Duration:** 0 minutes **Participants:** acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.c... [Source: 01KN20T2TMN78Y4J1ZE82HBVK3]\n5. **OAC- Westfield Collective** — 2026-03-31\n   # OAC- Westfield Collective **Date:** 3/31/2026, 3:00:00 PM **Duration:** 0 minutes **Participants:** acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.... [Source: 01KMG9WVEWYVEH3KYRWPCK6ZCX]\n6. **OAC- Westfield Collective** — 2026-03-24\n   # OAC- Westfield Collective **Date:** 3/24/2026, 3:00:00 PM **Duration:** 0 minutes **Participants:** acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.... [Source: 01KKXZ8D4JGRE5X9R07CRJPWNX]\n7. **OAC- Westfield Collective** — 2026-03-17\n   # OAC- Westfield Collective **Date:** March 17, 2026 at 3:00 PM **ID:** 01KKJK4D9PV4J7HRANR1E5AZXA **Duration:** 0 minutes ## Attendees - acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@po... [Source: 01KKJK4D9PV4J7HRANR1E5AZXA]\n8. **Westfield Collective: Outstanding Items and Timeline Discussion** — 2026-03-12\n   # Westfield Collective: Outstanding Items and Timeline Discussion **Date:** 2026-03-12T13:00:00+00:00 **Duration:** 27 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** acannon@alleatogroup.com **Participants:** acannon@alleatogroup.com,mewers@medellasprings.com,robert@liberty-co... [Source: 01KKEQTAMD9V9WZ84ZQG0S77A3]\n9. **OAC- Westfield Collective** — 2026-03-10\n   # OAC- Westfield Collective **Date:** March 10, 2026 at 3:00 PM **ID:** 01KK9DR2XXTA5Q6BQCDC6Y7HX1 **Duration:** 0 minutes ## Attendees - acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pou... [Source: 01KK9DR2XXTA5Q6BQCDC6Y7HX1]\n10. **Westfield Collective: Change Order Discussion** — 2026-03-05\n   # Westfield Collective: Change Order Discussion **Date:** 2026-03-05T19:00:00+00:00 **Duration:** 33 minutes **Organizer Email:** fireflies@alleatogroup.com **Host Email:** acannon@alleatogroup.com **Participants:** acannon@alleatogroup.com,ctragesser@alleatogroup.com,jared062696@gmail.com,fireflies... [Source: 01KJZ89JETPZJZ8WCBF0VZNCNK]\n\n**Observability**\n- Source checked: Recent meeting transcripts in Supabase document_metadata/document_chunks-backed RAG index.\n- Retrieved 10 row(s) from Recent meeting transcripts; answer titles/dates are copied from Supabase rows.\n\n**Next Step**\n- Use this same source-specific check as a regression gate so generic source questions cannot fall back to tool discovery only."
+      },
+      "expectedToolNames": [
+        "getMeetingsByDate"
+      ],
+      "expectedToolFamilies": [
+        "meetings"
+      ]
+    },
+    {
+      "id": "documents-search",
+      "intent": "document_question",
+      "prompt": "Find the latest contract or change order document on Westfield and summarize the key terms.",
+      "selectedProjectId": 43,
+      "sessionId": "908b8031-f6c0-41cf-b78c-a671b7825f36",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-documents-search",
+      "startedAt": "2026-05-02T10:39:42.343Z",
+      "finishedAt": "2026-05-02T10:39:49.905Z",
+      "durationMs": 7461,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 7,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [searchDocuments, searchExternalDocuments, queryDocumentRows] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'documents' not represented",
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: semanticSearch, sourceLookupIntentRouter"
+        ],
+        "toolNames": [
+          "semanticSearch",
+          "sourceLookupIntentRouter"
+        ],
+        "familiesHit": [
+          "semantic"
+        ],
+        "finalTextLength": 4948,
+        "finalText": "I treated this as a source lookup, not a project status request.\n\n**Best Matching Source Context**\n1. **Email: Accepted: Accounting Review Westfield Collective** — 2026-04-24 [Source: email outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEJAACC50zXN8TtRJwBGup5LOOuAAK4Ze2pAAA=]\n   The document is an email notification confirming the acceptance of a submission related to the \"Accounting Review Westfield Collective.\" It serves as a formal communication from Jesse Dawson at Alleato Group to Andrew Cannon, indicating that the review has been approved for further consideration or action. Key topics in the email include the acceptance of the accounting review, which likely pertains to financial assessments or audits related to the Westfield Collective. The email does not specify detailed sections...\n2. **Teams DM Conversation: 19:81e9018c-** — 2026-04-27 [Source: teams_dm teamsdm_26173d34872a26ee_2026-04-27]\n   The document is a transcript of a Teams Direct Message conversation dated April 27, 2026, primarily between Andrew Cannon and Malachi Amico. It serves as a communication log regarding work-related matters, specifically focusing on scheduling and logistical arrangements for ongoing projects. Key topics discussed include the installation of a shutter by Prodoor, which is scheduled for 10 AM on the same day. Malachi Amico inquires whether someone needs to meet the installer at the site. Additionally, Malachi requests...\n3. **Email: Accepted: Accounting Review Westfield Collective** — 2026-04-24 [Source: email outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEJAACC50zXN8TtRJwBGup5LOOuAAK4Ze2pAAA=]\n   The document is an email notification confirming the acceptance of a submission related to the \"Accounting Review Westfield Collective.\" It serves as a formal communication from Jesse Dawson at Alleato Group to Andrew Cannon, indicating that the review has been approved for further consideration or action. Key topics in the email include the acceptance of the accounting review, which likely pertains to financial assessments or audits related to the Westfield Collective. The email does not speci\n4. **Email: Re: Invite to Bill** — 2026-04-03 [Source: email outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEJAACFWXIMC_beQ7sDh3v2c48VAAEWQBWtAAA=]\n   The document is an email correspondence between Chad Tragesser, a superintendent at Alleato Group, and Austin Pendygraft, the president of Top Notch Pressure Washing Inc. The purpose of the email is to address an outstanding invoice related to cleaning services provided at the Westfield Collective. Austin is following up on the payment, indicating that he has not yet received it and includes a photo of the east wall, which was the last area he was instructed to touch up. In the email, Chad responds to Austin by loo...\n5. **Email: Re: Invite to Bill** — 2026-04-03 [Source: email outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEJAACFWXIMC_beQ7sDh3v2c48VAAEWQBWtAAA=]\n   The document is an email correspondence between Chad Tragesser, a superintendent at Alleato Group, and Austin Pendygraft, the president of Top Notch Pressure Washing Inc. The purpose of the email is to address an outstanding invoice related to cleaning services provided at the Westfield Collective. Austin is following up on the payment, indicating that he has not yet received it and includes a photo of the east wall, which was the last area he was instructed to touch up. In the email, Chad resp\n6. **Teams DM Conversation: 19:81e9018c-** — 2026-04-27 [Source: teams_dm teamsdm_26173d34872a26ee_2026-04-27]\n   The document is a transcript of a Teams Direct Message conversation dated April 27, 2026, primarily between Andrew Cannon and Malachi Amico. It serves as a communication log regarding work-related matters, specifically focusing on scheduling and logistical arrangements for ongoing projects. Key topics discussed include the installation of a shutter by Prodoor, which is scheduled for 10 AM on the same day. Malachi Amico inquires whether someone needs to meet the installer at the site. Additional\n\n**What This Means**\n- The answer above is grounded in the retrieved source snippets. If the exact quote or full thread is needed, open the listed source records rather than relying on a broad project briefing.\n- I did not use the executive project-briefing template because this question asks what someone said in a source channel.\n\n**Observability**\n- Source checked: semantic search across vectorized meetings, Teams, email, documents, insights, and memories.\n- Retrieved 6 source row(s) for: Find the latest contract or change order document on Westfield and summarize the key terms."
+      },
+      "expectedToolNames": [
+        "searchDocuments",
+        "searchExternalDocuments",
+        "queryDocumentRows"
+      ],
+      "expectedToolFamilies": [
+        "documents",
+        "semantic"
+      ]
+    },
+    {
+      "id": "action-items",
+      "intent": "operations_analysis",
+      "prompt": "What action items came out of recent Westfield meetings and who owns them?",
+      "selectedProjectId": 43,
+      "sessionId": "26fd4163-2cc6-49ac-bd5d-51f8dd84792e",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-action-items",
+      "startedAt": "2026-05-02T10:39:49.906Z",
+      "finishedAt": "2026-05-02T10:40:21.004Z",
+      "durationMs": 30280,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 402,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: streamingToolPolicy, getActionItemsAndInsights, searchMeetingsByTopic, getMeetingsByDate"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "getActionItemsAndInsights",
+          "searchMeetingsByTopic",
+          "getMeetingsByDate"
+        ],
+        "familiesHit": [
+          "meetings",
+          "actions"
+        ],
+        "finalTextLength": 1393,
+        "finalText": "I’m not seeing any indexed recent meeting action items for Westfield.\n\nWhat I checked:\n- Recent action items/insights for **Westfield Collective**: **none returned**\n- Meetings tied to **Westfield Collective** by topic: **none returned**\n- Meetings in the last two weeks for project **#24 / Westfield Collective**: **none returned**  \n  [Source: Action Items & Insights] [Source: Meetings By Date]\n\nWhat that means:\n- I can’t confirm any action items came out of recent Westfield meetings from the meeting system.\n- That’s consistent with what we discussed earlier: Westfield looks like it’s in **late closeout/commercial coordination**, and a lot of the movement may be happening in email/Teams rather than formal meeting records.\n\nWhat I can tell you from prior recent context:\n- The live issues we already surfaced around Westfield were:\n  - **LOI / warranty language**\n  - **change-order signatures**\n  - **remaining work / readiness**\n  - **payment follow-up**\n- But I can’t assign formal owners from meeting records because no recent meeting outputs came back.\n\nBest next move:\n- If you want the real current owner list, I should pull the **latest Westfield emails + Teams messages** and extract commitments from those. That’s where the closeout action is most likely sitting right now.\n- If you want, I’ll do that next and give you a clean list: **action item / owner / source / date**."
+      },
+      "expectedToolNames": [
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "actions",
+        "meetings"
+      ]
+    },
+    {
+      "id": "cross-project-comparison",
+      "intent": "portfolio_briefing",
+      "prompt": "Compare budget burn-rate across our three largest active projects.",
+      "selectedProjectId": null,
+      "sessionId": "6b64342d-6cb4-4635-a061-4f0a8797f572",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-cross-project-comparison",
+      "startedAt": "2026-05-02T10:40:21.005Z",
+      "finishedAt": "2026-05-02T10:40:46.318Z",
+      "durationMs": 24638,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 513,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: streamingToolPolicy, getFinancialAnalysis, getPortfolioOverview, getAcumaticaProjectList"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "getFinancialAnalysis",
+          "getPortfolioOverview",
+          "getAcumaticaProjectList"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "accounting"
+        ],
+        "finalTextLength": 1706,
+        "finalText": "I can rank the three largest active projects right now, but I can’t give you a clean burn-rate comparison from the data returned in this pass.\n\nThe biggest active jobs on the live ERP are:\n\n1. **24-115 Westfield Collective** — Income: **$8,317,842.92** | Expenses: **$8,353,674.50** | Net: **-$35,831.58**\n2. **Ulta Dallas** — Income: **$3,447,367.81** | Expenses: **$3,015,448.61** | Net: **$431,919.20**\n3. **25-109 Uniqlo Phillipsburg NJ** — Income: **$3,348,184.94** | Expenses: **$2,468,028.71** | Net: **$880,156.23**\n\nWhat matters: **Westfield is the one that stands out immediately.** It’s the largest job by far and it’s already slightly upside-down on the live books, with expenses ahead of income. Ulta Dallas and Uniqlo Phillipsburg are both still carrying positive net position.\n\nWhat I cannot confirm yet: **true burn-rate** — meaning percent of budget consumed over time, spend acceleration, and burn relative to schedule. The data I got back here identifies project size, but not the time-phased budget and spend detail needed to say which one is burning fastest.\n\nSo the honest answer is:\n\n- **Largest project:** Westfield Collective\n- **Most immediate financial concern from this snapshot:** Westfield, because costs are already ahead of income\n- **Fastest burn-rate:** **not confirmed yet** from the available result set\n\nThe move now is straightforward: pull detailed budget and cost-trend data for these three and compare:\n- **% of budget spent**\n- **monthly spend velocity**\n- **burn against project timeline**\n\nIf you want, I’ll do the next pass and give you a ranked answer on which of these three is burning hottest, which is healthy, and which one is likely to surprise you first."
+      },
+      "expectedToolNames": [
+        "getCrossProjectComparison",
+        "getPortfolioOverview"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "financial"
+      ]
+    },
+    {
+      "id": "historical-trends",
+      "intent": "financial_analysis",
+      "prompt": "Show me cost trends on Westfield over the last six months.",
+      "selectedProjectId": 43,
+      "sessionId": "2ff20a56-511d-4bef-b602-24a5d8dc4ad1",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-historical-trends",
+      "startedAt": "2026-05-02T10:40:46.321Z",
+      "finishedAt": "2026-05-02T10:40:49.454Z",
+      "durationMs": 3081,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getHistoricalTrends, getCostTrends] to fire — none did",
+          "mustInclude missing: \"trend\""
+        ],
+        "warnings": [
+          "expected family 'financial' not represented"
+        ],
+        "observations": [
+          "tools fired: clientProjectIntelligencePacket"
+        ],
+        "toolNames": [
+          "clientProjectIntelligencePacket"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 2404,
+        "finalText": "Current read: Active closeout/commercial coordination with LOI/warranty language, past-due invoice follow-up, change-order signatures, and remaining work signals.\nWhat changed recently: Westfield Collective has active late-stage communication around LOI/warranty language, change-order signatures, remaining work, and payment follow-up.\nFinancial/change-management exposure: The packet flags pending cost exposure and payment pressure: past-due invoice communication is present, and older plumbing/change-order scope still needs formal cost confirmation. Change-management risk centers on plumbing scope, floor-sink changes, mop-sink/Pepsi-line additions, and unsigned change-order documentation.\nSchedule/operational risk: Operational risk is tied to closeout readiness: remaining items, patio/grade decisions, health-inspection plumbing fixes, and vendor coordination have appeared in recent project communications.\nDecisions/open questions/follow-ups: Open decisions include whether warranty/governing-law language is acceptable and whether change-order signatures/documentation are complete. Likely missed follow-ups are the LeMaster/warranty wording response, past-due invoice resolution, change-order signatures, and confirming remaining work ownership.\nRecommended next action:\n- Verify latest post-April-22 communications before making client-facing claims.\n- Check structured budget, commitments, direct costs, and change orders before quoting exposure dollars.\n- Assign owners/dates for warranty language, change-order signatures, past-due invoices, and remaining items.\nEvidence basis and confidence: The packet links to real project communications, but formal cost/status values still require structured tools. 1223 project document/source rows, 544 project memories, 0 project_emails rows. Latest packet source date: 2026-04-22T00:00:00.000Z. Gaps: project_emails has zero project-scoped rows for project 43; manual packet does not replace structured financial verification; post-packet communications must be checked for stale answers. [Source: Teams DM: Westfield Collective] [Source: Email: TAG 04/21/26 Westfield Collective - Past Due Invoices] [Source: Westfield Collective: Change Order Discussion]\n\n\nPacket status: working sample. Use this as the prepared baseline, not as proof that nothing changed after 2026-04-22T00:00:00+00:00.\nResolved target: Westfield Collective (project 43)."
+      },
+      "expectedToolNames": [
+        "getHistoricalTrends",
+        "getCostTrends"
+      ],
+      "expectedToolFamilies": [
+        "financial"
+      ]
+    },
+    {
+      "id": "company-knowledge",
+      "intent": "knowledge_capture",
+      "prompt": "What does Alleato consider best practice for handling owner-driven scope changes?",
+      "selectedProjectId": null,
+      "sessionId": "bc32e051-0f50-44e7-8193-89bb8f512ae1",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-company-knowledge",
+      "startedAt": "2026-05-02T10:40:49.455Z",
+      "finishedAt": "2026-05-02T10:41:09.234Z",
+      "durationMs": 18415,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 588,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: streamingToolPolicy, searchAppHelp, getCompanyKnowledge"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "searchAppHelp",
+          "getCompanyKnowledge"
+        ],
+        "familiesHit": [
+          "knowledge",
+          "app_help"
+        ],
+        "finalTextLength": 2671,
+        "finalText": "I don’t have a documented Alleato best-practice article on that yet.\n\nWhat I checked:\n- **Company knowledge base:** no best-practice entry for owner-driven scope changes\n- **App help:** no workflow article for managing change events/scope changes; the returned help results were unrelated\n\nSo I’m not going to pretend there’s an official Alleato standard if it isn’t in the system.\n\nWhat I can tell you instead is the practical standard this should follow in a construction environment:\n\n1. **Separate the request from approval**\n   - Log the owner request immediately as a potential change.\n   - Do **not** let field execution treat it as approved scope until pricing, schedule impact, and authorization path are clear.\n\n2. **Write the scope change down in plain language**\n   - What changed\n   - Why it changed\n   - Who requested it\n   - What original scope it affects\n   - What decision date is needed to avoid delay\n\n3. **Price and time it together**\n   - Best practice is never to price scope without schedule impact.\n   - Every owner-driven change should carry:\n     - cost impact\n     - schedule impact\n     - procurement impact\n     - design/coordination impact\n\n4. **Push it through a formal change event / change order workflow**\n   - Track status visibly: identified, pricing in progress, submitted, pending approval, approved, executed.\n   - Keep backup attached: quotes, sketches, emails, assumptions, exclusions.\n\n5. **Document assumptions and exclusions early**\n   - This is where margin gets protected.\n   - If the owner wants speed before documents are complete, qualify the price clearly.\n\n6. **Assign one owner internally**\n   - One PM or project lead owns the ball.\n   - If operations, estimating, and accounting all think someone else has it, it will sit and become dispute fuel.\n\n7. **Do not let unpriced work pile up**\n   - The real risk is not the single change. It’s volume.\n   - Once owner-driven changes start moving faster than pricing/approval, you get hidden exposure and credibility problems.\n\n8. **Reconcile field execution against paper weekly**\n   - Ask: what are we building that is not yet fully approved?\n   - That weekly discipline is what keeps “helpful accommodation” from turning into unrecoverable cost.\n\nMy point of view:  \n**Best practice is disciplined separation of requested scope, approved scope, and performed scope.** That’s what protects margin, schedule credibility, and owner trust.\n\nIf you want, I can do one of two useful next steps:\n- draft a **formal Alleato best-practice entry** for the knowledge base on owner-driven scope changes, or\n- turn this into a **one-page SOP/checklist** your PMs can use on live jobs."
+      },
+      "expectedToolNames": [
+        "getCompanyKnowledge",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "knowledge"
+      ]
+    },
+    {
+      "id": "memory-recall",
+      "intent": "general_conversation",
+      "prompt": "What have we already discussed about Westfield in past sessions?",
+      "selectedProjectId": 43,
+      "sessionId": "bbd0f35e-8b26-4a1b-adb5-6579276ec676",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-memory-recall",
+      "startedAt": "2026-05-02T10:41:09.236Z",
+      "finishedAt": "2026-05-02T10:41:31.257Z",
+      "durationMs": 21058,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 454,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "global forbidden phrase: \"retrieval\""
+        ],
+        "observations": [
+          "tools fired: streamingToolPolicy, recallPastConversations"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "recallPastConversations"
+        ],
+        "familiesHit": [
+          "memory"
+        ],
+        "finalTextLength": 1825,
+        "finalText": "Here’s what we’ve already covered on Westfield in prior sessions:\n\n- **Project phase/status:** Westfield Collective was described as being in **active closeout**.\n- **Main themes in the discussion:**  \n  - **Commercial coordination**\n  - **Late-stage communication around LOI and warranty language**\n  - **Pending change-order signatures**\n  - **Remaining work / closeout items**\n  - **Payment follow-up**\n\n- **Risks we identified:**  \n  - **Pending costs** that still needed clarity  \n  - **Invoice/payment timing**  \n  - **Scope changes** still affecting final alignment  \n  - **Schedule/readiness risk** tied to finishing and closeout coordination\n\n- **Specific follow-up you asked about:**  \n  - You wanted clarification on **Brandon’s discussion about JobPlanner in Teams**.  \n  - I wasn’t able to retrieve enough reliable context at the time to answer that cleanly.\n\n- **Concrete deliverable from that session:**  \n  - We also worked through **guidance for drafting an RFI about electrical rough-in delays**, including what details needed to be included and a safe draft structure.\n\nWhat I can say confidently is this: the prior Westfield discussion wasn’t about a healthy “nothing to see here” closeout. It was about a project in the last stretch where **paperwork, scope alignment, and payment/approval loose ends** were the real pressure points.\n\nOne gap: I tried pulling the past-conversation memory tool just now, and that lookup failed on the backend, so this summary is coming from the session continuity I already have loaded rather than a fresh memory retrieval.\n\nIf you want, I can do one of these next:\n1. **Reconstruct the full Westfield timeline** from meetings/emails/Teams, or  \n2. **Turn our past Westfield discussions into an action log**: issue, owner, last known status, and what still needs to move."
+      },
+      "expectedToolNames": [
+        "recallPastConversations",
+        "searchMemories"
+      ],
+      "expectedToolFamilies": [
+        "memory"
+      ]
+    },
+    {
+      "id": "app-help",
+      "intent": "app_help",
+      "prompt": "How do I create a commitment in this app?",
+      "selectedProjectId": null,
+      "sessionId": "25104250-a4ff-483d-9257-b1b77373428d",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-app-help",
+      "startedAt": "2026-05-02T10:41:31.258Z",
+      "finishedAt": "2026-05-02T10:41:43.147Z",
+      "durationMs": 11329,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 255,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: streamingToolPolicy, searchAppHelp"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "searchAppHelp"
+        ],
+        "familiesHit": [
+          "app_help"
+        ],
+        "finalTextLength": 1069,
+        "finalText": "I don’t have a published help article for creating a commitment yet.\n\nWhat I can tell you from the app’s current workflow:\n\n1. Go to the right project first.\n2. Open the commitments/financial contracts area for that project.\n3. Choose whether you’re creating a subcontract or a purchase order.\n4. Enter the vendor, scope/title, contract value, and status details.\n5. Attach supporting backup if needed.\n6. Save, then route it for whatever approval flow your team uses.\n\nWhat’s missing right now is a controlled help doc that confirms:\n- the exact screen path\n- required fields\n- whether commitments can be created from the AI directly in your environment\n- approval behavior after save\n\nSo the honest answer is: I don’t have that workflow documented well enough to give you button-by-button instructions without guessing.\n\nTwo ways forward:\n- If you want, I can help you find the exact commitment area by project and tell you what records already exist there.\n- Or I can flag this as missing help-center coverage so the team adds a proper “Create a Commitment” article."
+      },
+      "expectedToolNames": [
+        "searchAppHelp"
+      ],
+      "expectedToolFamilies": [
+        "app_help"
+      ]
+    },
+    {
+      "id": "accounting-ap-aging",
+      "intent": "financial_analysis",
+      "prompt": "What's our AP aging look like right now?",
+      "selectedProjectId": null,
+      "sessionId": "3c38ec1d-510a-4432-b5a0-a806ff0459bd",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-accounting-ap-aging",
+      "startedAt": "2026-05-02T10:41:43.149Z",
+      "finishedAt": "2026-05-02T10:42:05.332Z",
+      "durationMs": 21404,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 378,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: streamingToolPolicy, getAPAgingReport"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "getAPAgingReport"
+        ],
+        "familiesHit": [
+          "accounting"
+        ],
+        "finalTextLength": 1146,
+        "finalText": "AP is clean in volume, but bad in age.\n\n**Right now: $14,110 outstanding total, and 100% of it is in 90+ days past due.** There’s nothing sitting in current, 1–30, 31–60, or 61–90.\n\n### Aging snapshot\n- **Current:** $0\n- **1–30 days:** $0\n- **31–60 days:** $0\n- **61–90 days:** $0\n- **90+ days:** **$14,110** across **2 bills**\n\n### What that means\nThe balance is small, so this is **not a cash-volume problem**. It **is** a cleanup problem.\n\nWhen every open AP dollar is 90+ days old, one of two things is usually true:\n- the bills are being ignored, or\n- they’re in dispute and never got resolved properly.\n\nEither way, it’s the kind of thing that creates unnecessary vendor friction.\n\n### What I’d do next\n1. **Identify the 2 bills today** — vendor, invoice date, amount, and whether they’re disputed or simply unpaid.\n2. **Clear or resolve them this week.**\n3. **Check if either vendor is active on a current project** so this doesn’t turn into a field relationship issue over a relatively small balance.\n\nIf you want, I can pull the **recent AP bills** or **vendor spend detail** next and tell you exactly which vendors make up that $14,110."
+      },
+      "expectedToolNames": [
+        "getAPAgingReport"
+      ],
+      "expectedToolFamilies": [
+        "accounting"
+      ]
+    },
+    {
+      "id": "accounting-cash-position",
+      "intent": "financial_analysis",
+      "prompt": "What's our current cash position across accounts?",
+      "selectedProjectId": null,
+      "sessionId": "eeac3a06-9211-4dc0-9430-efeed371b419",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-accounting-cash-position",
+      "startedAt": "2026-05-02T10:42:05.333Z",
+      "finishedAt": "2026-05-02T10:42:34.274Z",
+      "durationMs": 28154,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 407,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: streamingToolPolicy, getCashPositionReport, getFinancialAnalysis, getAPAgingReport, getRecentInvoices, getARAgingReport, getRecentBills"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "getCashPositionReport",
+          "getFinancialAnalysis",
+          "getAPAgingReport",
+          "getRecentInvoices",
+          "getARAgingReport",
+          "getRecentBills"
+        ],
+        "familiesHit": [
+          "financial",
+          "accounting"
+        ],
+        "finalTextLength": 1451,
+        "finalText": "I don't have a clean live cash read across accounts right now because the ERP cash-position pull failed, and AR aging failed too.\n\nWhat I can confirm:\n- **$14,110 in AP is outstanding**, all in the **90+ day bucket**\n- That’s across **2 overdue bills**\n- Recent feeds returned **0 open AP bills** and **0 open AR invoices**, but without the failed cash-position and AR-aging pulls, that is **not enough** to call liquidity healthy\n\nWhat that means:\n- The one hard signal here is **overdue payables**, which is a working-capital issue until proven otherwise\n- I **cannot verify current net cash, total bank position, or recent inflows vs. outflows** from the data that came back\n- So the real answer is: **there’s at least some payment drag, but I don’t have enough reliable ERP output yet to give you a true company-wide cash position**\n\nWhat to do next:\n1. **Review the 2 past-due bills today** — confirm whether they’re disputed, on hold, or simply unpaid\n2. **Retry the ERP cash-position and AR-aging reports** — that’s the missing piece for a real liquidity answer\n3. If you want a practical workaround right now, I can pull:\n   - **live AP aging + vendor spend pressure**, or\n   - **project-level billing/commitment exposure**\n   \nThat would at least show where cash pressure is likely coming from while the cash-position endpoint is failing.\n\nIf you want, I can dig into the **2 overdue bills** next and tell you exactly who we owe and for what."
+      },
+      "expectedToolNames": [
+        "getCashPositionReport"
+      ],
+      "expectedToolFamilies": [
+        "accounting"
+      ]
+    },
+    {
+      "id": "thought-partner-bid",
+      "intent": "brainstorming",
+      "prompt": "Help me think through whether we should bid on a $4M warehouse renovation in a market we haven't worked in. What are the tradeoffs?",
+      "selectedProjectId": null,
+      "sessionId": "5c65583f-66e2-4e5e-b856-1668a3b3ef2c",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-thought-partner-bid",
+      "startedAt": "2026-05-02T10:42:34.275Z",
+      "finishedAt": "2026-05-02T10:43:24.125Z",
+      "durationMs": 48908,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1082,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: streamingToolPolicy, getCompanyKnowledge, getCompanyKnowledge, getCompanyKnowledge, getCompanyKnowledge, getCompanyKnowledge, getCrossProjectComparison, getActionItemsAndInsights, getPortfolioOverview, getPortfolioOverview, getPortfolioOverview, getProjectsWithRisks, getPortfolioOverview, searchConstructionMarket"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "getCompanyKnowledge",
+          "getCompanyKnowledge",
+          "getCompanyKnowledge",
+          "getCompanyKnowledge",
+          "getCompanyKnowledge",
+          "getCrossProjectComparison",
+          "getActionItemsAndInsights",
+          "getPortfolioOverview",
+          "getPortfolioOverview",
+          "getPortfolioOverview",
+          "getProjectsWithRisks",
+          "getPortfolioOverview",
+          "searchConstructionMarket"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "knowledge",
+          "actions",
+          "web"
+        ],
+        "finalTextLength": 4659,
+        "finalText": "The real question isn’t “can we do a $4M warehouse renovation?” It’s whether this is a smart way to buy into a new market.\n\nMy read: **bid it only if it clears a higher bar than a normal $4M job**. New-market work can be worth it, but the first project usually costs more attention, more contingency, and more margin than people want to admit.\n\n## The upside\n\n- **Market entry without betting the company.** At $4M, it’s big enough to matter and small enough to be a controlled entry move.\n- **Good reference value.** A warehouse renovation can become a credible calling card if you want more industrial work there.\n- **Potential repeat-work platform.** If the client has multiple facilities or a regional footprint, this can be a door-opener, not just a one-off.\n- **You already have industrial/warehouse signal in the portfolio.** The current project mix shows warehouse/industrial experience, so this isn’t a capability stretch on type — it’s a geography stretch.\n\n## The downside\n\nThis is where these jobs go sideways.\n\n- **Margin gets thinner fast.** New subs, new inspectors, new permit norms, more travel, more coordination friction. One bad assumption can wipe out the fee on a $4M job.\n- **Local competitors have the home-field advantage.** They know the trades, the AHJ process, and probably the owner reps.\n- **Staffing risk is real.** A $4M renovation is not a “fit it in” project. It needs real PM coverage, superintendent presence, and fast issue resolution.\n- **Cash can get tight.** If the contract has slow pay, retainage, weak mobilization billing, or early material deposits, you can feel the pain before you see any upside.\n- **You can damage the market if the first one goes badly.** A bad first project is worse than no first project.\n\n## The tradeoff in plain English\n\nYou’re trading:\n\n- **short-term certainty** for **strategic foothold**\n- **known-margin home-market work** for **higher-risk future-positioning**\n- **local relationship weakness today** for **potential credibility tomorrow**\n\nThat trade only makes sense if this job is more than revenue. If it’s just a one-off hard-bid renovation in a market where you have no local edge, I’d be skeptical.\n\n## What has to be true before I’d say yes\n\nI’d want at least most of these to be true:\n\n1. **The margin is stronger than normal**\n   - Not “acceptable.”\n   - Strong enough to absorb startup inefficiency, travel, coordination drag, and estimating uncertainty.\n\n2. **The client matters**\n   - Repeat client, portfolio owner, broker/developer relationship, or clear follow-on potential.\n   - If this is a random one-off, the strategic upside drops hard.\n\n3. **You have a local execution plan**\n   - Local superintendent, local partner, or at least a real prequalified sub bench.\n   - If you’re building the local network from scratch while estimating, that’s a warning sign.\n\n4. **You are not stretching the same core people**\n   - If the bid depends on already-loaded PM/super resources, don’t kid yourself — the project will pay for that with mistakes.\n\n5. **The contract won’t punish the learning curve**\n   - Reasonable retainage, payment timing, manageable schedule, clear scope, no fantasy assumptions about change orders saving the job.\n\n6. **The project has enough complexity to differentiate**\n   - If it’s pure low-bid commodity work, locals usually win.\n   - If it’s phased renovation, occupied work, logistics-heavy, MEP-intensive, or schedule-sensitive, that’s more winnable if your team is good.\n\n## When I’d bid it\n\nI’d lean **yes** if:\n- the client is strategic,\n- the project could lead to more work in that market,\n- the fee is healthy,\n- and you can name the PM and superintendent today without robbing another job.\n\n## When I’d pass\n\nI’d lean **no** if:\n- it’s a one-off,\n- price is tight,\n- locals are entrenched,\n- you don’t have a local field anchor,\n- or the job only works if everything goes right.\n\nThat’s the trap: **new-market jobs that require perfect execution are usually not good bets.**\n\n## My recommendation\n\nUse a simple decision rule:\n\n**Bid only if at least 2 of these 3 are true:**\n- the **relationship upside** is real,\n- the **margin cushion** is real,\n- the **local execution plan** is real.\n\nIf you only have one of the three, pass.\n\nBy the way, the people side is the part most teams underweight. The portfolio already shows active coordination load on current work, and a $4M renovation needs dedicated attention. If this gets staffed as an “also cover this one” job, that’s the wrong answer before the bid even goes out.\n\nIf you want, I can turn this into a **weighted bid/no-bid scorecard** you can use in 10 minutes with your team."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": []
+    },
+    {
+      "id": "what-changed",
+      "intent": "project_briefing",
+      "prompt": "What changed on Westfield since the last time I asked?",
+      "selectedProjectId": 43,
+      "sessionId": "ce8fb5cf-69f1-4fa1-a8de-4a5997f0fc16",
+      "sessionLabel": "eval-2026-05-02T10-32-47-633Z-what-changed",
+      "startedAt": "2026-05-02T10:43:24.128Z",
+      "finishedAt": "2026-05-02T10:43:27.924Z",
+      "durationMs": 3743,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 6,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [semanticSearch, recallPastConversations] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'semantic' not represented",
+          "expected family 'communications' not represented",
+          "expected family 'memory' not represented"
+        ],
+        "observations": [
+          "tools fired: clientProjectIntelligencePacket"
+        ],
+        "toolNames": [
+          "clientProjectIntelligencePacket"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 2404,
+        "finalText": "Current read: Active closeout/commercial coordination with LOI/warranty language, past-due invoice follow-up, change-order signatures, and remaining work signals.\nWhat changed recently: Westfield Collective has active late-stage communication around LOI/warranty language, change-order signatures, remaining work, and payment follow-up.\nFinancial/change-management exposure: The packet flags pending cost exposure and payment pressure: past-due invoice communication is present, and older plumbing/change-order scope still needs formal cost confirmation. Change-management risk centers on plumbing scope, floor-sink changes, mop-sink/Pepsi-line additions, and unsigned change-order documentation.\nSchedule/operational risk: Operational risk is tied to closeout readiness: remaining items, patio/grade decisions, health-inspection plumbing fixes, and vendor coordination have appeared in recent project communications.\nDecisions/open questions/follow-ups: Open decisions include whether warranty/governing-law language is acceptable and whether change-order signatures/documentation are complete. Likely missed follow-ups are the LeMaster/warranty wording response, past-due invoice resolution, change-order signatures, and confirming remaining work ownership.\nRecommended next action:\n- Verify latest post-April-22 communications before making client-facing claims.\n- Check structured budget, commitments, direct costs, and change orders before quoting exposure dollars.\n- Assign owners/dates for warranty language, change-order signatures, past-due invoices, and remaining items.\nEvidence basis and confidence: The packet links to real project communications, but formal cost/status values still require structured tools. 1223 project document/source rows, 544 project memories, 0 project_emails rows. Latest packet source date: 2026-04-22T00:00:00.000Z. Gaps: project_emails has zero project-scoped rows for project 43; manual packet does not replace structured financial verification; post-packet communications must be checked for stale answers. [Source: Teams DM: Westfield Collective] [Source: Email: TAG 04/21/26 Westfield Collective - Past Due Invoices] [Source: Westfield Collective: Change Order Discussion]\n\n\nPacket status: working sample. Use this as the prepared baseline, not as proof that nothing changed after 2026-04-22T00:00:00+00:00.\nResolved target: Westfield Collective (project 43)."
+      },
+      "expectedToolNames": [
+        "semanticSearch",
+        "recallPastConversations"
+      ],
+      "expectedToolFamilies": [
+        "semantic",
+        "communications",
+        "memory"
+      ]
+    }
+  ]
+}

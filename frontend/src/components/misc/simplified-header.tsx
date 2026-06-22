@@ -31,7 +31,6 @@ const coreTools = [
 
 const projectManagementTools = [
   { name: "Emails", href: "/emails" },
-  { name: "Outlook Emails", href: "/outlook-emails" },
   { name: "RFIs", href: "/rfis", hasCreateAction: true },
   { name: "Submittals", href: "/submittals", hasCreateAction: true },
   { name: "Transmittals", href: "/transmittals" },

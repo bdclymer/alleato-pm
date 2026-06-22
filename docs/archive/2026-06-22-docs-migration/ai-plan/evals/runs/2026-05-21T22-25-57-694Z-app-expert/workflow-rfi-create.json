@@ -1,0 +1,70 @@
+{
+  "id": "workflow-rfi-create",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 14003,
+  "question": "Can the app help create an RFI?",
+  "mustInclude": [
+    "RFI",
+    "preview"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Yes — the app can help create an RFI.\n\nWhat I checked:\n- Feature registry: `ai-assistant-actions` and `rfis`\n- Help articles:\n  - `docs/help/articles/ai-assistant-actions.md`\n  - `docs/help/articles/rfis.md`\n\nDocumented behavior:\n- The AI assistant supports **Create RFI** as a write action.\n- It requires **confirmation** before executing the write.\n- The RFI article documents the user-facing RFI creation flow:\n  - choose **Create RFI**\n  - enter **Subject** and **Question**\n  - set **Assignee**\n  - set **Due Date**\n  - choose a **Discipline**\n  - optionally pin to a drawing and attach files\n  - submit\n\nImportant route evidence:\n- AI assistant route: `/ai-assistant`\n- RFI list route: `/[projectId]/rfis`\n- New RFI route discovered in implementation: `/[projectId]/rfis/new`\n\nSo the documented answer is: **yes, the app can help create an RFI, and the AI assistant can do it with a preview-and-confirm flow.**\n\nWhat remains uncertain:\n- I did not check the page-specific route implementation for `/[projectId]/rfis/new`, so I’m relying on curated help for the workflow and on route inventory only for the route existence.\n- I also don’t know the current project context, so I can’t say whether RFI creation is enabled for a specific project or permission set.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/ai-assistant-actions.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-assistant-actions.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/rfis.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/rfis.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/rfis",
+        "sourceType": "sitemap",
+        "route": "/rfis",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/rfis/new",
+        "sourceType": "sitemap",
+        "route": "/rfis/new",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 13913,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

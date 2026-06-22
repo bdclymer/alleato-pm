@@ -46,7 +46,7 @@ const pool = new pg.Pool({
 });
 
 const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-const outDir = path.join(repoRoot, "docs/ai-plan/evals/dogfood", stamp);
+const outDir = path.join(repoRoot, "docs/archive/2026-06-22-docs-migration/ai-plan/evals/dogfood", stamp);
 mkdirSync(outDir, { recursive: true });
 
 // ─────────── Ground-truth queries ──────────────────────────────────────────

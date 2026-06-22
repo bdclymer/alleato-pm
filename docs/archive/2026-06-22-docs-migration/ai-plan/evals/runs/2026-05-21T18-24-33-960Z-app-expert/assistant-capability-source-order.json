@@ -1,0 +1,96 @@
+{
+  "id": "assistant-capability-source-order",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 8191,
+  "question": "How should Ask Alleato decide what app documentation to trust?",
+  "response": {
+    "answer": "Ask Alleato should trust app documentation in this order:\n\n1. **Curated help articles first**  \n   The app-navigation help article says the sitemap and feature registry are generated from the codebase and help metadata, and that Ask Alleato should use curated docs when they exist. It also says the assistant should include the exact route and a short reason when possible.  \n   Source: `docs/help/articles/app-navigation-and-feature-map.md`\n\n2. **Feature registry metadata as the index**\n   The feature registry is the first place to search for a documented feature, route, and whether a help article exists. For Ask Alleato-related content, I found:\n   - `AI Assistant Overview` → `docs/help/articles/ai-assistant-overview.md`\n   - `AI Capabilities Index` → `docs/help/articles/ai-capabilities-index.md`\n   - `Ask the AI Assistant for Help` → `docs/help/articles/ask-the-ai-assistant.md`\n   - `Navigate Alleato PM` → `docs/help/articles/app-navigation-and-feature-map.md`\n   - `Use Help Center and Ask Alleato Together` → `docs/help/articles/use-help-center-and-ai-assistant.md`\n\n3. **Read the linked help article before answering behavior/capability questions**\n   If feature metadata points to a help article, that article should be treated as the user-facing source of truth before saying behavior is uncertain.\n\n4. **Use route lookup for page-specific questions**\n   For questions about a specific page or current route, route metadata should be checked after docs. If the route exists but lacks a curated article, Ask Alleato should say it found the route from the app inventory and that user-facing documentation is still missing.\n\n5. **Use implementation evidence only as a fallback**\n   If no curated doc exists, route-discovered evidence is acceptable, but it should be labeled clearly as **implementation evidence**, not user-facing documentation.\n\n6. **Do not claim an action is executable unless docs support it**\n   A write/action should only be described as available if the feature registry, help article, or action metadata explicitly says so.\n\n7. **If evidence conflicts or is missing, say so plainly**\n   State what was checked and what remains uncertain instead of guessing.\n\nArtifact status check: both generated artifacts are available and fresh enough to use:\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nIf you want, I can also summarize this as a short “trust hierarchy” Ask Alleato can follow internally.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/app-navigation-and-feature-map.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-navigation-and-feature-map.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ai-assistant-overview.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-assistant-overview.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ai-capabilities-index.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-capabilities-index.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ask-the-ai-assistant.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ask-the-ai-assistant.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/use-help-center-and-ai-assistant.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/use-help-center-and-ai-assistant.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/capability",
+        "sourceType": "sitemap",
+        "route": "/capability",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/action",
+        "sourceType": "sitemap",
+        "route": "/action",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 8182,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

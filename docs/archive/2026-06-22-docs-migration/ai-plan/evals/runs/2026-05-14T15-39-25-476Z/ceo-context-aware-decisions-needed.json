@@ -1,0 +1,308 @@
+{
+  "id": "ceo-context-aware-decisions-needed",
+  "intent": "operations_analysis",
+  "prompt": "What decisions am I holding up?",
+  "selectedProjectId": null,
+  "sessionId": "6c27002b-a9e3-4f94-bc52-5f1eb1cdfed0",
+  "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-context-aware-decisions-needed",
+  "startedAt": "2026-05-14T15:53:01.487Z",
+  "finishedAt": "2026-05-14T15:53:12.369Z",
+  "durationMs": 10232,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 11,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [getActionItemsAndInsights, getRFIStatus] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'actions' not represented",
+      "expected family 'operations' not represented"
+    ],
+    "observations": [
+      "tools fired: intentPlanner, featureRequestPacketRouter"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "featureRequestPacketRouter"
+    ],
+    "familiesHit": [],
+    "finalTextLength": 388,
+    "finalText": "Captured the request packet: What decisions am I holding up?.\n\nPacket: /ai-assistant/feature-requests/3d4864d9-f192-4b1b-9fa4-db3a496efe73\n\nI stopped at packet capture so this turn does not time out while also generating plans, Linear drafts, or handoffs.\n\nNext step: open the packet, then run the implementation-plan/Linear/handoff actions from the packet widget when the scope is ready."
+  },
+  "expectedToolNames": [
+    "getActionItemsAndInsights",
+    "getRFIStatus"
+  ],
+  "expectedToolFamilies": [
+    "actions",
+    "operations"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T15:53:04.335Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Capturing the request packet",
+        "status": "loading",
+        "timestamp": "2026-05-14T15:53:04.335Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-feature-request-3d4864d9-f192-4b1b-9fa4-db3a496efe73",
+      "data": {
+        "widget": {
+          "type": "feature_request_packet",
+          "id": "feature-request-3d4864d9-f192-4b1b-9fa4-db3a496efe73",
+          "title": "What decisions am I holding up?",
+          "requestId": "3d4864d9-f192-4b1b-9fa4-db3a496efe73",
+          "status": "ready_for_planning",
+          "readinessLabel": "Needs clarification",
+          "readyForBuild": false,
+          "openQuestions": [
+            "Should blocker coverage include RFIs, submittals, invoices, commitments, change orders, or every open workflow blocker?"
+          ],
+          "acceptanceCriteriaCount": 3,
+          "linearIssueUrl": null,
+          "linearSyncStatus": "not_started",
+          "handoffPath": null,
+          "detailHref": "/ai-assistant/feature-requests/3d4864d9-f192-4b1b-9fa4-db3a496efe73"
+        }
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-feature-request-packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-feature-request-packet",
+      "delta": "Captured the request packet: What decisions am I holding up?.\n\nPacket: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-feature-request-packet",
+      "delta": "/ai-assistant/feature-requests/3d4864d9-f192-4b1b-9fa4-db3a496efe73\n\nI stopped at packet "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-feature-request-packet",
+      "delta": "capture so this turn does not time out while also generating plans, Linear drafts, or "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-feature-request-packet",
+      "delta": "handoffs.\n\nNext step: open the packet, then run the implementation-plan/Linear/handoff "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-feature-request-packet",
+      "delta": "actions from the packet widget when the scope is ready."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-feature-request-packet"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Request packet captured",
+        "status": "success",
+        "timestamp": "2026-05-14T15:53:11.703Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": null,
+    "data_parts": [
+      {
+        "id": "assistant-widget-feature-request-3d4864d9-f192-4b1b-9fa4-db3a496efe73",
+        "data": {
+          "widget": {
+            "id": "feature-request-3d4864d9-f192-4b1b-9fa4-db3a496efe73",
+            "type": "feature_request_packet",
+            "title": "What decisions am I holding up?",
+            "status": "ready_for_planning",
+            "requestId": "3d4864d9-f192-4b1b-9fa4-db3a496efe73",
+            "detailHref": "/ai-assistant/feature-requests/3d4864d9-f192-4b1b-9fa4-db3a496efe73",
+            "handoffPath": null,
+            "openQuestions": [
+              "Should blocker coverage include RFIs, submittals, invoices, commitments, change orders, or every open workflow blocker?"
+            ],
+            "readyForBuild": false,
+            "linearIssueUrl": null,
+            "readinessLabel": "Needs clarification",
+            "linearSyncStatus": "not_started",
+            "acceptanceCriteriaCount": 3
+          }
+        },
+        "type": "data-assistant-widget"
+      }
+    ],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "What decisions am I holding up?",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "general_conversation",
+          "sourceSpecificRagKind": null,
+          "messageDrivenToolNames": [
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus"
+          ],
+          "recentEmailInboxRequest": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "decision_lookup",
+          "planner": "model",
+          "rationale": "The user is asking to identify pending decisions they may be blocking, which maps to reviewing decision records. Because no project is selected, the assistant should first clarify scope or ask which project(s) to check before retrieving decision data.",
+          "confidence": "high",
+          "responseMode": "ask_clarifying_question",
+          "requiredTools": [],
+          "deterministicIntent": "general_conversation",
+          "shouldAskClarifyingQuestion": true
+        },
+        "timestamp": "2026-05-14T15:53:04.333Z"
+      },
+      {
+        "tool": "featureRequestPacketRouter",
+        "input": {
+          "message": "What decisions am I holding up?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "status": "ready_for_planning",
+          "requestId": "3d4864d9-f192-4b1b-9fa4-db3a496efe73",
+          "readyForBuild": false,
+          "missingRequirements": [
+            "affected workflow or page scope",
+            "open implementation-critical questions resolved or converted to assumptions",
+            "implementation plan",
+            "Claude Code handoff",
+            "Linear issue or Linear draft body"
+          ],
+          "deterministicFastPath": true
+        },
+        "timestamp": "2026-05-14T15:53:11.230Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": null,
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": null,
+    "loop_diagnostic": {
+      "steps": [],
+      "stepStarts": [],
+      "totalStepCount": 0,
+      "finalFinishReason": "unknown",
+      "preparedStepCount": 0,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 62,
+      "reasons": [
+        "at least one successful tool call",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

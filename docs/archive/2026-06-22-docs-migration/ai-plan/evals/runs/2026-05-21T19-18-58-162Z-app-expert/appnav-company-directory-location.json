@@ -1,0 +1,61 @@
+{
+  "id": "appnav-company-directory-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4076,
+  "question": "Where do company records live outside a project?",
+  "response": {
+    "answer": "I can’t answer this from App Expert artifacts because the required generated docs are missing.\n\nWhat I checked:\n- App Expert artifact status\n- Feature registry search for:\n  - “company records outside a project”\n  - “company records”\n- App sitemap search for “company records”\n\nResult:\n- `docs/architecture/generated/app-sitemap.generated.json` is missing\n- `docs/architecture/generated/feature-registry.generated.json` is missing\n\nSo there’s no curated route/help/feature evidence available, and I can’t safely claim where company records live outside a project.\n\nIf you want, regenerate the artifacts with:\n- `npm run docs:generate-app-expert`\n\nThen I can re-check and give you the exact route/help/article/source-file evidence.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/feature",
+        "sourceType": "sitemap",
+        "route": "/help/feature",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/article/source-file",
+        "sourceType": "sitemap",
+        "route": "/help/article/source-file",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3970,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

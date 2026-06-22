@@ -1,0 +1,2367 @@
+{
+  "id": "realworld-draft-email-response",
+  "intent": "email_action",
+  "prompt": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+  "selectedProjectId": null,
+  "sessionId": "009fca54-e363-4afa-8b44-a3d505cdc921",
+  "sessionLabel": "eval-2026-05-19T04-23-08-875Z-6c38c20f-realworld-draft-email-response",
+  "startedAt": "2026-05-19T04:24:17.190Z",
+  "finishedAt": "2026-05-19T04:24:33.037Z",
+  "durationMs": 12506,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 340,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "judge email_operator score 2 < 4: The response is a generic draft but it fails the prompt’s requirement to keep it short and professional for an update request, and it introduces unsupported specifics (change orders, the 22nd, mullion stabilizer drop-off) without showing evidence from the thread. It also implies action via a confirmation step, which is not an appropriate email draft response and risks confusing whether anything was actually sent."
+    ],
+    "warnings": [],
+    "observations": [
+      "tools fired: getRecentOutlookEmails, readOutlookEmailThread, draftOutlookEmail, getRecentEmails",
+      "judge email_operator: fail (2/4)"
+    ],
+    "toolNames": [
+      "getRecentOutlookEmails",
+      "readOutlookEmailThread",
+      "draftOutlookEmail",
+      "getRecentEmails"
+    ],
+    "familiesHit": [
+      "communications",
+      "email_action"
+    ],
+    "finalTextLength": 300,
+    "finalText": "Draft is ready:\n\nBryan,\n\nThanks for the update. I’m still working through the change orders today and will get back to you shortly. If the 22nd holds for site work, I’ll plan around that and coordinate the mullion stabilizer drop-off.\n\nAndrew\n\nSay **confirm** and I’ll save it to your Outlook drafts.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 15000,
+      "maxDurationMs": 30000,
+      "durationMs": 12506
+    },
+    "judge": {
+      "status": "fail",
+      "rubric": "email_operator",
+      "score": 2,
+      "minScore": 4,
+      "summary": "The response is a generic draft but it fails the prompt’s requirement to keep it short and professional for an update request, and it introduces unsupported specifics (change orders, the 22nd, mullion stabilizer drop-off) without showing evidence from the thread. It also implies action via a confirmation step, which is not an appropriate email draft response and risks confusing whether anything was actually sent.",
+      "strengths": [
+        "Produces a concise, sender-ready tone.",
+        "Directly addresses the recipient and includes a basic status update structure."
+      ],
+      "weaknesses": [
+        "Does not separate urgent vs normal email or explain why this message matters.",
+        "Fails to identify the actual thread context with evidence; introduces possibly invented details.",
+        "Does not recommend a concrete action path beyond a confirmation prompt.",
+        "Not especially tailored to Brandon’s review/send requirement; the wording is not clearly practical or minimal enough.",
+        "Risks implying a workflow step ('Say confirm') that is not part of the requested draft and could be mistaken for sending."
+      ],
+      "dimensionScores": {
+        "separates_urgent_from_noise": 1,
+        "identifies_who_needs_response_why_what_if_ignored": 1,
+        "summarizes_threads_efficiently": 2,
+        "recommends_concrete_response_path": 1,
+        "draft_short_direct_practical": 2,
+        "never_claims_sent_or_invents_details": 1
+      },
+      "provider": "vercel_gateway",
+      "model": "openai/gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "draftOutlookEmail",
+    "getRecentEmails",
+    "getRecentOutlookEmails",
+    "readOutlookEmailThread"
+  ],
+  "expectedToolFamilies": [
+    "email_action",
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: structured_outlook_inbox_query",
+        "status": "loading",
+        "timestamp": "2026-05-19T04:24:17.256Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (1 sources, 0 warnings)",
+        "status": "success",
+        "durations": {
+          "recent_emails": 306
+        },
+        "timestamp": "2026-05-19T04:24:18.353Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "SbVj0Al51EQLO96y"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_JtCJpXOFRGzdobJOPrYQ1b56",
+      "toolName": "getRecentOutlookEmails"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JtCJpXOFRGzdobJOPrYQ1b56",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JtCJpXOFRGzdobJOPrYQ1b56",
+      "inputTextDelta": "limit"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JtCJpXOFRGzdobJOPrYQ1b56",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JtCJpXOFRGzdobJOPrYQ1b56",
+      "inputTextDelta": "10"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JtCJpXOFRGzdobJOPrYQ1b56",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_JtCJpXOFRGzdobJOPrYQ1b56",
+      "toolName": "getRecentOutlookEmails",
+      "input": {
+        "limit": 10
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_JtCJpXOFRGzdobJOPrYQ1b56",
+      "output": {
+        "source": "outlook_email_intake",
+        "count": 10,
+        "emails": [
+          {
+            "id": 1758,
+            "graphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBaAAA=",
+            "mailboxUserId": "acannon@alleatogroup.com",
+            "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQAERL4jNfvL1Iv9pus3RddMA=",
+            "subject": "RE: Open CO's Westfield Collective",
+            "fromName": "Bryan Doss",
+            "fromEmail": "dossb@cih-inc.com",
+            "toList": [
+              "acannon@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-18T23:17:01+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 43,
+            "project": {
+              "id": 43,
+              "name": "Westfield Collective",
+              "projectNumber": "24-115"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBaAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: RE: Open CO's Westfield Collective Date: 2026-05-18T23:17:01Z From: Bryan Doss <dossb@cih-inc.com> To: Andrew Cannon <acannon@alleatogroup.com> Currently looking like 22 nd on the site work. &nbsp; &nbsp; &nbsp; Bryan Doss Vice President, Operations O:&nbsp;317-558-5700 M:&nbsp;317-447-2769 E:&nbsp; dossb@cih-inc.com 9190 Corporation Drive Indianapolis, IN 46256 &nbsp; &nbsp; From: Andrew Cannon &lt;acannon@alleatogroup.com&gt; Sent: Monday, May 18, 2026 9:19 AM To: Bryan Doss &lt;doss..."
+          },
+          {
+            "id": 1759,
+            "graphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBZAAA=",
+            "mailboxUserId": "acannon@alleatogroup.com",
+            "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQAJfNr87oid5DtcvAjJK9hyw=",
+            "subject": "Re: Westfield Collective: Dumpster Enclosure Gates",
+            "fromName": "Sean Mastain",
+            "fromEmail": "sean@goodshepherdfence.com",
+            "toList": [
+              "acannon@alleatogroup.com"
+            ],
+            "ccList": [
+              "dfranklin@alleatogroup.com",
+              "Ctragesser@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-18T23:05:29+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 43,
+            "project": {
+              "id": 43,
+              "name": "Westfield Collective",
+              "projectNumber": "24-115"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBZAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: Westfield Collective: Dumpster Enclosure Gates Date: 2026-05-18T23:05:29Z From: Sean Mastain <sean@goodshepherdfence.com> To: Andrew Cannon <acannon@alleatogroup.com> Andrew, After reviewing the site and discussing the project with the&nbsp; Production Manager/Owner, we would not recommend installing the gates directly onto the existing walls. Instead, we would propose setting dedicated posts to properly support the gates, as we cannot confidently guarantee that the current wall st..."
+          },
+          {
+            "id": 1764,
+            "graphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB-afAAA=",
+            "mailboxUserId": "acannon@alleatogroup.com",
+            "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQAO7lXLR_MjhGkaXDc11Z2uA=",
+            "subject": "Alleato Group: Union Collective: Solar Roof",
+            "fromName": "Andrew Cannon",
+            "fromEmail": "acannon@alleatogroup.com",
+            "toList": [
+              "philip@ibexdevgroup.com"
+            ],
+            "ccList": [
+              "dfranklin@alleatogroup.com",
+              "bclymer@alleatogroup.com",
+              "jdawson@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-18T23:04:54+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 1009,
+            "project": {
+              "id": 1009,
+              "name": "Union Collective",
+              "projectNumber": "26-119"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB%2FafAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Alleato Group: Union Collective: Solar Roof Date: 2026-05-18T23:04:54Z From: Andrew Cannon <acannon@alleatogroup.com> To: Philip Johnson <philip@ibexdevgroup.com> Good Afternoon, Philip,&nbsp; Could you please provide insight on the following questions for the solar roof product? What is the lead time to get the panels over to the United States once we place the order? Is there a local install group in the United States. Any special requirements or rooms needed for the electrical distr..."
+          },
+          {
+            "id": 1763,
+            "graphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBVAAA=",
+            "mailboxUserId": "acannon@alleatogroup.com",
+            "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQABe7ujWRLAtAiHEMnGMmw2Q=",
+            "subject": "Training Hub in Notion",
+            "fromName": "Maria Calcetero",
+            "fromEmail": "Mcalcetero@alleatogroup.com",
+            "toList": [
+              "allcompany@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-18T22:58:31+00:00",
+            "status": "Received",
+            "matchStatus": "matched",
+            "projectId": 90,
+            "project": {
+              "id": 90,
+              "name": "Alleato Internal Ops",
+              "projectNumber": null
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBVAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Training Hub in Notion Date: 2026-05-18T22:58:31Z From: Maria Calcetero <Mcalcetero@alleatogroup.com> To: Alleato Group <allcompany@alleatogroup.com> Hi Team, We are excited to share that we &nbsp;have a dedicated Training Hub available in Notion for all employees: https://www.notion.so/alleatogroup/21eee3c6d996807f9764c42ff8f2c2d1?v=21eee3c6d99680d6899a000c666fb396 This hub was created to serve as a central place for training materials, and helpful knowledge that can support everyone ..."
+          },
+          {
+            "id": 1765,
+            "graphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB-aeAAA=",
+            "mailboxUserId": "acannon@alleatogroup.com",
+            "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQAD8ysY35gsJPv-uukJf13iU=",
+            "subject": "Re: Civil Plans - Union Collective",
+            "fromName": "Andrew Cannon",
+            "fromEmail": "acannon@alleatogroup.com",
+            "toList": [
+              "dfranklin@alleatogroup.com",
+              "arussell@vioxinc.com",
+              "mbollman@vioxinc.com",
+              "glarison@vioxinc.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-18T22:54:22+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 1009,
+            "project": {
+              "id": 1009,
+              "name": "Union Collective",
+              "projectNumber": "26-119"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB%2FaeAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: Civil Plans - Union Collective Date: 2026-05-18T22:54:22Z From: Andrew Cannon <acannon@alleatogroup.com> To: Douglas Franklin <dfranklin@alleatogroup.com>, Alex Russell <arussell@vioxinc.com>, Michelle Bollman <mbollman@vioxinc.com>, Greg Larison <glarison@vioxinc.com> Alex,&nbsp; What day this week could you have a CAD file sent back? Would Wednesday work for you? Best, Andrew Cannon&nbsp; &nbsp; Assistant Project Manager at Alleato Group Mobile &nbsp;317.315.3968 | &nbsp; Email &..."
+          },
+          {
+            "id": 1766,
+            "graphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB-adAAA=",
+            "mailboxUserId": "acannon@alleatogroup.com",
+            "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQAP27D_1YbjlBprgCCnKyDj8=",
+            "subject": "Union Collective PO",
+            "fromName": "Andrew Cannon",
+            "fromEmail": "acannon@alleatogroup.com",
+            "toList": [
+              "e@damngoodinteriors.com"
+            ],
+            "ccList": [
+              "dfranklin@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-18T22:52:43+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 1009,
+            "project": {
+              "id": 1009,
+              "name": "Union Collective",
+              "projectNumber": "26-119"
+            },
+            "hasAttachments": true,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB%2FadAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Union Collective PO Date: 2026-05-18T22:52:43Z From: Andrew Cannon <acannon@alleatogroup.com> To: Eli Hariton <e@damngoodinteriors.com> Eli,&nbsp; Please see the attached PO for the Union Collective design.&nbsp; Review, sign, and return once completed.&nbsp; Best, Andrew Cannon&nbsp; &nbsp; Assistant Project Manager at Alleato Group Mobile &nbsp;317.315.3968 | &nbsp; Email &nbsp; acannon@alleatogroup.com Web &nbsp; www.alleatogroup.com &nbsp; | &nbsp; &nbsp; &nbsp; Indianapolis - 8383..."
+          },
+          {
+            "id": 1754,
+            "graphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB-acAAA=",
+            "mailboxUserId": "acannon@alleatogroup.com",
+            "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQANn9jIEXV3FLqRmjLq8X_Ks=",
+            "subject": "Re: Union Collective: CAD Files",
+            "fromName": "Andrew Cannon",
+            "fromEmail": "acannon@alleatogroup.com",
+            "toList": [
+              "jerome.daksiewicz@dkgrar.com"
+            ],
+            "ccList": [
+              "dfranklin@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-18T21:50:00+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 1009,
+            "project": {
+              "id": 1009,
+              "name": "Union Collective",
+              "projectNumber": "26-119"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB%2FacAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: Union Collective: CAD Files Date: 2026-05-18T21:50:00Z From: Andrew Cannon <acannon@alleatogroup.com> To: Jerome Daksiewicz <jerome.daksiewicz@dkgrar.com> Jerome, Thank you for sending over the CAD files today. Will you have updated exterior elevations ready for tomorrow's meeting at 2pm with Micheal Schwartz?&nbsp; Best, Andrew Cannon&nbsp; &nbsp; Assistant Project Manager at Alleato Group Mobile &nbsp;317.315.3968 | &nbsp; Email &nbsp; acannon@alleatogroup.com Web &nbsp; www.alle..."
+          },
+          {
+            "id": 1755,
+            "graphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB-abAAA=",
+            "mailboxUserId": "acannon@alleatogroup.com",
+            "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQACv1ulDWO7hLl4dCeNjUK9U=",
+            "subject": "Union Collective: DGI Meeting",
+            "fromName": "Andrew Cannon",
+            "fromEmail": "acannon@alleatogroup.com",
+            "toList": [
+              "mewers@medellasprings.com"
+            ],
+            "ccList": [
+              "dfranklin@alleatogroup.com",
+              "bclymer@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-18T21:48:41+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 1009,
+            "project": {
+              "id": 1009,
+              "name": "Union Collective",
+              "projectNumber": "26-119"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB%2FabAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Union Collective: DGI Meeting Date: 2026-05-18T21:48:41Z From: Andrew Cannon <acannon@alleatogroup.com> To: Mike Ewers <mewers@medellasprings.com> Good Afternoon, Mike, We'd like to get together with you and the DGI team this Wednesday or Thursday. Eli would like to walk though general aesthetics, tones, and layout for Union Collective.&nbsp; Times that work for both Eli and I:&nbsp; Wednesday (05/20) Any time after 2pm Thursday (05/21) Any time after 1pm&nbsp; Please let me know what ..."
+          },
+          {
+            "id": 1756,
+            "graphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB-aaAAA=",
+            "mailboxUserId": "acannon@alleatogroup.com",
+            "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQAJ2a7cApY29HsVNQ-nlxUmQ=",
+            "subject": "Westfield Collective: Water Pooling at 2nd lvl patio",
+            "fromName": "Andrew Cannon",
+            "fromEmail": "acannon@alleatogroup.com",
+            "toList": [
+              "jhillery@merrittcontracting.com",
+              "thillery@merrittcontracting.com"
+            ],
+            "ccList": [
+              "dfranklin@alleatogroup.com",
+              "bclymer@alleatogroup.com",
+              "jdawson@alleatogroup.com",
+              "Ctragesser@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-18T21:25:19+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 43,
+            "project": {
+              "id": 43,
+              "name": "Westfield Collective",
+              "projectNumber": "24-115"
+            },
+            "hasAttachments": true,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB%2FaaAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Westfield Collective: Water Pooling at 2nd lvl patio Date: 2026-05-18T21:25:19Z From: Andrew Cannon <acannon@alleatogroup.com> To: Josh Hillery <jhillery@merrittcontracting.com>, Tim Hillery <thillery@merrittcontracting.com> Josh &amp; Tim,&nbsp; We have two areas on the 2 nd &nbsp;level patio where water is pooling up against the building. I've attached drawings with the locations marked and pictures for reference.&nbsp; Do you have any recommendations for addressing this? One option ..."
+          },
+          {
+            "id": 1752,
+            "graphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBSAAA=",
+            "mailboxUserId": "acannon@alleatogroup.com",
+            "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQAEG6bI1c3DRCu8N8d5w733Y=",
+            "subject": "Re: Union Collective CAD Files",
+            "fromName": "Eli Hariton",
+            "fromEmail": "e@damngoodinteriors.com",
+            "toList": [
+              "jerome.daksiewicz@dkgrar.com"
+            ],
+            "ccList": [
+              "dstewart@fgschaefer.com",
+              "M@damngoodinteriors.com",
+              "g@damngoodinteriors.com",
+              "Matt@cincyav.com",
+              "Bcottrell@ordcha.com",
+              "ncvrettos@vrettoseng.com",
+              "acannon@alleatogroup.com",
+              "mamico@alleatogroup.com",
+              "dfranklin@alleatogroup.com",
+              "mhensley@fgschaefer.com"
+            ],
+            "receivedAt": "2026-05-18T21:01:24+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 1009,
+            "project": {
+              "id": 1009,
+              "name": "Union Collective",
+              "projectNumber": "26-119"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBSAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: Union Collective CAD Files Date: 2026-05-18T21:01:24Z From: Eli Hariton <e@damngoodinteriors.com> To: Jerome Daksiewicz <jerome.daksiewicz@dkgrar.com> Thanks Jerome!&nbsp; E On Mon, May 18, 2026 at 2:38 PM Jerome Daksiewicz &lt; jerome.daksiewicz@dkgrar.com &gt; wrote:"
+          }
+        ],
+        "operationalNote": "These are synced Outlook rows. For exact mailbox freshness, also call getOutlookOperationsStatus."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "toolName": "readOutlookEmailThread"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "inputTextDelta": "int"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "inputTextDelta": "ake"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "inputTextDelta": "Email"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "inputTextDelta": "175"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "inputTextDelta": "8"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "inputTextDelta": "limit"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "inputTextDelta": "10"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "toolName": "readOutlookEmailThread",
+      "input": {
+        "intakeEmailId": 1758,
+        "limit": 10
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_y7wrVUHY1HKGNBd17aR1Ep85",
+      "output": {
+        "source": "outlook_email_intake",
+        "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQAERL4jNfvL1Iv9pus3RddMA=",
+        "messageCount": 4,
+        "messages": [
+          {
+            "id": 146,
+            "graphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHM71PfAAA=",
+            "mailboxUserId": "acannon@alleatogroup.com",
+            "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQAERL4jNfvL1Iv9pus3RddMA=",
+            "subject": "Open CO's Westfield Collective",
+            "fromName": "Bryan Doss",
+            "fromEmail": "dossb@cih-inc.com",
+            "toList": [
+              "acannon@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-06T13:50:50+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 43,
+            "project": {
+              "id": 43,
+              "name": "Westfield Collective",
+              "projectNumber": "24-115"
+            },
+            "hasAttachments": true,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHM71PfAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Open CO's Westfield Collective Date: 2026-05-06T13:50:50Z From: Bryan Doss <dossb@cih-inc.com> To: Andrew Cannon <acannon@alleatogroup.com> Hey Andrew, Could you review and respond to these 4 OPEN CO's 2 redate my involvement on the project. Could you please send me a CO if you approve these, or let me know if you don't so we can adjust our contract amount. Bryan Doss Vice President, Operations O: 317-558-5700 M: 317-447-2769 E: dossb@cih-inc.com 9190 Corporation Drive Indianapolis, IN..."
+          },
+          {
+            "id": 851,
+            "graphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHQgM-QAAA=",
+            "mailboxUserId": "acannon@alleatogroup.com",
+            "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQAERL4jNfvL1Iv9pus3RddMA=",
+            "subject": "Re: Open CO's Westfield Collective",
+            "fromName": "Andrew Cannon",
+            "fromEmail": "acannon@alleatogroup.com",
+            "toList": [
+              "dossb@cih-inc.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-11T22:25:13+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 43,
+            "project": {
+              "id": 43,
+              "name": "Westfield Collective",
+              "projectNumber": "24-115"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHQgM%2FQAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: Open CO's Westfield Collective Date: 2026-05-11T22:25:13Z From: Andrew Cannon <acannon@alleatogroup.com> To: Bryan Doss <dossb@cih-inc.com> Hi Bryan,&nbsp; Please see below CO#1: I will send over.&nbsp; CO#2: Ice Cream door was on the drawings, 101 lobby from 101A storage was not. I will send over.&nbsp; CO#17: Please provide more information or a backup.&nbsp; CO#20 already accounted for. Total should be $118.41 Please let me know the dates for the electrical room door and frame i..."
+          },
+          {
+            "id": 1698,
+            "graphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB-aTAAA=",
+            "mailboxUserId": "acannon@alleatogroup.com",
+            "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQAERL4jNfvL1Iv9pus3RddMA=",
+            "subject": "Re: Open CO's Westfield Collective",
+            "fromName": "Andrew Cannon",
+            "fromEmail": "acannon@alleatogroup.com",
+            "toList": [
+              "dossb@cih-inc.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-18T13:18:40+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 43,
+            "project": {
+              "id": 43,
+              "name": "Westfield Collective",
+              "projectNumber": "24-115"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHVB%2FaTAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: Open CO's Westfield Collective Date: 2026-05-18T13:18:40Z From: Andrew Cannon <acannon@alleatogroup.com> To: Bryan Doss <dossb@cih-inc.com> Good Morning Bryan,&nbsp; Working on your change orders today. Sorry for the delay. Please confirm what day your team will be onsite this week at Westfield Collective. I will drop off the mullion stabilizer once I have a confirmed date. Thank you, Andrew Cannon&nbsp; &nbsp; Assistant Project Manager at Alleato Group Mobile &nbsp;317.315.3968 | ..."
+          },
+          {
+            "id": 1758,
+            "graphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBaAAA=",
+            "mailboxUserId": "acannon@alleatogroup.com",
+            "conversationId": "AAQkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwAQAERL4jNfvL1Iv9pus3RddMA=",
+            "subject": "RE: Open CO's Westfield Collective",
+            "fromName": "Bryan Doss",
+            "fromEmail": "dossb@cih-inc.com",
+            "toList": [
+              "acannon@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-18T23:17:01+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 43,
+            "project": {
+              "id": 43,
+              "name": "Westfield Collective",
+              "projectNumber": "24-115"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBaAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: RE: Open CO's Westfield Collective Date: 2026-05-18T23:17:01Z From: Bryan Doss <dossb@cih-inc.com> To: Andrew Cannon <acannon@alleatogroup.com> Currently looking like 22 nd on the site work. &nbsp; &nbsp; &nbsp; Bryan Doss Vice President, Operations O:&nbsp;317-558-5700 M:&nbsp;317-447-2769 E:&nbsp; dossb@cih-inc.com 9190 Corporation Drive Indianapolis, IN 46256 &nbsp; &nbsp; From: Andrew Cannon &lt;acannon@alleatogroup.com&gt; Sent: Monday, May 18, 2026 9:19 AM To: Bryan Doss &lt;doss..."
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "toolName": "draftOutlookEmail"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "mail"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "box"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "User"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "ac"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "annon"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "@"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "alle"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "og"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "roup"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": ".com"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "reply"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "To"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Graph"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Message"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "A"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "AM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "k"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "AD"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "ll"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "NT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Z"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "k"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "YT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Fl"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "LT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Zi"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "ZD"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Qt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "NG"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Vl"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "NS"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Mm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Nl"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "LT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Bl"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "N"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "DR"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "h"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "MT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "di"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Thi"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Y"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "w"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "BG"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "AAAA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "AA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Aw"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "um"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "4"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "-e"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "o"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "4"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "i"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Q"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "IT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "mx"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Ds"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "_AM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "x"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "LB"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "w"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "A"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "2"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "b"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "V"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "2"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "E"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "J"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "f"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "i"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Q"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "qo"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "GM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "NC"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Z"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "W"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "v"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "L"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "AAAA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "AA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "EM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "AAA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "2"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "b"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "V"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "2"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "E"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "J"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "f"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "i"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Q"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "qo"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "GM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "NC"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Z"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "W"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "v"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "L"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "AA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "HV"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Br"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Ba"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "AAA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "=\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "subject"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "RE"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " Open"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " CO"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "'s"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " West"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " Collective"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "body"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Bry"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "an"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": ",\\"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "n"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\\n"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Thanks"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " for"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " update"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " I"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "’m"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " still"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " working"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " through"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " change"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " orders"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " today"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " will"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " get"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " back"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " you"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " shortly"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " If"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "22"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "nd"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " holds"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " for"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " site"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " work"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": ","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " I"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "’ll"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " plan"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " around"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " that"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " coordinate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " mull"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "ion"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " stabil"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "izer"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": " drop"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "-off"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": ".\\"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "n"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\\n"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Andrew"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Recipients"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\":[]"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "cc"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Recipients"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\":[]"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "bcc"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Recipients"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\":[]"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "importance"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "43"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "draft"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "-re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "ply"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "-open"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "-c"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "os"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "-west"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "175"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "8"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "toolName": "draftOutlookEmail",
+      "input": {
+        "mailboxUserId": "acannon@alleatogroup.com",
+        "replyToGraphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBaAAA=",
+        "subject": "RE: Open CO's Westfield Collective",
+        "body": "Bryan,\n\nThanks for the update. I’m still working through the change orders today and will get back to you shortly. If the 22nd holds for site work, I’ll plan around that and coordinate the mullion stabilizer drop-off.\n\nAndrew",
+        "toRecipients": [],
+        "ccRecipients": [],
+        "bccRecipients": [],
+        "importance": "normal",
+        "projectId": 43,
+        "confirmed": false,
+        "idempotencyKey": "draft-reply-open-cos-westfield-1758"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_cJ5myLQbOhQVaFn90ID9k4VX",
+      "output": {
+        "action": "preview",
+        "message": "Here's the Outlook email draft I'll create. Reply **confirm** to save it to Outlook drafts.",
+        "mailboxUserId": "acannon@alleatogroup.com",
+        "mode": "reply",
+        "subject": "RE: Open CO's Westfield Collective",
+        "body": "Bryan,\n\nThanks for the update. I’m still working through the change orders today and will get back to you shortly. If the 22nd holds for site work, I’ll plan around that and coordinate the mullion stabilizer drop-off.\n\nAndrew",
+        "toRecipients": [],
+        "ccRecipients": [],
+        "bccRecipients": [],
+        "replyToGraphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBaAAA=",
+        "voiceProfile": {
+          "path": "docs/ai-plan/brandon-email-voice-profile.md",
+          "version": "2026-05-13",
+          "summary": "For Brandon's Outlook drafts, write short, direct, action-oriented replies. Start with the ask or answer, skip formal re-addressing in active reply chains, use plain construction/business language, and avoid consultant phrasing."
+        },
+        "adaptiveCard": {
+          "type": "AdaptiveCard",
+          "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+          "version": "1.5",
+          "body": [
+            {
+              "type": "TextBlock",
+              "text": "RE: Open CO's Westfield Collective",
+              "weight": "Bolder",
+              "size": "Medium",
+              "wrap": true
+            },
+            {
+              "type": "FactSet",
+              "facts": [
+                {
+                  "title": "Mailbox",
+                  "value": "acannon@alleatogroup.com"
+                },
+                {
+                  "title": "Recipients",
+                  "value": "inferred from original message"
+                },
+                {
+                  "title": "Mode",
+                  "value": "Reply draft"
+                },
+                {
+                  "title": "Status",
+                  "value": "draft"
+                }
+              ]
+            }
+          ],
+          "actions": []
+        },
+        "widget": {
+          "type": "outlook_email_draft",
+          "id": "outlook-email-draft-preview",
+          "title": "Outlook email draft",
+          "status": "draft",
+          "mailboxUserId": "acannon@alleatogroup.com",
+          "mode": "reply",
+          "subject": "RE: Open CO's Westfield Collective",
+          "body": "Bryan,\n\nThanks for the update. I’m still working through the change orders today and will get back to you shortly. If the 22nd holds for site work, I’ll plan around that and coordinate the mullion stabilizer drop-off.\n\nAndrew",
+          "toRecipients": [],
+          "ccRecipients": [],
+          "bccRecipients": [],
+          "replyToGraphMessageId": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHVBrBaAAA=",
+          "voiceProfile": {
+            "path": "docs/ai-plan/brandon-email-voice-profile.md",
+            "version": "2026-05-13",
+            "summary": "For Brandon's Outlook drafts, write short, direct, action-oriented replies. Start with the ask or answer, skip formal re-addressing in active reply chains, use plain construction/business language, and avoid consultant phrasing."
+          },
+          "adaptiveCard": {
+            "type": "AdaptiveCard",
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "version": "1.5",
+            "body": [
+              {
+                "type": "TextBlock",
+                "text": "RE: Open CO's Westfield Collective",
+                "weight": "Bolder",
+                "size": "Medium",
+                "wrap": true
+              },
+              {
+                "type": "FactSet",
+                "facts": [
+                  {
+                    "title": "Mailbox",
+                    "value": "acannon@alleatogroup.com"
+                  },
+                  {
+                    "title": "Recipients",
+                    "value": "inferred from original message"
+                  },
+                  {
+                    "title": "Mode",
+                    "value": "Reply draft"
+                  },
+                  {
+                    "title": "Status",
+                    "value": "draft"
+                  }
+                ]
+              }
+            ],
+            "actions": []
+          },
+          "confirmPrompt": "Confirm this Outlook email draft and create it with draftOutlookEmail."
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Draft"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ready"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Bry"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Thanks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " update"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’m"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " working"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " through"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " orders"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shortly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "22"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "nd"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " holds"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " site"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’ll"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " plan"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " around"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordinate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mull"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stabil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "izer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " drop"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-off"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Andrew"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Say"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "confirm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’ll"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " save"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " your"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " drafts"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "finish",
+      "finishReason": "stop"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 129751,
+      "totalTokens": 130120,
+      "outputTokens": 369
+    },
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "retrieval-complete",
+          "status": "success",
+          "message": "Retrieved (1 sources, 0 warnings)",
+          "durations": {
+            "recent_emails": 306
+          },
+          "timestamp": "2026-05-19T04:24:18.353Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": 4,
+    "tool_trace": [
+      {
+        "tool": "getRecentOutlookEmails",
+        "input": {
+          "message": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+          "selectedProjectId": null
+        },
+        "timestamp": "2026-05-19T04:24:29.586Z"
+      },
+      {
+        "tool": "readOutlookEmailThread",
+        "input": {
+          "message": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+          "selectedProjectId": null
+        },
+        "timestamp": "2026-05-19T04:24:29.586Z"
+      },
+      {
+        "tool": "draftOutlookEmail",
+        "input": {
+          "message": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+          "selectedProjectId": null
+        },
+        "timestamp": "2026-05-19T04:24:29.586Z"
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "finish_reason": "stop",
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "email_action",
+      "reason": "structured_outlook_inbox_query",
+      "sources": [
+        "recentEmails"
+      ],
+      "responseFormat": "recent_email_inbox"
+    },
+    "response_message_id": "SbVj0Al51EQLO96y",
+    "empty_model_response": false
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "id": "appnav-rfis-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 3880,
+  "question": "Where do RFIs live in the app?",
+  "response": {
+    "answer": "I can’t answer this reliably from App Expert artifacts right now.\n\nWhat I checked:\n- App Expert artifact status\n- Feature registry search for `RFI`\n- App sitemap search for `RFI`\n\nWhat I found:\n- Both generated artifacts are missing:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n\nBecause the required curated metadata is unavailable, I can’t confirm where RFIs live in the app without risking an unsupported guess.\n\nIf you want, I can still try to infer it from implementation source files as fallback evidence, but that would be implementation evidence, not curated App Expert documentation.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3777,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

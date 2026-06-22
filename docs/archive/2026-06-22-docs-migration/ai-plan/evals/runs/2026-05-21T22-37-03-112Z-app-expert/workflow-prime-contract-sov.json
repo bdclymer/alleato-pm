@@ -1,0 +1,70 @@
+{
+  "id": "workflow-prime-contract-sov",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 10119,
+  "question": "Where does schedule of values fit into prime contracts?",
+  "mustInclude": [
+    "prime",
+    "SOV"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Schedule of values fits into prime contracts as the owner-facing billing breakdown.\n\nWhat the docs say:\n- The **Prime Contract** defines the contract value, the **schedule of values used for billing**, and the modifications log.\n- The **prime contract SOV** is what **owner pay applications bill against**.\n- Each SOV line has **original value, approved changes, and billed-to-date**.\n- You edit it from **Prime Contracts** → **Schedule of Values** tab.\n\nRelated evidence:\n- Help article: `docs/help/articles/prime-contracts.md`\n- Related route: `/[projectId]/prime-contracts`\n\nRelationship to other areas:\n- **Estimates** can be imported into the prime contract SOV: `docs/help/articles/estimates.md`\n- **Commitments** also have their own SOV, but that is separate from the prime contract SOV: `docs/help/articles/commitments.md`\n\nSo, in app terms: **schedule of values is a core part of Prime Contracts**, not a separate contract type. It’s the line-item structure used to bill the owner against the prime contract.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/prime-contracts.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/prime-contracts.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/prime-contracts",
+        "sourceType": "sitemap",
+        "route": "/prime-contracts",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/estimates.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/estimates.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/commitments.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/commitments.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 10019,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "id": "feature-outlook-integration",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 10585,
+  "question": "How should the app explain Outlook integration?",
+  "mustInclude": [
+    "Outlook"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "The app should explain Outlook integration as a Microsoft 365 inbox sync that auto-matches incoming emails to projects and indexes attachments for search.\n\nDocumented behavior from the help article:\n- Connect via **Settings → Integrations → Connect Microsoft 365**\n- Incoming mail is read from the mailbox, not sent from it\n- Emails are matched to projects using subject, sender, recipients, and thread history\n- Matched emails appear in the project **Emails** tool\n- Unmatched or ambiguous emails go to an intake queue for manual assignment\n- Attachment text in PDFs, Word, and Excel files is extracted and searchable\n- The AI assistant can use email content as evidence\n\nExact evidence checked:\n- Help article: `docs/help/articles/outlook-integration.md`\n- Routes:\n  - `/settings/integrations`\n  - `/[projectId]/emails`\n\nWhat remains uncertain:\n- The help article does not mention any separate user-facing route specifically named “Outlook Emails”; route discovery shows implementation evidence for `/[projectId]/outlook-emails` and `/outlook-emails`, but those are not documented in the curated help article.\n- No write/send-mail capability is documented. The article explicitly says the integration only reads inbox mail and does not send mail on the user’s behalf.\n\nIf you want, I can also summarize the exact wording the UI should use in a short product-facing blurb.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/outlook-integration.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/outlook-integration.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/integrations",
+        "sourceType": "sitemap",
+        "route": "/integrations",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/emails",
+        "sourceType": "sitemap",
+        "route": "/emails",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/outlook-emails",
+        "sourceType": "sitemap",
+        "route": "/outlook-emails",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/send-mail",
+        "sourceType": "sitemap",
+        "route": "/send-mail",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 10456,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

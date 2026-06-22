@@ -1,0 +1,959 @@
+{
+  "suite": "app-expert-eval-suite",
+  "endpoint": "https://alleato-backend-rbnj.onrender.com/api/intelligence/app-expert",
+  "total": 50,
+  "passed": 0,
+  "failed": 50,
+  "results": [
+    {
+      "id": "appnav-change-events-location",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 398,
+      "question": "Where do I create a change event for a project?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-rfis-location",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 128,
+      "question": "Where do RFIs live in the app?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-submittals-location",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 461,
+      "question": "Which page owns submittals?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-budget-location",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 86,
+      "question": "Where should I go to review project budget line items?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-prime-contracts-location",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 114,
+      "question": "Where do owner prime contracts live?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-commitments-location",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 91,
+      "question": "Where are subcontract commitments managed?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-documents-location",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 116,
+      "question": "Where do I find project documents?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-drawings-location",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 89,
+      "question": "Where are drawings viewed?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-project-directory-location",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 109,
+      "question": "Where do I manage project team contacts?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-company-directory-location",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 115,
+      "question": "Where do company records live outside a project?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-create-project",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 87,
+      "question": "How do I start a new project?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-budget-line-items",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 81,
+      "question": "How should budget line items work?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-change-management-lifecycle",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 110,
+      "question": "Explain the change management lifecycle in the app.",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-rfi-create",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 80,
+      "question": "Can the app help create an RFI?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-submittal-review",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 96,
+      "question": "What should I check on the submittals page?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-prime-contract-sov",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 107,
+      "question": "Where does schedule of values fit into prime contracts?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-commitment-sov",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 85,
+      "question": "Where does a subcontractor SOV belong?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-invoicing-owner",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 111,
+      "question": "Where do owner invoices belong?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-direct-costs",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 99,
+      "question": "What are direct costs for in the app?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-schedule",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 106,
+      "question": "Where do schedule tasks live?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-hidden-page",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 104,
+      "question": "Why might I not see a project page?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-admin-page",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 104,
+      "question": "How should the assistant explain admin-only pages?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-employee-email-privacy",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 106,
+      "question": "What if someone can see another employee's emails?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-project-membership",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 81,
+      "question": "Why does project membership matter?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-user-management",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 105,
+      "question": "Where should user management questions point?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-actions",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 97,
+      "question": "Can Ask Alleato create records for me?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-source-order",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 88,
+      "question": "How should Ask Alleato decide what app documentation to trust?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-app-expert",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 91,
+      "question": "What is the App Expert supposed to answer?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-ai-actions",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 108,
+      "question": "What AI assistant actions are live versus planned?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-memory",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 109,
+      "question": "Where does AI memory fit in the product?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-documents-rag-boundary",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 85,
+      "question": "What is the difference between project documents and RAG knowledge?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-feature-route-source",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 89,
+      "question": "What source should the assistant cite for where a page exists?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-feature-registry-source",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 87,
+      "question": "What source should the assistant cite for whether a feature is documented?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-route-discovered-boundary",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 83,
+      "question": "What should the assistant say if a route exists but there is no help article?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-artifact-freshness",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 108,
+      "question": "How can the assistant know whether its app map is current?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-live-feature",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 97,
+      "question": "How should Ask Alleato answer when a feature is live?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-partial-feature",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 94,
+      "question": "How should Ask Alleato explain a partially implemented feature?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-planned-feature",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 99,
+      "question": "How should Ask Alleato explain a planned feature?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-blocked-feature",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 102,
+      "question": "How should Ask Alleato explain a blocked feature?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-deprecated-feature",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 79,
+      "question": "How should Ask Alleato explain deprecated behavior?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-missing-button",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 105,
+      "question": "Why might a button be missing on a page?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-empty-data",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 85,
+      "question": "Why might a page be empty even though the route exists?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-wrong-page",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 82,
+      "question": "What should I do if I am on the wrong page for a workflow?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-stale-docs",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 113,
+      "question": "What should Ask Alleato say if documentation and the route map disagree?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-no-current-route",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 81,
+      "question": "Can the App Expert answer without knowing my current page?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "admin-feedback-inbox",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 82,
+      "question": "Where should questions about feedback and annotation triage go?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "feature-progress-reports",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 84,
+      "question": "Does the app have progress reports?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "feature-photos",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 91,
+      "question": "Where are project photos?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "feature-daily-log",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 110,
+      "question": "Where do daily logs live?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "feature-outlook-integration",
+      "status": "failed",
+      "httpStatus": 503,
+      "durationMs": 108,
+      "question": "How should the app explain Outlook integration?",
+      "response": {
+        "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+      },
+      "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+      "shapeIssues": [
+        "missing answer",
+        "missing sources",
+        "missing toolTrace",
+        "invalid mode"
+      ],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    }
+  ]
+}

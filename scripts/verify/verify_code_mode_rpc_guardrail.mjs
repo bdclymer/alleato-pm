@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "../..");
 const decisionPath = path.join(
   repoRoot,
-  "docs/ai-plan/security/code-mode-rpc-security-decision.md",
+  "docs/archive/2026-06-22-docs-migration/ai-plan/security/code-mode-rpc-security-decision.md",
 );
 
 const requiredDecisionSections = [

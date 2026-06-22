@@ -1,0 +1,2545 @@
+{
+  "id": "recent-emails-synthesis",
+  "intent": "source_lookup",
+  "prompt": "What are the emails telling us this week? Pull out commitments, issues, and anything I should act on.",
+  "selectedProjectId": null,
+  "sessionId": "96d330b3-c21d-429e-8872-9a552f3bee11",
+  "sessionLabel": "eval-2026-05-14T13-08-06-523Z-recent-emails-synthesis",
+  "startedAt": "2026-05-14T13:22:03.278Z",
+  "finishedAt": "2026-05-14T13:23:29.375Z",
+  "durationMs": 84872,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 351,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "expected family 'communications' not represented",
+      "global forbidden phrase: \"retrieval\""
+    ],
+    "observations": [
+      "tools fired: intentPlanner, semanticSearch, assistantSourceHealth, sourceLookupIntentRouter, mcpToolDiscovery, streamingToolPolicy"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "semanticSearch",
+      "assistantSourceHealth",
+      "sourceLookupIntentRouter",
+      "mcpToolDiscovery",
+      "streamingToolPolicy"
+    ],
+    "familiesHit": [
+      "semantic",
+      "source_health"
+    ],
+    "finalTextLength": 1471,
+    "finalText": "I searched the available source evidence, and there’s no email result set loaded for this question.\n\nWhat that means:\n- I **can’t honestly tell you what emails are saying this week** from the evidence I have here.\n- The retrieval layer came back with **0 matching source rows**.\n- Sync health is also **degraded**, with likely gaps from **embedding backlog**, so thin results may be a pipeline problem, not proof that nothing happened.\n\nWhat I can tell you:\n- This is **not** a reliable basis for an inbox summary.\n- Several Outlook sources are flagged critical right now, including:\n  - **njepson@alleatogroup.com**\n  - **mparsons@alleatogroup.com**\n  - **jdawson@alleatogroup.com**\n  - **ctragesser@alleatogroup.com**\n\nSo the real issue is data coverage, not just lack of activity.\n\nWhat to do next:\n- Fix or verify Outlook sync/embedding for the affected mailboxes first.\n- Then rerun a **this week** email pull and extract:\n  - **Commitments**: who promised what, by when\n  - **Issues**: blockers, owner pressure, procurement gaps, approvals, cost exposure\n  - **Action items**: what needs your decision or escalation\n\nRight now, the business conclusion is simple: **don’t make decisions off this result**. The email evidence is incomplete.\n\nIf you want, I can still help structure the review once the inbox data is available:\n1. top commitments by owner and due date  \n2. unresolved issues by project  \n3. decisions waiting on you  \n4. emails that need replies today"
+  },
+  "expectedToolNames": [
+    "semanticSearch",
+    "searchEmails"
+  ],
+  "expectedToolFamilies": [
+    "communications",
+    "semantic"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:22:05.988Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Searching source records for the requested discussion context",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:22:45.692Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "synthesis",
+        "message": "Loaded source records — synthesizing answer",
+        "status": "success",
+        "timestamp": "2026-05-14T13:23:09.303Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "uBfkBbpFSaomTN1L"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " searched"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " available"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " result"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " set"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " loaded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " question"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " honestly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " emails"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " saying"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " here"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " layer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " came"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matching"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " health"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "de"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "graded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " likely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gaps"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "embedding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " backlog"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " results"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " may"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pipeline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " problem"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " proof"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " nothing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " happened"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reliable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " basis"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " inbox"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " summary"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Several"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sources"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " flagged"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " critical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " including"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "nje"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "pson"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "m"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "par"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "sons"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "jd"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "aw"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "son"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ct"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "rag"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "esser"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "So"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " just"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lack"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " activity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Fix"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " verify"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "embedding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " affected"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mail"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "boxes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " first"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Then"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pull"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " extract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Commit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ments"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " who"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " promised"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " when"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " blockers"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pressure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " procurement"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gaps"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " approvals"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exposure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " your"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decision"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " escalation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " business"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " conclusion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " simple"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "don"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " make"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " off"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " result"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " incomplete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " help"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " structure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " review"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " once"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " inbox"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " available"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " top"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitments"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " due"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " date"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " waiting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "4"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " emails"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " replies"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 5517,
+      "totalTokens": 5864,
+      "outputTokens": 347,
+      "cacheHitRatio": 0.882,
+      "cachedInputTokens": 4864
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "What are the emails telling us this week? Pull out commitments, issues, and anything I should act on.",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "source_lookup",
+          "sourceSpecificRagKind": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "source_lookup",
+          "planner": "model",
+          "rationale": "The user wants exact evidence from internal email records and a synthesis of what emails indicate this week, specifically commitments, issues, and action items. This requires retrieving and analyzing internal email sources rather than external research or generic status reporting.",
+          "confidence": "high",
+          "responseMode": "retrieve_sources",
+          "requiredTools": [
+            "email"
+          ],
+          "deterministicIntent": "source_lookup",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T13:22:05.986Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "error": "semanticSearch timed out during source lookup retrieval",
+        "input": {
+          "query": "What are the emails telling us this week? Pull out commitments, issues, and anything I should act on.",
+          "projectId": null,
+          "threshold": 0.5,
+          "matchCount": 12,
+          "skipRerank": false
+        },
+        "timestamp": "2026-05-14T13:23:03.693Z"
+      },
+      {
+        "tool": "assistantSourceHealth",
+        "input": {
+          "reason": "empty_source_lookup"
+        },
+        "output": {
+          "alerts": [
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: crusin@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:crusin@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: accounting@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:accounting@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: njepson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "njepson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: mparsons@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "mparsons@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: jdawson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "jdawson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "ctragesser@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: crusin@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "crusin@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: awehner@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "awehner@alleatogroup.com"
+            }
+          ],
+          "counts": {
+            "sources": 30,
+            "uncompiled": 10204,
+            "unembedded": 819,
+            "warningSources": 0,
+            "criticalSources": 30,
+            "failedSubscriptions": 0,
+            "expiringSubscriptions": 0
+          },
+          "reason": "empty_source_lookup",
+          "sources": [
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-14T05:40:17.479335+00:00",
+              "resourceId": "user:crusin@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: crusin@alleatogroup.com",
+              "staleMinutes": 455,
+              "lastSuccessAt": "2026-05-14T05:40:17.479335+00:00",
+              "uncompiledCount": 937,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-14T06:40:45.750041+00:00",
+              "resourceId": "user:accounting@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: accounting@alleatogroup.com",
+              "staleMinutes": 395,
+              "lastSuccessAt": "2026-05-14T06:40:45.750041+00:00",
+              "uncompiledCount": 937,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+              "resourceId": "njepson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: njepson@alleatogroup.com",
+              "staleMinutes": 20157,
+              "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+              "resourceId": "mparsons@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: mparsons@alleatogroup.com",
+              "staleMinutes": 20158,
+              "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+              "resourceId": "jdawson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: jdawson@alleatogroup.com",
+              "staleMinutes": 20159,
+              "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+              "resourceId": "ctragesser@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: ctragesser@alleatogroup.com",
+              "staleMinutes": 4036,
+              "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+              "resourceId": "crusin@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: crusin@alleatogroup.com",
+              "staleMinutes": 20160,
+              "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+              "resourceId": "awehner@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: awehner@alleatogroup.com",
+              "staleMinutes": 20161,
+              "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+              "resourceId": "accounting@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: accounting@alleatogroup.com",
+              "staleMinutes": 20160,
+              "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T18:14:44.817404+00:00",
+              "resourceId": "acannon@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: acannon@alleatogroup.com",
+              "staleMinutes": 1141,
+              "lastSuccessAt": "2026-05-13T18:14:44.817404+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T20:06:20.616839+00:00",
+              "resourceId": "38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: 38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+              "staleMinutes": 1029,
+              "lastSuccessAt": "2026-05-13T20:06:20.616839+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T00:00:00+00:00",
+              "resourceId": "document_metadata",
+              "lastErrorAt": null,
+              "resourceName": "Outlook email",
+              "staleMinutes": 2235,
+              "lastSuccessAt": "2026-05-13T00:00:00+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            }
+          ],
+          "generatedAt": "2026-05-14T13:23:03.693Z",
+          "missingStage": "embedding_backlog",
+          "overallStatus": "degraded"
+        },
+        "timestamp": "2026-05-14T13:23:03.693Z"
+      },
+      {
+        "tool": "sourceLookupIntentRouter",
+        "input": {
+          "query": "What are the emails telling us this week? Pull out commitments, issues, and anything I should act on.",
+          "intent": "source_lookup",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": "additive-context",
+          "resultCount": 0,
+          "recentTeamsWindow": null,
+          "usedProjectBriefingTemplate": false
+        },
+        "timestamp": "2026-05-14T13:23:09.303Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.excalidraw.com/mcp",
+          "server": "excalidraw"
+        },
+        "output": {
+          "allowedTools": [
+            "read_me",
+            "create_view",
+            "export_to_excalidraw",
+            "save_checkpoint",
+            "read_checkpoint"
+          ],
+          "enabledTools": [
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "enabledToolCount": 5,
+          "discoveredToolCount": 5
+        },
+        "timestamp": "2026-05-14T13:23:09.423Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.supabase.com/mcp?project_ref=lgveqfnpkxvzbnnwuled",
+          "server": "supabase"
+        },
+        "output": {
+          "error": "MCP HTTP Transport Error: POSTing to endpoint (HTTP 401): {\"message\":\"JWT could not be decoded\"}"
+        },
+        "timestamp": "2026-05-14T13:23:09.464Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "tools disabled: source_lookup context pre-loaded",
+          "promptMode": "full_strategist",
+          "toolChoice": "auto",
+          "fullToolCount": 99,
+          "modelToolCount": 0,
+          "modelToolNames": [],
+          "streamMaxSteps": 10,
+          "scopedToolCount": 0,
+          "streamMaxOutputTokens": 4000,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": true
+        },
+        "timestamp": "2026-05-14T13:23:09.464Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": {
+      "alerts": [
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: crusin@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:crusin@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: accounting@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:accounting@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: njepson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "njepson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: mparsons@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "mparsons@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: jdawson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "jdawson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "ctragesser@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: crusin@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "crusin@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: awehner@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "awehner@alleatogroup.com"
+        }
+      ],
+      "counts": {
+        "sources": 30,
+        "uncompiled": 10204,
+        "unembedded": 819,
+        "warningSources": 0,
+        "criticalSources": 30,
+        "failedSubscriptions": 0,
+        "expiringSubscriptions": 0
+      },
+      "reason": "empty_source_lookup",
+      "sources": [
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-14T05:40:17.479335+00:00",
+          "resourceId": "user:crusin@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: crusin@alleatogroup.com",
+          "staleMinutes": 455,
+          "lastSuccessAt": "2026-05-14T05:40:17.479335+00:00",
+          "uncompiledCount": 937,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-14T06:40:45.750041+00:00",
+          "resourceId": "user:accounting@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: accounting@alleatogroup.com",
+          "staleMinutes": 395,
+          "lastSuccessAt": "2026-05-14T06:40:45.750041+00:00",
+          "uncompiledCount": 937,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+          "resourceId": "njepson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: njepson@alleatogroup.com",
+          "staleMinutes": 20157,
+          "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+          "resourceId": "mparsons@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: mparsons@alleatogroup.com",
+          "staleMinutes": 20158,
+          "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+          "resourceId": "jdawson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: jdawson@alleatogroup.com",
+          "staleMinutes": 20159,
+          "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+          "resourceId": "ctragesser@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: ctragesser@alleatogroup.com",
+          "staleMinutes": 4036,
+          "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+          "resourceId": "crusin@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: crusin@alleatogroup.com",
+          "staleMinutes": 20160,
+          "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+          "resourceId": "awehner@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: awehner@alleatogroup.com",
+          "staleMinutes": 20161,
+          "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+          "resourceId": "accounting@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: accounting@alleatogroup.com",
+          "staleMinutes": 20160,
+          "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T18:14:44.817404+00:00",
+          "resourceId": "acannon@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: acannon@alleatogroup.com",
+          "staleMinutes": 1141,
+          "lastSuccessAt": "2026-05-13T18:14:44.817404+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T20:06:20.616839+00:00",
+          "resourceId": "38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: 38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+          "staleMinutes": 1029,
+          "lastSuccessAt": "2026-05-13T20:06:20.616839+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T00:00:00+00:00",
+          "resourceId": "document_metadata",
+          "lastErrorAt": null,
+          "resourceName": "Outlook email",
+          "staleMinutes": 2235,
+          "lastSuccessAt": "2026-05-13T00:00:00+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        }
+      ],
+      "generatedAt": "2026-05-14T13:23:03.693Z",
+      "missingStage": "embedding_backlog",
+      "overallStatus": "degraded"
+    },
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 5517,
+          "finishReason": "stop",
+          "outputTokens": 347,
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "modelProvider": "openai.chat",
+          "availableToolNames": []
+        }
+      ],
+      "totalStepCount": 1,
+      "finalFinishReason": "stop",
+      "preparedStepCount": 1,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 70,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response",
+        "1 tool call failure(s)"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "id": "feature-daily-log",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 5701,
+  "question": "Where do daily logs live?",
+  "response": {
+    "answer": "Daily logs live in the project area at:\n\n- `/[projectId]/daily-log`\n\nThis is documented in the curated help article `docs/help/articles/daily-log.md` and the feature registry entry `daily-log`.\n\nWhat I checked:\n- App expert artifact status: both generated artifacts are current\n- Feature registry: found a documented “Daily Log” feature\n- Help article: confirms you open **Daily Log** from the project sidebar\n\nRelevant source references:\n- Help article: `docs/help/articles/daily-log.md`\n- Route in feature registry: `/[projectId]/daily-log`\n- Route file: `frontend/src/app/(main)/[projectId]/daily-log/page.tsx`\n\nIf you meant the general table route instead of the project-scoped daily log, there is also a route-discovered page at `/daily-logs`, but that one has no linked help article.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/daily-log",
+        "sourceType": "sitemap",
+        "route": "/daily-log",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/daily-log.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/daily-log.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/daily-log/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/daily-log/page.tsx",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 5699,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

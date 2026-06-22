@@ -1,0 +1,55 @@
+{
+  "id": "troubleshooting-wrong-page",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 11395,
+  "question": "What should I do if I am on the wrong page for a workflow?",
+  "mustInclude": [
+    "route"
+  ],
+  "preferredTools": [
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "If you’re on the wrong page for a workflow, use Ask Alleato to get to the correct page. For app navigation, the docs say the app is split into:\n\n- global pages like `/`, `/site-map`, and `/ai-assistant`\n- project-scoped pages like `/[projectId]/home` and the rest of the project tools\n\nThe curated navigation help article says Ask Alleato should tell you the exact route and why that page is the right place:\n- `docs/help/articles/app-navigation-and-feature-map.md`\n\nWhat to do:\n1. Identify the workflow you’re trying to complete.\n2. Move to the page that matches that workflow.\n3. If you’re not sure, ask for the exact route for that workflow.\n\nRelevant documented routes from the navigation article:\n- `/` — global landing page\n- `/[projectId]/home` — project home\n- `/site-map` — app sitemap\n- `/ai-assistant` — Ask Alleato / help\n\nI checked the artifact status first, and both generated artifacts are current and available:\n- `app-sitemap.generated.json`\n- `feature-registry.generated.json`\n\nWhat remains uncertain: the docs do not describe a universal “wrong page” recovery button or workflow-specific back-navigation behavior. They only confirm that you should navigate to the route that matches the workflow.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/home",
+        "sourceType": "sitemap",
+        "route": "/home",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-navigation-and-feature-map.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-navigation-and-feature-map.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 11299,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_app_sitemap"
+  ]
+}

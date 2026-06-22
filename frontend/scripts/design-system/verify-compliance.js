@@ -122,7 +122,7 @@ function checkDocumentation() {
   header('3. Design System Documentation');
 
   const docs = [
-    'docs/design/README.md',
+    'docs/archive/2026-06-22-docs-migration/design/README.md',
     '.claude/design-audit/design-system-rules.md',
     'src/design-system/tokens.md',
   ];

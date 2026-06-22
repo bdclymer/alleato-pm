@@ -1,0 +1,7726 @@
+{
+  "id": "source-freshness-rag-health",
+  "intent": "source_health",
+  "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+  "selectedProjectId": null,
+  "sessionId": "319521d1-29f0-4934-a540-ca85dcec6d72",
+  "sessionLabel": "eval-2026-06-09T09-32-00-033Z-b73c8876-source-freshness-rag-health",
+  "startedAt": "2026-06-09T09:34:51.829Z",
+  "finishedAt": "2026-06-09T09:35:40.159Z",
+  "durationMs": 48086,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 1316,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected required tool 'assistantSourceHealth' to fire",
+      "required metadata missing: source_health"
+    ],
+    "warnings": [
+      "expected family 'source_health' not represented",
+      "global forbidden phrase: \"retrieval\"",
+      "duration 48086ms exceeded warning budget 30000ms"
+    ],
+    "observations": [
+      "tools fired: semanticSearch, getOutlookOperationsStatus, getMeetingIntelligence, searchDocuments"
+    ],
+    "toolNames": [
+      "semanticSearch",
+      "getOutlookOperationsStatus",
+      "getMeetingIntelligence",
+      "searchDocuments"
+    ],
+    "familiesHit": [
+      "meetings",
+      "communications",
+      "documents",
+      "semantic"
+    ],
+    "finalTextLength": 5302,
+    "finalText": "Short answer: **Teams and meetings look current enough to use. Outlook does not. “Packets” are the weakest area unless you mean meeting/intelligence snapshots, not a formal packet system.**\n\nWhat matters most: **the AI readout is reliable for recent Teams and meeting-derived signals, but not for live Outlook inbox coverage right now.** There are also some content-pipeline gaps that mean you should treat “no update found” differently depending on the source.\n\n## What looks current enough\n\n- **Teams sync is active and recent.** Multiple Teams sources synced this morning on **2026-06-09**, including Brandon’s DM export at **08:40 UTC** and several channel/message sources around **09:10 UTC**. That’s current enough for operational readouts. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n- **Meeting intelligence is current through the last 7 days.** The system returned **10 meetings** from **2026-06-03 to 2026-06-09**, with structured risks, decisions, and action items. That means the meetings pipeline is alive and producing usable summaries. [Source: `getMeetingIntelligence`, 2026-06-09]\n- **SharePoint/OneDrive file sync has at least some current sources.** SharePoint SOP and Andrew Cannon OneDrive job folders synced around **02:30 UTC on 2026-06-09**. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n\n## What is stale or broken\n\n- **Outlook live monitoring is not current.** The only Graph subscription shown is for **mharrison@alleatogroup.com**, and it is **inactive** with status **renewal_due**, expired **2026-05-15**, with error **“reauthorizationRequired.”** That means **live Outlook webhook coverage is broken**. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n- **There is no evidence here of Brandon’s mailbox being live-monitored.** The subscription listed is Megan Harrison’s mailbox, not Brandon’s. So if the readout is claiming live Outlook freshness for Brandon, that is not supported by this status output. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n- **At least one Outlook sync path has a data integrity problem.** For **acannon@alleatogroup.com**, the sync status is **mismatch**: sync returned **30 emails**, but only **9 durable document rows** increased. That means some Outlook ingestion is completing imperfectly even when it runs. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n- **OneDrive coverage is uneven.** One source — **cgillespie@alleatogroup.com:/Alleato Group/2026 Jobs** — last synced on **2026-05-20**, which is stale compared with the rest. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n\n## What is missing or structurally thin\n\n- **Opportunity/packet-style tracking is incomplete in meeting intelligence.** The meeting pipeline explicitly says: **“Opportunity tracking is not available in the current intelligence pipeline; only risks, decisions, and actions are surfaced.”** So if you expect a full executive packet with opportunities, momentum, blockers, owners, and commercial implications all in one place, the current meeting intelligence does not fully cover that. [Source: `getMeetingIntelligence`, 2026-06-09]\n- **There does not appear to be a distinct, searchable formal “packet” corpus from this check.** A document search for packet-related records returned **no matching documents**. That doesn’t prove packets don’t exist, but it does mean I don’t have evidence from this retrieval that there is a maintained packet repository being kept current. [Source: `searchDocuments`, 2026-06-09]\n- **There is a known reliability gap around recent Teams retrieval.** A stored team memory says there is **“a significant gap in the ability to retrieve recent Teams messages reliably”** and that a dedicated retrieval tool is needed. Current sync status looks healthy, but that note means retrieval quality has been a known issue even when sync is running. [Source: `semanticSearch` result from ai_memory, created 2026-05-19]\n\n## Practical trust level by source\n\n- **Meetings:** trust for recent project signal, decisions, and action items\n- **Teams:** generally trust for recent synced conversations, but be careful with “nothing found” conclusions\n- **Outlook:** **do not treat as live/current right now**\n- **Packets/briefing docs:** trust only if generated from fresh meetings/Teams/financial tools at query time, not as a standalone source of truth\n\n## What I’d treat as the real risk\n\nThe biggest issue is this: **the system can still sound current while Outlook is stale.** If a readout blends meetings, Teams, and “email context” without saying the Outlook monitor is degraded, that can create false confidence.\n\n## Recommendation\n\nUse the AI readout, but with this rule set:\n\n1. **Trust meeting and Teams-based project updates from the last 7 days**\n2. **Do not trust any claim that depends on live Outlook coverage until Graph is reauthorized**\n3. **If a briefing says “no recent email activity,” treat that as unverified**\n4. **If you want a high-confidence project update, build it from meetings + Teams + structured project/financial tools first, then add Outlook only if the mailbox status is healthy**\n\nIf you want, I can do the next useful step: **run a source-health audit specifically for Brandon’s operating view** and tell you, source by source, what your daily brief can safely rely on right now.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 60000,
+      "durationMs": 48086
+    }
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "source_health"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: source_lookup_intent",
+        "status": "loading",
+        "timestamp": "2026-06-09T09:34:52.616Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (1 sources, 0 warnings)",
+        "status": "success",
+        "durations": {
+          "semantic_search": 8628
+        },
+        "timestamp": "2026-06-09T09:35:01.518Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "es4ipkGoos9a8FEJ"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_s37ZIHjYww8slyDgH08VOzoX",
+      "toolName": "getOutlookOperationsStatus"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_s37ZIHjYww8slyDgH08VOzoX",
+      "inputTextDelta": "{\"so"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_s37ZIHjYww8slyDgH08VOzoX",
+      "inputTextDelta": "urce\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_s37ZIHjYww8slyDgH08VOzoX",
+      "inputTextDelta": ": \"all"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_s37ZIHjYww8slyDgH08VOzoX",
+      "inputTextDelta": "_gra"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_s37ZIHjYww8slyDgH08VOzoX",
+      "inputTextDelta": "ph\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_s37ZIHjYww8slyDgH08VOzoX",
+      "toolName": "getOutlookOperationsStatus",
+      "input": {
+        "source": "all_graph"
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "toolName": "getMeetingIntelligence"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "{\"re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "lativ"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "eWindo"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "w\": "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "\"last"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "_7_day"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "s\", "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "\"inte"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "nt\": \""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "summ"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "ary\","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": " \"limi"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "t\": "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "10, \""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "timeZo"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "ne\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": " \"Ame"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "rica/N"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "ew_Y"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "inputTextDelta": "ork\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "toolName": "getMeetingIntelligence",
+      "input": {
+        "relativeWindow": "last_7_days",
+        "intent": "summary",
+        "limit": 10,
+        "timeZone": "America/New_York"
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "toolName": "semanticSearch"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "{\"qu"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "ery\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": " \"data"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": " syn"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "c sta"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "le mis"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "sing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": " Team"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "s Outl"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "ook "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "meeti"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "ngs pa"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "cket"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "s cur"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "rent e"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "noug"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "h rel"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "iabili"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "ty s"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "ource"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": " gaps\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": ", \"m"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "atchC"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "ount\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": " 10,"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": " \"thr"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "eshold"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "\": 0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": ".25, "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "\"skipR"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "eran"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "k\": t"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "inputTextDelta": "rue}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "toolName": "semanticSearch",
+      "input": {
+        "query": "data sync stale missing Teams Outlook meetings packets current enough reliability source gaps",
+        "matchCount": 10,
+        "threshold": 0.25,
+        "skipRerank": true
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "toolName": "searchDocuments"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "{\"qu"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "ery\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": " \"pack"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "et O"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "R pac"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "kets p"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "roje"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "ct pa"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "cket s"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "tatu"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "s upd"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "ate br"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "iefi"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "ng sn"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "apshot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": " cur"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "rent "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "stale "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "miss"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "ing\","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": " \"maxR"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "esul"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "ts\": "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "inputTextDelta": "10}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "toolName": "searchDocuments",
+      "input": {
+        "query": "packet OR packets project packet status update briefing snapshot current stale missing",
+        "maxResults": 10
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_s37ZIHjYww8slyDgH08VOzoX",
+      "output": {
+        "source": "all_graph",
+        "subscriptionCount": 1,
+        "activeSubscriptionCount": 0,
+        "syncStateCount": 20,
+        "erroredSyncStateCount": 1,
+        "subscriptions": [
+          {
+            "id": "464a9e8f-8f3a-4037-8054-5a965913fa87",
+            "source": "outlook_email",
+            "resource": "users/mharrison@alleatogroup.com/messages",
+            "resourceId": "mharrison@alleatogroup.com",
+            "resourceName": "Outlook: mharrison@alleatogroup.com",
+            "changeType": "created,updated",
+            "status": "renewal_due",
+            "expirationAt": "2026-05-15T20:03:54.517915+00:00",
+            "lastNotificationAt": null,
+            "lastLifecycleEventAt": "2026-05-15T17:03:55.147958+00:00",
+            "lastRenewedAt": "2026-05-13T20:03:56.658727+00:00",
+            "lastErrorMessage": "Microsoft Graph lifecycle event: reauthorizationRequired"
+          }
+        ],
+        "syncStates": [
+          {
+            "id": "e7f454d1-d0e8-4562-90f0-e7db5ea258a3",
+            "source": "teams_message",
+            "resourceId": "5419de66-9272-4093-9797-14537e3ec850:19:own79nxzS3yNo1IoNrHTKM6cUMJxUqE-84VPKO6pjwE1@thread.tacv2",
+            "resourceName": "Teams: Parsons / Parsons",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T09:10:14.29998+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T09:10:14.546236+00:00"
+          },
+          {
+            "id": "0c618ebb-0fdc-4199-91a1-7a3eaa861374",
+            "source": "teams_message",
+            "resourceId": "63200919-566f-45eb-8919-6c7ab11cda82:19:WVsnjg0q_3kBlRdte-CveLVHsTJbfSbdvBR9acQvcus1@thread.tacv2",
+            "resourceName": "Teams: Live chat requests / General",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T09:10:13.397453+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T09:10:13.526205+00:00"
+          },
+          {
+            "id": "fde7cfd5-9f11-41c2-8cba-0fbf93149cad",
+            "source": "teams_message",
+            "resourceId": "635360e0-00a8-40e0-8272-5861d540af80:19:BbC90Q2EuQqpYjcnwbSI8WqSE4Ag8UyNXj6op6-S7K81@thread.tacv2",
+            "resourceName": "Teams: Marketing Alleato Group / General",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T09:10:11.658832+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T09:10:12.027687+00:00"
+          },
+          {
+            "id": "686af9a9-e170-45fa-8f55-7d0b6d2d9179",
+            "source": "teams_chat_export",
+            "resourceId": "user:bclymer@alleatogroup.com",
+            "resourceName": "Teams DM export: bclymer@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T08:40:29.794909+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T08:40:30.080228+00:00"
+          },
+          {
+            "id": "e6c49410-6b5b-4d63-926e-f680b91d0f03",
+            "source": "teams_chat_export",
+            "resourceId": "user:acannon@alleatogroup.com",
+            "resourceName": "Teams DM export: acannon@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T07:41:26.708686+00:00",
+            "itemsSynced": 25,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T07:41:26.752309+00:00"
+          },
+          {
+            "id": "18f2b989-28fe-48cc-bda0-542ac772a33c",
+            "source": "teams_chat_export",
+            "resourceId": "user:njepson@alleatogroup.com",
+            "resourceName": "Teams DM export: njepson@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T06:40:42.415052+00:00",
+            "itemsSynced": 1,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T06:40:42.509115+00:00"
+          },
+          {
+            "id": "44c63538-55e9-4f67-91f8-19f915b0f4b2",
+            "source": "teams_chat_export",
+            "resourceId": "user:mparsons@alleatogroup.com",
+            "resourceName": "Teams DM export: mparsons@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T05:40:30.172684+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T05:40:30.439595+00:00"
+          },
+          {
+            "id": "8679616e-9e94-41c4-ae65-17783c8e877e",
+            "source": "teams_chat_export",
+            "resourceId": "user:jdawson@alleatogroup.com",
+            "resourceName": "Teams DM export: jdawson@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T04:41:15.544541+00:00",
+            "itemsSynced": 14,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T04:41:15.582606+00:00"
+          },
+          {
+            "id": "fe72bdea-d552-4d52-9b77-f8be6c93e55a",
+            "source": "teams_chat_export",
+            "resourceId": "user:ctragesser@alleatogroup.com",
+            "resourceName": "Teams DM export: ctragesser@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T03:40:30.694597+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T03:40:30.787175+00:00"
+          },
+          {
+            "id": "3a6439ea-43a4-48e4-836f-c7d21e4cd80f",
+            "source": "teams_chat_export",
+            "resourceId": "user:accounting@alleatogroup.com",
+            "resourceName": "Teams DM export: accounting@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T02:40:36.020844+00:00",
+            "itemsSynced": 1,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T02:40:36.087055+00:00"
+          },
+          {
+            "id": "c8ca6ef6-02b6-4c99-9a78-17d61ae67d1a",
+            "source": "sharepoint_file",
+            "resourceId": "sharepoint:AlleatoGroup:/SOP",
+            "resourceName": "SharePoint: AlleatoGroup/SOP",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T02:30:06.525393+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T02:30:06.552854+00:00"
+          },
+          {
+            "id": "36b03df1-4f88-4e52-b325-6a35b7fa5010",
+            "source": "onedrive_file",
+            "resourceId": "acannon@alleatogroup.com:/Alleato Group/2025 Jobs",
+            "resourceName": "OneDrive: acannon@alleatogroup.com/Alleato Group/2025 Jobs",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T02:30:06.279829+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T02:30:06.314649+00:00"
+          },
+          {
+            "id": "5dcc7abb-fbdd-454c-913a-f8073cdf4cab",
+            "source": "onedrive_file",
+            "resourceId": "acannon@alleatogroup.com:/Alleato Group/2026 Jobs",
+            "resourceName": "OneDrive: acannon@alleatogroup.com/Alleato Group/2026 Jobs",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T02:30:05.840262+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T02:30:05.870531+00:00"
+          },
+          {
+            "id": "688034bf-8f1e-487b-9ff7-e80453f665dd",
+            "source": "teams_chat_export",
+            "resourceId": "user:crusin@alleatogroup.com",
+            "resourceName": "Teams DM export: crusin@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T02:30:04.762196+00:00",
+            "itemsSynced": 1,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T02:30:04.787098+00:00"
+          },
+          {
+            "id": "65371d71-d94a-419d-9922-614c71805bab",
+            "source": "teams_message",
+            "resourceId": "35ba0de8-79b8-4f4c-b560-040072501cb8:19:cf9f4bdb5d904bbf9ad73523a1c83180@thread.tacv2",
+            "resourceName": "Teams: Alleato Group / CART Memphis Cold Storage",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T02:29:59.624767+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T02:29:59.650575+00:00"
+          },
+          {
+            "id": "1b7677f7-24a5-4dcd-b90a-949eb31197cb",
+            "source": "teams_message",
+            "resourceId": "35ba0de8-79b8-4f4c-b560-040072501cb8:19:64ed98a56b7e4f7cb281997be132aa0e@thread.tacv2",
+            "resourceName": "Teams: Alleato Group / 🤖 FRIDAY - AI Assistant",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T02:29:59.20362+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T02:29:59.221165+00:00"
+          },
+          {
+            "id": "bd6743ec-f3df-4b60-a836-ee0e2003ef00",
+            "source": "outlook_email",
+            "resourceId": "acannon@alleatogroup.com",
+            "resourceName": "Outlook: acannon@alleatogroup.com",
+            "syncStatus": "mismatch",
+            "lastSyncAt": "2026-06-09T02:29:53.219694+00:00",
+            "itemsSynced": 30,
+            "errorMessage": "Persisted Outlook doc delta mismatch for acannon@alleatogroup.com: sync_outlook_emails returned 30, but durable document_metadata rows increased by 9.",
+            "updatedAt": "2026-06-09T02:29:53.245172+00:00"
+          },
+          {
+            "id": "68901987-009d-4086-9f44-ceacddbc82e3",
+            "source": "teams_chat_export",
+            "resourceId": "user:cgillespie@alleatogroup.com",
+            "resourceName": "Teams DM export: cgillespie@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T01:40:36.490598+00:00",
+            "itemsSynced": 2,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T01:40:36.535259+00:00"
+          },
+          {
+            "id": "89abfb96-d155-43c1-a7ff-27448eaa6c0f",
+            "source": "teams_chat_export",
+            "resourceId": "user:awehner@alleatogroup.com",
+            "resourceName": "Teams DM export: awehner@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T00:40:45.052807+00:00",
+            "itemsSynced": 5,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T00:40:45.136166+00:00"
+          },
+          {
+            "id": "dc11af84-7ca6-404c-9204-9d5b66558f43",
+            "source": "onedrive_file",
+            "resourceId": "cgillespie@alleatogroup.com:/Alleato Group/2026 Jobs",
+            "resourceName": "OneDrive: cgillespie@alleatogroup.com/Alleato Group/2026 Jobs",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-05-20T19:00:52.444988+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-05-20T19:00:52.679851+00:00"
+          }
+        ],
+        "failsLoudly": "Webhook notifications are recorded into source_sync_runs and subscription/sync failures are visible through graph_subscriptions, graph_sync_state, source-sync health, and Render cron failures."
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_kOCR6xI71OcPNRay309cKvgb",
+      "output": {
+        "type": "meeting_intelligence",
+        "id": "meeting-intelligence",
+        "title": "Meeting summary",
+        "subtitle": "Structured readout from meeting records, extracted insights, and transcript summaries",
+        "dateLabel": "2026-06-03 to 2026-06-09",
+        "meetingCount": 10,
+        "criticalRiskCount": 23,
+        "decisionCount": 12,
+        "actionItemCount": 50,
+        "topInsights": [
+          "10 meeting records matched this window.",
+          "23 risk signals found across the matched meetings.",
+          "12 decision signals found across the matched meetings.",
+          "Opportunity tracking is not available in the current intelligence pipeline; only risks, decisions, and actions are surfaced."
+        ],
+        "recommendedNextActions": [
+          "Open the meeting cards with risk or action badges first.",
+          "Convert verified ownership items into Tasks page records.",
+          "Use the linked meeting records as the evidence trail before sending an owner update."
+        ],
+        "emptyState": "No meeting rows matched this request.",
+        "meetings": [
+          {
+            "id": "01KTG11PVTWJBSCP7T6GTKNG7X",
+            "title": "Goodwill Kokomo Weekly Design Meeting",
+            "projectId": 1016,
+            "projectName": "GW Kokomo",
+            "date": "2026-06-08T17:30:00+00:00",
+            "source": "fireflies",
+            "summary": "📊 Survey and CAD Completion: CAD file confirmed; all materials due by Friday for BZA submittal to avoid delays.\n🏗️ Elevation Drawings Ready: Elevations completed for transparency compliance; will be integrated with site plans for zoning rules.\n⚡ Power Line ...",
+            "criticalRisks": [
+              "⚡ Power Line Setback Issue: Canopy is 7.7 feet from power lines; Colin to confirm clearance requirements with Duke Energy.",
+              "- **Power Line Setback Issue:** Canopy is 7.7 feet from power lines; Colin to confirm clearance requirements with Duke Energy.",
+              "Elevation drawings were completed for transparency compliance, and the canopy's proximity to power lines was highlighted as a setback issue requiring consultation with Duke Energy."
+            ],
+            "decisions": [
+              "📊 Survey and CAD Completion: CAD file confirmed; all materials due by Friday for BZA submittal to avoid delays.",
+              "- **Survey and CAD Completion:** CAD file confirmed; all materials due by Friday for BZA submittal to avoid delays.",
+              "# Goodwill Kokomo Weekly Design Meeting **Date:** 6/8/2026, 5:30:00 PM **Duration:** 0 minutes **Participants:** jerome.daksiewicz@dkgrar.com,jburke@jpsconsultingengineers.com,bryce.clendenning@goodwillindy.org,nathan.owens@dkgrar.com,amulder@goodwillindy.org,abhishek@tec-mep.com,awoodhams@deemfirst.com,chad.mayes@kimley-horn.com,colin.nicoski@kimley-horn.com,dlainhart@central-security.com,ehtasham@tec-mep.com,fireflies@alleatogroup.com,grussell@tec-mep.com,jdawson@alleatogroup.com,kgreen@alleatogroup.com,njepson@alleatogroup.com, jerome.daksiewicz@dkgrar.com, jburke@jpsconsultingengineers.com, bryce.clendenning@goodwillindy.org, nathan.owens@dkgrar.com, amulder@goodwillindy.org, abhishek@tec-mep.com, awoodhams@deemfirst.com, chad.mayes@kimley-horn.com, colin.nicoski@kimley-horn.com, dlainhart@central-security.com, ehtasham@tec-mep.com, fireflies@alleatogroup.com, grussell@tec-mep.com, jdawson@alleatogroup.com, kgreen@alleatogroup.com ## Summary - **Survey and CAD Completion:** CAD file confirmed; all materials due by Friday for BZA submittal to avoid delays."
+            ],
+            "actionItems": [
+              "Send BZA application to Nick Jepson for signature to proceed with submission (06:52)",
+              "Contact Duke Energy to confirm power line clearance requirements to ensure canopy setback compliance and safety (02:41)",
+              "Contact city to determine the submission process for the BZA application, including whether to submit via email or website (07:14)",
+              "Coordinate return of signed BZA application and ensure delivery of hard copies of the site plan as required for submission (07:31)",
+              "Provide updated canopy elevation drawings to Kimley-Horn by Thursday afternoon for printing ahead of Friday submission deadline (13:22)"
+            ],
+            "href": "/1016/meetings/01KTG11PVTWJBSCP7T6GTKNG7X"
+          },
+          {
+            "id": "01KT225CXJAMK6DFZ29K56JBDW",
+            "title": "Weekly Schedule Review Goodwill Allisonville Road Teams Meeting",
+            "projectId": 754,
+            "projectName": "GW Allisonville Rd IN",
+            "date": "2026-06-08T14:00:00+00:00",
+            "source": "fireflies",
+            "summary": "☔️ Construction Schedule Aligned with Weather: Footings set for next Monday, weather conditions considered; pumping water necessary.\n📦 Steel Delivery Deadline: Targeted for July 1; critical for scheduling subsequent structural work.\n🛠️ Interior Finishing Ti...",
+            "criticalRisks": [
+              "📦 Steel Delivery Deadline: Targeted for July 1; critical for scheduling subsequent structural work.",
+              "🔒 Security Installation Planned: Expected by late July, reliant on power availability; coordination needed with door installations.",
+              "- **Steel Delivery Deadline:** Targeted for July 1; critical for scheduling subsequent structural work."
+            ],
+            "decisions": [],
+            "actionItems": [
+              "Touch base with Kindred regarding footings and backfill schedule to ensure proper sequencing and timing (00:46)",
+              "Coordinate with Kindred on asphalt sub-base work and curing prior to asphalt paving to ensure readiness for midweek start (03:02)",
+              "Schedule demolition contractor for roof membrane, metal decking, and dock pit demolition on Tuesday and Wednesday this week (04:49)",
+              "Discuss security system installation timing with Bryce and Dean, confirming schedule for late July after permanent power and door locks installation (06:32)",
+              "Arrange fire sprinkler work to start after ductwork completion and set up weekly interior inspection follow-ups to monitor progress (09:25)"
+            ],
+            "href": "/754/meetings/01KT225CXJAMK6DFZ29K56JBDW"
+          },
+          {
+            "id": "01KT9P1ANSMC358GGXTAPZA2MZ",
+            "title": "Weekly design coordination Exol PA",
+            "projectId": 760,
+            "projectName": "Exol Wilmer",
+            "date": "2026-06-08T13:00:00+00:00",
+            "source": "fireflies",
+            "summary": "⏳ Permit Submission Delay: Delaying submissions until city reviews phase one avoids resetting the review clock and minimizes delays.\n✅ Stamped Drawings Urgency: A stamped drawing set will be delivered today to meet landlord requirements, irrespective of permi...",
+            "criticalRisks": [
+              "⏳ Permit Submission Delay: Delaying submissions until city reviews phase one avoids resetting the review clock and minimizes delays.",
+              "- **Permit Submission Delay:** Delaying submissions until city reviews phase one avoids resetting the review clock and minimizes delays.",
+              "# Weekly design coordination Exol PA **Date:** 6/8/2026, 1:00:00 PM **Duration:** 0 minutes **Participants:** bwright@alleatogroup.com,phollingsworth@alleatogroup.com,bcottrell@ordcha.com,jerome.daksiewicz@dkgrar.com,bclymer@alleatogroup.com,nwilliams@smithmiller.net,dhumphreys@rjskelding.com,jdawson@alleatogroup.com,christopher.w.lopez@gmail.com,naveen@jpsconsultingengineers.com, phollingsworth@alleatogroup.com, bcottrell@ordcha.com, jerome.daksiewicz@dkgrar.com, bclymer@alleatogroup.com, nwilliams@smithmiller.net, dhumphreys@rjskelding.com, jdawson@alleatogroup.com, christopher.w.lopez@gmail.com, naveen@jpsconsultingengineers.com ## Summary - **Permit Submission Delay:** Delaying submissions until city reviews phase one avoids resetting the review clock and minimizes delays."
+            ],
+            "decisions": [
+              "🗣️ Clear Communication: Team members confirmed document readiness and dependencies to keep the project on track.",
+              "- **Clear Communication:** Team members confirmed document readiness and dependencies to keep the project on track."
+            ],
+            "actionItems": [
+              "Coordinate with Naveen to ensure the stamped drawing set and structural calculation PDFs are delivered to the landlord today for review (04:34)",
+              "Advise Jerome to email Steve, the new project manager, to obtain responses on floor outlets and electrical power requirements in the break and game rooms before permit submission (10:34)",
+              "Monitor the city plan review progress and hold off any permit submission until after the city review comments are received to avoid restarting the city review clock (01:24)",
+              "Follow up with responsible parties to obtain the fire alarm minimum requirement specifications and charging station layout details, proceeding with minimum fire alarm plan as recommended until details are received (00:31)",
+              "Resend detailed questions regarding floor outlets and electrical power locations in the break and game rooms to Steve for follow-up input before permit submission (09:57)"
+            ],
+            "href": "/760/meetings/01KT9P1ANSMC358GGXTAPZA2MZ"
+          },
+          {
+            "id": "01KT225CXDMDAR3BJH14QJEMTF",
+            "title": "Uniqlo & GPC Huddle",
+            "projectId": 31,
+            "projectName": "Uniqlo Phillipsburg NJ",
+            "date": "2026-06-08T12:30:00+00:00",
+            "source": "fireflies",
+            "summary": "🔧 Siva verticals progressing: Siva verticals progressing with manpower adjustments; TJ Graves aims for aisle nine by Wednesday. Limited floor space affects main pipe installs.\n💧 GPC site dealing with water leak issues: GPC site dealing with water leak issue...",
+            "criticalRisks": [
+              "Improved photo documentation is crucial for client billing and risk management, with specific reporting expectations set for subcontractors."
+            ],
+            "decisions": [],
+            "actionItems": [
+              "Follow up to confirm if workers from GPC will be permanently assigned to Siva and clarify with Jesse the deployment plan for Chris and Jordan (07:36)",
+              "Obtain and provide shop vacuums, squeegees, trash cans, and wet floor signs for GPC site to assist with water cleanup and safety during hydro testing (44:32)",
+              "Check with Mike Parsons on availability/status of cleaning equipment previously purchased for Uniqlo to be used at GPC (44:32)",
+              "Intensify efforts to obtain daily photo and report updates from subcontractors at GPC, escalating to Jesse if compliance not met (19:00)",
+              "Upload photos and documentation to job planner daily, including hydro testing photos with before and after shots (23:28)"
+            ],
+            "href": "/31/meetings/01KT225CXDMDAR3BJH14QJEMTF"
+          },
+          {
+            "id": "01KTC4ZDBNNDXH81VCTY7ASFB0",
+            "title": "Bluebeam Technical suuport",
+            "projectId": null,
+            "projectName": null,
+            "date": "2026-06-05T15:00:00+00:00",
+            "source": "fireflies",
+            "summary": "✅ Installation issue resolved: A corrupt install required a cleaner utility and admin rights for successful launch.\n🔍 File inspection confirmed success: Verification showed installation files present, enabling Bob to use Bluebeam without errors.\n🔑 Licensing...",
+            "criticalRisks": [
+              "✅ Installation issue resolved: A corrupt install required a cleaner utility and admin rights for successful launch.",
+              "- **Installation issue resolved with clean reinstall**: A corrupt install required a cleaner utility and admin rights for successful launch.",
+              "# Bluebeam Technical suuport **Date:** 6/5/2026, 3:00:00 PM **Duration:** 0 minutes **Participants:** support@bluebeam.com,bwright@alleatogroup.com,fireflies@alleatogroup.com,mcalcetero@alleatogroup.com, support@bluebeam.com, bwright@alleatogroup.com, fireflies@alleatogroup.com ## Summary - **Installation issue resolved with clean reinstall**: A corrupt install required a cleaner utility and admin rights for successful launch."
+            ],
+            "decisions": [
+              "🔍 File inspection confirmed success: Verification showed installation files present, enabling Bob to use Bluebeam without errors.",
+              "🔑 Licensing checked and functional: Correct license was confirmed, allowing full access to Bluebeam tools post-installation.",
+              "- **File inspection confirmed reinstallation success**: Verification showed installation files present, enabling Bob to use Bluebeam without errors."
+            ],
+            "actionItems": [
+              "Run the Bluebeam cleaner utility with administrator permissions, confirm full cleaning, and reinstall Bluebeam client as instructed (12:33)",
+              "Verify successful installation by launching Bluebeam app and confirm license assignment by checking user info panel (23:40)",
+              "Test Bluebeam functionality with actual documents beyond sample tutorial files (25:28)",
+              "Ensure Bluebeam license is assigned to Bob prior to reinstallation and confirm post-installation (10:23)",
+              "Send direct join link for meetings to avoid delays caused by support inbox filtering (07:50)"
+            ],
+            "href": "/meetings/01KTC4ZDBNNDXH81VCTY7ASFB0"
+          },
+          {
+            "id": "01KTA35T41AVBZA4DX6BJG33E9",
+            "title": "Union Collective: Solaroof Discussion",
+            "projectId": 1009,
+            "projectName": "Union Collective",
+            "date": "2026-06-05T13:30:00+00:00",
+            "source": "fireflies",
+            "summary": "☀️ Solar Expertise: Team brings extensive solar installation experience; prefers complex projects, notably the successful Kalamazoo Roofit installation.\n🏠 Sole Roof Advantages: Outperforms Roofit in installation speed and warranty; benefits from 30 years of ...",
+            "criticalRisks": [
+              "Critical discussions included battery storage solutions and the clear division of labor required during the installation process.",
+              "## Keywords Solaroof, Battery Energy Storage, Building Integrated Photovoltaics (BIPV), Electrical Load Management, Solar Installation, Critical/Essential Loads"
+            ],
+            "decisions": [],
+            "actionItems": [
+              "Email updated roof layout drawings including kitchen exhaust fans and roof hatch to Tony Frisone, Phil, and Greg Oliver for coordination (14:48)",
+              "Add critical loads as an agenda item for the next Owner-Architect-Contractor (OAC) meeting to ensure alignment on backup power requirements (18:59)",
+              "Provide Greg Oliver with site plan, building renderings, and a spreadsheet version of the equipment schedule to facilitate load analysis and system design (52:31)",
+              "Compile and distribute meeting minutes along with requested drawings and documents to all meeting participants to ensure alignment and record keeping (01:12:11)",
+              "Coordinate and clarify essential and critical backup loads with ownership to support further system design and battery sizing (18:53)"
+            ],
+            "href": "/1009/meetings/01KTA35T41AVBZA4DX6BJG33E9"
+          },
+          {
+            "id": "01KT225CXPKFXGSEQSW1BMB5RH",
+            "title": "Uniqlo & GPC Huddle",
+            "projectId": 31,
+            "projectName": "Uniqlo Phillipsburg NJ",
+            "date": "2026-06-05T12:30:00+00:00",
+            "source": "fireflies",
+            "summary": "🚧 Vertical Installation Progress: Solid progress in vertical pipe installation; cuts allow installation without obstructing future work.\n💧 Hydro Testing Urgency: Hydro test critical for system four must complete today to avoid racking delays; repairs schedu...",
+            "criticalRisks": [
+              "💧 Hydro Testing Urgency: Hydro test critical for system four must complete today to avoid racking delays; repairs scheduled for weekend.",
+              "👷 Manpower Accountability Needed: Subcontractor crew reductions risk project delays; written manpower plans emphasized for better accountability.",
+              "- **Hydro Testing Urgency:** Hydro test critical for system four must complete today to avoid racking delays; repairs scheduled for weekend."
+            ],
+            "decisions": [],
+            "actionItems": [
+              "Take and send photos and videos of vertical installation and riser clamp issue to Kebba and team for report updates (06:59)",
+              "Upload pictures to reports and assist in marking up installation status (16:32)",
+              "Follow up immediately with Kurt on credit application status for Windustrial and inform team (30:15)",
+              "Visit site to verify manpower presence personally and capture photos",
+              "report condition accurately (22:37)"
+            ],
+            "href": "/31/meetings/01KT225CXPKFXGSEQSW1BMB5RH"
+          },
+          {
+            "id": "01KT7GJ5KJGWX7P3YSWEEV0SDK",
+            "title": "Sprinkler Division SOP Improvement",
+            "projectId": 90,
+            "projectName": "Alleato Internal Ops",
+            "date": "2026-06-04T18:00:00+00:00",
+            "source": "fireflies",
+            "summary": "🔧 Field Work Priorities: Focus on setting verticals to enhance safety and efficiency, minimizing downtime and overlaps with other trades.\n📅 Weekend Resource Deployment: Potential Saturday mobilization planned; at least two workers will ensure critical tasks...",
+            "criticalRisks": [
+              "📅 Weekend Resource Deployment: Potential Saturday mobilization planned; at least two workers will ensure critical tasks are completed on time.",
+              "- **Weekend Resource Deployment:** Potential Saturday mobilization planned; at least two workers will ensure critical tasks are completed on time."
+            ],
+            "decisions": [
+              "The team agreed on implementing daily accountability checklists for better tracking and a probation period of 90 days to establish routine."
+            ],
+            "actionItems": [
+              "Draft combined daily and pre-installation checklist documents, incorporating input from team and addressing sprinkler-specific needs (26:50)",
+              "Develop digital and printable versions of checklists, ensuring usability in field and availability of interactive tools (20:48)",
+              "Assist field personnel in establishing weekly coordination meetings with rack installers and subcontractors",
+              "offer support and be CC’d on communications (01:00:00)",
+              "Manage inspection log process and promote use in Job Planner software, linking documentation and approvals (24:50)"
+            ],
+            "href": "/90/meetings/01KT7GJ5KJGWX7P3YSWEEV0SDK"
+          },
+          {
+            "id": "01KT9WDMA5M7YQEMYZQF4NXHYR",
+            "title": "Bluebeam set up",
+            "projectId": 90,
+            "projectName": "Alleato Internal Ops",
+            "date": "2026-06-04T18:00:00+00:00",
+            "source": "fireflies",
+            "summary": "🚫 License Issues Block Access: Bob’s account lacked an active license, preventing software use until reassignment is completed.\n📞 Technical Support Needed: Errors hindered quick license changes; Maria will escalate to Bluebeam support for resolution.\n💬 Use...",
+            "criticalRisks": [
+              "🗄️ Sufficient Licenses Available: Six licenses are ready for reassignment, but system glitches delayed enabling Bob’s access.",
+              "🤝 Friendly Rapport Builds Trust: Casual conversation helped maintain positive communication and user confidence during the issue resolution.",
+              "- **Sufficient Licenses Available:** Six licenses are ready for reassignment, but system glitches delayed enabling Bob’s access."
+            ],
+            "decisions": [],
+            "actionItems": [
+              "Verify and modify Bob Wright’s Bluebeam license to restore his software access by changing his account status from 'no pay collaborator' to an appropriate license type (01:42)",
+              "Contact Bluebeam support to reinstate Bob Wright’s license and request that a new valid license be sent via email for setup (03:11)",
+              "Email the new Bluebeam license details to Bob Wright so he can set up and test software access (03:20)",
+              "Keep Bob Wright informed on the progress and resolution status of his Bluebeam license issue (03:50)",
+              "Await the email containing the reinstated Bluebeam license and test the software access once received (03:20)"
+            ],
+            "href": "/90/meetings/01KT9WDMA5M7YQEMYZQF4NXHYR"
+          },
+          {
+            "id": "01KT4N9QYBKP10BTBC91F09FCH",
+            "title": "Vermillion design weekly call",
+            "projectId": 67,
+            "projectName": "Vermillion Rise Warehouse",
+            "date": "2026-06-04T17:00:00+00:00",
+            "source": "fireflies",
+            "summary": "📅 Drawing Submission Deadline: Final drawing submission is set for Monday to meet state approval timelines.\n🔧 Material Selection: Thicker Schedule 40 black steel pipe will replace galvanized due to costs; benefits will be shared with the client.\n💧 Corrosio...",
+            "criticalRisks": [],
+            "decisions": [
+              "🔥 Fire Safety Ratings Confirmed: Two-hour rating for office walls and one-hour for assembly spaces meets regulatory codes without redesign.",
+              "- **Fire Safety Ratings Confirmed:** Two-hour rating for office walls and one-hour for assembly spaces meets regulatory codes without redesign.",
+              "Alex confirmed key CAD details, including mechanical pads and compactor relocation, while Bob noted a new pad requirement would be deferred."
+            ],
+            "actionItems": [
+              "Review CAD files to verify inclusion of mechanical pads, RTE locations, and compactor move details",
+              "confirm completeness with Keith and report back (04:06)",
+              "Provide timeline and deliver final set of structural drawings by end of day tomorrow or Monday morning (04:06)",
+              "Send CDR application to Alex for signature either today or tomorrow to prepare for state submission on Monday (06:23)",
+              "Assemble and send completed architectural updates separately upon completion, prior to Monday submission (13:31)"
+            ],
+            "href": "/67/meetings/01KT4N9QYBKP10BTBC91F09FCH"
+          }
+        ]
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_b35CCmdBAht5Snh6D7ls8dTo",
+      "output": {
+        "query": "data sync stale missing Teams Outlook meetings packets current enough reliability source gaps",
+        "resultCount": 10,
+        "results": [
+          {
+            "content": "There is a significant gap in the ability to retrieve recent Teams messages reliably; a dedicated recent message retrieval tool is needed.",
+            "sourceTable": "ai_memory",
+            "recordId": "44e117de-78c7-4cd9-8986-a80d10558232",
+            "sourceDocumentId": "44e117de-78c7-4cd9-8986-a80d10558232",
+            "sourceChunkId": "ai_memory_44e117de-78c7-4cd9-8986-a80d10558232",
+            "similarity": 0.531,
+            "finalScore": 0.567,
+            "projectIds": [],
+            "metadata": {
+              "title": null,
+              "category": null,
+              "source": null,
+              "source_type": "ai_memory",
+              "date": null,
+              "type": "lesson",
+              "user_id": "1854b4b0-3e8e-4d69-86df-32cdb3c80ee0",
+              "meeting_id": null,
+              "project_id": null,
+              "visibility": "team"
+            },
+            "createdAt": "2026-05-19T20:39:46.321548"
+          },
+          {
+            "content": "The document is a direct message from a team member, dated February 15, 2026, communicating the restoration of Teams communication services. The primary purpose of this message is to inform team members about the resolution of a browser service issue that had previously hindered reliable messaging on the Teams platform. This update is crucial for ensuring effective communication within the team, particularly in contexts where TUI (Text User Interface) access is not feasible.\n\nKey topics covered in the message include the confirmation that Teams messaging is now functioning reliably, the continuation of a 10-second monitoring protocol, and the establishment of redundant monitoring systems to enhance communication reliability. The message emphasizes the importance of dependable communication tools in the team's operations, highlighting the need for solutions that do not depend on TUI access.\n\nImportant details include the specific date of the update (February 15, 2026) and the acknowledgment of the previous service issue that affected communication. The message indicates a proactive approach to prevent future disruptions by implementing redundant systems, which suggests a commitment to maintaining operational efficiency.\n\nAs for action items, the sender mentions setting up redundant monitoring systems, indicating that this will be a next step to ensure ongoing reliability in communication. Team members are encouraged to engage with the updated system and provide feedback as necessary to further enhance communication strategies.",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_1771178416926",
+            "sourceDocumentId": "teamsdm_1771178416926",
+            "sourceChunkId": "teamsdm_1771178416926__ff_meeting_summary_-1_0",
+            "similarity": 0.472,
+            "finalScore": 0.505,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM: 19:b1dd9a78-",
+              "category": "meeting_summary",
+              "source": null,
+              "source_type": "teams_dm",
+              "date": null,
+              "doc_type": "meeting_summary",
+              "file_date": null,
+              "project_id": null,
+              "segment_id": null,
+              "chunk_index": 0,
+              "content_hash": "1d99345e7807dc34",
+              "participants": [],
+              "segment_index": -1
+            },
+            "createdAt": "2026-04-30T08:23:16.81607"
+          },
+          {
+            "content": "[Teams DM: 19:c4beb912-]\n\n[Teams Direct Message: 19:c4beb912-]\n\n[2026-02-19] Unknown: ✅ Firefly meetings synced - 50 transcripts updated, 31 Brandon meetings tracked, 5 new meetings since last sync. Meanwhile: Still waiting on your Azure authentication (code: AQVPF59Q2 at https://microsoft.com/devicelogin ) to create the 7 C-suite Teams apps.",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_1771477611336",
+            "sourceDocumentId": "teamsdm_1771477611336",
+            "sourceChunkId": "teamsdm_1771477611336__chunk_0",
+            "similarity": 0.497,
+            "finalScore": 0.501,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM: 19:c4beb912-",
+              "category": "teams_message",
+              "source": "microsoft_graph",
+              "source_type": "teams_dm",
+              "date": "2026-02-19T00:00:00+00:00",
+              "tags": "[\"teams\",\"direct_message\",\"19:c4beb912-\"]",
+              "type": "teams_dm",
+              "project_id": null,
+              "chunk_index": 0,
+              "participants": "[\"Unknown\"]",
+              "total_chunks": 1
+            },
+            "createdAt": "2026-02-19T00:00:00+00:00"
+          },
+          {
+            "content": "ai_memory: The meeting was scheduled via Microsoft Teams with a link provided, indicating the use of Outlook calendar integration.",
+            "sourceTable": "ai_memory",
+            "recordId": "166dd4ab-856d-45fc-aa0c-48ead403e371",
+            "sourceDocumentId": "166dd4ab-856d-45fc-aa0c-48ead403e371",
+            "sourceChunkId": "ai_memory_166dd4ab-856d-45fc-aa0c-48ead403e371",
+            "similarity": 0.451,
+            "finalScore": 0.495,
+            "projectIds": [],
+            "metadata": {
+              "title": null,
+              "category": null,
+              "source": "meeting_ingest",
+              "source_type": "ai_memory",
+              "date": null,
+              "type": "fact",
+              "meeting_id": "01KS1ECR060S4ZCJH4X1KR9139",
+              "project_id": null
+            },
+            "createdAt": "2026-05-20T14:15:56.995769"
+          },
+          {
+            "content": "[Teams DM Conversation: 19:c4beb912-]\n\n[Teams Direct Message Conversation: 19:c4beb912-]\nDate: 2026-05-07\n\n[message:1778112537844] [2026-05-07 00:08:57] Brandon Clymer: Can you see my calendar?\n[message:1778112551645] [2026-05-07 00:09:11] Unknown: No. I don’t have direct live access to your calendar right now. What I can see with the current tools: meetings that were captured into the system meeting transcripts and notes date-based meeting records if they’ve been synced into Alleato What I can’t confirm from here: your full Outlook or Google calendar private calendar events that haven’t been ingested into the platform free/busy availability in real time If you want, I can still check what meetings the system has for: today this week a specific project a specific topic If that’s what you mean, say “show me today’s meetings” and I’ll pull them.\n[message:1778112603197] [2026-05-07 00:10:03] Brandon Clymer: So how can we make it so you can view my calendar? You’re able to see my emails aren’t you?\n[message:1778112621349] [2026-05-07 00:10:21] Unknown: Right now, I can see synced email because there’s a documented Microsoft Outlook email integration in Alleato. I do not have evidence from the help center that your calendar is currently connected the same way. What the app help confirms: Outlook integration = incoming Microsoft 365 email sync Teams integration = Teams messages/channels sync I did not find a calendar integration article or setup flow in the help center So the honest answer is: Yes — I can access synced email data when your Microsoft 365 mailbox is connected. Not yet, at least not from documented app functionality — I don’t have proof that I can view your Outlook calendar the same way today.",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_b47843f759515cdb_2026-05-07",
+            "sourceDocumentId": "teamsdm_b47843f759515cdb_2026-05-07",
+            "sourceChunkId": "teamsdm_b47843f759515cdb_2026-05-07__chunk_0",
+            "similarity": 0.454,
+            "finalScore": 0.492,
+            "projectIds": [
+              47
+            ],
+            "metadata": {
+              "title": "Teams DM Conversation: 19:c4beb912-",
+              "category": "teams_message",
+              "source": "microsoft_graph",
+              "source_type": "teams_dm",
+              "date": "2026-05-07T00:00:00+00:00",
+              "tags": "teams,direct_message,19:c4beb912-,unassigned",
+              "type": "teams_dm_conversation",
+              "project_id": 47,
+              "chunk_index": 0,
+              "participants": "Archon, Unknown, bclymer@alleatogroup.com",
+              "total_chunks": 7
+            },
+            "createdAt": "2026-05-07T00:00:00+00:00"
+          },
+          {
+            "content": "The document is a direct message from a Microsoft Teams conversation, specifically identified by the unique identifier \"19:c4beb912-\". The purpose of this communication appears to be a brief update regarding the status of a task or request that involves sending information or a document. The message is informal and indicates a delay in the sender's ability to fulfill the request due to a lack of internet connectivity.\n\nIn the message dated April 3, 2026, Misty Rogers informs the recipient that she will send the requested information as soon as she is back online. This indicates a reliance on digital communication tools for task completion and highlights the potential challenges posed by connectivity issues. The key topic of the message revolves around the completion and delivery of a specific document or information that has not been detailed in the message itself.\n\nThe important detail in this communication is the date, which signifies when the message was sent, and the acknowledgment of the current inability to send the information due to internet issues. The action item here is clear: the recipient should anticipate receiving the information from Misty once her internet service is restored. There are no specific numbers or formal requirements mentioned in the message, but it emphasizes the need for patience and understanding regarding the delay.",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_1775241799552",
+            "sourceDocumentId": "teamsdm_1775241799552",
+            "sourceChunkId": "teamsdm_1775241799552__ff_meeting_summary_-1_0",
+            "similarity": 0.467,
+            "finalScore": 0.489,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM: 19:c4beb912-",
+              "category": "meeting_summary",
+              "source": null,
+              "source_type": "teams_dm",
+              "date": null,
+              "doc_type": "meeting_summary",
+              "file_date": null,
+              "project_id": null,
+              "segment_id": null,
+              "chunk_index": 0,
+              "content_hash": "d0c3f39fd68cf376",
+              "participants": [],
+              "segment_index": -1
+            },
+            "createdAt": "2026-04-03T18:50:27.305809"
+          },
+          {
+            "content": "**Summary of Teams DM Conversation: Ops Meeting Reminder Chat**\n\nThe document is a direct message conversation on Microsoft Teams, serving as a reminder for team members to update their project statuses in Notion ahead of the upcoming Operations meetings. This informal communication highlights the importance of maintaining current project information to facilitate effective discussions during the meetings.\n\nThe key topic of the conversation revolves around the necessity for team members to input",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_7e9c23379abbebcf_2025-09-22",
+            "sourceDocumentId": "teamsdm_7e9c23379abbebcf_2025-09-22",
+            "sourceChunkId": "teamsdm_7e9c23379abbebcf_2025-09-22__ff_segment_summary_0_0",
+            "similarity": 0.443,
+            "finalScore": 0.484,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM Conversation: Ops Meeting Reminder Chat",
+              "category": "segment_summary",
+              "source": null,
+              "source_type": "teams_dm",
+              "date": null,
+              "doc_type": "segment_summary",
+              "file_date": null,
+              "project_id": null,
+              "segment_id": "b2e985fb-c83b-47d3-9aad-0fdec701a5e3",
+              "chunk_index": 0,
+              "content_hash": "6968b5feb69f6ffb",
+              "participants": [],
+              "segment_index": 0
+            },
+            "createdAt": "2026-05-12T05:41:55.109555"
+          },
+          {
+            "content": "The team convened to tackle synchronization problems within OneDrive that resulted in file duplication and inconsistencies in folder contents, particularly affecting workflows. Andrew Cannon highlighted the issue of duplicated folders and missing files, while Maria Calcetero clarified the confusion stemming from personal vaults versus shared files. With a backlog of 18,000 files still uploading, pausing sync was deemed necessary to prevent further issues. They also discussed the impact of temporary Wi-Fi outages on troubleshooting efforts and emphasized the need for better scheduling in IT infrastructure. The team decided to standardize file access through the Alito shared OneDrive to minimize reliance on personal vaults and agreed on the necessity of user training to close knowledge gaps regarding OneDrive's setup and syncing processes.",
+            "sourceTable": "meeting_summary_embed",
+            "recordId": "01KEFA4SEQRA30KDKWX4WZ0QFS",
+            "sourceDocumentId": "01KEFA4SEQRA30KDKWX4WZ0QFS",
+            "sourceChunkId": "dm_summary_01KEFA4SEQRA30KDKWX4WZ0QFS",
+            "similarity": 0.49,
+            "finalScore": 0.484,
+            "projectIds": [],
+            "metadata": {
+              "title": "One Drive Review",
+              "category": null,
+              "source": "fireflies",
+              "source_type": "meeting_summary_embed",
+              "date": null,
+              "project_id": null
+            },
+            "createdAt": "2026-01-08T18:30:53.073976"
+          },
+          {
+            "content": "**Summary of Teams DM: 19:294326c9-**\n\nThe document is a direct message from a Teams chat, dated July 16, 2024, involving a conversation between team members regarding the status of a file upload. This informal communication serves to clarify the progress of a syncing process related to a shared document or project file.\n\nThe key topic discussed in the message is the syncing status of a file, with Lee Buchanan indicating that if the file still displays the original version, it has not yet completed the upload process. This highlights the importance of ensuring that all team members are aware of the current state of shared resources, particularly in collaborative environments where timely access to updated information is crucial.\n\nWhile the document does not contain specific numbers or formal requirements, the date of the message is significant as it provides a timeline for the ongoing project. The action item implied in the message is for team members to monitor the syncing status and confirm when the upload is fully completed, ensuring that everyone has access to the most current version of the document. This communication underscores the need for clear updates and coordination among team members to facilitate effective collaboration.",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_1721146224190",
+            "sourceDocumentId": "teamsdm_1721146224190",
+            "sourceChunkId": "teamsdm_1721146224190__ff_meeting_summary_-1_0",
+            "similarity": 0.465,
+            "finalScore": 0.484,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM: 19:294326c9-",
+              "category": "meeting_summary",
+              "source": null,
+              "source_type": "teams_dm",
+              "date": null,
+              "doc_type": "meeting_summary",
+              "file_date": null,
+              "project_id": null,
+              "segment_id": null,
+              "chunk_index": 0,
+              "content_hash": "b91c44c40551d8d8",
+              "participants": [],
+              "segment_index": -1
+            },
+            "createdAt": "2026-03-25T06:22:56.689612"
+          },
+          {
+            "content": "[Teams DM: 19:b1dd9a78-]\n\n[Teams Direct Message: 19:b1dd9a78-]\n\n[2026-02-15] FRIDAY: 🚀 **TEAMS COMMUNICATION RESTORED!** Browser service issue FIXED! I can now: ✅ Send Teams messages reliably ✅ Continue 10-second monitoring&nbsp; ✅ Provide redundant status updates You're absolutely right - we need reliable Teams communication without requiring TUI access.&nbsp; Setting up redundant monitoring systems now! 🔧⚡",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_1771178416926",
+            "sourceDocumentId": "teamsdm_1771178416926",
+            "sourceChunkId": "teamsdm_1771178416926__chunk_0",
+            "similarity": 0.478,
+            "finalScore": 0.483,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM: 19:b1dd9a78-",
+              "category": "teams_message",
+              "source": "microsoft_graph",
+              "source_type": "teams_dm",
+              "date": "2026-02-15T00:00:00+00:00",
+              "tags": "[\"teams\",\"direct_message\",\"19:b1dd9a78-\"]",
+              "type": "teams_dm",
+              "project_id": null,
+              "chunk_index": 0,
+              "participants": "[\"FRIDAY\"]",
+              "total_chunks": 1
+            },
+            "createdAt": "2026-02-15T00:00:00+00:00"
+          }
+        ],
+        "retrievalBreakdown": {
+          "knowledgeMatches": 0,
+          "externalChunkMatches": 20,
+          "activeRetrievalWeights": 0,
+          "usedProjectFilter": false,
+          "filteredAdminOnlySources": []
+        }
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_BnoDKkRKqQGurKIAvbJNckqq",
+      "output": {
+        "results": [],
+        "message": "No documents found matching \"packet OR packets project packet status update briefing snapshot current stale missing\". Try broader keywords or use semanticSearch for meaning-based results."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Short"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " use"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " does"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Packets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " weakest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " area"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unless"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/int"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "elligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " snapshots"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " formal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " most"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AI"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reliable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-derived"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signals"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " inbox"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " some"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " content"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-p"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ipeline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gaps"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " should"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " treat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " update"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " found"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " differently"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " depending"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " looks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Multiple"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sources"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " morning"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " including"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brandon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " DM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " export"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "08"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "40"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " UTC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " several"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " channel"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/message"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sources"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " around"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "10"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " UTC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operational"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "outs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " intelligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " through"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "7"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " days"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " returned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "10"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "03"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " structured"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pipeline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " producing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " usable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " summaries"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Int"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "elligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Share"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Point"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "One"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Drive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " file"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " least"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " some"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sources"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Share"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Point"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " SOP"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Andrew"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cannon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " One"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Drive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " job"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " folders"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " around"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "02"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "30"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " UTC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " broken"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " monitoring"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Graph"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " subscription"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shown"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mh"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "arrison"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "inactive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "renew"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "al"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "_due"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " expired"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "15"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " error"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "rea"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "uthor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ization"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Required"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " webhook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " broken"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " here"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brandon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mailbox"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-mon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "itored"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " subscription"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " listed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Megan"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Harrison"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mailbox"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brandon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " So"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " claiming"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " freshness"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brandon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " supported"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " output"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "At"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " least"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " path"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " integrity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " problem"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " For"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "annon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "m"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ismatch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " returned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "30"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " emails"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "9"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " durable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " document"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " increased"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " some"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ingestion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " completing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " imperfect"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " even"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " when"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " runs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "One"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Drive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " uneven"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " One"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cg"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "illes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "pie"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ato"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Group"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Jobs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "20"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " compared"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " missing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " structur"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ally"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Opportunity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-style"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tracking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " incomplete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " intelligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pipeline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " explicitly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " says"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Opportunity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tracking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " available"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " intelligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pipeline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ";"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " surfaced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " So"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " expect"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " full"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " executive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " opportunities"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " momentum"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " blockers"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owners"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commercial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " implications"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " all"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " place"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " intelligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " does"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cover"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Int"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "elligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " does"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " appear"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " distinct"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " searchable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " formal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " corpus"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " check"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " A"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " document"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-related"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " records"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " returned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matching"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " documents"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " doesn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " prove"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " don"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exist"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " does"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " don"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " maintained"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " repository"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " kept"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Documents"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " known"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reliability"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " around"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " A"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stored"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " memory"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " says"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " significant"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ability"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieve"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " messages"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reliably"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dedicated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tool"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " looks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " healthy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " note"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " quality"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " been"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " known"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " even"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " when"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " running"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "semantic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " result"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ai"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "_memory"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " created"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "19"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Practical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " level"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Meet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " generally"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " conversations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " careful"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "nothing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " found"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " conclusions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " treat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Packets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "brief"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " docs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " generated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fresh"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "financial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tools"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " query"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " time"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " standalone"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " truth"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " treat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " biggest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sound"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " while"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " blends"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " context"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " without"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " saying"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " monitor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " degraded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " create"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " false"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Recommendation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Use"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AI"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " set"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-based"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " updates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "7"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " days"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " any"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " claim"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " depends"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " until"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Graph"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "authorized"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " briefing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " says"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " activity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " treat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "verified"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "4"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " high"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " update"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " build"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " +"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " +"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " structured"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "financial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tools"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " first"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " then"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " add"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mailbox"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " healthy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " useful"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " step"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "run"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-health"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " audit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " specifically"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brandon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operating"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " view"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " your"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " daily"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " brief"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " safely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "finish",
+      "finishReason": "stop"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 68710,
+      "totalTokens": 70074,
+      "outputTokens": 1364
+    },
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "retrieval-complete",
+          "status": "success",
+          "message": "Retrieved (1 sources, 0 warnings)",
+          "durations": {
+            "semantic_search": 8628
+          },
+          "timestamp": "2026-06-09T09:35:01.518Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": 2,
+    "tool_trace": [
+      {
+        "tool": "semanticSearch",
+        "agent": "retrieval-planner-v2",
+        "input": {
+          "query": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "output": {
+          "resultCount": 8
+        },
+        "status": "success",
+        "toolName": "semanticSearch",
+        "timestamp": "2026-06-09T09:35:39.723Z",
+        "durationMs": 8628
+      },
+      {
+        "tool": "getOutlookOperationsStatus",
+        "error": null,
+        "input": {
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": "all_graph",
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "getOutlookOperationsStatus",
+        "timestamp": "2026-06-09T09:35:05.081Z"
+      },
+      {
+        "tool": "getMeetingIntelligence",
+        "error": null,
+        "input": {
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "getMeetingIntelligence",
+        "timestamp": "2026-06-09T09:35:05.451Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "error": null,
+        "input": {
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "semanticSearch",
+        "timestamp": "2026-06-09T09:35:13.830Z"
+      },
+      {
+        "tool": "searchDocuments",
+        "error": null,
+        "input": {
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "searchDocuments",
+        "timestamp": "2026-06-09T09:35:16.817Z"
+      },
+      {
+        "tool": "getOutlookOperationsStatus",
+        "input": {
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "getOutlookOperationsStatus",
+        "timestamp": "2026-06-09T09:35:39.723Z"
+      },
+      {
+        "tool": "getMeetingIntelligence",
+        "input": {
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "getMeetingIntelligence",
+        "timestamp": "2026-06-09T09:35:39.723Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "input": {
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "semanticSearch",
+        "timestamp": "2026-06-09T09:35:39.723Z"
+      },
+      {
+        "tool": "searchDocuments",
+        "input": {
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "searchDocuments",
+        "timestamp": "2026-06-09T09:35:39.723Z"
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse.",
+          "projectId": null,
+          "visibility": "private"
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project.",
+          "projectId": null,
+          "visibility": "private"
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly.",
+          "projectId": null,
+          "visibility": "private"
+        }
+      ],
+      "teamUsed": 0,
+      "retrieved": {
+        "team": 0,
+        "relevant": 0,
+        "preferences": 3
+      },
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "source_debug": {
+      "memory": {
+        "memories": [
+          {
+            "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+            "type": "preference",
+            "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+            "type": "preference",
+            "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+            "type": "preference",
+            "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly.",
+            "projectId": null,
+            "visibility": "private"
+          }
+        ],
+        "teamUsed": 0,
+        "retrieved": {
+          "team": 0,
+          "relevant": 0,
+          "preferences": 3
+        },
+        "totalUsed": 3,
+        "relevantUsed": 0,
+        "preferencesUsed": 3,
+        "recentConversationsUsed": 3
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "semanticSearch",
+              "agent": "retrieval-planner-v2",
+              "status": "success",
+              "durationMs": 8628
+            }
+          ],
+          "failedCount": 0,
+          "totalMeasuredMs": 8628
+        },
+        "toolNames": [
+          "semanticSearch",
+          "getOutlookOperationsStatus",
+          "getMeetingIntelligence",
+          "semanticSearch",
+          "searchDocuments",
+          "getOutlookOperationsStatus",
+          "getMeetingIntelligence",
+          "semanticSearch",
+          "searchDocuments"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 9,
+        "sourceCoverage": []
+      },
+      "orchestrator": "retrieval-planner-v2",
+      "outputPolicy": {
+        "stopWhen": "stepCountIs(10)",
+        "maxOutputTokens": 8000
+      },
+      "retrievalPlan": {
+        "intent": "source_lookup",
+        "reason": "source_lookup_intent",
+        "sources": [
+          "semanticVectorSearch"
+        ],
+        "responseFormat": "source_lookup"
+      }
+    },
+    "finish_reason": "stop",
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "source_lookup_intent",
+      "sources": [
+        "semanticVectorSearch"
+      ],
+      "responseFormat": "source_lookup"
+    },
+    "synthesis_model": "openai/gpt-5.4",
+    "response_quality": {
+      "score": 90,
+      "reasons": [
+        "multiple successful tool calls",
+        "multiple source citations"
+      ],
+      "confidence": "high",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "response_message_id": "es4ipkGoos9a8FEJ",
+    "empty_model_response": false
+  }
+}

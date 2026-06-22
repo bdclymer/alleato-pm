@@ -350,66 +350,7 @@ function RegenerateBriefCard() {
   );
 }
 
-// ── 5. Intelligence compiler ──────────────────────────────────────────────────
-
-function IntelligenceCompilerCard() {
-  const [status, setStatus] = React.useState<ActionStatus>("idle");
-  const [message, setMessage] = React.useState("");
-  const [sourceLimit, setSourceLimit] = React.useState("5");
-  const [packetLimit, setPacketLimit] = React.useState("5");
-
-  const run = async () => {
-    setStatus("running");
-    setMessage("Running intelligence compiler…");
-    try {
-      const data = await apiFetch<{ message?: string }>("/api/admin/intelligence-compiler/run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sourceLimit: Number(sourceLimit),
-          packetLimit: Number(packetLimit),
-          dryRun: false,
-          background: true,
-        }),
-      });
-      setStatus("success");
-      setMessage(data.message ?? "Compiler started. Check /admin/intelligence-compiler for status.");
-    } catch (e) {
-      setStatus("error");
-      setMessage(e instanceof Error ? e.message : "Compiler failed.");
-    }
-  };
-
-  return (
-    <ActionCard
-      title="Intelligence Compiler"
-      badge="AI"
-      icon={Brain}
-      description="Generate AI intelligence packets for the executive dashboard. Runs on-demand — not scheduled."
-    >
-      <div className="flex items-center gap-2">
-        <Select value={sourceLimit} onValueChange={setSourceLimit}>
-          <SelectTrigger size="sm" className="flex-1">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="3">3 sources</SelectItem>
-            <SelectItem value="5">5 sources (default)</SelectItem>
-            <SelectItem value="10">10 sources</SelectItem>
-            <SelectItem value="25">25 sources</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button size="sm" onClick={run} disabled={status === "running"}>
-          {status === "running" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Brain className="h-3.5 w-3.5" />}
-          Run
-        </Button>
-      </div>
-      <StatusBadge status={status} message={message} />
-    </ActionCard>
-  );
-}
-
-// ── 6. Daily flags ────────────────────────────────────────────────────────────
+// ── 5. Daily flags ────────────────────────────────────────────────────────────
 
 function DailyFlagsCard() {
   const [status, setStatus] = React.useState<ActionStatus>("idle");
@@ -783,7 +724,6 @@ export function AdminActionCards() {
       <SendBriefToTeamsCard />
       <RegenerateBriefCard />
       <AccountingSyncCard />
-      <IntelligenceCompilerCard />
       <DailyFlagsCard />
       <ProgressReportDraftsCard />
       <RagEvalCard />

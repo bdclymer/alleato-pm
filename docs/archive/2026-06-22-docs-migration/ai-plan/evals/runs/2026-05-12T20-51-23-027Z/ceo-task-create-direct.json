@@ -1,0 +1,337 @@
+{
+  "id": "ceo-task-create-direct",
+  "intent": "action_preview",
+  "prompt": "Add a task for me to call the Ulta owner about the AC1 approval by Friday.",
+  "selectedProjectId": null,
+  "sessionId": "f45ae166-05d8-44d4-bb24-9dfbe08d02eb",
+  "sessionLabel": "eval-2026-05-12T20-51-23-027Z-ceo-task-create-direct",
+  "startedAt": "2026-05-12T20:51:23.030Z",
+  "finishedAt": "2026-05-12T20:51:50.704Z",
+  "durationMs": 26728,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 19,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected required tool 'createGeneratedTask' to fire"
+    ],
+    "warnings": [
+      "expected family 'action_write' not represented",
+      "expected family 'task_management' not represented"
+    ],
+    "observations": [
+      "tools fired: intentPlanner, taskSourceReview"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "taskSourceReview"
+    ],
+    "familiesHit": [],
+    "finalTextLength": 1002,
+    "finalText": "Verdict: client/owner responsibility, not an internal Alleato task from this meeting.\n\nEvidence: The source discussion says “Mechanical team working to locate kitchen exhaust vents and other equipment to avoid visibility from key sightlines” and “consultants to continue work once plans are locked.” That is coordination/work by the mechanical designer/consultant on the project, not a distinct Alleato internal to-do for a teammate named “mechanical.” It’s also a design coordination outcome from the meeting, not a clearly assigned internal action with an Alleato owner.\n\nRecommended correction: Reclassify this as either:\n- a consultant/client coordination item tied to the mechanical consultant, or\n- a meeting outcome/design note, not an internal Tasks-page task.\n\nIf kept as a task, assign it to the actual project owner at Alleato who will coordinate with the mechanical consultant, with a clearer title like: “Coordinate with mechanical consultant to conceal exhaust locations in final design.”"
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "action_write",
+    "task_management"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T20:51:32.757Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Opening the task row and source meeting evidence",
+        "status": "loading",
+        "timestamp": "2026-05-12T20:51:36.294Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-task-source-review",
+      "data": {
+        "widget": {
+          "type": "task_summary",
+          "id": "task-source-review",
+          "title": "Matched task source review",
+          "subtitle": "Direct task row joined to its source meeting record",
+          "totalCount": 1,
+          "dateLabel": "Tue, May 12, 2026",
+          "items": [
+            {
+              "id": "1df4325b-64fe-45bb-a869-0f1a6e75904b",
+              "title": "Coordinate with mechanical designer on exhaust system concealment and aesthetic integration",
+              "description": "Coordinate with mechanical designer on exhaust system concealment and aesthetic integration",
+              "status": "open",
+              "priority": "medium",
+              "dueDate": null,
+              "assigneeName": "mechanical",
+              "projectId": 1009,
+              "projectName": "Union Collective",
+              "sourceTitle": "Union Collective: Interior Design Vision",
+              "sourceSystem": "fireflies",
+              "sourceDate": "2026-05-12T18:00:00+00:00",
+              "createdAt": "2026-05-12T20:20:12.475554+00:00",
+              "href": "/1009/tasks?task=1df4325b-64fe-45bb-a869-0f1a6e75904b"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "synthesis",
+        "message": "Reviewing whether the source meeting supports the task",
+        "status": "loading",
+        "timestamp": "2026-05-12T20:51:40.420Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-task-source-review"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-task-source-review",
+      "delta": "Verdict: client/owner responsibility, not an internal Alleato task from this meeting.\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-task-source-review",
+      "delta": "Evidence: The source discussion says “Mechanical team working to locate kitchen exhaust "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-task-source-review",
+      "delta": "vents and other equipment to avoid visibility from key sightlines” and “consultants to "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-task-source-review",
+      "delta": "continue work once plans are locked.” That is coordination/work by the mechanical "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-task-source-review",
+      "delta": "designer/consultant on the project, not a distinct Alleato internal to-do for a teammate "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-task-source-review",
+      "delta": "named “mechanical.” It’s also a design coordination outcome from the meeting, not a "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-task-source-review",
+      "delta": "clearly assigned internal action with an Alleato owner.\n\nRecommended correction: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-task-source-review",
+      "delta": "Reclassify this as either:\n- a consultant/client coordination item tied to the mechanical "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-task-source-review",
+      "delta": "consultant, or\n- a meeting outcome/design note, not an internal Tasks-page task.\n\nIf kept "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-task-source-review",
+      "delta": "as a task, assign it to the actual project owner at Alleato who will coordinate with the "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-task-source-review",
+      "delta": "mechanical consultant, with a clearer title like: “Coordinate with mechanical consultant "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-task-source-review",
+      "delta": "to conceal exhaust locations in final design.”"
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-task-source-review"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Task source review complete",
+        "status": "success",
+        "timestamp": "2026-05-12T20:51:49.756Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 3658,
+      "totalTokens": 3853,
+      "outputTokens": 195,
+      "cacheHitRatio": 0,
+      "cachedInputTokens": 0
+    },
+    "data_parts": [
+      {
+        "id": "assistant-widget-task-source-review",
+        "data": {
+          "widget": {
+            "id": "task-source-review",
+            "type": "task_summary",
+            "items": [
+              {
+                "id": "1df4325b-64fe-45bb-a869-0f1a6e75904b",
+                "href": "/1009/tasks?task=1df4325b-64fe-45bb-a869-0f1a6e75904b",
+                "title": "Coordinate with mechanical designer on exhaust system concealment and aesthetic integration",
+                "status": "open",
+                "dueDate": null,
+                "priority": "medium",
+                "createdAt": "2026-05-12T20:20:12.475554+00:00",
+                "projectId": 1009,
+                "sourceDate": "2026-05-12T18:00:00+00:00",
+                "description": "Coordinate with mechanical designer on exhaust system concealment and aesthetic integration",
+                "projectName": "Union Collective",
+                "sourceTitle": "Union Collective: Interior Design Vision",
+                "assigneeName": "mechanical",
+                "sourceSystem": "fireflies"
+              }
+            ],
+            "title": "Matched task source review",
+            "subtitle": "Direct task row joined to its source meeting record",
+            "dateLabel": "Tue, May 12, 2026",
+            "totalCount": 1
+          }
+        },
+        "type": "data-assistant-widget"
+      }
+    ],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Add a task for me to call the Ulta owner about the AC1 approval by Friday.",
+          "taskSourceReview": {
+            "dateScope": "recent",
+            "taskTitle": null
+          },
+          "selectedProjectId": null,
+          "deterministicIntent": "task_write",
+          "sourceSpecificRagKind": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "task_write",
+          "planner": "deterministic_fallback",
+          "rationale": "Model planner unavailable; using deterministic fallback intent.",
+          "confidence": "low",
+          "responseMode": "draft_safe_action",
+          "requiredTools": [],
+          "deterministicIntent": "task_write",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-12T20:51:32.755Z"
+      },
+      {
+        "tool": "taskSourceReview",
+        "input": {
+          "message": "Add a task for me to call the Ulta owner about the AC1 approval by Friday.",
+          "request": {
+            "dateScope": "recent",
+            "taskTitle": null
+          },
+          "selectedProjectId": null
+        },
+        "output": {
+          "endIso": "2026-05-13T04:00:00.000Z",
+          "startIso": "2026-05-12T04:00:00.000Z",
+          "sourceTitle": "Union Collective: Interior Design Vision",
+          "evidenceChars": 14000,
+          "matchedTaskId": "1df4325b-64fe-45bb-a869-0f1a6e75904b",
+          "sourceOfTruth": "public.tasks joined to tasks_metadata_id_fkey document_metadata",
+          "candidateCount": 167,
+          "matchedTaskTitle": "Coordinate with mechanical designer on exhaust system concealment and aesthetic integration",
+          "requestedTaskTitle": null
+        },
+        "timestamp": "2026-05-12T20:51:40.420Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [],
+      "stepStarts": [],
+      "totalStepCount": 0,
+      "finalFinishReason": "unknown",
+      "preparedStepCount": 0,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 62,
+      "reasons": [
+        "at least one successful tool call",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

@@ -181,7 +181,7 @@ const AGENT_GROUPS: { label: string; icon: React.ComponentType<{ className?: str
     label: "Backend Deep Agents (live)",
     icon: BrainCircuit,
     agents: [
-      { name: "Project Intelligence", job: "Project-status synthesis runtime with source-coverage tools.", status: "live", href: "/intelligence-compiler" },
+      { name: "Project Intelligence", job: "Project-status synthesis runtime with source-coverage tools.", status: "live", href: "/ai-system-health" },
       { name: "Executive Briefing", job: "Portfolio-level executive briefing runtime.", status: "live", href: "/ai-work-runs" },
       { name: "Research Agent", job: "Web research (Tavily + fetch).", status: "live", href: "/deep-research" },
       { name: "Content Builder", job: "Marketing & content generation with image tools.", status: "live", href: "/ai" },
@@ -315,7 +315,7 @@ const LIVE_SURFACES: {
   { name: "How the AI works", href: "/docs/ai-overview", desc: "Guided tour of agents, tools, models & memory.", icon: Compass },
   { name: "AI system health", href: "/ai-system-health", desc: "Conversations, spend, model mix, learning loop.", icon: Gauge },
   { name: "Agent inventory", href: "/ai/admin/agents", desc: "Every agent with status & deployment.", icon: Building2 },
-  { name: "Intelligence compiler", href: "/intelligence-compiler", desc: "Source ingestion & packet health.", icon: BrainCircuit },
+  { name: "Project intelligence health", href: "/ai-system-health", desc: "Source ingestion, synthesis health, and AI operations.", icon: BrainCircuit },
   { name: "Executive brief runs", href: "/ai-work-runs", desc: "Daily-brief run ledger & evidence rows.", icon: Sparkles },
   { name: "Deep research archive", href: "/deep-research", desc: "Past Deep Agents research projects.", icon: FileSearch },
   { name: "Memory center", href: "/settings/memory", desc: "Inspect & correct what the AI remembers.", icon: Eye },
@@ -326,11 +326,11 @@ const LIVE_SURFACES: {
 ];
 
 const SOURCE_DOCS: string[] = [
-  "docs/ai-plan/AI-MASTER-PLAN.md",
-  "docs/ai-plan/AI-VISION.md",
+  "docs/archive/2026-06-22-docs-migration/ai-plan/AI-MASTER-PLAN.md",
+  "docs/archive/2026-06-22-docs-migration/ai-plan/AI-VISION.md",
   "docs/architecture/AI-TOOLS-INVENTORY.md",
-  "docs/ai-plan/AI-OS-GAP-MATRIX.md",
-  "docs/ai-plan/AI-OS-PHASE-1-IMPLEMENTATION-PLAN.md",
+  "docs/archive/2026-06-22-docs-migration/ai-plan/AI-OS-GAP-MATRIX.md",
+  "docs/archive/2026-06-22-docs-migration/ai-plan/AI-OS-PHASE-1-IMPLEMENTATION-PLAN.md",
   "AGENT_ACTION_LAYER_CONTRACT.md",
 ];
 

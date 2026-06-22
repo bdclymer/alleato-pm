@@ -1,0 +1,45 @@
+{
+  "id": "documents-search",
+  "intent": "document_question",
+  "prompt": "Find the latest contract or change order document on Westfield and summarize the key terms.",
+  "selectedProjectId": 43,
+  "sessionId": "d1f60507-e055-4ca8-8826-61cd659f6ab1",
+  "sessionLabel": "eval-2026-05-02T10-17-07-154Z-documents-search",
+  "startedAt": "2026-05-02T10:22:09.923Z",
+  "finishedAt": "2026-05-02T10:22:25.225Z",
+  "durationMs": 96,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"2fbc8034-8f1f-4b01-96ff-4107f4ab6987\",\"timestamp\":\"2026-05-02T10:22:10.015Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"2fbc8034-8f1f-4b01-96ff-4107f4ab6987\",\"timestamp\":\"2026-05-02T10:22:10.015Z\"}",
+      "HTTP 401",
+      "expected at least one of [searchDocuments, searchExternalDocuments, queryDocumentRows] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'documents' not represented",
+      "expected family 'semantic' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"2fbc8034-8f1f-4b01-96ff-4107f4ab6987\",\"timestamp\":\"2026-05-02T10:22:10.015Z\"}"
+  },
+  "expectedToolNames": [
+    "searchDocuments",
+    "searchExternalDocuments",
+    "queryDocumentRows"
+  ],
+  "expectedToolFamilies": [
+    "documents",
+    "semantic"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

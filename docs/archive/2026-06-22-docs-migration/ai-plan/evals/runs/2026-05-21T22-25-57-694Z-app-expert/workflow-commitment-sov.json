@@ -1,0 +1,105 @@
+{
+  "id": "workflow-commitment-sov",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 9519,
+  "question": "Where does a subcontractor SOV belong?",
+  "mustInclude": [
+    "commitment",
+    "SOV"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "A subcontractor SOV belongs in **My Work** for the subcontractor view, and in **Commitments** for the GC/project-side commitment record.\n\nWhat I checked:\n- Artifact status: both generated artifacts are available and fresh.\n- Feature registry:\n  - **My Work (Subcontractor Portal)** — `docs/help/articles/my-work.md`\n  - **Commitments (Subcontracts and Purchase Orders)** — `docs/help/articles/commitments.md`\n  - **Submit an Invoice (Subcontractor)** — `docs/help/articles/submit-invoice.md`\n- Help articles:\n  - `docs/help/articles/my-work.md`\n  - `docs/help/articles/commitments.md`\n\nDocumented behavior:\n- **My Work** says it shows the subcontractor’s **Schedule of Values** with billed-to-date and remaining balance, and from the SOV section you can **Submit Invoice**.\n- **Commitments** says each commitment has a vendor and a **schedule of values (SOV)**, and the vendor invoices against those SOV lines through pay applications.\n\nRelevant routes:\n- Subcontractor portal: `/[projectId]/my-work`\n- GC/project commitments: `/[projectId]/commitments`\n- Subcontractor invoice start: `/[projectId]/invoicing/subcontractor/new`\n\nIf you mean “where should a subcontractor go to view or use their SOV,” the answer is **My Work**. If you mean “where is the SOV stored/managed on the project,” the answer is **Commitments**.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/project-side",
+        "sourceType": "sitemap",
+        "route": "/project-side",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/my-work.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/my-work.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/commitments.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/commitments.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/submit-invoice.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/submit-invoice.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/my-work",
+        "sourceType": "sitemap",
+        "route": "/my-work",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/project",
+        "sourceType": "sitemap",
+        "route": "/project",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/commitments",
+        "sourceType": "sitemap",
+        "route": "/commitments",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/invoicing/subcontractor/new",
+        "sourceType": "sitemap",
+        "route": "/invoicing/subcontractor/new",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/managed",
+        "sourceType": "sitemap",
+        "route": "/managed",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 9426,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

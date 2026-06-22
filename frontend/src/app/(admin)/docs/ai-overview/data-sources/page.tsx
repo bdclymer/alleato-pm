@@ -130,9 +130,9 @@ const CRONS = [
     description: "Outlook + Teams + OneDrive sync, embed, compile",
   },
   {
-    name: "alleato-task-extraction",
-    schedule: "Daily 7 AM UTC",
-    description: "Extract action items from communications",
+    name: "alleato-project-synthesis-sweep",
+    schedule: "Configured in Render",
+    description: "Build current project intelligence synthesis from embedded communications",
   },
   {
     name: "alleato-rag-health",

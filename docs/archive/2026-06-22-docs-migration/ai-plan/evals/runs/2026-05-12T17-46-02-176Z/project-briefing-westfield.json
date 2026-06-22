@@ -1,0 +1,72 @@
+{
+  "id": "project-briefing-westfield",
+  "intent": "project_briefing",
+  "prompt": "What's the latest on Westfield Collective?",
+  "selectedProjectId": 43,
+  "sessionId": "af011432-3ff1-4250-843d-096f5c744c61",
+  "sessionLabel": "eval-2026-05-12T17-46-02-176Z-project-briefing-westfield",
+  "startedAt": "2026-05-12T17:46:02.178Z",
+  "finishedAt": "2026-05-12T17:46:27.351Z",
+  "durationMs": 9453,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 3,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getProjectBriefingSnapshot, semanticSearch] to fire — none did",
+      "mustInclude missing: \"Westfield\"",
+      "answer length 0 < min 200"
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'semantic' not represented",
+      "expected family 'communications' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getProjectBriefingSnapshot",
+    "semanticSearch"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "semantic",
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T17:46:08.284Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-12T17:46:10.731Z"
+      }
+    },
+    {
+      "type": "error",
+      "errorText": "I hit a retrieval/generation failure before I could give you a trustworthy strategist answer.\n\nWhat happened: Failed to load insight cards: TypeError: fetch failed\nWhat I could confirm: I checked 2 sources successfully.\nWhat that means: The pinned project context was included, so the failure is in retrieval or generation rather than project selection.\nI still need a successful retrieval pass before I can give a sourced strategic read on: \"What's the latest on Westfield Collective?\".\n\nThe right next move is to retry the same question with the project or decision you care about most. If this repeats, the persisted tool trace now shows exactly which source failed instead of leaving the chat blank."
+    }
+  ],
+  "persistedMetadata": null
+}

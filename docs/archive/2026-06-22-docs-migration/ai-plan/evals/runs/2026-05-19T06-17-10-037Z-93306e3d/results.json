@@ -1,0 +1,124 @@
+{
+  "generatedAt": "2026-05-19T06:18:16.858Z",
+  "baseUrl": "http://localhost:3001",
+  "bundle": null,
+  "filter": null,
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "warningCount": 2,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": false,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 1,
+    "passed": 0,
+    "failed": 0,
+    "errors": 0,
+    "averageScore": null
+  },
+  "slowestCases": [
+    {
+      "id": "realworld-business-risks",
+      "intent": "risk_review",
+      "durationMs": 66279,
+      "status": "pass",
+      "warnings": [
+        "duration 66279ms exceeded warning budget 30000ms",
+        "judge strategic_advisor skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+      ]
+    }
+  ],
+  "toolCoverage": {
+    "backendDeepAgentExecutiveBriefing": 1,
+    "listDomainIntelligence": 1,
+    "getProjectsWithRisks": 1,
+    "consultCRO": 1,
+    "semanticSearch": 1
+  },
+  "intentDistribution": {
+    "risk_review": 1
+  },
+  "results": [
+    {
+      "id": "realworld-business-risks",
+      "intent": "risk_review",
+      "prompt": "What risks exist in the business right now?",
+      "selectedProjectId": null,
+      "sessionId": "f7c33f64-8b78-48fc-bd26-78f827c23063",
+      "sessionLabel": "eval-2026-05-19T06-17-10-037Z-93306e3d-realworld-business-risks",
+      "startedAt": "2026-05-19T06:17:10.090Z",
+      "finishedAt": "2026-05-19T06:18:16.856Z",
+      "durationMs": 66279,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1157,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "duration 66279ms exceeded warning budget 30000ms",
+          "judge strategic_advisor skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+        ],
+        "observations": [
+          "tools fired: backendDeepAgentExecutiveBriefing, listDomainIntelligence, getProjectsWithRisks, consultCRO, semanticSearch",
+          "judge strategic_advisor: skipped"
+        ],
+        "toolNames": [
+          "backendDeepAgentExecutiveBriefing",
+          "listDomainIntelligence",
+          "getProjectsWithRisks",
+          "consultCRO",
+          "semanticSearch"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "communications",
+          "semantic",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 5315,
+        "finalText": "The business risk is real, and it’s concentrated in project execution more than in formal risk logging.\n\nRight now the clearest signal is this: **10 current-phase projects are showing critical risk indicators, but none of them have structured risk records logged.** That’s a control problem, not just a project problem. It means the risk is showing up in meetings and AI health signals, but not being captured cleanly enough to manage systematically. [Source: Project Risk Radar - Current projects]\n\nWhat’s driving risk right now:\n\n- **Westfield Collective** is the biggest signal in the portfolio with a **risk score of 518** and **74 high/critical AI insights** tied to active issues. The latest meeting points to heavy site complexity: steep topography, major grading volume, reduced parking, truck access redesign, and stormwater compliance pressure. That combination usually means budget pressure plus entitlement/site-planning drag. [Source: Meeting \"Union Site Review Meeting\" - 2026-05-15]\n- **Union Collective** is next with a **risk score of 232**, including **25 high/critical insights** and **44 critical health items**. The latest signal shows likely **approval and zoning delay risk**, with distillery zoning amendments expected to push approvals into **October-November**, while geotech is still pending. That’s classic preconstruction drift risk. [Source: Meeting \"Union Collective: OAC\" - 2026-05-14]\n- **Uniqlo Phillipsburg NJ** shows a **risk score of 203** with **29 high/critical insights**. The meeting summary suggests field coordination and material management are active concerns, though the evidence I have is thinner here because the source meeting date is missing. [Source: Meeting \"Uniqlo, Martinsville, CEVA, & GPC Huddle\" - undated]\n- **Vermillion Rise Warehouse** remains a live concern with a **risk score of 98**, **13 high/critical insights**, and **7 tracked issues**. The latest signal points to design coordination and pricing clarity around HVAC layout, wall penetrations, and separating office vs. warehouse cost visibility. That’s manageable, but only if pricing and decision ownership stay tight. [Source: Meeting \"Vermillion Rise Existing building discussions\" - undated]\n- **GW Allisonville Rd IN** shows active procurement/schedule risk. The latest meeting specifically calls out **door frame order delays due to submittal issues**, six-to-eight-week lead times, and communication problems with the fire sprinkler trade. That’s the kind of issue that quietly turns into schedule damage if nobody forces resolution early. [Source: Meeting \"Weekly Schedule Review Goodwill Allisonville Road Teams Meeting\" - 2026-05-11]\n- **Exol Wilmer** shows preconstruction execution risk: bid tracking issues, internal communication friction, and staffing needs significant enough that the team is advocating for a **full-time superintendent and PM**. [Source: Meeting \"Exol Wilmer - Review on GC's\" - 2026-05-18]\n\nAt the business level, beyond individual projects, I also see recurring strategic risk signals in the available intelligence:\n\n- **Competitive pressure / pricing competitiveness** [Insights dated 2026-03-02 and 2026-03-04]\n- **Market volatility affecting decision-making** [Insight dated 2026-03-02]\n- **Potential regulatory change exposure** [Insight dated 2026-03-10]\n\nThat tells me the business is carrying **two layers of risk at once**:\n1. **Operational execution risk** across active jobs\n2. **Market/competitive pressure** around pricing and positioning\n\nWhat matters most:\n- The immediate threat is **execution drift without clean risk ownership**.\n- The deeper management issue is that **risk detection is happening, but risk registration is not**. Ten risky projects and zero structured risk records is not a healthy operating discipline.\n\nWhat I’d do next:\n1. **Force-rank the top five risk jobs this week**: Westfield Collective, Union Collective, Uniqlo Phillipsburg NJ, Vermillion Rise Warehouse, and GW Allisonville Rd IN.\n2. For each one, require a one-line answer to:\n   - what is the actual risk,\n   - who owns it,\n   - what decision is due next,\n   - what happens if it slips.\n3. **Convert the current AI/meeting signals into formal tracked risks.** Right now the organization is seeing smoke but not putting enough fires on the board.\n4. Put special executive attention on:\n   - **Westfield Collective** for site/civil and cost exposure\n   - **Union Collective** for entitlement/approval timing\n   - **Allisonville** for procurement and submittal-driven schedule risk\n\nConfidence and gaps:\n- Strong confidence on the portfolio-level project risk picture because the Project Risk Radar returned current cross-project signals.\n- Lower confidence on enterprise financial risk today because the **CRO consult timed out**, so I do **not** have a synthesized risk read across claims, budget overrun exposure, or unpriced financial events from that specialist.\n- I also did **not** yet pull the domain intelligence packets for accounting, operations, BD, and people/talent, so this is the **project-risk-led view**, not the full business operating-system view.\n\nIf you want the full executive answer, I’d do one more pass across **operations, accounting, business development, and people/talent** and give you the top business risks ranked in plain English.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 66279
+        },
+        "judge": {
+          "status": "skipped",
+          "rubric": "strategic_advisor",
+          "score": null,
+          "minScore": 4,
+          "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+          "strengths": [],
+          "weaknesses": [],
+          "dimensionScores": {},
+          "provider": null,
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getProjectsWithRisks",
+        "getPortfolioOverview",
+        "getFinancialAnalysis",
+        "assistantSourceHealth"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "risk",
+        "financial",
+        "source_health"
+      ]
+    }
+  ]
+}

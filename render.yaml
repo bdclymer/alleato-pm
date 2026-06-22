@@ -462,55 +462,6 @@ services:
       - key: OPENAI_API_KEY
         sync: false
 
-  # Extracts action items from meetings, emails, and Teams messages daily at 7 AM UTC.
-  # Replaces the former Vercel cron route (/api/admin/cron/extract-brandon-tasks).
-  - type: cron
-    name: alleato-task-extraction
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    schedule: "0 7 * * *"
-    dockerCommand: >-
-      python3 -c "
-      import json, sys;
-      sys.path.insert(0, '/app');
-      from src.services.task_extraction import run_task_extraction;
-      result = run_task_extraction(window_days=2, max_docs=25);
-      print(json.dumps(result, indent=2));
-      sys.exit(1 if result.get('errors', 0) > 0 and result.get('inserted', 0) == 0 else 0)
-      "
-    envVars:
-      - key: PYTHONPATH
-        value: /app:/app/src:/app/src/services
-      - key: PYTHONUNBUFFERED
-        value: 1
-      - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
-      - key: DATABASE_URL
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
-      - key: RAG_SUPABASE_URL
-        sync: false
-      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: RAG_DATABASE_READS_ENABLED
-        value: "true"
-      - key: TASK_EXTRACTION_MAX_DOCS
-        value: "25"
-      - key: TASK_EXTRACTION_MAX_RUN_DOCS
-        value: "25"
-      - key: TASK_EXTRACTION_CANDIDATE_LIMIT
-        value: "100"
-      - key: TASK_EXTRACTION_DESCRIPTION_LIMIT
-        value: "1000"
-      - key: AI_GATEWAY_API_KEY
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-
   # Runs RAG meeting vectorization health check daily at noon UTC.
   # Replaces the former GitHub Actions workflow — no Actions minutes consumed.
   # Posts to SLACK_WEBHOOK_URL on failure.
@@ -547,8 +498,8 @@ services:
       - key: SLACK_WEBHOOK_URL
         sync: false
 
-  # Backend AI provider canary. The intelligence pipeline (meeting extraction,
-  # synthesizer, compilers, task extraction) swallows LLM failures into empty
+  # Backend AI provider canary. The intelligence pipeline (meeting extraction
+  # and project synthesis) must not swallow LLM failures into empty
   # results, so an OpenAI quota/auth outage is invisible — it looked like "no
   # signal" for ~5 days ending 2026-06-14 (memory: incident-openai-quota-
   # backend-ai-down). This issues a cheap 1-token completion every 2 hours and
@@ -587,8 +538,8 @@ services:
       - key: AI_HEALTH_ALERT_TEAMS_USER_ID
         sync: false
 
-  # Checks source freshness, embedding backlog, compiler backlog, task extraction,
-  # and persisted alerts for every RAG source multiple times per day.
+  # Checks source freshness, embedding backlog, compiler backlog, and persisted
+  # alerts for every RAG source multiple times per day.
   - type: cron
     name: alleato-source-rag-health
     runtime: docker
@@ -620,98 +571,6 @@ services:
       - key: RAG_HEALTH_REMEDIATION_WEBHOOK_URL
         sync: false
       - key: RAG_HEALTH_REMEDIATION_WEBHOOK_TOKEN
-        sync: false
-
-  # Scheduled periodic packet refresh — guarantees intelligence packets are
-  # never older than ~6h regardless of source-signal activity. The owner
-  # briefing depends on fresh packets; without this, projects with quiet
-  # comms sit stale indefinitely.
-  # Runs 4x/day in UTC: 02:00, 09:00, 15:00, 21:00.
-  # 09:00 UTC fires ~1h before the 11:00 UTC executive briefing morning cron,
-  # so the briefing always reads packets refreshed within the last ~1h.
-  - type: cron
-    name: alleato-packet-refresh-periodic
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    schedule: "0 2,9,15,21 * * *"
-    dockerCommand: >-
-      python3 src/scripts/enqueue_periodic_packet_refresh.py --dry-run
-    envVars:
-      - key: PYTHONPATH
-        value: /app:/app/src:/app/src/services:/app/src/workers
-      - key: PYTHONUNBUFFERED
-        value: 1
-      - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
-      - key: DATABASE_URL
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: RAG_SUPABASE_URL
-        sync: false
-      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: RAG_DATABASE_READS_ENABLED
-        value: "true"
-      - key: RAG_DATABASE_WRITES_ENABLED
-        value: "true"
-
-  # Drains source intelligence + packet refresh queues. The backend web service
-  # keeps APScheduler disabled in production, so this cron is the production
-  # compiler loop that turns queued RAG work into current intelligence packets.
-  - type: cron
-    name: alleato-intelligence-compiler-drain
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    schedule: "0 * * * *"
-    dockerCommand: >-
-      timeout 12m python3 -c "
-      import json, sys;
-      sys.path.insert(0, '/app');
-      from src.services.scheduler import _run_intelligence_compiler;
-      result = _run_intelligence_compiler(source_limit=15, packet_limit=0, max_processing_time_ms=600000);
-      print(json.dumps(result, indent=2, default=str));
-      failed = int(result.get('source_jobs_failed') or 0) + int(result.get('packet_jobs_failed') or 0);
-      succeeded = int(result.get('source_jobs_succeeded') or 0) + int(result.get('packet_jobs_succeeded') or 0);
-      packet_failed = int(result.get('packet_jobs_failed') or 0);
-      sys.exit(1 if result.get('timed_out') or packet_failed or (failed and not succeeded) else 0)
-      "
-    envVars:
-      - key: PYTHONPATH
-        value: /app:/app/src:/app/src/services:/app/src/workers
-      - key: PYTHONUNBUFFERED
-        value: 1
-      - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
-      - key: ALLOW_PM_APP_FINAL_PROJECTIONS
-        value: "true"
-      - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS
-        value: "100"
-      - key: DATABASE_URL
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: RAG_SUPABASE_URL
-        sync: false
-      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: RAG_DATABASE_READS_ENABLED
-        value: "true"
-      - key: RAG_DATABASE_WRITES_ENABLED
-        value: "true"
-      - key: AI_GATEWAY_API_KEY
-        sync: false
-      - key: OPENAI_API_KEY
         sync: false
 
   # Domain (company_process) packet compiler — synthesizes cross-project
@@ -906,12 +765,6 @@ services:
         value: "true"
       - key: USE_UNIFIED_AGENT
         value: true
-      - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED
-        value: true
-      - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME
-        value: deep_agents
-      - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL
-        value: gpt-5.4-mini
       - key: DEEP_AGENTS_RESEARCH_ENABLED
         value: true
       - key: DEEP_AGENTS_RESEARCH_MODEL

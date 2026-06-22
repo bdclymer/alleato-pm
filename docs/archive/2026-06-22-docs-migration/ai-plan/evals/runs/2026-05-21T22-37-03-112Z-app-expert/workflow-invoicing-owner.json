@@ -1,0 +1,77 @@
+{
+  "id": "workflow-invoicing-owner",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 7107,
+  "question": "Where do owner invoices belong?",
+  "mustInclude": [
+    "invoice",
+    "owner"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Owner invoices belong in **Invoicing** under the project.\n\nWhat I checked:\n- Artifact status: both generated artifacts are present and current.\n- Feature metadata:\n  - `invoicing` → documented help article `docs/help/articles/invoicing.md`\n  - route-discovered owner invoice create path: `/[projectId]/invoices/owner/new`\n- Help article `docs/help/articles/invoicing.md` says:\n  - Invoicing handles **owner pay applications**\n  - Use the **Owner Invoices** tab\n  - Owner invoices are submitted against the **prime contract SOV**\n\nRelevant routes:\n- `/[projectId]/invoicing` — documented project Invoicing page\n- `/[projectId]/invoices/owner/new` — owner invoice create form, route-discovered implementation evidence\n- `/[projectId]/invoices` and `/[projectId]/invoices/new` also exist as route-discovered invoice pages, but the documented owner workflow is anchored in `/[projectId]/invoicing`\n\nSo the user-facing answer is: **owner invoices belong in the project’s Invoicing area, specifically the Owner Invoices flow/tab.**",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/invoicing.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/invoicing.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/invoices/owner/new",
+        "sourceType": "sitemap",
+        "route": "/invoices/owner/new",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/invoicing",
+        "sourceType": "sitemap",
+        "route": "/invoicing",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/invoices",
+        "sourceType": "sitemap",
+        "route": "/invoices",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/invoices/new",
+        "sourceType": "sitemap",
+        "route": "/invoices/new",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 7005,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

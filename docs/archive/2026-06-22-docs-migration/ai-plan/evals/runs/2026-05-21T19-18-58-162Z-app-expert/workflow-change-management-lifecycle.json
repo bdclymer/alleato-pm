@@ -1,0 +1,47 @@
+{
+  "id": "workflow-change-management-lifecycle",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4921,
+  "question": "Explain the change management lifecycle in the app.",
+  "response": {
+    "answer": "I can’t reliably explain the app’s change management lifecycle because the required App Expert artifacts are missing.\n\nChecked:\n- `docs/architecture/generated/app-sitemap.generated.json` — missing\n- `docs/architecture/generated/feature-registry.generated.json` — missing\n\nResult:\n- App Expert status: not OK\n- Feature metadata search: unavailable\n- Sitemap search: unavailable\n\nWhat remains uncertain:\n- Whether the app has a documented change management lifecycle at all\n- The exact user-facing workflow, routes, help articles, and any implementation-backed evidence\n\nTo proceed, the app docs need to be generated first:\n- `npm run docs:generate-app-expert`\n\nIf you want, I can also help you locate the underlying source docs or route files directly from the repo instead, but I can’t claim the lifecycle behavior from the missing generated artifacts.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 4823,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

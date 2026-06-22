@@ -24,7 +24,7 @@ function makePacket(overrides: Partial<ClientProjectIntelligencePacket> = {}): C
     id: "packet-union",
     targetId: "target-union",
     packetType: "current",
-    packetVersion: "project-operating-summary-v1",
+    packetVersion: "project_intelligence_synthesis_v1:current",
     generatedAt: "2026-05-19T14:05:18.031Z",
     coveredStartAt: null,
     coveredEndAt: "2026-05-19T14:05:18.031Z",
@@ -64,7 +64,7 @@ function makePacket(overrides: Partial<ClientProjectIntelligencePacket> = {}): C
         ],
       },
     },
-    compilerVersion: "project-operating-summary-v1",
+    compilerVersion: "project_intelligence_synthesis_v1",
     cards: [
       {
         id: "card-1",

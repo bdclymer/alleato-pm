@@ -61,7 +61,7 @@ export const POST = withApiGuardrails("/api/admin/rag-eval/run#POST", async ({ r
 
   const REPO_ROOT = path.resolve(process.cwd(), "..");
   const PYTHON = process.env.RAG_EVAL_PYTHON_BIN || "python3";
-  const RAG_DIR = path.join(REPO_ROOT, "docs/PRPs/rag");
+  const RAG_DIR = path.join(REPO_ROOT, "docs/archive/2026-06-22-docs-migration/PRPs/rag");
 
   type EvalType = z.infer<typeof RagEvalTypeSchema>;
 

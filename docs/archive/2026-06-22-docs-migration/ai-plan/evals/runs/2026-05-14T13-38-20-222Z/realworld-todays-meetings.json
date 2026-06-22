@@ -1,0 +1,933 @@
+{
+  "id": "realworld-todays-meetings",
+  "intent": "meeting_query",
+  "prompt": "Tell me about today's meetings. What decisions, risks, or commitments should I know about?",
+  "selectedProjectId": null,
+  "sessionId": "ac42389b-28b0-42c0-a4d5-64f2f81963f5",
+  "sessionLabel": "eval-2026-05-14T13-38-20-222Z-realworld-todays-meetings",
+  "startedAt": "2026-05-14T13:38:20.224Z",
+  "finishedAt": "2026-05-14T13:38:24.998Z",
+  "durationMs": 4299,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 18,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "expected family 'meetings' not represented",
+      "expected family 'actions' not represented",
+      "global forbidden phrase: \"RAG\"",
+      "global forbidden phrase: \"retrieval\""
+    ],
+    "observations": [
+      "tools fired: intentPlanner, promptContextReducer, assistantWidgetPlanner, sourceSpecificRagRetrieval, assistantSourceHealth, assistantComponentRegistry"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "promptContextReducer",
+      "assistantWidgetPlanner",
+      "sourceSpecificRagRetrieval",
+      "assistantSourceHealth",
+      "assistantComponentRegistry"
+    ],
+    "familiesHit": [
+      "source_health"
+    ],
+    "finalTextLength": 868,
+    "finalText": "**Meeting transcripts**\n\nI did not find matching meeting transcripts for 2026-05-14.\n\n**Observability**\n- Source checked: Meeting transcripts in Supabase document_metadata/document_chunks-backed RAG index.\n- Retrieval returned 0 rows, so I am not inventing a list.\n\n**Next Step**\n- Check the sync/vectorization health for this source before using it for an owner-ready update.\n\n**Current Source Health**\n- Overall status: degraded\n- Likely gap if evidence is missing: embedding_backlog\n- Backlog: 819 unembedded, 10204 uncompiled\n- critical source_sync_critical: Teams DM export: crusin@alleatogroup.com is critical.\n- critical source_sync_critical: Teams DM export: accounting@alleatogroup.com is critical.\n- critical source_sync_critical: Outlook: njepson@alleatogroup.com is critical.\n- critical source_sync_critical: Outlook: mparsons@alleatogroup.com is critical."
+  },
+  "expectedToolNames": [
+    "sourceSpecificRagRetrieval",
+    "getMeetingIntelligence",
+    "getActionItemsAndInsights",
+    "searchMeetingsByTopic"
+  ],
+  "expectedToolFamilies": [
+    "meetings",
+    "actions"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:38:23.610Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-decision-packet",
+      "data": {
+        "widget": {
+          "type": "decision_packet",
+          "id": "decision-packet",
+          "title": "Decision packet",
+          "recommendation": "Treat this as a review item until the assistant confirms the supporting project evidence.",
+          "confidence": "medium",
+          "impacts": [
+            {
+              "label": "Financial impact",
+              "value": "Needs source-backed amount"
+            },
+            {
+              "label": "Schedule impact",
+              "value": "Needs current project context"
+            },
+            {
+              "label": "Owner action",
+              "value": "Confirm responsible party before executing"
+            }
+          ],
+          "risks": [
+            "Missing source evidence could lead to the wrong owner or cost treatment.",
+            "A write action should stay preview-only until the final fields are confirmed."
+          ],
+          "nextActions": [
+            "Ask the assistant to pull source evidence for this decision.",
+            "Convert the decision into an RFI, change event, task, or email draft once the fields are confirmed."
+          ]
+        }
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Searching Meeting transcripts in Supabase RAG",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:38:23.611Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-meeting-insights",
+      "data": {
+        "widget": {
+          "type": "meeting_insights",
+          "id": "meeting-insights",
+          "title": "Meeting insights: 2026-05-14",
+          "subtitle": "Decisions, promises, risks, questions, and suggested follow-ups from meeting retrieval.",
+          "dateLabel": "2026-05-14",
+          "projectId": null,
+          "projectName": null,
+          "metrics": {
+            "meetingCount": 0,
+            "decisionCount": 0,
+            "actionItemCount": 0,
+            "riskCount": 0,
+            "unresolvedQuestionCount": 0
+          },
+          "decisions": [],
+          "promises": [],
+          "risks": [],
+          "unresolvedQuestions": [],
+          "suggestedTasks": [],
+          "sources": []
+        }
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "synthesis",
+        "message": "Writing sourced Meeting transcripts answer",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:38:24.094Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-source-specific-rag"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Meeting transcripts**\n\nI did not find matching meeting transcripts for 2026-05-14.\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Observability**\n- Source checked: Meeting transcripts in Supabase "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "document_metadata/document_chunks-backed RAG index.\n- Retrieval returned 0 rows, so I am "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "not inventing a list.\n\n**Next Step**\n- Check the sync/vectorization health for this source "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "before using it for an owner-ready update.\n\n**Current Source Health**\n- Overall status: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "degraded\n- Likely gap if evidence is missing: embedding_backlog\n- Backlog: 819 unembedded, "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "10204 uncompiled\n- critical source_sync_critical: Teams DM export: crusin@alleatogroup.com "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "is critical.\n- critical source_sync_critical: Teams DM export: accounting@alleatogroup.com "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "is critical.\n- critical source_sync_critical: Outlook: njepson@alleatogroup.com is "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "critical.\n- critical source_sync_critical: Outlook: mparsons@alleatogroup.com is critical."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-source-specific-rag"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Meeting transcripts check complete",
+        "status": "success",
+        "timestamp": "2026-05-14T13:38:24.514Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": null,
+    "data_parts": [
+      {
+        "id": "assistant-widget-decision-packet",
+        "data": {
+          "widget": {
+            "id": "decision-packet",
+            "type": "decision_packet",
+            "risks": [
+              "Missing source evidence could lead to the wrong owner or cost treatment.",
+              "A write action should stay preview-only until the final fields are confirmed."
+            ],
+            "title": "Decision packet",
+            "impacts": [
+              {
+                "label": "Financial impact",
+                "value": "Needs source-backed amount"
+              },
+              {
+                "label": "Schedule impact",
+                "value": "Needs current project context"
+              },
+              {
+                "label": "Owner action",
+                "value": "Confirm responsible party before executing"
+              }
+            ],
+            "confidence": "medium",
+            "nextActions": [
+              "Ask the assistant to pull source evidence for this decision.",
+              "Convert the decision into an RFI, change event, task, or email draft once the fields are confirmed."
+            ],
+            "recommendation": "Treat this as a review item until the assistant confirms the supporting project evidence."
+          }
+        },
+        "type": "data-assistant-widget"
+      },
+      {
+        "id": "assistant-widget-meeting-insights",
+        "data": {
+          "widget": {
+            "id": "meeting-insights",
+            "type": "meeting_insights",
+            "risks": [],
+            "title": "Meeting insights: 2026-05-14",
+            "metrics": {
+              "riskCount": 0,
+              "meetingCount": 0,
+              "decisionCount": 0,
+              "actionItemCount": 0,
+              "unresolvedQuestionCount": 0
+            },
+            "sources": [],
+            "promises": [],
+            "subtitle": "Decisions, promises, risks, questions, and suggested follow-ups from meeting retrieval.",
+            "dateLabel": "2026-05-14",
+            "decisions": [],
+            "projectId": null,
+            "projectName": null,
+            "suggestedTasks": [],
+            "unresolvedQuestions": []
+          }
+        },
+        "type": "data-assistant-widget"
+      }
+    ],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Tell me about today's meetings. What decisions, risks, or commitments should I know about?",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "source_lookup",
+          "sourceSpecificRagKind": "meetings_on_date",
+          "recentEmailInboxRequest": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "latest_status",
+          "planner": "model",
+          "rationale": "The user wants a synthesized briefing from today's meetings focused on decisions, risks, and commitments. That is a current-status/briefing request rather than a raw source lookup. Because no project is selected and 'today' may need scope clarification across projects, ask a clarifying question and then build a concise meeting-based status packet using today's meeting sources.",
+          "confidence": "medium",
+          "responseMode": "build_project_packet",
+          "requiredTools": [
+            "meetings_on_date"
+          ],
+          "deterministicIntent": "source_lookup",
+          "shouldAskClarifyingQuestion": true
+        },
+        "timestamp": "2026-05-14T13:38:23.609Z"
+      },
+      {
+        "tool": "promptContextReducer",
+        "input": {
+          "intent": "latest_status",
+          "message": "Tell me about today's meetings. What decisions, risks, or commitments should I know about?"
+        },
+        "output": {
+          "promptMode": "lean_advisor",
+          "skippedGeneralMemory": true,
+          "skippedExecutivePacket": true,
+          "skippedWorkspaceArtifacts": true,
+          "retainedPacketFirstRetrieval": true
+        },
+        "timestamp": "2026-05-14T13:38:23.611Z"
+      },
+      {
+        "tool": "assistantWidgetPlanner",
+        "input": {
+          "message": "Tell me about today's meetings. What decisions, risks, or commitments should I know about?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "widgets": [
+            {
+              "id": "decision-packet",
+              "type": "decision_packet"
+            }
+          ]
+        },
+        "timestamp": "2026-05-14T13:38:23.611Z"
+      },
+      {
+        "tool": "sourceSpecificRagRetrieval",
+        "input": {
+          "date": "2026-05-14",
+          "kind": "meetings_on_date",
+          "label": "Meeting transcripts",
+          "limit": 20
+        },
+        "output": {
+          "rows": [],
+          "rowCount": 0
+        },
+        "timestamp": "2026-05-14T13:38:23.980Z"
+      },
+      {
+        "tool": "assistantSourceHealth",
+        "input": {
+          "reason": "empty_source_lookup"
+        },
+        "output": {
+          "alerts": [
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: crusin@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:crusin@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: accounting@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:accounting@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: njepson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "njepson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: mparsons@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "mparsons@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: jdawson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "jdawson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "ctragesser@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: crusin@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "crusin@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: awehner@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "awehner@alleatogroup.com"
+            }
+          ],
+          "counts": {
+            "sources": 30,
+            "uncompiled": 10204,
+            "unembedded": 819,
+            "warningSources": 0,
+            "criticalSources": 30,
+            "failedSubscriptions": 0,
+            "expiringSubscriptions": 0
+          },
+          "reason": "empty_source_lookup",
+          "sources": [
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-14T05:40:17.479335+00:00",
+              "resourceId": "user:crusin@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: crusin@alleatogroup.com",
+              "staleMinutes": 470,
+              "lastSuccessAt": "2026-05-14T05:40:17.479335+00:00",
+              "uncompiledCount": 937,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-14T06:40:45.750041+00:00",
+              "resourceId": "user:accounting@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: accounting@alleatogroup.com",
+              "staleMinutes": 410,
+              "lastSuccessAt": "2026-05-14T06:40:45.750041+00:00",
+              "uncompiledCount": 937,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+              "resourceId": "njepson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: njepson@alleatogroup.com",
+              "staleMinutes": 20172,
+              "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+              "resourceId": "mparsons@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: mparsons@alleatogroup.com",
+              "staleMinutes": 20173,
+              "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+              "resourceId": "jdawson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: jdawson@alleatogroup.com",
+              "staleMinutes": 20174,
+              "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+              "resourceId": "ctragesser@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: ctragesser@alleatogroup.com",
+              "staleMinutes": 4051,
+              "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+              "resourceId": "crusin@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: crusin@alleatogroup.com",
+              "staleMinutes": 20175,
+              "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+              "resourceId": "awehner@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: awehner@alleatogroup.com",
+              "staleMinutes": 20176,
+              "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+              "resourceId": "accounting@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: accounting@alleatogroup.com",
+              "staleMinutes": 20175,
+              "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T18:14:44.817404+00:00",
+              "resourceId": "acannon@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: acannon@alleatogroup.com",
+              "staleMinutes": 1156,
+              "lastSuccessAt": "2026-05-13T18:14:44.817404+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T20:06:20.616839+00:00",
+              "resourceId": "38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: 38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+              "staleMinutes": 1044,
+              "lastSuccessAt": "2026-05-13T20:06:20.616839+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T00:00:00+00:00",
+              "resourceId": "document_metadata",
+              "lastErrorAt": null,
+              "resourceName": "Outlook email",
+              "staleMinutes": 2250,
+              "lastSuccessAt": "2026-05-13T00:00:00+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            }
+          ],
+          "generatedAt": "2026-05-14T13:38:23.981Z",
+          "missingStage": "embedding_backlog",
+          "overallStatus": "degraded"
+        },
+        "timestamp": "2026-05-14T13:38:23.981Z"
+      },
+      {
+        "tool": "assistantComponentRegistry",
+        "input": {
+          "kind": "meetings_on_date",
+          "sourceTool": "sourceSpecificRagRetrieval"
+        },
+        "output": {
+          "widgetId": "meeting-insights",
+          "widgetType": "meeting_insights",
+          "meetingCount": 0
+        },
+        "timestamp": "2026-05-14T13:38:24.094Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": null,
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": {
+      "alerts": [
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: crusin@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:crusin@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: accounting@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:accounting@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: njepson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "njepson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: mparsons@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "mparsons@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: jdawson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "jdawson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "ctragesser@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: crusin@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "crusin@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: awehner@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "awehner@alleatogroup.com"
+        }
+      ],
+      "counts": {
+        "sources": 30,
+        "uncompiled": 10204,
+        "unembedded": 819,
+        "warningSources": 0,
+        "criticalSources": 30,
+        "failedSubscriptions": 0,
+        "expiringSubscriptions": 0
+      },
+      "reason": "empty_source_lookup",
+      "sources": [
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-14T05:40:17.479335+00:00",
+          "resourceId": "user:crusin@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: crusin@alleatogroup.com",
+          "staleMinutes": 470,
+          "lastSuccessAt": "2026-05-14T05:40:17.479335+00:00",
+          "uncompiledCount": 937,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-14T06:40:45.750041+00:00",
+          "resourceId": "user:accounting@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: accounting@alleatogroup.com",
+          "staleMinutes": 410,
+          "lastSuccessAt": "2026-05-14T06:40:45.750041+00:00",
+          "uncompiledCount": 937,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+          "resourceId": "njepson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: njepson@alleatogroup.com",
+          "staleMinutes": 20172,
+          "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+          "resourceId": "mparsons@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: mparsons@alleatogroup.com",
+          "staleMinutes": 20173,
+          "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+          "resourceId": "jdawson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: jdawson@alleatogroup.com",
+          "staleMinutes": 20174,
+          "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+          "resourceId": "ctragesser@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: ctragesser@alleatogroup.com",
+          "staleMinutes": 4051,
+          "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+          "resourceId": "crusin@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: crusin@alleatogroup.com",
+          "staleMinutes": 20175,
+          "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+          "resourceId": "awehner@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: awehner@alleatogroup.com",
+          "staleMinutes": 20176,
+          "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+          "resourceId": "accounting@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: accounting@alleatogroup.com",
+          "staleMinutes": 20175,
+          "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T18:14:44.817404+00:00",
+          "resourceId": "acannon@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: acannon@alleatogroup.com",
+          "staleMinutes": 1156,
+          "lastSuccessAt": "2026-05-13T18:14:44.817404+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T20:06:20.616839+00:00",
+          "resourceId": "38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: 38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+          "staleMinutes": 1044,
+          "lastSuccessAt": "2026-05-13T20:06:20.616839+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T00:00:00+00:00",
+          "resourceId": "document_metadata",
+          "lastErrorAt": null,
+          "resourceName": "Outlook email",
+          "staleMinutes": 2250,
+          "lastSuccessAt": "2026-05-13T00:00:00+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        }
+      ],
+      "generatedAt": "2026-05-14T13:38:23.981Z",
+      "missingStage": "embedding_backlog",
+      "overallStatus": "degraded"
+    },
+    "learning_usage": null,
+    "loop_diagnostic": {
+      "steps": [],
+      "stepStarts": [],
+      "totalStepCount": 0,
+      "finalFinishReason": "unknown",
+      "preparedStepCount": 0,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

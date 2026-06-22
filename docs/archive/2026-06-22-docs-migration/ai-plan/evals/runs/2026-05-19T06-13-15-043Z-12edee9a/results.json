@@ -1,0 +1,125 @@
+{
+  "generatedAt": "2026-05-19T06:13:57.348Z",
+  "baseUrl": "http://localhost:3001",
+  "bundle": null,
+  "filter": null,
+  "totalCases": 1,
+  "passed": 0,
+  "failed": 1,
+  "warningCount": 5,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": false,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 1,
+    "passed": 0,
+    "failed": 0,
+    "errors": 0,
+    "averageScore": null
+  },
+  "slowestCases": [
+    {
+      "id": "realworld-business-risks",
+      "intent": "risk_review",
+      "durationMs": 41778,
+      "status": "fail",
+      "warnings": [
+        "expected family 'project' not represented",
+        "expected family 'financial' not represented",
+        "expected family 'source_health' not represented",
+        "duration 41778ms exceeded warning budget 30000ms",
+        "judge strategic_advisor skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+      ]
+    }
+  ],
+  "toolCoverage": {
+    "getProjectsWithRisks": 1,
+    "listDomainIntelligence": 1,
+    "getDomainIntelligence": 1,
+    "semanticSearch": 1
+  },
+  "intentDistribution": {
+    "risk_review": 1
+  },
+  "results": [
+    {
+      "id": "realworld-business-risks",
+      "intent": "risk_review",
+      "prompt": "What risks exist in the business right now?",
+      "selectedProjectId": null,
+      "sessionId": "e84b19a9-ef6e-4901-a363-7ae3439c55a4",
+      "sessionLabel": "eval-2026-05-19T06-13-15-043Z-12edee9a-realworld-business-risks",
+      "startedAt": "2026-05-19T06:13:15.142Z",
+      "finishedAt": "2026-05-19T06:13:57.347Z",
+      "durationMs": 41778,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1107,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected required tool 'backendDeepAgentExecutiveBriefing' to fire"
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'financial' not represented",
+          "expected family 'source_health' not represented",
+          "duration 41778ms exceeded warning budget 30000ms",
+          "judge strategic_advisor skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+        ],
+        "observations": [
+          "tools fired: getProjectsWithRisks, listDomainIntelligence, getDomainIntelligence, semanticSearch",
+          "judge strategic_advisor: skipped"
+        ],
+        "toolNames": [
+          "getProjectsWithRisks",
+          "listDomainIntelligence",
+          "getDomainIntelligence",
+          "semanticSearch"
+        ],
+        "familiesHit": [
+          "risk",
+          "communications",
+          "semantic"
+        ],
+        "finalTextLength": 5107,
+        "finalText": "Yes. The business risk right now is less about one project blowing up and more about **too much manual, person-dependent work sitting underneath growth**.\n\nThe clearest risks:\n\n- **Financial control risk.** Accounting is still running with heavy manual posting, cross-checks, and system handoffs between Notion, Venture/Prism, Acumatica, and TimeCo. That creates posting error risk, slows reporting, and weakens confidence in WIP and revenue visibility. One meeting explicitly tied this to **billing discrepancies, inaccurate revenue recognition, a reported $70K net loss, and discussion of an $8M credit line**. [Source: Domain Intelligence — Accounting Function; Fireflies meeting “Rob & Brandon - Next steps,” 2026-05-14]\n- **Operational process debt.** Operations is absorbing too much friction from unclear scope, missing schedules, late closeout docs, access problems, and repeated follow-up. That means teams are compensating with heroics instead of system discipline. [Source: Domain Intelligence — Operations, generated 2026-05-19]\n- **Pursuit conversion and margin risk.** BD has live opportunities, but multiple pursuits are still being held together by scope clarifications, late bid coverage, and incomplete design inputs. That’s how margin gets given away before the job is even won. [Source: Domain Intelligence — Business Development, generated 2026-05-19]\n- **People dependency risk.** Key workflows still depend on a few people teaching others informally — Jose, Misty, Maria, Brandon. That’s a scaling problem and a continuity problem. If one person is out, work slows down. [Source: Domain Intelligence — People & Talent, generated 2026-05-19]\n- **Portfolio execution risk.** The project risk radar shows **10 current-phase projects with critical risk signals**, with the highest concentrations on **Westfield Collective, Union Collective, Uniqlo Phillipsburg NJ, and Vermillion Rise Warehouse**. [Source: Project Risk Radar — Current projects]\n\nWhat matters most is this:  \n**the company is not short on activity — it’s short on operating leverage.** Work is moving, but too much of it still depends on manual coordination, tribal knowledge, and late-stage cleanup.\n\nThe strongest evidence behind that:\n\n- Accounting packet says the function is “labor-heavy and fragile,” with manual credit card coding, payroll/time tracking transition, and unresolved WIP/revenue reporting gaps. [Source: Domain Intelligence — Accounting Function]\n- Operations packet says scope, schedule, closeout, and access issues keep recurring across jobs like **Uniqlo/GPC, Wilmer, Exol, Union, and Ace Hardware**. [Source: Domain Intelligence — Operations]\n- BD packet says the issue is not demand but **conversion** — opportunities exist, but the workflow from precon to proposal is too noisy. [Source: Domain Intelligence — Business Development]\n- People packet says onboarding and productivity are still slowed by application access, role clarity, and informal knowledge transfer. [Source: Domain Intelligence — People & Talent]\n\nOn the project side, the biggest live concentrations of risk by current radar score are:\n\n1. **Westfield Collective** — highest current risk concentration in the portfolio. [Source: Project Risk Radar; meeting “Union Site Review Meeting,” 2026-05-15]\n2. **Union Collective** — major volume of critical items and viability constraints tied to site planning/zoning. [Source: Project Risk Radar; Domain Intelligence — Business Development]\n3. **Uniqlo Phillipsburg NJ** — closeout/testing/documentation risk still active. [Source: Project Risk Radar; Domain Intelligence — Operations]\n4. **Vermillion Rise Warehouse** — still carrying critical items and tracked issues. [Source: Project Risk Radar]\n\nWhat I’d do next:\n\n- **Pick one executive owner for systems/process stabilization** across accounting + operations. Right now the same root issue is showing up in four different domains.\n- **Force a weekly risk review on the top 5 current projects** by radar score, starting with Westfield Collective, Union Collective, Uniqlo Phillipsburg NJ, Vermillion Rise, and Goodwill Noblesville.\n- **Decide quickly on the finance stack direction**: stabilize Acumatica + reporting around it, or commit to a migration path. The current “maybe both” posture is adding risk. [Source: Domain Intelligence — Accounting Function]\n- **Standardize onboarding and access before adding more people.** Otherwise every hire adds drag before they add capacity. [Source: Domain Intelligence — People & Talent]\n- **Tighten bid discipline on active pursuits** with one owner per pursuit and a visible bid-gap list. [Source: Domain Intelligence — Business Development]\n\nConfidence is decent on the business-level pattern because all four domain packets are fresh from today and point to the same conclusion. What I do **not** have here is a live cash, AP/AR, or margin cut layered on top of this answer.\n\nIf you want, I can do the next pass two ways:\n1. **rank the business risks by severity and urgency**, or  \n2. **give you a CEO-style readout with financial, operational, and project risk in one page.**",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 41778
+        },
+        "judge": {
+          "status": "skipped",
+          "rubric": "strategic_advisor",
+          "score": null,
+          "minScore": 4,
+          "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+          "strengths": [],
+          "weaknesses": [],
+          "dimensionScores": {},
+          "provider": null,
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getProjectsWithRisks",
+        "getPortfolioOverview",
+        "getFinancialAnalysis",
+        "assistantSourceHealth"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "risk",
+        "financial",
+        "source_health"
+      ]
+    }
+  ]
+}

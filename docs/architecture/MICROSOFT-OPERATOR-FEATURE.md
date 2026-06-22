@@ -46,9 +46,9 @@ frontend/src/lib/ai/tools/action-tools.ts
 2. User types "confirm" → AI calls again with `confirmed: true` → `createOutlookMailDraft()` is called → draft appears in Outlook Drafts folder
 
 **Brandon voice:** The tool description instructs the model to apply Brandon's communication profile docs before composing:
-- `docs/ai-plan/brandon-email-voice-profile.md` — tone and voice
-- `docs/ai-plan/brandon-operating-profile.md` — owner/operator judgment
-- `docs/ai-plan/brandon-email-drafting-playbook.md` — reply patterns
+- `docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md` — tone and voice
+- `docs/archive/2026-06-22-docs-migration/ai-plan/brandon-operating-profile.md` — owner/operator judgment
+- `docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-drafting-playbook.md` — reply patterns
 
 **Graph library:** `frontend/src/lib/microsoft-graph/mail.ts` — `createOutlookMailDraft()`, `resolveOutlookMailboxUserId()`
 
@@ -147,9 +147,9 @@ All resolved in `frontend/src/lib/microsoft-graph/mail.ts` → `graphEnv()`.
 The `BRANDON_EMAIL_VOICE_PROFILE` constant (line 76 of `action-tools.ts`) is attached to every draft tool response and passed to the model as context. It points to three docs:
 
 ```
-docs/ai-plan/brandon-email-voice-profile.md
-docs/ai-plan/brandon-operating-profile.md
-docs/ai-plan/brandon-email-drafting-playbook.md
+docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md
+docs/archive/2026-06-22-docs-migration/ai-plan/brandon-operating-profile.md
+docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-drafting-playbook.md
 ```
 
 Drafts from any mailbox use these docs. There is no per-mailbox voice profile switching yet.
@@ -213,9 +213,9 @@ All tool `needsApproval` functions should derive from this map, not implement ad
 | `frontend/src/lib/bot/teams-chat.ts` | Archon bot — `sendProactiveMessage`, `sendProactiveCard` |
 | `frontend/src/lib/bot/teams-proactive.ts` | Alternative proactive DM path — `sendProactiveTeamsDM` |
 | `frontend/src/lib/microsoft-graph/calendar-invites.ts` | Calendar invite creation (separate from mail) |
-| `docs/ai-plan/brandon-email-voice-profile.md` | Brandon's communication voice guide |
-| `docs/ai-plan/brandon-email-drafting-playbook.md` | Reply pattern playbook |
-| `docs/ai-plan/brandon-operating-profile.md` | Owner/operator judgment guide |
+| `docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md` | Brandon's communication voice guide |
+| `docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-drafting-playbook.md` | Reply pattern playbook |
+| `docs/archive/2026-06-22-docs-migration/ai-plan/brandon-operating-profile.md` | Owner/operator judgment guide |
 
 ---
 

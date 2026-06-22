@@ -1,0 +1,75 @@
+{
+  "id": "appnav-drawings-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 5423,
+  "question": "Where are drawings viewed?",
+  "response": {
+    "answer": "Drawings are viewed in the **Drawing Viewer** at:\n\n- `/[projectId]/drawings`\n- implementation-backed viewer pages also exist at:\n  - `/[projectId]/drawings/[drawingId]`\n  - `/[projectId]/drawings/viewer/[drawingId]`\n  - `/[projectId]/drawings/viewer-v2/[drawingId]`\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are current and available.\n- Feature registry:\n  - **Drawing Viewer and Annotations** → help article `docs/help/articles/drawings-viewer.md`\n  - **Drawings** → help article `docs/help/articles/drawings.md`\n- Help article `docs/help/articles/drawings-viewer.md` says:\n  - “Open **Drawings**.”\n  - “Select a drawing from the log.”\n  - “The viewer opens to the current revision.”\n  - It is a full-screen PDF viewer with annotation, measurement, and pin tools.\n\nSo the documented user-facing answer is: **open Drawings, then select a drawing from the log to view it in the full-screen PDF viewer**.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/drawings",
+        "sourceType": "sitemap",
+        "route": "/drawings",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/drawings/[drawingId]",
+        "sourceType": "sitemap",
+        "route": "/drawings/[drawingId]",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/drawings/viewer/[drawingId]",
+        "sourceType": "sitemap",
+        "route": "/drawings/viewer/[drawingId]",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/drawings/viewer-v2/[drawingId]",
+        "sourceType": "sitemap",
+        "route": "/drawings/viewer-v2/[drawingId]",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/drawings-viewer.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/drawings-viewer.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/drawings.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/drawings.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 5417,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

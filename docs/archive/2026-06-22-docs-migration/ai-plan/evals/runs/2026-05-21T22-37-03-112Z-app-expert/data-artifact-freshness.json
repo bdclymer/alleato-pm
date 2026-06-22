@@ -1,0 +1,77 @@
+{
+  "id": "data-artifact-freshness",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 7251,
+  "question": "How can the assistant know whether its app map is current?",
+  "mustInclude": [
+    "generated",
+    "artifact"
+  ],
+  "preferredTools": [
+    "get_app_expert_artifact_status"
+  ],
+  "response": {
+    "answer": "The assistant knows whether its app map is current by checking the generated artifact status first.\n\nWhat I checked:\n- App Expert artifact status:\n  - `app-sitemap.generated.json` — OK, `count: 283`, generated at `2026-05-21T18:31:24.877Z`\n  - `feature-registry.generated.json` — OK, `count: 290`, generated at `2026-05-21T18:31:24.877Z`\n- Curated help article:\n  - `docs/help/articles/app-navigation-and-feature-map.md`\n\nWhat the docs say:\n- The app sitemap and feature registry are generated from the codebase and help article metadata.\n- Ask Alleato should use those generated artifacts to determine navigation and route availability.\n- If a route exists but has no curated help article yet, it should be treated as implementation evidence, and the assistant should say user-facing documentation is still missing.\n- For missing pages, the first checks are project context, permission scope, and whether the user is on a global page without a selected project.\n\nSo, to know if its app map is current, the assistant should:\n1. Check artifact freshness/availability.\n2. Use the generated sitemap/feature registry as the current inventory.\n3. Prefer curated help articles for documented behavior.\n4. Fall back to route-discovered implementation evidence only when docs are missing.\n\nExact references:\n- Help article: `docs/help/articles/app-navigation-and-feature-map.md`\n- Generated artifacts:\n  - `/app/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json`\n  - `/app/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json`\n\nCurrent status: both artifacts are available and freshly generated at `2026-05-21T18:31:24.877Z`.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/app-navigation-and-feature-map.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-navigation-and-feature-map.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/availability.",
+        "sourceType": "sitemap",
+        "route": "/availability.",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/feature",
+        "sourceType": "sitemap",
+        "route": "/feature",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 7155,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "get_app_expert_artifact_status"
+  ]
+}

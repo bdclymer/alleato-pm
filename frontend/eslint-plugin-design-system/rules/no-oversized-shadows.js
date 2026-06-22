@@ -17,7 +17,7 @@ module.exports = {
     fixable: 'code',
     messages: {
       oversizedShadow:
-        '"{{value}}" is too heavy. Use shadow-xs (cards) or shadow-sm (dropdowns). See docs/design/DESIGN.md.',
+        '"{{value}}" is too heavy. Use shadow-xs (cards) or shadow-sm (dropdowns). See docs/archive/2026-06-22-docs-migration/design/DESIGN.md.',
     },
     schema: [],
   },

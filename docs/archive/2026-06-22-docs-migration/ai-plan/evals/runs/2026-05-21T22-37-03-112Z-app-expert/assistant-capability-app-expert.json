@@ -1,0 +1,70 @@
+{
+  "id": "assistant-capability-app-expert",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 5335,
+  "question": "What is the App Expert supposed to answer?",
+  "mustInclude": [
+    "app",
+    "expert"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "The App Expert is supposed to answer questions about the app itself: navigation, routes, features, workflow behavior, permissions, assistant action status, and implementation-backed source references.\n\nWhat I checked:\n- App Expert artifact status: generated sitemap and feature registry are both present and fresh.\n- Feature registry: found the relevant help article **`docs/help/articles/app-feature-status-and-limitations.md`**.\n- Help article: it says the assistant should distinguish **live, partially implemented, planned, blocked, and deprecated** behavior, and should **not guess** when evidence is incomplete.\n\nSo, in practice, App Expert should:\n- Use curated help docs and generated artifacts first.\n- Read linked help articles before answering workflow/capability questions.\n- Use route lookup for page-specific questions.\n- Separate documented behavior from implementation evidence.\n- Refuse to claim write actions are available unless docs/action metadata explicitly support that.\n- State what was checked and what remains uncertain when evidence is missing.\n\nExact source references:\n- Help article: `docs/help/articles/app-feature-status-and-limitations.md`\n- Relevant route: `/ai-assistant`\n- Artifact paths:\n  - `/app/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json`\n  - `/app/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json`\n\nIf you want, I can also summarize the specific App Expert answer policy in one sentence.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/action",
+        "sourceType": "sitemap",
+        "route": "/action",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 5245,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

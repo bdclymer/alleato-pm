@@ -1,0 +1,45 @@
+{
+  "id": "documents-search",
+  "intent": "document_question",
+  "prompt": "Find the latest contract or change order document on Westfield and summarize the key terms.",
+  "selectedProjectId": 43,
+  "sessionId": "344de2c2-6f8b-4a41-8585-6bd3e30aa27f",
+  "sessionLabel": "eval-2026-05-02T14-03-13-539Z-documents-search",
+  "startedAt": "2026-05-02T14:13:46.185Z",
+  "finishedAt": "2026-05-02T14:14:01.457Z",
+  "durationMs": 2,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "expected at least one of [searchDocuments, searchExternalDocuments, queryDocumentRows] to fire — none did",
+      "answer length 0 < min 120"
+    ],
+    "warnings": [
+      "expected family 'documents' not represented",
+      "expected family 'semantic' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "searchDocuments",
+    "searchExternalDocuments",
+    "queryDocumentRows"
+  ],
+  "expectedToolFamilies": [
+    "documents",
+    "semantic"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

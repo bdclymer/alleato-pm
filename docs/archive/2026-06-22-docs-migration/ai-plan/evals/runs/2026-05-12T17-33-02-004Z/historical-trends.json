@@ -1,0 +1,44 @@
+{
+  "id": "historical-trends",
+  "intent": "financial_analysis",
+  "prompt": "Show me cost trends on Westfield over the last six months.",
+  "selectedProjectId": 43,
+  "sessionId": "3bdaccaf-8e23-40a0-b7a3-748f84431da7",
+  "sessionLabel": "eval-2026-05-12T17-33-02-004Z-historical-trends",
+  "startedAt": "2026-05-12T17:39:39.140Z",
+  "finishedAt": "2026-05-12T17:39:56.688Z",
+  "durationMs": 2244,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"602a60b7-93a4-4187-a5a6-97ce7fe6b307\",\"timestamp\":\"2026-05-12T17:39:41.383Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"602a60b7-93a4-4187-a5a6-97ce7fe6b307\",\"timestamp\":\"2026-05-12T17:39:41.383Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getHistoricalTrends, getCostTrends] to fire — none did",
+      "mustInclude missing: \"trend\""
+    ],
+    "warnings": [
+      "expected family 'financial' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"602a60b7-93a4-4187-a5a6-97ce7fe6b307\",\"timestamp\":\"2026-05-12T17:39:41.383Z\"}"
+  },
+  "expectedToolNames": [
+    "getHistoricalTrends",
+    "getCostTrends"
+  ],
+  "expectedToolFamilies": [
+    "financial"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

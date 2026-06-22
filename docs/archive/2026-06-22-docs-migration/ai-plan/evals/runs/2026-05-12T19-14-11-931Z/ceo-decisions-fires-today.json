@@ -1,0 +1,279 @@
+{
+  "id": "ceo-decisions-fires-today",
+  "intent": "project_briefing",
+  "prompt": "Any fires I need to put out today?",
+  "selectedProjectId": null,
+  "sessionId": "cd258e4f-3026-48d3-bf54-12b1f44c4667",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-ceo-decisions-fires-today",
+  "startedAt": "2026-05-12T20:07:36.834Z",
+  "finishedAt": "2026-05-12T20:09:22.180Z",
+  "durationMs": 90003,
+  "httpStatus": 200,
+  "streamError": "stream read error: This operation was aborted",
+  "streamEventCount": 33,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: This operation was aborted",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getProjectsWithRisks, getActionItemsAndInsights] to fire — none did",
+      "mustIncludeAny missing one of: \"urgent\", \"critical\", \"fire\", \"today\", \"risk\", \"blocked\"",
+      "answer length 0 < min 200"
+    ],
+    "warnings": [
+      "expected family 'risk' not represented",
+      "expected family 'actions' not represented",
+      "expected family 'communications' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getProjectsWithRisks",
+    "getActionItemsAndInsights"
+  ],
+  "expectedToolFamilies": [
+    "risk",
+    "actions",
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T20:07:46.870Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "We7j329Tmy5f3xiz"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_79Rt6KgMvBDr0WfLw6cF0hGy",
+      "toolName": "consultCRO"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_79Rt6KgMvBDr0WfLw6cF0hGy",
+      "inputTextDelta": "{\"question\":\"What are the most urgent project and portfolio risks that need executive attention today? Prioritize concrete fires to put out today across active projects.\",\"context\":\"User asked: 'Any fires I need to put out today?' Today is 2026-05-12. Focus on urgent risks, aging issues, unpriced change exposure, schedule/procurement blockers, and anything that likely needs same-day action.\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_79Rt6KgMvBDr0WfLw6cF0hGy",
+      "toolName": "consultCRO",
+      "input": {
+        "question": "What are the most urgent project and portfolio risks that need executive attention today? Prioritize concrete fires to put out today across active projects.",
+        "context": "User asked: 'Any fires I need to put out today?' Today is 2026-05-12. Focus on urgent risks, aging issues, unpriced change exposure, schedule/procurement blockers, and anything that likely needs same-day action."
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_2dqOZ7ANUBVOejBRwUReT8iB",
+      "toolName": "consultCFO"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2dqOZ7ANUBVOejBRwUReT8iB",
+      "inputTextDelta": "{\"question\":\"What financial fires need attention today across active projects and company cash position? Prioritize same-day issues like cash flow pressure, overdue receivables/payables, margin threats, and approvals blocking cash.\",\"context\":\"User asked: 'Any fires I need to put out today?' Today is 2026-05-12. Focus on concrete issues requiring executive attention today.\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_2dqOZ7ANUBVOejBRwUReT8iB",
+      "toolName": "consultCFO",
+      "input": {
+        "question": "What financial fires need attention today across active projects and company cash position? Prioritize same-day issues like cash flow pressure, overdue receivables/payables, margin threats, and approvals blocking cash.",
+        "context": "User asked: 'Any fires I need to put out today?' Today is 2026-05-12. Focus on concrete issues requiring executive attention today."
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_WpBusBey7c580dkKdvoPZHDq",
+      "toolName": "consultCOO"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_WpBusBey7c580dkKdvoPZHDq",
+      "inputTextDelta": "{\"question\":\"What operational fires need attention today across active projects? Prioritize schedule blockers, overdue action items, RFIs/submittals causing delay, procurement issues, and anything requiring immediate follow-up.\",\"context\":\"User asked: 'Any fires I need to put out today?' Today is 2026-05-12. Focus on same-day operational blockers and owners if identifiable.\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_WpBusBey7c580dkKdvoPZHDq",
+      "toolName": "consultCOO",
+      "input": {
+        "question": "What operational fires need attention today across active projects? Prioritize schedule blockers, overdue action items, RFIs/submittals causing delay, procurement issues, and anything requiring immediate follow-up.",
+        "context": "User asked: 'Any fires I need to put out today?' Today is 2026-05-12. Focus on same-day operational blockers and owners if identifiable."
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_79Rt6KgMvBDr0WfLw6cF0hGy",
+      "output": {
+        "agent": "cro",
+        "analysis": "The CRO encountered an error while analyzing: Sub-agent cro exceeded 15000ms timeout",
+        "confidence": "low",
+        "toolsUsed": [],
+        "durationMs": 15038,
+        "alerts": [
+          {
+            "severity": "warning",
+            "message": "CRO agent error: Sub-agent cro exceeded 15000ms timeout"
+          }
+        ]
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_2dqOZ7ANUBVOejBRwUReT8iB",
+      "output": {
+        "agent": "cfo",
+        "analysis": "The CFO encountered an error while analyzing: Sub-agent cfo exceeded 15000ms timeout",
+        "confidence": "low",
+        "toolsUsed": [],
+        "durationMs": 15025,
+        "alerts": [
+          {
+            "severity": "warning",
+            "message": "CFO agent error: Sub-agent cfo exceeded 15000ms timeout"
+          }
+        ]
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_WpBusBey7c580dkKdvoPZHDq",
+      "output": {
+        "agent": "coo",
+        "analysis": "The COO encountered an error while analyzing: Sub-agent coo exceeded 15000ms timeout",
+        "confidence": "low",
+        "toolsUsed": [],
+        "durationMs": 15024,
+        "alerts": [
+          {
+            "severity": "warning",
+            "message": "COO agent error: Sub-agent coo exceeded 15000ms timeout"
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_tdMWKXvu1AUMMuKQrkZSxYtw",
+      "toolName": "getProjectBriefingSnapshot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_tdMWKXvu1AUMMuKQrkZSxYtw",
+      "inputTextDelta": "{\"projectName\":\"Cedar Park\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_tdMWKXvu1AUMMuKQrkZSxYtw",
+      "toolName": "getProjectBriefingSnapshot",
+      "input": {
+        "projectName": "Cedar Park"
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_WCTzHbDEYHs1nQfpefKLNeng",
+      "toolName": "getProjectBriefingSnapshot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_WCTzHbDEYHs1nQfpefKLNeng",
+      "inputTextDelta": "{\"projectName\":\"Exol Morrisville\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_WCTzHbDEYHs1nQfpefKLNeng",
+      "toolName": "getProjectBriefingSnapshot",
+      "input": {
+        "projectName": "Exol Morrisville"
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_jirV0GaHl9d5QKQ556ihpmfz",
+      "toolName": "getProjectBriefingSnapshot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_jirV0GaHl9d5QKQ556ihpmfz",
+      "inputTextDelta": "{\"projectName\":\"Vermillion Rise\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_jirV0GaHl9d5QKQ556ihpmfz",
+      "toolName": "getProjectBriefingSnapshot",
+      "input": {
+        "projectName": "Vermillion Rise"
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_OTiSL4RVWrHCNSvrMcbUg0Td",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_OTiSL4RVWrHCNSvrMcbUg0Td",
+      "inputTextDelta": "{\"assigneeName\":\"\",\"maxResults\":15}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_OTiSL4RVWrHCNSvrMcbUg0Td",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "assigneeName": "",
+        "maxResults": 15
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_WKukQft91cSddC14KSaBoXkP",
+      "toolName": "getCashPositionReport"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_WKukQft91cSddC14KSaBoXkP",
+      "inputTextDelta": "{\"windowDays\":30}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_WKukQft91cSddC14KSaBoXkP",
+      "toolName": "getCashPositionReport",
+      "input": {
+        "windowDays": 30
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_WKukQft91cSddC14KSaBoXkP",
+      "output": {
+        "error": "Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"The given key was not present in the dictionary.\",\"exceptionType\":\"System.Collections.Generic.KeyNotFoundException\",\"stackTrace\":\"   at System.ThrowHelper.ThrowKeyNotFoundException()\\r\\n   at System.Collections.Generic.Dictionary`2.get_Item(TKey key)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.TryBindAsDeclaredProperty(PathSegmentToken tokenIn, IEdmEntityType entityType, ODataPathSegment& segment)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPathSegmentTokenBinder.ConvertNonTypeTokenToSegment(PathSegmentToken tokenIn, IEdmModel model, IEdmEntityType entityType)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.ProcessTokenAsPath(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectPropertyVisitor.Visit(NonSystemToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SyntacticAst.SelectBinder.Bind(SelectToken tokenIn)\\r\\n   at Microsoft.Data.OData.Query.SelectExpandSemanticBinder.Parse(IEdmEntityType elementType, IEdmEntitySet entitySet, ExpandToken expandToken, SelectToken selectToken, ODataUriParserConfiguration configuration)\\r\\n   at PX.Api.ContractBased.OData.Helpers.ParseSelectCustomAndExpand(ODataUriParser uriParser, String select, String expand, String custom, IEdmEntityType elementType, EntityImpl entity, Nullable`1 returnBehaviorToSet)\\r\\n   at PX.Api.ContractBased.OData.Helpers.FillRestQueryOptions(IEdmModel edmModel, EntityImpl entity, String filter, String select, String expand, String custom)\\r\\n   at PX.Api.ContractBased.WebApi.Controllers.EntityController.<GetList>d__14.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at lambda_method(Closure , Object )\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ActionMethodExecutor.AwaitableObjectResultExecutor.<Execute>d__0.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeActionMethodAsync>d__12.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeNextActionFilterAsync>d__10.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Rethrow(ActionExecutedContext context)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeInnerFilterAsync>d__13.MoveNext()\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at Microsoft.AspNetCore.Mvc.Internal.ResourceInvoker.<InvokeNextExceptionFilterAsync>d__24.MoveNext()\"}",
+        "suggestion": "The Acumatica ERP connection may be temporarily unavailable. Try again or rely on the Supabase financial data."
+      }
+    }
+  ],
+  "persistedMetadata": null
+}

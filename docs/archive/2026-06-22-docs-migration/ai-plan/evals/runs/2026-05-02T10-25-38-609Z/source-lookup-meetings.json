@@ -1,0 +1,382 @@
+{
+  "id": "source-lookup-meetings",
+  "intent": "source_lookup",
+  "prompt": "What did Brandon say about billing in any recent meeting?",
+  "selectedProjectId": null,
+  "sessionId": "8fadda74-13a7-46c9-9de6-4ec7cafb402f",
+  "sessionLabel": "eval-2026-05-02T10-25-38-609Z-source-lookup-meetings",
+  "startedAt": "2026-05-02T10:31:51.156Z",
+  "finishedAt": "2026-05-02T10:31:58.899Z",
+  "durationMs": 7406,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 7,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "expected family 'meetings' not represented"
+    ],
+    "observations": [
+      "tools fired: semanticSearch, sourceLookupIntentRouter"
+    ],
+    "toolNames": [
+      "semanticSearch",
+      "sourceLookupIntentRouter"
+    ],
+    "familiesHit": [
+      "semantic"
+    ],
+    "finalTextLength": 4576,
+    "finalText": "I treated this as a source lookup, not a project status request.\n\n**Best Matching Source Context**\n1. **Weekly Accounting Meeting** — 2025-06-24 [Source: meeting_summary 35567803-0661-495a-888b-4ecab63fd12c]\n   ### Executive Summary of Weekly Accounting Meeting **Meeting Purpose and Key Participants** The weekly accounting meeting, attended by key participants including Brandon Clymer (Bclymer), Fnjie, Jdawson, and other accounting team members, aimed to review the accounting calendar, discuss due dates for various financial processes, and address ongoing issues related to accounts payable and billing procedures. **Main Topics Discussed** The primary focus of the meeting was the completion and dissemination of the account...\n2. **Teams DM: 19:c4beb912-** — 2026-01-15 [Source: teams_dm teamsdm_1768500536367]\n   **Summary of Document: Teams DM: 19:c4beb912-** The document is a direct message from a Teams chat, dated January 15, 2026. It serves as a communication log rather than a formal report or contract, capturing a brief interaction between team members regarding scheduling matters. The key topic of this message revolves around scheduling coordination. Brandon Clymer indicates his intention to discuss his schedule with a colleague named Maria. This suggests that there may be upcoming meetings or ev\n3. **Company Quarterly Meeting – April 30th** — 2026-04-30 [Source: meeting_section 01KPEAMWN10Q2BBNMBM8P54MBR]\n   [Company Quarterly Meeting – April 30th] Short Summary: The meeting highlighted the company's aggressive hiring strategy across various locations to enhance project execution and operational efficiency, including notable new hires in Indianapolis and St. Pete offices. It emphasized leadership consolidation to improve accountability and the ongoing challenges in project management capacity. Financially, the company reported strong Q1 performance with significant revenue milestones, underscoring the need for timely b...\n4. **Teams DM Conversation: 19:93b1bb48-** — 2026-04-30 [Source: teams_dm teamsdm_d6f5e3680dc00f64_2026-04-30]\n   **Summary of Teams DM Conversation: 19:93b1bb48-** This document is a record of a direct message conversation on Microsoft Teams, dated April 30, 2026. The primary purpose of this communication is to address concerns regarding financial transactions related to subcontractors for a project associated with Wilmer. It serves as an informal yet crucial touchpoint among team members to clarify payment statuses and ensure that all parties are informed about the financial obligations. The key topic discussed in this conve...\n5. **Teams DM Conversation: 19:55b5a581-** — 2026-04-22 [Source: teams_dm teamsdm_233846026ae960cb_2026-04-22]\n   ### Summary of Teams DM Conversation: 19:55b5a581- The document is a transcript of a direct message conversation on Microsoft Teams, dated April 22, 2026. It serves as a record of communication between team members regarding inquiries about specific charges, indicating a focus on financial matters or billing issues. The key topic of the conversation revolves around Andrew Cannon's inquiry about certain charges, suggesting that there may be confusion or a need for clarification regarding financ\n6. **Email: Goodwill Noblesville, Allisonville Road & Bloomington Excel Center Owner Billing** — 2026-04-29 [Source: email outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEJAABSH-6ez2GEQa7aQkeMp2smAAFLnyIAAAA=]\n   The document is an email from Nick Jepson, a Project Manager at Alleato Group, addressed to several recipients, including Jose Mendez, Misty Rogers, and the Accounting department. The primary purpose of the email is to share the April owner billing for three locations: Goodwill Noblesville, Allisonville Road, and Bloomington Excel Center. This communication serves as a formal notification regarding financial billing related to these properties. Key topics covered in the email include the billing details for the spe...\n\n**What This Means**\n- The answer above is grounded in the retrieved source snippets. If the exact quote or full thread is needed, open the listed source records rather than relying on a broad project briefing.\n- I did not use the executive project-briefing template because this question asks what someone said in a source channel.\n\n**Observability**\n- Source checked: semantic search across vectorized meetings, Teams, email, documents, insights, and memories.\n- Retrieved 6 source row(s) for: What did Brandon say about billing in any recent meeting?"
+  },
+  "expectedToolNames": [
+    "searchMeetingsByTopic",
+    "semanticSearch"
+  ],
+  "expectedToolFamilies": [
+    "meetings",
+    "semantic"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-02T10:31:51.411Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Searching source records for the requested discussion context",
+        "status": "loading",
+        "timestamp": "2026-05-02T10:31:53.316Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "synthesis",
+        "message": "Writing source-grounded answer",
+        "status": "loading",
+        "timestamp": "2026-05-02T10:31:58.054Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "source-lookup-answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "source-lookup-answer",
+      "delta": "I treated this as a source lookup, not a project status request.\n\n**Best Matching Source Context**\n1. **Weekly Accounting Meeting** — 2025-06-24 [Source: meeting_summary 35567803-0661-495a-888b-4ecab63fd12c]\n   ### Executive Summary of Weekly Accounting Meeting **Meeting Purpose and Key Participants** The weekly accounting meeting, attended by key participants including Brandon Clymer (Bclymer), Fnjie, Jdawson, and other accounting team members, aimed to review the accounting calendar, discuss due dates for various financial processes, and address ongoing issues related to accounts payable and billing procedures. **Main Topics Discussed** The primary focus of the meeting was the completion and dissemination of the account...\n2. **Teams DM: 19:c4beb912-** — 2026-01-15 [Source: teams_dm teamsdm_1768500536367]\n   **Summary of Document: Teams DM: 19:c4beb912-** The document is a direct message from a Teams chat, dated January 15, 2026. It serves as a communication log rather than a formal report or contract, capturing a brief interaction between team members regarding scheduling matters. The key topic of this message revolves around scheduling coordination. Brandon Clymer indicates his intention to discuss his schedule with a colleague named Maria. This suggests that there may be upcoming meetings or ev\n3. **Company Quarterly Meeting – April 30th** — 2026-04-30 [Source: meeting_section 01KPEAMWN10Q2BBNMBM8P54MBR]\n   [Company Quarterly Meeting – April 30th] Short Summary: The meeting highlighted the company's aggressive hiring strategy across various locations to enhance project execution and operational efficiency, including notable new hires in Indianapolis and St. Pete offices. It emphasized leadership consolidation to improve accountability and the ongoing challenges in project management capacity. Financially, the company reported strong Q1 performance with significant revenue milestones, underscoring the need for timely b...\n4. **Teams DM Conversation: 19:93b1bb48-** — 2026-04-30 [Source: teams_dm teamsdm_d6f5e3680dc00f64_2026-04-30]\n   **Summary of Teams DM Conversation: 19:93b1bb48-** This document is a record of a direct message conversation on Microsoft Teams, dated April 30, 2026. The primary purpose of this communication is to address concerns regarding financial transactions related to subcontractors for a project associated with Wilmer. It serves as an informal yet crucial touchpoint among team members to clarify payment statuses and ensure that all parties are informed about the financial obligations. The key topic discussed in this conve...\n5. **Teams DM Conversation: 19:55b5a581-** — 2026-04-22 [Source: teams_dm teamsdm_233846026ae960cb_2026-04-22]\n   ### Summary of Teams DM Conversation: 19:55b5a581- The document is a transcript of a direct message conversation on Microsoft Teams, dated April 22, 2026. It serves as a record of communication between team members regarding inquiries about specific charges, indicating a focus on financial matters or billing issues. The key topic of the conversation revolves around Andrew Cannon's inquiry about certain charges, suggesting that there may be confusion or a need for clarification regarding financ\n6. **Email: Goodwill Noblesville, Allisonville Road & Bloomington Excel Center Owner Billing** — 2026-04-29 [Source: email outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEJAABSH-6ez2GEQa7aQkeMp2smAAFLnyIAAAA=]\n   The document is an email from Nick Jepson, a Project Manager at Alleato Group, addressed to several recipients, including Jose Mendez, Misty Rogers, and the Accounting department. The primary purpose of the email is to share the April owner billing for three locations: Goodwill Noblesville, Allisonville Road, and Bloomington Excel Center. This communication serves as a formal notification regarding financial billing related to these properties. Key topics covered in the email include the billing details for the spe...\n\n**What This Means**\n- The answer above is grounded in the retrieved source snippets. If the exact quote or full thread is needed, open the listed source records rather than relying on a broad project briefing.\n- I did not use the executive project-briefing template because this question asks what someone said in a source channel.\n\n**Observability**\n- Source checked: semantic search across vectorized meetings, Teams, email, documents, insights, and memories.\n- Retrieved 6 source row(s) for: What did Brandon say about billing in any recent meeting?"
+    },
+    {
+      "type": "text-end",
+      "id": "source-lookup-answer"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Source lookup complete",
+        "status": "success",
+        "timestamp": "2026-05-02T10:31:58.560Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": null,
+    "tool_trace": [
+      {
+        "tool": "semanticSearch",
+        "input": {
+          "query": "What did Brandon say about billing in any recent meeting?",
+          "threshold": 0.2,
+          "matchCount": 8,
+          "skipRerank": true
+        },
+        "output": {
+          "query": "What did Brandon say about billing in any recent meeting?",
+          "results": [
+            {
+              "content": "### Executive Summary of Weekly Accounting Meeting\n\n**Meeting Purpose and Key Participants**  \nThe weekly accounting meeting, attended by key participants including Brandon Clymer (Bclymer), Fnjie, Jdawson, and other accounting team members, aimed to review the accounting calendar, discuss due dates for various financial processes, and address ongoing issues related to accounts payable and billing procedures.\n\n**Main Topics Discussed**  \nThe primary focus of the meeting was the completion and dissemination of the accounting calendar, which outlines critical due dates for credit card transactions, subcontractor billing, and owner billings. Fnjie noted that the calendar is currently missing insurance dates up to December 2025, which he will add before sending it out to the entire company. The team discussed the importance of clearly communicating these due dates to ensure all employees are aware of their responsibilities. Additionally, Jdawson provided an update on the successful testing of importing pending invoices from Notion to Acumatica, indicating no issues were encountered.\n\n**Key Decisions and Outcomes**  \nThe team agreed that the accounting calendar should be finalized and distributed by the end of the week to facilitate better communication regarding due dates. It was confirmed that all subcontractor invoices should be processed by the 25th of each month, with owner billings due by the 30th. The team also reiterated the \"pay when paid\" policy for subcontractors, meaning payments will only be processed upon receipt of payment from clients, unless otherwise approved.\n\n**Action Items and Next Steps**  \nAction items include Fnjie finalizing the accounting calendar and coordinating with Fatima to ensure clarity on due dates. Bclymer will follow up with Jesse regarding the timeline for owner billings and subcontractor invoices. Additionally, the team will update the mapping in Acumatica live to align with the successful test results from Notion. All team members are instructed to email project managers regarding pending invoices, copying Brandon and Jesse to ensure accountability.\n\n**Risks or Concerns Raised**  \nA potential risk discussed was the delay in processing payments if owner billings are not received on time, which could affect cash flow. Bclymer raised concerns about processing bills that are due without having received payment for owner billings, highlighting the need for strict adherence to the payment policy. The team acknowledged the import",
+              "metadata": {
+                "date": "2025-06-24T00:00:00+00:00",
+                "title": "Weekly Accounting Meeting",
+                "source": "fireflies",
+                "category": "Internal",
+                "doc_type": "meeting_summary",
+                "file_date": "2025-12-08T04:38:32.583204+00:00",
+                "project_id": 60,
+                "segment_id": null,
+                "chunk_index": 0,
+                "source_type": "meeting_summary",
+                "content_hash": "f56fb0773caf277d",
+                "participants": [],
+                "segment_index": -1
+              },
+              "recordId": "35567803-0661-495a-888b-4ecab63fd12c",
+              "createdAt": "2025-06-24T00:00:00+00:00",
+              "finalScore": 0.497,
+              "projectIds": [
+                60
+              ],
+              "similarity": 0.511,
+              "sourceTable": "meeting_summary"
+            },
+            {
+              "content": "The document is an email from Nick Jepson, a Project Manager at Alleato Group, addressed to several recipients, including Jose Mendez, Misty Rogers, and the Accounting department. The primary purpose of the email is to share the April owner billing for three locations: Goodwill Noblesville, Allisonville Road, and Bloomington Excel Center. This communication serves as a formal notification regarding financial billing related to these properties.\n\nKey topics covered in the email include the billing details for the specified locations, which are likely to include financial figures and any relevant charges or credits associated with the properties. While the email does not provide specific numbers or detailed breakdowns, it indicates that the billing information is attached for review. The date of the email is April 29, 2026, suggesting that the billing pertains to the month of April.\n\nAs for action items, the recipients are expected to review the attached billing document. There are no explicit next steps outlined in the email, but it implies that the recipients should process the billing information accordingly. Nick Jepson also provides his contact information for any follow-up questions or clarifications regarding the billing.",
+              "metadata": {
+                "date": "2026-04-29T00:00:00+00:00",
+                "title": "Email: Goodwill Noblesville, Allisonville Road & Bloomington Excel Center Owner Billing",
+                "source": "microsoft_graph",
+                "category": "email",
+                "doc_type": "meeting_summary",
+                "file_date": null,
+                "project_id": 25125,
+                "segment_id": null,
+                "chunk_index": 0,
+                "source_type": "email",
+                "content_hash": "1b21990c24f20853",
+                "participants": [],
+                "segment_index": -1
+              },
+              "recordId": "outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEJAABSH-6ez2GEQa7aQkeMp2smAAFLnyIAAAA=",
+              "createdAt": "2026-04-29T00:00:00+00:00",
+              "finalScore": 0.646,
+              "projectIds": [
+                25125
+              ],
+              "similarity": 0.448,
+              "sourceTable": "email"
+            },
+            {
+              "content": "**Summary of Teams DM Conversation: 19:93b1bb48-**\n\nThis document is a record of a direct message conversation on Microsoft Teams, dated April 30, 2026. The primary purpose of this communication is to address concerns regarding financial transactions related to subcontractors for a project associated with Wilmer. It serves as an informal yet crucial touchpoint among team members to clarify payment statuses and ensure that all parties are informed about the financial obligations.\n\nThe key topic discussed in this conversation revolves around the payment status of subcontractors. Brandon Clymer initiates the conversation by inquiring whether any payments have been made to the subcontractors for the Wilmer project. This indicates a potential issue with cash flow or administrative oversight that needs to be addressed promptly to maintain good relationships with subcontractors and ensure project continuity.\n\nWhile the document does not provide specific numbers or detailed timelines, the date of the conversation is significant as it reflects a point in time when financial obligations should be reviewed. The inquiry suggests an urgent need for action, likely requiring a follow-up from the finance or project management team to confirm payment statuses and rectify any outstanding issues. The next steps would involve investigating the payment records for the Wilmer project and communicating any findings to the relevant stakeholders to resolve the matter efficiently.",
+              "metadata": {
+                "date": "2026-04-30T00:00:00+00:00",
+                "title": "Teams DM Conversation: 19:93b1bb48-",
+                "source": "microsoft_graph",
+                "category": "teams_message",
+                "doc_type": "meeting_summary",
+                "file_date": null,
+                "project_id": null,
+                "segment_id": null,
+                "chunk_index": 0,
+                "source_type": "teams_dm",
+                "content_hash": "32cb2699e0a672a7",
+                "participants": [],
+                "segment_index": -1
+              },
+              "recordId": "teamsdm_d6f5e3680dc00f64_2026-04-30",
+              "createdAt": "2026-04-30T00:00:00+00:00",
+              "finalScore": 0.632,
+              "projectIds": [],
+              "similarity": 0.454,
+              "sourceTable": "teams_dm"
+            },
+            {
+              "content": "Brandon has decided not to pay the bill until further consideration.",
+              "metadata": null,
+              "recordId": "",
+              "createdAt": "2026-03-25T01:10:42.920637+00:00",
+              "finalScore": 0.635,
+              "projectIds": [],
+              "similarity": 0.578,
+              "sourceTable": "insights"
+            },
+            {
+              "content": "[Company Quarterly Meeting – April 30th] Short Summary:\n\nThe meeting highlighted the company's aggressive hiring strategy across various locations to enhance project execution and operational efficiency, including notable new hires in Indianapolis and St. Pete offices. It emphasized leadership consolidation to improve accountability and the ongoing challenges in project management capacity. Financially, the company reported strong Q1 performance with significant revenue milestones, underscoring the need for timely billing processes. The introduction of new project workflows was discussed to streamline operations, while marketing efforts showed impressive social media engagement, directly linked to lead generation. Additionally, technology adoption, including tools like ChatGPT and project management systems, was prioritized to boost productivity, all anchored in a leadership philosophy that encourages accountability and continuous improvement.",
+              "metadata": {
+                "date": "2026-04-30T17:00:00+00:00",
+                "title": "Company Quarterly Meeting – April 30th",
+                "source": "fireflies",
+                "category": null,
+                "doc_type": "section_short_summary",
+                "file_date": null,
+                "project_id": null,
+                "segment_id": null,
+                "chunk_index": 1,
+                "source_type": "meeting_section",
+                "content_hash": "98855dc6756aa3ba",
+                "participants": [],
+                "segment_index": -2
+              },
+              "recordId": "01KPEAMWN10Q2BBNMBM8P54MBR",
+              "createdAt": "2026-04-30T17:00:00+00:00",
+              "finalScore": 0.59,
+              "projectIds": [],
+              "similarity": 0.456,
+              "sourceTable": "meeting_section"
+            },
+            {
+              "content": "The document is an email from Nick Jepson, a Project Manager at Alleato Group, addressed to several recipients, including Jose Mendez, Misty Rogers, and the Accounting department. The primary purpose of the email is to share the April owner billing for three locations: Goodwill Noblesville, Allisonville Road, and Bloomington Excel Center. This communication serves as a formal notification regarding financial billing related to these properties.\n\nKey topics covered in the email include the billin",
+              "metadata": {
+                "date": "2026-04-29T00:00:00+00:00",
+                "title": "Email: Goodwill Noblesville, Allisonville Road & Bloomington Excel Center Owner Billing",
+                "source": "microsoft_graph",
+                "category": "email",
+                "doc_type": "segment_summary",
+                "file_date": null,
+                "project_id": 25125,
+                "segment_id": "ccd17871-1e87-4da5-b319-1706a86adb28",
+                "chunk_index": 0,
+                "source_type": "email",
+                "content_hash": "4f7fb48f7506c953",
+                "participants": [],
+                "segment_index": 0
+              },
+              "recordId": "outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEJAABSH-6ez2GEQa7aQkeMp2smAAFLnyIAAAA=",
+              "createdAt": "2026-04-29T00:00:00+00:00",
+              "finalScore": 0.633,
+              "projectIds": [
+                25125
+              ],
+              "similarity": 0.43,
+              "sourceTable": "email"
+            },
+            {
+              "content": "### Summary of Teams DM Conversation: 19:55b5a581-\n\nThe document is a transcript of a direct message conversation on Microsoft Teams, dated April 22, 2026. It serves as a record of communication between team members regarding inquiries about specific charges, indicating a focus on financial matters or billing issues.\n\nThe key topic of the conversation revolves around Andrew Cannon's inquiry about certain charges, suggesting that there may be confusion or a need for clarification regarding financ",
+              "metadata": {
+                "date": "2026-04-22T00:00:00+00:00",
+                "title": "Teams DM Conversation: 19:55b5a581-",
+                "source": "microsoft_graph",
+                "category": "teams_message",
+                "doc_type": "segment_summary",
+                "file_date": null,
+                "project_id": null,
+                "segment_id": "c87f437c-e840-4239-87bb-22f730b96b12",
+                "chunk_index": 0,
+                "source_type": "teams_dm",
+                "content_hash": "b79dc5e87f26e635",
+                "participants": [],
+                "segment_index": 0
+              },
+              "recordId": "teamsdm_233846026ae960cb_2026-04-22",
+              "createdAt": "2026-04-22T00:00:00+00:00",
+              "finalScore": 0.604,
+              "projectIds": [],
+              "similarity": 0.431,
+              "sourceTable": "teams_dm"
+            },
+            {
+              "content": "**Summary of Document: Teams DM: 19:c4beb912-**\n\nThe document is a direct message from a Teams chat, dated January 15, 2026. It serves as a communication log rather than a formal report or contract, capturing a brief interaction between team members regarding scheduling matters.\n\nThe key topic of this message revolves around scheduling coordination. Brandon Clymer indicates his intention to discuss his schedule with a colleague named Maria. This suggests that there may be upcoming meetings or ev",
+              "metadata": {
+                "date": "2026-01-15T00:00:00+00:00",
+                "title": "Teams DM: 19:c4beb912-",
+                "source": "microsoft_graph",
+                "category": "teams_message",
+                "doc_type": "segment_summary",
+                "file_date": null,
+                "project_id": null,
+                "segment_id": "0b9b3bc0-d36a-48ba-8cbc-08c0acd5e816",
+                "chunk_index": 0,
+                "source_type": "teams_dm",
+                "content_hash": "6bc26ca71c8e6330",
+                "participants": [],
+                "segment_index": 0
+              },
+              "recordId": "teamsdm_1768500536367",
+              "createdAt": "2026-01-15T00:00:00+00:00",
+              "finalScore": 0.495,
+              "projectIds": [],
+              "similarity": 0.417,
+              "sourceTable": "teams_dm"
+            }
+          ],
+          "resultCount": 8,
+          "retrievalBreakdown": {
+            "knowledgeMatches": 8,
+            "usedProjectFilter": false,
+            "externalChunkMatches": 16,
+            "filteredAdminOnlySources": []
+          }
+        },
+        "timestamp": "2026-05-02T10:31:58.051Z"
+      },
+      {
+        "tool": "sourceLookupIntentRouter",
+        "input": {
+          "query": "What did Brandon say about billing in any recent meeting?",
+          "intent": "source_lookup",
+          "selectedProjectId": null
+        },
+        "output": {
+          "resultCount": 8,
+          "usedProjectBriefingTemplate": false
+        },
+        "timestamp": "2026-05-02T10:31:58.054Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [],
+      "stepStarts": [],
+      "totalStepCount": 0,
+      "finalFinishReason": "unknown",
+      "preparedStepCount": 0,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 77,
+      "reasons": [
+        "at least one successful tool call",
+        "multiple source citations"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled. Provider matrix 2026-05-01 confirmed AI SDK Gateway and direct OpenAI both pass generateText + streamText with tool calls (finishReason=stop, 1 tool call, non-empty text). Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "id": "status-blocked-feature",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 7975,
+  "question": "How should Ask Alleato explain a blocked feature?",
+  "response": {
+    "answer": "Ask Alleato should explain a blocked feature like this:\n\n- Say the feature is **blocked**, not live.\n- State the **reason for the block** if known: missing credential, provider, permission, migration, or product decision.\n- Be explicit about what is **documented vs. uncertain**.\n- Do **not** claim the assistant can perform a write action unless the feature registry, help article, or action metadata says it can.\n- If the user asks whether it works, answer with the checked evidence and what remains unresolved.\n\nThis is backed by:\n- Feature registry entry: **Understand Feature Status**  \n  - help article: `docs/help/articles/app-feature-status-and-limitations.md`\n  - routes: `/ai-assistant`, `/docs`\n\nRelevant documented language from the help article:\n- **Blocked** means the workflow depends on a missing credential, provider, permission, migration, or product decision.\n- If the answer is not fully known, Ask Alleato should say what it checked and what remains uncertain instead of guessing.\n\nSo a good user-facing explanation would be:\n\n> This feature is currently blocked. That means it depends on a missing credential, provider, permission, migration, or product decision, so it isn’t available yet. I checked the curated feature status docs and will only confirm it as available if the documented workflow or action metadata says so.\n\nIf you want, I can also give you a shorter “in-app” wording version for Ask Alleato to use.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 7973,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

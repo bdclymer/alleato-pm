@@ -154,8 +154,8 @@ export type ClientProjectIntelligencePacket = {
 };
 
 /**
- * How old a packet may be before we flag it as stale. Tied to the periodic
- * refresh cron in render.yaml (alleato-packet-refresh-periodic, every 6h);
- * 8h gives 2h of slack for delayed cron runs.
+ * How old a packet may be before we flag it as stale. Current packets should
+ * come from `project_intelligence_synthesis_v1`; stale packets are warnings,
+ * not proof that the synthesis path is active.
  */
 export const PACKET_STALE_AFTER_HOURS = 8;

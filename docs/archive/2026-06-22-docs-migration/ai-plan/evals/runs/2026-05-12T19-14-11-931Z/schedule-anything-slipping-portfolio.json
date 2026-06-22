@@ -1,0 +1,46 @@
+{
+  "id": "schedule-anything-slipping-portfolio",
+  "intent": "operations_analysis",
+  "prompt": "Is anything slipping on the schedule across our active projects?",
+  "selectedProjectId": null,
+  "sessionId": "9e583e31-0e20-432a-8ffa-cff761ac8f68",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-schedule-anything-slipping-portfolio",
+  "startedAt": "2026-05-12T20:20:25.914Z",
+  "finishedAt": "2026-05-12T20:20:41.744Z",
+  "durationMs": 519,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"be490cf4-c1eb-4528-9bad-47d063714797\",\"timestamp\":\"2026-05-12T20:20:26.432Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"be490cf4-c1eb-4528-9bad-47d063714797\",\"timestamp\":\"2026-05-12T20:20:26.432Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getScheduleAnalysis, getProjectsWithRisks] to fire — none did",
+      "mustIncludeAny missing one of: \"schedule\", \"slip\", \"delay\", \"behind\", \"on track\", \"milestone\""
+    ],
+    "warnings": [
+      "expected family 'schedule' not represented",
+      "expected family 'risk' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"be490cf4-c1eb-4528-9bad-47d063714797\",\"timestamp\":\"2026-05-12T20:20:26.432Z\"}"
+  },
+  "expectedToolNames": [
+    "getScheduleAnalysis",
+    "getProjectsWithRisks"
+  ],
+  "expectedToolFamilies": [
+    "schedule",
+    "risk"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

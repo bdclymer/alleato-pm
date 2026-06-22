@@ -15,7 +15,7 @@ dotenv.config({ path: path.join(repoRoot, "frontend/.env.local"), quiet: true })
 
 const DEFAULT_DATASET_PATH = path.join(
   repoRoot,
-  "docs/ai-plan/evals/strategic-operator/langsmith-strategic-rag-v1.json",
+  "docs/archive/2026-06-22-docs-migration/ai-plan/evals/strategic-operator/langsmith-strategic-rag-v1.json",
 );
 const DEFAULT_DATASET_NAME = "Strategic Operator Eval v1";
 

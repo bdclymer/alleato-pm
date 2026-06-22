@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-05-14T20:28:07.488Z",
+  "baseUrl": "http://localhost:3000",
+  "bundle": null,
+  "filter": null,
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "clientProjectIntelligencePacket": 1,
+    "mcpToolDiscovery": 1,
+    "streamingToolPolicy": 1,
+    "noToolRetry": 1
+  },
+  "intentDistribution": {
+    "project_briefing": 1
+  },
+  "results": [
+    {
+      "id": "owner-strategy-ulta-action-plan",
+      "intent": "project_briefing",
+      "prompt": "I am Brandon. For 25-127 Ulta Beauty Fresno, what is most likely to cost us money this week, what is blocked, and what do I personally need to do today?",
+      "selectedProjectId": null,
+      "sessionId": "b6e0bddc-2199-4ed4-848a-58aaca9e21f4",
+      "sessionLabel": "eval-2026-05-14T20-27-28-124Z-c6dcc936-owner-strategy-ulta-action-plan",
+      "startedAt": "2026-05-14T20:27:28.206Z",
+      "finishedAt": "2026-05-14T20:28:07.487Z",
+      "durationMs": 38900,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 43,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'semantic' not represented",
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "clientProjectIntelligencePacket",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 2880,
+        "finalText": "Here’s where things stand for 25-127 Ulta Beauty Fresno, based on the latest meetings, financials, and communications:\n\n## What’s Most Likely to Cost Money This Week\n\n- **Insurance Compliance Delay:** The fire inspector flagged ductwork blocking the sprinklers. If this isn’t fixed right away, you’re looking at potential premium increases and maybe retrofit costs. The insurance company is watching closely — any slip on this is a hard, unnecessary hit to the budget.\n- **AC Unit Relocation:** The AC1 relocation is stuck waiting on the solar company’s approval. Every day this drags out, GCs are likely absorbing overhead and may ripple into general conditions or escalation charges. If the solar approval isn’t cleared, associated trades could start pushing for change orders.\n- **Outstanding Invoice for Citadel:** Payments to Citadel were held up due to an accounting sync issue. If the check isn’t actually sent this week (as last promised), you risk late fees and strained vendor relations. Check with accounting — don’t take “it’s sent” at face value.\n\n## What’s Blocked\n\n- **AC1 Relocation:** Entirely dependent on the solar vendor’s sign-off. Until they release, all downstream work on that system is stalled.\n- **Insurance sign-off for ductwork:** Final roof and ductwork signoff is blocked pending fixes to meet sprinkler code and insurance directives. Nothing moves forward until this is cleared, and both schedule and money are at risk.\n\n## What You Need to Do Today\n\n**1. Get Live Confirmation on Payments:**\n   - Don’t trust the accounting relay — confirm with your AP team that Citadel’s payment was actually sent as promised. If there’s any further delay, email Erica Valencia at Citadel with a new ETA yourself.\n\n**2. Push the Solar Company:**\n   - Call or email your primary solar contact directly. “Ulta AC1 relocation is now on hold waiting on your approval. What’s the holdup, and what’s the turnaround if we escalate?” Be explicit about cost risk.\n\n**3. Set Up a Field Check on the Duct/Fire Suppression:**\n   - Have the site super or field PM verify that the duct sock has been fully removed and the revised setup meets both fire code and insurance specs. Document with photos and email that to both the owner and insurance point of contact.\n\n**4. Demand a Root Cause Report from Subcontractors:**\n   - Whoever failed to check the ductwork placement against sprinkler head clearance needs to document their fix plan. This is a preventable error — don’t let it happen again.\n\n**Bottom line:**  \nClearing these blocks today prevents both immediate costs (insurance, vendor relations) and midterm headaches (schedule delay and change orders). If you do nothing else, chase down Citadel payment status and the solar sign-off. If either stall, you’re exposed on both money and schedule.\n\nLet me know if you want talking points or draft emails for any of these."
+      },
+      "expectedToolNames": [
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot",
+        "semanticSearch",
+        "searchMeetingsByTopic",
+        "searchEmails",
+        "searchTeamsMessages"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic",
+        "communications"
+      ]
+    }
+  ]
+}

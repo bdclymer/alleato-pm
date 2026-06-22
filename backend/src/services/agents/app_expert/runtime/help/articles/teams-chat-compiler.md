@@ -92,4 +92,4 @@ Check the Teams Chat Compiler when:
 ## Engineering Reference
 
 The detailed implementation document lives at
-`docs/features/teams-compiler.md`.
+`docs/archive/2026-06-22-docs-migration/features/teams-compiler.md`.

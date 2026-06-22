@@ -1,0 +1,261 @@
+{
+  "id": "realworld-urgent-inbox",
+  "intent": "source_lookup",
+  "prompt": "Is there anything urgent in my inbox?",
+  "selectedProjectId": null,
+  "sessionId": "4a92809d-57e8-43d8-ad13-b59aef9c69fa",
+  "sessionLabel": "eval-2026-06-09T11-05-54-885Z-08af8995-realworld-urgent-inbox",
+  "startedAt": "2026-06-09T11:06:07.378Z",
+  "finishedAt": "2026-06-09T11:06:23.480Z",
+  "durationMs": 12185,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 9,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "judge email_operator score 3 < 4: The triage is mostly structured and does identify one likely urgent item, but it mixes urgency with generic inbox categorization and contains several unsupported or inconsistent judgments. It also fails to clearly separate confirmed user-owned actions from merely interesting inbox items, and some recommendations are not well evidenced."
+    ],
+    "warnings": [],
+    "observations": [
+      "tools fired: consultMicrosoftExecutiveAssistant",
+      "judge email_operator: fail (3/4)"
+    ],
+    "toolNames": [
+      "consultMicrosoftExecutiveAssistant"
+    ],
+    "familiesHit": [
+      "communications",
+      "email_action"
+    ],
+    "finalTextLength": 3468,
+    "finalText": "Urgent inbox triage for bclymer@alleatogroup.com:\n\nAlert now\n- RE: ULTA update needed. — Allen, Walter — 2026-06-09 09:59 UTC\n  Action: Alert now. Reason: The email contains a direct external ask with explicit timing.\n  Evidence: Thank you for the update.\n\nReply\n- RE: Exol Morrisville PA — Steve Fischer — 2026-06-09 02:59 UTC\n  Thread activity: 2 messages in this subject thread.\n  Action: Reply. Reason: The sender appears to be asking for a direct response.\n  Evidence: Sorry for the follow up email.\n\nDelegate\n- Payment creation process — Misty Rogers — 2026-06-09 11:05 UTC\n  Action: Delegate. Reason: This looks like an internal follow-up that needs ownership or routing.\n  Evidence: Hello, Attached is the SOP I created for the payment making process.\n- Exol Morrisville PA — Bob  Wright — 2026-06-08 20:57 UTC\n  Action: Delegate. Reason: This looks like an internal follow-up that needs ownership or routing.\n  Evidence: Steve, please see attached proposal for the Exol Morrisville project phase 1.\n\nWatch\n- [Reminder] Your payment is due in 1 day — Ryan Niddel — 2026-06-09 03:54 UTC\n  Action: Watch. Reason: Admin reminder; time-sensitive, but not clearly an immediate reply item from the email alone.\n  Evidence: Your payment is due in 1 day Hi Brandon Clymer, Reminder! Your payment for Executive Growth Network 2025 (sold by Ryan Niddel ) is due in 1 day.\n- Fw: Marr Rd. Renovations — Jesse Dawson — 2026-06-08 22:51 UTC\n  Action: Watch. Reason: Present in the inbox, but the email evidence does not prove an immediate action.\n  Evidence: Jake, this as the most economical base plan for them, provide alternates to replace all flooring, lighting, ceilings, wall paint as upgrades.\n- Microsoft 365 security: You have messages in quarantine — quarantine@messaging.microsoft.com — 2026-06-08 22:46 UTC\n  Action: Watch. Reason: Security/admin notice exists, but the inbox evidence alone does not prove an immediate incident.\n  Evidence: Review These Messages 1 messages are being held for you to review as of 6/8/2026 9:20:16 PM (UTC).\n\nIgnore/noise\n- Sign in to Perplexity — Perplexity — 2026-06-09 09:37 UTC\n  Action: Ignore/noise. Reason: Authentication message; usually ignorable unless the sign-in was requested.\n  Evidence: Sign in to your account Sign in This link and code will only be valid for the next 5 minutes.\n- Alleato Group: ERP Integrations Daily Summary — Alleato Group — 2026-06-09 06:15 UTC\n  Action: Ignore/noise. Reason: Operational summary or digest; no direct action is shown in the email itself.\n  Evidence: Alleato Group DO NOT REPLY TO THIS EMAIL This is a notification sent from an unmonitored email address.\n- Major update from Message center — Microsoft 365 Message center — 2026-06-08 22:47 UTC\n  Action: Ignore/noise. Reason: Present in the inbox, but the email evidence does not prove an immediate action.\n  Evidence: View the description of the update.\n- RE: ULTA update needed. — Alec Wehner — 2026-06-08 22:10 UTC\n  Action: Ignore/noise. Reason: Present in the inbox, but the email evidence does not prove an immediate action.\n  Evidence: Good afternoon Walter, In regards to AC1 install: Grant and I are currently working with Capitol Valley to get manpower on site tomorrow morning and have the so\n\nRecommended next steps for Brandon\n1. Handle the Alert now items first, if any are present.\n2. Reply to the direct sender asks next.\n3. Leave Watch/Ignore items alone unless they match known work you are already handling.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 12185
+    },
+    "judge": {
+      "status": "fail",
+      "rubric": "email_operator",
+      "score": 3,
+      "minScore": 4,
+      "summary": "The triage is mostly structured and does identify one likely urgent item, but it mixes urgency with generic inbox categorization and contains several unsupported or inconsistent judgments. It also fails to clearly separate confirmed user-owned actions from merely interesting inbox items, and some recommendations are not well evidenced.",
+      "strengths": [
+        "Separates the inbox into action buckets (Alert now, Reply, Delegate, Watch, Ignore/noise).",
+        "Flags one item as urgent and gives a reason tied to an external ask with timing.",
+        "Avoids claiming any email was sent.",
+        "Includes short evidence snippets rather than dumping full threads."
+      ],
+      "weaknesses": [
+        "Urgency is not consistently evidence-backed; several items are labeled Watch/Ignore/Delegate without enough proof from the quoted text.",
+        "Does not clearly identify who specifically needs a response and what happens if ignored for most items.",
+        "Thread summaries are uneven and sometimes rely on vague phrases like 'looks like' or 'appears to be asking' without concrete consequences.",
+        "The same subject ('Exol Morrisville PA') is split across Reply and Delegate, which is confusing and weakens ownership clarity.",
+        "Some recommendations are not concrete enough for Brandon to act on immediately, especially for watch/delegate items."
+      ],
+      "dimensionScores": {
+        "separates_urgent_critical_from_noise": 3,
+        "identifies_who_needs_response_why_it_matters_what_happens_if_ignored": 3,
+        "summarizes_threads_efficiently_without_raw_dump": 4,
+        "recommends_concrete_response_path": 4,
+        "draft_requests_short_direct_practical": 2,
+        "never_claims_sent_or_invents_details": 4,
+        "separates_confirmed_user_owned_actions_from_inbox_items": 2,
+        "labels_suspicious_phishing_urgency_ignore_as_evidence_backed": 3
+      },
+      "provider": "openai",
+      "model": "gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "consultMicrosoftExecutiveAssistant"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:06:07.563Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Delegating Microsoft operator work",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:06:07.689Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:06:10.690Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:06:13.691Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T11:06:16.692Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-microsoft-executive-assistant"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-microsoft-executive-assistant",
+      "delta": "Urgent inbox triage for bclymer@alleatogroup.com:\n\nAlert now\n- RE: ULTA update needed. — Allen, Walter — 2026-06-09 09:59 UTC\n  Action: Alert now. Reason: The email contains a direct external ask with explicit timing.\n  Evidence: Thank you for the update.\n\nReply\n- RE: Exol Morrisville PA — Steve Fischer — 2026-06-09 02:59 UTC\n  Thread activity: 2 messages in this subject thread.\n  Action: Reply. Reason: The sender appears to be asking for a direct response.\n  Evidence: Sorry for the follow up email.\n\nDelegate\n- Payment creation process — Misty Rogers — 2026-06-09 11:05 UTC\n  Action: Delegate. Reason: This looks like an internal follow-up that needs ownership or routing.\n  Evidence: Hello, Attached is the SOP I created for the payment making process.\n- Exol Morrisville PA — Bob  Wright — 2026-06-08 20:57 UTC\n  Action: Delegate. Reason: This looks like an internal follow-up that needs ownership or routing.\n  Evidence: Steve, please see attached proposal for the Exol Morrisville project phase 1.\n\nWatch\n- [Reminder] Your payment is due in 1 day — Ryan Niddel — 2026-06-09 03:54 UTC\n  Action: Watch. Reason: Admin reminder; time-sensitive, but not clearly an immediate reply item from the email alone.\n  Evidence: Your payment is due in 1 day Hi Brandon Clymer, Reminder! Your payment for Executive Growth Network 2025 (sold by Ryan Niddel ) is due in 1 day.\n- Fw: Marr Rd. Renovations — Jesse Dawson — 2026-06-08 22:51 UTC\n  Action: Watch. Reason: Present in the inbox, but the email evidence does not prove an immediate action.\n  Evidence: Jake, this as the most economical base plan for them, provide alternates to replace all flooring, lighting, ceilings, wall paint as upgrades.\n- Microsoft 365 security: You have messages in quarantine — quarantine@messaging.microsoft.com — 2026-06-08 22:46 UTC\n  Action: Watch. Reason: Security/admin notice exists, but the inbox evidence alone does not prove an immediate incident.\n  Evidence: Review These Messages 1 messages are being held for you to review as of 6/8/2026 9:20:16 PM (UTC).\n\nIgnore/noise\n- Sign in to Perplexity — Perplexity — 2026-06-09 09:37 UTC\n  Action: Ignore/noise. Reason: Authentication message; usually ignorable unless the sign-in was requested.\n  Evidence: Sign in to your account Sign in This link and code will only be valid for the next 5 minutes.\n- Alleato Group: ERP Integrations Daily Summary — Alleato Group — 2026-06-09 06:15 UTC\n  Action: Ignore/noise. Reason: Operational summary or digest; no direct action is shown in the email itself.\n  Evidence: Alleato Group DO NOT REPLY TO THIS EMAIL This is a notification sent from an unmonitored email address.\n- Major update from Message center — Microsoft 365 Message center — 2026-06-08 22:47 UTC\n  Action: Ignore/noise. Reason: Present in the inbox, but the email evidence does not prove an immediate action.\n  Evidence: View the description of the update.\n- RE: ULTA update needed. — Alec Wehner — 2026-06-08 22:10 UTC\n  Action: Ignore/noise. Reason: Present in the inbox, but the email evidence does not prove an immediate action.\n  Evidence: Good afternoon Walter, In regards to AC1 install: Grant and I are currently working with Capitol Valley to get manpower on site tomorrow morning and have the so\n\nRecommended next steps for Brandon\n1. Handle the Alert now items first, if any are present.\n2. Reply to the direct sender asks next.\n3. Leave Watch/Ignore items alone unless they match known work you are already handling."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-microsoft-executive-assistant"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Microsoft Executive Assistant answer returned",
+        "status": "success",
+        "timestamp": "2026-06-09T11:06:19.556Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "tool_trace": [
+      {
+        "tool": "consultMicrosoftExecutiveAssistant",
+        "error": null,
+        "input": {
+          "message": "Is there anything urgent in my inbox?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": "deep_agents",
+          "count": null,
+          "error": null,
+          "source": "microsoft_graph_live",
+          "summary": "Urgent inbox triage for bclymer@alleatogroup.com:\n\nAlert now\n- RE: ULTA update needed. — Allen, Walter — 2026-06-09 09:59 UTC\n  Action: Alert now. Reason: The email contains a direct external ask with explicit timing.\n  Evidence: Thank you for the update.\n\nReply\n- RE: Exol Morrisville PA — Steve Fischer — 2026-06-09 02:59 UTC\n  Thread activity: 2 messages in this subject thread.\n  Action: Reply. Reason: The sender appears to be asking for a direct response.\n  Evidence: Sorry for the follow up em",
+          "toolTrace": [
+            {
+              "tool": "read_live_outlook_inbox",
+              "agent": "microsoft-executive-assistant",
+              "detail": "read_live_outlook_inbox completed.",
+              "output": {
+                "ok": true,
+                "count": 25,
+                "source": "microsoft_graph_live",
+                "fetchedAt": "2026-06-09T11:06:12.446713+00:00",
+                "truncated": true,
+                "mailboxUserId": "bclymer@alleatogroup.com"
+              },
+              "source": "microsoft_graph_live",
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "deepagents_microsoft_executive_assistant_runtime",
+              "agent": "microsoft-executive-assistant",
+              "detail": "Microsoft Executive Assistant produced an answer.",
+              "output": null,
+              "source": null,
+              "status": "success",
+              "durationMs": 11513
+            }
+          ],
+          "actionCount": 0,
+          "orchestrator": "microsoft-executive-assistant"
+        },
+        "status": "success",
+        "toolName": "consultMicrosoftExecutiveAssistant",
+        "timestamp": "2026-06-09T11:06:19.365Z",
+        "durationMs": 11674
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "source_debug": {
+      "memory": {
+        "reason": "This answer was produced by a delegated specialist/direct Deep Agents path; inspect delegated trace and backend memory metadata for specialist-side context.",
+        "status": "not_loaded_in_frontend"
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "consultMicrosoftExecutiveAssistant",
+              "agent": "unknown-agent",
+              "status": "success",
+              "durationMs": 11674
+            }
+          ],
+          "failedCount": 0,
+          "totalMeasuredMs": 11674
+        },
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 1,
+        "sourceCoverage": []
+      },
+      "orchestrator": "microsoft-executive-assistant",
+      "outputPolicy": null,
+      "retrievalPlan": {
+        "intent": "source_lookup",
+        "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "sources": [],
+        "responseFormat": "conversational"
+      }
+    },
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+      "sources": [],
+      "responseFormat": "conversational"
+    },
+    "response_quality": {
+      "score": 62,
+      "reasons": [
+        "at least one successful tool call",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "delegated_orchestrator": "microsoft-executive-assistant"
+  }
+}

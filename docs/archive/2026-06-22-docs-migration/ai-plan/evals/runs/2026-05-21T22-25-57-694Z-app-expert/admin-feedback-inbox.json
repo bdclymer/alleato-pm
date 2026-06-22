@@ -1,0 +1,55 @@
+{
+  "id": "admin-feedback-inbox",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 8373,
+  "question": "Where should questions about feedback and annotation triage go?",
+  "mustInclude": [
+    "feedback"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Questions about feedback should go to **Feedback Inbox**:\n\n- **Route:** `/feedback-inbox`\n- **Help article:** `docs/help/articles/submit-feedback.md`\n\nThat help article says feedback is for things that are **wrong, confusing, missing, or worth improving**.\n\nFor **annotation triage**, the generated app inventory shows an **admin-only** route:\n\n- **Route:** `/annotation-inbox`\n- **Source:** implementation evidence only\n- **Source file:** `frontend/src/app/(admin)/annotation-inbox/page.tsx`\n\nThere is **no curated help article linked yet** for `/annotation-inbox`, so I can’t confirm its user-facing workflow beyond the route inventory.\n\nIf you mean **where to submit product feedback about annotation issues**, use **`/feedback-inbox`**. If you mean **the internal admin page for handling annotation triage**, that appears to be **`/annotation-inbox`**.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/submit-feedback.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/submit-feedback.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(admin)/annotation-inbox/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(admin)/annotation-inbox/page.tsx",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 8266,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

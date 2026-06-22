@@ -22,7 +22,7 @@ module.exports = {
       cardTrap:
         'Card trap detected: "bg-card" + "border border-border" + "rounded" on one element. ' +
         'Use tonal elevation (bg-muted, bg-accent) or the SectionCard/Card components instead. ' +
-        'See docs/design/UI_GUIDE.md #2.',
+        'See docs/archive/2026-06-22-docs-migration/design/UI_GUIDE.md #2.',
       bgWhite:
         '"bg-white" is not a design token. Use "bg-card" (surface) or "bg-background" (page). ' +
         'bg-white breaks dark mode.',

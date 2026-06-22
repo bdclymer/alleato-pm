@@ -1,0 +1,223 @@
+{
+  "generatedAt": "2026-05-14T15:23:25.087Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "source-sync-teams-regression",
+    "description": "Agentic-eval guardrail for Teams/source-sync prompts. The assistant must distinguish live source-health questions from Teams content lookup and must expose stale source state instead of pretending coverage is complete.",
+    "criteria": [
+      "Source-health trust questions must fire assistantSourceHealth.",
+      "Teams content questions must fire a Teams-capable retrieval path.",
+      "Answers must not claim complete evidence coverage when source freshness is uncertain.",
+      "Answers must give a direct operational read instead of generic AI/RAG caveats."
+    ]
+  },
+  "filter": "(source-lookup-teams|source-freshness-rag-health|realworld-teams-source-freshness|realworld-teams-this-week-signal)$",
+  "totalCases": 4,
+  "passed": 3,
+  "failed": 1,
+  "toolCoverage": {
+    "intentPlanner": 4,
+    "assistantSourceHealth": 4,
+    "messageDrivenToolRouter": 3,
+    "mcpToolDiscovery": 3,
+    "streamingToolPolicy": 3,
+    "searchTeamsMessages": 2,
+    "promptContextReducer": 1,
+    "backendDeepAgentProjectStatus": 1,
+    "clientProjectIntelligencePacket": 1,
+    "sourceSpecificRagRetrieval": 1,
+    "semanticSearch": 1,
+    "sourceLookupIntentRouter": 1,
+    "getMeetingsByDate": 1,
+    "noToolRetry": 1
+  },
+  "intentDistribution": {
+    "source_lookup": 2,
+    "source_health": 2
+  },
+  "results": [
+    {
+      "id": "source-lookup-teams",
+      "intent": "source_lookup",
+      "prompt": "Look through Teams for Westfield punch-list chatter. What is the latest real signal?",
+      "selectedProjectId": 43,
+      "sessionId": "6153a4ca-53f1-4738-aa37-9b0c136e2f3b",
+      "sessionLabel": "eval-2026-05-14T15-19-33-650Z-source-lookup-teams",
+      "startedAt": "2026-05-14T15:19:33.653Z",
+      "finishedAt": "2026-05-14T15:21:00.933Z",
+      "durationMs": 86787,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 2492,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "global forbidden phrase: \"retrieval\""
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, assistantSourceHealth, messageDrivenToolRouter, backendDeepAgentProjectStatus, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, searchTeamsMessages"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "assistantSourceHealth",
+          "messageDrivenToolRouter",
+          "backendDeepAgentProjectStatus",
+          "clientProjectIntelligencePacket",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "searchTeamsMessages"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "communications",
+          "source_health"
+        ],
+        "finalTextLength": 10317,
+        "finalText": "Latest real Teams signal: there still is **no clean Teams thread explicitly about a “punch list.”** The most credible closeout-adjacent signal is that on **Mar 23, 2026**, Andrew was actively managing **remaining items** and subcontractor follow-up for Westfield.\n\n**Best Teams evidence**\n- **Remaining-items coordination:** Andrew told Ty to open an Excel with “**some remaining items for Westfield Collective**,” call subs, log notes, leave voicemails, call back, and email if needed. That reads like active closeout/punch follow-up, even though the term “punch list” is not used.  \n  Source: **Teams message in microsoft_graph on Mar 23, 2026**\n- **Access / closeout logistics before that:** Andrew said they needed to know which subs would be onsite and when so they could notify the client and get subs into the building. That supports the idea that unfinished items were still being worked through.  \n  Source: **Teams message in microsoft_graph on Mar 23, 2026**\n- **Earlier operational constraint:** On **Mar 3, 2026**, the building inspector had **not finalized the TCO**, and the team was waiting on an ETA. That is a real project signal, but it is more occupancy/logistics than punch-list chatter.  \n  Source: **Teams message in microsoft_graph on Mar 3, 2026**\n\n**What I’d treat as noise, not a punch-list signal**\n- **Mar 24, 2026 ribbon cutting** mention — ceremonial, not issue-driven.  \n  Source: **Teams message in microsoft_graph on Mar 24, 2026**\n- File syncing / folder / video-upload chatter — admin only, not field closeout.\n\n**Bottom line**\nThe latest real Teams signal is: **Westfield still had remaining closeout items being actively chased with subs on Mar 23, but Teams does not show a specific punch-list escalation, completion confirmation, or defect trend.**\n\n**Important source caveat**\nTeams retrieval fell back to keyword matches because vector search timed out, and project sync is currently **degraded** with a likely **embedding backlog**. So this is the best available Teams signal, but not guaranteed to be complete coverage of all Teams chatter.\n\nIn other words, Westfield does **not** appear to have a hot punch-list fire in Teams right now. The signal is more “administering remaining items” than “major unresolved punch issue.”\n\n\n**Latest real Teams signal:** Westfield still had **remaining closeout items being actively chased with subs**, but I do **not** see a clear Teams thread explicitly calling out a punch-list problem or escalation.\n\n**What matters most**\n- On **Mar 23, 2026**, Andrew told Ty to open an Excel with “**some remaining items for Westfield Collective**,” call subcontractors, log notes, leave voicemails, call back, and email if needed. That is the strongest Teams-based sign of active punch/closeout follow-up.  \n  **Source:** Teams message in **microsoft_graph** on **Mar 23, 2026**\n- In that same thread, Andrew said they need to know **which subs are onsite, when, and how to coordinate building access/client notice**. That reinforces “working through remaining items,” not “all punch complete.”  \n  **Source:** Teams message in **microsoft_graph** on **Mar 23, 2026**\n- The other meaningful closeout-adjacent Teams signal is older: on **Mar 3, 2026**, the team was still waiting on the **building inspector to finalize the TCO**.  \n  **Source:** Teams message in **microsoft_graph** on **Mar 3, 2026**\n\n**What I do not see in Teams**\n- No explicit “punch list complete”\n- No clear defect escalation\n- No recent Teams fight about unresolved items\n- No solid Teams confirmation of final closeout\n\n**Bottom line**\nThe latest real signal from Teams is **active management of remaining items with subs on Mar 23**, not a material punch-list blowup. If you’re judging heat level from Teams alone, this looks like **routine closeout coordination**, not a current red flag.\n\n**Source gap**\nTeams search fell back to keyword matching because retrieval timed out, and the project’s sync health is **degraded** with a likely **embedding backlog**. So Teams evidence here is directionally useful, but not full-fidelity coverage.\n\n\nLatest real Teams signal: **Westfield still had “remaining items” being actively chased with subs on Mar 23, 2026.** I do **not** see a fresh Teams thread showing a punch-list blowup, a defect trend, or a clean “punch complete” confirmation.\n\n**Best evidence**\n- **Mar 23, 2026:** Andrew told Ty to open an Excel with “**some remaining items for Westfield Collective**,” call subs, log notes, leave voicemails, call back, and email if needed. That is the strongest closeout/punch-like signal in Teams.  \n  **Source:** Teams message in **microsoft_graph** on **Mar 23, 2026**\n- Same thread: Andrew said they need to know **which subs are onsite and when** so the client can be notified and the building can be opened up. That suggests active coordination of unfinished work, not final closure.  \n  **Source:** Teams message in **microsoft_graph** on **Mar 23, 2026**\n- **Older but relevant:** on **Mar 3, 2026**, the team was waiting on the **building inspector to finalize the TCO**. That is a real operational signal, but it is more occupancy/logistics than punch-list chatter.  \n  **Source:** Teams message in **microsoft_graph** on **Mar 3, 2026**\n\n**Read on the signal**\n- **What it says:** there were still loose ends being worked through.\n- **What it does not say:** no Teams evidence of a serious unresolved punch-list issue, owner escalation, or confirmed completion.\n\n**Bottom line**\nFrom Teams alone, the latest real signal is **routine closeout coordination of remaining items**, not a current punch-list fire.\n\n**Coverage caveat**\nTeams retrieval fell back to keyword matches because search timed out, and project sync is **degraded** with a likely **embedding backlog**. So this is the best available Teams read, but not guaranteed complete.\n\n\nThe latest real Teams signal is **Mar 23, 2026: active follow-up on “remaining items” for Westfield with subcontractors**. That is the closest thing to punch-list chatter in Teams.\n\n**Why that’s the real signal**\n- Andrew directed Ty to open an Excel with “**some remaining items for Westfield Collective**,” call subs, take notes, leave voicemails, call back, and email if needed. That’s concrete closeout coordination, not casual chatter.  \n  **Source:** Teams message in **microsoft_graph** on **Mar 23, 2026**\n- Andrew also said they need visibility into **which subs are onsite and when** so they can notify the client and get subs into the building.  \n  **Source:** Teams message in **microsoft_graph** on **Mar 23, 2026**\n\n**What I would not overread**\n- I do **not** see an explicit Teams thread saying “punch list,” a new escalation, or confirmation that all punch items are closed.\n- The **Mar 3, 2026** TCO delay is real, but it is an occupancy/logistics issue, not direct punch-list evidence.  \n  **Source:** Teams message in **microsoft_graph** on **Mar 3, 2026**\n\n**Bottom line**\nTeams suggests **unfinished closeout items were still being worked and coordinated**, but there is **no current Teams-based signal of a major punch-list problem**.\n\n**Source caveat**\nThis Teams search fell back to keyword results because vector retrieval timed out, and source sync is currently **degraded** with likely **embedding backlog**. So the evidence is useful but may not be exhaustive.\n\n\n**Latest real signal from Teams:** on **Mar 23, 2026**, the team was still actively working through **remaining items** at Westfield by chasing subcontractors and coordinating site access. That is the clearest punch-list-adjacent signal.\n\n**Evidence**\n- Andrew to Ty: open the Excel with “**some remaining items for Westfield Collective**,” call subs, document notes, leave voicemails, follow up, and email if needed.  \n  **Source:** Teams message in **microsoft_graph** on **Mar 23, 2026**\n- Andrew also emphasized knowing **who would be onsite and when** so the client could be notified and subs could get into the building.  \n  **Source:** Teams message in **microsoft_graph** on **Mar 23, 2026**\n\n**What that means**\n- There were still loose ends being administered.\n- It looks like **normal closeout coordination**, not a material escalation.\n\n**Not seeing in Teams**\n- No explicit “punch list” thread\n- No recent owner complaint thread\n- No confirmed completion thread\n- No major defect cluster\n\n**Secondary signal**\n- On **Mar 3, 2026**, the inspector had **not finalized the TCO** yet. That’s a real project signal, but separate from punch-list defects.  \n  **Source:** Teams message in **microsoft_graph** on **Mar 3, 2026**\n\n**Bottom line**\nIf you want the honest Teams-only read: **there is no hot punch-list chatter**. The latest real signal is simply that **remaining items were still being tracked and pushed with subs**.\n\n**Coverage note**\nTeams retrieval was partial: search timed out and returned keyword matches, and the project has **degraded sync / likely embedding backlog**, so I would not treat this as complete Teams coverage.\n\n\nLatest real Teams signal: **there’s no clear punch-list flare-up in Teams.** The strongest evidence is **Mar 23, 2026** closeout coordination around **remaining items**.\n\n### What changed\n- Andrew told Ty to work from an Excel with “**some remaining items for Westfield Collective**,” call subcontractors, record notes, and keep following up if they did not answer.  \n  **Source:** Teams message in **microsoft_graph** on **Mar 23, 2026**\n- Andrew also said they need to know **which subs are onsite and what time** so they can notify the client and get them into the building.  \n  **Source:** Teams message in **microsoft_graph** on **Mar 23, 2026**\n\n### Why it matters\nThat is a real field-management signal that **unfinished closeout work still existed** and required active subcontractor coordination. But it does **not** read like a major punch-list dispute or owner escalation.\n\n### Secondary signal\n- On **Mar 3, 2026**, the team was still waiting for the **building inspector to finalize the TCO**.  \n  **Source:** Teams message in **microsoft_graph** on **Mar 3, 2026**\n\n### Call\n**Teams says “remaining items being managed,” not “punch-list problem.”**\n\n### Source caveat\nTeams search degraded to keyword-only results because vector retrieval timed out, and project sync shows likely **embedding backlog**. So this"
+      },
+      "expectedToolNames": [
+        "searchTeamsMessages",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-teams-this-week-signal",
+      "intent": "source_lookup",
+      "prompt": "Using Teams messages from this past week, what are people actually worried about?",
+      "selectedProjectId": null,
+      "sessionId": "088835c3-fb9b-4ead-88b3-905b68c016c6",
+      "sessionLabel": "eval-2026-05-14T15-19-33-650Z-realworld-teams-this-week-signal",
+      "startedAt": "2026-05-14T15:21:00.935Z",
+      "finishedAt": "2026-05-14T15:21:10.989Z",
+      "durationMs": 9949,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 58,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'communications' not represented",
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, sourceSpecificRagRetrieval"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "sourceSpecificRagRetrieval"
+        ],
+        "familiesHit": [
+          "source_health"
+        ],
+        "finalTextLength": 4258,
+        "finalText": "**Main Teams Discussions (2026-05-07 to 2026-05-14)**\n\n1. **Teams DM Conversation: 19:meeting_N** - 2026-05-14. [Teams Direct Message Conversation: 19:meeting_N] Date: 2026-05-14 [message:1778770933019] [2026-05-14 15:02:13] Fireflies.ai Notetaker La' Kis: Fireflies invited Fireflies.ai here... [Teams Direct Message Conversation: 19:meeting_N] Date: 2026-05-14 [message:1778767289793] [2026-05-14 14:01:29] Fireflies.ai Notetaker Malachi: Malachi Amico invited Fireflies.ai... [Teams Direct Message Conversation: 19:meeting_N] Date: 2026-05-14 [message:1778762520373] [2026-05-14 12:42:00] Fireflies.ai Notetaker Kebba: Kebba invited Fireflies.ai here to re... [Sources: teamsdm_f744fbab8d5309b8_2026-05-14, teamsdm_85dcf7e5d9e0ee5b_2026-05-14, teamsdm_a567c86fb2f4b8ad_2026-05-14]\n2. **Teams DM Conversation: 19:meeting_M** - 2026-05-14. [Teams Direct Message Conversation: 19:meeting_M] Date: 2026-05-14 [message:1778770838640] [2026-05-14 15:00:38] TeamsMaestro | AI notetaker: To help take notes, this meeting is be... [Sources: teamsdm_ad16143fa9701a1e_2026-05-14]\n3. **Teams DM Conversation: 19:c4beb912-** - 2026-05-14. [Teams Direct Message Conversation: 19:c4beb912-] Date: 2026-05-14 [message:1778770676847] [2026-05-14 14:57:56] Misty Rogers: Brandon, you are not CC'd on this email, is this some... [Sources: teamsdm_3b4bd9acdcc42826_2026-05-14]\n4. **Teams DM Conversation: 19:abea48a7c** - 2026-05-14. [Teams Direct Message Conversation: 19:abea48a7c] Date: 2026-05-14 [message:1778768582238] [2026-05-14 14:23:02] Brandon Clymer: Keep in mind we have a budget that we put together... [Sources: teamsdm_4c78941c57e96814_2026-05-14]\n5. **Teams DM Conversation: 19:2c91f58c-** - 2026-05-14. [Teams Direct Message Conversation: 19:2c91f58c-] Date: 2026-05-14 [message:1778757551442] [2026-05-14 11:19:11] Candon Rusin: hey did jesse just ask you to get rates for dumpsters... [Sources: teamsdm_b16d30bd2c2d0d6d_2026-05-14]\n6. **Teams DM Conversation: 19:5ccd645d-** - 2026-05-14. [Teams Direct Message Conversation: 19:5ccd645d-] Date: 2026-05-14 [message:1778760264267] [2026-05-14 12:04:24] Jazmin Gaona: I did not, I still don't have access to your calendar... [Sources: teamsdm_fa6033a35c57ae68_2026-05-14]\n7. **Teams DM Conversation: 19:5f9d3daf-** - 2026-05-14. [Teams Direct Message Conversation: 19:5f9d3daf-] Date: 2026-05-14 [message:1778758859222] [2026-05-14 11:40:59] Maria Calcetero: No. I don’t have your W9 [message:1778766023661] [... [Sources: teamsdm_eb820b72671b1d60_2026-05-14]\n8. **Teams DM Conversation: 19:7cb4602b-** - 2026-05-14. [Teams Direct Message Conversation: 19:7cb4602b-] Date: 2026-05-14 [message:1778757242228] [2026-05-14 11:14:02] La' Kisha Green: The permit drawings for Ace Hardware are still bei... [Sources: teamsdm_126ed096c879071d_2026-05-14]\n9. **Teams DM Conversation: Alleato Marketing** - 2026-05-14. [Teams Direct Message Conversation: Alleato Marketing] Date: 2026-05-14 [message:1778756641855] [2026-05-14 11:04:01] Maria Calcetero: aisun Mamedova can we add pictures and Job ti... [Sources: teamsdm_88eaa94af37cf3f5_2026-05-14]\n10. **Teams DM Conversation: 19:459fd1b0-** - 2026-05-14. [Teams Direct Message Conversation: 19:459fd1b0-] Date: 2026-05-14 [message:1778756170772] [2026-05-14 10:56:10] Douglas Franklin: Right now I don't see a schedule in the job folde... [Sources: teamsdm_9ffe0d2ffafe50c7_2026-05-14]\n\n**Observability**\n- Source checked: Teams messages in Supabase document_metadata/document_chunks-backed RAG index.\n- Retrieved 12 Teams row(s), grouped into 10 conversation/day bucket(s), and answered from concrete Teams snippets/titles.\n\n**Next Step**\n- Use these grouped conversations as the audit sample and compare them against graph_sync_state errors for any inaccessible chats.\n\n**Current Source Health**\n- Overall status: degraded\n- Likely gap if evidence is missing: embedding_backlog\n- Backlog: 941 unembedded, 10790 uncompiled\n- critical source_sync_critical: Teams DM export: jdawson@alleatogroup.com is critical.\n- critical source_sync_critical: Teams DM export: ctragesser@alleatogroup.com is critical.\n- critical source_sync_critical: Outlook: njepson@alleatogroup.com is critical.\n- critical source_sync_critical: Outlook: mparsons@alleatogroup.com is critical."
+      },
+      "expectedToolNames": [
+        "sourceSpecificRagRetrieval",
+        "searchTeamsMessages",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "source-freshness-rag-health",
+      "intent": "source_health",
+      "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+      "selectedProjectId": null,
+      "sessionId": "d0075f20-479c-460d-8b7d-660a25a38dc7",
+      "sessionLabel": "eval-2026-05-14T15-19-33-650Z-source-freshness-rag-health",
+      "startedAt": "2026-05-14T15:21:10.990Z",
+      "finishedAt": "2026-05-14T15:22:07.364Z",
+      "durationMs": 55808,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 370,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "mustInclude missing: \"packet\""
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, getMeetingsByDate, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "semanticSearch",
+          "sourceLookupIntentRouter",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getMeetingsByDate",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "meetings",
+          "semantic",
+          "source_health"
+        ],
+        "finalTextLength": 2090,
+        "finalText": "Not everything is up to date right now — there are gaps you should know about before you rely on the AI’s view:\n\n**Critical Source Sync Issues (as of 2026-05-14):**\n- **Teams DMs:** Direct message exports for jdawson@alleatogroup.com and ctragesser@alleatogroup.com are in critical sync failure. Recent or private conversations with these users will be missing.\n- **Outlook Email:** Mailboxes for njepson@alleatogroup.com, mparsons@alleatogroup.com, jdawson@alleatogroup.com, and ctragesser@alleatogroup.com are in critical sync failure. Any key activity (inbound or outbound) from these users may not appear in search or updates.\n- **Embeddings Backlog:** 941 source files are still waiting to be embedded (processed for search). That means anything recently added — from meetings, documents, or communications — could be invisible to AI queries until the backlog clears.\n- **General Vector Database:** 10,790 source items are not fully compiled yet, so the AI's deep semantic search coverage is incomplete.\n\n**What is current and safe to trust:**\n- Broad meeting, Teams channel, and standard email records outside the failed mailboxes likely remain available.\n- Any hard project data (budgets, financials, tasks) pulled directly from ERP or core apps is not affected by source sync delays.\n\n**What’s at risk:**\n- **Recent or sensitive discussions** involving the four named Outlook users or those two Teams DM channels.\n- **Action items, approvals, or problems discussed in private chats or late-breaking emails**—especially anything in the last 1–2 weeks—could be missing.\n- **Late or newly-uploaded files** may not show up in readouts or search results.\n\n**Next step:**  \nIf you want a complete, real-time view, confirm open questions directly with the involved team members — especially those without current inbox or Teams DM coverage. Critical project financials are stable; communications and unstructured meeting notes are where blind spots exist.\n\nLet me know if there’s a specific user, topic, or document you need verified, and I’ll try direct queries or suggest a manual check."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "source_health"
+      ]
+    },
+    {
+      "id": "realworld-teams-source-freshness",
+      "intent": "source_health",
+      "prompt": "Are Teams messages current enough to trust today, or is source sync stale?",
+      "selectedProjectId": null,
+      "sessionId": "3c424a4b-5bf3-4a07-995e-d697d4fa9cf9",
+      "sessionLabel": "eval-2026-05-14T15-19-33-650Z-realworld-teams-source-freshness",
+      "startedAt": "2026-05-14T15:22:07.366Z",
+      "finishedAt": "2026-05-14T15:23:25.084Z",
+      "durationMs": 77096,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 2632,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, searchTeamsMessages"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "searchTeamsMessages"
+        ],
+        "familiesHit": [
+          "communications",
+          "source_health"
+        ],
+        "finalTextLength": 1465,
+        "finalText": "No. **Teams is not current enough to trust as complete today.**\n\nWhy I’m saying that:\n- Your system health shows **source sync is degraded** as of **2026-05-14T15:22:11Z**.\n- There are **critical Teams DM export issues** on **jdawson@alleatogroup.com** and **ctragesser@alleatogroup.com**.\n- The Teams results I could retrieve were mostly **older than today** — recent hits were around **May 4, 2026**, plus older **Apr 8 / Mar 24 / Mar 23** records.\n- One search returned **no matches**, and multiple searches hit a **vector timeout** and fell back to keyword results. That’s another reliability hit.\n- The sync note says the likely missing stage is **embedding_backlog**, so content may exist but not yet be searchable.\n\nWhat that means in practice:\n- **If a Teams message shows up, use it.**\n- **If nothing shows up, don’t treat that as proof nothing happened today.**\n- Coverage is especially questionable for **Dawson** and **CTragesser** DMs.\n\nMy recommendation:\n- For today’s decision-making, use **email and meetings as the primary record**.\n- Use Teams as **supporting evidence only** until sync health clears.\n\nIf you want the clean operating answer, it’s this:\n- **Historical Teams signal:** usable\n- **Same-day completeness:** not trustworthy\n- **Source sync today:** stale enough to be cautious\n\nNext move: if you want, I can help you build a **today-safe source stack** for a specific project — what to trust from meetings, email, and Teams right now."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "source_health"
+      ]
+    }
+  ]
+}

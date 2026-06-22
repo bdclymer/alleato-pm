@@ -1,0 +1,2939 @@
+{
+  "id": "ceo-meetings-promised-to-do",
+  "intent": "meeting_query",
+  "prompt": "What did I commit to in meetings this past week?",
+  "selectedProjectId": null,
+  "sessionId": "e55f6a49-d5f1-415f-8b21-4191d67f21bd",
+  "sessionLabel": "eval-2026-05-14T13-08-06-523Z-ceo-meetings-promised-to-do",
+  "startedAt": "2026-05-14T13:41:39.860Z",
+  "finishedAt": "2026-05-14T13:41:47.455Z",
+  "durationMs": 7441,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 62,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [getMeetingsByDate, getActionItemsAndInsights, getMeetingIntelligence, searchMeetingsByTopic] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'meetings' not represented",
+      "expected family 'actions' not represented",
+      "global forbidden phrase: \"RAG\""
+    ],
+    "observations": [
+      "tools fired: intentPlanner, sourceSpecificRagRetrieval, assistantComponentRegistry"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "sourceSpecificRagRetrieval",
+      "assistantComponentRegistry"
+    ],
+    "familiesHit": [],
+    "finalTextLength": 4424,
+    "finalText": "**Recent Meetings**\n\n1. **Uniqlo+Alleato Group** — 2026-05-13\n   # Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **Participants:** mcalcetero@alleatogroup.com,aelkarrimy@tpgarchitecture.com,bclymer@alleatogroup.com,jdawson@alleatogroup.... [Source: 01KQYS0S95N8FJQQD1C00V1F4M]\n2. **FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting** — 2026-05-13\n   # FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Participants:** bclymer@alleatogroup.com **Fireflies Link:** https://app.fireflies.ai/view/01KRHBD8KNN3W6CC0CCD2EN1NS **Is... [Source: 01KRHBD8KNN3W6CC0CCD2EN1NS]\n3. **FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting** — 2026-05-13\n   # FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** ekonjoyan@majesticrealty.com **Participants:** ekonjoyan@majesticrealty.com,bclymer@alleatogroup.com,kmass@... [Source: 01KRBNYM8VEH65W9XTPYDACXYC]\n4. **Superior Bev Sprinkler Review** — 2026-05-13\n   # Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com **Participants:** connor.clark@hy-tek.com,dave.willis@hy-tek.com,ronnie.mitchell@hy-tek.com,bclymer@alleatogroup.com,joe.... [Source: 01KRH0BZF3H520AKEXJGZERA76]\n5. **Alleato PM Software** — 2026-05-13\n   # Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Participants:** mharrison@alleatogroup.com,megan@megankharrison.com,jdawson@alleatogroup.com,bclymer@alleatogroup.com, mharrison... [Source: 01KRFGCG4XJHN6Q2H3DQ5FDYB9]\n6. **Union Collective (Architectural and Civil Design Approval)** — 2026-05-13\n   # Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** acannon@alleatogroup.com **Participants:** acannon@alleatogroup.com,mewers@medellasprings.com,dfranklin@alleatogroup... [Source: 01KRET7P70FNJYK2C7HJH8GDX2]\n7. **Hillsdale Holdings // Alleato Weekly** — 2026-05-13\n   # Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Participants:** bclymer@alleatogroup.com,gcloud@alleatogroup.com,mferderer@ferdimation.com,jdawson@alleatogroup... [Source: 01KQYS0S93Z9KXD4VSG2YM8VB3]\n8. **Review Superintendent SOP** — 2026-05-13\n   # Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Participants:** phollingsworth@alleatogroup.com,fireflies@alleatogroup.com,jdawson@alleatogroup.com, phollingsworth@alleat... [Source: 01KRGK0PYXTZBAB9JNFN0W27K9]\n9. **Estimating Meeting | Enzo A. & Jake R.** — 2026-05-13\n   # Estimating Meeting | Enzo A. & Jake R. **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 29 minutes **Organizer Email:** jrichardson@alleatogroup.com **Host Email:** eandrade@alleatogroup.com **Participants:** eandrade@alleatogroup.com,jrichardson@alleatogroup.com,hrutledge@alleatogroup.com,varviz... [Source: 01KRF1SC2AACV3JK64NPZ6PFTT]\n10. **Uniqlo & GPC Huddle** — 2026-05-13\n   # Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants:** kmass@alleatogroup.com,mparsons@alleatogroup.com,jdawson@alleatogroup.com,bclymer@alleatogroup.com,fireflies@alleato... [Source: 01KQYFRYD72Y18B5ZCJKQ30RQV]\n\n**Observability**\n- Source checked: Recent meeting transcripts in Supabase document_metadata/document_chunks-backed RAG index.\n- Retrieved 10 row(s) from Recent meeting transcripts; answer titles/dates are copied from Supabase rows.\n\n**Next Step**\n- Use this same source-specific check as a regression gate so generic source questions cannot fall back to tool discovery only."
+  },
+  "expectedToolNames": [
+    "getMeetingsByDate",
+    "getActionItemsAndInsights",
+    "getMeetingIntelligence",
+    "searchMeetingsByTopic"
+  ],
+  "expectedToolFamilies": [
+    "meetings",
+    "actions"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:41:43.315Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Searching Recent meeting transcripts in Supabase RAG",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:41:44.925Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-meeting-insights",
+      "data": {
+        "widget": {
+          "type": "meeting_insights",
+          "id": "meeting-insights",
+          "title": "Recent meeting insights",
+          "subtitle": "Decisions, promises, risks, questions, and suggested follow-ups from meeting retrieval.",
+          "dateLabel": "Last 60 days",
+          "projectId": 31,
+          "projectName": null,
+          "metrics": {
+            "meetingCount": 10,
+            "decisionCount": 29,
+            "actionItemCount": 30,
+            "riskCount": 30,
+            "unresolvedQuestionCount": 30
+          },
+          "decisions": [
+            {
+              "id": "01KQYS0S95N8FJQQD1C00V1F4M-0",
+              "title": "- **Joe confirmed near completion of air compressor piping with only hose replacements outstanding** (03:40) - Incorrect half-inch hoses on ",
+              "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "sourceTitle": "Uniqlo+Alleato Group",
+              "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S95N8FJQQD1C00V1F4M-1",
+              "title": "- Kebba confirmed this information will be sent to all relevant teams.",
+              "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "sourceTitle": "Uniqlo+Alleato Group",
+              "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-0",
+              "title": "- **Warehouse Traffic Flow:** Forklift paths and office adjacency adjustments confirmed to optimize material handling and access efficiency.",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-1",
+              "title": "Finally, the team confirmed manual shelving for the relay pick area and discussed the layout of travel lanes to optimize material handling.",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-2",
+              "title": "🚚 Warehouse Traffic Flow: Forklift paths and office adjacency adjustments confirmed to optimize material handling and access efficiency.",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRBNYM8VEH65W9XTPYDACXYC-0",
+              "title": "Confirmed consultation with Uniqlo’s loss prevention team.",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRBNYM8VEH65W9XTPYDACXYC-1",
+              "title": "Confirmed power drop and air compressor drain locations to be provided by Exotec and coordinated with building design.",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRBNYM8VEH65W9XTPYDACXYC-2",
+              "title": "## Notes ## **Project Scheduling and Deadlines** The team agreed to a tight schedule with critical deadlines focused on accelerating constru",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRH0BZF3H520AKEXJGZERA76-0",
+              "title": "- **Customer Engagement Strategy** aims to present design options with clear risk communication to facilitate decision-making by end of the ",
+              "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+              "sourceTitle": "Superior Bev Sprinkler Review",
+              "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRH0BZF3H520AKEXJGZERA76-1",
+              "title": "This decision was influenced by expert feedback and existing measurements, leading to the understanding that a two-level design safely meets",
+              "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+              "sourceTitle": "Superior Bev Sprinkler Review",
+              "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRH0BZF3H520AKEXJGZERA76-2",
+              "title": "🤝 Customer Engagement Strategy: aims to present design options with clear risk communication to facilitate decision-making by end of the we",
+              "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+              "sourceTitle": "Superior Bev Sprinkler Review",
+              "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-0",
+              "title": "Confirmed ability to import or create budget lines and cost codes manually.",
+              "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+              "sourceTitle": "Alleato PM Software",
+              "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-1",
+              "title": "- Megan Harrison confirmed this import functionality exists but requires some bug fixes and UI improvements.",
+              "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+              "sourceTitle": "Alleato PM Software",
+              "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-2",
+              "title": "- This approach minimizes rework and ensures budgets reflect approved estimates precisely.",
+              "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+              "sourceTitle": "Alleato PM Software",
+              "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRET7P70FNJYK2C7HJH8GDX2-0",
+              "title": "- **Design Team Collaboration Confirmed:** Alleatogroup continues as design partner; follow-up meeting scheduled to finalize outstanding det",
+              "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+              "sourceTitle": "Union Collective (Architectural and Civil Design Approval)",
+              "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRET7P70FNJYK2C7HJH8GDX2-1",
+              "title": "Alleatogroup interior design deposit approved to proceed.",
+              "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+              "sourceTitle": "Union Collective (Architectural and Civil Design Approval)",
+              "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRET7P70FNJYK2C7HJH8GDX2-2",
+              "title": "## Notes ## **Interior Design and Layout Adjustments** The team agreed on a refined interior layout with strategic repositioning of key elem",
+              "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+              "sourceTitle": "Union Collective (Architectural and Civil Design Approval)",
+              "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-0",
+              "title": "## Notes ## **Design and Drawing Finalization** The team agreed to finalize and circulate all key design drawings by Friday to enable timely",
+              "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+              "sourceTitle": "Hillsdale Holdings // Alleato Weekly",
+              "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-1",
+              "title": "- **Commitment to submit final review sets by Friday** ensures all disciplines except structural are on track, with structural confirmation ",
+              "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+              "sourceTitle": "Hillsdale Holdings // Alleato Weekly",
+              "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-2",
+              "title": "- **Managing chemical risks via zoning and isolation is critical to limit fire and corrosion damage** (14:34) - Mark explained that TCCA and",
+              "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+              "sourceTitle": "Hillsdale Holdings // Alleato Weekly",
+              "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRGK0PYXTZBAB9JNFN0W27K9-0",
+              "title": "🔗 **Access and Follow-up Coordination** (17:05 - 17:32) Jesse confirmed sending Scribe access to Parker.",
+              "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+              "sourceTitle": "Review Superintendent SOP",
+              "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRGK0PYXTZBAB9JNFN0W27K9-1",
+              "title": "✅ **Closing Remarks** (17:32 - 17:52) Appreciation expressed and next steps confirmed.",
+              "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+              "sourceTitle": "Review Superintendent SOP",
+              "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRGK0PYXTZBAB9JNFN0W27K9-2",
+              "title": "## Notes ## **Training and SOP Enhancement** The team decided to use Scribe to create video tutorials for improving training and standard op",
+              "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+              "sourceTitle": "Review Superintendent SOP",
+              "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRF1SC2AACV3JK64NPZ6PFTT-0",
+              "title": "- Hunter and Enzo confirmed Victor will continue calls until departure, expected possibly tomorrow.",
+              "detail": "# Estimating Meeting | Enzo A.",
+              "sourceTitle": "Estimating Meeting | Enzo A. & Jake R.",
+              "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRF1SC2AACV3JK64NPZ6PFTT-1",
+              "title": "[question] [08:14] **Enzo Andrade**: Did you make a decision?",
+              "detail": "# Estimating Meeting | Enzo A.",
+              "sourceTitle": "Estimating Meeting | Enzo A. & Jake R.",
+              "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRF1SC2AACV3JK64NPZ6PFTT-2",
+              "title": "[17:40] **Enzo Andrade**: And also confirmed that you have this project.",
+              "detail": "# Estimating Meeting | Enzo A.",
+              "sourceTitle": "Estimating Meeting | Enzo A. & Jake R.",
+              "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-0",
+              "title": "## Notes ## **Project Progress and Coordination** The team confirmed steady progress on racking and pipe installation despite some delays an",
+              "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+              "sourceTitle": "Uniqlo & GPC Huddle",
+              "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-1",
+              "title": "- **Vertical pipes for Siva expected early next week** enables planning for immediate vertical installation after mains (08:48) - Kebba Mass",
+              "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+              "sourceTitle": "Uniqlo & GPC Huddle",
+              "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-2",
+              "title": "- TJ Graves confirmed he has the contact info and will provide it once on site.",
+              "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+              "sourceTitle": "Uniqlo & GPC Huddle",
+              "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+              "confidence": "medium"
+            }
+          ],
+          "promises": [
+            {
+              "id": "01KQYS0S95N8FJQQD1C00V1F4M-0",
+              "title": "- **Flexible connection support issue under review** following Erin’s email about roof-rack flexibility (07:10) - Brian and Kebba clarified ",
+              "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "sourceTitle": "Uniqlo+Alleato Group",
+              "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S95N8FJQQD1C00V1F4M-1",
+              "title": "- Kebba will follow up with Erin to clarify if structural support changes are needed and send official confirmation.",
+              "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "sourceTitle": "Uniqlo+Alleato Group",
+              "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S95N8FJQQD1C00V1F4M-2",
+              "title": "- **Team members aware of health-related absences but maintaining steady progress** (01:24) - Ahmed out sick but no impact on project due to",
+              "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "sourceTitle": "Uniqlo+Alleato Group",
+              "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-0",
+              "title": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organize",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-1",
+              "title": "## Short Summary The team scheduled a follow-up call for Friday at 1:30 PM Eastern to address critical flooring and racking topics, involvin",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-2",
+              "title": "## Gist The meeting aimed to schedule a follow-up call to discuss flooring and racking topics involving key stakeholders.",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRBNYM8VEH65W9XTPYDACXYC-0",
+              "title": "## Shorthand Bullet 📅 **Meeting Scheduling and Attendees** (00:00 - 08:00) Scheduled follow-up technical meeting for Friday 1:30 PM Eastern",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRBNYM8VEH65W9XTPYDACXYC-1",
+              "title": "Planned follow-up dedicated security meeting to discuss locker area and security flow in detail.",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRBNYM8VEH65W9XTPYDACXYC-2",
+              "title": "Expressed desire to compress lead times especially for racking system installation due to peak business impact.",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRH0BZF3H520AKEXJGZERA76-0",
+              "title": "## Shorthand Bullet 🔥 **Fire Suppression System Requirements** (00:00 - 18:44) Clarification sought due to conflicting expert and vendor fe",
+              "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+              "sourceTitle": "Superior Bev Sprinkler Review",
+              "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRH0BZF3H520AKEXJGZERA76-1",
+              "title": "Proposal for Brandon Clymer to join follow-up call with Superior Beverage to explain design and risks.",
+              "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+              "sourceTitle": "Superior Bev Sprinkler Review",
+              "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRH0BZF3H520AKEXJGZERA76-2",
+              "title": "- If smaller K16.8 heads were present, a different design would be necessary due to height limitations.",
+              "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+              "sourceTitle": "Superior Bev Sprinkler Review",
+              "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-0",
+              "title": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Emai",
+              "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+              "sourceTitle": "Alleato PM Software",
+              "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-1",
+              "title": "## Short Summary The team discussed strategies to enhance budget creation by integrating owner contract data and utilizing an import feature",
+              "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+              "sourceTitle": "Alleato PM Software",
+              "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-2",
+              "title": "## Bullet Gist 📊 Budget Process Improvement: Integrate owner contract data into budget creation to enhance accuracy and reduce manual error",
+              "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+              "sourceTitle": "Alleato PM Software",
+              "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRET7P70FNJYK2C7HJH8GDX2-0",
+              "title": "- **Design Team Collaboration Confirmed:** Alleatogroup continues as design partner; follow-up meeting scheduled to finalize outstanding det",
+              "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+              "sourceTitle": "Union Collective (Architectural and Civil Design Approval)",
+              "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRET7P70FNJYK2C7HJH8GDX2-1",
+              "title": "Plan to send detailed site and civil documents to team; follow-up meeting scheduled.",
+              "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+              "sourceTitle": "Union Collective (Architectural and Civil Design Approval)",
+              "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRET7P70FNJYK2C7HJH8GDX2-2",
+              "title": "- The design must accommodate this volume to prevent bottlenecks.",
+              "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+              "sourceTitle": "Union Collective (Architectural and Civil Design Approval)",
+              "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-0",
+              "title": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogrou",
+              "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+              "sourceTitle": "Hillsdale Holdings // Alleato Weekly",
+              "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-1",
+              "title": "## Short Summary The team focused on finalizing and circulating key design drawings by Friday, with structural confirmations pending.",
+              "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+              "sourceTitle": "Hillsdale Holdings // Alleato Weekly",
+              "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-2",
+              "title": "## Bullet Gist 📅 Design Drawings Submission: Final review sets will be circulated by Friday, excluding structural confirmation pending toda",
+              "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+              "sourceTitle": "Hillsdale Holdings // Alleato Weekly",
+              "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRGK0PYXTZBAB9JNFN0W27K9-0",
+              "title": "- **Bidding Enhancements:** Access to Building Connected allows for tracking bids and improving follow-up with subcontractors for timely upd",
+              "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+              "sourceTitle": "Review Superintendent SOP",
+              "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRGK0PYXTZBAB9JNFN0W27K9-1",
+              "title": "📝 Bidding Enhancements: Access to Building Connected allows for tracking bids and improving follow-up with subcontractors for timely update",
+              "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+              "sourceTitle": "Review Superintendent SOP",
+              "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRGK0PYXTZBAB9JNFN0W27K9-2",
+              "title": "🔗 **Access and Follow-up Coordination** (17:05 - 17:32) Jesse confirmed sending Scribe access to Parker.",
+              "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+              "sourceTitle": "Review Superintendent SOP",
+              "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRF1SC2AACV3JK64NPZ6PFTT-0",
+              "title": "**Date:** 2026-05-13T13:00:00+00:00 **Duration:** 29 minutes **Organizer Email:** jrichardson@alleatogroup.com **Host Email:** eandrade@alle",
+              "detail": "# Estimating Meeting | Enzo A.",
+              "sourceTitle": "Estimating Meeting | Enzo A. & Jake R.",
+              "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRF1SC2AACV3JK64NPZ6PFTT-1",
+              "title": "- **Communication and Follow-Up:** Emphasis on persistent follow-ups with hesitant vendors; detailed notes on calls are crucial for tracking",
+              "detail": "# Estimating Meeting | Enzo A.",
+              "sourceTitle": "Estimating Meeting | Enzo A. & Jake R.",
+              "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRF1SC2AACV3JK64NPZ6PFTT-2",
+              "title": "## Gist The meeting focused on securing bids for a project with a tight deadline of April 18, emphasizing vendor engagement and follow-up st",
+              "detail": "# Estimating Meeting | Enzo A.",
+              "sourceTitle": "Estimating Meeting | Enzo A. & Jake R.",
+              "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-0",
+              "title": "- **Communication Gaps:** Remote teams unresponsive; escalation plans for follow-up calls initiated to ensure timely coordination.",
+              "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+              "sourceTitle": "Uniqlo & GPC Huddle",
+              "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-1",
+              "title": "📞 Communication Gaps: Remote teams unresponsive; escalation plans for follow-up calls initiated to ensure timely coordination.",
+              "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+              "sourceTitle": "Uniqlo & GPC Huddle",
+              "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-2",
+              "title": "Racking work is paused due to access permit delays but prep and painting can continue over the weekend.",
+              "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+              "sourceTitle": "Uniqlo & GPC Huddle",
+              "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+              "confidence": "medium"
+            }
+          ],
+          "risks": [
+            {
+              "id": "01KQYS0S95N8FJQQD1C00V1F4M-0",
+              "title": "- **Change Order Pending Approval:** Approval needed for chains and floor taping to proceed; critical for project timeline.",
+              "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "sourceTitle": "Uniqlo+Alleato Group",
+              "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S95N8FJQQD1C00V1F4M-1",
+              "title": "📝 Change Order Pending Approval: Approval needed for chains and floor taping to proceed; critical for project timeline.",
+              "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "sourceTitle": "Uniqlo+Alleato Group",
+              "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S95N8FJQQD1C00V1F4M-2",
+              "title": "- **Flexible connection support issue under review** following Erin’s email about roof-rack flexibility (07:10) - Brian and Kebba clarified ",
+              "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "sourceTitle": "Uniqlo+Alleato Group",
+              "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-0",
+              "title": "- **Flooring Specifications Needed:** Lidl will provide details on slab thickness, joint fillers, and other critical info during the call.",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-1",
+              "title": "## Short Summary The team scheduled a follow-up call for Friday at 1:30 PM Eastern to address critical flooring and racking topics, involvin",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-2",
+              "title": "📏 Flooring Specifications Needed: Lidl will provide details on slab thickness, joint fillers, and other critical info during the call.",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRBNYM8VEH65W9XTPYDACXYC-0",
+              "title": "## Short Summary The meeting addressed key project scheduling and architectural design decisions, with a tight schedule highlighted by criti",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRBNYM8VEH65W9XTPYDACXYC-1",
+              "title": "## Gist The meeting focused on project scheduling and design decisions, emphasizing critical deadlines and operational efficiency.",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRBNYM8VEH65W9XTPYDACXYC-2",
+              "title": "## Notes ## **Project Scheduling and Deadlines** The team agreed to a tight schedule with critical deadlines focused on accelerating constru",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRH0BZF3H520AKEXJGZERA76-0",
+              "title": "- **Customer Engagement Strategy** aims to present design options with clear risk communication to facilitate decision-making by end of the ",
+              "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+              "sourceTitle": "Superior Bev Sprinkler Review",
+              "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRH0BZF3H520AKEXJGZERA76-1",
+              "title": "🤝 Customer Engagement Strategy: aims to present design options with clear risk communication to facilitate decision-making by end of the we",
+              "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+              "sourceTitle": "Superior Bev Sprinkler Review",
+              "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRH0BZF3H520AKEXJGZERA76-2",
+              "title": "Development of a form to capture critical system parameters for accurate future pricing and design.",
+              "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+              "sourceTitle": "Superior Bev Sprinkler Review",
+              "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-0",
+              "title": "- **Feature Enhancements:** Implement automated screenshot uploads for easier issue reporting and enhance visibility in change event screens",
+              "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+              "sourceTitle": "Alleato PM Software",
+              "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-1",
+              "title": "✨ Feature Enhancements: Implement automated screenshot uploads for easier issue reporting and enhance visibility in change event screens.",
+              "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+              "sourceTitle": "Alleato PM Software",
+              "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-2",
+              "title": "## Shorthand Bullet 🛠️ **Feedback Tools and Bug Tracking** (01:00 - 02:00) Discussed usage of feedback tools including screenshot uploads a",
+              "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+              "sourceTitle": "Alleato PM Software",
+              "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRET7P70FNJYK2C7HJH8GDX2-0",
+              "title": "- Andrew Cannon and others preferred to delay final decision to allow creative solutions.",
+              "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+              "sourceTitle": "Union Collective (Architectural and Civil Design Approval)",
+              "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRET7P70FNJYK2C7HJH8GDX2-1",
+              "title": "[11:38] **Mike Ewers**: This is not going to solve the closet issue, but like, to solve for this first before we.",
+              "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+              "sourceTitle": "Union Collective (Architectural and Civil Design Approval)",
+              "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRET7P70FNJYK2C7HJH8GDX2-2",
+              "title": "[metric] [12:19] **Douglas Franklin**: Yeah, the problem.",
+              "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+              "sourceTitle": "Union Collective (Architectural and Civil Design Approval)",
+              "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-0",
+              "title": "- **Risk Management Strategy:** Ensuring adequate fire barriers and isolation of chemical risk areas is essential for compliance and safety.",
+              "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+              "sourceTitle": "Hillsdale Holdings // Alleato Weekly",
+              "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-1",
+              "title": "Lastly, discussions emphasized the importance of adhering to safety regulations and establishing effective risk management strategies, parti",
+              "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+              "sourceTitle": "Hillsdale Holdings // Alleato Weekly",
+              "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-2",
+              "title": "## Gist The meeting aimed to finalize design drawings and address critical issues in sprinkler and electrical systems to enhance safety and ",
+              "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+              "sourceTitle": "Hillsdale Holdings // Alleato Weekly",
+              "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRGK0PYXTZBAB9JNFN0W27K9-0",
+              "title": "- **Daily Reporting Focus:** Emphasis on detailed daily logs to improve documentation accuracy on critical tasks.",
+              "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+              "sourceTitle": "Review Superintendent SOP",
+              "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRGK0PYXTZBAB9JNFN0W27K9-1",
+              "title": "📋 Daily Reporting Focus: Emphasis on detailed daily logs to improve documentation accuracy on critical tasks.",
+              "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+              "sourceTitle": "Review Superintendent SOP",
+              "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRGK0PYXTZBAB9JNFN0W27K9-2",
+              "title": "Noted missing reports and scheduling challenges including weekend coverage.",
+              "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+              "sourceTitle": "Review Superintendent SOP",
+              "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRF1SC2AACV3JK64NPZ6PFTT-0",
+              "title": "Encouraged full use of internship to gain comprehensive construction management exposure.",
+              "detail": "# Estimating Meeting | Enzo A.",
+              "sourceTitle": "Estimating Meeting | Enzo A. & Jake R.",
+              "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRF1SC2AACV3JK64NPZ6PFTT-1",
+              "title": "- Maintaining call momentum through Monday is critical due to the tight deadline.",
+              "detail": "# Estimating Meeting | Enzo A.",
+              "sourceTitle": "Estimating Meeting | Enzo A. & Jake R.",
+              "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRF1SC2AACV3JK64NPZ6PFTT-2",
+              "title": "- Follow-up calls are critical for subcontractors who promised to respond soon.",
+              "detail": "# Estimating Meeting | Enzo A.",
+              "sourceTitle": "Estimating Meeting | Enzo A. & Jake R.",
+              "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-0",
+              "title": "- **Material Delivery Delays:** Awaiting truck deliveries; preparations ongoing but risks identified for racking delays if flu line material",
+              "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+              "sourceTitle": "Uniqlo & GPC Huddle",
+              "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-1",
+              "title": "- **Safety Concerns:** Caleb’s injury poses workforce risk, but adjusted tasks will allow him to continue working while recovering.",
+              "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+              "sourceTitle": "Uniqlo & GPC Huddle",
+              "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-2",
+              "title": "- **Documentation Practices:** Gaps in daily reports and photo documentation noted; plans to standardize and catch up on missing data.",
+              "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+              "sourceTitle": "Uniqlo & GPC Huddle",
+              "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+              "confidence": "medium"
+            }
+          ],
+          "unresolvedQuestions": [
+            {
+              "id": "01KQYS0S95N8FJQQD1C00V1F4M-0",
+              "title": "- **Air Pressure and Hydro Tests:** Tests on pipes this week; successful tests will confirm project readiness for fence removal.",
+              "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "sourceTitle": "Uniqlo+Alleato Group",
+              "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S95N8FJQQD1C00V1F4M-1",
+              "title": "## Short Summary The meeting highlighted the successful completion of the fire sprinkler pipe replacement, with air pressure and hydro tests",
+              "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "sourceTitle": "Uniqlo+Alleato Group",
+              "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S95N8FJQQD1C00V1F4M-2",
+              "title": "⚙️ Air Pressure and Hydro Tests: Tests on pipes this week; successful tests will confirm project readiness for fence removal.",
+              "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "sourceTitle": "Uniqlo+Alleato Group",
+              "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-0",
+              "title": "Preliminary main office layout discussed with wet areas relocated, reception and waiting areas defined, break room adjacent to reception, ph",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-1",
+              "title": "- **Reception and Meeting Rooms Designed for Visitor Management** (17:50) - Reception is near the main entrance with a waiting area to strea",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-2",
+              "title": "## Keywords - Flooring - ASRS - Office Layout - Racking - Warehouse Design - Meeting Scheduling ## Action Items - Confirm availability for F",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRBNYM8VEH65W9XTPYDACXYC-0",
+              "title": "- John Min to confirm operational needs and finalize restroom count and layout.",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRBNYM8VEH65W9XTPYDACXYC-1",
+              "title": "- Brian Hammond to confirm exact electrical capacity requirements with Uniqlo for final design.",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRBNYM8VEH65W9XTPYDACXYC-2",
+              "title": "## Keywords - Uniqlo - ASRS - fire suppression - office layout - security design - project scheduling ## Action Items - Clean up and distrib",
+              "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRH0BZF3H520AKEXJGZERA76-0",
+              "title": "- Brandon emphasized the need to confirm system types early to avoid pricing and design errors.",
+              "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+              "sourceTitle": "Superior Bev Sprinkler Review",
+              "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRH0BZF3H520AKEXJGZERA76-1",
+              "title": "- **Assumptions About Overhead Facility Sprinklers** need verification to confirm system coverage (06:10) - The design assumes the facility ",
+              "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+              "sourceTitle": "Superior Bev Sprinkler Review",
+              "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRH0BZF3H520AKEXJGZERA76-2",
+              "title": "[question] [00:18] **Brandon Clymer**: Doing well.",
+              "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+              "sourceTitle": "Superior Bev Sprinkler Review",
+              "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-0",
+              "title": "- This helps users verify financial data quickly.",
+              "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+              "sourceTitle": "Alleato PM Software",
+              "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-1",
+              "title": "- Jesse will verify post-deployment.",
+              "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+              "sourceTitle": "Alleato PM Software",
+              "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-2",
+              "title": "- **Jesse planned to follow up with Megan post-call to check on fixes and deployment status** (52:08) - They agreed on a 10-minute check-in ",
+              "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+              "sourceTitle": "Alleato PM Software",
+              "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRET7P70FNJYK2C7HJH8GDX2-0",
+              "title": "## Keywords - Interior layout - bar design - restroom storage - elevator placement - site plan - utility management ## Action Items - Send s",
+              "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+              "sourceTitle": "Union Collective (Architectural and Civil Design Approval)",
+              "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRET7P70FNJYK2C7HJH8GDX2-1",
+              "title": "[question] [00:03] **Andrew Cannon**: Bobby, are you a lebron hater?",
+              "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+              "sourceTitle": "Union Collective (Architectural and Civil Design Approval)",
+              "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRET7P70FNJYK2C7HJH8GDX2-2",
+              "title": "[question] [00:08] **Robert Jemison**: I hate lebron.",
+              "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+              "sourceTitle": "Union Collective (Architectural and Civil Design Approval)",
+              "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-0",
+              "title": "- **Proposal to schedule review meetings immediately after receiving preliminary drawings to ensure early issue identification** (17:58) - J",
+              "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+              "sourceTitle": "Hillsdale Holdings // Alleato Weekly",
+              "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-1",
+              "title": "- **Managing chemical risks via zoning and isolation is critical to limit fire and corrosion damage** (14:34) - Mark explained that TCCA and",
+              "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+              "sourceTitle": "Hillsdale Holdings // Alleato Weekly",
+              "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-2",
+              "title": "[00:42] **Bob Wright**: The only one in question right now is structural.",
+              "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+              "sourceTitle": "Hillsdale Holdings // Alleato Weekly",
+              "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRGK0PYXTZBAB9JNFN0W27K9-0",
+              "title": "- **Parker is gaining access to Building Connected to track bids and follow up on outstanding proposals** (17:15) - Bob is assisting with ac",
+              "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+              "sourceTitle": "Review Superintendent SOP",
+              "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRGK0PYXTZBAB9JNFN0W27K9-1",
+              "title": "[question] [03:54] **Jesse Dawson**: I can hear you now.",
+              "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+              "sourceTitle": "Review Superintendent SOP",
+              "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRGK0PYXTZBAB9JNFN0W27K9-2",
+              "title": "[question] [04:27] **Parker Hollingsworth**: I've heard of it.",
+              "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+              "sourceTitle": "Review Superintendent SOP",
+              "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRF1SC2AACV3JK64NPZ6PFTT-0",
+              "title": "- Making multiple calls to the same subcontractor to confirm their intent is encouraged.",
+              "detail": "# Estimating Meeting | Enzo A.",
+              "sourceTitle": "Estimating Meeting | Enzo A. & Jake R.",
+              "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRF1SC2AACV3JK64NPZ6PFTT-1",
+              "title": "[question] [01:47] **Enzo Andrade**: We got done with concrete, masonry, structural steel, roofing, doors and frames, flooring is done.",
+              "detail": "# Estimating Meeting | Enzo A.",
+              "sourceTitle": "Estimating Meeting | Enzo A. & Jake R.",
+              "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KRF1SC2AACV3JK64NPZ6PFTT-2",
+              "title": "[question] [03:51] **Enzo Andrade**: Yeah.",
+              "detail": "# Estimating Meeting | Enzo A.",
+              "sourceTitle": "Estimating Meeting | Enzo A. & Jake R.",
+              "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-0",
+              "title": "Emphasis on showing start and end times to verify test durations.",
+              "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+              "sourceTitle": "Uniqlo & GPC Huddle",
+              "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-1",
+              "title": "## Keywords - Racking progress - vertical pipes - delivery delays - pipe installation - safety incidents - documentation - testing procedure",
+              "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+              "sourceTitle": "Uniqlo & GPC Huddle",
+              "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+              "confidence": "medium"
+            },
+            {
+              "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-2",
+              "title": "[00:03] **Kebba Mass**: I can confirm that.",
+              "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+              "sourceTitle": "Uniqlo & GPC Huddle",
+              "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+              "confidence": "medium"
+            }
+          ],
+          "suggestedTasks": [
+            {
+              "id": "meeting-task-1",
+              "title": "- **Flexible connection support issue under review** following Erin’s email about roof-rack flexibility (07:10) - Brian and Kebba clarified ",
+              "description": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "projectId": 31,
+              "projectName": null,
+              "ownerName": "Project Manager",
+              "priority": "high",
+              "sourceType": "meeting",
+              "sourceTitle": "Uniqlo+Alleato Group",
+              "href": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "recommendedAction": "create_task",
+              "confidence": "medium"
+            },
+            {
+              "id": "meeting-task-2",
+              "title": "- Kebba will follow up with Erin to clarify if structural support changes are needed and send official confirmation.",
+              "description": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "projectId": 31,
+              "projectName": null,
+              "ownerName": "Project Manager",
+              "priority": "high",
+              "sourceType": "meeting",
+              "sourceTitle": "Uniqlo+Alleato Group",
+              "href": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "recommendedAction": "create_task",
+              "confidence": "medium"
+            },
+            {
+              "id": "meeting-task-3",
+              "title": "- **Team members aware of health-related absences but maintaining steady progress** (01:24) - Ahmed out sick but no impact on project due to",
+              "description": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "projectId": 31,
+              "projectName": null,
+              "ownerName": "Project Manager",
+              "priority": "high",
+              "sourceType": "meeting",
+              "sourceTitle": "Uniqlo+Alleato Group",
+              "href": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "recommendedAction": "create_task",
+              "confidence": "medium"
+            },
+            {
+              "id": "meeting-task-4",
+              "title": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organize",
+              "description": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "projectId": null,
+              "projectName": null,
+              "ownerName": "Project Manager",
+              "priority": "high",
+              "sourceType": "meeting",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "href": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "recommendedAction": "create_task",
+              "confidence": "medium"
+            },
+            {
+              "id": "meeting-task-5",
+              "title": "## Short Summary The team scheduled a follow-up call for Friday at 1:30 PM Eastern to address critical flooring and racking topics, involvin",
+              "description": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "projectId": null,
+              "projectName": null,
+              "ownerName": "Project Manager",
+              "priority": "high",
+              "sourceType": "meeting",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "href": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "recommendedAction": "create_task",
+              "confidence": "medium"
+            },
+            {
+              "id": "meeting-task-6",
+              "title": "## Gist The meeting aimed to schedule a follow-up call to discuss flooring and racking topics involving key stakeholders.",
+              "description": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "projectId": 1009,
+              "projectName": null,
+              "ownerName": "Project Manager",
+              "priority": "high",
+              "sourceType": "meeting",
+              "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "href": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "recommendedAction": "create_task",
+              "confidence": "medium"
+            }
+          ],
+          "sources": [
+            {
+              "id": "meeting-source-1",
+              "title": "Uniqlo+Alleato Group",
+              "sourceType": "meeting",
+              "date": "2026-05-13T21:30:00+00:00",
+              "snippet": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+              "href": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+              "confidence": "medium"
+            },
+            {
+              "id": "meeting-source-2",
+              "title": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceType": "meeting",
+              "date": "2026-05-13T19:00:54+00:00",
+              "snippet": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+              "href": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "confidence": "medium"
+            },
+            {
+              "id": "meeting-source-3",
+              "title": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "sourceType": "meeting",
+              "date": "2026-05-13T19:00:00+00:00",
+              "snippet": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+              "href": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+              "confidence": "medium"
+            },
+            {
+              "id": "meeting-source-4",
+              "title": "Superior Bev Sprinkler Review",
+              "sourceType": "meeting",
+              "date": "2026-05-13T17:30:00+00:00",
+              "snippet": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+              "href": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+              "confidence": "medium"
+            },
+            {
+              "id": "meeting-source-5",
+              "title": "Alleato PM Software",
+              "sourceType": "meeting",
+              "date": "2026-05-13T17:15:00+00:00",
+              "snippet": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+              "href": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+              "confidence": "medium"
+            },
+            {
+              "id": "meeting-source-6",
+              "title": "Union Collective (Architectural and Civil Design Approval)",
+              "sourceType": "meeting",
+              "date": "2026-05-13T15:30:00+00:00",
+              "snippet": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+              "href": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+              "confidence": "medium"
+            },
+            {
+              "id": "meeting-source-7",
+              "title": "Hillsdale Holdings // Alleato Weekly",
+              "sourceType": "meeting",
+              "date": "2026-05-13T15:00:00+00:00",
+              "snippet": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+              "href": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+              "confidence": "medium"
+            },
+            {
+              "id": "meeting-source-8",
+              "title": "Review Superintendent SOP",
+              "sourceType": "meeting",
+              "date": "2026-05-13T13:00:00+00:00",
+              "snippet": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+              "href": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+              "confidence": "medium"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "synthesis",
+        "message": "Writing sourced Recent meeting transcripts answer",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:41:46.335Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-source-specific-rag"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Recent Meetings**\n\n1. **Uniqlo+Alleato Group** — 2026-05-13\n   # Uniqlo+Alleato Group "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "mcalcetero@alleatogroup.com,aelkarrimy@tpgarchitecture.com,bclymer@alleatogroup.com,jdawso"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "n@alleatogroup.... [Source: 01KQYS0S95N8FJQQD1C00V1F4M]\n2. **FW: Uniqlo/Majestic - Chino "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "CA Warehouse - Weekly TI Scope Meeting** — 2026-05-13\n   # FW: Uniqlo/Majestic - Chino CA "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "minutes **Organizer Email:** bclymer@alleatogroup.com **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "bclymer@alleatogroup.com **Fireflies Link:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "https://app.fireflies.ai/view/01KRHBD8KNN3W6CC0CCD2EN1NS **Is... [Source: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "01KRHBD8KNN3W6CC0CCD2EN1NS]\n3. **FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Scope Meeting** — 2026-05-13\n   # FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Email:** bclymer@alleatogroup.com **Host Email:** ekonjoyan@majesticrealty.com "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Participants:** ekonjoyan@majesticrealty.com,bclymer@alleatogroup.com,kmass@... [Source: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "01KRBNYM8VEH65W9XTPYDACXYC]\n4. **Superior Bev Sprinkler Review** — 2026-05-13\n   # "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Participants:** connor.clark@hy-tek.com,dave.willis@hy-tek.com,ronnie.mitchell@hy-tek.co"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "m,bclymer@alleatogroup.com,joe.... [Source: 01KRH0BZF3H520AKEXJGZERA76]\n5. **Alleato PM "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Software** — 2026-05-13\n   # Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "bclymer@alleatogroup.com **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "mharrison@alleatogroup.com,megan@megankharrison.com,jdawson@alleatogroup.com,bclymer@allea"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "togroup.com, mharrison... [Source: 01KRFGCG4XJHN6Q2H3DQ5FDYB9]\n6. **Union Collective "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "(Architectural and Civil Design Approval)** — 2026-05-13\n   # Union Collective "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "(Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "acannon@alleatogroup.com **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "acannon@alleatogroup.com,mewers@medellasprings.com,dfranklin@alleatogroup... [Source: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "01KRET7P70FNJYK2C7HJH8GDX2]\n7. **Hillsdale Holdings // Alleato Weekly** — 2026-05-13\n   # "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "jdawson@alleatogroup.com **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "bclymer@alleatogroup.com,gcloud@alleatogroup.com,mferderer@ferdimation.com,jdawson@alleato"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "group... [Source: 01KQYS0S93Z9KXD4VSG2YM8VB3]\n8. **Review Superintendent SOP** — "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "2026-05-13\n   # Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "jdawson@alleatogroup.com **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "phollingsworth@alleatogroup.com,fireflies@alleatogroup.com,jdawson@alleatogroup.com, "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "phollingsworth@alleat... [Source: 01KRGK0PYXTZBAB9JNFN0W27K9]\n9. **Estimating Meeting | "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Enzo A. & Jake R.** — 2026-05-13\n   # Estimating Meeting | Enzo A. & Jake R. **Date:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "2026-05-13T13:00:00+00:00 **Duration:** 29 minutes **Organizer Email:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "jrichardson@alleatogroup.com **Host Email:** eandrade@alleatogroup.com **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "eandrade@alleatogroup.com,jrichardson@alleatogroup.com,hrutledge@alleatogroup.com,varviz..."
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": " [Source: 01KRF1SC2AACV3JK64NPZ6PFTT]\n10. **Uniqlo & GPC Huddle** — 2026-05-13\n   # Uniqlo "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "& GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "kmass@alleatogroup.com,mparsons@alleatogroup.com,jdawson@alleatogroup.com,bclymer@alleatog"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "roup.com,fireflies@alleato... [Source: 01KQYFRYD72Y18B5ZCJKQ30RQV]\n\n**Observability**\n- "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Source checked: Recent meeting transcripts in Supabase "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "document_metadata/document_chunks-backed RAG index.\n- Retrieved 10 row(s) from Recent "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "meeting transcripts; answer titles/dates are copied from Supabase rows.\n\n**Next Step**\n- "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Use this same source-specific check as a regression gate so generic source questions "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "cannot fall back to tool discovery only."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-source-specific-rag"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Recent meeting transcripts check complete",
+        "status": "success",
+        "timestamp": "2026-05-14T13:41:47.289Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": null,
+    "data_parts": [
+      {
+        "id": "assistant-widget-meeting-insights",
+        "data": {
+          "widget": {
+            "id": "meeting-insights",
+            "type": "meeting_insights",
+            "risks": [
+              {
+                "id": "01KQYS0S95N8FJQQD1C00V1F4M-0",
+                "title": "- **Change Order Pending Approval:** Approval needed for chains and floor taping to proceed; critical for project timeline.",
+                "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "sourceTitle": "Uniqlo+Alleato Group"
+              },
+              {
+                "id": "01KQYS0S95N8FJQQD1C00V1F4M-1",
+                "title": "📝 Change Order Pending Approval: Approval needed for chains and floor taping to proceed; critical for project timeline.",
+                "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "sourceTitle": "Uniqlo+Alleato Group"
+              },
+              {
+                "id": "01KQYS0S95N8FJQQD1C00V1F4M-2",
+                "title": "- **Flexible connection support issue under review** following Erin’s email about roof-rack flexibility (07:10) - Brian and Kebba clarified ",
+                "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "sourceTitle": "Uniqlo+Alleato Group"
+              },
+              {
+                "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-0",
+                "title": "- **Flooring Specifications Needed:** Lidl will provide details on slab thickness, joint fillers, and other critical info during the call.",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-1",
+                "title": "## Short Summary The team scheduled a follow-up call for Friday at 1:30 PM Eastern to address critical flooring and racking topics, involvin",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-2",
+                "title": "📏 Flooring Specifications Needed: Lidl will provide details on slab thickness, joint fillers, and other critical info during the call.",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRBNYM8VEH65W9XTPYDACXYC-0",
+                "title": "## Short Summary The meeting addressed key project scheduling and architectural design decisions, with a tight schedule highlighted by criti",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRBNYM8VEH65W9XTPYDACXYC-1",
+                "title": "## Gist The meeting focused on project scheduling and design decisions, emphasizing critical deadlines and operational efficiency.",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRBNYM8VEH65W9XTPYDACXYC-2",
+                "title": "## Notes ## **Project Scheduling and Deadlines** The team agreed to a tight schedule with critical deadlines focused on accelerating constru",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRH0BZF3H520AKEXJGZERA76-0",
+                "title": "- **Customer Engagement Strategy** aims to present design options with clear risk communication to facilitate decision-making by end of the ",
+                "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+                "sourceTitle": "Superior Bev Sprinkler Review"
+              },
+              {
+                "id": "01KRH0BZF3H520AKEXJGZERA76-1",
+                "title": "🤝 Customer Engagement Strategy: aims to present design options with clear risk communication to facilitate decision-making by end of the we",
+                "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+                "sourceTitle": "Superior Bev Sprinkler Review"
+              },
+              {
+                "id": "01KRH0BZF3H520AKEXJGZERA76-2",
+                "title": "Development of a form to capture critical system parameters for accurate future pricing and design.",
+                "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+                "sourceTitle": "Superior Bev Sprinkler Review"
+              },
+              {
+                "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-0",
+                "title": "- **Feature Enhancements:** Implement automated screenshot uploads for easier issue reporting and enhance visibility in change event screens",
+                "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+                "sourceTitle": "Alleato PM Software"
+              },
+              {
+                "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-1",
+                "title": "✨ Feature Enhancements: Implement automated screenshot uploads for easier issue reporting and enhance visibility in change event screens.",
+                "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+                "sourceTitle": "Alleato PM Software"
+              },
+              {
+                "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-2",
+                "title": "## Shorthand Bullet 🛠️ **Feedback Tools and Bug Tracking** (01:00 - 02:00) Discussed usage of feedback tools including screenshot uploads a",
+                "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+                "sourceTitle": "Alleato PM Software"
+              },
+              {
+                "id": "01KRET7P70FNJYK2C7HJH8GDX2-0",
+                "title": "- Andrew Cannon and others preferred to delay final decision to allow creative solutions.",
+                "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+                "confidence": "medium",
+                "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+                "sourceTitle": "Union Collective (Architectural and Civil Design Approval)"
+              },
+              {
+                "id": "01KRET7P70FNJYK2C7HJH8GDX2-1",
+                "title": "[11:38] **Mike Ewers**: This is not going to solve the closet issue, but like, to solve for this first before we.",
+                "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+                "confidence": "medium",
+                "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+                "sourceTitle": "Union Collective (Architectural and Civil Design Approval)"
+              },
+              {
+                "id": "01KRET7P70FNJYK2C7HJH8GDX2-2",
+                "title": "[metric] [12:19] **Douglas Franklin**: Yeah, the problem.",
+                "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+                "confidence": "medium",
+                "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+                "sourceTitle": "Union Collective (Architectural and Civil Design Approval)"
+              },
+              {
+                "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-0",
+                "title": "- **Risk Management Strategy:** Ensuring adequate fire barriers and isolation of chemical risk areas is essential for compliance and safety.",
+                "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+                "confidence": "medium",
+                "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+                "sourceTitle": "Hillsdale Holdings // Alleato Weekly"
+              },
+              {
+                "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-1",
+                "title": "Lastly, discussions emphasized the importance of adhering to safety regulations and establishing effective risk management strategies, parti",
+                "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+                "confidence": "medium",
+                "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+                "sourceTitle": "Hillsdale Holdings // Alleato Weekly"
+              },
+              {
+                "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-2",
+                "title": "## Gist The meeting aimed to finalize design drawings and address critical issues in sprinkler and electrical systems to enhance safety and ",
+                "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+                "confidence": "medium",
+                "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+                "sourceTitle": "Hillsdale Holdings // Alleato Weekly"
+              },
+              {
+                "id": "01KRGK0PYXTZBAB9JNFN0W27K9-0",
+                "title": "- **Daily Reporting Focus:** Emphasis on detailed daily logs to improve documentation accuracy on critical tasks.",
+                "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+                "sourceTitle": "Review Superintendent SOP"
+              },
+              {
+                "id": "01KRGK0PYXTZBAB9JNFN0W27K9-1",
+                "title": "📋 Daily Reporting Focus: Emphasis on detailed daily logs to improve documentation accuracy on critical tasks.",
+                "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+                "sourceTitle": "Review Superintendent SOP"
+              },
+              {
+                "id": "01KRGK0PYXTZBAB9JNFN0W27K9-2",
+                "title": "Noted missing reports and scheduling challenges including weekend coverage.",
+                "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+                "sourceTitle": "Review Superintendent SOP"
+              },
+              {
+                "id": "01KRF1SC2AACV3JK64NPZ6PFTT-0",
+                "title": "Encouraged full use of internship to gain comprehensive construction management exposure.",
+                "detail": "# Estimating Meeting | Enzo A.",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+                "sourceTitle": "Estimating Meeting | Enzo A. & Jake R."
+              },
+              {
+                "id": "01KRF1SC2AACV3JK64NPZ6PFTT-1",
+                "title": "- Maintaining call momentum through Monday is critical due to the tight deadline.",
+                "detail": "# Estimating Meeting | Enzo A.",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+                "sourceTitle": "Estimating Meeting | Enzo A. & Jake R."
+              },
+              {
+                "id": "01KRF1SC2AACV3JK64NPZ6PFTT-2",
+                "title": "- Follow-up calls are critical for subcontractors who promised to respond soon.",
+                "detail": "# Estimating Meeting | Enzo A.",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+                "sourceTitle": "Estimating Meeting | Enzo A. & Jake R."
+              },
+              {
+                "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-0",
+                "title": "- **Material Delivery Delays:** Awaiting truck deliveries; preparations ongoing but risks identified for racking delays if flu line material",
+                "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+                "sourceTitle": "Uniqlo & GPC Huddle"
+              },
+              {
+                "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-1",
+                "title": "- **Safety Concerns:** Caleb’s injury poses workforce risk, but adjusted tasks will allow him to continue working while recovering.",
+                "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+                "sourceTitle": "Uniqlo & GPC Huddle"
+              },
+              {
+                "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-2",
+                "title": "- **Documentation Practices:** Gaps in daily reports and photo documentation noted; plans to standardize and catch up on missing data.",
+                "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+                "sourceTitle": "Uniqlo & GPC Huddle"
+              }
+            ],
+            "title": "Recent meeting insights",
+            "metrics": {
+              "riskCount": 30,
+              "meetingCount": 10,
+              "decisionCount": 29,
+              "actionItemCount": 30,
+              "unresolvedQuestionCount": 30
+            },
+            "sources": [
+              {
+                "id": "meeting-source-1",
+                "date": "2026-05-13T21:30:00+00:00",
+                "href": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "title": "Uniqlo+Alleato Group",
+                "snippet": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "confidence": "medium",
+                "sourceType": "meeting"
+              },
+              {
+                "id": "meeting-source-2",
+                "date": "2026-05-13T19:00:54+00:00",
+                "href": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "title": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+                "snippet": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceType": "meeting"
+              },
+              {
+                "id": "meeting-source-3",
+                "date": "2026-05-13T19:00:00+00:00",
+                "href": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+                "title": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+                "snippet": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+                "confidence": "medium",
+                "sourceType": "meeting"
+              },
+              {
+                "id": "meeting-source-4",
+                "date": "2026-05-13T17:30:00+00:00",
+                "href": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+                "title": "Superior Bev Sprinkler Review",
+                "snippet": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+                "confidence": "medium",
+                "sourceType": "meeting"
+              },
+              {
+                "id": "meeting-source-5",
+                "date": "2026-05-13T17:15:00+00:00",
+                "href": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+                "title": "Alleato PM Software",
+                "snippet": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+                "confidence": "medium",
+                "sourceType": "meeting"
+              },
+              {
+                "id": "meeting-source-6",
+                "date": "2026-05-13T15:30:00+00:00",
+                "href": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+                "title": "Union Collective (Architectural and Civil Design Approval)",
+                "snippet": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+                "confidence": "medium",
+                "sourceType": "meeting"
+              },
+              {
+                "id": "meeting-source-7",
+                "date": "2026-05-13T15:00:00+00:00",
+                "href": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+                "title": "Hillsdale Holdings // Alleato Weekly",
+                "snippet": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+                "confidence": "medium",
+                "sourceType": "meeting"
+              },
+              {
+                "id": "meeting-source-8",
+                "date": "2026-05-13T13:00:00+00:00",
+                "href": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+                "title": "Review Superintendent SOP",
+                "snippet": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceType": "meeting"
+              }
+            ],
+            "promises": [
+              {
+                "id": "01KQYS0S95N8FJQQD1C00V1F4M-0",
+                "title": "- **Flexible connection support issue under review** following Erin’s email about roof-rack flexibility (07:10) - Brian and Kebba clarified ",
+                "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "sourceTitle": "Uniqlo+Alleato Group"
+              },
+              {
+                "id": "01KQYS0S95N8FJQQD1C00V1F4M-1",
+                "title": "- Kebba will follow up with Erin to clarify if structural support changes are needed and send official confirmation.",
+                "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "sourceTitle": "Uniqlo+Alleato Group"
+              },
+              {
+                "id": "01KQYS0S95N8FJQQD1C00V1F4M-2",
+                "title": "- **Team members aware of health-related absences but maintaining steady progress** (01:24) - Ahmed out sick but no impact on project due to",
+                "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "sourceTitle": "Uniqlo+Alleato Group"
+              },
+              {
+                "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-0",
+                "title": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organize",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-1",
+                "title": "## Short Summary The team scheduled a follow-up call for Friday at 1:30 PM Eastern to address critical flooring and racking topics, involvin",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-2",
+                "title": "## Gist The meeting aimed to schedule a follow-up call to discuss flooring and racking topics involving key stakeholders.",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRBNYM8VEH65W9XTPYDACXYC-0",
+                "title": "## Shorthand Bullet 📅 **Meeting Scheduling and Attendees** (00:00 - 08:00) Scheduled follow-up technical meeting for Friday 1:30 PM Eastern",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRBNYM8VEH65W9XTPYDACXYC-1",
+                "title": "Planned follow-up dedicated security meeting to discuss locker area and security flow in detail.",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRBNYM8VEH65W9XTPYDACXYC-2",
+                "title": "Expressed desire to compress lead times especially for racking system installation due to peak business impact.",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRH0BZF3H520AKEXJGZERA76-0",
+                "title": "## Shorthand Bullet 🔥 **Fire Suppression System Requirements** (00:00 - 18:44) Clarification sought due to conflicting expert and vendor fe",
+                "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+                "sourceTitle": "Superior Bev Sprinkler Review"
+              },
+              {
+                "id": "01KRH0BZF3H520AKEXJGZERA76-1",
+                "title": "Proposal for Brandon Clymer to join follow-up call with Superior Beverage to explain design and risks.",
+                "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+                "sourceTitle": "Superior Bev Sprinkler Review"
+              },
+              {
+                "id": "01KRH0BZF3H520AKEXJGZERA76-2",
+                "title": "- If smaller K16.8 heads were present, a different design would be necessary due to height limitations.",
+                "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+                "sourceTitle": "Superior Bev Sprinkler Review"
+              },
+              {
+                "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-0",
+                "title": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Emai",
+                "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+                "sourceTitle": "Alleato PM Software"
+              },
+              {
+                "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-1",
+                "title": "## Short Summary The team discussed strategies to enhance budget creation by integrating owner contract data and utilizing an import feature",
+                "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+                "sourceTitle": "Alleato PM Software"
+              },
+              {
+                "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-2",
+                "title": "## Bullet Gist 📊 Budget Process Improvement: Integrate owner contract data into budget creation to enhance accuracy and reduce manual error",
+                "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+                "sourceTitle": "Alleato PM Software"
+              },
+              {
+                "id": "01KRET7P70FNJYK2C7HJH8GDX2-0",
+                "title": "- **Design Team Collaboration Confirmed:** Alleatogroup continues as design partner; follow-up meeting scheduled to finalize outstanding det",
+                "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+                "confidence": "medium",
+                "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+                "sourceTitle": "Union Collective (Architectural and Civil Design Approval)"
+              },
+              {
+                "id": "01KRET7P70FNJYK2C7HJH8GDX2-1",
+                "title": "Plan to send detailed site and civil documents to team; follow-up meeting scheduled.",
+                "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+                "confidence": "medium",
+                "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+                "sourceTitle": "Union Collective (Architectural and Civil Design Approval)"
+              },
+              {
+                "id": "01KRET7P70FNJYK2C7HJH8GDX2-2",
+                "title": "- The design must accommodate this volume to prevent bottlenecks.",
+                "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+                "confidence": "medium",
+                "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+                "sourceTitle": "Union Collective (Architectural and Civil Design Approval)"
+              },
+              {
+                "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-0",
+                "title": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogrou",
+                "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+                "confidence": "medium",
+                "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+                "sourceTitle": "Hillsdale Holdings // Alleato Weekly"
+              },
+              {
+                "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-1",
+                "title": "## Short Summary The team focused on finalizing and circulating key design drawings by Friday, with structural confirmations pending.",
+                "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+                "confidence": "medium",
+                "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+                "sourceTitle": "Hillsdale Holdings // Alleato Weekly"
+              },
+              {
+                "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-2",
+                "title": "## Bullet Gist 📅 Design Drawings Submission: Final review sets will be circulated by Friday, excluding structural confirmation pending toda",
+                "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+                "confidence": "medium",
+                "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+                "sourceTitle": "Hillsdale Holdings // Alleato Weekly"
+              },
+              {
+                "id": "01KRGK0PYXTZBAB9JNFN0W27K9-0",
+                "title": "- **Bidding Enhancements:** Access to Building Connected allows for tracking bids and improving follow-up with subcontractors for timely upd",
+                "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+                "sourceTitle": "Review Superintendent SOP"
+              },
+              {
+                "id": "01KRGK0PYXTZBAB9JNFN0W27K9-1",
+                "title": "📝 Bidding Enhancements: Access to Building Connected allows for tracking bids and improving follow-up with subcontractors for timely update",
+                "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+                "sourceTitle": "Review Superintendent SOP"
+              },
+              {
+                "id": "01KRGK0PYXTZBAB9JNFN0W27K9-2",
+                "title": "🔗 **Access and Follow-up Coordination** (17:05 - 17:32) Jesse confirmed sending Scribe access to Parker.",
+                "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+                "sourceTitle": "Review Superintendent SOP"
+              },
+              {
+                "id": "01KRF1SC2AACV3JK64NPZ6PFTT-0",
+                "title": "**Date:** 2026-05-13T13:00:00+00:00 **Duration:** 29 minutes **Organizer Email:** jrichardson@alleatogroup.com **Host Email:** eandrade@alle",
+                "detail": "# Estimating Meeting | Enzo A.",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+                "sourceTitle": "Estimating Meeting | Enzo A. & Jake R."
+              },
+              {
+                "id": "01KRF1SC2AACV3JK64NPZ6PFTT-1",
+                "title": "- **Communication and Follow-Up:** Emphasis on persistent follow-ups with hesitant vendors; detailed notes on calls are crucial for tracking",
+                "detail": "# Estimating Meeting | Enzo A.",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+                "sourceTitle": "Estimating Meeting | Enzo A. & Jake R."
+              },
+              {
+                "id": "01KRF1SC2AACV3JK64NPZ6PFTT-2",
+                "title": "## Gist The meeting focused on securing bids for a project with a tight deadline of April 18, emphasizing vendor engagement and follow-up st",
+                "detail": "# Estimating Meeting | Enzo A.",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+                "sourceTitle": "Estimating Meeting | Enzo A. & Jake R."
+              },
+              {
+                "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-0",
+                "title": "- **Communication Gaps:** Remote teams unresponsive; escalation plans for follow-up calls initiated to ensure timely coordination.",
+                "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+                "sourceTitle": "Uniqlo & GPC Huddle"
+              },
+              {
+                "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-1",
+                "title": "📞 Communication Gaps: Remote teams unresponsive; escalation plans for follow-up calls initiated to ensure timely coordination.",
+                "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+                "sourceTitle": "Uniqlo & GPC Huddle"
+              },
+              {
+                "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-2",
+                "title": "Racking work is paused due to access permit delays but prep and painting can continue over the weekend.",
+                "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+                "sourceTitle": "Uniqlo & GPC Huddle"
+              }
+            ],
+            "subtitle": "Decisions, promises, risks, questions, and suggested follow-ups from meeting retrieval.",
+            "dateLabel": "Last 60 days",
+            "decisions": [
+              {
+                "id": "01KQYS0S95N8FJQQD1C00V1F4M-0",
+                "title": "- **Joe confirmed near completion of air compressor piping with only hose replacements outstanding** (03:40) - Incorrect half-inch hoses on ",
+                "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "sourceTitle": "Uniqlo+Alleato Group"
+              },
+              {
+                "id": "01KQYS0S95N8FJQQD1C00V1F4M-1",
+                "title": "- Kebba confirmed this information will be sent to all relevant teams.",
+                "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "sourceTitle": "Uniqlo+Alleato Group"
+              },
+              {
+                "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-0",
+                "title": "- **Warehouse Traffic Flow:** Forklift paths and office adjacency adjustments confirmed to optimize material handling and access efficiency.",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-1",
+                "title": "Finally, the team confirmed manual shelving for the relay pick area and discussed the layout of travel lanes to optimize material handling.",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-2",
+                "title": "🚚 Warehouse Traffic Flow: Forklift paths and office adjacency adjustments confirmed to optimize material handling and access efficiency.",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRBNYM8VEH65W9XTPYDACXYC-0",
+                "title": "Confirmed consultation with Uniqlo’s loss prevention team.",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRBNYM8VEH65W9XTPYDACXYC-1",
+                "title": "Confirmed power drop and air compressor drain locations to be provided by Exotec and coordinated with building design.",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRBNYM8VEH65W9XTPYDACXYC-2",
+                "title": "## Notes ## **Project Scheduling and Deadlines** The team agreed to a tight schedule with critical deadlines focused on accelerating constru",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRH0BZF3H520AKEXJGZERA76-0",
+                "title": "- **Customer Engagement Strategy** aims to present design options with clear risk communication to facilitate decision-making by end of the ",
+                "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+                "sourceTitle": "Superior Bev Sprinkler Review"
+              },
+              {
+                "id": "01KRH0BZF3H520AKEXJGZERA76-1",
+                "title": "This decision was influenced by expert feedback and existing measurements, leading to the understanding that a two-level design safely meets",
+                "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+                "sourceTitle": "Superior Bev Sprinkler Review"
+              },
+              {
+                "id": "01KRH0BZF3H520AKEXJGZERA76-2",
+                "title": "🤝 Customer Engagement Strategy: aims to present design options with clear risk communication to facilitate decision-making by end of the we",
+                "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+                "sourceTitle": "Superior Bev Sprinkler Review"
+              },
+              {
+                "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-0",
+                "title": "Confirmed ability to import or create budget lines and cost codes manually.",
+                "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+                "sourceTitle": "Alleato PM Software"
+              },
+              {
+                "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-1",
+                "title": "- Megan Harrison confirmed this import functionality exists but requires some bug fixes and UI improvements.",
+                "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+                "sourceTitle": "Alleato PM Software"
+              },
+              {
+                "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-2",
+                "title": "- This approach minimizes rework and ensures budgets reflect approved estimates precisely.",
+                "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+                "sourceTitle": "Alleato PM Software"
+              },
+              {
+                "id": "01KRET7P70FNJYK2C7HJH8GDX2-0",
+                "title": "- **Design Team Collaboration Confirmed:** Alleatogroup continues as design partner; follow-up meeting scheduled to finalize outstanding det",
+                "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+                "confidence": "medium",
+                "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+                "sourceTitle": "Union Collective (Architectural and Civil Design Approval)"
+              },
+              {
+                "id": "01KRET7P70FNJYK2C7HJH8GDX2-1",
+                "title": "Alleatogroup interior design deposit approved to proceed.",
+                "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+                "confidence": "medium",
+                "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+                "sourceTitle": "Union Collective (Architectural and Civil Design Approval)"
+              },
+              {
+                "id": "01KRET7P70FNJYK2C7HJH8GDX2-2",
+                "title": "## Notes ## **Interior Design and Layout Adjustments** The team agreed on a refined interior layout with strategic repositioning of key elem",
+                "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+                "confidence": "medium",
+                "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+                "sourceTitle": "Union Collective (Architectural and Civil Design Approval)"
+              },
+              {
+                "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-0",
+                "title": "## Notes ## **Design and Drawing Finalization** The team agreed to finalize and circulate all key design drawings by Friday to enable timely",
+                "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+                "confidence": "medium",
+                "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+                "sourceTitle": "Hillsdale Holdings // Alleato Weekly"
+              },
+              {
+                "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-1",
+                "title": "- **Commitment to submit final review sets by Friday** ensures all disciplines except structural are on track, with structural confirmation ",
+                "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+                "confidence": "medium",
+                "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+                "sourceTitle": "Hillsdale Holdings // Alleato Weekly"
+              },
+              {
+                "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-2",
+                "title": "- **Managing chemical risks via zoning and isolation is critical to limit fire and corrosion damage** (14:34) - Mark explained that TCCA and",
+                "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+                "confidence": "medium",
+                "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+                "sourceTitle": "Hillsdale Holdings // Alleato Weekly"
+              },
+              {
+                "id": "01KRGK0PYXTZBAB9JNFN0W27K9-0",
+                "title": "🔗 **Access and Follow-up Coordination** (17:05 - 17:32) Jesse confirmed sending Scribe access to Parker.",
+                "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+                "sourceTitle": "Review Superintendent SOP"
+              },
+              {
+                "id": "01KRGK0PYXTZBAB9JNFN0W27K9-1",
+                "title": "✅ **Closing Remarks** (17:32 - 17:52) Appreciation expressed and next steps confirmed.",
+                "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+                "sourceTitle": "Review Superintendent SOP"
+              },
+              {
+                "id": "01KRGK0PYXTZBAB9JNFN0W27K9-2",
+                "title": "## Notes ## **Training and SOP Enhancement** The team decided to use Scribe to create video tutorials for improving training and standard op",
+                "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+                "sourceTitle": "Review Superintendent SOP"
+              },
+              {
+                "id": "01KRF1SC2AACV3JK64NPZ6PFTT-0",
+                "title": "- Hunter and Enzo confirmed Victor will continue calls until departure, expected possibly tomorrow.",
+                "detail": "# Estimating Meeting | Enzo A.",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+                "sourceTitle": "Estimating Meeting | Enzo A. & Jake R."
+              },
+              {
+                "id": "01KRF1SC2AACV3JK64NPZ6PFTT-1",
+                "title": "[question] [08:14] **Enzo Andrade**: Did you make a decision?",
+                "detail": "# Estimating Meeting | Enzo A.",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+                "sourceTitle": "Estimating Meeting | Enzo A. & Jake R."
+              },
+              {
+                "id": "01KRF1SC2AACV3JK64NPZ6PFTT-2",
+                "title": "[17:40] **Enzo Andrade**: And also confirmed that you have this project.",
+                "detail": "# Estimating Meeting | Enzo A.",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+                "sourceTitle": "Estimating Meeting | Enzo A. & Jake R."
+              },
+              {
+                "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-0",
+                "title": "## Notes ## **Project Progress and Coordination** The team confirmed steady progress on racking and pipe installation despite some delays an",
+                "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+                "sourceTitle": "Uniqlo & GPC Huddle"
+              },
+              {
+                "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-1",
+                "title": "- **Vertical pipes for Siva expected early next week** enables planning for immediate vertical installation after mains (08:48) - Kebba Mass",
+                "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+                "sourceTitle": "Uniqlo & GPC Huddle"
+              },
+              {
+                "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-2",
+                "title": "- TJ Graves confirmed he has the contact info and will provide it once on site.",
+                "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+                "sourceTitle": "Uniqlo & GPC Huddle"
+              }
+            ],
+            "projectId": 31,
+            "projectName": null,
+            "suggestedTasks": [
+              {
+                "id": "meeting-task-1",
+                "href": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "title": "- **Flexible connection support issue under review** following Erin’s email about roof-rack flexibility (07:10) - Brian and Kebba clarified ",
+                "priority": "high",
+                "ownerName": "Project Manager",
+                "projectId": 31,
+                "confidence": "medium",
+                "sourceType": "meeting",
+                "description": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "projectName": null,
+                "sourceTitle": "Uniqlo+Alleato Group",
+                "recommendedAction": "create_task"
+              },
+              {
+                "id": "meeting-task-2",
+                "href": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "title": "- Kebba will follow up with Erin to clarify if structural support changes are needed and send official confirmation.",
+                "priority": "high",
+                "ownerName": "Project Manager",
+                "projectId": 31,
+                "confidence": "medium",
+                "sourceType": "meeting",
+                "description": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "projectName": null,
+                "sourceTitle": "Uniqlo+Alleato Group",
+                "recommendedAction": "create_task"
+              },
+              {
+                "id": "meeting-task-3",
+                "href": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "title": "- **Team members aware of health-related absences but maintaining steady progress** (01:24) - Ahmed out sick but no impact on project due to",
+                "priority": "high",
+                "ownerName": "Project Manager",
+                "projectId": 31,
+                "confidence": "medium",
+                "sourceType": "meeting",
+                "description": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "projectName": null,
+                "sourceTitle": "Uniqlo+Alleato Group",
+                "recommendedAction": "create_task"
+              },
+              {
+                "id": "meeting-task-4",
+                "href": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "title": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organize",
+                "priority": "high",
+                "ownerName": "Project Manager",
+                "projectId": null,
+                "confidence": "medium",
+                "sourceType": "meeting",
+                "description": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "projectName": null,
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+                "recommendedAction": "create_task"
+              },
+              {
+                "id": "meeting-task-5",
+                "href": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "title": "## Short Summary The team scheduled a follow-up call for Friday at 1:30 PM Eastern to address critical flooring and racking topics, involvin",
+                "priority": "high",
+                "ownerName": "Project Manager",
+                "projectId": null,
+                "confidence": "medium",
+                "sourceType": "meeting",
+                "description": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "projectName": null,
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+                "recommendedAction": "create_task"
+              },
+              {
+                "id": "meeting-task-6",
+                "href": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "title": "## Gist The meeting aimed to schedule a follow-up call to discuss flooring and racking topics involving key stakeholders.",
+                "priority": "high",
+                "ownerName": "Project Manager",
+                "projectId": 1009,
+                "confidence": "medium",
+                "sourceType": "meeting",
+                "description": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "projectName": null,
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+                "recommendedAction": "create_task"
+              }
+            ],
+            "unresolvedQuestions": [
+              {
+                "id": "01KQYS0S95N8FJQQD1C00V1F4M-0",
+                "title": "- **Air Pressure and Hydro Tests:** Tests on pipes this week; successful tests will confirm project readiness for fence removal.",
+                "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "sourceTitle": "Uniqlo+Alleato Group"
+              },
+              {
+                "id": "01KQYS0S95N8FJQQD1C00V1F4M-1",
+                "title": "## Short Summary The meeting highlighted the successful completion of the fire sprinkler pipe replacement, with air pressure and hydro tests",
+                "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "sourceTitle": "Uniqlo+Alleato Group"
+              },
+              {
+                "id": "01KQYS0S95N8FJQQD1C00V1F4M-2",
+                "title": "⚙️ Air Pressure and Hydro Tests: Tests on pipes this week; successful tests will confirm project readiness for fence removal.",
+                "detail": "# Uniqlo+Alleato Group **Date:** 2026-05-13T21:30:00+00:00 **Duration:** 19 minutes **Organizer Email:** mcalcetero@alleatogroup.com **Host Email:** mcalcetero@alleatogroup.com **P...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYS0S95N8FJQQD1C00V1F4M",
+                "sourceTitle": "Uniqlo+Alleato Group"
+              },
+              {
+                "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-0",
+                "title": "Preliminary main office layout discussed with wet areas relocated, reception and waiting areas defined, break room adjacent to reception, ph",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-1",
+                "title": "- **Reception and Meeting Rooms Designed for Visitor Management** (17:50) - Reception is near the main entrance with a waiting area to strea",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRHBD8KNN3W6CC0CCD2EN1NS-2",
+                "title": "## Keywords - Flooring - ASRS - Office Layout - Racking - Warehouse Design - Meeting Scheduling ## Action Items - Confirm availability for F",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:54+00:00 **Duration:** 21 minutes **Organizer Email:** bclymer@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRHBD8KNN3W6CC0CCD2EN1NS",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRBNYM8VEH65W9XTPYDACXYC-0",
+                "title": "- John Min to confirm operational needs and finalize restroom count and layout.",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRBNYM8VEH65W9XTPYDACXYC-1",
+                "title": "- Brian Hammond to confirm exact electrical capacity requirements with Uniqlo for final design.",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRBNYM8VEH65W9XTPYDACXYC-2",
+                "title": "## Keywords - Uniqlo - ASRS - fire suppression - office layout - security design - project scheduling ## Action Items - Clean up and distrib",
+                "detail": "# FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting **Date:** 2026-05-13T19:00:00+00:00 **Duration:** 107 minutes **Organizer Email:** bclymer@alleatogroup.com **H...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KRBNYM8VEH65W9XTPYDACXYC",
+                "sourceTitle": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting"
+              },
+              {
+                "id": "01KRH0BZF3H520AKEXJGZERA76-0",
+                "title": "- Brandon emphasized the need to confirm system types early to avoid pricing and design errors.",
+                "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+                "sourceTitle": "Superior Bev Sprinkler Review"
+              },
+              {
+                "id": "01KRH0BZF3H520AKEXJGZERA76-1",
+                "title": "- **Assumptions About Overhead Facility Sprinklers** need verification to confirm system coverage (06:10) - The design assumes the facility ",
+                "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+                "sourceTitle": "Superior Bev Sprinkler Review"
+              },
+              {
+                "id": "01KRH0BZF3H520AKEXJGZERA76-2",
+                "title": "[question] [00:18] **Brandon Clymer**: Doing well.",
+                "detail": "# Superior Bev Sprinkler Review **Date:** 2026-05-13T17:30:00+00:00 **Duration:** 31 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** connor.clark@hy-tek.com *...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRH0BZF3H520AKEXJGZERA76",
+                "sourceTitle": "Superior Bev Sprinkler Review"
+              },
+              {
+                "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-0",
+                "title": "- This helps users verify financial data quickly.",
+                "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+                "sourceTitle": "Alleato PM Software"
+              },
+              {
+                "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-1",
+                "title": "- Jesse will verify post-deployment.",
+                "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+                "sourceTitle": "Alleato PM Software"
+              },
+              {
+                "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9-2",
+                "title": "- **Jesse planned to follow up with Megan post-call to check on fixes and deployment status** (52:08) - They agreed on a 10-minute check-in ",
+                "detail": "# Alleato PM Software **Date:** 2026-05-13T17:15:00+00:00 **Duration:** 54 minutes **Organizer Email:** bclymer@alleatogroup.com **Host Email:** bclymer@alleatogroup.com **Particip...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+                "sourceTitle": "Alleato PM Software"
+              },
+              {
+                "id": "01KRET7P70FNJYK2C7HJH8GDX2-0",
+                "title": "## Keywords - Interior layout - bar design - restroom storage - elevator placement - site plan - utility management ## Action Items - Send s",
+                "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+                "confidence": "medium",
+                "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+                "sourceTitle": "Union Collective (Architectural and Civil Design Approval)"
+              },
+              {
+                "id": "01KRET7P70FNJYK2C7HJH8GDX2-1",
+                "title": "[question] [00:03] **Andrew Cannon**: Bobby, are you a lebron hater?",
+                "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+                "confidence": "medium",
+                "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+                "sourceTitle": "Union Collective (Architectural and Civil Design Approval)"
+              },
+              {
+                "id": "01KRET7P70FNJYK2C7HJH8GDX2-2",
+                "title": "[question] [00:08] **Robert Jemison**: I hate lebron.",
+                "detail": "# Union Collective (Architectural and Civil Design Approval) **Date:** 2026-05-13T15:30:00+00:00 **Duration:** 44 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email...",
+                "confidence": "medium",
+                "sourceHref": "/1009/meetings/01KRET7P70FNJYK2C7HJH8GDX2",
+                "sourceTitle": "Union Collective (Architectural and Civil Design Approval)"
+              },
+              {
+                "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-0",
+                "title": "- **Proposal to schedule review meetings immediately after receiving preliminary drawings to ensure early issue identification** (17:58) - J",
+                "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+                "confidence": "medium",
+                "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+                "sourceTitle": "Hillsdale Holdings // Alleato Weekly"
+              },
+              {
+                "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-1",
+                "title": "- **Managing chemical risks via zoning and isolation is critical to limit fire and corrosion damage** (14:34) - Mark explained that TCCA and",
+                "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+                "confidence": "medium",
+                "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+                "sourceTitle": "Hillsdale Holdings // Alleato Weekly"
+              },
+              {
+                "id": "01KQYS0S93Z9KXD4VSG2YM8VB3-2",
+                "title": "[00:42] **Bob Wright**: The only one in question right now is structural.",
+                "detail": "# Hillsdale Holdings // Alleato Weekly **Date:** 2026-05-13T15:00:00+00:00 **Duration:** 25 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogro...",
+                "confidence": "medium",
+                "sourceHref": "/67/meetings/01KQYS0S93Z9KXD4VSG2YM8VB3",
+                "sourceTitle": "Hillsdale Holdings // Alleato Weekly"
+              },
+              {
+                "id": "01KRGK0PYXTZBAB9JNFN0W27K9-0",
+                "title": "- **Parker is gaining access to Building Connected to track bids and follow up on outstanding proposals** (17:15) - Bob is assisting with ac",
+                "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+                "sourceTitle": "Review Superintendent SOP"
+              },
+              {
+                "id": "01KRGK0PYXTZBAB9JNFN0W27K9-1",
+                "title": "[question] [03:54] **Jesse Dawson**: I can hear you now.",
+                "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+                "sourceTitle": "Review Superintendent SOP"
+              },
+              {
+                "id": "01KRGK0PYXTZBAB9JNFN0W27K9-2",
+                "title": "[question] [04:27] **Parker Hollingsworth**: I've heard of it.",
+                "detail": "# Review Superintendent SOP **Date:** 2026-05-13T13:00:00+00:00 **Duration:** 19 minutes **Organizer Email:** jdawson@alleatogroup.com **Host Email:** jdawson@alleatogroup.com **Pa...",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRGK0PYXTZBAB9JNFN0W27K9",
+                "sourceTitle": "Review Superintendent SOP"
+              },
+              {
+                "id": "01KRF1SC2AACV3JK64NPZ6PFTT-0",
+                "title": "- Making multiple calls to the same subcontractor to confirm their intent is encouraged.",
+                "detail": "# Estimating Meeting | Enzo A.",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+                "sourceTitle": "Estimating Meeting | Enzo A. & Jake R."
+              },
+              {
+                "id": "01KRF1SC2AACV3JK64NPZ6PFTT-1",
+                "title": "[question] [01:47] **Enzo Andrade**: We got done with concrete, masonry, structural steel, roofing, doors and frames, flooring is done.",
+                "detail": "# Estimating Meeting | Enzo A.",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+                "sourceTitle": "Estimating Meeting | Enzo A. & Jake R."
+              },
+              {
+                "id": "01KRF1SC2AACV3JK64NPZ6PFTT-2",
+                "title": "[question] [03:51] **Enzo Andrade**: Yeah.",
+                "detail": "# Estimating Meeting | Enzo A.",
+                "confidence": "medium",
+                "sourceHref": "/meetings/01KRF1SC2AACV3JK64NPZ6PFTT",
+                "sourceTitle": "Estimating Meeting | Enzo A. & Jake R."
+              },
+              {
+                "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-0",
+                "title": "Emphasis on showing start and end times to verify test durations.",
+                "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+                "sourceTitle": "Uniqlo & GPC Huddle"
+              },
+              {
+                "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-1",
+                "title": "## Keywords - Racking progress - vertical pipes - delivery delays - pipe installation - safety incidents - documentation - testing procedure",
+                "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+                "sourceTitle": "Uniqlo & GPC Huddle"
+              },
+              {
+                "id": "01KQYFRYD72Y18B5ZCJKQ30RQV-2",
+                "title": "[00:03] **Kebba Mass**: I can confirm that.",
+                "detail": "# Uniqlo & GPC Huddle **Date:** 2026-05-13T12:30:00+00:00 **Duration:** 27 minutes **Organizer Email:** kmass@alleatogroup.com **Host Email:** kmass@alleatogroup.com **Participants...",
+                "confidence": "medium",
+                "sourceHref": "/31/meetings/01KQYFRYD72Y18B5ZCJKQ30RQV",
+                "sourceTitle": "Uniqlo & GPC Huddle"
+              }
+            ]
+          }
+        },
+        "type": "data-assistant-widget"
+      }
+    ],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "What did I commit to in meetings this past week?",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "source_lookup",
+          "sourceSpecificRagKind": "recent_meetings",
+          "recentEmailInboxRequest": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "source_lookup",
+          "planner": "deterministic_fallback",
+          "rationale": "Deterministic intent 'source_lookup' overrode model planner intent 'task_followup' to prevent routing downgrade.",
+          "confidence": "medium",
+          "responseMode": "retrieve_sources",
+          "requiredTools": [],
+          "deterministicIntent": "source_lookup",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T13:41:43.313Z"
+      },
+      {
+        "tool": "sourceSpecificRagRetrieval",
+        "input": {
+          "kind": "recent_meetings",
+          "label": "Recent meeting transcripts",
+          "limit": 10,
+          "endDate": "2026-05-14",
+          "startDate": "2026-05-07"
+        },
+        "output": {
+          "rows": [
+            {
+              "id": "01KQYS0S95N8FJQQD1C00V1F4M",
+              "date": "2026-05-13T21:30:00+00:00",
+              "type": "meeting",
+              "title": "Uniqlo+Alleato Group",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 31,
+              "documentId": "01KQYS0S95N8FJQQD1C00V1F4M"
+            },
+            {
+              "id": "01KRHBD8KNN3W6CC0CCD2EN1NS",
+              "date": "2026-05-13T19:00:54+00:00",
+              "type": "meeting",
+              "title": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 31,
+              "documentId": "01KRHBD8KNN3W6CC0CCD2EN1NS"
+            },
+            {
+              "id": "01KRBNYM8VEH65W9XTPYDACXYC",
+              "date": "2026-05-13T19:00:00+00:00",
+              "type": "meeting",
+              "title": "FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 31,
+              "documentId": "01KRBNYM8VEH65W9XTPYDACXYC"
+            },
+            {
+              "id": "01KRH0BZF3H520AKEXJGZERA76",
+              "date": "2026-05-13T17:30:00+00:00",
+              "type": "meeting",
+              "title": "Superior Bev Sprinkler Review",
+              "source": "fireflies",
+              "category": null,
+              "projectId": null,
+              "documentId": "01KRH0BZF3H520AKEXJGZERA76"
+            },
+            {
+              "id": "01KRFGCG4XJHN6Q2H3DQ5FDYB9",
+              "date": "2026-05-13T17:15:00+00:00",
+              "type": "meeting",
+              "title": "Alleato PM Software",
+              "source": "fireflies",
+              "category": null,
+              "projectId": null,
+              "documentId": "01KRFGCG4XJHN6Q2H3DQ5FDYB9"
+            },
+            {
+              "id": "01KRET7P70FNJYK2C7HJH8GDX2",
+              "date": "2026-05-13T15:30:00+00:00",
+              "type": "meeting",
+              "title": "Union Collective (Architectural and Civil Design Approval)",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 1009,
+              "documentId": "01KRET7P70FNJYK2C7HJH8GDX2"
+            },
+            {
+              "id": "01KQYS0S93Z9KXD4VSG2YM8VB3",
+              "date": "2026-05-13T15:00:00+00:00",
+              "type": "meeting",
+              "title": "Hillsdale Holdings // Alleato Weekly",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 67,
+              "documentId": "01KQYS0S93Z9KXD4VSG2YM8VB3"
+            },
+            {
+              "id": "01KRGK0PYXTZBAB9JNFN0W27K9",
+              "date": "2026-05-13T13:00:00+00:00",
+              "type": "meeting",
+              "title": "Review Superintendent SOP",
+              "source": "fireflies",
+              "category": null,
+              "projectId": null,
+              "documentId": "01KRGK0PYXTZBAB9JNFN0W27K9"
+            },
+            {
+              "id": "01KRF1SC2AACV3JK64NPZ6PFTT",
+              "date": "2026-05-13T13:00:00+00:00",
+              "type": "meeting",
+              "title": "Estimating Meeting | Enzo A. & Jake R.",
+              "source": "fireflies",
+              "category": null,
+              "projectId": null,
+              "documentId": "01KRF1SC2AACV3JK64NPZ6PFTT"
+            },
+            {
+              "id": "01KQYFRYD72Y18B5ZCJKQ30RQV",
+              "date": "2026-05-13T12:30:00+00:00",
+              "type": "meeting",
+              "title": "Uniqlo & GPC Huddle",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 31,
+              "documentId": "01KQYFRYD72Y18B5ZCJKQ30RQV"
+            }
+          ],
+          "rowCount": 10
+        },
+        "timestamp": "2026-05-14T13:41:45.859Z"
+      },
+      {
+        "tool": "assistantComponentRegistry",
+        "input": {
+          "kind": "recent_meetings",
+          "sourceTool": "sourceSpecificRagRetrieval"
+        },
+        "output": {
+          "widgetId": "meeting-insights",
+          "widgetType": "meeting_insights",
+          "meetingCount": 10
+        },
+        "timestamp": "2026-05-14T13:41:46.335Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [],
+      "stepStarts": [],
+      "totalStepCount": 0,
+      "finalFinishReason": "unknown",
+      "preparedStepCount": 0,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 90,
+      "reasons": [
+        "multiple successful tool calls",
+        "multiple source citations"
+      ],
+      "confidence": "high",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

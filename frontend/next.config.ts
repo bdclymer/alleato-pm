@@ -197,7 +197,7 @@ const nextConfig: NextConfig = {
   // into every API function. The pnpm version glob keeps this working across
   // @sparticuz/chromium upgrades. If you add a new PDF/email route, add it here.
   outputFileTracingIncludes: {
-    "/**/*": ["../docs/help/**"],
+    "/**/*": ["../docs/archive/2026-06-22-docs-migration/help/**"],
     "/api/commitments/[commitmentId]/email": CHROMIUM_TRACE_GLOBS,
     "/api/commitments/[commitmentId]/export": CHROMIUM_TRACE_GLOBS,
     "/api/projects/[projectId]/estimates/[estimateId]/pdf": CHROMIUM_TRACE_GLOBS,
@@ -233,12 +233,12 @@ const nextConfig: NextConfig = {
       "../vermillian/**",
       "../docs/.archive/**",
       "../docs/BMAD/**",
-      "../docs/PRPs/**",
-      "../docs/ai-plan/evals/**",
-      "../docs/asrs/**",
-      "../docs/change-order-process/**",
+      "../docs/archive/2026-06-22-docs-migration/PRPs/**",
+      "../docs/archive/2026-06-22-docs-migration/ai-plan/evals/**",
+      "../docs/archive/2026-06-22-docs-migration/asrs/**",
+      "../docs/archive/2026-06-22-docs-migration/change-order-process/**",
       "../docs/ops/evidence/**",
-      "../docs/procore-reference/procore-workflow-images/**",
+      "../docs/archive/2026-06-22-docs-migration/procore-reference/procore-workflow-images/**",
       "../docs/reports/**",
       "../scripts/adversarial-harness/**",
       "../scripts/change-events-crawl/**",

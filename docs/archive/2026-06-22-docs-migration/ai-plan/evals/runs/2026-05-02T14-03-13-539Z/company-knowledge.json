@@ -1,0 +1,42 @@
+{
+  "id": "company-knowledge",
+  "intent": "knowledge_capture",
+  "prompt": "What does Alleato consider best practice for handling owner-driven scope changes?",
+  "selectedProjectId": null,
+  "sessionId": "f29e92d0-15de-46d3-9f3a-01515bde0be3",
+  "sessionLabel": "eval-2026-05-02T14-03-13-539Z-company-knowledge",
+  "startedAt": "2026-05-02T14:14:47.286Z",
+  "finishedAt": "2026-05-02T14:15:02.543Z",
+  "durationMs": 1,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "expected at least one of [getCompanyKnowledge, semanticSearch] to fire — none did",
+      "answer length 0 < min 100"
+    ],
+    "warnings": [
+      "expected family 'knowledge' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getCompanyKnowledge",
+    "semanticSearch"
+  ],
+  "expectedToolFamilies": [
+    "knowledge"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

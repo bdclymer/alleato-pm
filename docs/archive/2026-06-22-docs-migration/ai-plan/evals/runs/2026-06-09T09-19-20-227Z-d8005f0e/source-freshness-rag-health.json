@@ -1,0 +1,6449 @@
+{
+  "id": "source-freshness-rag-health",
+  "intent": "source_health",
+  "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+  "selectedProjectId": null,
+  "sessionId": "8827a9ac-9f90-4af2-915d-0eed60d1937c",
+  "sessionLabel": "eval-2026-06-09T09-19-20-227Z-d8005f0e-source-freshness-rag-health",
+  "startedAt": "2026-06-09T09:22:43.773Z",
+  "finishedAt": "2026-06-09T09:23:26.646Z",
+  "durationMs": 42575,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 1130,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected required tool 'assistantSourceHealth' to fire",
+      "required metadata missing: source_health"
+    ],
+    "warnings": [
+      "expected family 'source_health' not represented",
+      "duration 42575ms exceeded warning budget 30000ms"
+    ],
+    "observations": [
+      "tools fired: semanticSearch, getOutlookOperationsStatus, searchMemories"
+    ],
+    "toolNames": [
+      "semanticSearch",
+      "getOutlookOperationsStatus",
+      "searchMemories"
+    ],
+    "familiesHit": [
+      "communications",
+      "semantic",
+      "memory"
+    ],
+    "finalTextLength": 4242,
+    "finalText": "Short answer: **Teams looks current enough. Outlook does not. Meetings are mixed. “Packets” are only as current as the underlying sync, so treat them as partially stale right now.**\n\nWhat matters most: **the live Microsoft layer is not fully healthy**, so I would not trust any AI readout as “fully current” unless it is grounded in recent Teams syncs and explicitly not relying on live Outlook. The biggest gap is Outlook, not Teams. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n\nWhat’s current enough\n\n- **Teams**\n  - Multiple Teams sources show successful syncs **today, 2026-06-09**, including channel messages around **09:10 UTC** and Brandon’s DM export at **08:40 UTC**. That is fresh enough for operational readouts. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n  - Brandon-specific Teams DM export is syncing successfully: **“Teams DM export: bclymer@alleatogroup.com” lastSyncAt 2026-06-09T08:40:29Z**. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n\nWhat is stale or broken\n\n- **Outlook live monitoring**\n  - The only visible Graph subscription is for **mharrison@alleatogroup.com**, and it is **not active**.\n  - Status is **renewal_due**.\n  - Expiration was **2026-05-15**.\n  - Last error: **“Microsoft Graph lifecycle event: reauthorizationRequired.”**  \n  That means live Outlook notifications are not healthy right now. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n\n- **Outlook mailbox coverage**\n  - I do **not** see an active Outlook subscription for **bclymer@alleatogroup.com** in this status output.\n  - There is an Outlook sync state for **acannon@alleatogroup.com**, but it is flagged **mismatch**, with this exact issue: **sync returned 30 emails, durable records increased by only 9**. That means at least one Outlook mailbox has ingestion inconsistency. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n\n- **OneDrive / file sync**\n  - One OneDrive source is stale: **cgillespie@alleatogroup.com / Alleato Group / 2026 Jobs** last synced **2026-05-20**, which is materially old compared to today. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n\nWhat is missing or uncertain\n\n- **Meetings**\n  - I do not have a clean system-level freshness metric here for “all meetings.”\n  - The evidence says meeting transcripts were syncing earlier in the year — one note said **“Firefly meetings synced - 50 transcripts updated”** on **2026-02-19** — but that is old evidence and not enough to prove current meeting freshness today. [Source: Teams DM, 2026-02-19]\n  - So the honest answer is: **meeting data may be present and usable, but I cannot verify from this evidence that the meeting layer is fully current as of today.**\n\n- **Packets / AI readouts**\n  - If by “packets” you mean AI briefings/summaries built from synced Microsoft and meeting data, then their freshness depends on source health.\n  - Since **Teams is current**, packet content based on Teams is probably fine.\n  - Since **Outlook live monitoring is unhealthy** and at least one Outlook mailbox has a **document mismatch**, any packet leaning on recent email is suspect unless it cites exact synced emails already ingested. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n\nMy operating read\n\n- **Safe to trust:** Teams-based recent activity, especially Brandon DM exports and channels that synced this morning. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n- **Use caution:** meeting summaries unless we verify the specific meeting exists in the system and check its date.\n- **Do not assume current:** Outlook-driven “latest” readouts, inbox summaries, or anything claiming real-time email awareness. The subscription health does not support that. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n\nBest next move\n\nBefore trusting a project readout, I’d validate it source-by-source:\n1. **Teams** — okay to use.\n2. **Meetings** — verify the latest meeting dates for that project.\n3. **Outlook** — assume partial/stale unless the exact emails are already synced and cited.\n4. **Packets** — trust only when they show underlying source dates.\n\nIf you want, I can do a **freshness audit by source for Brandon specifically** — Teams, Outlook, meetings, and files — and tell you exactly what the AI can safely rely on right now.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 60000,
+      "durationMs": 42575
+    }
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "source_health"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: source_lookup_intent",
+        "status": "loading",
+        "timestamp": "2026-06-09T09:22:44.045Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (1 sources, 0 warnings)",
+        "status": "success",
+        "durations": {
+          "semantic_search": 8268
+        },
+        "timestamp": "2026-06-09T09:22:52.479Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "Ds4c4xkAxUEDQqyH"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_FxvkzXdbE83z7qu4ErVecpU3",
+      "toolName": "getOutlookOperationsStatus"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FxvkzXdbE83z7qu4ErVecpU3",
+      "inputTextDelta": "{\"so"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FxvkzXdbE83z7qu4ErVecpU3",
+      "inputTextDelta": "urce\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FxvkzXdbE83z7qu4ErVecpU3",
+      "inputTextDelta": ": \"all"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FxvkzXdbE83z7qu4ErVecpU3",
+      "inputTextDelta": "_gra"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FxvkzXdbE83z7qu4ErVecpU3",
+      "inputTextDelta": "ph\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_FxvkzXdbE83z7qu4ErVecpU3",
+      "toolName": "getOutlookOperationsStatus",
+      "input": {
+        "source": "all_graph"
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "toolName": "searchMemories"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "{\"qu"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "ery\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": " \"data"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": " fre"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "shnes"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "s stal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "e mi"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "ssing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": " Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": " Out"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "look "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "meetin"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "gs p"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "acket"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "s curr"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "ent "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "enoug"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "h know"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "n ga"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "ps in"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "tegrat"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "ions"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": " issue"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "s\", "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "\"type"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "\": \"co"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "ntex"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "inputTextDelta": "t\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "toolName": "searchMemories",
+      "input": {
+        "query": "data freshness stale missing Teams Outlook meetings packets current enough known gaps integrations sync issues",
+        "type": "context"
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "toolName": "semanticSearch"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "{\"qu"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "ery\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": " \"Team"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "s Ou"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "tlook"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": " meeti"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "ngs "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "packe"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "ts sta"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "le m"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "issin"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "g sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": " cur"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "rent "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "enough"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": " dat"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "a fre"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "shness"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": " int"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "egrat"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "ion ga"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "ps\","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": " \"mat"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "chCoun"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "t\": "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "8, \"t"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "hresho"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "ld\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": " 0.3,"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": " \"skip"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "Rera"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "nk\": "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "inputTextDelta": "true}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "toolName": "semanticSearch",
+      "input": {
+        "query": "Teams Outlook meetings packets stale missing sync current enough data freshness integration gaps",
+        "matchCount": 8,
+        "threshold": 0.3,
+        "skipRerank": true
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_FxvkzXdbE83z7qu4ErVecpU3",
+      "output": {
+        "source": "all_graph",
+        "subscriptionCount": 1,
+        "activeSubscriptionCount": 0,
+        "syncStateCount": 20,
+        "erroredSyncStateCount": 1,
+        "subscriptions": [
+          {
+            "id": "464a9e8f-8f3a-4037-8054-5a965913fa87",
+            "source": "outlook_email",
+            "resource": "users/mharrison@alleatogroup.com/messages",
+            "resourceId": "mharrison@alleatogroup.com",
+            "resourceName": "Outlook: mharrison@alleatogroup.com",
+            "changeType": "created,updated",
+            "status": "renewal_due",
+            "expirationAt": "2026-05-15T20:03:54.517915+00:00",
+            "lastNotificationAt": null,
+            "lastLifecycleEventAt": "2026-05-15T17:03:55.147958+00:00",
+            "lastRenewedAt": "2026-05-13T20:03:56.658727+00:00",
+            "lastErrorMessage": "Microsoft Graph lifecycle event: reauthorizationRequired"
+          }
+        ],
+        "syncStates": [
+          {
+            "id": "e7f454d1-d0e8-4562-90f0-e7db5ea258a3",
+            "source": "teams_message",
+            "resourceId": "5419de66-9272-4093-9797-14537e3ec850:19:own79nxzS3yNo1IoNrHTKM6cUMJxUqE-84VPKO6pjwE1@thread.tacv2",
+            "resourceName": "Teams: Parsons / Parsons",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T09:10:14.29998+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T09:10:14.546236+00:00"
+          },
+          {
+            "id": "0c618ebb-0fdc-4199-91a1-7a3eaa861374",
+            "source": "teams_message",
+            "resourceId": "63200919-566f-45eb-8919-6c7ab11cda82:19:WVsnjg0q_3kBlRdte-CveLVHsTJbfSbdvBR9acQvcus1@thread.tacv2",
+            "resourceName": "Teams: Live chat requests / General",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T09:10:13.397453+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T09:10:13.526205+00:00"
+          },
+          {
+            "id": "fde7cfd5-9f11-41c2-8cba-0fbf93149cad",
+            "source": "teams_message",
+            "resourceId": "635360e0-00a8-40e0-8272-5861d540af80:19:BbC90Q2EuQqpYjcnwbSI8WqSE4Ag8UyNXj6op6-S7K81@thread.tacv2",
+            "resourceName": "Teams: Marketing Alleato Group / General",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T09:10:11.658832+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T09:10:12.027687+00:00"
+          },
+          {
+            "id": "686af9a9-e170-45fa-8f55-7d0b6d2d9179",
+            "source": "teams_chat_export",
+            "resourceId": "user:bclymer@alleatogroup.com",
+            "resourceName": "Teams DM export: bclymer@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T08:40:29.794909+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T08:40:30.080228+00:00"
+          },
+          {
+            "id": "e6c49410-6b5b-4d63-926e-f680b91d0f03",
+            "source": "teams_chat_export",
+            "resourceId": "user:acannon@alleatogroup.com",
+            "resourceName": "Teams DM export: acannon@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T07:41:26.708686+00:00",
+            "itemsSynced": 25,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T07:41:26.752309+00:00"
+          },
+          {
+            "id": "18f2b989-28fe-48cc-bda0-542ac772a33c",
+            "source": "teams_chat_export",
+            "resourceId": "user:njepson@alleatogroup.com",
+            "resourceName": "Teams DM export: njepson@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T06:40:42.415052+00:00",
+            "itemsSynced": 1,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T06:40:42.509115+00:00"
+          },
+          {
+            "id": "44c63538-55e9-4f67-91f8-19f915b0f4b2",
+            "source": "teams_chat_export",
+            "resourceId": "user:mparsons@alleatogroup.com",
+            "resourceName": "Teams DM export: mparsons@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T05:40:30.172684+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T05:40:30.439595+00:00"
+          },
+          {
+            "id": "8679616e-9e94-41c4-ae65-17783c8e877e",
+            "source": "teams_chat_export",
+            "resourceId": "user:jdawson@alleatogroup.com",
+            "resourceName": "Teams DM export: jdawson@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T04:41:15.544541+00:00",
+            "itemsSynced": 14,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T04:41:15.582606+00:00"
+          },
+          {
+            "id": "fe72bdea-d552-4d52-9b77-f8be6c93e55a",
+            "source": "teams_chat_export",
+            "resourceId": "user:ctragesser@alleatogroup.com",
+            "resourceName": "Teams DM export: ctragesser@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T03:40:30.694597+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T03:40:30.787175+00:00"
+          },
+          {
+            "id": "3a6439ea-43a4-48e4-836f-c7d21e4cd80f",
+            "source": "teams_chat_export",
+            "resourceId": "user:accounting@alleatogroup.com",
+            "resourceName": "Teams DM export: accounting@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T02:40:36.020844+00:00",
+            "itemsSynced": 1,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T02:40:36.087055+00:00"
+          },
+          {
+            "id": "c8ca6ef6-02b6-4c99-9a78-17d61ae67d1a",
+            "source": "sharepoint_file",
+            "resourceId": "sharepoint:AlleatoGroup:/SOP",
+            "resourceName": "SharePoint: AlleatoGroup/SOP",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T02:30:06.525393+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T02:30:06.552854+00:00"
+          },
+          {
+            "id": "36b03df1-4f88-4e52-b325-6a35b7fa5010",
+            "source": "onedrive_file",
+            "resourceId": "acannon@alleatogroup.com:/Alleato Group/2025 Jobs",
+            "resourceName": "OneDrive: acannon@alleatogroup.com/Alleato Group/2025 Jobs",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T02:30:06.279829+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T02:30:06.314649+00:00"
+          },
+          {
+            "id": "5dcc7abb-fbdd-454c-913a-f8073cdf4cab",
+            "source": "onedrive_file",
+            "resourceId": "acannon@alleatogroup.com:/Alleato Group/2026 Jobs",
+            "resourceName": "OneDrive: acannon@alleatogroup.com/Alleato Group/2026 Jobs",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T02:30:05.840262+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T02:30:05.870531+00:00"
+          },
+          {
+            "id": "688034bf-8f1e-487b-9ff7-e80453f665dd",
+            "source": "teams_chat_export",
+            "resourceId": "user:crusin@alleatogroup.com",
+            "resourceName": "Teams DM export: crusin@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T02:30:04.762196+00:00",
+            "itemsSynced": 1,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T02:30:04.787098+00:00"
+          },
+          {
+            "id": "65371d71-d94a-419d-9922-614c71805bab",
+            "source": "teams_message",
+            "resourceId": "35ba0de8-79b8-4f4c-b560-040072501cb8:19:cf9f4bdb5d904bbf9ad73523a1c83180@thread.tacv2",
+            "resourceName": "Teams: Alleato Group / CART Memphis Cold Storage",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T02:29:59.624767+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T02:29:59.650575+00:00"
+          },
+          {
+            "id": "1b7677f7-24a5-4dcd-b90a-949eb31197cb",
+            "source": "teams_message",
+            "resourceId": "35ba0de8-79b8-4f4c-b560-040072501cb8:19:64ed98a56b7e4f7cb281997be132aa0e@thread.tacv2",
+            "resourceName": "Teams: Alleato Group / 🤖 FRIDAY - AI Assistant",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T02:29:59.20362+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T02:29:59.221165+00:00"
+          },
+          {
+            "id": "bd6743ec-f3df-4b60-a836-ee0e2003ef00",
+            "source": "outlook_email",
+            "resourceId": "acannon@alleatogroup.com",
+            "resourceName": "Outlook: acannon@alleatogroup.com",
+            "syncStatus": "mismatch",
+            "lastSyncAt": "2026-06-09T02:29:53.219694+00:00",
+            "itemsSynced": 30,
+            "errorMessage": "Persisted Outlook doc delta mismatch for acannon@alleatogroup.com: sync_outlook_emails returned 30, but durable document_metadata rows increased by 9.",
+            "updatedAt": "2026-06-09T02:29:53.245172+00:00"
+          },
+          {
+            "id": "68901987-009d-4086-9f44-ceacddbc82e3",
+            "source": "teams_chat_export",
+            "resourceId": "user:cgillespie@alleatogroup.com",
+            "resourceName": "Teams DM export: cgillespie@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T01:40:36.490598+00:00",
+            "itemsSynced": 2,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T01:40:36.535259+00:00"
+          },
+          {
+            "id": "89abfb96-d155-43c1-a7ff-27448eaa6c0f",
+            "source": "teams_chat_export",
+            "resourceId": "user:awehner@alleatogroup.com",
+            "resourceName": "Teams DM export: awehner@alleatogroup.com",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-06-09T00:40:45.052807+00:00",
+            "itemsSynced": 5,
+            "errorMessage": null,
+            "updatedAt": "2026-06-09T00:40:45.136166+00:00"
+          },
+          {
+            "id": "dc11af84-7ca6-404c-9204-9d5b66558f43",
+            "source": "onedrive_file",
+            "resourceId": "cgillespie@alleatogroup.com:/Alleato Group/2026 Jobs",
+            "resourceName": "OneDrive: cgillespie@alleatogroup.com/Alleato Group/2026 Jobs",
+            "syncStatus": "success",
+            "lastSyncAt": "2026-05-20T19:00:52.444988+00:00",
+            "itemsSynced": 0,
+            "errorMessage": null,
+            "updatedAt": "2026-05-20T19:00:52.679851+00:00"
+          }
+        ],
+        "failsLoudly": "Webhook notifications are recorded into source_sync_runs and subscription/sync failures are visible through graph_subscriptions, graph_sync_state, source-sync health, and Render cron failures."
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_LMnhPtfCxk16uwsn6PlTFUMB",
+      "output": {
+        "memories": [],
+        "message": "No relevant memories found."
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_DANKVtXEJEDjd3HtzmM6vUZN",
+      "output": {
+        "query": "Teams Outlook meetings packets stale missing sync current enough data freshness integration gaps",
+        "resultCount": 8,
+        "results": [
+          {
+            "content": "There is a significant gap in the ability to retrieve recent Teams messages reliably; a dedicated recent message retrieval tool is needed.",
+            "sourceTable": "ai_memory",
+            "recordId": "44e117de-78c7-4cd9-8986-a80d10558232",
+            "sourceDocumentId": "44e117de-78c7-4cd9-8986-a80d10558232",
+            "sourceChunkId": "ai_memory_44e117de-78c7-4cd9-8986-a80d10558232",
+            "similarity": 0.489,
+            "finalScore": 0.529,
+            "projectIds": [],
+            "metadata": {
+              "title": null,
+              "category": null,
+              "source": null,
+              "source_type": "ai_memory",
+              "date": null,
+              "type": "lesson",
+              "user_id": "1854b4b0-3e8e-4d69-86df-32cdb3c80ee0",
+              "meeting_id": null,
+              "project_id": null,
+              "visibility": "team"
+            },
+            "createdAt": "2026-05-19T20:39:46.321548"
+          },
+          {
+            "content": "[Teams DM: 19:c4beb912-]\n\n[Teams Direct Message: 19:c4beb912-]\n\n[2026-02-19] Unknown: ✅ Firefly meetings synced - 50 transcripts updated, 31 Brandon meetings tracked, 5 new meetings since last sync. Meanwhile: Still waiting on your Azure authentication (code: AQVPF59Q2 at https://microsoft.com/devicelogin ) to create the 7 C-suite Teams apps.",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_1771477611336",
+            "sourceDocumentId": "teamsdm_1771477611336",
+            "sourceChunkId": "teamsdm_1771477611336__chunk_0",
+            "similarity": 0.471,
+            "finalScore": 0.478,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM: 19:c4beb912-",
+              "category": "teams_message",
+              "source": "microsoft_graph",
+              "source_type": "teams_dm",
+              "date": "2026-02-19T00:00:00+00:00",
+              "tags": "[\"teams\",\"direct_message\",\"19:c4beb912-\"]",
+              "type": "teams_dm",
+              "project_id": null,
+              "chunk_index": 0,
+              "participants": "[\"Unknown\"]",
+              "total_chunks": 1
+            },
+            "createdAt": "2026-02-19T00:00:00+00:00"
+          },
+          {
+            "content": "[Teams DM: 19:c4beb912-]\n\n[Teams Direct Message: 19:c4beb912-]\n\n[2026-02-19] Unknown: ✅ Learning cycle complete 2 new insights synthesized (both from firefly_sync) Email and calendar patterns analyzed Still outstanding from earlier: C-suite Teams messaging test results: ✅ CFO and CSO working (2/6 successful) ❌ CRO, CMO, CLO, CTO failed (timing/rate-limit issues) Config is correct. Do you want me to: Retry the 4 failed agents sequentially with delays? Leave it (they'll work fine in normal operation)? Or have you moved on and want to focus on something else?",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_1771483768476",
+            "sourceDocumentId": "teamsdm_1771483768476",
+            "sourceChunkId": "teamsdm_1771483768476__chunk_0",
+            "similarity": 0.455,
+            "finalScore": 0.464,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM: 19:c4beb912-",
+              "category": "teams_message",
+              "source": "microsoft_graph",
+              "source_type": "teams_dm",
+              "date": "2026-02-19T00:00:00+00:00",
+              "tags": "[\"teams\",\"direct_message\",\"19:c4beb912-\"]",
+              "type": "teams_dm",
+              "project_id": null,
+              "chunk_index": 0,
+              "participants": "[\"Unknown\"]",
+              "total_chunks": 1
+            },
+            "createdAt": "2026-02-19T00:00:00+00:00"
+          },
+          {
+            "content": "[Alleato Group Team Intro] Notes — Communication Tools and Meeting Logistics:\n\nThe team addressed technical issues impacting meeting invites and collaboration tools.\n\n- **Issue with meeting platform showing Skype instead of Teams emerged recently** and caused confusion (05:38)\n    - Tim noticed sudden switch to Skype meetings instead of Microsoft Teams, which is unusual\n    - This impacts meeting consistency and participant experience\n    - Tim planned to get assistance from David to resolve the tool integration problem\n    - Fixing this will restore smooth internal communication and avoid missed invites\n\n- **Email and messaging used actively to confirm attendance and adjust plans** due to members’ travel and availability constraints (06:31)\n    - Maria texted Jesse to verify his schedule and confirm if he could join\n    - Fatima monitored responses and proposed rescheduling if needed\n    - Active communication via multiple channels ensured the team stayed aligned despite disruptions\n    - This flexible communication approach supports real-time adjustments and reduces no-shows",
+            "sourceTable": "meeting_notes",
+            "recordId": "01KKF04TWB5ZRVRK8X03ED7MTG",
+            "sourceDocumentId": "01KKF04TWB5ZRVRK8X03ED7MTG",
+            "sourceChunkId": "01KKF04TWB5ZRVRK8X03ED7MTG__ff_notes_topic_-3_7",
+            "similarity": 0.445,
+            "finalScore": 0.462,
+            "projectIds": [
+              90
+            ],
+            "metadata": {
+              "title": "Alleato Group Team Intro",
+              "category": "notes_topic",
+              "source": null,
+              "source_type": "meeting_notes",
+              "date": "2026-03-13T15:00:00+00:00",
+              "doc_type": "notes_topic",
+              "file_date": "2026-03-13T15:00:00+00:00",
+              "project_id": 90,
+              "segment_id": null,
+              "chunk_index": 7,
+              "content_hash": "ab47b9a5562786c8",
+              "participants": [
+                "fnjie@llum.com",
+                "bclymer@alleatogroup.com",
+                "jdawson@alleatogroup.com",
+                "tstone@llum.com",
+                "zzita@llum.com",
+                "ymontesano@llum.com",
+                "bclymer@alleatogroup.com",
+                "jdawson@alleatogroup.com",
+                "tstone@llum.com",
+                "zzita@llum.com",
+                "ymontesano@llum.com"
+              ],
+              "segment_index": -3
+            },
+            "createdAt": "2026-03-13T15:00:00+00:00"
+          },
+          {
+            "content": "opportunity: Improve operational efficiency by addressing data synchronization issues promptly. (Owner: Sarah Johnson)",
+            "sourceTable": "insight",
+            "recordId": "01KEHQVTVFFA6X5CY3VVP7W6YB",
+            "sourceDocumentId": "01KEHQVTVFFA6X5CY3VVP7W6YB",
+            "sourceChunkId": "insight_a29eb0fe-1951-4c92-9299-6038f593a4ea",
+            "similarity": 0.446,
+            "finalScore": 0.459,
+            "projectIds": [],
+            "metadata": {
+              "title": null,
+              "category": null,
+              "source": null,
+              "source_type": "insight",
+              "date": null,
+              "type": "opportunity",
+              "owner": "Sarah Johnson",
+              "status": "open",
+              "project_id": null
+            },
+            "createdAt": "2026-03-02T14:56:44.201964"
+          },
+          {
+            "content": "opportunity: Streamline meeting scheduling process to avoid conflicts in the future.",
+            "sourceTable": "email",
+            "recordId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQCR62ZAAA=",
+            "sourceDocumentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQCR62ZAAA=",
+            "sourceChunkId": "insight_e0b126f3-b85e-4fa8-bbfd-6443aa302714",
+            "similarity": 0.439,
+            "finalScore": 0.458,
+            "projectIds": [],
+            "metadata": {
+              "title": null,
+              "category": null,
+              "source": null,
+              "source_type": "email",
+              "date": null,
+              "type": "opportunity",
+              "owner": null,
+              "status": "open",
+              "project_id": null
+            },
+            "createdAt": "2026-03-18T18:23:02.855141"
+          },
+          {
+            "content": "opportunity: Improve communication protocols to prevent scheduling confusion. (Owner: Jesse Dawson)",
+            "sourceTable": "email",
+            "recordId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQCR86eAAA=",
+            "sourceDocumentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQCR86eAAA=",
+            "sourceChunkId": "insight_c25f72af-5749-46a5-a382-859c874388b8",
+            "similarity": 0.437,
+            "finalScore": 0.456,
+            "projectIds": [],
+            "metadata": {
+              "title": null,
+              "category": null,
+              "source": null,
+              "source_type": "email",
+              "date": null,
+              "type": "opportunity",
+              "owner": "Jesse Dawson",
+              "status": "open",
+              "project_id": null
+            },
+            "createdAt": "2026-03-18T18:25:40.816972"
+          },
+          {
+            "content": "opportunity: Enhance communication and coordination among team members to ensure all key participants can attend future meetings.",
+            "sourceTable": "email",
+            "recordId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQCR86YAAA=",
+            "sourceDocumentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQCR86YAAA=",
+            "sourceChunkId": "insight_7e7c0164-93b1-4d6b-b1cd-cfc1d16a8a1a",
+            "similarity": 0.436,
+            "finalScore": 0.456,
+            "projectIds": [],
+            "metadata": {
+              "title": null,
+              "category": null,
+              "source": null,
+              "source_type": "email",
+              "date": null,
+              "type": "opportunity",
+              "owner": null,
+              "status": "open",
+              "project_id": null
+            },
+            "createdAt": "2026-03-18T18:27:30.785074"
+          }
+        ],
+        "retrievalBreakdown": {
+          "knowledgeMatches": 0,
+          "externalChunkMatches": 16,
+          "activeRetrievalWeights": 0,
+          "usedProjectFilter": false,
+          "filteredAdminOnlySources": []
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Short"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " looks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " does"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mixed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Packets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " underlying"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " treat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " them"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " partially"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " most"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Microsoft"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " layer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " healthy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " would"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " any"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AI"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unless"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " grounded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " explicitly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " relying"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " biggest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Multiple"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sources"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " show"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " successful"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " including"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " channel"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " messages"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " around"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "10"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " UTC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brandon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " DM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " export"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "08"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "40"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " UTC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fresh"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operational"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "outs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brandon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-specific"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " DM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " export"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " syncing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " successfully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " DM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " export"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bc"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "At"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "T"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "08"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "40"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "29"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Z"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " broken"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " monitoring"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " visible"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Graph"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " subscription"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mh"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "arrison"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "renew"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "al"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "_due"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Exp"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "iration"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "15"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " error"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Microsoft"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Graph"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lifecycle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " event"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "authorization"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Required"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " notifications"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " healthy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mailbox"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " see"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " subscription"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "bc"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " output"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " state"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "annon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " flagged"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "m"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ismatch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " returned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "30"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " emails"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " durable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " records"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " increased"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "9"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " least"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mailbox"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ingestion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " incons"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "istency"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "One"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Drive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " file"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " One"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " One"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Drive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cg"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "illes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "pie"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "@"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "og"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "roup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".com"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ato"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Group"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Jobs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "20"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " materially"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " old"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " compared"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " missing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " uncertain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Meet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-level"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " freshness"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " metric"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " here"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "all"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".”\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " says"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " transcripts"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " were"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " syncing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " earlier"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " year"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " note"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " said"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Fire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "fly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "50"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " transcripts"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " updated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "02"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "19"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " old"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " prove"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " freshness"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " DM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "02"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "19"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " So"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " honest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " may"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " present"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " usable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cannot"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " verify"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " layer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Packets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AI"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "outs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "pack"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AI"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " brief"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "umm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "aries"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " built"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Microsoft"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " then"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " their"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " freshness"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " depends"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " health"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Since"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " content"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " based"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " probably"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fine"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Since"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " monitoring"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unhealthy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " least"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mailbox"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "document"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mismatch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " any"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " leaning"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " suspect"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unless"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cites"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " emails"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " already"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ested"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "My"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operating"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Safe"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-based"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " activity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " especially"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brandon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " DM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exports"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " channels"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " morning"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Use"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " caution"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " summaries"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unless"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " we"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " verify"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " specific"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exists"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " check"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " its"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " date"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " assume"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-driven"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "latest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "outs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " inbox"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " summaries"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " anything"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " claiming"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-time"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " awareness"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " subscription"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " health"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " does"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " support"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Best"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " move"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Before"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trusting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " validate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " okay"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " use"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Meet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " verify"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " latest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " assume"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " partial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/st"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unless"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " emails"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " already"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cited"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "4"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Packets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trust"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " when"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " show"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " underlying"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "fresh"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ness"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " audit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brandon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " specifically"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " files"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exactly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AI"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " safely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "finish",
+      "finishReason": "stop"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 62792,
+      "totalTokens": 63954,
+      "outputTokens": 1162
+    },
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "retrieval-complete",
+          "status": "success",
+          "message": "Retrieved (1 sources, 0 warnings)",
+          "durations": {
+            "semantic_search": 8268
+          },
+          "timestamp": "2026-06-09T09:22:52.479Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": 2,
+    "tool_trace": [
+      {
+        "tool": "semanticSearch",
+        "agent": "retrieval-planner-v2",
+        "input": {
+          "query": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "output": {
+          "resultCount": 8
+        },
+        "status": "success",
+        "toolName": "semanticSearch",
+        "timestamp": "2026-06-09T09:23:26.151Z",
+        "durationMs": 8268
+      },
+      {
+        "tool": "getOutlookOperationsStatus",
+        "error": null,
+        "input": {
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": "all_graph",
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "getOutlookOperationsStatus",
+        "timestamp": "2026-06-09T09:22:56.897Z"
+      },
+      {
+        "tool": "searchMemories",
+        "error": null,
+        "input": {
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "searchMemories",
+        "timestamp": "2026-06-09T09:22:57.132Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "error": null,
+        "input": {
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "semanticSearch",
+        "timestamp": "2026-06-09T09:23:03.858Z"
+      },
+      {
+        "tool": "getOutlookOperationsStatus",
+        "input": {
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "getOutlookOperationsStatus",
+        "timestamp": "2026-06-09T09:23:26.151Z"
+      },
+      {
+        "tool": "searchMemories",
+        "input": {
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "searchMemories",
+        "timestamp": "2026-06-09T09:23:26.151Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "input": {
+          "message": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "semanticSearch",
+        "timestamp": "2026-06-09T09:23:26.151Z"
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse.",
+          "projectId": null,
+          "visibility": "private"
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project.",
+          "projectId": null,
+          "visibility": "private"
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly.",
+          "projectId": null,
+          "visibility": "private"
+        }
+      ],
+      "teamUsed": 0,
+      "retrieved": {
+        "team": 0,
+        "relevant": 0,
+        "preferences": 3
+      },
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "source_debug": {
+      "memory": {
+        "memories": [
+          {
+            "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+            "type": "preference",
+            "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+            "type": "preference",
+            "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+            "type": "preference",
+            "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly.",
+            "projectId": null,
+            "visibility": "private"
+          }
+        ],
+        "teamUsed": 0,
+        "retrieved": {
+          "team": 0,
+          "relevant": 0,
+          "preferences": 3
+        },
+        "totalUsed": 3,
+        "relevantUsed": 0,
+        "preferencesUsed": 3,
+        "recentConversationsUsed": 3
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "semanticSearch",
+              "agent": "retrieval-planner-v2",
+              "status": "success",
+              "durationMs": 8268
+            }
+          ],
+          "failedCount": 0,
+          "totalMeasuredMs": 8268
+        },
+        "toolNames": [
+          "semanticSearch",
+          "getOutlookOperationsStatus",
+          "searchMemories",
+          "semanticSearch",
+          "getOutlookOperationsStatus",
+          "searchMemories",
+          "semanticSearch"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 7,
+        "sourceCoverage": []
+      },
+      "orchestrator": "retrieval-planner-v2",
+      "outputPolicy": {
+        "stopWhen": "stepCountIs(10)",
+        "maxOutputTokens": 8000
+      },
+      "retrievalPlan": {
+        "intent": "source_lookup",
+        "reason": "source_lookup_intent",
+        "sources": [
+          "semanticVectorSearch"
+        ],
+        "responseFormat": "source_lookup"
+      }
+    },
+    "finish_reason": "stop",
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "source_lookup_intent",
+      "sources": [
+        "semanticVectorSearch"
+      ],
+      "responseFormat": "source_lookup"
+    },
+    "synthesis_model": "openai/gpt-5.4",
+    "response_quality": {
+      "score": 90,
+      "reasons": [
+        "multiple successful tool calls",
+        "multiple source citations"
+      ],
+      "confidence": "high",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "response_message_id": "Ds4c4xkAxUEDQqyH",
+    "empty_model_response": false
+  }
+}

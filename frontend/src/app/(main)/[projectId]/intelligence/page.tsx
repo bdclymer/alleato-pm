@@ -1381,7 +1381,7 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
           description={`The current packet failed to load: ${packetLoadError}`}
           action={
             <Button asChild size="sm" variant="outline">
-              <Link href="/intelligence-compiler">Open compiler health</Link>
+              <Link href="/ai-system-health">Open AI system health</Link>
             </Button>
           }
         />

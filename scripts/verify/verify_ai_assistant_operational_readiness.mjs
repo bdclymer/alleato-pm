@@ -49,7 +49,7 @@ function requireCondition(condition, message) {
 
 const packageJson = readJson("package.json");
 const scripts = packageJson.scripts ?? {};
-const evalSuite = readJson("docs/ai-plan/evals/assistant-eval-suite.json");
+const evalSuite = readJson("docs/archive/2026-06-22-docs-migration/ai-plan/evals/assistant-eval-suite.json");
 const evalRunner = read("scripts/verify/verify_ai_assistant_eval_suite.mjs");
 const chatHandler = read("frontend/src/app/api/ai-assistant/chat/handler-v2.ts");
 const actionTools = read("frontend/src/lib/ai/tools/action-tools.ts");
@@ -65,7 +65,7 @@ const requiredScripts = [
   "rag:verify:deep-agents-executive-evals",
   "rag:verify:app-expert-evals",
   "rag:verify:app-expert-smoke",
-  "rag:verify:intelligence-compiler",
+  "rag:verify:project-intelligence-live-paths",
   "rag:verify:chunk-integrity",
   "rag:verify:repaired-meeting-retrieval",
   "rag:verify:meetings",
@@ -209,7 +209,7 @@ const summary = {
     "npm run rag:verify:app-expert-evals:prod",
     "npm run rag:verify:eval-suite -- --filter \"owner-strategy|action-task|task-register|source-freshness\"",
     "python3 scripts/verify/verify_integration_health.py --skip-env",
-    "npm run rag:verify:intelligence-compiler",
+    "npm run rag:verify:project-intelligence-live-paths",
     "npm run rag:verify:chunk-integrity -- --days=1",
     "npm run rag:verify:repaired-meeting-retrieval",
   ],

@@ -1,0 +1,436 @@
+{
+  "id": "financial-margin",
+  "intent": "financial_analysis",
+  "prompt": "What's the projected margin on Westfield Collective?",
+  "selectedProjectId": 43,
+  "sessionId": "1ddb0b31-3077-4e5d-b7e8-52204a89b759",
+  "sessionLabel": "eval-2026-05-12T17-46-02-176Z-financial-margin",
+  "startedAt": "2026-05-12T17:53:31.594Z",
+  "finishedAt": "2026-05-12T17:53:53.776Z",
+  "durationMs": 21763,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 22,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [getMarginAnalysis, getFinancialAnalysis] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'financial' not represented"
+    ],
+    "observations": [
+      "tools fired: intentPlanner, clientProjectIntelligencePacket, streamingToolPolicy, noToolRetry"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "clientProjectIntelligencePacket",
+      "streamingToolPolicy",
+      "noToolRetry"
+    ],
+    "familiesHit": [],
+    "finalTextLength": 1040,
+    "finalText": "Current packet data doesn't include a firm projected margin number for Westfield Collective—none of the recent emails or flagged insights state it directly.\n\nHere's what I do know from the latest intelligence packet:\n\n- Financial/change order communication is active (see: GreyRock pay apps and minor scope clarifications), but there’s no explicit update on total cost-to-complete, remaining contingency, or gross profit forecast.\n- No direct mention of margin erosion, major cost overruns, or unexpected scope expansions in the latest operational or closeout threads.\n- No recent flagged margin risk, but the lack of fresh financials is a gap.\n\nRecommendation: Pull a live budget vs. forecast vs. contract summary to confirm actual projected margin and remaining contingency. If you want, I can run that report or fetch the latest ERP data for you.\n\nBottom line: There’s no sign of immediate margin trouble, but you’re operating without a current number. Let me know if you want me to pull a real-time budget and margin snapshot right now."
+  },
+  "expectedToolNames": [
+    "getMarginAnalysis",
+    "getFinancialAnalysis"
+  ],
+  "expectedToolFamilies": [
+    "financial"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T17:53:36.680Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-12T17:53:39.092Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Loaded project intelligence packet — synthesizing strategist response",
+        "status": "success",
+        "timestamp": "2026-05-12T17:53:41.507Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "pHqpG87KdTONQzMh"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-failure-response"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "Current packet data doesn't include a firm projected margin number for Westfield "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "Collective—none of the recent emails or flagged insights state it directly.\n\nHere's what I "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "do know from the latest intelligence packet:\n\n- Financial/change order communication is "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "active (see: GreyRock pay apps and minor scope clarifications), but there’s no explicit "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "update on total cost-to-complete, remaining contingency, or gross profit forecast.\n- No "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "direct mention of margin erosion, major cost overruns, or unexpected scope expansions in "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "the latest operational or closeout threads.\n- No recent flagged margin risk, but the lack "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "of fresh financials is a gap.\n\nRecommendation: Pull a live budget vs. forecast vs. "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "contract summary to confirm actual projected margin and remaining contingency. If you "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "want, I can run that report or fetch the latest ERP data for you.\n\nBottom line: There’s no "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "sign of immediate margin trouble, but you’re operating without a current number. Let me "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "know if you want me to pull a real-time budget and margin snapshot right now."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-failure-response"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 0,
+      "totalTokens": 0,
+      "outputTokens": 0,
+      "cacheHitRatio": 0,
+      "cachedInputTokens": 0
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "What's the projected margin on Westfield Collective?",
+          "selectedProjectId": 43,
+          "deterministicIntent": "financial_analysis",
+          "sourceSpecificRagKind": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "financial_analysis",
+          "planner": "model",
+          "rationale": "The user is asking for a financial metric—the projected margin—on a specific selected project (Westfield Collective, project id 43). This maps directly to financial analysis rather than source lookup because they want the current financial outlook, not underlying evidence or documents.",
+          "confidence": "high",
+          "responseMode": "answer_directly",
+          "requiredTools": [],
+          "deterministicIntent": "financial_analysis",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-12T17:53:36.680Z"
+      },
+      {
+        "tool": "clientProjectIntelligencePacket",
+        "input": {
+          "query": "What's the projected margin on Westfield Collective?",
+          "intent": "financial_analysis",
+          "selectedProjectId": 43
+        },
+        "output": {
+          "mode": "additive-context",
+          "packetId": "75216a3a-3684-46f9-813f-05cc3e9a7163",
+          "cardCount": 491,
+          "packetAgeDays": 0,
+          "resolvedTarget": {
+            "id": "0b2bd1aa-c36d-4910-b82e-90958d430036",
+            "slug": "westfield-collective",
+            "source": "selected_project",
+            "projectId": 43
+          },
+          "freshnessStatus": "fresh",
+          "operatingSummaryLoaded": false
+        },
+        "timestamp": "2026-05-12T17:53:41.507Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "streamingModelToolsEnabled": true
+        },
+        "timestamp": "2026-05-12T17:53:41.507Z"
+      },
+      {
+        "tool": "noToolRetry",
+        "input": {
+          "reason": "The model/tool run completed without returning final assistant text.",
+          "retryModel": "openai/gpt-4.1",
+          "primaryModel": "openai/gpt-5.4"
+        },
+        "output": {
+          "succeeded": true,
+          "contentLength": 1040
+        },
+        "timestamp": "2026-05-12T17:53:52.849Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        },
+        {
+          "id": "3b39f81a-6d4e-408c-8ce3-509ffb649487",
+          "type": "fact",
+          "content": "Westfield Collective is engaged in active closeout and commercial coordination with ongoing discussions about LOI/warranty language, change-order signatures, and remaining work."
+        }
+      ],
+      "teamUsed": 1,
+      "totalUsed": 4,
+      "relevantUsed": 1,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "finishReason": "other",
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "extractStructuredActionBrief",
+            "createChangeOrder",
+            "createChangeEvent",
+            "updateProjectStatus",
+            "createRFI",
+            "createTask",
+            "createGeneratedTask",
+            "createProjectCompany",
+            "createProjectContact",
+            "updateGeneratedTask",
+            "deleteGeneratedTask",
+            "flagProjectRisk",
+            "updateRFIStatus",
+            "createMeetingNote",
+            "createSubmittal",
+            "logDailyReport",
+            "generateProjectSummary",
+            "createInitiativeCard",
+            "createCommitment",
+            "submitFeedback",
+            "addBoardItem",
+            "sendTeamsMessage",
+            "findRelatedFeatureRequests",
+            "captureFeatureRequestPacket",
+            "updateFeatureRequestPacket",
+            "scoreFeatureRequestReadiness",
+            "generateImplementationPlan",
+            "generateClaudeCodeHandoff",
+            "draftLinearIssueFromFeatureRequest",
+            "draftLinearSubIssuesFromImplementationPlan",
+            "attachLinearIssueToFeatureRequest",
+            "attachLinearSubIssueToFeatureRequest",
+            "recordLinearStatusUpdateForFeatureRequest",
+            "createWeeklyProgressReportDraft",
+            "updateProgressReportSections",
+            "listProgressReportPhotos",
+            "selectProgressReportPhotos",
+            "generateProgressReportPdf",
+            "listWorkspaceArtifacts",
+            "getDraftArtifact",
+            "saveWorkspaceArtifact",
+            "promoteWorkspaceArtifact",
+            "getSubmittalLog",
+            "getSpecRequirements",
+            "detectMissingSubmittals",
+            "logFeedback",
+            "reviewDocument",
+            "consultCFO",
+            "consultCOO",
+            "consultCRO",
+            "consultCHRO",
+            "consultVPBD",
+            "consultCMO",
+            "getCommitmentsOverview",
+            "getChangeOrderDetails",
+            "getDirectCostsSummary",
+            "getBudgetLineItems",
+            "getCostTrends",
+            "getMarginAnalysis",
+            "getAPAgingReport",
+            "getARAgingReport",
+            "getCashPositionReport",
+            "getVendorSpendReport",
+            "getRecentBills",
+            "getRecentInvoices",
+            "getAcumaticaProjectBudget",
+            "getAcumaticaProjectList",
+            "getPurchaseOrderSummary",
+            "getPeopleAndRoles",
+            "getVendorPerformance",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getCrossProjectComparison",
+            "getHistoricalTrends",
+            "semanticSearch",
+            "getCompanyKnowledge",
+            "recallPastConversations",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "saveToKnowledgeBase",
+            "saveInsight",
+            "searchMemories",
+            "writeMemory",
+            "findProject",
+            "getRecentEmails",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchExternalDocuments",
+            "queryBudgetData",
+            "queryChangeOrders",
+            "queryCommitments",
+            "queryDirectCosts",
+            "queryScheduleTasks",
+            "queryDocumentRows",
+            "searchStructuredFinancialRows",
+            "getScheduleAnalysis",
+            "searchAppHelp",
+            "getForecastComparison",
+            "getMeetingIntelligence",
+            "getProjectBriefingSnapshot",
+            "getFinancialAnalysis",
+            "getProjectBudgetSummary",
+            "getActionItemsAndInsights",
+            "getMeetingsByDate",
+            "searchDocuments",
+            "getProjectDetails"
+          ]
+        }
+      ],
+      "totalStepCount": 1,
+      "finalFinishReason": "other",
+      "preparedStepCount": 1,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "compiled intelligence packet with multiple evidence cards",
+        "retrieval trace included 491 source-bearing record(s) without inline citations"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

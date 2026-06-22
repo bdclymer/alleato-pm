@@ -1,0 +1,56 @@
+{
+  "id": "assistant-capability-actions",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6318,
+  "question": "Can Ask Alleato create records for me?",
+  "mustInclude": [
+    "preview",
+    "confirm"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Yes — Ask Alleato can create records.\n\nEvidence checked:\n- App Expert artifact status: fresh and available\n- Curated help article: `docs/help/articles/ai-assistant-actions.md`\n- Relevant feature entry: **What the AI Assistant Can Do (Actions)**\n\nDocumented behavior:\n- Ask Alleato can **create and update records directly from chat**.\n- For any action that writes to the database, it shows a **preview card** first and waits for your **confirmation** before writing.\n- The article explicitly lists write actions it can perform, including:\n  - **Create Change Order**\n  - **Create Change Event**\n  - **Create RFI**\n  - **Create Commitment**\n  - **Create Task**\n  - **Create Meeting Note**\n  - **Create Submittal**\n  - **Log Daily Report**\n  - **Save to Knowledge Base**\n  - **Save Insight**\n  - plus some update actions like **Update Project Status** and **Update RFI Status**\n\nConstraints:\n- Write access is **scoped to projects you have permission to edit**.\n- The assistant **does not execute a financial write without a preview first**.\n- It does **not** approve, sign, or pay on your behalf.\n\nSo the answer is: **yes, but writes require confirmation for sensitive/financial actions, and permission scope applies**.\n\nIf you want, I can also tell you which record types are **no-confirmation** vs **confirmation-required**.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/ai-assistant-actions.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-assistant-actions.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/financial",
+        "sourceType": "sitemap",
+        "route": "/financial",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6227,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

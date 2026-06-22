@@ -1,0 +1,357 @@
+{
+  "id": "toolcov-read-research-company",
+  "intent": "web_research",
+  "prompt": "Research Turner Construction for me — size, market focus, and reputation.",
+  "selectedProjectId": null,
+  "sessionId": "f50adbed-fba3-4d74-b92b-e6b1a48486a8",
+  "sessionLabel": "eval-2026-06-09T15-07-42-031Z-25b84ec6-toolcov-read-research-company",
+  "startedAt": "2026-06-09T15:08:54.877Z",
+  "finishedAt": "2026-06-09T15:09:11.352Z",
+  "durationMs": 16185,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 12,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "expected family 'web' not represented"
+    ],
+    "observations": [
+      "tools fired: backendDeepAgentResearch, deepagents_research_runtime",
+      "backend Deep Agents memory candidates: 0"
+    ],
+    "toolNames": [
+      "backendDeepAgentResearch",
+      "deepagents_research_runtime"
+    ],
+    "familiesHit": [],
+    "finalTextLength": 2928,
+    "finalText": "## Turner Construction — size, market focus, reputation\n\n### Public web sources\n- **Size:** Turner’s official site says it has **over 16,000 employees** and completes **more than $28 billion** of construction annually across **thousands of projects**. It also says Turner operates in **North America and in 30 countries around the world**. URL: https://www.turnerconstruction.com/who-we-are\n- **Company scale corroboration:** Turner’s LinkedIn profile lists **10,001+ employees** and **19,546 employees on LinkedIn**, with **839,270 followers**. URL: https://www.linkedin.com/company/turner-construction-company\n- **Market focus:** Turner describes itself as a **North America-based, international construction services company** and says it is a leader in **diverse market segments**. Its market sectors include **aviation & transportation, federal, healthcare, pharmaceutical & biotech, industrial & advanced manufacturing, critical facilities, and sports & entertainment**. Turner also states it is a leader in major segments including **healthcare, education, commercial, sports, aviation, pharmaceutical, retail, and green building**. URL: https://www.turnerconstruction.com/market-sectors\n- **Recent sector emphasis:** In a 2025 company update, Turner said leading sectors include **data centers, healthcare, commercial, and education**, with backlog concentrated in **data centers, healthcare, education, and sports/entertainment**. URL: https://www.turnerconstruction.com/insights/turner-construction-company-achieves-historic-growth-in-the-first-half-of-2025\n- **Reputation:** Turner’s official site says its reputation was built on **integrity, working safely, delivering complex and challenging projects, and driving innovation**. LinkedIn/Turner also emphasizes recognition for **large, complex projects**, **innovation**, and **emerging technologies**. URLs: https://www.turnerconstruction.com/who-we-are , https://www.linkedin.com/company/turner-construction-company\n- **Positioning:** Turner presents itself as the **largest general contractor in the country** on its official site. URL: https://www.turnerconstruction.com/who-we-are\n\n### Alleato internal evidence\n- I checked team-memory context for “Turner Construction” and found **no relevant Alleato internal evidence** about this company in the retrieved memories. The only returned items were unrelated team memories, so there is **no internal project/vendor-specific evidence to add**.\n\n### Bottom line\nTurner Construction is a **very large, top-tier contractor** with **16k+ employees**, **$28B+ annual volume**, and a broad footprint across North America and internationally. Its strongest market focus is in **complex, high-value verticals**—especially **data centers/critical facilities, healthcare, education, commercial, aviation, and sports/entertainment**. Its reputation is centered on **scale, safety, complex-project delivery, and innovation**.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 16185
+    }
+  },
+  "expectedToolNames": [
+    "researchCompany",
+    "backendDeepAgentResearch"
+  ],
+  "expectedToolFamilies": [
+    "web"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: conversational_fallback",
+        "status": "loading",
+        "timestamp": "2026-06-09T15:08:54.946Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Checking Render Deep Agents research",
+        "status": "loading",
+        "timestamp": "2026-06-09T15:08:55.135Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents research…",
+        "status": "loading",
+        "timestamp": "2026-06-09T15:08:58.136Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents research…",
+        "status": "loading",
+        "timestamp": "2026-06-09T15:09:01.136Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents research…",
+        "status": "loading",
+        "timestamp": "2026-06-09T15:09:04.137Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents research…",
+        "status": "loading",
+        "timestamp": "2026-06-09T15:09:07.137Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents research…",
+        "status": "loading",
+        "timestamp": "2026-06-09T15:09:10.137Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-deep-agent-research",
+      "data": {
+        "widget": {
+          "type": "source_evidence_drawer",
+          "id": "deep-agent-research-evidence",
+          "title": "Research sources",
+          "sources": [
+            {
+              "id": "https://www.turnerconstruction.com/who-we-are",
+              "title": "https://www.turnerconstruction.com/who-we-are",
+              "sourceType": "knowledge",
+              "href": "https://www.turnerconstruction.com/who-we-are",
+              "snippet": "Public web source",
+              "confidence": "medium"
+            },
+            {
+              "id": "https://www.linkedin.com/company/turner-construction-company",
+              "title": "https://www.linkedin.com/company/turner-construction-company",
+              "sourceType": "knowledge",
+              "href": "https://www.linkedin.com/company/turner-construction-company",
+              "snippet": "Public web source",
+              "confidence": "medium"
+            },
+            {
+              "id": "https://www.turnerconstruction.com/market-sectors",
+              "title": "https://www.turnerconstruction.com/market-sectors",
+              "sourceType": "knowledge",
+              "href": "https://www.turnerconstruction.com/market-sectors",
+              "snippet": "Public web source",
+              "confidence": "medium"
+            },
+            {
+              "id": "https://www.turnerconstruction.com/insights/turner-construction-company-achieves-historic-growth-in-the-first-half-of-2025",
+              "title": "https://www.turnerconstruction.com/insights/turner-construction-company-achieves-historic-growth-in-the-first-half-of-2025",
+              "sourceType": "knowledge",
+              "href": "https://www.turnerconstruction.com/insights/turner-construction-company-achieves-historic-growth-in-the-first-half-of-2025",
+              "snippet": "Public web source",
+              "confidence": "medium"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-deep-agent-research"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-deep-agent-research",
+      "delta": "## Turner Construction — size, market focus, reputation\n\n### Public web sources\n- **Size:** Turner’s official site says it has **over 16,000 employees** and completes **more than $28 billion** of construction annually across **thousands of projects**. It also says Turner operates in **North America and in 30 countries around the world**. URL: https://www.turnerconstruction.com/who-we-are\n- **Company scale corroboration:** Turner’s LinkedIn profile lists **10,001+ employees** and **19,546 employees on LinkedIn**, with **839,270 followers**. URL: https://www.linkedin.com/company/turner-construction-company\n- **Market focus:** Turner describes itself as a **North America-based, international construction services company** and says it is a leader in **diverse market segments**. Its market sectors include **aviation & transportation, federal, healthcare, pharmaceutical & biotech, industrial & advanced manufacturing, critical facilities, and sports & entertainment**. Turner also states it is a leader in major segments including **healthcare, education, commercial, sports, aviation, pharmaceutical, retail, and green building**. URL: https://www.turnerconstruction.com/market-sectors\n- **Recent sector emphasis:** In a 2025 company update, Turner said leading sectors include **data centers, healthcare, commercial, and education**, with backlog concentrated in **data centers, healthcare, education, and sports/entertainment**. URL: https://www.turnerconstruction.com/insights/turner-construction-company-achieves-historic-growth-in-the-first-half-of-2025\n- **Reputation:** Turner’s official site says its reputation was built on **integrity, working safely, delivering complex and challenging projects, and driving innovation**. LinkedIn/Turner also emphasizes recognition for **large, complex projects**, **innovation**, and **emerging technologies**. URLs: https://www.turnerconstruction.com/who-we-are , https://www.linkedin.com/company/turner-construction-company\n- **Positioning:** Turner presents itself as the **largest general contractor in the country** on its official site. URL: https://www.turnerconstruction.com/who-we-are\n\n### Alleato internal evidence\n- I checked team-memory context for “Turner Construction” and found **no relevant Alleato internal evidence** about this company in the retrieved memories. The only returned items were unrelated team memories, so there is **no internal project/vendor-specific evidence to add**.\n\n### Bottom line\nTurner Construction is a **very large, top-tier contractor** with **16k+ employees**, **$28B+ annual volume**, and a broad footprint across North America and internationally. Its strongest market focus is in **complex, high-value verticals**—especially **data centers/critical facilities, healthcare, education, commercial, aviation, and sports/entertainment**. Its reputation is centered on **scale, safety, complex-project delivery, and innovation**."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-deep-agent-research"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Render Deep Agents research answer returned",
+        "status": "success",
+        "timestamp": "2026-06-09T15:09:11.046Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": null,
+    "data_parts": [
+      {
+        "id": "assistant-widget-deep-agent-research",
+        "data": {
+          "widget": {
+            "id": "deep-agent-research-evidence",
+            "type": "source_evidence_drawer",
+            "title": "Research sources",
+            "sources": [
+              {
+                "id": "https://www.turnerconstruction.com/who-we-are",
+                "href": "https://www.turnerconstruction.com/who-we-are",
+                "title": "https://www.turnerconstruction.com/who-we-are",
+                "snippet": "Public web source",
+                "confidence": "medium",
+                "sourceType": "knowledge"
+              },
+              {
+                "id": "https://www.linkedin.com/company/turner-construction-company",
+                "href": "https://www.linkedin.com/company/turner-construction-company",
+                "title": "https://www.linkedin.com/company/turner-construction-company",
+                "snippet": "Public web source",
+                "confidence": "medium",
+                "sourceType": "knowledge"
+              },
+              {
+                "id": "https://www.turnerconstruction.com/market-sectors",
+                "href": "https://www.turnerconstruction.com/market-sectors",
+                "title": "https://www.turnerconstruction.com/market-sectors",
+                "snippet": "Public web source",
+                "confidence": "medium",
+                "sourceType": "knowledge"
+              },
+              {
+                "id": "https://www.turnerconstruction.com/insights/turner-construction-company-achieves-historic-growth-in-the-first-half-of-2025",
+                "href": "https://www.turnerconstruction.com/insights/turner-construction-company-achieves-historic-growth-in-the-first-half-of-2025",
+                "title": "https://www.turnerconstruction.com/insights/turner-construction-company-achieves-historic-growth-in-the-first-half-of-2025",
+                "snippet": "Public web source",
+                "confidence": "medium",
+                "sourceType": "knowledge"
+              }
+            ]
+          }
+        },
+        "type": "data-assistant-widget"
+      }
+    ],
+    "tool_trace": [
+      {
+        "tool": "backendDeepAgentResearch",
+        "agent": "frontend-ai-assistant",
+        "input": {
+          "message": "Research Turner Construction for me — size, market focus, and reputation.",
+          "selectedProjectId": null
+        },
+        "detail": null,
+        "status": "success",
+        "toolName": "backendDeepAgentResearch",
+        "timestamp": "2026-06-09T15:09:10.533Z",
+        "durationMs": 15398
+      },
+      {
+        "tool": "deepagents_research_runtime",
+        "agent": "alleato-research-orchestrator",
+        "input": {
+          "message": "Research Turner Construction for me — size, market focus, and reputation.",
+          "selectedProjectId": null
+        },
+        "detail": "Deep Agents research runtime produced an answer with durable memory.",
+        "status": "success",
+        "toolName": "deepagents_research_runtime",
+        "timestamp": "2026-06-09T15:09:10.533Z",
+        "durationMs": 15281
+      }
+    ],
+    "architecture": "render-backend-deep-agents-v1",
+    "source_debug": {
+      "memory": {
+        "reason": "This answer was produced by a delegated specialist/direct Deep Agents path; inspect delegated trace and backend memory metadata for specialist-side context.",
+        "status": "not_loaded_in_frontend"
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "backendDeepAgentResearch",
+              "agent": "frontend-ai-assistant",
+              "status": "success",
+              "durationMs": 15398
+            },
+            {
+              "tool": "deepagents_research_runtime",
+              "agent": "alleato-research-orchestrator",
+              "status": "success",
+              "durationMs": 15281
+            }
+          ],
+          "failedCount": 0,
+          "totalMeasuredMs": 30679
+        },
+        "toolNames": [
+          "backendDeepAgentResearch",
+          "deepagents_research_runtime"
+        ],
+        "evidenceCount": 4,
+        "toolCallCount": 2,
+        "sourceCoverage": [
+          {
+            "url": "https://www.turnerconstruction.com/who-we-are",
+            "title": "https://www.turnerconstruction.com/who-we-are",
+            "sourceType": "web"
+          },
+          {
+            "url": "https://www.linkedin.com/company/turner-construction-company",
+            "title": "https://www.linkedin.com/company/turner-construction-company",
+            "sourceType": "web"
+          },
+          {
+            "url": "https://www.turnerconstruction.com/market-sectors",
+            "title": "https://www.turnerconstruction.com/market-sectors",
+            "sourceType": "web"
+          },
+          {
+            "url": "https://www.turnerconstruction.com/insights/turner-construction-company-achieves-historic-growth-in-the-first-half-of-2025",
+            "title": "https://www.turnerconstruction.com/insights/turner-construction-company-achieves-historic-growth-in-the-first-half-of-2025",
+            "sourceType": "web"
+          }
+        ]
+      },
+      "orchestrator": "backend-deep-agent-research",
+      "outputPolicy": null,
+      "retrievalPlan": {
+        "intent": "external_research",
+        "reason": "conversational_fallback",
+        "sources": [],
+        "responseFormat": "conversational"
+      }
+    },
+    "provider_path": "render-backend-ai-gateway",
+    "retrieval_plan": {
+      "intent": "external_research",
+      "reason": "conversational_fallback",
+      "sources": [],
+      "responseFormat": "conversational"
+    },
+    "response_quality": {
+      "score": 62,
+      "reasons": [
+        "at least one successful tool call",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "backend_deep_agent": {
+      "mode": "deep_agents",
+      "endpoint": "research",
+      "orchestrator": "alleato-research-orchestrator",
+      "source_count": 4,
+      "skills_loaded": [
+        "web-research",
+        "deep-agents-core"
+      ]
+    }
+  }
+}

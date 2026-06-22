@@ -1,0 +1,51 @@
+{
+  "id": "appnav-company-directory-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6338,
+  "question": "Where do company records live outside a project?",
+  "mustInclude": [
+    "/directory",
+    "company"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "Company records live in the global **Company Directory**, not inside a project.\n\nEvidence checked:\n- Feature registry: **Company Directory** → route **`/directory`** → help article **`docs/help/articles/company-directory.md`**\n- Help article says: “The Company Directory is the global roster of every company and contact your organization works with. It is shared across all projects...”\n- It also says open **Directory** from the main sidebar, “**not project-scoped**.”\n\nWhat that means:\n- **Global location:** `/directory`\n- **Outside a project:** yes, company records are maintained centrally there\n- **Project use:** records can then be reused across projects\n\nUncertainty:\n- I did not find any conflicting documentation for another company-record location.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/company-directory.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/company-directory.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6253,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

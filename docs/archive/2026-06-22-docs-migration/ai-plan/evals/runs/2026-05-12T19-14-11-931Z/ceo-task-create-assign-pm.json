@@ -1,0 +1,86 @@
+{
+  "id": "ceo-task-create-assign-pm",
+  "intent": "action_preview",
+  "prompt": "Get someone on confirming the AC1 solar approval date — assign it to the Ulta PM, due Wednesday.",
+  "selectedProjectId": null,
+  "sessionId": "1e51f6cf-f0f8-4c95-a3a4-78cc99f20647",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-ceo-task-create-assign-pm",
+  "startedAt": "2026-05-12T19:50:19.847Z",
+  "finishedAt": "2026-05-12T19:52:05.204Z",
+  "durationMs": 90002,
+  "httpStatus": 200,
+  "streamError": "stream read error: This operation was aborted",
+  "streamEventCount": 4,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: This operation was aborted",
+      "assistant message was not persisted to chat_history",
+      "expected required tool 'createGeneratedTask' to fire",
+      "mustInclude missing: \"Preview\"",
+      "mustInclude missing: \"confirm\"",
+      "mustIncludeAny missing one of: \"AC1\", \"solar\", \"Ulta\", \"Wednesday\", \"PM\"",
+      "answer length 0 < min 180"
+    ],
+    "warnings": [
+      "expected family 'action_write' not represented",
+      "expected family 'task_management' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "action_write",
+    "task_management"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:50:35.806Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-create-task",
+      "data": {
+        "widget": {
+          "type": "create_task",
+          "id": "create-task",
+          "title": "Create task",
+          "defaultTitle": "Get someone on confirming the AC1 solar approval date — assign it to the Ulta P...",
+          "defaultBody": "Get someone on confirming the AC1 solar approval date — assign it to the Ulta PM, due Wednesday.",
+          "defaultDueDate": "2026-05-19",
+          "defaultPriority": "normal",
+          "projectId": null
+        }
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Creating task preview",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:51:46.447Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "Hu8bWauovq5Sjgda"
+    }
+  ],
+  "persistedMetadata": null
+}

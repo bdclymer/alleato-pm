@@ -1,0 +1,56 @@
+{
+  "id": "meetings-by-date",
+  "intent": "meeting_query",
+  "prompt": "What meetings did we have on the Westfield project in the last 30 days?",
+  "selectedProjectId": 43,
+  "sessionId": "eb37d02f-16ba-4bc1-9979-b5157aeafcc1",
+  "sessionLabel": "eval-2026-05-12T18-54-56-719Z-meetings-by-date",
+  "startedAt": "2026-05-12T18:54:56.721Z",
+  "finishedAt": "2026-05-12T18:55:36.557Z",
+  "durationMs": 24042,
+  "httpStatus": 200,
+  "streamError": "stream read error: terminated",
+  "streamEventCount": 1,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: terminated",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getMeetingsByDate, getMeetingIntelligence, sourceSpecificRagRetrieval] to fire — none did",
+      "mustInclude missing: \"meeting\"",
+      "answer length 0 < min 80"
+    ],
+    "warnings": [
+      "expected family 'meetings' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getMeetingsByDate",
+    "getMeetingIntelligence",
+    "sourceSpecificRagRetrieval"
+  ],
+  "expectedToolFamilies": [
+    "meetings"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T18:55:06.703Z"
+      }
+    }
+  ],
+  "persistedMetadata": null
+}

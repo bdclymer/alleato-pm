@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import type { CommentableEntityType } from "@/lib/liveblocks/rooms";
+import type { CommentableEntityType } from "@/lib/collaboration/rooms";
 
 export interface CollaborationEntityContextValue {
   entityType: CommentableEntityType;

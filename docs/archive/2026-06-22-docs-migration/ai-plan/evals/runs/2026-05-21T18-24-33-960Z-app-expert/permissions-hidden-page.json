@@ -1,0 +1,47 @@
+{
+  "id": "permissions-hidden-page",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6728,
+  "question": "Why might I not see a project page?",
+  "response": {
+    "answer": "You might not see a project page for a few documented reasons:\n\n- Project pages are **project-scoped** and require a project ID in the route.\n- If no project ID is supplied, there may be no valid project context to load.\n- The app’s navigation docs say project-scoped pages are for work tied to a single project, and the home route is ` /[projectId]/home `.\n\nWhat I checked:\n- Artifact status: both generated artifacts are available and fresh.\n- Curated help article: `docs/help/articles/app-navigation-and-feature-map.md`\n- Route lookup: ` /[projectId]/home `\n\nDocumented behavior:\n- Project pages require a project ID.\n- Global pages are separate from project-scoped pages.\n- The project home page exists at ` /[projectId]/home ` and is the per-project dashboard.\n\nWhat remains uncertain:\n- Whether you are missing the page because you are on the wrong route, lack permission, or the project doesn’t exist is not stated in the curated docs I checked.\n\nIf you want, I can look up a specific project page route next, such as budget, commitments, documents, or change events.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/[projectId]/home",
+        "sourceType": "sitemap",
+        "route": "/[projectId]/home",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-navigation-and-feature-map.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-navigation-and-feature-map.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6723,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

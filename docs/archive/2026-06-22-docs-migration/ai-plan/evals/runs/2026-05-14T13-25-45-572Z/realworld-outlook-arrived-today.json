@@ -1,0 +1,4519 @@
+{
+  "id": "realworld-outlook-arrived-today",
+  "intent": "source_lookup",
+  "prompt": "What came in through Outlook today that needs my attention?",
+  "selectedProjectId": null,
+  "sessionId": "57cccc36-2a81-41c0-8af7-d39c1f51ff19",
+  "sessionLabel": "eval-2026-05-14T13-25-45-572Z-realworld-outlook-arrived-today",
+  "startedAt": "2026-05-14T13:29:02.981Z",
+  "finishedAt": "2026-05-14T13:29:23.491Z",
+  "durationMs": 20010,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 687,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected required tool 'getRecentEmails' to fire"
+    ],
+    "warnings": [],
+    "observations": [
+      "tools fired: intentPlanner, emailActionIntentRouter, mcpToolDiscoverySkipped, streamingToolPolicy, getRecentOutlookEmails"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "emailActionIntentRouter",
+      "mcpToolDiscoverySkipped",
+      "streamingToolPolicy",
+      "getRecentOutlookEmails"
+    ],
+    "familiesHit": [
+      "communications",
+      "email_action"
+    ],
+    "finalTextLength": 2856,
+    "finalText": "What needs your attention today is **Union Collective**. Everything else in this batch is mostly noise or FYI.\n\n### Needs attention\n\n- **Union Collective — corrected title commitment follow-up**\n  - **Email from Ellis O'Connell on 2026-05-14 12:31 UTC**\n  - He asked if there has been any movement on providing a **corrected title commitment**.\n  - That’s a direct external follow-up, and you’re cc’d. If that item is still sitting with the owner or internal team, it needs an answer today.\n\n- **Union Collective — owner review/layout decision**\n  - **Email from Jerome Daksiewicz on 2026-05-14 12:46 UTC**\n  - Jerome asked about **moving the walk-ins next to the vendor stalls** to eliminate guest/BOH cross-traffic.\n  - Doug replied he **likes the idea and plans to review it with the owner today**.\n  - Andrew then asked a real design-impact question: **how much cooler space would be lost**.\n  - This matters because it’s no longer just a design thought — it’s turning into an owner-facing decision and needs a quantified answer.\n\n### Worth knowing, but not urgent\n\n- **Niemann Carmel Build Out**\n  - **Email from Douglas Franklin on 2026-05-14 10:48 UTC**\n  - Existing condition photos were captured and shared for the build-out space.\n  - Useful progress signal, but nothing in the preview suggests you personally need to jump in right now.\n\n- **Quotes for Maryland**\n  - **Email from Brian Shows on 2026-05-14 11:44 UTC**\n  - He says the quote/drawing shows a new bathroom at the north end, but he **needs an updated drawing** because he can only see a men’s room.\n  - That likely needs a reply or corrected document, but I can’t tell from the preview whether it’s critical today versus normal coordination.\n\n### Not worth your time right now\n\n- Best Buy shipment notices\n- Best Buy Marketplace messages from PC Heaven\n- Capital One card shipment notice\n- Maria’s scheduling email unless you’re actively waiting on that meeting setup\n\n### The read on it\n\nThe real issue is **Union Collective has two active coordination threads that can stall progress fast**:\n1. an outside party waiting on a corrected title commitment, and  \n2. a layout change discussion that needs a concrete space-impact answer before the owner conversation gets loose.\n\n### What I’d do next\n\n1. **Get a same-day answer out on the corrected title commitment** — even if it’s just status and owner dependency.\n2. **Pin down the cooler space impact on the walk-in relocation idea before the owner call closes the loop.**\n3. **Decide whether you want to reply personally on the Maryland drawing issue or push it back to the design/contact owner.**\n\nIf you want, I can do the next step now:\n- draft a reply on the **title commitment** email,\n- draft a reply on the **walk-in relocation** thread, or\n- pull the **full Union Collective thread** so you can see exactly where it stands."
+  },
+  "expectedToolNames": [
+    "getRecentEmails",
+    "getRecentOutlookEmails"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:29:06.257Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Preparing Outlook draft workflow",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:29:09.064Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "zfNnwngkF4zORzIN"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "toolName": "getRecentOutlookEmails"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "since"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "T"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "Z"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "limit"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "15"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "toolName": "getRecentOutlookEmails",
+      "input": {
+        "since": "2026-05-14T00:00:00Z",
+        "limit": 15
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_Mz07z2bZOx8SPxTCqOAHmlZC",
+      "output": {
+        "source": "outlook_email_intake",
+        "count": 15,
+        "emails": [
+          {
+            "id": 1167,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijwDAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAJf7qyzJACBMmVUk2ch3f_8=",
+            "subject": "Re: Union Collective (Union, KY)",
+            "fromName": "Andrew Cannon",
+            "fromEmail": "acannon@alleatogroup.com",
+            "toList": [
+              "eoconnell@vioxinc.com",
+              "glarison@vioxinc.com"
+            ],
+            "ccList": [
+              "bclymer@alleatogroup.com",
+              "mamico@alleatogroup.com",
+              "jdawson@alleatogroup.com",
+              "mbollman@vioxinc.com",
+              "rhartig@vioxinc.com",
+              "arussell@vioxinc.com",
+              "dfranklin@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-14T12:58:13+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 1009,
+            "project": {
+              "id": 1009,
+              "name": "Union Collective",
+              "projectNumber": "26-119"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijwDAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: Union Collective (Union, KY) Date: 2026-05-14T12:58:13Z From: Andrew Cannon <acannon@alleatogroup.com> To: Ellis O'Connell <eoconnell@vioxinc.com>, Greg Larison <glarison@vioxinc.com> Ellis,&nbsp; Thanks for checking in, as I did not see your email.&nbsp; I will send your comments to our owner and get back with you. Best, Andrew Cannon&nbsp; &nbsp; Assistant Project Manager at Alleato Group Mobile &nbsp;317.315.3968 | &nbsp; Email &nbsp; acannon@alleatogroup.com Web &nbsp; www.alle..."
+          },
+          {
+            "id": 1168,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijwCAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAO1POVab0uBGjijOQVjkzdU=",
+            "subject": "Re: TAG 05/13/26 Union Collective - Development Regulations",
+            "fromName": "Andrew Cannon",
+            "fromEmail": "acannon@alleatogroup.com",
+            "toList": [
+              "dfranklin@alleatogroup.com",
+              "jerome.daksiewicz@dkgrar.com",
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [
+              "jdawson@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-14T12:55:48+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 1009,
+            "project": {
+              "id": 1009,
+              "name": "Union Collective",
+              "projectNumber": "26-119"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijwCAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: TAG 05/13/26 Union Collective - Development Regulations Date: 2026-05-14T12:55:48Z From: Andrew Cannon <acannon@alleatogroup.com> To: Douglas Franklin <dfranklin@alleatogroup.com>, Jerome Daksiewicz <jerome.daksiewicz@dkgrar.com>, Brandon Clymer <bclymer@alleatogroup.com> Jerome,&nbsp; Good thinking here, how much cooler space would they be losing though?&nbsp; Best, Andrew Cannon&nbsp; &nbsp; Assistant Project Manager at Alleato Group Mobile &nbsp;317.315.3968 | &nbsp; Email &nbsp..."
+          },
+          {
+            "id": 1169,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijwBAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAO1POVab0uBGjijOQVjkzdU=",
+            "subject": "Re: TAG 05/13/26 Union Collective - Development Regulations",
+            "fromName": "Douglas Franklin",
+            "fromEmail": "dfranklin@alleatogroup.com",
+            "toList": [
+              "jerome.daksiewicz@dkgrar.com",
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [
+              "acannon@alleatogroup.com",
+              "jdawson@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-14T12:50:31+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 1009,
+            "project": {
+              "id": 1009,
+              "name": "Union Collective",
+              "projectNumber": "26-119"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijwBAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: TAG 05/13/26 Union Collective - Development Regulations Date: 2026-05-14T12:50:31Z From: Douglas Franklin <dfranklin@alleatogroup.com> To: Jerome Daksiewicz <jerome.daksiewicz@dkgrar.com>, Brandon Clymer <bclymer@alleatogroup.com> Jerome, I like this idea a lot. &nbsp;We will review with the owner today on the call. Thank you, Doug Get Outlook for iOS From: Jerome Daksiewicz &lt;jerome.daksiewicz@dkgrar.com&gt; Sent: Thursday, May 14, 2026 8:46:15 AM To: Brandon Clymer &lt;bclymer@..."
+          },
+          {
+            "id": 1170,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijwAAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAO1POVab0uBGjijOQVjkzdU=",
+            "subject": "Re: TAG 05/13/26 Union Collective - Development Regulations",
+            "fromName": "Jerome Daksiewicz",
+            "fromEmail": "jerome.daksiewicz@dkgrar.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [
+              "dfranklin@alleatogroup.com",
+              "acannon@alleatogroup.com",
+              "jdawson@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-14T12:46:54+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 1009,
+            "project": {
+              "id": 1009,
+              "name": "Union Collective",
+              "projectNumber": "26-119"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijwAAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: TAG 05/13/26 Union Collective - Development Regulations Date: 2026-05-14T12:46:54Z From: Jerome Daksiewicz <jerome.daksiewicz@dkgrar.com> To: Brandon Clymer <bclymer@alleatogroup.com> From the owner review comments sent over yesterday - any thoughts on moving the walk-ins next to the vendor stalls? That would eliminate the cross-traffic between guest and BOH staff Jerome Daksiewicz Director of Design O:&nbsp; 317 . 614 . 0053 x325 DKGR 10 West Market Street . Suite 800 . Indianapol..."
+          },
+          {
+            "id": 1171,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv-AAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAJf7qyzJACBMmVUk2ch3f_8=",
+            "subject": "RE: Union Collective (Union, KY)",
+            "fromName": "Ellis O'Connell",
+            "fromEmail": "eoconnell@vioxinc.com",
+            "toList": [
+              "acannon@alleatogroup.com",
+              "glarison@vioxinc.com"
+            ],
+            "ccList": [
+              "bclymer@alleatogroup.com",
+              "mamico@alleatogroup.com",
+              "jdawson@alleatogroup.com",
+              "mbollman@vioxinc.com",
+              "rhartig@vioxinc.com",
+              "arussell@vioxinc.com",
+              "dfranklin@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-14T12:31:40+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 1009,
+            "project": {
+              "id": 1009,
+              "name": "Union Collective",
+              "projectNumber": "26-119"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv%2FAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: RE: Union Collective (Union, KY) Date: 2026-05-14T12:31:40Z From: Ellis O'Connell <eoconnell@vioxinc.com> To: Andrew Cannon <acannon@alleatogroup.com>, Greg Larison <glarison@vioxinc.com> Andrew, &nbsp; Following up on the below email, curious if there has been any movement with providing a corrected title commitment? &nbsp; Thanks, &nbsp; Ellis O’Connell Survey Technician &nbsp; vioxinc.com &nbsp; 859-727-3293&nbsp;&nbsp;ext.2048 &nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nb..."
+          },
+          {
+            "id": 1172,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv_AAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQACDOp2VN8DdKh7lSF5gXxmI=",
+            "subject": "📦 Your package is out for delivery. 📦",
+            "fromName": "Best Buy Notifications",
+            "fromEmail": "BestBuyInfo@emailinfo.bestbuy.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-14T12:30:11+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv%2BAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: 📦 Your package is out for delivery. 📦 Date: 2026-05-14T12:30:11Z From: Best Buy Notifications <BestBuyInfo@emailinfo.bestbuy.com> To: Brandon Clymer <bclymer@alleatogroup.com> See inside for details. Mariaalejandra&nbsp;&nbsp;|&nbsp;&nbsp; View Account View: Web Top Deals Outlet TVs Computers Cell Phones Appliances Your package is out for delivery. FedEx let us know your package will be delivered today. You can track its status on your order details page. Order number: BBY01-80717946..."
+          },
+          {
+            "id": 1173,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv9AAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQABD7McdjxT9NlrfBc70E4R0=",
+            "subject": "Follow-Up Meeting Availability",
+            "fromName": "Maria Calcetero",
+            "fromEmail": "Mcalcetero@alleatogroup.com",
+            "toList": [
+              "sarahn@goldentaxrelief.com"
+            ],
+            "ccList": [
+              "bclymer@alleatogroup.com",
+              "jgaona@alleatogroup.com",
+              "ben@goldentaxrelief.com"
+            ],
+            "receivedAt": "2026-05-14T12:20:21+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv9AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Follow-Up Meeting Availability Date: 2026-05-14T12:20:21Z From: Maria Calcetero <Mcalcetero@alleatogroup.com> To: sarahn@goldentaxrelief.com <sarahn@goldentaxrelief.com> Hi Sarah, I hope you are doing well. I wanted to follow up regarding the next meeting with Brandon and your team. Could you please let me know when you are planning to schedule it? Brandon currently has availability next week on: Tuesday morning between 10:00 AM – 11:30 AM Wednesday afternoon between 1:00 PM – 3:00 PM ..."
+          },
+          {
+            "id": 1164,
+            "graphMessageId": "AAMkAGNhMTc5ZDAwLTYwNjEtNGE5Mi04ZTI4LTllODdiY2RhNjliNABGAAAAAADrAAP0kly5Tp7uNi2CrItPBwA7VpBaSF70Sqm32W6tK4ohAAAAAAEMAAA7VpBaSF70Sqm32W6tK4ohAABmRoSDAAA=",
+            "mailboxUserId": "mharrison@alleatogroup.com",
+            "conversationId": "AAQkAGNhMTc5ZDAwLTYwNjEtNGE5Mi04ZTI4LTllODdiY2RhNjliNAAQAJAW-azdTfdAuzzYtdd75zY=",
+            "subject": "Your AI Skill output - Daily Digest",
+            "fromName": "Fred from Fireflies.ai",
+            "fromEmail": "fred@fireflies.ai",
+            "toList": [
+              "MHarrison@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-14T12:09:57+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkAGNhMTc5ZDAwLTYwNjEtNGE5Mi04ZTI4LTllODdiY2RhNjliNABGAAAAAADrAAP0kly5Tp7uNi2CrItPBwA7VpBaSF70Sqm32W6tK4ohAAAAAAEMAAA7VpBaSF70Sqm32W6tK4ohAABmRoSDAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Your AI Skill output - Daily Digest Date: 2026-05-14T12:09:57Z From: Fred from Fireflies.ai <fred@fireflies.ai> To: Megan Harrison <MHarrison@alleatogroup.com> Daily Digest Multiple meetings · May 13, 2026 Action Items 🛠️ Alleato PM Software Improvements (Bug fixes and feature enhancements) 🔴 Fix slow loading issue and deploy fix live by next sprint ^1 🔴 Improve screenshot upload to auto-capture and upload without manual steps ^1 🔴 Fix budget and commitment selection bugs, ensure a..."
+          },
+          {
+            "id": 1157,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv8AAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAJGR9kfAL0g4kXEPod0YbvM=",
+            "subject": "RE: Quotes for Maryland",
+            "fromName": "Brian Shows",
+            "fromEmail": "richard.shows@bellacanvas.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-14T11:44:33+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv8AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: RE: Quotes for Maryland Date: 2026-05-14T11:44:33Z From: Brian Shows <richard.shows@bellacanvas.com> To: Brandon Clymer <bclymer@alleatogroup.com> Hi Brandon, I got the email. The quote and drawing show a new bathroom at the North end of the facility where we want it installed. We need an updated drawing, as I can only see a men’s room. &nbsp; From: Brandon Clymer &lt;bclymer@alleatogroup.com&gt; Sent: Wednesday, May 13, 2026 8:52 PM To: Brian Shows &lt;richard.shows@bellacanvas.com&gt..."
+          },
+          {
+            "id": 1158,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv7AAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAHp2gRVfl_pAqAL7KLKRNho=",
+            "subject": "Niemann Carmel Build Out",
+            "fromName": "Douglas Franklin",
+            "fromEmail": "dfranklin@alleatogroup.com",
+            "toList": [
+              "jrichardson@alleatogroup.com",
+              "eandrade@alleatogroup.com"
+            ],
+            "ccList": [
+              "kgreen@alleatogroup.com",
+              "jdawson@alleatogroup.com",
+              "bclymer@alleatogroup.com",
+              "varvizu@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-14T10:48:12+00:00",
+            "status": "Matched",
+            "matchStatus": "matched",
+            "projectId": 38,
+            "project": {
+              "id": 38,
+              "name": "Niemann Foods TI",
+              "projectNumber": "25-103"
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv7AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Niemann Carmel Build Out Date: 2026-05-14T10:48:12Z From: Douglas Franklin <dfranklin@alleatogroup.com> To: Jake Richardson <jrichardson@alleatogroup.com>, Enzo Andrade <eandrade@alleatogroup.com> Jake and Enzo, Victor was able to get to the space next to FedEx and took some photos of the existing conditions for the build out that Glendon asked for. They are in the folder link below, but when this becomes a new project, I will move this folder. Niemann Carmel Build out Thank you, Doug ..."
+          },
+          {
+            "id": 1159,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv6AAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAF_ZiOkkhT1JrJ9uLphV5Mw=",
+            "subject": "📦 Your package is out for delivery. 📦",
+            "fromName": "Best Buy Notifications",
+            "fromEmail": "BestBuyInfo@emailinfo.bestbuy.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-14T10:30:09+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv6AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: 📦 Your package is out for delivery. 📦 Date: 2026-05-14T10:30:09Z From: Best Buy Notifications <BestBuyInfo@emailinfo.bestbuy.com> To: Brandon Clymer <bclymer@alleatogroup.com> See inside for details. Jazmin&nbsp;&nbsp;|&nbsp;&nbsp; View Account View: Web Top Deals Outlet TVs Computers Cell Phones Appliances Your package is out for delivery. FedEx let us know your package will be delivered today. You can track its status on your order details page. Order number: BBY01-807179581917 Tra..."
+          },
+          {
+            "id": 1160,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv5AAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAKPZzMCroE5KlsrXzWeHzh0=",
+            "subject": "You have a new message from PC Heaven.",
+            "fromName": "PC Heaven via Best Buy Marketplace",
+            "fromEmail": "reply+f6i1h17ezn@marketplace.bestbuy.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-14T09:22:30+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv5AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: You have a new message from PC Heaven. Date: 2026-05-14T09:22:30Z From: PC Heaven via Best Buy Marketplace <reply+f6i1h17ezn@marketplace.bestbuy.com> To: Brandon Clymer <bclymer@alleatogroup.com> See inside for details. You have a message from PC Heaven. PC Heaven message Dear Jazmin, Thank you for your message. We have reviewed the shipment status. According to UPS tracking, the estimated delivery date is Monday, May 18, and a signature will be required upon delivery. Tracking number:..."
+          },
+          {
+            "id": 1161,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv4AAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAEjSN0AJBalFsIVrtNv6g_I=",
+            "subject": "You have a new message from PC Heaven.",
+            "fromName": "PC Heaven via Best Buy Marketplace",
+            "fromEmail": "reply+klr2nbar57@marketplace.bestbuy.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-14T09:21:46+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv4AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: You have a new message from PC Heaven. Date: 2026-05-14T09:21:46Z From: PC Heaven via Best Buy Marketplace <reply+klr2nbar57@marketplace.bestbuy.com> To: Brandon Clymer <bclymer@alleatogroup.com> You don't often get email from reply+klr2nbar57@marketplace.bestbuy.com. Learn why this is important See inside for details. You have a message from PC Heaven. PC Heaven message Dear Jazmin, Thank you for your message. We have reviewed the shipment status. According to UPS tracking, the estima..."
+          },
+          {
+            "id": 1162,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv2AAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAK6E9Ip2YoFHlpzjTYeKHyU=",
+            "subject": "📦 Your package is out for delivery. 📦",
+            "fromName": "Best Buy Notifications",
+            "fromEmail": "BestBuyInfo@emailinfo.bestbuy.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-14T07:42:00+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv2AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: 📦 Your package is out for delivery. 📦 Date: 2026-05-14T07:42:00Z From: Best Buy Notifications <BestBuyInfo@emailinfo.bestbuy.com> To: Brandon Clymer <bclymer@alleatogroup.com> See inside for details. Jazmin&nbsp;&nbsp;|&nbsp;&nbsp; View Account View: Web Top Deals Outlet TVs Computers Cell Phones Appliances Your package is out for delivery. FedEx let us know your package will be delivered today. You can track its status on your order details page. Order number: BBY01-807179581917 Tra..."
+          },
+          {
+            "id": 1163,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv0AAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAImV2C7697hCnrf9Yvpw_aM=",
+            "subject": "A new card for COLIN has shipped",
+            "fromName": "Capital One Business",
+            "fromEmail": "capitalone@notification.capitalone.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-14T05:39:25+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv0AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: A new card for COLIN has shipped Date: 2026-05-14T05:39:25Z From: Capital One Business <capitalone@notification.capitalone.com> To: Brandon Clymer <bclymer@alleatogroup.com> Look for it in the mail soon. ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ­ ­ ­ ­ ­ ..."
+          }
+        ],
+        "operationalNote": "These are synced Outlook rows. For exact mailbox freshness, also call getOutlookOperationsStatus."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " your"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " attention"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Union"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Everything"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " else"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " batch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mostly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " noise"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " FY"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " attention"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Union"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " corrected"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " title"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " follow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ellis"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " O"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "'"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Connell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "14"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "12"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "31"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " UTC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " He"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " asked"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " been"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " any"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " movement"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " providing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "correct"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " title"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " direct"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " external"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " follow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cc"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " item"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sitting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " internal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Union"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " review"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/layout"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decision"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Jerome"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " D"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "aks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "iew"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "icz"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "14"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "12"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "46"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " UTC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Jerome"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " asked"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "moving"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " walk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-ins"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vendor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stalls"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " eliminate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " guest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "BO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "H"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cross"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "traffic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Doug"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " replied"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " he"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "likes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " idea"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " plans"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " review"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Andrew"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " then"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " asked"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-impact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " question"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "how"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " much"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cooler"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " space"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " would"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " longer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " just"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thought"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " turning"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-facing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decision"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " quantified"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Worth"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " knowing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " urgent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "N"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "iem"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ann"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Carmel"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Build"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Douglas"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Franklin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "14"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "10"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "48"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " UTC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Existing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " condition"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " photos"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " were"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " captured"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shared"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " build"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " space"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Useful"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " progress"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " nothing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " preview"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " suggests"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " personally"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " jump"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Quotes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Maryland"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brian"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Shows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "14"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "11"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "44"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " UTC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " He"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " says"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " quote"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "rawing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " new"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bathroom"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " north"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " end"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " he"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " updated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " drawing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " he"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " see"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " men"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " room"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " likely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reply"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " corrected"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " document"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tell"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " preview"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " critical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " versus"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " normal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " worth"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " your"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " time"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Best"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Buy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shipment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " notices"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Best"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Buy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Marketplace"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " messages"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " PC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Heaven"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Capital"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " One"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " card"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shipment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " notice"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Maria"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scheduling"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unless"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actively"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " waiting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " setup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Union"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " two"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " threads"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stall"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " progress"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fast"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " outside"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " party"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " waiting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " corrected"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " title"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " layout"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " discussion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " concrete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " space"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-impact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " before"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " conversation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " loose"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " same"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-day"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " corrected"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " title"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " even"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " just"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dependency"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Pin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " down"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cooler"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " space"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " impact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " walk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " relocation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " idea"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " before"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " call"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " closes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " loop"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Dec"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ide"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reply"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " personally"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Maryland"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " drawing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " push"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/contact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " step"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " draft"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reply"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "title"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " draft"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reply"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "walk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " relocation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thread"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pull"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "full"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Union"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thread"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " see"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exactly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " where"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stands"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 21326,
+      "totalTokens": 22021,
+      "outputTokens": 695,
+      "cacheHitRatio": 0.99,
+      "cachedInputTokens": 21120
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "What came in through Outlook today that needs my attention?",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "source_lookup",
+          "sourceSpecificRagKind": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "email_action",
+          "planner": "model",
+          "rationale": "The user is asking about Outlook items that require attention, which is best handled as an email-focused action rather than general source lookup. They want triage of incoming Outlook messages from today, likely to identify items needing response or follow-up. This is not drafting/sending an email, but it is still centered on Outlook inbox activity rather than broader project records.",
+          "confidence": "medium",
+          "responseMode": "draft_safe_action",
+          "requiredTools": [],
+          "deterministicIntent": "source_lookup",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T13:29:06.257Z"
+      },
+      {
+        "tool": "emailActionIntentRouter",
+        "input": {
+          "intent": "email_action",
+          "message": "What came in through Outlook today that needs my attention?"
+        },
+        "output": {
+          "injectedEmailActionOverride": true,
+          "skippedSourceSpecificShortCircuit": false
+        },
+        "timestamp": "2026-05-14T13:29:09.064Z"
+      },
+      {
+        "tool": "mcpToolDiscoverySkipped",
+        "input": {
+          "intent": "email_action",
+          "message": "What came in through Outlook today that needs my attention?"
+        },
+        "output": {
+          "reason": "Known Outlook/email action tools are local; skipping generic MCP discovery for latency."
+        },
+        "timestamp": "2026-05-14T13:29:09.064Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "promptMode": "full_strategist",
+          "toolChoice": "auto",
+          "fullToolCount": 117,
+          "modelToolCount": 4,
+          "modelToolNames": [
+            "draftOutlookEmail",
+            "getRecentOutlookEmails",
+            "readOutlookEmailThread",
+            "searchEmails"
+          ],
+          "streamMaxSteps": 5,
+          "scopedToolCount": 4,
+          "streamMaxOutputTokens": 1200,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": false
+        },
+        "timestamp": "2026-05-14T13:29:09.064Z"
+      },
+      {
+        "tool": "getRecentOutlookEmails",
+        "input": {
+          "limit": 15,
+          "since": "2026-05-14T00:00:00Z"
+        },
+        "output": {
+          "count": 15,
+          "emails": [
+            {
+              "id": 1167,
+              "ccList": [
+                "bclymer@alleatogroup.com",
+                "mamico@alleatogroup.com",
+                "jdawson@alleatogroup.com",
+                "mbollman@vioxinc.com",
+                "rhartig@vioxinc.com",
+                "arussell@vioxinc.com",
+                "dfranklin@alleatogroup.com"
+              ],
+              "status": "Matched",
+              "toList": [
+                "eoconnell@vioxinc.com",
+                "glarison@vioxinc.com"
+              ],
+              "preview": "Subject: Re: Union Collective (Union, KY) Date: 2026-05-14T12:58:13Z From: Andrew Cannon <acannon@alleatogroup.com> To: Ellis O'Connell <eoconnell@vioxinc.com>, Greg Larison <glarison@vioxinc.com> Ellis,&nbsp; Thanks for checking in, as I did not see your email.&nbsp; I will send your comments to our owner and get back with you. Best, Andrew Cannon&nbsp; &nbsp; Assistant Project Manager at Alleato Group Mobile &nbsp;317.315.3968 | &nbsp; Email &nbsp; acannon@alleatogroup.com Web &nbsp; www.alle...",
+              "project": {
+                "id": 1009,
+                "name": "Union Collective",
+                "projectNumber": "26-119"
+              },
+              "subject": "Re: Union Collective (Union, KY)",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijwDAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "Andrew Cannon",
+              "fromEmail": "acannon@alleatogroup.com",
+              "projectId": 1009,
+              "receivedAt": "2026-05-14T12:58:13+00:00",
+              "matchStatus": "matched",
+              "mailboxUserId": "bclymer@alleatogroup.com",
+              "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAJf7qyzJACBMmVUk2ch3f_8=",
+              "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijwDAAA=",
+              "hasAttachments": false
+            },
+            {
+              "id": 1168,
+              "ccList": [
+                "jdawson@alleatogroup.com"
+              ],
+              "status": "Matched",
+              "toList": [
+                "dfranklin@alleatogroup.com",
+                "jerome.daksiewicz@dkgrar.com",
+                "bclymer@alleatogroup.com"
+              ],
+              "preview": "Subject: Re: TAG 05/13/26 Union Collective - Development Regulations Date: 2026-05-14T12:55:48Z From: Andrew Cannon <acannon@alleatogroup.com> To: Douglas Franklin <dfranklin@alleatogroup.com>, Jerome Daksiewicz <jerome.daksiewicz@dkgrar.com>, Brandon Clymer <bclymer@alleatogroup.com> Jerome,&nbsp; Good thinking here, how much cooler space would they be losing though?&nbsp; Best, Andrew Cannon&nbsp; &nbsp; Assistant Project Manager at Alleato Group Mobile &nbsp;317.315.3968 | &nbsp; Email &nbsp...",
+              "project": {
+                "id": 1009,
+                "name": "Union Collective",
+                "projectNumber": "26-119"
+              },
+              "subject": "Re: TAG 05/13/26 Union Collective - Development Regulations",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijwCAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "Andrew Cannon",
+              "fromEmail": "acannon@alleatogroup.com",
+              "projectId": 1009,
+              "receivedAt": "2026-05-14T12:55:48+00:00",
+              "matchStatus": "matched",
+              "mailboxUserId": "bclymer@alleatogroup.com",
+              "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAO1POVab0uBGjijOQVjkzdU=",
+              "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijwCAAA=",
+              "hasAttachments": false
+            },
+            {
+              "id": 1169,
+              "ccList": [
+                "acannon@alleatogroup.com",
+                "jdawson@alleatogroup.com"
+              ],
+              "status": "Matched",
+              "toList": [
+                "jerome.daksiewicz@dkgrar.com",
+                "bclymer@alleatogroup.com"
+              ],
+              "preview": "Subject: Re: TAG 05/13/26 Union Collective - Development Regulations Date: 2026-05-14T12:50:31Z From: Douglas Franklin <dfranklin@alleatogroup.com> To: Jerome Daksiewicz <jerome.daksiewicz@dkgrar.com>, Brandon Clymer <bclymer@alleatogroup.com> Jerome, I like this idea a lot. &nbsp;We will review with the owner today on the call. Thank you, Doug Get Outlook for iOS From: Jerome Daksiewicz &lt;jerome.daksiewicz@dkgrar.com&gt; Sent: Thursday, May 14, 2026 8:46:15 AM To: Brandon Clymer &lt;bclymer@...",
+              "project": {
+                "id": 1009,
+                "name": "Union Collective",
+                "projectNumber": "26-119"
+              },
+              "subject": "Re: TAG 05/13/26 Union Collective - Development Regulations",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijwBAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "Douglas Franklin",
+              "fromEmail": "dfranklin@alleatogroup.com",
+              "projectId": 1009,
+              "receivedAt": "2026-05-14T12:50:31+00:00",
+              "matchStatus": "matched",
+              "mailboxUserId": "bclymer@alleatogroup.com",
+              "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAO1POVab0uBGjijOQVjkzdU=",
+              "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijwBAAA=",
+              "hasAttachments": false
+            },
+            {
+              "id": 1170,
+              "ccList": [
+                "dfranklin@alleatogroup.com",
+                "acannon@alleatogroup.com",
+                "jdawson@alleatogroup.com"
+              ],
+              "status": "Matched",
+              "toList": [
+                "bclymer@alleatogroup.com"
+              ],
+              "preview": "Subject: Re: TAG 05/13/26 Union Collective - Development Regulations Date: 2026-05-14T12:46:54Z From: Jerome Daksiewicz <jerome.daksiewicz@dkgrar.com> To: Brandon Clymer <bclymer@alleatogroup.com> From the owner review comments sent over yesterday - any thoughts on moving the walk-ins next to the vendor stalls? That would eliminate the cross-traffic between guest and BOH staff Jerome Daksiewicz Director of Design O:&nbsp; 317 . 614 . 0053 x325 DKGR 10 West Market Street . Suite 800 . Indianapol...",
+              "project": {
+                "id": 1009,
+                "name": "Union Collective",
+                "projectNumber": "26-119"
+              },
+              "subject": "Re: TAG 05/13/26 Union Collective - Development Regulations",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijwAAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "Jerome Daksiewicz",
+              "fromEmail": "jerome.daksiewicz@dkgrar.com",
+              "projectId": 1009,
+              "receivedAt": "2026-05-14T12:46:54+00:00",
+              "matchStatus": "matched",
+              "mailboxUserId": "bclymer@alleatogroup.com",
+              "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAO1POVab0uBGjijOQVjkzdU=",
+              "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijwAAAA=",
+              "hasAttachments": false
+            },
+            {
+              "id": 1171,
+              "ccList": [
+                "bclymer@alleatogroup.com",
+                "mamico@alleatogroup.com",
+                "jdawson@alleatogroup.com",
+                "mbollman@vioxinc.com",
+                "rhartig@vioxinc.com",
+                "arussell@vioxinc.com",
+                "dfranklin@alleatogroup.com"
+              ],
+              "status": "Matched",
+              "toList": [
+                "acannon@alleatogroup.com",
+                "glarison@vioxinc.com"
+              ],
+              "preview": "Subject: RE: Union Collective (Union, KY) Date: 2026-05-14T12:31:40Z From: Ellis O'Connell <eoconnell@vioxinc.com> To: Andrew Cannon <acannon@alleatogroup.com>, Greg Larison <glarison@vioxinc.com> Andrew, &nbsp; Following up on the below email, curious if there has been any movement with providing a corrected title commitment? &nbsp; Thanks, &nbsp; Ellis O’Connell Survey Technician &nbsp; vioxinc.com &nbsp; 859-727-3293&nbsp;&nbsp;ext.2048 &nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nb...",
+              "project": {
+                "id": 1009,
+                "name": "Union Collective",
+                "projectNumber": "26-119"
+              },
+              "subject": "RE: Union Collective (Union, KY)",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv%2FAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "Ellis O'Connell",
+              "fromEmail": "eoconnell@vioxinc.com",
+              "projectId": 1009,
+              "receivedAt": "2026-05-14T12:31:40+00:00",
+              "matchStatus": "matched",
+              "mailboxUserId": "bclymer@alleatogroup.com",
+              "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAJf7qyzJACBMmVUk2ch3f_8=",
+              "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv-AAA=",
+              "hasAttachments": false
+            },
+            {
+              "id": 1172,
+              "ccList": [],
+              "status": "Received",
+              "toList": [
+                "bclymer@alleatogroup.com"
+              ],
+              "preview": "Subject: 📦 Your package is out for delivery. 📦 Date: 2026-05-14T12:30:11Z From: Best Buy Notifications <BestBuyInfo@emailinfo.bestbuy.com> To: Brandon Clymer <bclymer@alleatogroup.com> See inside for details. Mariaalejandra&nbsp;&nbsp;|&nbsp;&nbsp; View Account View: Web Top Deals Outlet TVs Computers Cell Phones Appliances Your package is out for delivery. FedEx let us know your package will be delivered today. You can track its status on your order details page. Order number: BBY01-80717946...",
+              "project": null,
+              "subject": "📦 Your package is out for delivery. 📦",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv%2BAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "Best Buy Notifications",
+              "fromEmail": "BestBuyInfo@emailinfo.bestbuy.com",
+              "projectId": null,
+              "receivedAt": "2026-05-14T12:30:11+00:00",
+              "matchStatus": "unassigned",
+              "mailboxUserId": "bclymer@alleatogroup.com",
+              "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQACDOp2VN8DdKh7lSF5gXxmI=",
+              "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv_AAA=",
+              "hasAttachments": false
+            },
+            {
+              "id": 1173,
+              "ccList": [
+                "bclymer@alleatogroup.com",
+                "jgaona@alleatogroup.com",
+                "ben@goldentaxrelief.com"
+              ],
+              "status": "Received",
+              "toList": [
+                "sarahn@goldentaxrelief.com"
+              ],
+              "preview": "Subject: Follow-Up Meeting Availability Date: 2026-05-14T12:20:21Z From: Maria Calcetero <Mcalcetero@alleatogroup.com> To: sarahn@goldentaxrelief.com <sarahn@goldentaxrelief.com> Hi Sarah, I hope you are doing well. I wanted to follow up regarding the next meeting with Brandon and your team. Could you please let me know when you are planning to schedule it? Brandon currently has availability next week on: Tuesday morning between 10:00 AM – 11:30 AM Wednesday afternoon between 1:00 PM – 3:00 PM ...",
+              "project": null,
+              "subject": "Follow-Up Meeting Availability",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv9AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "Maria Calcetero",
+              "fromEmail": "Mcalcetero@alleatogroup.com",
+              "projectId": null,
+              "receivedAt": "2026-05-14T12:20:21+00:00",
+              "matchStatus": "unassigned",
+              "mailboxUserId": "bclymer@alleatogroup.com",
+              "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQABD7McdjxT9NlrfBc70E4R0=",
+              "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv9AAA=",
+              "hasAttachments": false
+            },
+            {
+              "id": 1164,
+              "ccList": [],
+              "status": "Received",
+              "toList": [
+                "MHarrison@alleatogroup.com"
+              ],
+              "preview": "Subject: Your AI Skill output - Daily Digest Date: 2026-05-14T12:09:57Z From: Fred from Fireflies.ai <fred@fireflies.ai> To: Megan Harrison <MHarrison@alleatogroup.com> Daily Digest Multiple meetings · May 13, 2026 Action Items 🛠️ Alleato PM Software Improvements (Bug fixes and feature enhancements) 🔴 Fix slow loading issue and deploy fix live by next sprint ^1 🔴 Improve screenshot upload to auto-capture and upload without manual steps ^1 🔴 Fix budget and commitment selection bugs, ensure a...",
+              "project": null,
+              "subject": "Your AI Skill output - Daily Digest",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkAGNhMTc5ZDAwLTYwNjEtNGE5Mi04ZTI4LTllODdiY2RhNjliNABGAAAAAADrAAP0kly5Tp7uNi2CrItPBwA7VpBaSF70Sqm32W6tK4ohAAAAAAEMAAA7VpBaSF70Sqm32W6tK4ohAABmRoSDAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "Fred from Fireflies.ai",
+              "fromEmail": "fred@fireflies.ai",
+              "projectId": null,
+              "receivedAt": "2026-05-14T12:09:57+00:00",
+              "matchStatus": "unassigned",
+              "mailboxUserId": "mharrison@alleatogroup.com",
+              "conversationId": "AAQkAGNhMTc5ZDAwLTYwNjEtNGE5Mi04ZTI4LTllODdiY2RhNjliNAAQAJAW-azdTfdAuzzYtdd75zY=",
+              "graphMessageId": "AAMkAGNhMTc5ZDAwLTYwNjEtNGE5Mi04ZTI4LTllODdiY2RhNjliNABGAAAAAADrAAP0kly5Tp7uNi2CrItPBwA7VpBaSF70Sqm32W6tK4ohAAAAAAEMAAA7VpBaSF70Sqm32W6tK4ohAABmRoSDAAA=",
+              "hasAttachments": false
+            },
+            {
+              "id": 1157,
+              "ccList": [],
+              "status": "Received",
+              "toList": [
+                "bclymer@alleatogroup.com"
+              ],
+              "preview": "Subject: RE: Quotes for Maryland Date: 2026-05-14T11:44:33Z From: Brian Shows <richard.shows@bellacanvas.com> To: Brandon Clymer <bclymer@alleatogroup.com> Hi Brandon, I got the email. The quote and drawing show a new bathroom at the North end of the facility where we want it installed. We need an updated drawing, as I can only see a men’s room. &nbsp; From: Brandon Clymer &lt;bclymer@alleatogroup.com&gt; Sent: Wednesday, May 13, 2026 8:52 PM To: Brian Shows &lt;richard.shows@bellacanvas.com&gt...",
+              "project": null,
+              "subject": "RE: Quotes for Maryland",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv8AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "Brian Shows",
+              "fromEmail": "richard.shows@bellacanvas.com",
+              "projectId": null,
+              "receivedAt": "2026-05-14T11:44:33+00:00",
+              "matchStatus": "unassigned",
+              "mailboxUserId": "bclymer@alleatogroup.com",
+              "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAJGR9kfAL0g4kXEPod0YbvM=",
+              "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv8AAA=",
+              "hasAttachments": false
+            },
+            {
+              "id": 1158,
+              "ccList": [
+                "kgreen@alleatogroup.com",
+                "jdawson@alleatogroup.com",
+                "bclymer@alleatogroup.com",
+                "varvizu@alleatogroup.com"
+              ],
+              "status": "Matched",
+              "toList": [
+                "jrichardson@alleatogroup.com",
+                "eandrade@alleatogroup.com"
+              ],
+              "preview": "Subject: Niemann Carmel Build Out Date: 2026-05-14T10:48:12Z From: Douglas Franklin <dfranklin@alleatogroup.com> To: Jake Richardson <jrichardson@alleatogroup.com>, Enzo Andrade <eandrade@alleatogroup.com> Jake and Enzo, Victor was able to get to the space next to FedEx and took some photos of the existing conditions for the build out that Glendon asked for. They are in the folder link below, but when this becomes a new project, I will move this folder. Niemann Carmel Build out Thank you, Doug ...",
+              "project": {
+                "id": 38,
+                "name": "Niemann Foods TI",
+                "projectNumber": "25-103"
+              },
+              "subject": "Niemann Carmel Build Out",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv7AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "Douglas Franklin",
+              "fromEmail": "dfranklin@alleatogroup.com",
+              "projectId": 38,
+              "receivedAt": "2026-05-14T10:48:12+00:00",
+              "matchStatus": "matched",
+              "mailboxUserId": "bclymer@alleatogroup.com",
+              "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAHp2gRVfl_pAqAL7KLKRNho=",
+              "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv7AAA=",
+              "hasAttachments": false
+            },
+            {
+              "id": 1159,
+              "ccList": [],
+              "status": "Received",
+              "toList": [
+                "bclymer@alleatogroup.com"
+              ],
+              "preview": "Subject: 📦 Your package is out for delivery. 📦 Date: 2026-05-14T10:30:09Z From: Best Buy Notifications <BestBuyInfo@emailinfo.bestbuy.com> To: Brandon Clymer <bclymer@alleatogroup.com> See inside for details. Jazmin&nbsp;&nbsp;|&nbsp;&nbsp; View Account View: Web Top Deals Outlet TVs Computers Cell Phones Appliances Your package is out for delivery. FedEx let us know your package will be delivered today. You can track its status on your order details page. Order number: BBY01-807179581917 Tra...",
+              "project": null,
+              "subject": "📦 Your package is out for delivery. 📦",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv6AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "Best Buy Notifications",
+              "fromEmail": "BestBuyInfo@emailinfo.bestbuy.com",
+              "projectId": null,
+              "receivedAt": "2026-05-14T10:30:09+00:00",
+              "matchStatus": "unassigned",
+              "mailboxUserId": "bclymer@alleatogroup.com",
+              "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAF_ZiOkkhT1JrJ9uLphV5Mw=",
+              "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv6AAA=",
+              "hasAttachments": false
+            },
+            {
+              "id": 1160,
+              "ccList": [],
+              "status": "Received",
+              "toList": [
+                "bclymer@alleatogroup.com"
+              ],
+              "preview": "Subject: You have a new message from PC Heaven. Date: 2026-05-14T09:22:30Z From: PC Heaven via Best Buy Marketplace <reply+f6i1h17ezn@marketplace.bestbuy.com> To: Brandon Clymer <bclymer@alleatogroup.com> See inside for details. You have a message from PC Heaven. PC Heaven message Dear Jazmin, Thank you for your message. We have reviewed the shipment status. According to UPS tracking, the estimated delivery date is Monday, May 18, and a signature will be required upon delivery. Tracking number:...",
+              "project": null,
+              "subject": "You have a new message from PC Heaven.",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv5AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "PC Heaven via Best Buy Marketplace",
+              "fromEmail": "reply+f6i1h17ezn@marketplace.bestbuy.com",
+              "projectId": null,
+              "receivedAt": "2026-05-14T09:22:30+00:00",
+              "matchStatus": "unassigned",
+              "mailboxUserId": "bclymer@alleatogroup.com",
+              "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAKPZzMCroE5KlsrXzWeHzh0=",
+              "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv5AAA=",
+              "hasAttachments": false
+            },
+            {
+              "id": 1161,
+              "ccList": [],
+              "status": "Received",
+              "toList": [
+                "bclymer@alleatogroup.com"
+              ],
+              "preview": "Subject: You have a new message from PC Heaven. Date: 2026-05-14T09:21:46Z From: PC Heaven via Best Buy Marketplace <reply+klr2nbar57@marketplace.bestbuy.com> To: Brandon Clymer <bclymer@alleatogroup.com> You don't often get email from reply+klr2nbar57@marketplace.bestbuy.com. Learn why this is important See inside for details. You have a message from PC Heaven. PC Heaven message Dear Jazmin, Thank you for your message. We have reviewed the shipment status. According to UPS tracking, the estima...",
+              "project": null,
+              "subject": "You have a new message from PC Heaven.",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv4AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "PC Heaven via Best Buy Marketplace",
+              "fromEmail": "reply+klr2nbar57@marketplace.bestbuy.com",
+              "projectId": null,
+              "receivedAt": "2026-05-14T09:21:46+00:00",
+              "matchStatus": "unassigned",
+              "mailboxUserId": "bclymer@alleatogroup.com",
+              "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAEjSN0AJBalFsIVrtNv6g_I=",
+              "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv4AAA=",
+              "hasAttachments": false
+            },
+            {
+              "id": 1162,
+              "ccList": [],
+              "status": "Received",
+              "toList": [
+                "bclymer@alleatogroup.com"
+              ],
+              "preview": "Subject: 📦 Your package is out for delivery. 📦 Date: 2026-05-14T07:42:00Z From: Best Buy Notifications <BestBuyInfo@emailinfo.bestbuy.com> To: Brandon Clymer <bclymer@alleatogroup.com> See inside for details. Jazmin&nbsp;&nbsp;|&nbsp;&nbsp; View Account View: Web Top Deals Outlet TVs Computers Cell Phones Appliances Your package is out for delivery. FedEx let us know your package will be delivered today. You can track its status on your order details page. Order number: BBY01-807179581917 Tra...",
+              "project": null,
+              "subject": "📦 Your package is out for delivery. 📦",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv2AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "Best Buy Notifications",
+              "fromEmail": "BestBuyInfo@emailinfo.bestbuy.com",
+              "projectId": null,
+              "receivedAt": "2026-05-14T07:42:00+00:00",
+              "matchStatus": "unassigned",
+              "mailboxUserId": "bclymer@alleatogroup.com",
+              "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAK6E9Ip2YoFHlpzjTYeKHyU=",
+              "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv2AAA=",
+              "hasAttachments": false
+            },
+            {
+              "id": 1163,
+              "ccList": [],
+              "status": "Received",
+              "toList": [
+                "bclymer@alleatogroup.com"
+              ],
+              "preview": "Subject: A new card for COLIN has shipped Date: 2026-05-14T05:39:25Z From: Capital One Business <capitalone@notification.capitalone.com> To: Brandon Clymer <bclymer@alleatogroup.com> Look for it in the mail soon. ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ­ ­ ­ ­ ­ ...",
+              "project": null,
+              "subject": "A new card for COLIN has shipped",
+              "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQmijv0AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "fromName": "Capital One Business",
+              "fromEmail": "capitalone@notification.capitalone.com",
+              "projectId": null,
+              "receivedAt": "2026-05-14T05:39:25+00:00",
+              "matchStatus": "unassigned",
+              "mailboxUserId": "bclymer@alleatogroup.com",
+              "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAImV2C7697hCnrf9Yvpw_aM=",
+              "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijv0AAA=",
+              "hasAttachments": false
+            }
+          ],
+          "source": "outlook_email_intake",
+          "operationalNote": "These are synced Outlook rows. For exact mailbox freshness, also call getOutlookOperationsStatus."
+        },
+        "timestamp": "2026-05-14T13:29:11.284Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 6123,
+          "finishReason": "tool-calls",
+          "outputTokens": 37,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getRecentOutlookEmails"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 15203,
+          "finishReason": "stop",
+          "outputTokens": 658,
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "draftOutlookEmail",
+            "getRecentOutlookEmails",
+            "readOutlookEmailThread",
+            "searchEmails"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "draftOutlookEmail",
+            "getRecentOutlookEmails",
+            "readOutlookEmailThread",
+            "searchEmails"
+          ]
+        }
+      ],
+      "totalStepCount": 2,
+      "finalFinishReason": "stop",
+      "preparedStepCount": 2,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 1
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

@@ -1,0 +1,249 @@
+{
+  "generatedAt": "2026-06-09T15:09:11.353Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": null,
+  "filter": "^toolcov-read-(structured-financial-rows|acumatica-project-budget|research-company)$",
+  "totalCases": 3,
+  "passed": 3,
+  "failed": 0,
+  "warningCount": 4,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": false,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 0,
+    "passed": 0,
+    "failed": 0,
+    "errors": 0,
+    "averageScore": null
+  },
+  "slowestCases": [
+    {
+      "id": "toolcov-read-structured-financial-rows",
+      "intent": "structured_financial",
+      "durationMs": 42575,
+      "status": "pass",
+      "warnings": [
+        "expected family 'structured' not represented",
+        "duration 42575ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "toolcov-read-acumatica-project-budget",
+      "intent": "accounting",
+      "durationMs": 29584,
+      "status": "pass",
+      "warnings": [
+        "expected family 'accounting' not represented"
+      ]
+    },
+    {
+      "id": "toolcov-read-research-company",
+      "intent": "web_research",
+      "durationMs": 16185,
+      "status": "pass",
+      "warnings": [
+        "expected family 'web' not represented"
+      ]
+    }
+  ],
+  "toolCoverage": {
+    "backendDeepAgentProjectStatus": 2,
+    "project_lookup": 2,
+    "packet_reader": 2,
+    "teams_reader": 2,
+    "meetings_reader": 2,
+    "emails_reader": 2,
+    "documents_reader": 2,
+    "financials_reader": 2,
+    "schedule_reader": 2,
+    "rfi_reader": 2,
+    "submittal_reader": 2,
+    "deepagents_runtime": 2,
+    "backendDeepAgentResearch": 1,
+    "deepagents_research_runtime": 1
+  },
+  "intentDistribution": {
+    "structured_financial": 1,
+    "accounting": 1,
+    "web_research": 1
+  },
+  "results": [
+    {
+      "id": "toolcov-read-structured-financial-rows",
+      "intent": "structured_financial",
+      "prompt": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+      "selectedProjectId": 43,
+      "sessionId": "683099d5-0e9d-4527-bb80-81f95cc64cb2",
+      "sessionLabel": "eval-2026-06-09T15-07-42-031Z-25b84ec6-toolcov-read-structured-financial-rows",
+      "startedAt": "2026-06-09T15:07:42.049Z",
+      "finishedAt": "2026-06-09T15:08:24.962Z",
+      "durationMs": 42575,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 21,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'structured' not represented",
+          "duration 42575ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: backendDeepAgentProjectStatus, project_lookup, packet_reader, teams_reader, meetings_reader, emails_reader, documents_reader, financials_reader, schedule_reader, rfi_reader, submittal_reader, deepagents_runtime",
+          "backend Deep Agents memory candidates: 0"
+        ],
+        "toolNames": [
+          "backendDeepAgentProjectStatus",
+          "project_lookup",
+          "packet_reader",
+          "teams_reader",
+          "meetings_reader",
+          "emails_reader",
+          "documents_reader",
+          "financials_reader",
+          "schedule_reader",
+          "rfi_reader",
+          "submittal_reader",
+          "deepagents_runtime"
+        ],
+        "familiesHit": [
+          "project",
+          "risk"
+        ],
+        "finalTextLength": 2206,
+        "finalText": "No structured financial line rows for Westfield Collective mention “concrete” in the budget lines I checked. On the financial side, that means I could not surface any concrete-specific amount to quote from the structured budget layer.\n\nEvidence\n- Westfield Collective budget summary shows $0 original budget, $0 revised budget, $0 approved budget changes, and $0 prime contract value. Source: `project_budget_summary` for Westfield Collective.\n- I queried `budget_lines` for Westfield Collective across line description, cost code title, division title, and common concrete cost-code patterns; the result was 0 rows. Source: `query_db` on `budget_lines` / `cost_codes`.\n- The project’s structured financial line layer, as checked here, therefore contains no concrete-tagged amount to report. Source: `query_db` result, 0 rows.\n- Current project coverage is still active on emails/documents/financials, but meetings, RFI, and submittal coverage are missing, so the broader control picture is incomplete. Source: provided source coverage.\n\nWhat this means\nThis does not look like a concrete cost exposure showing up in the budget line structure yet. The bigger read is that Westfield’s financial control data is thin and effectively empty at the project budget layer, so you should not treat that as proof there’s no concrete work — just proof it is not surfaced cleanly in the structured budget lines I checked.\n\nRecommended next steps\n- If you want the real exposure read, I’d broaden from budget lines to commitments, PO lines, invoices, and ERP mirror tables for “concrete” on Westfield.\n- If you only care about the current PM budget layer, the answer is: no concrete rows found, no amounts to report.\n\nUncertainty\n- I only checked the structured budget line layer, not every financial table in the system.\n- The project budget summary itself is $0 / blanked out, so there is no usable amount there to anchor a concrete-specific read.\n- Meetings, RFI, and submittal coverage are missing, which limits cross-checking against field or coordination context.\n\nSource coverage note: meetings: missing; rfi: missing; submittal: missing. I did not use unavailable or stale source categories as factual support.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 42575
+        }
+      },
+      "expectedToolNames": [
+        "searchStructuredFinancialRows",
+        "backendDeepAgentProjectStatus"
+      ],
+      "expectedToolFamilies": [
+        "structured",
+        "project"
+      ]
+    },
+    {
+      "id": "toolcov-read-acumatica-project-budget",
+      "intent": "accounting",
+      "prompt": "Pull the Acumatica project budget for Westfield.",
+      "selectedProjectId": 43,
+      "sessionId": "22a90680-2d6b-4933-9ed1-6d0233e1d625",
+      "sessionLabel": "eval-2026-06-09T15-07-42-031Z-25b84ec6-toolcov-read-acumatica-project-budget",
+      "startedAt": "2026-06-09T15:08:24.963Z",
+      "finishedAt": "2026-06-09T15:08:54.876Z",
+      "durationMs": 29584,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 17,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'accounting' not represented"
+        ],
+        "observations": [
+          "tools fired: backendDeepAgentProjectStatus, project_lookup, packet_reader, teams_reader, meetings_reader, emails_reader, documents_reader, financials_reader, schedule_reader, rfi_reader, submittal_reader, deepagents_runtime",
+          "backend Deep Agents memory candidates: 0"
+        ],
+        "toolNames": [
+          "backendDeepAgentProjectStatus",
+          "project_lookup",
+          "packet_reader",
+          "teams_reader",
+          "meetings_reader",
+          "emails_reader",
+          "documents_reader",
+          "financials_reader",
+          "schedule_reader",
+          "rfi_reader",
+          "submittal_reader",
+          "deepagents_runtime"
+        ],
+        "familiesHit": [
+          "project",
+          "risk"
+        ],
+        "finalTextLength": 2840,
+        "finalText": "Direct answer\n\nWestfield Collective’s structured budget is showing as flatlined at $0 across budget, contract, and billing, which is not a real project financial picture — it’s a data-coverage problem, not a clean zero project. Operationally, the project looks quiet in the structured system, but recent email traffic shows closeout/activation issues still hanging around.\n\nEvidence\n\n- Budget summary shows original budget $0, revised budget $0, approved changes $0, and budget delta $0. Source: PM database project budget summary for Westfield Collective.\n- Prime contract summary also shows original contract $0, revised contract $0, approved owner COs $0, pending owner COs $0, invoiced $0, paid $0, remaining balance $0. Source: PM database project budget summary for Westfield Collective.\n- Project briefing flags no open RFIs, submittals, or overdue schedule tasks in structured tables, and no commitments or change events recorded there. Source: PM database project briefing snapshot for Westfield Collective.\n- Recent movement is still active: 2026-06-08 email chain on roll-up counter doors, 2026-06-08 email on roof cost, 2026-06-08 email on duct sweating, and 2026-06-05 email on warranty and O&M manuals. Source: PM database project briefing snapshot for Westfield Collective.\n- Document intake includes a contract change order attachment for “Added Electrical for exterior walk in cooler” and a counter shutter drawing file on 2026-06-08. Source: PM database recent documents for Westfield Collective.\n\nWhat this means\n\nDo not treat the $0 budget as a usable financial read. The structured financials are either not populated or not wired to this project yet, so any margin or exposure conclusion would be fiction. The real signal here is that Westfield is in late-stage closeout/activation mode with active warranty and field coordination items still moving, which means the risk is less “big budget overrun” and more “small unresolved issues turning into payment/admin drag.”\n\nRecommended next steps\n\n- Pull the Acumatica project code mapping for Westfield Collective and verify whether the budget/contract feed is missing or mis-linked.\n- Have the PM confirm whether all change work has been entered into the project controls, especially the exterior walk-in cooler electrical change order and any door/shutter scope.\n- Before any owner-facing financial update, reconcile recent email/document activity against the budget and committed cost picture.\n\nUncertainty\n\n- The structured budget and contract fields appear empty or unmapped, so the financial read is incomplete.\n- I cannot tell from the current structured data whether the $0 values are real or a sync/mapping issue.\n\nSource coverage note: meetings: missing; rfi: missing; submittal: missing. I did not use unavailable or stale source categories as factual support.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 29584
+        }
+      },
+      "expectedToolNames": [
+        "getAcumaticaProjectBudget",
+        "backendDeepAgentProjectStatus"
+      ],
+      "expectedToolFamilies": [
+        "accounting",
+        "project"
+      ]
+    },
+    {
+      "id": "toolcov-read-research-company",
+      "intent": "web_research",
+      "prompt": "Research Turner Construction for me — size, market focus, and reputation.",
+      "selectedProjectId": null,
+      "sessionId": "f50adbed-fba3-4d74-b92b-e6b1a48486a8",
+      "sessionLabel": "eval-2026-06-09T15-07-42-031Z-25b84ec6-toolcov-read-research-company",
+      "startedAt": "2026-06-09T15:08:54.877Z",
+      "finishedAt": "2026-06-09T15:09:11.352Z",
+      "durationMs": 16185,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 12,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'web' not represented"
+        ],
+        "observations": [
+          "tools fired: backendDeepAgentResearch, deepagents_research_runtime",
+          "backend Deep Agents memory candidates: 0"
+        ],
+        "toolNames": [
+          "backendDeepAgentResearch",
+          "deepagents_research_runtime"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 2928,
+        "finalText": "## Turner Construction — size, market focus, reputation\n\n### Public web sources\n- **Size:** Turner’s official site says it has **over 16,000 employees** and completes **more than $28 billion** of construction annually across **thousands of projects**. It also says Turner operates in **North America and in 30 countries around the world**. URL: https://www.turnerconstruction.com/who-we-are\n- **Company scale corroboration:** Turner’s LinkedIn profile lists **10,001+ employees** and **19,546 employees on LinkedIn**, with **839,270 followers**. URL: https://www.linkedin.com/company/turner-construction-company\n- **Market focus:** Turner describes itself as a **North America-based, international construction services company** and says it is a leader in **diverse market segments**. Its market sectors include **aviation & transportation, federal, healthcare, pharmaceutical & biotech, industrial & advanced manufacturing, critical facilities, and sports & entertainment**. Turner also states it is a leader in major segments including **healthcare, education, commercial, sports, aviation, pharmaceutical, retail, and green building**. URL: https://www.turnerconstruction.com/market-sectors\n- **Recent sector emphasis:** In a 2025 company update, Turner said leading sectors include **data centers, healthcare, commercial, and education**, with backlog concentrated in **data centers, healthcare, education, and sports/entertainment**. URL: https://www.turnerconstruction.com/insights/turner-construction-company-achieves-historic-growth-in-the-first-half-of-2025\n- **Reputation:** Turner’s official site says its reputation was built on **integrity, working safely, delivering complex and challenging projects, and driving innovation**. LinkedIn/Turner also emphasizes recognition for **large, complex projects**, **innovation**, and **emerging technologies**. URLs: https://www.turnerconstruction.com/who-we-are , https://www.linkedin.com/company/turner-construction-company\n- **Positioning:** Turner presents itself as the **largest general contractor in the country** on its official site. URL: https://www.turnerconstruction.com/who-we-are\n\n### Alleato internal evidence\n- I checked team-memory context for “Turner Construction” and found **no relevant Alleato internal evidence** about this company in the retrieved memories. The only returned items were unrelated team memories, so there is **no internal project/vendor-specific evidence to add**.\n\n### Bottom line\nTurner Construction is a **very large, top-tier contractor** with **16k+ employees**, **$28B+ annual volume**, and a broad footprint across North America and internationally. Its strongest market focus is in **complex, high-value verticals**—especially **data centers/critical facilities, healthcare, education, commercial, aviation, and sports/entertainment**. Its reputation is centered on **scale, safety, complex-project delivery, and innovation**.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 16185
+        }
+      },
+      "expectedToolNames": [
+        "researchCompany",
+        "backendDeepAgentResearch"
+      ],
+      "expectedToolFamilies": [
+        "web"
+      ]
+    }
+  ]
+}

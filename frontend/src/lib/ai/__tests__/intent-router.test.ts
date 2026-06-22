@@ -213,7 +213,7 @@ describe("intent router", () => {
     // Regression: market-conditions and industry-trend questions without an
     // explicit "web"/"research" verb were falling to internal RAG and being
     // answered from internal files instead of searching the web.
-    // See docs/ai-plan/evals/TOOL-COVERAGE-RUN-RESULTS.md.
+    // See docs/archive/2026-06-22-docs-migration/ai-plan/evals/TOOL-COVERAGE-RUN-RESULTS.md.
     it.each([
       "What's happening in the US commercial construction market this quarter?",
       "What's the outlook for lumber prices nationally?",

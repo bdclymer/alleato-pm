@@ -19164,7 +19164,11 @@ export type Database = {
           source_metadata: Json
           status: string
           subject: string
+          teams_alert_sent_at: string | null
           to_list: string[] | null
+          triage_action: string | null
+          triage_at: string | null
+          triage_reason: string | null
           updated_at: string | null
           web_link: string | null
         }
@@ -19195,7 +19199,11 @@ export type Database = {
           source_metadata?: Json
           status?: string
           subject: string
+          teams_alert_sent_at?: string | null
           to_list?: string[] | null
+          triage_action?: string | null
+          triage_at?: string | null
+          triage_reason?: string | null
           updated_at?: string | null
           web_link?: string | null
         }
@@ -19226,7 +19234,11 @@ export type Database = {
           source_metadata?: Json
           status?: string
           subject?: string
+          teams_alert_sent_at?: string | null
           to_list?: string[] | null
+          triage_action?: string | null
+          triage_at?: string | null
+          triage_reason?: string | null
           updated_at?: string | null
           web_link?: string | null
         }

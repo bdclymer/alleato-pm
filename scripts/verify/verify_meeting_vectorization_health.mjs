@@ -62,6 +62,7 @@ const MEETING_CHUNK_SOURCE_TYPES = [
 ];
 const EXCLUDED_DOCUMENT_STATUSES = [
   "intentionally_excluded",
+  "deleted_no_transcript",
   "metadata_only",
   "not_vectorizable",
   "skipped_low_content",
@@ -420,7 +421,11 @@ try {
     select
       id::text,
       title,
-      coalesce(captured_at, date, created_at::timestamptz) as meeting_at
+      coalesce(captured_at, date, created_at::timestamptz) as meeting_at,
+      (
+        coalesce(raw_text, content, '') ~ '\\[[0-9]{1,2}:[0-9]{2}(:[0-9]{2})?\\]'
+        or length(coalesce(raw_text, content, '')) >= 5000
+      ) as has_transcript_like_content
     from public.document_metadata
     where (
       source = 'fireflies'
@@ -439,6 +444,9 @@ try {
     order by meeting_at desc
   `;
   const recentMeetingIds = recentMeetings.map((row) => row.id).filter(Boolean);
+  const transcriptExpectedMeetingIds = new Set(
+    recentMeetings.filter((row) => row.has_transcript_like_content === true).map((row) => row.id),
+  );
 
   const [metadata] = await appSql`
     with meeting_ids as materialized (
@@ -546,7 +554,12 @@ try {
     recent_meetings: recentMeetingIds.length,
     recent_meetings_with_chunks: recentMeetings.filter((row) => (chunkByDocumentId.get(row.id)?.chunk_count ?? 0) > 0).length,
     recent_meetings_with_embedded_chunks: recentMeetings.filter((row) => (chunkByDocumentId.get(row.id)?.embedded_chunk_count ?? 0) > 0).length,
-    recent_meetings_with_embedded_transcript_chunks: recentMeetings.filter((row) => (chunkByDocumentId.get(row.id)?.embedded_transcript_chunk_count ?? 0) > 0).length,
+    transcript_expected_meetings: transcriptExpectedMeetingIds.size,
+    transcript_expected_meetings_with_embedded_transcript_chunks: recentMeetings.filter(
+      (row) =>
+        transcriptExpectedMeetingIds.has(row.id) &&
+        (chunkByDocumentId.get(row.id)?.embedded_transcript_chunk_count ?? 0) > 0,
+    ).length,
     recent_chunks: recentChunkRows.reduce((sum, row) => sum + Number(row.chunk_count ?? 0), 0),
     recent_embedded_chunks: recentChunkRows.reduce((sum, row) => sum + Number(row.embedded_chunk_count ?? 0), 0),
     latest_recent_chunk_embedding_at: recentChunkRows.reduce((latest, row) => {
@@ -625,11 +638,14 @@ try {
     }
 
     const transcriptRatio =
-      recentChunkCoverage.recent_meetings_with_embedded_transcript_chunks / recent.recent_meetings;
+      recentChunkCoverage.transcript_expected_meetings > 0
+        ? recentChunkCoverage.transcript_expected_meetings_with_embedded_transcript_chunks /
+          recentChunkCoverage.transcript_expected_meetings
+        : 1;
     if (transcriptRatio < RECENT_MIN_TRANSCRIPT_CHUNK_RATIO) {
       fail(
-        `Only ${recentChunkCoverage.recent_meetings_with_embedded_transcript_chunks} of ` +
-          `${recent.recent_meetings} meetings from the last ${RECENT_WINDOW_DAYS} days ` +
+        `Only ${recentChunkCoverage.transcript_expected_meetings_with_embedded_transcript_chunks} of ` +
+          `${recentChunkCoverage.transcript_expected_meetings} transcript-bearing meetings from the last ${RECENT_WINDOW_DAYS} days ` +
           `have embedded full-transcript chunks (${(transcriptRatio * 100).toFixed(1)}%, ` +
           `required ≥${RECENT_MIN_TRANSCRIPT_CHUNK_RATIO * 100}%). ` +
           `Meeting summaries may exist, but full-transcript RAG coverage is incomplete.`

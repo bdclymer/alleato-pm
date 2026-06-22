@@ -1,0 +1,678 @@
+{
+  "id": "source-freshness-rag-health",
+  "intent": "source_health",
+  "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+  "selectedProjectId": null,
+  "sessionId": "e1ec424d-b53d-4978-a63d-de06522a38b1",
+  "sessionLabel": "eval-2026-05-14T15-51-05-316Z-source-freshness-rag-health",
+  "startedAt": "2026-05-14T15:53:27.618Z",
+  "finishedAt": "2026-05-14T15:55:42.795Z",
+  "durationMs": 120003,
+  "httpStatus": 200,
+  "streamError": "stream read error: This operation was aborted",
+  "streamEventCount": 92,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: This operation was aborted",
+      "assistant message was not persisted to chat_history",
+      "expected required tool 'assistantSourceHealth' to fire",
+      "mustInclude missing: \"Teams\"",
+      "mustInclude missing: \"Outlook\"",
+      "mustInclude missing: \"meeting\"",
+      "mustInclude missing: \"packet\"",
+      "mustIncludeAny missing one of: \"stale\", \"fresh\", \"up to date\", \"unembedded\", \"uncompiled\", \"source health\"",
+      "answer length 0 < min 250",
+      "required metadata missing: source_health",
+      "required metadata missing: tool_trace",
+      "required metadata missing: response_quality"
+    ],
+    "warnings": [
+      "expected family 'source_health' not represented"
+    ],
+    "observations": [
+      "tools fired: searchMeetingsByTopic"
+    ],
+    "toolNames": [
+      "searchMeetingsByTopic"
+    ],
+    "familiesHit": [
+      "meetings"
+    ],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "source_health"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T15:53:30.261Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Searching source records for the requested discussion context",
+        "status": "loading",
+        "timestamp": "2026-05-14T15:53:31.758Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "synthesis",
+        "message": "Loaded source records — synthesizing answer",
+        "status": "success",
+        "timestamp": "2026-05-14T15:53:49.760Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "DywCxtYOMKOmvety"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "toolName": "searchMeetingsByTopic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "topic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "source"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": " health"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": " current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "ness"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "toolName": "searchMeetingsByTopic",
+      "input": {
+        "topic": "source sync health currentness",
+        "projectId": 0,
+        "projectName": "",
+        "maxResults": 5
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_2KDkuYRszUnksBGCgfPhOu7W",
+      "output": {
+        "searchScope": "All projects",
+        "topic": "source sync health currentness",
+        "totalResults": 2,
+        "results": [
+          {
+            "sourceRef": "[Source: Meeting - \"Notion bill processing\" - 2026-02-19T15:00:00+00:00]",
+            "id": "01KHRVMTG1DS197XWH2NB1N0YR",
+            "title": "Notion bill processing",
+            "date": "2026-02-19T15:00:00+00:00",
+            "project": "Alleato Finance",
+            "projectId": 60,
+            "participants": "mrogers@alleatogroup.com, mcalcetero@alleatogroup.com, mgusi@alleatogroup.com, fireflies@alleatogroup.com, mcalcetero@alleatogroup.com, mgusi@alleatogroup.com, fireflies@alleatogroup.com",
+            "summary": "📄 Invoice Management Process: Streamlined invoicing in Notion with automatic sync to Acumatica, focusing on key statuses only.\n🗂️ Tax Document Coordination: Urgent financial documents needed by March 4; call scheduled to ensure collections are ready.\n📝 K1 and Tax Filing Clarifications: Confirm K1 preparation with CBIZ; clarify filing strategy with new tax firm for April deadline.\n🏦 Trust Account Setup Requirements: Notarization needed for trust documents; bank accounts to be opened separately for each trust.\n💰 Cash Flow Strategy Overview: Maintain $300,000 cash reserve; transfer excess into money market for estimated $150,000 annual interest.\n🔄 Process Simplification Efforts: Eliminate unnecessary fields in Notion; direct communication for unresolved inquiries to improve workflow.",
+            "actionItems": "Assist Misty Rogers and Melanie Gusi with adding photos to email signatures (00:01)\nProvide help to Misty Rogers on attaching invoice files and using Notion for invoice tracking (00:11)\nFollow up if invoices marked posted in Notion do not appear in Acumatica and liaise with integration team if issues arise (00:10)\nAdd subcontractor payment records to audit folder and coordinate with Misty Rogers for other audit documentation (00:23)\nReach out to PMs AJ and Keva for clarifications on materials supplied to subcontractors for audit questions (00:26)\nCoordinate scheduling and joining CPA call with Misty and Fatima, send necessary documents for licensing review (00:29)\nContact CBIZ and Rottweiler to confirm K1 preparation responsibility and request a meeting to clarify tax filings and extensions (00:59)\nSend Brandon Clymer trust documents required for notarization and bank account opening (01:05)\nCall Brandon to explain trust bank account procedures and notarization (01:05)\nMonitor Brandon’s tax filings and document status, coordinate with Misty Rogers and relevant accountants (01:13)\nIdentify and locate professional photo for email signature and coordinate addition (00:01)\nUse Notion to track invoice statuses, tag PMs for updates, and set reminders for follow-ups (00:03)\nAdd payment and contractual documents to the audit folder as requested (00:23)\nFacilitate CPA call scheduling for licensing documents and ensure attendance alongside Maria and Fatima (00:31)\nDownload payroll W2s including Brandon’s from payroll system and prepare for tax documentation (00:49)\nCommunicate with Brandon about missing K1s and tax documentation, update on tax firm responsibilities (00:56)\nAssist in cash flow tracking to determine investable funds for money market accounts (01:07)\nGuide Brandon through trust bank account establishment steps as explained by Maria (01:05)\nPrepare to follow up on communication with accountant firms on tax filings, extensions, and documentation needs (01:13)\nEnter data into Notion for invoice and accounting tracking as recognized and continue collaboration on Notion usage (00:01)\nParticipate in CPA call if needed, but primarily support Misty and Maria (00:31)"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Weekly Accounting Meeting\" - 2026-02-03T19:00:00+00:00]",
+            "id": "01KGDA2EHV7JSGJ4WK6B6QYQ72",
+            "title": "Weekly Accounting Meeting",
+            "date": "2026-02-03T19:00:00+00:00",
+            "project": "Alleato Finance",
+            "projectId": 60,
+            "participants": "mcalcetero@alleatogroup.com, bclymer@alleatogroup.com, jdawson@alleatogroup.com, aortiz@alleatogroup.com, fnjie@llum.com, jmendez@alleatogroup.com, accounting@alleatogroup.com, mgusi@alleatogroup.com, bclymer@alleatogroup.com, jdawson@alleatogroup.com, aortiz@alleatogroup.com, fnjie@llum.com, jmendez@alleatogroup.com, accounting@alleatogroup.com, mgusi@alleatogroup.com",
+            "summary": "💰 AR Discrepancies Identified: $4.3 million mismatch noticed in past-due AR due to incorrect billing dates and missing invoices.\n✅ AR Data Verification Plan: Team to cross-check billing data to ensure accuracy for reliable cash flow and financial reporting.\n📊 Credit Transactions Gap: Incomplete coding of transactions affects cost accuracy; need for all uncoded entries to be addressed before closing.\n📋 Payroll Classification Adjustment: Shift executive payroll under overhead with subcategories for better tracking of labor expenses and budgeting.\n📅 Meeting for Role Clarity Scheduled: Mandatory meeting planned to finalize task delegation and enhance team autonomy in operations.\n🔗 System Integration Changes: Discontinuing Procore-Acumatica link saves $8,000; focus remains on Job Planner a",
+            "actionItems": "Prepare and lead meeting with Fatima, Misty, Melanie to review AR updates and clarify tasks, scheduled for tomorrow at 1pm (38:00)\nSend calendar invitations for the upcoming training and task meeting (39:34)\nTake lead roles in upcoming accounting meetings and reporting to Brandon; prepare to lead reviews and ensure tasks are completed (36:10)\nProvide training or demonstrations on using Job Planner and Acumatica to ensure the accounting team can validate and correct AR aging and billing (10:05)\nAdopt personal email logins for individual responsibilities and maintain group email for shared responsibilities and invoice monitoring (02:00)"
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "toolName": "searchMeetingsByTopic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "topic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": " Outlook"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": " meetings"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": " packets"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": " current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": " stale"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": " missing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": " health"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "10"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "toolName": "searchMeetingsByTopic",
+      "input": {
+        "topic": "Teams Outlook meetings packets current stale missing sync health",
+        "projectId": 0,
+        "projectName": "",
+        "maxResults": 10
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_cUVpW6pY9eQLpavNbduwt7p8",
+      "output": {
+        "searchScope": "All projects",
+        "topic": "Teams Outlook meetings packets current stale missing sync health",
+        "totalResults": 10,
+        "results": [
+          {
+            "sourceRef": "[Source: Meeting - \"Timeco Quick Overview\" - 2026-05-14T14:00:00+00:00]",
+            "id": "01KRHFEGH14SFGEYDFTQ163G87",
+            "title": "Timeco Quick Overview",
+            "date": "2026-05-14T14:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": "mcalcetero@alleatogroup.com, sam.harris@tcpsoftware.com, jdawson@alleatogroup.com, fireflies@alleatogroup.com, sam.harris@tcpsoftware.com, jdawson@alleatogroup.com, fireflies@alleatogroup.com",
+            "summary": "✅ System Configuration Finalized: Finalized key system settings for Florida and Indianapolis, ensuring clarity on PTO and bereavement leave types for employees.\n🌐 VPN and IP Whitelisting Introduced: Improved remote access by requiring employee-provided IP addresses for smoother login.\n⏰ Overtime Calculation Automated: Automated overtime calculations for hourly employees; salaried employees' overtime is not visible to avoid confusion.\n📑 Expense Approvals Defined: Expense approvals must occur within the current pay period, ensuring efficient submissions management for managers.\n👥 All Employees Needed in TimeCo: All employees, except contractors, must be included in TimeCo for accurate timesheet management.\n🧹 Data Cleanup Essential: Data cleanup and role assignments are essential before s",
+            "actionItems": "Provide public IP address to Sam to facilitate VPN whitelist for easier Timeco access (02:09)\nSend email to Venture and include Sam, John Lagua, Brianna, and Maria regarding missing employees and supervisor roles sync in Timeco (32:23)\nInquire with Venture about adding cost codes (\"Costco\") to integrate with Timeco system for budget tracking (31:25)\nCoordinate internal testing of supervisor assignments and permissions with Jesse prior to employee rollout (33:03)\nAssist Maria with adding Maria’s IP to whitelist for Timeco access (02:09)\nDemonstrate employee-side and admin views on Timeco for confirming visible leave/time options and system navigation (06:38)\nReset and share new password for intern Victor and communicate support process (32:31)\nAdvise on system limitations regarding adding cost code dropdown and filtering by projects; recommend contacting Venture about integration (30:19)\nClarify all employees need to be added to Timeco including salaried employees for comprehensive tracking (15:23)\nConfirm all payroll employees, except contractors, should be included in timesheet system (16:42)\nWork with Maria on testing supervisor assignments and training for approving timesheets (33:03)"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Uniqlo & GPC Huddle\" - 2026-05-13T12:30:00+00:00]",
+            "id": "01KQYFRYD72Y18B5ZCJKQ30RQV",
+            "title": "Uniqlo & GPC Huddle",
+            "date": "2026-05-13T12:30:00+00:00",
+            "project": "Uniqlo Phillipsburg NJ",
+            "projectId": 31,
+            "participants": "{\"kmass@alleatogroup.com,mparsons@alleatogroup.com,jdawson@alleatogroup.com,bclymer@alleatogroup.com,fireflies@alleatogroup.com,gdavis@alleatogroup.com,tgraves@alleatogroup.com,awehner@alleatogroup.com\",mparsons@alleatogroup.com,jdawson@alleatogroup.com,bclymer@alleatogroup.com,fireflies@alleatogroup.com,gdavis@alleatogroup.com,tgraves@alleatogroup.com,awehner@alleatogroup.com}",
+            "summary": "The meeting highlighted steady progress in racking and pipe installations, with a resolution to a crossbar conflict that prevented formal delays. Despite logistics challenges, weekend work is planned for pipe prep and painting. Truck delivery delays are impacting branch line work, but preparatory tasks continue while awaiting materials. Coordination issues on-site were noted, particularly concerning layout and material handling. Caleb's injury was discussed as a short-term workforce risk, but adjustments will allow him to work during recovery. Gaps in daily reporting and photo documentation were identified, with plans to standardize and catch up to ensure quality assurance and compliance.",
+            "actionItems": "{}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Teams DM Conversation: 19:c4beb912-\" - 2026-05-10T00:00:00+00:00]",
+            "id": "teamsdm_b47843f759515cdb_2026-05-10",
+            "title": "Teams DM Conversation: 19:c4beb912-",
+            "date": "2026-05-10T00:00:00+00:00",
+            "project": "Exol Morrisville",
+            "projectId": 876,
+            "participants": "Archon, Unknown, bclymer@alleatogroup.com",
+            "summary": "### Summary of Teams DM Conversation: 19:c4beb912-\n\nThe document is a direct message conversation from Microsoft Teams dated May 10, 2026, primarily serving as an operational brief for the recipient, Brandon. This brief outlines the key agenda items for the upcoming days, focusing on project management and team coordination.\n\nThe conversation highlights two main items scheduled over the next three days, specifically related to Project Signals. The first item is a weekly status call for the Exol project located in Morrisville, PA, involving collaboration between Exol and Alleato. The second item pertains to a huddle for Uniqlo and GPC at the Phillipsburg, NJ location. The message encourages Brandon to reach out with any questions or requests for follow-ups regarding these items.\n\nKey detail",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Man Power review\" - 2026-05-07T19:00:00+00:00]",
+            "id": "01KR1X0E9HG58ESZHAW8HZFAQS",
+            "title": "Man Power review",
+            "date": "2026-05-07T19:00:00+00:00",
+            "project": "Alleato Internal Ops",
+            "projectId": 90,
+            "participants": "{\"fireflies@alleatogroup.com,jgaona@alleatogroup.com,aortiz@alleatogroup.com\",fireflies@alleatogroup.com,jgaona@alleatogroup.com}",
+            "summary": "The meeting focused on enhancing the project and manpower tracking system, with Jazmin tasked to reorganize the manpower sheet for better clarity and functionality. Tools like Google Sheets, Asana, and Excel are being explored to improve project tracking, while staffing coordination is critical due to existing shortages. Communication protocols are being centralized to streamline access to meeting records. Additionally, initiatives like distributing backpacks to employees aim to boost morale and brand presence. Emphasis was placed on workload management and personal well-being, recognizing the need for flexibility and support as team members navigate their responsibilities.",
+            "actionItems": "{}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Teams DM Conversation: 19:c4beb912-\" - 2026-05-07T00:00:00+00:00]",
+            "id": "teamsdm_b47843f759515cdb_2026-05-07",
+            "title": "Teams DM Conversation: 19:c4beb912-",
+            "date": "2026-05-07T00:00:00+00:00",
+            "project": "Union Collective",
+            "projectId": 1009,
+            "participants": "Archon, Unknown, bclymer@alleatogroup.com",
+            "summary": "The document is a transcript of a direct message conversation on Microsoft Teams, dated May 7, 2026, between Brandon Clymer and an unidentified participant. The purpose of this conversation is to discuss access to Brandon's calendar and the limitations of the current tools available for viewing meeting information.\n\nKey topics covered in the conversation include the inability of the unknown participant to access Brandon's calendar directly, specifically mentioning that they cannot view his full Outlook or Google calendar, nor can they see private events that haven't been synced into the platform, Alleato. The participant clarifies that they can only access certain meeting records that have been captured in the system, such as meeting transcripts and notes, and can provide information on me",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Victoria Moreland - Teams interview is booked for 3/9/2026 at 11:00 AM EDT\" - 2026-03-09T15:00:00+00:00]",
+            "id": "01KK4PHVCF3EGNK193KD5K68F1",
+            "title": "Victoria Moreland - Teams interview is booked for 3/9/2026 at 11:00 AM EDT",
+            "date": "2026-03-09T15:00:00+00:00",
+            "project": "Alleato Internal Ops",
+            "projectId": 90,
+            "participants": "luke.holm@cybercoders.com, jdawson@alleatogroup.com, aortiz@alleatogroup.com, mcalcetero@alleatogroup.com, jdawson@alleatogroup.com, aortiz@alleatogroup.com, mcalcetero@alleatogroup.com",
+            "summary": "📅 Interview Scheduling Gaps: Identified inefficiencies in candidate communication and interview scheduling impacting overall team effectiveness.\n📂 Resume Integration in Invites: Including resumes directly in calendar invites improved preparation and reduced search time for candidate info.\n💻 Technical Issues: Daylight savings and hardware problems, like camera malfunctions, disrupted meetings and highlighted need for better tech management.\n🖼️ Profile Picture Guidance: Simplified process for updating profile pictures enhanced professionalism in virtual meetings, with shared image options provided.\n🤝 Real-Time Resource Sharing: Immediate sharing of candidate materials through Teams improved coordination and responsiveness between team members.",
+            "actionItems": "Send screenshot instructions via Teams on adding profile pictures to Microsoft Teams (02:54)\nCall candidate Victoria Moreland, leave voicemail, and assess next steps regarding missed interview (06:26)\nReschedule Victoria Moreland’s interview and update Jesse’s calendar accordingly (12:16)\nSign into Jesse’s Teams account with permission to update profile picture (14:38)\nText Luke Holm to clarify the absence or delay of candidate Victoria Moreland for the interview (06:19)"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"One Drive Review\" - 2026-01-08T18:00:00+00:00]",
+            "id": "01KEFA4SEQRA30KDKWX4WZ0QFS",
+            "title": "One Drive Review",
+            "date": "2026-01-08T18:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": "{\"mcalcetero@alleatogroup.com,acannon@alleatogroup.com\",acannon@alleatogroup.com}",
+            "summary": "The team convened to tackle synchronization problems within OneDrive that resulted in file duplication and inconsistencies in folder contents, particularly affecting workflows. Andrew Cannon highlighted the issue of duplicated folders and missing files, while Maria Calcetero clarified the confusion stemming from personal vaults versus shared files. With a backlog of 18,000 files still uploading, pausing sync was deemed necessary to prevent further issues. They also discussed the impact of temporary Wi-Fi outages on troubleshooting efforts and emphasized the need for better scheduling in IT infrastructure. The team decided to standardize file access through the Alito shared OneDrive to minimize reliance on personal vaults and agreed on the necessity of user training to close knowledge gaps ",
+            "actionItems": "{}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Daily TB\" - 2025-10-15T00:00:00+00:00]",
+            "id": "2142c392-37bc-4836-9cfc-411b032d465f",
+            "title": "Daily TB",
+            "date": "2025-10-15T00:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": null,
+            "summary": "- Change orders backlog from Superior totals approximately $23,000; Andrew reviewing discrepancies for accuracy.  \n- Owner approved $43,000 Kebony siding order, vendor Alpha selected, with 2â3 week lead time before purchase order deadline on 24th.  \n- Jesse Remillard noted $12,000 over budget on siding; lock in actual costs before further adjustments.  \n- Additional owner change orders include $181,000 credit from Brennan for October; Jesse and Andrew planning detailed reviews to finalize discrepancies.  \n- Utility account setups progressing; $1,600 invoice for 800-amp service upgrade heads for scheduling to avoid delays.  \n- Upcoming construction sequence includes corings tomorrow, boring Friday, and waterproofing planned for Thursday with city drawing conflicts noted.  \n- Team preparin",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Teams DM Conversation: 19:9107cc15-\" - 2025-09-12T00:00:00+00:00]",
+            "id": "teamsdm_84fef93c54c5f4cc_2025-09-12",
+            "title": "Teams DM Conversation: 19:9107cc15-",
+            "date": "2025-09-12T00:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": "Ashley Ortiz",
+            "summary": "The document is a Teams Direct Message conversation dated September 12, 2025, primarily between Ashley Ortiz and Alec Wehner. The purpose of this conversation is to discuss the status of their office environment, specifically regarding desk arrangements, office cleanliness, and recent painting work.\n\nKey topics covered in the conversation include the movement of desks, the condition of the conference room and front entry, and updates on the office's appearance following recent painting. Ashley inquires about whether the painters have returned everything to its original place and mentions that a colleague, Brandon, is traveling back to Tampa, which may affect his presence in the office. Alec humorously notes that he and another colleague, Nick Kebba, are engaging in light-hearted antics in ",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"NetSuite & Alleato Group | Sync\" - 2025-07-16T00:00:00+00:00]",
+            "id": "f8bc92d1-bf9d-4cff-98ed-f050ce097480",
+            "title": "NetSuite & Alleato Group | Sync",
+            "date": "2025-07-16T00:00:00+00:00",
+            "project": null,
+            "projectId": 60,
+            "participants": null,
+            "summary": "**Executive Summary: NetSuite & Alleato Group Sync Meeting**\n\n**Meeting Purpose and Key Participants**  \nThe sync meeting between NetSuite and the Alleato Group was convened to discuss ongoing collaboration efforts and to align on project timelines and deliverables. Key participants included Jdawson from NetSuite, who facilitated the meeting, and representatives from the Alleato Group, including project managers and technical leads. The meeting took place on [insert date] and was recorded for reference.\n\n**Main Topics Discussed**  \nThe agenda covered several critical topics, including the integration of NetSuite’s ERP solutions with Alleato's existing systems, updates on project milestones, and the identification of any potential roadblocks. Participants shared insights on user feedback re",
+            "actionItems": null
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "toolName": "searchMeetingsByTopic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "topic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "current"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": " stale"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": " missing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": " packets"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": " outlook"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": " teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": " meetings"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": " sync"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": " health"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "10"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_uRkANDBft5AxLeWCsYSCVXsQ",
+      "toolName": "searchMeetingsByTopic",
+      "input": {
+        "topic": "current stale missing packets outlook teams meetings sync health",
+        "projectId": 0,
+        "projectName": "",
+        "maxResults": 10
+      }
+    },
+    {
+      "type": "abort",
+      "reason": "The operation was aborted due to timeout"
+    }
+  ],
+  "persistedMetadata": null
+}

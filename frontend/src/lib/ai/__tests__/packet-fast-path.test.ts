@@ -9,7 +9,7 @@ const packet: ClientProjectIntelligencePacket = {
   id: "packet-1",
   targetId: "target-1",
   packetType: "current",
-  packetVersion: "project-operating-summary-v1",
+  packetVersion: "project_intelligence_synthesis_v1:current",
   generatedAt: "2026-05-19T14:00:00.000Z",
   coveredStartAt: null,
   coveredEndAt: "2026-05-19T14:00:00.000Z",
@@ -31,7 +31,7 @@ const packet: ClientProjectIntelligencePacket = {
   reviewQueueCount: 0,
   staleItemCount: 0,
   packetJson: {},
-  compilerVersion: "project-operating-summary-v1",
+  compilerVersion: "project_intelligence_synthesis_v1",
   cards: [
     {
       id: "card-1",
@@ -76,7 +76,7 @@ describe("project packet fast path", () => {
     ).toBe(false);
   });
 
-  it("requires a fresh operating-summary packet with source-backed cards", () => {
+  it("requires a fresh Project Intelligence synthesis packet with source-backed cards", () => {
     expect(projectPacketIsFastPathEligible(packet)).toBe(true);
     expect(projectPacketFastPathBlockReason(packet)).toBeNull();
   });

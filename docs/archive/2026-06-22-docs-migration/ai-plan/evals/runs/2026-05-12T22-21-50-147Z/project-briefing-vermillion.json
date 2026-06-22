@@ -1,0 +1,6512 @@
+{
+  "id": "project-briefing-vermillion",
+  "intent": "project_briefing",
+  "prompt": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+  "selectedProjectId": 67,
+  "sessionId": "176f181e-3ad8-413e-b69d-eebc8ec2e825",
+  "sessionLabel": "eval-2026-05-12T22-21-50-147Z-project-briefing-vermillion",
+  "startedAt": "2026-05-12T22:21:50.149Z",
+  "finishedAt": "2026-05-12T22:22:53.328Z",
+  "durationMs": 62551,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 1011,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "expected family 'semantic' not represented"
+    ],
+    "observations": [
+      "tools fired: intentPlanner, promptContextReducer, clientProjectIntelligencePacket, streamingToolPolicy, getProjectBriefingSnapshot"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "promptContextReducer",
+      "clientProjectIntelligencePacket",
+      "streamingToolPolicy",
+      "getProjectBriefingSnapshot"
+    ],
+    "familiesHit": [
+      "project"
+    ],
+    "finalTextLength": 4608,
+    "finalText": "Owner-level read: **Vermillion Rise is still in preconstruction/design coordination, not truly in clean execution yet.** The job is moving, but the biggest issue is not field production — it’s that **scope, contract, and procurement are not fully locked while the team is trying to hold a near-term permit/start path**. That’s the thing to worry about.\n\n## What matters most right now\n\n### 1) The project is not commercially tight yet\nThis is the main risk.\n\n- The team was still in **A141 contract review/negotiation as of May 8–11**.\n- There are **5 unexecuted commitments** in the system, all still draft or otherwise not fully live.\n- A vendor asked on **May 5** when they would receive **formal PO/contract documentation for units already in production**.\n- There is also an email trail on **April 17** showing **outstanding HWC invoices**.\n\n**Owner read:** people are acting like the project is advancing, but the commercial paper and buyout trail are lagging behind. That creates avoidable exposure on payment friction, procurement leverage, and scope disputes later.  \nSource: [Source: Project Briefing Snapshot - Vermillion Rise Warehouse]\n\n### 2) Design is progressing, but key coordination is still unsettled\nThe project is active, but not fully defined.\n\n- On the **May 7 design weekly call**, the team discussed **cost growth from layout/square footage changes**, with the estimate described as having **nearly doubled** from revisions.\n- They were targeting **permit submittal by May 15**.\n- Structural/foundation coordination is still active; a **foundation redline** went out on **May 12**.\n- Electrical coordination was still being updated in late April, and vendor input was still coming in.\n- Open design/admin items remain in the system, including **4 RFIs open, 1 overdue**.\n\n**Owner read:** this is not a dead project, but it’s also not a settled set of documents ready for low-friction execution. The design team is still ironing out scope and engineering details while cost pressure is rising.  \nSource: [Source: Project Briefing Snapshot - Vermillion Rise Warehouse]\n\n### 3) The schedule story is aggressive and probably fragile\nThe official schedule data does not read like a reliable execution baseline.\n\n- Snapshot shows **41 incomplete tasks**, with **9 overdue**.\n- Overdue items include foundation and framing activities with dates back to February–April, which suggests the schedule is **not being maintained as a trustworthy control document**.\n- At the same time, meeting notes say the team is aiming for **mid-June construction start** and **late-July steel erection**, with permit submission targeted for **May 15**.\n\n**Owner read:** I would not manage this project off the current schedule fields alone. The real path appears to be “push design to permit, then release long-lead/procurement, then start in June,” but the system schedule looks stale or out of sync with reality. That is a management issue because it hides true float and decision deadlines.  \nSource: [Source: Project Briefing Snapshot - Vermillion Rise Warehouse]\n\n## Bottom line\n**Vermillion Rise is alive, but not yet under tight control.**  \nThe project appears to be in the **last mile of design + contract alignment**, with a push toward permit and early procurement. The near-term risk is **not catastrophic delay today**; it is that the team could slide into construction with **unfinished contract terms, incomplete buyout, and unresolved scope/cost alignment**.\n\n## If I were the owner, I’d force three answers this week\n1. **Is the contract effectively done, and what is still open?**  \n   If not signed/settled, list the last 3 business points blocking close.\n\n2. **What is the real approved budget after the latest layout/design changes?**  \n   The cost-growth discussion matters more than the snapshot’s budget math, which looks unreliable.\n\n3. **What exactly must be released in the next 7 days to protect the June start?**  \n   Especially steel, foundations, electrical coordination, and any units already in production.\n\n## Confidence / data gaps\nConfidence is **moderate**, not high.\n\nWhy:\n- Recent signal is good — there are current emails and meetings through **May 12**.\n- But some project controls are clearly noisy:\n  - budget math appears inconsistent,\n  - schedule data looks stale,\n  - several change events look like test/demo records,\n  - earlier packet coverage was thin.\n\nSo the directional read is strong: **commercial and design coordination are lagging the intended start cadence**.  \nThe exact financial and schedule baseline should be treated carefully until cleaned up."
+  },
+  "expectedToolNames": [
+    "getProjectBriefingSnapshot"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "semantic"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T22:22:24.148Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-12T22:22:25.440Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Loaded project intelligence packet — synthesizing strategist response",
+        "status": "success",
+        "timestamp": "2026-05-12T22:22:26.834Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "NTaDkvTewxfDWGQ6"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "toolName": "getProjectBriefingSnapshot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": "67"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": "V"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": "erm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": "illion"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": " Rise"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": " Warehouse"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "toolName": "getProjectBriefingSnapshot",
+      "input": {
+        "projectId": 67,
+        "projectName": "Vermillion Rise Warehouse"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_mctiqT8lHSlCtgUHEllt8KTY",
+      "output": {
+        "sourceRef": "[Source: Project Briefing Snapshot - Vermillion Rise Warehouse]",
+        "project": {
+          "id": 67,
+          "name": "Vermillion Rise Warehouse",
+          "projectNumber": "25-126",
+          "client": null,
+          "phase": "Current",
+          "healthStatus": null,
+          "completionPct": 0,
+          "summary": "The Vermillion Rise project involves the construction of a new precast building designated for pool chemical storage and manufacturing. The facility is planned to be approximately 232 feet by 452 feet, with 5,000 square feet allocated for office space accommodating 32 employees. Key elements of the project include downsizing the facility from its original plan by 60,000 square feet to reduce costs and accommodate future expansions. The project scope includes detailed architectural, structural, civil, plumbing, and electrical designs to meet the H3 occupancy requirements, focusing on safety and operational efficiency..."
+        },
+        "hardFacts": {
+          "budget": {
+            "originalBudget": 12940266,
+            "revisedBudget": 12940266,
+            "budgetDelta": 0,
+            "approvedBudgetChanges": 0,
+            "forecastVariance": -12865266,
+            "status": "under budget"
+          },
+          "contract": {
+            "originalContractValue": 75000,
+            "revisedContractValue": 75000,
+            "approvedContractChanges": 0,
+            "pendingContractChanges": 0,
+            "invoicedAmount": 0,
+            "paymentsReceived": 643184.8
+          },
+          "changeOrders": {
+            "recentCount": 3,
+            "pendingCount": 1,
+            "approvedCount": 2,
+            "pendingAmount": 1234.56,
+            "approvedAmount": 5000,
+            "statusBreakdown": {
+              "proposed": 1,
+              "approved": 2
+            },
+            "recent": [
+              {
+                "number": "003",
+                "title": "E2E 48580a03 1.1 Prime CO",
+                "status": "proposed",
+                "amount": 1234.56,
+                "dueDate": null
+              },
+              {
+                "number": "002",
+                "title": "E2E Test CO Happy Path",
+                "status": "approved",
+                "amount": 5000,
+                "dueDate": null
+              },
+              {
+                "number": "001",
+                "title": "Field condition change",
+                "status": "approved",
+                "amount": 0,
+                "dueDate": null
+              }
+            ]
+          },
+          "changeEvents": {
+            "openCount": 7,
+            "statusBreakdown": {
+              "approved": 1,
+              "open": 7,
+              "void": 1,
+              "rejected": 1
+            },
+            "recent": [
+              {
+                "number": "005",
+                "title": "Verify - Foundation Scope Change",
+                "status": "Approved",
+                "type": "Allowance",
+                "updatedAt": "2026-04-25T03:04:18.494265+00:00"
+              },
+              {
+                "number": "011",
+                "title": "Updated Scope — Concrete",
+                "status": "Open",
+                "type": "Design Change",
+                "updatedAt": "2026-04-25T03:00:24.650557+00:00"
+              },
+              {
+                "number": "012",
+                "title": "Auto-Number Test",
+                "status": "Open",
+                "type": "Owner Change",
+                "updatedAt": "2026-04-25T02:58:20.803409+00:00"
+              },
+              {
+                "number": "009",
+                "title": "Structural Steel Scope Addition",
+                "status": "Open",
+                "type": "Owner Change",
+                "updatedAt": "2026-04-21T14:53:53.416197+00:00"
+              },
+              {
+                "number": "004",
+                "title": "Test Change Event UI - Audit",
+                "status": "Void",
+                "type": "Owner Change",
+                "updatedAt": "2026-04-21T14:47:44.471078+00:00"
+              },
+              {
+                "number": "006",
+                "title": "Test CE from scenario",
+                "status": "Rejected",
+                "type": "Owner Change",
+                "updatedAt": "2026-04-21T14:46:35.415384+00:00"
+              },
+              {
+                "number": "007",
+                "title": "Structural Steel Scope Addition",
+                "status": "Open",
+                "type": "Owner Change",
+                "updatedAt": "2026-04-21T14:44:22.867226+00:00"
+              },
+              {
+                "number": "002",
+                "title": "Reason Mapping Verification Test",
+                "status": "Open",
+                "type": "Owner Change",
+                "updatedAt": "2026-04-21T14:44:22.867226+00:00"
+              }
+            ]
+          },
+          "rfis": {
+            "openCount": 4,
+            "overdueCount": 1,
+            "scheduleSensitiveCount": 0,
+            "statusBreakdown": {
+              "open": 3,
+              "draft": 1
+            },
+            "open": [
+              {
+                "number": 2,
+                "subject": "Specified fire rating for north wall assembly",
+                "status": "open",
+                "dueDate": "2026-04-10",
+                "ballInCourt": "Brandon",
+                "scheduleImpact": "tbd"
+              },
+              {
+                "number": 1,
+                "subject": "Clarification on Footing Depth for Building A",
+                "status": "open",
+                "dueDate": null,
+                "ballInCourt": null,
+                "scheduleImpact": null
+              },
+              {
+                "number": 3,
+                "subject": "Test RFI Validation",
+                "status": "draft",
+                "dueDate": null,
+                "ballInCourt": null,
+                "scheduleImpact": null
+              },
+              {
+                "number": 4,
+                "subject": "Test RFI Drawing Number",
+                "status": "open",
+                "dueDate": null,
+                "ballInCourt": "",
+                "scheduleImpact": null
+              }
+            ]
+          },
+          "submittals": {
+            "openCount": 2,
+            "overdueCount": 0,
+            "longLeadOpenCount": 0,
+            "statusBreakdown": {
+              "draft": 1,
+              "distributed": 1
+            },
+            "open": [
+              {
+                "number": "TEST-001",
+                "title": "Verification Test Submittal",
+                "status": "Draft",
+                "dueDate": null,
+                "requiredOnSiteDate": null,
+                "ballInCourt": null,
+                "leadTime": null
+              },
+              {
+                "number": "TST-160936",
+                "title": "Feature Test Submittal EDITED",
+                "status": "Distributed",
+                "dueDate": null,
+                "requiredOnSiteDate": null,
+                "ballInCourt": null,
+                "leadTime": null
+              }
+            ]
+          },
+          "schedule": {
+            "totalTasks": 45,
+            "incompleteCount": 41,
+            "overdueCount": 9,
+            "upcomingMilestoneCount": 0,
+            "upcomingMilestones": [],
+            "overdueTasks": [
+              {
+                "name": "Receive Reactions",
+                "finishDate": "2026-02-15",
+                "status": "in_progress",
+                "percentComplete": 50
+              },
+              {
+                "name": "Pour Concrete",
+                "finishDate": "2026-03-05",
+                "status": "in_progress",
+                "percentComplete": 80
+              },
+              {
+                "name": "Foundation Inspection",
+                "finishDate": "2026-03-08",
+                "status": "in_progress",
+                "percentComplete": 50
+              },
+              {
+                "name": "Phase 2: Foundation",
+                "finishDate": "2026-03-15",
+                "status": "in_progress",
+                "percentComplete": 75
+              },
+              {
+                "name": "Floor Framing",
+                "finishDate": "2026-03-25",
+                "status": "in_progress",
+                "percentComplete": 50
+              },
+              {
+                "name": "Wall Framing",
+                "finishDate": "2026-04-05",
+                "status": "not_started",
+                "percentComplete": 0
+              },
+              {
+                "name": "Review HVAC submittals",
+                "finishDate": "2026-04-05",
+                "status": "not_started",
+                "percentComplete": 0
+              },
+              {
+                "name": "Roof Framing",
+                "finishDate": "2026-04-15",
+                "status": "not_started",
+                "percentComplete": 0
+              }
+            ]
+          },
+          "commitments": {
+            "totalCount": 5,
+            "unexecutedCount": 5,
+            "statusBreakdown": {
+              "terminated": 1,
+              "draft": 4
+            },
+            "unexecuted": [
+              {
+                "title": "SC Smoke 100",
+                "type": "subcontract",
+                "contractNumber": "SC-002",
+                "status": "Terminated"
+              },
+              {
+                "title": null,
+                "type": "purchase_order",
+                "contractNumber": "PO-001",
+                "status": "Draft"
+              },
+              {
+                "title": "Test Subcontract SC-GAUNTLET-001 EDITED",
+                "type": "subcontract",
+                "contractNumber": "SC-GAUNTLET-001-EDITED",
+                "status": "Draft"
+              },
+              {
+                "title": "",
+                "type": "purchase_order",
+                "contractNumber": "test-001",
+                "status": "Draft"
+              },
+              {
+                "title": "Updated Title Test",
+                "type": "purchase_order",
+                "contractNumber": "Updated Test",
+                "status": "Draft"
+              }
+            ]
+          },
+          "notifications": {
+            "openCount": 0,
+            "open": []
+          }
+        },
+        "recentMovement": [
+          {
+            "sourceRef": "[Source: Email - \"Email: VERMILLION FOUNDATIONS (REDLINE)\" - 2026-05-12T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4VakAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: VERMILLION FOUNDATIONS (REDLINE)",
+            "date": "2026-05-12T00:00:00+00:00",
+            "summary": "The document is an email from Keith Fisher of Steel Services, Inc., addressed to several recipients including Brandon Clymer and Bob Wright from Alleato Group, regarding the Vermillion Foundations project. The primary purpose of the email is to share a redline markup of four foundation types and their respective locations, although it does not specify when these will be incorporated into the drawings.\n\nKey topics discussed in the email include the redline markup of foundation types, which is essential for the project's structural planning. The email also contains a cautionary note about the rise in email hacking and fraudulent funding instructions, advising recipients to verify any requests for wire transfers to ensure they are legitimate. Additionally, the email emphasizes the confidentiality of its contents, warning against unauthorized use or distribution.\n\nImportant details include ...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: RE: Hillsdale-Alleato A141\" - 2026-05-12T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4VaaAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: RE: Hillsdale-Alleato A141",
+            "date": "2026-05-12T00:00:00+00:00",
+            "summary": "The document is an email correspondence between Logan Stevens, an associate at BTLaw, and Grant Schertzing, an attorney at Miller Johnson, regarding revisions to a contract or agreement identified as \"Hillsdale-Alleato A141.\" The purpose of the email is to confirm the acceptance of most of the revisions discussed in a previous meeting, as well as to address additional sections that were not covered in detail during that discussion.\n\nKey topics in the email include the acceptance of changes to the contract, specifically regarding insurance requirements. Hillsdale has agreed to provide $1 million in errors and omissions coverage and has opted not to require pollution liability insurance. Additionally, they will carry all-risk property insurance as outlined in Exhibit B of the agreement. Logan expresses a willingness to discuss any further concerns or revisions with Grant after he reviews ...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"A141 Discussion\" - 2026-05-11T18:30:00+00:00]",
+            "sourceType": "Meeting",
+            "sourceUrl": "https://app.fireflies.ai/view/01KRBZZEZNAGAG88HTSK4FG2JV",
+            "title": "A141 Discussion",
+            "date": "2026-05-11T18:30:00+00:00",
+            "summary": "✅ Contract Terms Alignment: Progress on dispute resolution, subcontractor approvals, indemnification, and payment timelines was achieved.\n⚖️ Dispute Resolution Preference: Litigation favored for flexibility; will discuss further to finalize language.\n💼 Subcontractor Approval Thresholds: Proposed thresholds range from $10,000 to $300,000, aiming for transparency and operational efficiency.\n🔒 Indemnification Clarity: Protects Hillsdale from liability due to design builder's actions and ensures site control.\n💵 Payment Processes: Allowed partial payments during disputes, with specific timelines for notifications and resolutions established.\n📅 Next Steps: Logan to integrate changes; anticipate contract execution shortly after February 13 closing.",
+            "notes": "## **Contract Negotiation and Key Terms**\n\nThe team made significant progress aligning on contract terms, particularly around dispute resolution, subcontractor approvals, indemnification, and payment timelines.\n\n- **Dispute Resolution Preference for Litigation** was reaffirmed by Grant Schertzing and Mark Ferderer, preferring litigation over arbitration due to greater flexibility despite arbitration typically saving time and cost (06:29)  \n    - Litigation allows Hillsdale to maintain control over dispute resolution on a case-by-case basis.  \n    - Mark expressed some personal concerns about arbitration from experience but agreed litigation is preferable here.  \n    - Brandon Clymer agreed to discuss this point further post-call to finalize language.\n\n- **Subcontractor Approval Thresholds Discussed** with focus on balancing Hillsdale’s need for oversight and operational efficiency (08:32)  \n    - Hillsdale proposed a $10,000 approval threshold for significant trades, which Brandon found too low and suggested $150,000 to $300,000 as more practical.  \n    - Mark emphasized avoiding \"thin subbing\" where large contracts are split just below threshold to circumvent approval.  \n    - Th...",
+            "actionItems": [
+              "Review detailed contract provisions on change orders, mechanics' liens, and dispute resolution to refine language (30:07)",
+              "Draft revisions to subcontractor approval notification process including timing and thresholds and circulate for review (11:00)",
+              "Adjust permit cost reimbursement language to clearly exclude permit costs from contract sum and address reimbursement (25:40)",
+              "Modify punch list completion timing language to include “commence within” and diligence clauses addressing lead times (52:20)",
+              "Refine notification and dispute resolution timelines for payment withholding to 15-day notice and 45-day resolution periods (43:30)",
+              "Review final payment waiver language and compare original versions",
+              "consult with team and Brandon for acceptable terms (01:01:20)",
+              "Incorporate agreed changes related to breach cure period and notify Grant and Brandon accordingly (01:09:00)"
+            ],
+            "bulletPoints": [
+              "✅ Contract Terms Alignment: Progress on dispute resolution, subcontractor approvals, indemnification, and payment timelines was achieved.",
+              "⚖️ Dispute Resolution Preference: Litigation favored for flexibility",
+              "will discuss further to finalize language.",
+              "💼 Subcontractor Approval Thresholds: Proposed thresholds range from $10,000 to $300,000, aiming for transparency and operational efficiency.",
+              "🔒 Indemnification Clarity: Protects Hillsdale from liability due to design builder's actions and ensures site control.",
+              "💵 Payment Processes: Allowed partial payments during disputes, with specific timelines for notifications and resolutions established.",
+              "📅 Next Steps: Logan to integrate changes",
+              "anticipate contract execution shortly after February 13 closing."
+            ],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [
+              "Contract negotiation",
+              "subcontractor approval",
+              "dispute resolution",
+              "indemnification",
+              "payment withholding",
+              "mechanics lien"
+            ],
+            "sentiment": {
+              "neutral_pct": 61,
+              "negative_pct": 7,
+              "positive_pct": 32
+            }
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Vermillian Rise Contract Review\" - 2026-05-11T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEJAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4X%2BzAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Vermillian Rise Contract Review",
+            "date": "2026-05-11T00:00:00+00:00",
+            "summary": "The document is an email regarding the review of the Vermillian Rise contract, dated May 11, 2026. It is addressed to Logan Stevens and Mark Ferderer, indicating a collaborative effort to assess the contract's terms and conditions. The email serves as a notification for a scheduled Microsoft Teams meeting to discuss the contract in detail, emphasizing the importance of the review process.\n\nKey topics likely covered in the contract include project specifications, timelines, financial obligations, and compliance requirements. While specific details from the contract are not provided in the email, the mention of a meeting suggests that critical issues or amendments may need to be addressed. The meeting is set to facilitate a thorough discussion among the involved parties, ensuring that all aspects of the contract are understood and agreed upon.\n\nThe email includes a link to join the Micros...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Canceled: Vermillian Rise Contract Review\" - 2026-05-11T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEJAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4X%2B3AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Canceled: Vermillian Rise Contract Review",
+            "date": "2026-05-11T00:00:00+00:00",
+            "summary": "**Summary of Document: Canceled: Vermillian Rise Contract Review**\n\nThe document is an email notification regarding the cancellation of the Vermillian Rise Contract Review meeting. It is dated May 11, 2026, and is sent by Brandon Clymer from Alleato Group to Logan Stevens and Mark Ferderer, indicating a formal communication related to contract management.\n\nKey topics in the email include the cancellation of the review meeting, which suggests that there may have been changes in project timelines or priorities. The email also mentions that a new invite has been sent, implying that while the original meeting is canceled, there is an intention to reschedule or address the contract review at a later date.\n\nImportant details include the date of the original meeting and the parties involved in the communication. While specific numbers or requirements are not provided in the email, the mention ...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Re: Vermillian Rise Contract Review\" - 2026-05-11T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4VZTAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Re: Vermillian Rise Contract Review",
+            "date": "2026-05-11T00:00:00+00:00",
+            "summary": null,
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Hillsdale-Alleato A141\" - 2026-05-11T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4VZsAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Hillsdale-Alleato A141",
+            "date": "2026-05-11T00:00:00+00:00",
+            "summary": "The document is an email from Grant E. Schertzing, an attorney at Miller Johnson, to Logan Stevens at BTLaw, dated May 11, 2026. The purpose of the email is to communicate important updates regarding the A141 agreement, specifically addressing comments and modifications made by Brandon, likely a colleague or stakeholder involved in the contract negotiations.\n\nKey topics discussed in the email include the agreement on errors and omissions coverage, where Hillsdale has consented to a limit of $1 million. Additionally, it is noted that Hillsdale will not require pollution liability insurance, which could be a significant cost-saving measure. The email also mentions that under Exhibit B of the agreement, Hillsdale will be responsible for carrying all-risk property insurance, indicating a comprehensive coverage approach for potential property-related risks.\n\nImportant details include the spe...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Re: A141 Based Contract for Review\" - 2026-05-08T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEJAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQiHea4AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Re: A141 Based Contract for Review",
+            "date": "2026-05-08T00:00:00+00:00",
+            "summary": null,
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Re: A141 Based Contract for Review\" - 2026-05-08T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEJAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQiHea8AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Re: A141 Based Contract for Review",
+            "date": "2026-05-08T00:00:00+00:00",
+            "summary": "The document is an email correspondence regarding the review of an A141-based contract. The exchange involves Brandon Clymer, CEO of Alleato Group, and Mark Ferderer from Ferdimation, with additional recipients included in the CC line, indicating a collaborative effort in the review process. The primary purpose of the email is to schedule a meeting for further discussion on the contract.\n\nKey topics include the scheduling of a meeting to discuss the contract details, with Clymer proposing Monday afternoon after 1:30 PM EST as a suitable time. The email reflects an ongoing dialogue about the contract, suggesting that both parties are actively engaged in the review process. \n\nImportant details include the date of the email, May 8, 2026, and the specific time frame for the proposed meeting. Clymer's contact information is also provided, including his mobile number and the addresses of Alle...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion design weekly call\" - 2026-05-07T17:00:00+00:00]",
+            "sourceType": "Meeting",
+            "sourceUrl": "https://app.fireflies.ai/view/01KQF2WF59QV5T3B1NCNZN4NXF",
+            "title": "Vermillion design weekly call",
+            "date": "2026-05-07T17:00:00+00:00",
+            "summary": "The team discussed managing rising project costs due to expanded square footage and layout changes, leading to a nearly doubled cost estimate. They targeted a permit submittal by May 15, emphasizing the need for timely drawing completions. Clarifications on lab functions indicated low HVAC complexity, pivoting from chemical to mechanical testing, which impacts equipment needs. Electrical load specifications were addressed to ensure proper breaker sizing, while clear communication among team members regarding design changes and drawing submissions was vital to avoid delays. Ongoing coordination around structural details and materials aimed to enhance construction efficacy and prevent design conflicts.",
+            "notes": "## **Structural Design and Cost Management**\n\nThe team focused on managing unexpected cost increases tied to expanded square footage and layout changes in the structural design.\n\n- **Cost doubled due to increased square footage and layout changes** discussed by Bob Wright and Keith Fisher showed the project's scope nearly doubled in cost with a rise from about **1550 to 1780 square feet**, driving a roughly **$30,000** cost hike (06:01).\n    - The increase mainly came from removing bearing walls and creating a “box within a box” structure.\n    - Reducing or eliminating the office manager’s space could cut columns and steel, lowering costs.\n    - Bob planned to get client direction on whether to increase budget or reduce space to control costs.\n    - Keith and his team awaited clear guidance to finalize design decisions and keep work moving.\n\n- **Structural detail coordination and permit schedule** was aligned with a **permit submittal target of May 15**, with Clay Robinson and team aiming to complete drawings by then (30:48).\n    - Structural review of penetration elevations through precast is necessary due to hole size and placement.\n    - Jerome confirmed his team would package ...",
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [
+              "Structural design",
+              "HVAC",
+              "laboratory specifications",
+              "electrical equipment",
+              "spill containment",
+              "permit submittal"
+            ],
+            "sentiment": {
+              "neutral_pct": 70,
+              "negative_pct": 4,
+              "positive_pct": 26
+            }
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Hillsdale Holdings // Alleato Weekly\" - 2026-05-06T15:00:00+00:00]",
+            "sourceType": "Meeting",
+            "sourceUrl": "https://app.fireflies.ai/view/01KQCES6F3KTVHGCR26YYPN56N",
+            "title": "Hillsdale Holdings // Alleato Weekly",
+            "date": "2026-05-06T15:00:00+00:00",
+            "summary": "During the meeting, the team confirmed the contract close date for April 13th, emphasizing that signing will not affect project timelines, with long lead items set to begin post-signing. Early orders for steel and equipment to secure leading items were discussed, with a focus on a mid-June construction start and late July steel erection. Cost adjustments regarding electrical scope were addressed, with a revised estimate and deductive change orders proposed to return savings to the client. The importance of design coordination was highlighted, particularly with regards to fire protection and HVAC systems, and a site visit by Brandon Clymer was planned to enhance design clarity and safety.",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          },
+          {
+            "sourceRef": "[Source: Email - \"Email: Vermillion Rise\" - 2026-05-05T00:00:00+00:00]",
+            "sourceType": "Email",
+            "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQg45XhAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "title": "Email: Vermillion Rise",
+            "date": "2026-05-05T00:00:00+00:00",
+            "summary": "The document is an email from Andrew Harpenau, a Partner and Sales Engineer at AC Equipment Representatives, LLC, directed to Bob Wright at Alleato Group. The purpose of the email is to inquire about the status of formal documentation related to purchase orders (POs) and contracts for units currently in production. This communication indicates a collaborative effort between the two parties concerning ongoing projects.\n\nKey topics discussed in the email include the creation of POs and contracts, as well as a reference to an owner meeting that Bob mentioned would take place that week. Andrew is seeking clarity on when he can expect to receive the necessary paperwork to proceed with his responsibilities regarding the production units.\n\nImportant details include the date of the email, May 5, 2026, and Andrew's contact information, which includes his phone and fax numbers. The email highligh...",
+            "notes": null,
+            "actionItems": [],
+            "bulletPoints": [],
+            "decisions": [],
+            "keyTopics": [],
+            "topicsDiscussed": [],
+            "keywords": [],
+            "sentiment": null
+          }
+        ],
+        "sourceCoverage": {
+          "Email": 9,
+          "Meeting": 3
+        },
+        "riskSignals": [
+          "1 pending change order(s) need pricing/approval discipline.",
+          "1 overdue RFI(s), including 0 schedule-sensitive item(s).",
+          "9 incomplete schedule task(s) have finish dates before today.",
+          "5 commitment(s) are not executed."
+        ],
+        "recommendedQuestions": [
+          "What budget number has leadership committed to: original budget, revised budget, or latest forecast?",
+          "Which pending change orders need owner approval, pricing backup, or a go/no-go decision this week?",
+          "Which RFIs or submittals can move the schedule if they sit another week?",
+          "What long-lead/procurement items are not bought out or fully released?",
+          "What decision can the CEO, owner, or PM make now that would reduce risk fastest?",
+          "What open actions have no clear owner or due date?"
+        ],
+        "responseContract": {
+          "order": [
+            "Hard Facts",
+            "What Changed",
+            "Insider Analysis",
+            "Recommended Actions",
+            "Confidence and Data Gaps",
+            "Next Step"
+          ],
+          "hardFactsFirst": true,
+          "alwaysEndWithForwardMotion": true
+        },
+        "dataGaps": [
+          "Budget lines came from the budget_lines fallback because v_budget_lines is unavailable."
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-level"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "V"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "erm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "illion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rise"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pre"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "construction"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " truly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " execution"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " yet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " job"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " moving"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " biggest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " production"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " procurement"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " locked"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " while"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trying"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hold"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " near"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-term"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " permit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/start"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " path"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " worry"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " most"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ")"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commercially"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tight"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " yet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " main"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "A"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "141"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " review"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "neg"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "oti"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " May"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "8"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "–"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "11"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "execut"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitments"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " all"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " draft"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " otherwise"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " A"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vendor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " asked"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "May"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " when"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " would"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " receive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "formal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " PO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " documentation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " units"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " already"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " production"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trail"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "April"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "17"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " showing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "standing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " H"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "WC"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " invoices"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " people"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " acting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " like"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " advancing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commercial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " paper"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " buy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trail"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lag"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ging"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " behind"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " creates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " avoid"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "able"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exposure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " payment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " friction"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " procurement"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " leverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " disputes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " later"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brief"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Snapshot"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Verm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "illion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rise"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Warehouse"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ")"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " progressing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " key"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unsett"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "led"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " defined"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " On"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "May"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "7"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " weekly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " call"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " discussed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " growth"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " layout"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "quare"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " footage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " changes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " estimate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " described"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " having"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ne"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "arly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " doubled"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " revisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " They"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " were"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " targeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "permit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sub"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mitt"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "al"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " May"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "15"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Structural"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/f"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "oundation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ";"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "foundation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " red"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " went"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "May"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "12"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Electrical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " updated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " late"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " April"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vendor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " input"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coming"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/admin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " remain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " including"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "4"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " RF"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " overdue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dead"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " settled"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " set"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " documents"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ready"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " low"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-fr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "iction"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " execution"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ironing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " engineering"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " details"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " while"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pressure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rising"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brief"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Snapshot"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Verm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "illion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rise"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Warehouse"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ")"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " story"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " aggressive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " probably"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fragile"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " official"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " does"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " like"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reliable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " execution"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " baseline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Snapshot"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "41"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " incomplete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tasks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "9"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " overdue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Over"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "due"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " include"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " foundation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " framing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " activities"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " February"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "–"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "April"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " suggests"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " maintained"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trustworthy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " control"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " document"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " At"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " same"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " time"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " notes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " say"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " aiming"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mid"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-J"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "une"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " construction"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " start"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "late"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-J"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "uly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " steel"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " erection"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " permit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " submission"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " targeted"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "May"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "15"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " would"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " manage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " off"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fields"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alone"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " path"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " appears"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "push"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " permit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " then"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " release"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " long"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-le"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/pro"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "c"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "urement"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " then"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " start"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " June"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " looks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reality"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " management"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hides"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " true"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " float"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decision"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " deadlines"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brief"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Snapshot"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Verm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "illion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rise"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Warehouse"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Bottom"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "V"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "erm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "illion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Rise"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " yet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " under"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tight"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " control"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " appears"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mile"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " +"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alignment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " push"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " toward"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " permit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " early"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " procurement"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " near"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-term"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " catastrophic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " delay"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ";"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " could"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " slide"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " construction"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "unfinished"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " terms"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " incomplete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " buy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/c"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alignment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " were"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " force"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " three"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answers"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " effectively"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " done"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "?"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "sett"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "led"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " business"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " points"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " blocking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " approved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " after"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " latest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " layout"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " changes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "?"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-growth"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " discussion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " more"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " than"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " snapshot"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " math"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " looks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unreliable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exactly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " must"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " released"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "7"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " days"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " protect"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " June"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " start"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "?"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Especially"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " steel"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " foundations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " electrical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " any"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " units"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " already"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " production"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gaps"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "moder"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " high"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " emails"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " through"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "May"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "12"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " But"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " some"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " controls"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clearly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " noisy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " math"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " appears"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " inconsistent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " looks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " several"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " events"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " like"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " test"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/demo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " records"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " earlier"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "So"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " directional"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " strong"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "commercial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lag"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ging"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " intended"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " start"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cadence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " financial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " baseline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " should"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " treated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " carefully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " until"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cleaned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 12640,
+      "totalTokens": 13658,
+      "outputTokens": 1018,
+      "cacheHitRatio": 0.314,
+      "cachedInputTokens": 3968
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+          "taskSourceReview": null,
+          "selectedProjectId": 67,
+          "deterministicIntent": "task_followup",
+          "sourceSpecificRagKind": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "task_followup",
+          "planner": "deterministic_fallback",
+          "rationale": "Model planner unavailable; using deterministic fallback intent.",
+          "confidence": "low",
+          "responseMode": "build_project_packet",
+          "requiredTools": [],
+          "deterministicIntent": "task_followup",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-12T22:22:24.146Z"
+      },
+      {
+        "tool": "promptContextReducer",
+        "input": {
+          "intent": "task_followup",
+          "message": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump."
+        },
+        "output": {
+          "promptMode": "lean_advisor",
+          "skippedGeneralMemory": true,
+          "skippedExecutivePacket": true,
+          "skippedWorkspaceArtifacts": true,
+          "retainedPacketFirstRetrieval": true
+        },
+        "timestamp": "2026-05-12T22:22:25.440Z"
+      },
+      {
+        "tool": "clientProjectIntelligencePacket",
+        "input": {
+          "query": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+          "intent": "task_followup",
+          "selectedProjectId": 67
+        },
+        "output": {
+          "mode": "additive-context",
+          "packetId": "2e4264d3-56f2-4c3a-a1fa-1db34c0b47d2",
+          "cardCount": 27,
+          "packetAgeDays": 0,
+          "resolvedTarget": {
+            "id": "cc335677-58c6-4144-8e91-6d2fcc024bf8",
+            "slug": "25-126-vermillion-rise-warehouse",
+            "source": "selected_project",
+            "projectId": 67
+          },
+          "freshnessStatus": "fresh",
+          "operatingSummaryLoaded": false
+        },
+        "timestamp": "2026-05-12T22:22:26.834Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "promptMode": "lean_advisor",
+          "fullToolCount": 115,
+          "modelToolCount": 7,
+          "modelToolNames": [
+            "getActionItemsAndInsights",
+            "getProjectBriefingSnapshot",
+            "searchMeetingsByTopic",
+            "searchEmails",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "findProject"
+          ],
+          "streamMaxSteps": 10,
+          "scopedToolCount": 7,
+          "streamMaxOutputTokens": 4000,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": false
+        },
+        "timestamp": "2026-05-12T22:22:26.834Z"
+      },
+      {
+        "tool": "getProjectBriefingSnapshot",
+        "input": {
+          "projectId": 67,
+          "projectName": "Vermillion Rise Warehouse"
+        },
+        "output": {
+          "project": {
+            "id": 67,
+            "name": "Vermillion Rise Warehouse",
+            "phase": "Current",
+            "client": null,
+            "summary": "The Vermillion Rise project involves the construction of a new precast building designated for pool chemical storage and manufacturing. The facility is planned to be approximately 232 feet by 452 feet, with 5,000 square feet allocated for office space accommodating 32 employees. Key elements of the project include downsizing the facility from its original plan by 60,000 square feet to reduce costs and accommodate future expansions. The project scope includes detailed architectural, structural, civil, plumbing, and electrical designs to meet the H3 occupancy requirements, focusing on safety and operational efficiency...",
+            "healthStatus": null,
+            "completionPct": 0,
+            "projectNumber": "25-126"
+          },
+          "dataGaps": [
+            "Budget lines came from the budget_lines fallback because v_budget_lines is unavailable."
+          ],
+          "hardFacts": {
+            "rfis": {
+              "open": [
+                {
+                  "number": 2,
+                  "status": "open",
+                  "dueDate": "2026-04-10",
+                  "subject": "Specified fire rating for north wall assembly",
+                  "ballInCourt": "Brandon",
+                  "scheduleImpact": "tbd"
+                },
+                {
+                  "number": 1,
+                  "status": "open",
+                  "dueDate": null,
+                  "subject": "Clarification on Footing Depth for Building A",
+                  "ballInCourt": null,
+                  "scheduleImpact": null
+                },
+                {
+                  "number": 3,
+                  "status": "draft",
+                  "dueDate": null,
+                  "subject": "Test RFI Validation",
+                  "ballInCourt": null,
+                  "scheduleImpact": null
+                },
+                {
+                  "number": 4,
+                  "status": "open",
+                  "dueDate": null,
+                  "subject": "Test RFI Drawing Number",
+                  "ballInCourt": "",
+                  "scheduleImpact": null
+                }
+              ],
+              "openCount": 4,
+              "overdueCount": 1,
+              "statusBreakdown": {
+                "open": 3,
+                "draft": 1
+              },
+              "scheduleSensitiveCount": 0
+            },
+            "budget": {
+              "status": "under budget",
+              "budgetDelta": 0,
+              "revisedBudget": 12940266,
+              "originalBudget": 12940266,
+              "forecastVariance": -12865266,
+              "approvedBudgetChanges": 0
+            },
+            "contract": {
+              "invoicedAmount": 0,
+              "paymentsReceived": 643184.8,
+              "revisedContractValue": 75000,
+              "originalContractValue": 75000,
+              "pendingContractChanges": 0,
+              "approvedContractChanges": 0
+            },
+            "schedule": {
+              "totalTasks": 45,
+              "overdueCount": 9,
+              "overdueTasks": [
+                {
+                  "name": "Receive Reactions",
+                  "status": "in_progress",
+                  "finishDate": "2026-02-15",
+                  "percentComplete": 50
+                },
+                {
+                  "name": "Pour Concrete",
+                  "status": "in_progress",
+                  "finishDate": "2026-03-05",
+                  "percentComplete": 80
+                },
+                {
+                  "name": "Foundation Inspection",
+                  "status": "in_progress",
+                  "finishDate": "2026-03-08",
+                  "percentComplete": 50
+                },
+                {
+                  "name": "Phase 2: Foundation",
+                  "status": "in_progress",
+                  "finishDate": "2026-03-15",
+                  "percentComplete": 75
+                },
+                {
+                  "name": "Floor Framing",
+                  "status": "in_progress",
+                  "finishDate": "2026-03-25",
+                  "percentComplete": 50
+                },
+                {
+                  "name": "Wall Framing",
+                  "status": "not_started",
+                  "finishDate": "2026-04-05",
+                  "percentComplete": 0
+                },
+                {
+                  "name": "Review HVAC submittals",
+                  "status": "not_started",
+                  "finishDate": "2026-04-05",
+                  "percentComplete": 0
+                },
+                {
+                  "name": "Roof Framing",
+                  "status": "not_started",
+                  "finishDate": "2026-04-15",
+                  "percentComplete": 0
+                }
+              ],
+              "incompleteCount": 41,
+              "upcomingMilestones": [],
+              "upcomingMilestoneCount": 0
+            },
+            "submittals": {
+              "open": [
+                {
+                  "title": "Verification Test Submittal",
+                  "number": "TEST-001",
+                  "status": "Draft",
+                  "dueDate": null,
+                  "leadTime": null,
+                  "ballInCourt": null,
+                  "requiredOnSiteDate": null
+                },
+                {
+                  "title": "Feature Test Submittal EDITED",
+                  "number": "TST-160936",
+                  "status": "Distributed",
+                  "dueDate": null,
+                  "leadTime": null,
+                  "ballInCourt": null,
+                  "requiredOnSiteDate": null
+                }
+              ],
+              "openCount": 2,
+              "overdueCount": 0,
+              "statusBreakdown": {
+                "draft": 1,
+                "distributed": 1
+              },
+              "longLeadOpenCount": 0
+            },
+            "commitments": {
+              "totalCount": 5,
+              "unexecuted": [
+                {
+                  "type": "subcontract",
+                  "title": "SC Smoke 100",
+                  "status": "Terminated",
+                  "contractNumber": "SC-002"
+                },
+                {
+                  "type": "purchase_order",
+                  "title": null,
+                  "status": "Draft",
+                  "contractNumber": "PO-001"
+                },
+                {
+                  "type": "subcontract",
+                  "title": "Test Subcontract SC-GAUNTLET-001 EDITED",
+                  "status": "Draft",
+                  "contractNumber": "SC-GAUNTLET-001-EDITED"
+                },
+                {
+                  "type": "purchase_order",
+                  "title": "",
+                  "status": "Draft",
+                  "contractNumber": "test-001"
+                },
+                {
+                  "type": "purchase_order",
+                  "title": "Updated Title Test",
+                  "status": "Draft",
+                  "contractNumber": "Updated Test"
+                }
+              ],
+              "statusBreakdown": {
+                "draft": 4,
+                "terminated": 1
+              },
+              "unexecutedCount": 5
+            },
+            "changeEvents": {
+              "recent": [
+                {
+                  "type": "Allowance",
+                  "title": "Verify - Foundation Scope Change",
+                  "number": "005",
+                  "status": "Approved",
+                  "updatedAt": "2026-04-25T03:04:18.494265+00:00"
+                },
+                {
+                  "type": "Design Change",
+                  "title": "Updated Scope — Concrete",
+                  "number": "011",
+                  "status": "Open",
+                  "updatedAt": "2026-04-25T03:00:24.650557+00:00"
+                },
+                {
+                  "type": "Owner Change",
+                  "title": "Auto-Number Test",
+                  "number": "012",
+                  "status": "Open",
+                  "updatedAt": "2026-04-25T02:58:20.803409+00:00"
+                },
+                {
+                  "type": "Owner Change",
+                  "title": "Structural Steel Scope Addition",
+                  "number": "009",
+                  "status": "Open",
+                  "updatedAt": "2026-04-21T14:53:53.416197+00:00"
+                },
+                {
+                  "type": "Owner Change",
+                  "title": "Test Change Event UI - Audit",
+                  "number": "004",
+                  "status": "Void",
+                  "updatedAt": "2026-04-21T14:47:44.471078+00:00"
+                },
+                {
+                  "type": "Owner Change",
+                  "title": "Test CE from scenario",
+                  "number": "006",
+                  "status": "Rejected",
+                  "updatedAt": "2026-04-21T14:46:35.415384+00:00"
+                },
+                {
+                  "type": "Owner Change",
+                  "title": "Structural Steel Scope Addition",
+                  "number": "007",
+                  "status": "Open",
+                  "updatedAt": "2026-04-21T14:44:22.867226+00:00"
+                },
+                {
+                  "type": "Owner Change",
+                  "title": "Reason Mapping Verification Test",
+                  "number": "002",
+                  "status": "Open",
+                  "updatedAt": "2026-04-21T14:44:22.867226+00:00"
+                }
+              ],
+              "openCount": 7,
+              "statusBreakdown": {
+                "open": 7,
+                "void": 1,
+                "approved": 1,
+                "rejected": 1
+              }
+            },
+            "changeOrders": {
+              "recent": [
+                {
+                  "title": "E2E 48580a03 1.1 Prime CO",
+                  "amount": 1234.56,
+                  "number": "003",
+                  "status": "proposed",
+                  "dueDate": null
+                },
+                {
+                  "title": "E2E Test CO Happy Path",
+                  "amount": 5000,
+                  "number": "002",
+                  "status": "approved",
+                  "dueDate": null
+                },
+                {
+                  "title": "Field condition change",
+                  "amount": 0,
+                  "number": "001",
+                  "status": "approved",
+                  "dueDate": null
+                }
+              ],
+              "recentCount": 3,
+              "pendingCount": 1,
+              "approvedCount": 2,
+              "pendingAmount": 1234.56,
+              "approvedAmount": 5000,
+              "statusBreakdown": {
+                "approved": 2,
+                "proposed": 1
+              }
+            },
+            "notifications": {
+              "open": [],
+              "openCount": 0
+            }
+          },
+          "sourceRef": "[Source: Project Briefing Snapshot - Vermillion Rise Warehouse]",
+          "riskSignals": [
+            "1 pending change order(s) need pricing/approval discipline.",
+            "1 overdue RFI(s), including 0 schedule-sensitive item(s).",
+            "9 incomplete schedule task(s) have finish dates before today.",
+            "5 commitment(s) are not executed."
+          ],
+          "recentMovement": [
+            {
+              "date": "2026-05-12T00:00:00+00:00",
+              "notes": null,
+              "title": "Email: VERMILLION FOUNDATIONS (REDLINE)",
+              "summary": "The document is an email from Keith Fisher of Steel Services, Inc., addressed to several recipients including Brandon Clymer and Bob Wright from Alleato Group, regarding the Vermillion Foundations project. The primary purpose of the email is to share a redline markup of four foundation types and their respective locations, although it does not specify when these will be incorporated into the drawings.\n\nKey topics discussed in the email include the redline markup of foundation types, which is essential for the project's structural planning. The email also contains a cautionary note about the rise in email hacking and fraudulent funding instructions, advising recipients to verify any requests for wire transfers to ensure they are legitimate. Additionally, the email emphasizes the confidentiality of its contents, warning against unauthorized use or distribution.\n\nImportant details include ...",
+              "keywords": [],
+              "decisions": [],
+              "keyTopics": [],
+              "sentiment": null,
+              "sourceRef": "[Source: Email - \"Email: VERMILLION FOUNDATIONS (REDLINE)\" - 2026-05-12T00:00:00+00:00]",
+              "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4VakAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "sourceType": "Email",
+              "actionItems": [],
+              "bulletPoints": [],
+              "topicsDiscussed": []
+            },
+            {
+              "date": "2026-05-12T00:00:00+00:00",
+              "notes": null,
+              "title": "Email: RE: Hillsdale-Alleato A141",
+              "summary": "The document is an email correspondence between Logan Stevens, an associate at BTLaw, and Grant Schertzing, an attorney at Miller Johnson, regarding revisions to a contract or agreement identified as \"Hillsdale-Alleato A141.\" The purpose of the email is to confirm the acceptance of most of the revisions discussed in a previous meeting, as well as to address additional sections that were not covered in detail during that discussion.\n\nKey topics in the email include the acceptance of changes to the contract, specifically regarding insurance requirements. Hillsdale has agreed to provide $1 million in errors and omissions coverage and has opted not to require pollution liability insurance. Additionally, they will carry all-risk property insurance as outlined in Exhibit B of the agreement. Logan expresses a willingness to discuss any further concerns or revisions with Grant after he reviews ...",
+              "keywords": [],
+              "decisions": [],
+              "keyTopics": [],
+              "sentiment": null,
+              "sourceRef": "[Source: Email - \"Email: RE: Hillsdale-Alleato A141\" - 2026-05-12T00:00:00+00:00]",
+              "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4VaaAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "sourceType": "Email",
+              "actionItems": [],
+              "bulletPoints": [],
+              "topicsDiscussed": []
+            },
+            {
+              "date": "2026-05-11T18:30:00+00:00",
+              "notes": "## **Contract Negotiation and Key Terms**\n\nThe team made significant progress aligning on contract terms, particularly around dispute resolution, subcontractor approvals, indemnification, and payment timelines.\n\n- **Dispute Resolution Preference for Litigation** was reaffirmed by Grant Schertzing and Mark Ferderer, preferring litigation over arbitration due to greater flexibility despite arbitration typically saving time and cost (06:29)  \n    - Litigation allows Hillsdale to maintain control over dispute resolution on a case-by-case basis.  \n    - Mark expressed some personal concerns about arbitration from experience but agreed litigation is preferable here.  \n    - Brandon Clymer agreed to discuss this point further post-call to finalize language.\n\n- **Subcontractor Approval Thresholds Discussed** with focus on balancing Hillsdale’s need for oversight and operational efficiency (08:32)  \n    - Hillsdale proposed a $10,000 approval threshold for significant trades, which Brandon found too low and suggested $150,000 to $300,000 as more practical.  \n    - Mark emphasized avoiding \"thin subbing\" where large contracts are split just below threshold to circumvent approval.  \n    - Th...",
+              "title": "A141 Discussion",
+              "summary": "✅ Contract Terms Alignment: Progress on dispute resolution, subcontractor approvals, indemnification, and payment timelines was achieved.\n⚖️ Dispute Resolution Preference: Litigation favored for flexibility; will discuss further to finalize language.\n💼 Subcontractor Approval Thresholds: Proposed thresholds range from $10,000 to $300,000, aiming for transparency and operational efficiency.\n🔒 Indemnification Clarity: Protects Hillsdale from liability due to design builder's actions and ensures site control.\n💵 Payment Processes: Allowed partial payments during disputes, with specific timelines for notifications and resolutions established.\n📅 Next Steps: Logan to integrate changes; anticipate contract execution shortly after February 13 closing.",
+              "keywords": [
+                "Contract negotiation",
+                "subcontractor approval",
+                "dispute resolution",
+                "indemnification",
+                "payment withholding",
+                "mechanics lien"
+              ],
+              "decisions": [],
+              "keyTopics": [],
+              "sentiment": {
+                "neutral_pct": 61,
+                "negative_pct": 7,
+                "positive_pct": 32
+              },
+              "sourceRef": "[Source: Meeting - \"A141 Discussion\" - 2026-05-11T18:30:00+00:00]",
+              "sourceUrl": "https://app.fireflies.ai/view/01KRBZZEZNAGAG88HTSK4FG2JV",
+              "sourceType": "Meeting",
+              "actionItems": [
+                "Review detailed contract provisions on change orders, mechanics' liens, and dispute resolution to refine language (30:07)",
+                "Draft revisions to subcontractor approval notification process including timing and thresholds and circulate for review (11:00)",
+                "Adjust permit cost reimbursement language to clearly exclude permit costs from contract sum and address reimbursement (25:40)",
+                "Modify punch list completion timing language to include “commence within” and diligence clauses addressing lead times (52:20)",
+                "Refine notification and dispute resolution timelines for payment withholding to 15-day notice and 45-day resolution periods (43:30)",
+                "Review final payment waiver language and compare original versions",
+                "consult with team and Brandon for acceptable terms (01:01:20)",
+                "Incorporate agreed changes related to breach cure period and notify Grant and Brandon accordingly (01:09:00)"
+              ],
+              "bulletPoints": [
+                "✅ Contract Terms Alignment: Progress on dispute resolution, subcontractor approvals, indemnification, and payment timelines was achieved.",
+                "⚖️ Dispute Resolution Preference: Litigation favored for flexibility",
+                "will discuss further to finalize language.",
+                "💼 Subcontractor Approval Thresholds: Proposed thresholds range from $10,000 to $300,000, aiming for transparency and operational efficiency.",
+                "🔒 Indemnification Clarity: Protects Hillsdale from liability due to design builder's actions and ensures site control.",
+                "💵 Payment Processes: Allowed partial payments during disputes, with specific timelines for notifications and resolutions established.",
+                "📅 Next Steps: Logan to integrate changes",
+                "anticipate contract execution shortly after February 13 closing."
+              ],
+              "topicsDiscussed": []
+            },
+            {
+              "date": "2026-05-11T00:00:00+00:00",
+              "notes": null,
+              "title": "Email: Vermillian Rise Contract Review",
+              "summary": "The document is an email regarding the review of the Vermillian Rise contract, dated May 11, 2026. It is addressed to Logan Stevens and Mark Ferderer, indicating a collaborative effort to assess the contract's terms and conditions. The email serves as a notification for a scheduled Microsoft Teams meeting to discuss the contract in detail, emphasizing the importance of the review process.\n\nKey topics likely covered in the contract include project specifications, timelines, financial obligations, and compliance requirements. While specific details from the contract are not provided in the email, the mention of a meeting suggests that critical issues or amendments may need to be addressed. The meeting is set to facilitate a thorough discussion among the involved parties, ensuring that all aspects of the contract are understood and agreed upon.\n\nThe email includes a link to join the Micros...",
+              "keywords": [],
+              "decisions": [],
+              "keyTopics": [],
+              "sentiment": null,
+              "sourceRef": "[Source: Email - \"Email: Vermillian Rise Contract Review\" - 2026-05-11T00:00:00+00:00]",
+              "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEJAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4X%2BzAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "sourceType": "Email",
+              "actionItems": [],
+              "bulletPoints": [],
+              "topicsDiscussed": []
+            },
+            {
+              "date": "2026-05-11T00:00:00+00:00",
+              "notes": null,
+              "title": "Email: Canceled: Vermillian Rise Contract Review",
+              "summary": "**Summary of Document: Canceled: Vermillian Rise Contract Review**\n\nThe document is an email notification regarding the cancellation of the Vermillian Rise Contract Review meeting. It is dated May 11, 2026, and is sent by Brandon Clymer from Alleato Group to Logan Stevens and Mark Ferderer, indicating a formal communication related to contract management.\n\nKey topics in the email include the cancellation of the review meeting, which suggests that there may have been changes in project timelines or priorities. The email also mentions that a new invite has been sent, implying that while the original meeting is canceled, there is an intention to reschedule or address the contract review at a later date.\n\nImportant details include the date of the original meeting and the parties involved in the communication. While specific numbers or requirements are not provided in the email, the mention ...",
+              "keywords": [],
+              "decisions": [],
+              "keyTopics": [],
+              "sentiment": null,
+              "sourceRef": "[Source: Email - \"Email: Canceled: Vermillian Rise Contract Review\" - 2026-05-11T00:00:00+00:00]",
+              "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEJAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4X%2B3AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "sourceType": "Email",
+              "actionItems": [],
+              "bulletPoints": [],
+              "topicsDiscussed": []
+            },
+            {
+              "date": "2026-05-11T00:00:00+00:00",
+              "notes": null,
+              "title": "Email: Re: Vermillian Rise Contract Review",
+              "summary": null,
+              "keywords": [],
+              "decisions": [],
+              "keyTopics": [],
+              "sentiment": null,
+              "sourceRef": "[Source: Email - \"Email: Re: Vermillian Rise Contract Review\" - 2026-05-11T00:00:00+00:00]",
+              "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4VZTAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "sourceType": "Email",
+              "actionItems": [],
+              "bulletPoints": [],
+              "topicsDiscussed": []
+            },
+            {
+              "date": "2026-05-11T00:00:00+00:00",
+              "notes": null,
+              "title": "Email: Hillsdale-Alleato A141",
+              "summary": "The document is an email from Grant E. Schertzing, an attorney at Miller Johnson, to Logan Stevens at BTLaw, dated May 11, 2026. The purpose of the email is to communicate important updates regarding the A141 agreement, specifically addressing comments and modifications made by Brandon, likely a colleague or stakeholder involved in the contract negotiations.\n\nKey topics discussed in the email include the agreement on errors and omissions coverage, where Hillsdale has consented to a limit of $1 million. Additionally, it is noted that Hillsdale will not require pollution liability insurance, which could be a significant cost-saving measure. The email also mentions that under Exhibit B of the agreement, Hillsdale will be responsible for carrying all-risk property insurance, indicating a comprehensive coverage approach for potential property-related risks.\n\nImportant details include the spe...",
+              "keywords": [],
+              "decisions": [],
+              "keyTopics": [],
+              "sentiment": null,
+              "sourceRef": "[Source: Email - \"Email: Hillsdale-Alleato A141\" - 2026-05-11T00:00:00+00:00]",
+              "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4VZsAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "sourceType": "Email",
+              "actionItems": [],
+              "bulletPoints": [],
+              "topicsDiscussed": []
+            },
+            {
+              "date": "2026-05-08T00:00:00+00:00",
+              "notes": null,
+              "title": "Email: Re: A141 Based Contract for Review",
+              "summary": null,
+              "keywords": [],
+              "decisions": [],
+              "keyTopics": [],
+              "sentiment": null,
+              "sourceRef": "[Source: Email - \"Email: Re: A141 Based Contract for Review\" - 2026-05-08T00:00:00+00:00]",
+              "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEJAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQiHea4AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "sourceType": "Email",
+              "actionItems": [],
+              "bulletPoints": [],
+              "topicsDiscussed": []
+            },
+            {
+              "date": "2026-05-08T00:00:00+00:00",
+              "notes": null,
+              "title": "Email: Re: A141 Based Contract for Review",
+              "summary": "The document is an email correspondence regarding the review of an A141-based contract. The exchange involves Brandon Clymer, CEO of Alleato Group, and Mark Ferderer from Ferdimation, with additional recipients included in the CC line, indicating a collaborative effort in the review process. The primary purpose of the email is to schedule a meeting for further discussion on the contract.\n\nKey topics include the scheduling of a meeting to discuss the contract details, with Clymer proposing Monday afternoon after 1:30 PM EST as a suitable time. The email reflects an ongoing dialogue about the contract, suggesting that both parties are actively engaged in the review process. \n\nImportant details include the date of the email, May 8, 2026, and the specific time frame for the proposed meeting. Clymer's contact information is also provided, including his mobile number and the addresses of Alle...",
+              "keywords": [],
+              "decisions": [],
+              "keyTopics": [],
+              "sentiment": null,
+              "sourceRef": "[Source: Email - \"Email: Re: A141 Based Contract for Review\" - 2026-05-08T00:00:00+00:00]",
+              "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEJAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQiHea8AAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "sourceType": "Email",
+              "actionItems": [],
+              "bulletPoints": [],
+              "topicsDiscussed": []
+            },
+            {
+              "date": "2026-05-07T17:00:00+00:00",
+              "notes": "## **Structural Design and Cost Management**\n\nThe team focused on managing unexpected cost increases tied to expanded square footage and layout changes in the structural design.\n\n- **Cost doubled due to increased square footage and layout changes** discussed by Bob Wright and Keith Fisher showed the project's scope nearly doubled in cost with a rise from about **1550 to 1780 square feet**, driving a roughly **$30,000** cost hike (06:01).\n    - The increase mainly came from removing bearing walls and creating a “box within a box” structure.\n    - Reducing or eliminating the office manager’s space could cut columns and steel, lowering costs.\n    - Bob planned to get client direction on whether to increase budget or reduce space to control costs.\n    - Keith and his team awaited clear guidance to finalize design decisions and keep work moving.\n\n- **Structural detail coordination and permit schedule** was aligned with a **permit submittal target of May 15**, with Clay Robinson and team aiming to complete drawings by then (30:48).\n    - Structural review of penetration elevations through precast is necessary due to hole size and placement.\n    - Jerome confirmed his team would package ...",
+              "title": "Vermillion design weekly call",
+              "summary": "The team discussed managing rising project costs due to expanded square footage and layout changes, leading to a nearly doubled cost estimate. They targeted a permit submittal by May 15, emphasizing the need for timely drawing completions. Clarifications on lab functions indicated low HVAC complexity, pivoting from chemical to mechanical testing, which impacts equipment needs. Electrical load specifications were addressed to ensure proper breaker sizing, while clear communication among team members regarding design changes and drawing submissions was vital to avoid delays. Ongoing coordination around structural details and materials aimed to enhance construction efficacy and prevent design conflicts.",
+              "keywords": [
+                "Structural design",
+                "HVAC",
+                "laboratory specifications",
+                "electrical equipment",
+                "spill containment",
+                "permit submittal"
+              ],
+              "decisions": [],
+              "keyTopics": [],
+              "sentiment": {
+                "neutral_pct": 70,
+                "negative_pct": 4,
+                "positive_pct": 26
+              },
+              "sourceRef": "[Source: Meeting - \"Vermillion design weekly call\" - 2026-05-07T17:00:00+00:00]",
+              "sourceUrl": "https://app.fireflies.ai/view/01KQF2WF59QV5T3B1NCNZN4NXF",
+              "sourceType": "Meeting",
+              "actionItems": [],
+              "bulletPoints": [],
+              "topicsDiscussed": []
+            },
+            {
+              "date": "2026-05-06T15:00:00+00:00",
+              "notes": null,
+              "title": "Hillsdale Holdings // Alleato Weekly",
+              "summary": "During the meeting, the team confirmed the contract close date for April 13th, emphasizing that signing will not affect project timelines, with long lead items set to begin post-signing. Early orders for steel and equipment to secure leading items were discussed, with a focus on a mid-June construction start and late July steel erection. Cost adjustments regarding electrical scope were addressed, with a revised estimate and deductive change orders proposed to return savings to the client. The importance of design coordination was highlighted, particularly with regards to fire protection and HVAC systems, and a site visit by Brandon Clymer was planned to enhance design clarity and safety.",
+              "keywords": [],
+              "decisions": [],
+              "keyTopics": [],
+              "sentiment": null,
+              "sourceRef": "[Source: Meeting - \"Hillsdale Holdings // Alleato Weekly\" - 2026-05-06T15:00:00+00:00]",
+              "sourceUrl": "https://app.fireflies.ai/view/01KQCES6F3KTVHGCR26YYPN56N",
+              "sourceType": "Meeting",
+              "actionItems": [],
+              "bulletPoints": [],
+              "topicsDiscussed": []
+            },
+            {
+              "date": "2026-05-05T00:00:00+00:00",
+              "notes": null,
+              "title": "Email: Vermillion Rise",
+              "summary": "The document is an email from Andrew Harpenau, a Partner and Sales Engineer at AC Equipment Representatives, LLC, directed to Bob Wright at Alleato Group. The purpose of the email is to inquire about the status of formal documentation related to purchase orders (POs) and contracts for units currently in production. This communication indicates a collaborative effort between the two parties concerning ongoing projects.\n\nKey topics discussed in the email include the creation of POs and contracts, as well as a reference to an owner meeting that Bob mentioned would take place that week. Andrew is seeking clarity on when he can expect to receive the necessary paperwork to proceed with his responsibilities regarding the production units.\n\nImportant details include the date of the email, May 5, 2026, and Andrew's contact information, which includes his phone and fax numbers. The email highligh...",
+              "keywords": [],
+              "decisions": [],
+              "keyTopics": [],
+              "sentiment": null,
+              "sourceRef": "[Source: Email - \"Email: Vermillion Rise\" - 2026-05-05T00:00:00+00:00]",
+              "sourceUrl": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQg45XhAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+              "sourceType": "Email",
+              "actionItems": [],
+              "bulletPoints": [],
+              "topicsDiscussed": []
+            }
+          ],
+          "sourceCoverage": {
+            "Email": 9,
+            "Meeting": 3
+          },
+          "responseContract": {
+            "order": [
+              "Hard Facts",
+              "What Changed",
+              "Insider Analysis",
+              "Recommended Actions",
+              "Confidence and Data Gaps",
+              "Next Step"
+            ],
+            "hardFactsFirst": true,
+            "alwaysEndWithForwardMotion": true
+          },
+          "recommendedQuestions": [
+            "What budget number has leadership committed to: original budget, revised budget, or latest forecast?",
+            "Which pending change orders need owner approval, pricing backup, or a go/no-go decision this week?",
+            "Which RFIs or submittals can move the schedule if they sit another week?",
+            "What long-lead/procurement items are not bought out or fully released?",
+            "What decision can the CEO, owner, or PM make now that would reduce risk fastest?",
+            "What open actions have no clear owner or due date?"
+          ]
+        },
+        "timestamp": "2026-05-12T22:22:31.871Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": null,
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": null,
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 2889,
+          "finishReason": "tool-calls",
+          "outputTokens": 31,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getProjectBriefingSnapshot"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 9751,
+          "finishReason": "stop",
+          "outputTokens": 987,
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getActionItemsAndInsights",
+            "getProjectBriefingSnapshot",
+            "searchMeetingsByTopic",
+            "searchEmails",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "findProject"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getActionItemsAndInsights",
+            "getProjectBriefingSnapshot",
+            "searchMeetingsByTopic",
+            "searchEmails",
+            "searchTeamsMessages",
+            "semanticSearch",
+            "findProject"
+          ]
+        }
+      ],
+      "totalStepCount": 2,
+      "finalFinishReason": "stop",
+      "preparedStepCount": 2,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 1
+    },
+    "response_quality": {
+      "score": 90,
+      "reasons": [
+        "compiled intelligence packet with multiple evidence cards",
+        "multiple source citations"
+      ],
+      "confidence": "high",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

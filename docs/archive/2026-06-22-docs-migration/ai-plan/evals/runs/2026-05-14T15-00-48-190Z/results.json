@@ -1,0 +1,228 @@
+{
+  "generatedAt": "2026-05-14T15:01:30.685Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "inbox-outlook-regression",
+    "description": "Agentic-eval guardrail for live inbox/date/triage prompts. The assistant must use structured Outlook intake, avoid source-specific RAG, and avoid stale fallback language.",
+    "criteria": [
+      "Every case must fire getRecentEmails.",
+      "No case may fire sourceSpecificRagRetrieval.",
+      "Answers must not tell the user to wait for live Outlook tools.",
+      "Answers must be long enough to explain the inbox result or failure clearly."
+    ]
+  },
+  "filter": "realworld-(last-five-emails|urgent-inbox|important-emails-this-morning|outlook-arrived-today|email-reply-triage)$",
+  "totalCases": 5,
+  "passed": 5,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 5,
+    "getRecentEmails": 5
+  },
+  "intentDistribution": {
+    "source_lookup": 5
+  },
+  "results": [
+    {
+      "id": "realworld-last-five-emails",
+      "intent": "source_lookup",
+      "prompt": "Can you tell me my last five emails?",
+      "selectedProjectId": null,
+      "sessionId": "4db71fc9-d80d-435b-982d-46027aaf1191",
+      "sessionLabel": "eval-2026-05-14T15-00-48-190Z-realworld-last-five-emails",
+      "startedAt": "2026-05-14T15:00:48.197Z",
+      "finishedAt": "2026-05-14T15:01:00.667Z",
+      "durationMs": 11878,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, getRecentEmails"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 328,
+        "finalText": "I checked Outlook email intake for your inbox for the last day.\nNo emails received the last 1 day for test1@mail.com (mailbox).\nData freshness: Data is current as of May 14, 9:40 AM CT (syncs run hourly). Emails received after that time won't appear here yet.\nThis answer came from structured Outlook intake via getRecentEmails."
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-urgent-inbox",
+      "intent": "source_lookup",
+      "prompt": "Is there anything urgent in my inbox?",
+      "selectedProjectId": null,
+      "sessionId": "6f4ca5ac-07bf-4e4b-9a60-7e43e864a10f",
+      "sessionLabel": "eval-2026-05-14T15-00-48-190Z-realworld-urgent-inbox",
+      "startedAt": "2026-05-14T15:01:00.672Z",
+      "finishedAt": "2026-05-14T15:01:10.601Z",
+      "durationMs": 9849,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, getRecentEmails"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 328,
+        "finalText": "I checked Outlook email intake for your inbox for the last day.\nNo emails received the last 1 day for test1@mail.com (mailbox).\nData freshness: Data is current as of May 14, 9:40 AM CT (syncs run hourly). Emails received after that time won't appear here yet.\nThis answer came from structured Outlook intake via getRecentEmails."
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails",
+        "searchEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-important-emails-this-morning",
+      "intent": "source_lookup",
+      "prompt": "What important emails have I received this morning?",
+      "selectedProjectId": null,
+      "sessionId": "b1a7c11f-0434-4cb0-95eb-06ab43b18355",
+      "sessionLabel": "eval-2026-05-14T15-00-48-190Z-realworld-important-emails-this-morning",
+      "startedAt": "2026-05-14T15:01:10.603Z",
+      "finishedAt": "2026-05-14T15:01:17.368Z",
+      "durationMs": 6667,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, getRecentEmails"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 327,
+        "finalText": "I checked Outlook email intake for your inbox for today / this morning.\nNo emails received today for test1@mail.com (mailbox).\nData freshness: Data is current as of May 14, 9:40 AM CT (syncs run hourly). Emails received after that time won't appear here yet.\nThis answer came from structured Outlook intake via getRecentEmails."
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-outlook-arrived-today",
+      "intent": "source_lookup",
+      "prompt": "What came in through Outlook today that needs my attention?",
+      "selectedProjectId": null,
+      "sessionId": "fa61e98f-2c1e-4474-b52c-68f6b2584642",
+      "sessionLabel": "eval-2026-05-14T15-00-48-190Z-realworld-outlook-arrived-today",
+      "startedAt": "2026-05-14T15:01:17.369Z",
+      "finishedAt": "2026-05-14T15:01:22.150Z",
+      "durationMs": 4622,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, getRecentEmails"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 327,
+        "finalText": "I checked Outlook email intake for your inbox for today / this morning.\nNo emails received today for test1@mail.com (mailbox).\nData freshness: Data is current as of May 14, 9:40 AM CT (syncs run hourly). Emails received after that time won't appear here yet.\nThis answer came from structured Outlook intake via getRecentEmails."
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-email-reply-triage",
+      "intent": "source_lookup",
+      "prompt": "Show me any emails from today that need a reply.",
+      "selectedProjectId": null,
+      "sessionId": "5db946c3-c5d5-4fec-8ef5-06820bece432",
+      "sessionLabel": "eval-2026-05-14T15-00-48-190Z-realworld-email-reply-triage",
+      "startedAt": "2026-05-14T15:01:22.151Z",
+      "finishedAt": "2026-05-14T15:01:30.685Z",
+      "durationMs": 8459,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, getRecentEmails"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 327,
+        "finalText": "I checked Outlook email intake for your inbox for today / this morning.\nNo emails received today for test1@mail.com (mailbox).\nData freshness: Data is current as of May 14, 9:40 AM CT (syncs run hourly). Emails received after that time won't appear here yet.\nThis answer came from structured Outlook intake via getRecentEmails."
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    }
+  ]
+}

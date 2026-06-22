@@ -24,7 +24,7 @@ const files = {
   mcpTools: "frontend/src/lib/ai/tools/mcp-tools.ts",
   providerConfig: "frontend/src/lib/ai/provider-config.ts",
   webTools: "frontend/src/lib/ai/tools/web-search.ts",
-  auditDoc: "docs/ai-plan/AI-CHAT-IMPLEMENTATION-AUDIT-2026-04-26.md",
+  auditDoc: "docs/archive/2026-06-22-docs-migration/ai-plan/AI-CHAT-IMPLEMENTATION-AUDIT-2026-04-26.md",
   backendApiDoc: "backend/API.md",
   backendRequirements: "backend/requirements.txt",
 };

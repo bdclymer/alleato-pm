@@ -221,7 +221,7 @@ export type SummarizeProjectIntelligenceInput = {
   sources: ProjectIntelligenceSummarySource[];
   focus?:
     | "project_brief"
-    | "project_operating_summary"
+    | "project_intelligence"
     | "source_sync"
     | "handoff"
     | "daily_digest";

@@ -1,0 +1,46 @@
+{
+  "id": "ceo-task-list-owe",
+  "intent": "task_management",
+  "prompt": "What do I owe people right now?",
+  "selectedProjectId": null,
+  "sessionId": "fbdc7b7f-a24c-4ecc-b83b-f4bce8cad0ab",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-ceo-task-list-owe",
+  "startedAt": "2026-05-12T19:39:58.048Z",
+  "finishedAt": "2026-05-12T19:40:13.391Z",
+  "durationMs": 1,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getMyTasks, getActionItemsAndInsights] to fire — none did",
+      "mustIncludeAny missing one of: \"task\", \"action item\", \"follow\", \"open\", \"owe\"",
+      "answer length 0 < min 120"
+    ],
+    "warnings": [
+      "expected family 'task_management' not represented",
+      "expected family 'actions' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getMyTasks",
+    "getActionItemsAndInsights"
+  ],
+  "expectedToolFamilies": [
+    "task_management",
+    "actions"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

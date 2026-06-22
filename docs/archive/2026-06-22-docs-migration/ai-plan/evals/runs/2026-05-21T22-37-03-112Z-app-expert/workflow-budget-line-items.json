@@ -1,0 +1,56 @@
+{
+  "id": "workflow-budget-line-items",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6084,
+  "question": "How should budget line items work?",
+  "mustInclude": [
+    "budget",
+    "line item"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Budget line items are documented as the base unit for tracking budget vs actual on a project.\n\nWhat the help article says:\n- A line item is one row in the budget tied to a **cost code** and **cost type**.\n- To add one, you go to **Budget** on the project route **`/[projectId]/budget`**, then:\n  1. Select **Add Line Item**\n  2. Choose **Cost Code**\n  3. Choose **Cost Type**: labor, material, equipment, subcontract, other\n  4. Enter **Description** and **Original Budget**\n  5. Save\n- If the cost code is missing, an admin must add it to the project cost code list first.\n- To edit, click the row and update description, quantity, unit cost, or original budget.\n- The article warns that direct edits to original budget should be rare after contract signing; use a **budget modification** when the change should be tracked.\n- A budget modification moves money between line items without changing contract value, and may require approval depending on project settings.\n- Forecast can be auto-calculated from actual + remaining committed, or manually overridden from the line item detail panel.\n\nEvidence checked:\n- Feature registry: **Budget Line Items** → `docs/help/articles/budget-line-items.md`\n- Related route: **`/[projectId]/budget`**\n- Help article path: **`docs/help/articles/budget-line-items.md`**\n\nWhat remains uncertain:\n- I did not find a separate action or permission doc for whether any specific write operation is executable from every role. The help article describes the user flow, but I’m not inferring broader permissions beyond that.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/budget",
+        "sourceType": "sitemap",
+        "route": "/budget",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/budget-line-items.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/budget-line-items.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 5948,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

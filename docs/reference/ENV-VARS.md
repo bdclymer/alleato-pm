@@ -103,16 +103,6 @@ Set env vars in **Vercel Dashboard → Project → Settings → Environment Vari
 | `GITHUB_FEEDBACK_REPO_OWNER` | Yes (if feedback enabled) | Vercel | GitHub repo owner | e.g. `MeganHarrison` |
 | `GITHUB_FEEDBACK_LABELS` | No | Vercel | Comma-separated default labels for feedback issues | |
 
-### Integrations — Liveblocks (Collaboration)
-
-| Variable | Required | Where Set | Purpose | Notes |
-|----------|----------|-----------|---------|-------|
-| `LIVEBLOCKS_SECRET_KEY` | Yes (if collab enabled) | Vercel | Liveblocks secret key | **Must use lazy singleton pattern** — module-level init causes build crash (Gate 17) |
-| `LIVEBLOCKS_WEBHOOK_SECRET_KEY` | No | Vercel | Verifies incoming Liveblocks webhook signatures | |
-| `LIVEBLOCKS_NOTIFICATION_BASE_URL` | No | Vercel | Base URL for Liveblocks notification callbacks | |
-| `LIVEBLOCKS_TEAMS_ADAPTIVE_CARD_URL` | No | Vercel | Teams adaptive card URL for Liveblocks notifications | |
-| `LIVEBLOCKS_TEAMS_BODY_URL` | No | Vercel | Teams body URL for Liveblocks notifications | |
-
 ### Integrations — Resend (Email)
 
 | Variable | Required | Where Set | Purpose | Notes |
@@ -405,7 +395,6 @@ The following frontend vars cause `next build` to fail if absent AND the file us
 | Variable | Risk | Fix |
 |----------|------|-----|
 | `SUPABASE_SERVICE_ROLE_KEY` | Any page calling `createServiceClient()` without `force-dynamic` crashes at build time | Add `export const dynamic = "force-dynamic"` as first line of the page |
-| `LIVEBLOCKS_SECRET_KEY` | Module-level `new Liveblocks({...})` crashes at import time | Use lazy singleton — initialize inside a `getClient()` function, never at module top level |
 | `OPENAI_API_KEY` | Same — module-level OpenAI client init | Lazy singleton pattern |
 | `AI_GATEWAY_API_KEY` | Same | Lazy singleton pattern |
 | Any non-`NEXT_PUBLIC_*` key read at module level | Build fails in CI where the var is absent | Move read inside a function; add `force-dynamic` if it's a page |

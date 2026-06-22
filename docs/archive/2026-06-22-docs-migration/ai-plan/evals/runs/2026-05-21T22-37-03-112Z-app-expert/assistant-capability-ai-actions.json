@@ -1,0 +1,55 @@
+{
+  "id": "assistant-capability-ai-actions",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 7370,
+  "question": "What AI assistant actions are live versus planned?",
+  "mustInclude": [
+    "planned"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Live vs planned AI assistant actions, based on the curated docs:\n\n**Live**\n- The assistant can **create and update records directly from chat**.\n- **Write actions require a preview-and-confirm flow** before changes are made.\n- Documented live write actions:\n  - **Create Change Order**\n  - **Create Change Event**\n  - **Update Project Status**\n  - **Create RFI**\n  - **Flag Project Risk**\n  - **Create Commitment**\n- Documented live low-impact actions that **do not require confirmation**:\n  - **Create Task**\n  - **Update RFI Status**\n  - **Create Meeting Note**\n  - **Create Submittal**\n  - **Log Daily Report**\n  - **Save to Knowledge Base**\n  - **Save Insight**\n\n**Planned**\n- The curated docs I checked do **not** list any AI assistant actions as planned.\n- The feature-status article says **planned** means documented but not yet built, but this specific actions article does not mark any of the listed actions as planned.\n\n**What I checked**\n- Artifact status: `app-sitemap.generated.json` and `feature-registry.generated.json` are both available and current.\n- Feature registry entries:\n  - `ai-assistant-actions`\n  - `app-feature-status-and-limitations`\n- Help articles:\n  - `docs/help/articles/ai-assistant-actions.md`\n  - `docs/help/articles/app-feature-status-and-limitations.md`\n\n**Uncertainty**\n- I did not find any curated source labeling a specific assistant action as planned, blocked, or deprecated.\n- If you want, I can also search the route metadata for the `/ai-assistant` implementation to see whether any additional assistant actions are exposed in the UI beyond what the help article documents.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/ai-assistant-actions.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-assistant-actions.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 7246,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

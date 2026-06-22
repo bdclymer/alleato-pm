@@ -1,0 +1,61 @@
+{
+  "id": "assistant-capability-actions",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 3866,
+  "question": "Can Ask Alleato create records for me?",
+  "response": {
+    "answer": "I can’t confirm that Ask Alleato can create records.\n\nWhat I checked:\n- App Expert artifact status: failed\n  - Missing `docs/architecture/generated/app-sitemap.generated.json`\n  - Missing `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry searches for:\n  - `Ask Alleato create records`\n  - `create records`\n  - `records`\n  all failed because the feature registry artifact is missing.\n\nWhat this means:\n- I have no curated feature/help evidence to verify a record-creation action.\n- Per the available evidence, I cannot claim Ask Alleato is able to write/create records.\n\nIf you want, I can still help interpret the app’s implementation evidence once the generated App Expert artifacts are available.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help",
+        "sourceType": "sitemap",
+        "route": "/help",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/create",
+        "sourceType": "sitemap",
+        "route": "/create",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3771,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

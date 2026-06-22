@@ -1,35 +1,29 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { AlertTriangle, Download, Loader2, Upload } from "lucide-react";
+
 import {
-  AlertTriangle,
-  ArrowUpRight,
-  CalendarRange,
-  Download,
-  Loader2,
-  Search,
-  Upload,
-  Users,
-  UserRoundPlus,
-} from "lucide-react";
-import { SectionRuleHeading } from "@/components/layout/spacing";
-import { EmptyState, ErrorState, InfoAlert } from "@/components/ds";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+  Badge,
+  Button,
+  EmptyState,
+  ErrorState,
+  InfoAlert,
+} from "@/components/ds";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  InlineSelectEditor,
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type FilterConfig,
+  type TableColumn,
+  type ViewMode,
+} from "@/components/tables/unified";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import { SAMPLE_MANPOWER_CSV } from "./sample-data";
+
 import { daysUntilAssignmentStart, isAssignmentActive } from "./parser";
+import { SAMPLE_MANPOWER_CSV } from "./sample-data";
 import type {
   ManpowerAssignment,
   ManpowerAssignmentStatus,
@@ -39,6 +33,16 @@ import type {
 } from "./types";
 
 type TimeFilter = "active" | "next_30" | "all";
+
+type PeopleLoadRow = {
+  id: string;
+  assignee: string;
+  totalAssignments: number;
+  activeAssignments: number;
+  projects: string[];
+};
+
+const TABLE_ONLY_VIEWS: ViewMode[] = ["table"];
 
 const STATUS_VARIANTS: Record<ManpowerAssignmentStatus, string> = {
   filled: "bg-success/10 text-success",
@@ -53,56 +57,6 @@ const STAGE_VARIANTS: Record<ManpowerProjectStage, string> = {
   undated: "bg-muted text-muted-foreground",
 };
 
-function PlainTable({ className, ...props }: React.TableHTMLAttributes<HTMLTableElement>) {
-  return <table className={cn("w-full caption-bottom text-sm", className)} {...props} />;
-}
-
-function PlainTableHeader({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn("[&_tr]:border-b", className)} {...props} />;
-}
-
-function PlainTableBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <tbody className={cn("[&_tr:last-child]:border-0", className)} {...props} />;
-}
-
-function PlainTableRow({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("border-b transition-colors hover:bg-muted/50", className)} {...props} />;
-}
-
-function PlainTableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
-  return (
-    <th
-      className={cn("h-10 px-4 text-left align-middle font-medium text-muted-foreground", className)}
-      {...props}
-    />
-  );
-}
-
-function PlainTableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("p-4 align-middle", className)} {...props} />;
-}
-
-function formatImportedAt(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "Unknown import time" : format(date, "MMM d, yyyy 'at' h:mm a");
-}
-
-function formatWindow(assignment: ManpowerAssignment): string {
-  if (assignment.startLabel && assignment.finishLabel) {
-    return `${assignment.startLabel} - ${assignment.finishLabel}`;
-  }
-  if (assignment.startLabel) return `Starts ${assignment.startLabel}`;
-  if (assignment.finishLabel) return `Ends ${assignment.finishLabel}`;
-  return "No dates";
-}
-
-function matchesTimeFilter(assignment: ManpowerAssignment, filter: TimeFilter, now: Date): boolean {
-  if (filter === "all") return true;
-  if (filter === "active") return isAssignmentActive(assignment, now);
-  const daysUntilStart = daysUntilAssignmentStart(assignment, now);
-  return daysUntilStart !== null && daysUntilStart >= 0 && daysUntilStart <= 30;
-}
-
 const COVERAGE_OPTIONS: Array<{
   value: string;
   label: string;
@@ -114,19 +68,150 @@ const COVERAGE_OPTIONS: Array<{
   { value: "unassigned", label: "Unassigned", status: "open", personId: null },
 ];
 
+const ASSIGNMENT_FILTERS: FilterConfig[] = [
+  {
+    id: "timeWindow",
+    label: "Time window",
+    type: "select",
+    options: [
+      { value: "active", label: "Active now" },
+      { value: "next_30", label: "Starting in 30 days" },
+      { value: "all", label: "All dates" },
+    ],
+  },
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { value: "all", label: "All status" },
+      { value: "filled", label: "Filled" },
+      { value: "open", label: "Open" },
+      { value: "tbd", label: "TBD" },
+    ],
+  },
+];
+
+function formatWindow(assignment: ManpowerAssignment): string {
+  if (assignment.startLabel && assignment.finishLabel) {
+    return `${assignment.startLabel} - ${assignment.finishLabel}`;
+  }
+  if (assignment.startLabel) return `Starts ${assignment.startLabel}`;
+  if (assignment.finishLabel) return `Ends ${assignment.finishLabel}`;
+  return "No dates";
+}
+
+function formatPlanImportedAt(value: string | null | undefined): string {
+  if (!value) return "Import time unavailable";
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "Import time unavailable";
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(parsed);
+}
+
+function matchesTimeFilter(
+  assignment: ManpowerAssignment,
+  filter: TimeFilter,
+  now: Date,
+): boolean {
+  if (filter === "all") return true;
+  if (filter === "active") return isAssignmentActive(assignment, now);
+  const daysUntilStart = daysUntilAssignmentStart(assignment, now);
+  return daysUntilStart !== null && daysUntilStart >= 0 && daysUntilStart <= 30;
+}
+
+function getCoverageValue(assignment: ManpowerAssignment): string {
+  if (assignment.assigneePersonId) return assignment.assigneePersonId;
+  if (assignment.status === "tbd") return "tbd";
+  if (assignment.assigneeName === "New Hire") return "open";
+  return "unassigned";
+}
+
+function getStatusLabel(status: ManpowerAssignmentStatus): string {
+  if (status === "filled") return "Filled";
+  if (status === "open") return "Open";
+  return "TBD";
+}
+
+function buildAssignmentSearchText(assignment: ManpowerAssignment): string {
+  return [
+    assignment.projectCode,
+    assignment.projectName,
+    assignment.role,
+    assignment.assigneeName,
+    assignment.notes,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function buildRoleFilterOptions(roles: string[]): FilterConfig {
+  return {
+    id: "role",
+    label: "Role",
+    type: "select",
+    options: [
+      { value: "all", label: "All roles" },
+      ...roles.map((role) => ({ value: role, label: role })),
+    ],
+  };
+}
+
+function buildAssigneeFilterOptions(assignees: string[]): FilterConfig {
+  return {
+    id: "assignee",
+    label: "Assignee",
+    type: "select",
+    options: [
+      { value: "all", label: "All assignees" },
+      ...assignees.map((assignee) => ({ value: assignee, label: assignee })),
+    ],
+  };
+}
+
 export function ManpowerPageClient() {
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [payload, setPayload] = React.useState<ManpowerPagePayload | null>(null);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isImporting, setIsImporting] = React.useState(false);
   const [rowUpdateId, setRowUpdateId] = React.useState<string | null>(null);
-  const [search, setSearch] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<"all" | ManpowerAssignmentStatus>("all");
-  const [timeFilter, setTimeFilter] = React.useState<TimeFilter>("active");
-  const [roleFilter, setRoleFilter] = React.useState("all");
-  const [assigneeFilter, setAssigneeFilter] = React.useState("all");
   const now = React.useMemo(() => new Date(), []);
+
+  const tableState = useUnifiedTableState({
+    entityKey: "manpower-assignments",
+    pathname,
+    router,
+    searchParams,
+    defaults: {
+      view: "table",
+      allowedViews: TABLE_ONLY_VIEWS,
+      page: 1,
+      perPage: 25,
+      search: "",
+      sortBy: "project",
+      sortDirection: "asc",
+      visibleColumns: ["project", "role", "coverage", "status", "window", "stage", "notes"],
+      filters: {
+        timeWindow: "active",
+        status: "all",
+        role: "all",
+        assignee: "all",
+      },
+    },
+  });
 
   const loadPayload = React.useCallback(async () => {
     setIsLoading(true);
@@ -167,6 +252,7 @@ export function ManpowerPageClient() {
   const handleFileUpload = React.useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
     setIsImporting(true);
     setLoadError(null);
 
@@ -192,6 +278,7 @@ export function ManpowerPageClient() {
     async (assignment: ManpowerAssignment, value: string) => {
       setRowUpdateId(assignment.id);
       setLoadError(null);
+
       try {
         const person = payload?.people.find((candidate) => candidate.id === value) ?? null;
         const preset = COVERAGE_OPTIONS.find((option) => option.value === value) ?? null;
@@ -221,6 +308,26 @@ export function ManpowerPageClient() {
   const plan = payload?.plan ?? null;
   const people = payload?.people ?? [];
 
+  const assignmentActions = (
+    <div className="flex items-center gap-2">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+      <Button type="button" variant="outline" onClick={handleImportSample} disabled={isImporting}>
+        <Download className="mr-2 size-4" />
+        Load sample
+      </Button>
+      <Button type="button" onClick={() => fileInputRef.current?.click()} disabled={isImporting}>
+        {isImporting ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Upload className="mr-2 size-4" />}
+        Upload CSV
+      </Button>
+    </div>
+  );
+
   const roles = React.useMemo(
     () => Array.from(new Set((plan?.assignments ?? []).map((assignment) => assignment.role))).sort(),
     [plan?.assignments],
@@ -238,58 +345,68 @@ export function ManpowerPageClient() {
     [plan?.assignments],
   );
 
+  const assignmentFilters = React.useMemo(
+    () => [...ASSIGNMENT_FILTERS, buildRoleFilterOptions(roles), buildAssigneeFilterOptions(assignees)],
+    [assignees, roles],
+  );
+
+  const activeTimeFilter = (tableState.activeFilters.timeWindow as TimeFilter | undefined) ?? "active";
+  const activeStatusFilter =
+    (tableState.activeFilters.status as "all" | ManpowerAssignmentStatus | undefined) ?? "all";
+  const activeRoleFilter = (tableState.activeFilters.role as string | undefined) ?? "all";
+  const activeAssigneeFilter = (tableState.activeFilters.assignee as string | undefined) ?? "all";
+
   const filteredAssignments = React.useMemo(() => {
     const assignments = plan?.assignments ?? [];
-    const term = search.trim().toLowerCase();
+    const term = tableState.debouncedSearch.trim().toLowerCase();
 
     return assignments.filter((assignment) => {
-      if (statusFilter !== "all" && assignment.status !== statusFilter) return false;
-      if (roleFilter !== "all" && assignment.role !== roleFilter) return false;
-      if (assigneeFilter !== "all" && (assignment.assigneeName ?? "Unassigned") !== assigneeFilter) return false;
-      if (!matchesTimeFilter(assignment, timeFilter, now)) return false;
+      if (activeStatusFilter !== "all" && assignment.status !== activeStatusFilter) return false;
+      if (activeRoleFilter !== "all" && assignment.role !== activeRoleFilter) return false;
+      if (activeAssigneeFilter !== "all" && (assignment.assigneeName ?? "Unassigned") !== activeAssigneeFilter) {
+        return false;
+      }
+      if (!matchesTimeFilter(assignment, activeTimeFilter, now)) return false;
       if (!term) return true;
-
-      return [
-        assignment.projectCode,
-        assignment.projectName,
-        assignment.role,
-        assignment.assigneeName,
-        assignment.notes,
-      ]
-        .filter(Boolean)
-        .some((value) => value!.toLowerCase().includes(term));
+      return buildAssignmentSearchText(assignment).includes(term);
     });
-  }, [assigneeFilter, now, plan?.assignments, roleFilter, search, statusFilter, timeFilter]);
+  }, [
+    activeAssigneeFilter,
+    activeRoleFilter,
+    activeStatusFilter,
+    activeTimeFilter,
+    now,
+    plan?.assignments,
+    tableState.debouncedSearch,
+  ]);
 
   const openAssignments = React.useMemo(
     () => filteredAssignments.filter((assignment) => assignment.status !== "filled"),
     [filteredAssignments],
   );
 
-  const peopleSummary = React.useMemo(() => {
-    const byPerson = new Map<
-      string,
-      {
-        assignee: string;
-        totalAssignments: number;
-        activeAssignments: number;
-        projects: Set<string>;
-      }
-    >();
+  const peopleSummary = React.useMemo<PeopleLoadRow[]>(() => {
+    const byPerson = new Map<string, PeopleLoadRow>();
 
     filteredAssignments.forEach((assignment) => {
       if (!assignment.assigneeName || assignment.status !== "filled") return;
+
       const current = byPerson.get(assignment.assigneeName) ?? {
+        id: assignment.assigneeName,
         assignee: assignment.assigneeName,
         totalAssignments: 0,
         activeAssignments: 0,
-        projects: new Set<string>(),
+        projects: [],
       };
+
       current.totalAssignments += 1;
-      current.projects.add(assignment.projectName);
+      if (!current.projects.includes(assignment.projectName)) {
+        current.projects.push(assignment.projectName);
+      }
       if (isAssignmentActive(assignment, now)) {
         current.activeAssignments += 1;
       }
+
       byPerson.set(assignment.assigneeName, current);
     });
 
@@ -301,43 +418,229 @@ export function ManpowerPageClient() {
     });
   }, [filteredAssignments, now]);
 
-  const kpis = React.useMemo(() => {
-    if (!plan) return [];
-    const activeAssignments = plan.assignments.filter((assignment) => isAssignmentActive(assignment, now));
-    const openRoles = plan.assignments.filter((assignment) => assignment.status !== "filled");
-    const assignedPeople = new Set(
-      plan.assignments
-        .filter((assignment) => assignment.status === "filled" && assignment.assigneeName)
-        .map((assignment) => assignment.assigneeName),
-    );
+  const assignmentColumns = React.useMemo<TableColumn<ManpowerAssignment>[]>(
+    () => [
+      {
+        id: "project",
+        label: "Project",
+        alwaysVisible: true,
+        sortable: true,
+        sortValue: (assignment) => assignment.projectName,
+        render: (assignment) => (
+          <div className="space-y-1">
+            <div className="font-medium text-foreground">{assignment.projectName}</div>
+            <div className="text-xs text-muted-foreground">{assignment.projectCode ?? "No project code"}</div>
+          </div>
+        ),
+        csvValue: (assignment) => assignment.projectCode ?? assignment.projectName,
+        width: 220,
+      },
+      {
+        id: "role",
+        label: "Role",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (assignment) => assignment.role,
+        render: (assignment) => assignment.role,
+        csvValue: (assignment) => assignment.role,
+        width: 180,
+      },
+      {
+        id: "coverage",
+        label: "Coverage",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (assignment) => assignment.assigneeName ?? "",
+        render: (assignment) =>
+          rowUpdateId === assignment.id ? (
+            <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" />
+              Saving coverage
+            </span>
+          ) : (
+            <div className="min-w-40">
+              <InlineSelectEditor
+                value={getCoverageValue(assignment)}
+                options={[
+                  ...COVERAGE_OPTIONS.map((option) => ({
+                    value: option.value,
+                    label: option.label,
+                  })),
+                  ...people.map((person: ManpowerPersonOption) => ({
+                    value: person.id,
+                    label: person.name,
+                  })),
+                ]}
+                placeholder="Choose coverage"
+                onChange={() => undefined}
+                onCommit={(value) => {
+                  if (value) {
+                    void handleCoverageChange(assignment, value);
+                  }
+                }}
+              />
+            </div>
+          ),
+        csvValue: (assignment) => assignment.assigneeName ?? "Unassigned",
+        width: 220,
+      },
+      {
+        id: "status",
+        label: "Status",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (assignment) => assignment.status,
+        render: (assignment) => (
+          <Badge className={cn("border-0", STATUS_VARIANTS[assignment.status])}>
+            {rowUpdateId === assignment.id ? "Saving" : getStatusLabel(assignment.status)}
+          </Badge>
+        ),
+        csvValue: (assignment) => getStatusLabel(assignment.status),
+        width: 120,
+      },
+      {
+        id: "window",
+        label: "Window",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (assignment) => assignment.startDate ?? assignment.finishDate ?? "",
+        render: (assignment) => <span className="text-sm text-muted-foreground">{formatWindow(assignment)}</span>,
+        csvValue: (assignment) => formatWindow(assignment),
+        width: 170,
+      },
+      {
+        id: "stage",
+        label: "Project stage",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (assignment) =>
+          plan?.projects.find((project) => project.id === assignment.manpowerProjectId)?.stage ?? "undated",
+        render: (assignment) => {
+          const stage = plan?.projects.find((project) => project.id === assignment.manpowerProjectId)?.stage ?? "undated";
+          return <Badge className={cn("border-0 capitalize", STAGE_VARIANTS[stage])}>{stage}</Badge>;
+        },
+        csvValue: (assignment) =>
+          plan?.projects.find((project) => project.id === assignment.manpowerProjectId)?.stage ?? "undated",
+        width: 140,
+      },
+      {
+        id: "notes",
+        label: "Notes",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (assignment) => assignment.notes ?? "",
+        render: (assignment) => <span className="text-sm text-muted-foreground">{assignment.notes ?? "—"}</span>,
+        csvValue: (assignment) => assignment.notes ?? "",
+        width: 260,
+      },
+    ],
+    [handleCoverageChange, people, plan?.projects, rowUpdateId],
+  );
 
-    return [
+  const coverageGapColumns = React.useMemo<TableColumn<ManpowerAssignment>[]>(
+    () => [
+      assignmentColumns[0],
+      assignmentColumns[1],
       {
-        label: "Active projects",
-        value: plan.projects.filter((project) => project.stage === "active").length,
-        detail: `${plan.projects.length} total in active plan`,
-        icon: CalendarRange,
+        id: "gap_coverage",
+        label: "Coverage",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (assignment) => assignment.assigneeName ?? "",
+        render: (assignment) => (
+          <Badge className={cn("border-0", STATUS_VARIANTS[assignment.status])}>
+            {assignment.assigneeName ?? "Unassigned"}
+          </Badge>
+        ),
+        csvValue: (assignment) => assignment.assigneeName ?? "Unassigned",
+        width: 160,
+      },
+      assignmentColumns[4],
+      assignmentColumns[6],
+    ],
+    [assignmentColumns],
+  );
+
+  const peopleLoadColumns = React.useMemo<TableColumn<PeopleLoadRow>[]>(
+    () => [
+      {
+        id: "person",
+        label: "Person",
+        alwaysVisible: true,
+        sortable: true,
+        sortValue: (person) => person.assignee,
+        render: (person) => <span className="font-medium text-foreground">{person.assignee}</span>,
+        csvValue: (person) => person.assignee,
+        width: 220,
       },
       {
-        label: "Active assignments",
-        value: activeAssignments.length,
-        detail: "Roles staffed right now",
-        icon: Users,
+        id: "active_now",
+        label: "Active now",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (person) => person.activeAssignments,
+        align: "right",
+        render: (person) => (
+          <span className={cn("block text-right tabular-nums", person.activeAssignments >= 3 ? "text-warning" : "text-foreground")}>
+            {person.activeAssignments}
+          </span>
+        ),
+        csvValue: (person) => String(person.activeAssignments),
+        width: 120,
       },
       {
-        label: "Coverage gaps",
-        value: openRoles.length,
-        detail: "Open or TBD roles",
-        icon: UserRoundPlus,
+        id: "total_rows",
+        label: "Total rows",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (person) => person.totalAssignments,
+        align: "right",
+        render: (person) => <span className="block text-right tabular-nums text-muted-foreground">{person.totalAssignments}</span>,
+        csvValue: (person) => String(person.totalAssignments),
+        width: 120,
       },
       {
-        label: "Assigned people",
-        value: assignedPeople.size,
-        detail: "Named people on the active plan",
-        icon: ArrowUpRight,
+        id: "projects",
+        label: "Projects",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (person) => person.projects.length,
+        render: (person) => (
+          <span className="text-sm text-muted-foreground">
+            {person.projects.slice(0, 3).join(", ")}
+            {person.projects.length > 3 ? ` +${person.projects.length - 3} more` : ""}
+          </span>
+        ),
+        csvValue: (person) => person.projects.join(", "),
+        width: 280,
       },
-    ];
-  }, [now, plan]);
+    ],
+    [],
+  );
+
+  const handleFilterChange = React.useCallback(
+    (filters: Record<string, string | number | boolean | string[] | null | undefined>) => {
+      tableState.setActiveFilters(filters);
+      tableState.setPage(1);
+      tableState.setSearchParams({
+        timeWindow: String(filters.timeWindow ?? "active"),
+        status: String(filters.status ?? "all"),
+        role: String(filters.role ?? "all"),
+        assignee: String(filters.assignee ?? "all"),
+        page: "1",
+      });
+    },
+    [tableState],
+  );
+
+  const clearFilters = React.useCallback(() => {
+    handleFilterChange({
+      timeWindow: "active",
+      status: "all",
+      role: "all",
+      assignee: "all",
+    });
+  }, [handleFilterChange]);
 
   if (isLoading) {
     return (
@@ -349,380 +652,223 @@ export function ManpowerPageClient() {
 
   return (
     <div className="space-y-8">
-      <section className="space-y-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">
-              Cross-project staffing plan persisted from Microsoft Project CSV imports.
-            </p>
-            {plan ? (
-              <p className="text-sm text-muted-foreground">
-                Active plan: {plan.sourceLabel} imported {formatImportedAt(plan.importedAt)}
-                {plan.importedByName ? ` by ${plan.importedByName}` : ""}.
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No active manpower plan is stored yet.
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,text/csv"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleImportSample}
-              disabled={isImporting}
-            >
-              <Download className="mr-2 size-4" />
-              Load sample
-            </Button>
-            <Button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isImporting}
-            >
-              {isImporting ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Upload className="mr-2 size-4" />}
-              Upload CSV
-            </Button>
-          </div>
-        </div>
+      <InfoAlert variant="info">
+        CSV imports write the active manpower plan to Supabase. Coverage changes here update the stored staffing plan instead of resetting on refresh.
+      </InfoAlert>
 
-        <InfoAlert variant="info">
-          CSV imports now write the active manpower plan to Supabase. Assignee changes on this page update the stored plan instead of resetting on refresh.
-        </InfoAlert>
-
-        {loadError ? (
-          <ErrorState
-            title="Manpower system error"
-            error={loadError}
-          />
-        ) : null}
-      </section>
+      {loadError ? <ErrorState title="Manpower system error" error={loadError} /> : null}
 
       {!plan ? (
         <EmptyState
           title="No persisted manpower plan"
           description="Upload the latest spreadsheet export or load the sample plan to initialize the staffing system."
-          action={
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" onClick={handleImportSample} disabled={isImporting}>
-                Load sample
-              </Button>
-              <Button type="button" onClick={() => fileInputRef.current?.click()} disabled={isImporting}>
-                Upload CSV
-              </Button>
-            </div>
-          }
+          action={assignmentActions}
         />
       ) : (
         <>
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {kpis.map((kpi) => {
-              const Icon = kpi.icon;
-              return (
-                <Card key={kpi.label}>
-                  <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      {kpi.label}
-                    </CardTitle>
-                    <Icon className="size-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent className="space-y-1">
-                    <div className="text-3xl font-semibold tracking-tight text-foreground">
-                      {kpi.value}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{kpi.detail}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </section>
+          <UnifiedTablePage
+            header={{
+              title: "Coverage gaps",
+              description: "Open roles and TBD assignments in the current staffing view.",
+              variant: "compact",
+            }}
+            toolbar={{
+              totalItems: openAssignments.length,
+              filteredItems: openAssignments.length,
+              searchValue: "",
+              onSearchChange: () => undefined,
+              currentView: "table",
+              onViewChange: () => undefined,
+              enabledViews: TABLE_ONLY_VIEWS,
+              leftContent: (
+                <span className="text-sm text-muted-foreground">
+                  {openAssignments.length} gap{openAssignments.length === 1 ? "" : "s"}
+                </span>
+              ),
+            }}
+            data={{ items: openAssignments, isLoading: false, error: null }}
+            table={{
+              columns: coverageGapColumns,
+              getRowId: (assignment) => assignment.id,
+              density: "compact",
+              stickyHeader: true,
+            }}
+            emptyState={{
+              title: "No coverage gaps in this view",
+              description: "The current filter set only shows filled assignments.",
+              filteredDescription: "The current filter set only shows filled assignments.",
+              isFiltered: true,
+            }}
+            features={{
+              enableSearch: false,
+              enableViews: false,
+              enableFilters: false,
+              enableColumnToggle: false,
+              enableExport: false,
+              enablePagination: openAssignments.length > 12,
+              enableBulkDelete: false,
+              enableRowSelection: false,
+              enableRowActions: false,
+            }}
+            layout={{
+              containerPadding: false,
+              toolbarInlineWithHeader: true,
+              minWidth: 840,
+            }}
+          />
 
-          <section className="space-y-4">
-            <SectionRuleHeading
-              label="Coverage gaps"
-              actions={
-                <Badge variant="outline" className="w-fit">
-                  {openAssignments.length} gaps in current filter set
-                </Badge>
-              }
-            />
-            <p className="text-sm text-muted-foreground">
-              Open roles and TBD assignments in the active plan.
-            </p>
-            <div className="overflow-hidden rounded-lg border border-border/60 bg-background">
-              <PlainTable>
-                <PlainTableHeader>
-                  <PlainTableRow>
-                    <PlainTableHead>Project</PlainTableHead>
-                    <PlainTableHead>Role</PlainTableHead>
-                    <PlainTableHead>Coverage</PlainTableHead>
-                    <PlainTableHead>Window</PlainTableHead>
-                    <PlainTableHead>Notes</PlainTableHead>
-                  </PlainTableRow>
-                </PlainTableHeader>
-                <PlainTableBody>
-                  {openAssignments.slice(0, 12).map((assignment) => (
-                    <PlainTableRow key={assignment.id}>
-                      <PlainTableCell className="align-top">
-                        <div className="space-y-1">
-                          <div className="font-medium text-foreground">{assignment.projectName}</div>
-                          <div className="text-xs text-muted-foreground">{assignment.projectCode ?? "No project code"}</div>
-                        </div>
-                      </PlainTableCell>
-                      <PlainTableCell className="align-top">{assignment.role}</PlainTableCell>
-                      <PlainTableCell className="align-top">
-                        <Badge className={cn("border-0", STATUS_VARIANTS[assignment.status])}>
-                          {assignment.assigneeName ?? "Unassigned"}
-                        </Badge>
-                      </PlainTableCell>
-                      <PlainTableCell className="align-top text-sm text-muted-foreground">{formatWindow(assignment)}</PlainTableCell>
-                      <PlainTableCell className="align-top text-sm text-muted-foreground">{assignment.notes ?? "—"}</PlainTableCell>
-                    </PlainTableRow>
-                  ))}
-                  {openAssignments.length === 0 ? (
-                    <PlainTableRow>
-                      <PlainTableCell colSpan={5}>
-                        <EmptyState
-                          title="No coverage gaps in this view"
-                          description="The current filters only show filled assignments."
-                        />
-                      </PlainTableCell>
-                    </PlainTableRow>
-                  ) : null}
-                </PlainTableBody>
-              </PlainTable>
-            </div>
-          </section>
+          <UnifiedTablePage
+            header={{
+              title: "People load",
+              description: "Assignment volume ranked so staffing pressure is visible without scanning every project.",
+              variant: "compact",
+            }}
+            toolbar={{
+              totalItems: peopleSummary.length,
+              filteredItems: peopleSummary.length,
+              searchValue: "",
+              onSearchChange: () => undefined,
+              currentView: "table",
+              onViewChange: () => undefined,
+              enabledViews: TABLE_ONLY_VIEWS,
+              leftContent: (
+                <span className="text-sm text-muted-foreground">
+                  {peopleSummary.length} staffed people in the current view
+                </span>
+              ),
+            }}
+            data={{ items: peopleSummary, isLoading: false, error: null }}
+            table={{
+              columns: peopleLoadColumns,
+              getRowId: (person) => person.id,
+              density: "compact",
+              stickyHeader: true,
+            }}
+            emptyState={{
+              title: "No assigned people in this view",
+              description: "Broaden the filters to see staffed roles.",
+              filteredDescription: "Broaden the filters to see staffed roles.",
+              isFiltered: true,
+            }}
+            features={{
+              enableSearch: false,
+              enableViews: false,
+              enableFilters: false,
+              enableColumnToggle: false,
+              enableExport: false,
+              enablePagination: peopleSummary.length > 12,
+              enableBulkDelete: false,
+              enableRowSelection: false,
+              enableRowActions: false,
+            }}
+            layout={{
+              containerPadding: false,
+              toolbarInlineWithHeader: true,
+              minWidth: 780,
+            }}
+          />
 
-          <section className="space-y-4">
-            <SectionRuleHeading label="People load" />
-            <p className="text-sm text-muted-foreground">
-              Highest assignment volume first so staffing pressure is visible without scanning the entire plan.
-            </p>
-            <div className="overflow-hidden rounded-lg border border-border/60 bg-background">
-              <PlainTable>
-                <PlainTableHeader>
-                  <PlainTableRow>
-                    <PlainTableHead>Person</PlainTableHead>
-                    <PlainTableHead className="text-right">Active now</PlainTableHead>
-                    <PlainTableHead className="text-right">Total rows</PlainTableHead>
-                    <PlainTableHead>Projects</PlainTableHead>
-                  </PlainTableRow>
-                </PlainTableHeader>
-                <PlainTableBody>
-                  {peopleSummary.slice(0, 12).map((person) => (
-                    <PlainTableRow key={person.assignee}>
-                      <PlainTableCell className="font-medium text-foreground">{person.assignee}</PlainTableCell>
-                      <PlainTableCell className="text-right">
-                        <span className={cn(person.activeAssignments >= 3 ? "text-warning" : "text-foreground")}>
-                          {person.activeAssignments}
-                        </span>
-                      </PlainTableCell>
-                      <PlainTableCell className="text-right text-muted-foreground">{person.totalAssignments}</PlainTableCell>
-                      <PlainTableCell className="text-sm text-muted-foreground">
-                        {Array.from(person.projects).slice(0, 3).join(", ")}
-                        {person.projects.size > 3 ? ` +${person.projects.size - 3} more` : ""}
-                      </PlainTableCell>
-                    </PlainTableRow>
-                  ))}
-                  {peopleSummary.length === 0 ? (
-                    <PlainTableRow>
-                      <PlainTableCell colSpan={4}>
-                        <EmptyState
-                          title="No assigned people in this view"
-                          description="Broaden the filters to see staffed roles."
-                        />
-                      </PlainTableCell>
-                    </PlainTableRow>
-                  ) : null}
-                </PlainTableBody>
-              </PlainTable>
-            </div>
-          </section>
+          <UnifiedTablePage
+            header={{
+              title: "Assignments",
+              description: "Filter the active staffing plan and update assignment coverage in place.",
+              actions: assignmentActions,
+              variant: "compact",
+            }}
+            toolbar={{
+              totalItems: plan.assignments.length,
+              filteredItems: filteredAssignments.length,
+              searchValue: tableState.searchInput,
+              onSearchChange: tableState.setSearchInput,
+              searchPlaceholder: "Search project, role, assignee, or notes",
+              currentView: tableState.currentView,
+              onViewChange: (view) => {
+                tableState.setCurrentView(view);
+                tableState.setSearchParams({ view });
+              },
+              enabledViews: TABLE_ONLY_VIEWS,
+              filters: assignmentFilters,
+              activeFilters: tableState.activeFilters,
+              onFilterChange: handleFilterChange,
+              onClearFilters: clearFilters,
+              visibleColumns: tableState.visibleColumns,
+              onColumnVisibilityChange: tableState.setVisibleColumns,
+              leftContent: (
+                <span className="text-sm text-muted-foreground">
+                  Imported {formatPlanImportedAt(plan.importedAt)} ·{" "}
+                  {new Set(filteredAssignments.map((assignment) => assignment.manpowerProjectId)).size} projects ·{" "}
+                  {plan.warningCount} import warning{plan.warningCount === 1 ? "" : "s"}
+                </span>
+              ),
+            }}
+            data={{ items: filteredAssignments, isLoading: false, error: null }}
+            table={{
+              columns: assignmentColumns,
+              getRowId: (assignment) => assignment.id,
+              density: "compact",
+              stickyHeader: true,
+            }}
+            sorting={{
+              sortBy: tableState.sortBy,
+              sortDirection: tableState.sortDirection,
+              onSortChange: (sortBy, sortDirection) => {
+                tableState.setSortBy(sortBy);
+                tableState.setSortDirection(sortDirection);
+                tableState.setPage(1);
+                tableState.setSearchParams({
+                  sort: sortBy,
+                  sort_dir: sortDirection,
+                  page: "1",
+                });
+              },
+            }}
+            pagination={{
+              page: tableState.page,
+              totalPages: Math.max(1, Math.ceil(filteredAssignments.length / tableState.perPage)),
+              perPage: tableState.perPage,
+              clientSide: true,
+              onPageChange: (page) => {
+                tableState.setPage(page);
+                tableState.setSearchParams({ page: String(page) });
+              },
+              onPerPageChange: (perPage) => {
+                const parsed = Number(perPage);
+                if (!Number.isFinite(parsed) || parsed <= 0) return;
+                tableState.setPerPage(parsed);
+                tableState.setPage(1);
+                tableState.setSearchParams({ per_page: String(parsed), page: "1" });
+              },
+            }}
+            emptyState={{
+              title: "No manpower rows match these filters",
+              description: "Adjust the search, horizon, or staffing filters to recover the stored plan.",
+              filteredDescription: "Adjust the search, horizon, or staffing filters to recover the stored plan.",
+              isFiltered: Boolean(tableState.debouncedSearch) || filteredAssignments.length !== plan.assignments.length,
+            }}
+            features={{
+              enableViews: false,
+              enableBulkDelete: false,
+              enableRowSelection: false,
+              enableRowActions: false,
+            }}
+            layout={{
+              containerPadding: false,
+              toolbarInlineWithHeader: true,
+              minWidth: 1180,
+            }}
+            reportContext={{
+              projectName: "Company-wide manpower plan",
+              exportedBy: plan.importedByName ?? undefined,
+              extra: {
+                source: plan.sourceLabel,
+                imported_at: formatPlanImportedAt(plan.importedAt),
+              },
+            }}
+          />
 
-          <section className="space-y-4">
-            <SectionRuleHeading label="Assignments" />
-            <p className="text-sm text-muted-foreground">
-              Filter the persisted plan and reassign staffing directly from this page.
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-              <div className="relative sm:col-span-2 xl:col-span-2">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search project, role, assignee, or notes"
-                  className="pl-9"
-                />
-              </div>
-              <Select value={timeFilter} onValueChange={(value: TimeFilter) => setTimeFilter(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Time window" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active now</SelectItem>
-                  <SelectItem value="next_30">Starting in 30 days</SelectItem>
-                  <SelectItem value="all">All dates</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={(value: "all" | ManpowerAssignmentStatus) => setStatusFilter(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All status</SelectItem>
-                  <SelectItem value="filled">Filled</SelectItem>
-                  <SelectItem value="open">Open</SelectItem>
-                  <SelectItem value="tbd">TBD</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All roles</SelectItem>
-                  {roles.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {role}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Assignee" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All assignees</SelectItem>
-                  {assignees.map((assignee) => (
-                    <SelectItem key={assignee} value={assignee}>
-                      {assignee}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <span>{filteredAssignments.length} assignments</span>
-              <span aria-hidden="true">•</span>
-              <span>{new Set(filteredAssignments.map((assignment) => assignment.manpowerProjectId)).size} projects</span>
-              <span aria-hidden="true">•</span>
-              <span>{plan.warningCount} import warnings on active plan</span>
-            </div>
-
-            <div className="overflow-hidden rounded-lg border border-border/60 bg-background">
-              <PlainTable>
-                <PlainTableHeader>
-                  <PlainTableRow>
-                    <PlainTableHead>Project</PlainTableHead>
-                    <PlainTableHead>Role</PlainTableHead>
-                    <PlainTableHead>Coverage</PlainTableHead>
-                    <PlainTableHead>Status</PlainTableHead>
-                    <PlainTableHead>Window</PlainTableHead>
-                    <PlainTableHead>Project stage</PlainTableHead>
-                    <PlainTableHead>Notes</PlainTableHead>
-                  </PlainTableRow>
-                </PlainTableHeader>
-                <PlainTableBody>
-                  {filteredAssignments.map((assignment) => {
-                    const currentCoverageValue =
-                      assignment.assigneePersonId ??
-                      (assignment.status === "tbd"
-                        ? "tbd"
-                        : assignment.assigneeName === "New Hire"
-                          ? "open"
-                          : "unassigned");
-                    const project = plan.projects.find((candidate) => candidate.id === assignment.manpowerProjectId);
-
-                    return (
-                      <PlainTableRow key={assignment.id}>
-                        <PlainTableCell className="align-top">
-                          <div className="space-y-1">
-                            <div className="font-medium text-foreground">{assignment.projectName}</div>
-                            <div className="text-xs text-muted-foreground">{assignment.projectCode ?? "No project code"}</div>
-                          </div>
-                        </PlainTableCell>
-                        <PlainTableCell className="align-top">{assignment.role}</PlainTableCell>
-                        <PlainTableCell className="align-top">
-                          <Select
-                            value={currentCoverageValue}
-                            onValueChange={(value) => void handleCoverageChange(assignment, value)}
-                            disabled={rowUpdateId === assignment.id}
-                          >
-                            <SelectTrigger className="w-56">
-                              <SelectValue placeholder="Choose coverage" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {COVERAGE_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                              {people.map((person: ManpowerPersonOption) => (
-                                <SelectItem key={person.id} value={person.id}>
-                                  {person.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </PlainTableCell>
-                        <PlainTableCell className="align-top">
-                          <Badge className={cn("border-0", STATUS_VARIANTS[assignment.status])}>
-                            {rowUpdateId === assignment.id ? (
-                              <span className="inline-flex items-center gap-1">
-                                <Loader2 className="size-3 animate-spin" />
-                                Saving
-                              </span>
-                            ) : assignment.status === "filled" ? (
-                              "Filled"
-                            ) : assignment.status === "open" ? (
-                              "Open"
-                            ) : (
-                              "TBD"
-                            )}
-                          </Badge>
-                        </PlainTableCell>
-                        <PlainTableCell className="align-top text-sm text-muted-foreground">{formatWindow(assignment)}</PlainTableCell>
-                        <PlainTableCell className="align-top">
-                          <Badge className={cn("border-0", STAGE_VARIANTS[project?.stage ?? "undated"])}>
-                            {project?.stage ?? "undated"}
-                          </Badge>
-                        </PlainTableCell>
-                        <PlainTableCell className="align-top text-sm text-muted-foreground">{assignment.notes ?? "—"}</PlainTableCell>
-                      </PlainTableRow>
-                    );
-                  })}
-                  {filteredAssignments.length === 0 ? (
-                    <PlainTableRow>
-                      <PlainTableCell colSpan={7}>
-                        <EmptyState
-                          title="No manpower rows match these filters"
-                          description="Adjust the search, horizon, or staffing filters to recover the stored plan."
-                        />
-                      </PlainTableCell>
-                    </PlainTableRow>
-                  ) : null}
-                </PlainTableBody>
-              </PlainTable>
-            </div>
-          </section>
-
-          <section className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-            <div>
-              Imports fail loudly when the CSV format drifts. Missing required columns or unmappable rows return an error instead of silently dropping staffing data.
-            </div>
-          </section>
+          <InfoAlert variant="warning">
+            <span className="font-medium">CSV drift fails loudly.</span> Missing required columns or unmappable rows return an import error instead of silently dropping staffing data.
+          </InfoAlert>
         </>
       )}
     </div>

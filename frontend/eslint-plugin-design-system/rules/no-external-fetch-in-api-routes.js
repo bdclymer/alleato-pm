@@ -37,7 +37,7 @@ module.exports = {
       rawExternalFetch:
         'Use `fetchWithGuardrails` from "@/lib/fetch-with-guardrails" instead of raw `fetch()` for external service calls. ' +
         'Raw fetch has no timeout (hangs forever), no retry, no request-ID propagation, and no structured error output. ' +
-        'fetchWithGuardrails adds all four. See docs/patterns/integration-errors.md',
+        'fetchWithGuardrails adds all four. See docs/archive/2026-06-22-docs-migration/patterns/integration-errors.md',
     },
     schema: [],
   },

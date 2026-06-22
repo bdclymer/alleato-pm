@@ -1,0 +1,75 @@
+{
+  "id": "workflow-submittal-review",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 5961,
+  "question": "What should I check on the submittals page?",
+  "response": {
+    "answer": "Check the project’s **Submittals** page at:\n\n- **Route:** `/[projectId]/submittals`\n- **Help article:** `docs/help/articles/submittals.md`\n\nWhat the page is for, per the help article:\n- It’s the submittal log for shop drawings, product data sheets, samples, and similar documents.\n- The log shows:\n  - number and revision\n  - spec section and title\n  - type\n  - responsible contractor\n  - submittal coordinator\n  - reviewer\n  - status and due dates\n\nWhat to check there:\n- Whether each submittal has the correct **title**, **spec section**, and **type**\n- The assigned **responsible contractor**\n- The assigned **submittal coordinator**\n- The assigned **reviewer**\n- The current **status**\n- Any **due dates** or overdue items\n- The **revision** number if it has been resubmitted\n\nWorkflow/status behavior documented:\n- Standard review flow:\n  1. **Submittal Coordinator Review**\n  2. **Design Review**\n- Possible design review outcomes:\n  - Approved (No Exceptions Taken)\n  - Approved as Noted\n  - Revise and Resubmit\n  - Rejected\n  - For Information Only\n- If a submittal is **Revise and Resubmit**, a new revision is uploaded and the workflow restarts.\n\nImplementation evidence:\n- The page is backed by `frontend/src/app/(main)/[projectId]/submittals/page.tsx`\n- A submittal detail route also exists: `/[projectId]/submittals/[submittalId]`\n- A create form exists: `/[projectId]/submittals/new`\n- An edit form exists: `/[projectId]/submittals/[submittalId]/edit`\n\nIf you want, I can also tell you what to check on the **submittal detail page** specifically.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/submittals",
+        "sourceType": "sitemap",
+        "route": "/submittals",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/submittals.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/submittals.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/submittals/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/submittals/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/submittals/[submittalId]",
+        "sourceType": "sitemap",
+        "route": "/submittals/[submittalId]",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/submittals/new",
+        "sourceType": "sitemap",
+        "route": "/submittals/new",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/submittals/[submittalId]/edit",
+        "sourceType": "sitemap",
+        "route": "/submittals/[submittalId]/edit",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 5947,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

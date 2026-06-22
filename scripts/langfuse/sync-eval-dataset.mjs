@@ -2,14 +2,14 @@
 /**
  * Sync the assistant eval suite into a Langfuse dataset.
  *
- * Mirrors docs/ai-plan/evals/assistant-eval-suite.json (the 142-case read suite)
+ * Mirrors docs/archive/2026-06-22-docs-migration/ai-plan/evals/assistant-eval-suite.json (the 142-case read suite)
  * into a Langfuse dataset so eval runs can become tracked experiments with scores,
  * diffable across runs, and gateable in CI. Idempotent: re-running upserts items
  * by their stable case id, so it's safe to run after every suite edit.
  *
  * Usage (credentials from repo .env, or the LANGFUSE_* env vars):
  *   node scripts/langfuse/sync-eval-dataset.mjs
- *   node scripts/langfuse/sync-eval-dataset.mjs --suite docs/ai-plan/evals/assistant-eval-suite.json --dataset assistant-eval-suite
+ *   node scripts/langfuse/sync-eval-dataset.mjs --suite docs/archive/2026-06-22-docs-migration/ai-plan/evals/assistant-eval-suite.json --dataset assistant-eval-suite
  */
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -71,7 +71,7 @@ async function main() {
     process.exit(1);
   }
 
-  const suitePath = arg("--suite", "docs/ai-plan/evals/assistant-eval-suite.json");
+  const suitePath = arg("--suite", "docs/archive/2026-06-22-docs-migration/ai-plan/evals/assistant-eval-suite.json");
   const datasetName = arg("--dataset", "assistant-eval-suite");
   const suite = JSON.parse(await fs.readFile(path.join(repoRoot, suitePath), "utf8"));
   const cases = suite.cases ?? [];

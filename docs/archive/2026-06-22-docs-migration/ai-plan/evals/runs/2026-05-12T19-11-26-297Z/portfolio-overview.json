@@ -1,0 +1,45 @@
+{
+  "id": "portfolio-overview",
+  "intent": "portfolio_briefing",
+  "prompt": "Across all active projects, what should I worry about this week?",
+  "selectedProjectId": null,
+  "sessionId": "282e4aac-f06b-46f5-b00a-bc51f576bce3",
+  "sessionLabel": "eval-2026-05-12T19-11-26-297Z-portfolio-overview",
+  "startedAt": "2026-05-12T19:12:34.221Z",
+  "finishedAt": "2026-05-12T19:12:49.471Z",
+  "durationMs": 2,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getPortfolioOverview, getProjectsWithRisks] to fire — none did",
+      "answer length 0 < min 250"
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'risk' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getPortfolioOverview",
+    "getProjectsWithRisks"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "risk"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

@@ -1,0 +1,43 @@
+{
+  "id": "source-lookup-email",
+  "intent": "source_lookup",
+  "prompt": "Search emails for any schedule pressure on Westfield in the last two weeks.",
+  "selectedProjectId": 43,
+  "sessionId": "63f45cce-43c4-4aab-aeb3-61c6b5219ca2",
+  "sessionLabel": "eval-2026-05-12T17-33-02-004Z-source-lookup-email",
+  "startedAt": "2026-05-12T17:37:31.822Z",
+  "finishedAt": "2026-05-12T17:37:47.814Z",
+  "durationMs": 663,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"7979e12e-a469-4176-a4e4-36b30bfc8df2\",\"timestamp\":\"2026-05-12T17:37:32.483Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"7979e12e-a469-4176-a4e4-36b30bfc8df2\",\"timestamp\":\"2026-05-12T17:37:32.483Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [searchEmails, semanticSearch] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'communications' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"7979e12e-a469-4176-a4e4-36b30bfc8df2\",\"timestamp\":\"2026-05-12T17:37:32.483Z\"}"
+  },
+  "expectedToolNames": [
+    "searchEmails",
+    "semanticSearch"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

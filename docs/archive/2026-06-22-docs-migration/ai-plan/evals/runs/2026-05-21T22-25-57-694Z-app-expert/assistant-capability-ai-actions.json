@@ -1,0 +1,62 @@
+{
+  "id": "assistant-capability-ai-actions",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 8908,
+  "question": "What AI assistant actions are live versus planned?",
+  "mustInclude": [
+    "planned"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Live vs planned, based on the curated AI assistant actions article:\n\n## Live / documented now\nThe AI assistant can write these actions from chat:\n\n### Requires confirmation\nThese always show a preview first, then execute only after confirm:\n- Create Change Order\n- Create Change Event\n- Update Project Status\n- Create RFI\n- Flag Project Risk\n- Create Commitment\n\n### No confirmation required\nThese are lower-impact writes and execute directly:\n- Create Task\n- Update RFI Status\n- Create Meeting Note\n- Create Submittal\n- Log Daily Report\n- Save to Knowledge Base\n- Save Insight\n\n## Planned\nI did not find any “planned” AI assistant actions in the curated feature registry or help article. The article only documents current behavior and does not label any action as planned or upcoming.\n\n## Evidence checked\n- Artifact status: current and available\n  - `app-sitemap.generated.json`\n  - `feature-registry.generated.json`\n- Feature registry entry:\n  - `ai-assistant-actions`\n  - Help article: `docs/help/articles/ai-assistant-actions.md`\n  - Route: `/ai-assistant`\n- Help article confirms:\n  - writes are supported\n  - some require confirmation\n  - some do not\n\n## What remains uncertain\n- No curated source here enumerates future/planned assistant actions.\n- `related_actions` in the feature registry entry is empty, so there’s no structured “planned actions” list to cite.\n\nIf you want, I can also separate this into:\n1. actions live in the UI, and\n2. implementation evidence from the route/source file.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/ai-assistant-actions.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-assistant-actions.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/planned",
+        "sourceType": "sitemap",
+        "route": "/planned",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/source",
+        "sourceType": "sitemap",
+        "route": "/source",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 8807,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

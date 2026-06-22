@@ -6,9 +6,8 @@ pulls recent communications, asks an LLM to synthesize an executive packet
 plus recurring findings, and upserts intelligence_packets / insight_cards /
 insight_card_evidence in the MAIN Supabase project.
 
-Schedule via Render. Recommended cadence: ~4×/day to match
-alleato-packet-refresh-periodic (the project-level refresher), so the
-'what's going on with accounting?' answer is never more than ~6h stale.
+Schedule via Render. This is domain-only intelligence; project-level current
+packets are owned by project_intelligence.py and the project synthesis sweep.
 """
 
 from __future__ import annotations

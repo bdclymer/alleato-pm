@@ -1,0 +1,264 @@
+{
+  "generatedAt": "2026-05-14T20:11:19.609Z",
+  "baseUrl": "http://localhost:3000",
+  "bundle": null,
+  "filter": "owner-strategy|action-task|task-register|source-freshness",
+  "totalCases": 5,
+  "passed": 0,
+  "failed": 5,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "clientProjectIntelligencePacket": 1,
+    "mcpToolDiscovery": 1,
+    "streamingToolPolicy": 1,
+    "queryCommitments": 1,
+    "getProjectBudgetSummary": 1,
+    "getMarginAnalysis": 1,
+    "queryChangeOrders": 1,
+    "createTask": 1
+  },
+  "intentDistribution": {
+    "project_briefing": 1,
+    "action_preview": 1,
+    "task_management": 1,
+    "source_health": 2
+  },
+  "results": [
+    {
+      "id": "owner-strategy-ulta-action-plan",
+      "intent": "project_briefing",
+      "prompt": "I am Brandon. For 25-127 Ulta Beauty Fresno, what is most likely to cost us money this week, what is blocked, and what do I personally need to do today?",
+      "selectedProjectId": null,
+      "sessionId": "c9295fec-5f0c-425f-87c0-ceedc0dc4e2f",
+      "sessionLabel": "eval-2026-05-14T20-09-14-930Z-647685f4-owner-strategy-ulta-action-plan",
+      "startedAt": "2026-05-14T20:09:15.049Z",
+      "finishedAt": "2026-05-14T20:10:03.180Z",
+      "durationMs": 47671,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1063,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getProjectBriefingSnapshot, semanticSearch, searchMeetingsByTopic, searchEmails, searchTeamsMessages] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'semantic' not represented",
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, queryCommitments, getProjectBudgetSummary, getMarginAnalysis, queryChangeOrders"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "clientProjectIntelligencePacket",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "queryCommitments",
+          "getProjectBudgetSummary",
+          "getMarginAnalysis",
+          "queryChangeOrders"
+        ],
+        "familiesHit": [
+          "financial",
+          "structured"
+        ],
+        "finalTextLength": 4723,
+        "finalText": "Ulta Beauty Fresno’s biggest money risk this week is field rework and compliance cleanup — not a budgeted cost spike showing up cleanly in the system.\n\nWhat points to that:\n- The latest job signal says **AC1 relocation is still waiting on solar company approval**.\n- The inspector already flagged **ductwork blocking sprinklers**, and the team needs adjustments to stay compliant and avoid insurance fallout.\n- Roof work is mostly done, which means the remaining open items are the messy ones: **duct sock / sprinkler conflicts, cleanup, and coordination closeout**.\n- There’s also a recent vendor-payment issue in email history: **Citadel Roofing had not received payment as of 4/29**, tied to an accounting sync problem. Even if that was supposed to be corrected by that Friday, that kind of miss can turn into friction fast if anyone is still holding back.\n\nWhat is most likely to cost us money this week:\n1. **Sprinkler / ductwork rework**\n   - This is the clearest near-term cost exposure.\n   - If the fix isn’t clean and immediate, you get labor twice, potential inspection drag, and more subcontractor finger-pointing.\n\n2. **AC1 relocation delay**\n   - It’s blocked on **solar company approval**, which means crews can stall or remobilize.\n   - Remobilization and out-of-sequence work are where small jobs quietly bleed.\n\n3. **Sub/vendor relationship damage from payment issues**\n   - I can’t confirm from the financial tools whether Citadel was actually paid after that 4/29 email.\n   - But if that’s still unresolved, it can absolutely translate into slower response, less flexibility, or outright pushback on punch-type work this week.\n\nWhat’s blocked:\n- **AC1 relocation** is the main hard blocker. The packet specifically says it is **waiting on solar company approval**.\n- The **insurance/code issue around ductwork and sprinklers** is also effectively a blocker to clean closeout on that scope until the adjustment is accepted.\n- Financially, I do **not** see approved change order coverage in the system right now:\n  - **Approved COs: $0**\n  - **Pending COs: $0**\n  - The CO query tool itself failed on schema, so I can’t verify whether that means truly no CO activity or just incomplete CO visibility.\n\nWhat you personally need to do today:\n1. **Get a yes/no answer on solar approval for AC1**\n   - Owner: you.\n   - Why: this is the cleanest current blocker and the most likely source of avoidable field cost this week.\n   - If approval is not in hand, force a decision path today: who owns it, what is missing, and when it lands.\n\n2. **Have Candon confirm the exact sprinkler/duct correction plan and acceptance path**\n   - You need a same-day answer on:\n     - what is being changed,\n     - who is doing it,\n     - whether inspector/insurance concerns are fully cleared,\n     - and whether any extra cost is being carried by Alleato.\n   - If nobody owns that explicitly, you own the escalation.\n\n3. **Verify Citadel payment status**\n   - Don’t assume accounting fixed it.\n   - Confirm whether payment actually went out and whether Citadel is satisfied.\n   - If they are still unpaid or irritated, that becomes a real execution risk, not just an accounting issue.\n\n4. **Check whether any of this work needs pricing protection**\n   - Right now the financial record is too clean:\n     - **Budget: $3,268,581**\n     - **Revised budget: $3,268,581**\n     - **Projected final cost: $3,268,581**\n     - **Margin: 0 and stable**\n   - That tells me the system is not yet capturing current field friction as commercial exposure.\n   - If sprinkler fixes, remobilization, or approval-driven inefficiency are owner- or third-party-driven, make sure that gets documented immediately before it becomes unrecoverable.\n\nMy read:\nThis job doesn’t look like it has a major budget blowout brewing this week. It looks like the kind of project that loses money through **coordination slop at the finish line** — small rework, delayed approvals, and vendors getting annoyed. That’s exactly the stuff that never looks dangerous until margin is gone.\n\nData gaps you should know:\n- The change order tool failed, so CO visibility is incomplete.\n- Commitment records exist, but many are marked **Approved / executed: false**, which may be a data hygiene issue or may matter operationally.\n- The packet confidence is moderate at best: it cites **0 project emails rows** and **0 project document/source rows** even though there is linked meeting/email evidence.\n\nNext move:\nCall or message **Candon first** and get three answers today: **solar approval status, sprinkler correction status, and whether Citadel is paid**. If you want, I can turn that into a tight Brandon-style action list or draft the exact email/text you should send."
+      },
+      "expectedToolNames": [
+        "getProjectBriefingSnapshot",
+        "semanticSearch",
+        "searchMeetingsByTopic",
+        "searchEmails",
+        "searchTeamsMessages"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic",
+        "communications"
+      ]
+    },
+    {
+      "id": "action-task-preview-no-write",
+      "intent": "action_preview",
+      "prompt": "Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm.",
+      "selectedProjectId": null,
+      "sessionId": "2b8ddd6e-6910-4b4b-9c64-6597d9d756fa",
+      "sessionLabel": "eval-2026-05-14T20-09-14-930Z-647685f4-action-task-preview-no-write",
+      "startedAt": "2026-05-14T20:10:03.181Z",
+      "finishedAt": "2026-05-14T20:10:33.774Z",
+      "durationMs": 15005,
+      "httpStatus": 200,
+      "streamError": "stream read error: terminated",
+      "streamEventCount": 96,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: stream read error: terminated",
+          "assistant message was not persisted to chat_history",
+          "mustInclude missing: \"Preview\"",
+          "mustInclude missing: \"confirm\"",
+          "mustInclude missing: \"AC1\"",
+          "mustIncludeAny missing one of: \"not created\", \"No task was created\", \"Reply confirm\", \"confirmed: false\"",
+          "answer length 0 < min 180",
+          "required metadata missing: tool_trace",
+          "required metadata missing: provider_decision",
+          "required metadata missing: response_quality"
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: createTask"
+        ],
+        "toolNames": [
+          "createTask"
+        ],
+        "familiesHit": [
+          "action_write",
+          "task_management"
+        ],
+        "finalTextLength": 0,
+        "finalText": ""
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "action_write"
+      ]
+    },
+    {
+      "id": "task-register-source-grounded",
+      "intent": "task_management",
+      "prompt": "Show me my real task list from actual records. Split it into overdue, due soon, blocked, and unclear if you can.",
+      "selectedProjectId": null,
+      "sessionId": "c1ecbeba-cbd4-40ca-a038-4b89ad2a4c2a",
+      "sessionLabel": "eval-2026-05-14T20-09-14-930Z-647685f4-task-register-source-grounded",
+      "startedAt": "2026-05-14T20:10:33.775Z",
+      "finishedAt": "2026-05-14T20:10:49.095Z",
+      "durationMs": 2,
+      "httpStatus": 0,
+      "streamError": "fetch failed",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: fetch failed",
+          "assistant message was not persisted to chat_history",
+          "expected required tool 'getMyTasks' to fire",
+          "mustInclude missing: \"Sources Checked\"",
+          "mustIncludeAny missing one of: \"overdue\", \"due soon\", \"blocked\", \"task\"",
+          "answer length 0 < min 180",
+          "required metadata missing: tool_trace",
+          "required metadata missing: response_quality",
+          "response_quality.score missing"
+        ],
+        "warnings": [
+          "expected family 'task_management' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 0,
+        "finalText": ""
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "task_management"
+      ]
+    },
+    {
+      "id": "source-freshness-rag-health",
+      "intent": "source_health",
+      "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+      "selectedProjectId": null,
+      "sessionId": "0c535239-3a1a-4f94-90e0-8613838eb69e",
+      "sessionLabel": "eval-2026-05-14T20-09-14-930Z-647685f4-source-freshness-rag-health",
+      "startedAt": "2026-05-14T20:10:49.095Z",
+      "finishedAt": "2026-05-14T20:11:04.350Z",
+      "durationMs": 1,
+      "httpStatus": 0,
+      "streamError": "fetch failed",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: fetch failed",
+          "assistant message was not persisted to chat_history",
+          "expected required tool 'assistantSourceHealth' to fire",
+          "mustInclude missing: \"Teams\"",
+          "mustInclude missing: \"Outlook\"",
+          "mustInclude missing: \"meeting\"",
+          "mustInclude missing: \"packet\"",
+          "mustIncludeAny missing one of: \"stale\", \"fresh\", \"up to date\", \"unembedded\", \"uncompiled\", \"source health\"",
+          "answer length 0 < min 250",
+          "required metadata missing: source_health",
+          "required metadata missing: tool_trace",
+          "required metadata missing: response_quality"
+        ],
+        "warnings": [
+          "expected family 'source_health' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 0,
+        "finalText": ""
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "source_health"
+      ]
+    },
+    {
+      "id": "realworld-teams-source-freshness",
+      "intent": "source_health",
+      "prompt": "Are Teams messages current enough to trust today, or is source sync stale?",
+      "selectedProjectId": null,
+      "sessionId": "0ceb8739-de51-47af-a998-ee817b4542fd",
+      "sessionLabel": "eval-2026-05-14T20-09-14-930Z-647685f4-realworld-teams-source-freshness",
+      "startedAt": "2026-05-14T20:11:04.350Z",
+      "finishedAt": "2026-05-14T20:11:19.609Z",
+      "durationMs": 2,
+      "httpStatus": 0,
+      "streamError": "fetch failed",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: fetch failed",
+          "assistant message was not persisted to chat_history",
+          "expected required tool 'assistantSourceHealth' to fire",
+          "mustInclude missing: \"Teams\"",
+          "mustIncludeAny missing one of: \"stale\", \"fresh\", \"current\", \"sync\", \"source health\", \"unembedded\"",
+          "answer length 0 < min 160",
+          "required metadata missing: source_health",
+          "required metadata missing: tool_trace",
+          "required metadata missing: response_quality"
+        ],
+        "warnings": [
+          "expected family 'source_health' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 0,
+        "finalText": ""
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "source_health"
+      ]
+    }
+  ]
+}

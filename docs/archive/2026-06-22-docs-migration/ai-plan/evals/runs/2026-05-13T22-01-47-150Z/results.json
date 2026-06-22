@@ -1,0 +1,56 @@
+{
+  "generatedAt": "2026-05-13T22:02:08.173Z",
+  "baseUrl": "http://localhost:3001",
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "calendarActionIntentRouter": 1,
+    "mcpToolDiscovery": 1,
+    "streamingToolPolicy": 1
+  },
+  "intentDistribution": {
+    "calendar_action": 1
+  },
+  "results": [
+    {
+      "id": "realworld-meeting-invite-clarify",
+      "intent": "calendar_action",
+      "prompt": "Send a meeting invite to Megan Harrison.",
+      "selectedProjectId": null,
+      "sessionId": "ae9a2141-f229-4944-8a41-c74480162103",
+      "sessionLabel": "eval-2026-05-13T22-01-47-150Z-realworld-meeting-invite-clarify",
+      "startedAt": "2026-05-13T22:01:47.153Z",
+      "finishedAt": "2026-05-13T22:02:08.170Z",
+      "durationMs": 20592,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 93,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'calendar_action' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, calendarActionIntentRouter, mcpToolDiscovery, streamingToolPolicy"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "calendarActionIntentRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 316,
+        "finalText": "I need the basics first:\n\n- **Subject**\n- **Date**\n- **Start time**\n- **Duration or end time**\n- **Megan’s email** if you want to be precise\n\nIf you want, send it in one line like:\n**“30 min check-in with Megan Harrison tomorrow at 2 PM, megan@company.com”**\n\nOnce I have that, I’ll draft the invite preview for you."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "calendar_action"
+      ]
+    }
+  ]
+}

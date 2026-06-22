@@ -1,0 +1,43 @@
+{
+  "id": "historical-trends",
+  "intent": "financial_analysis",
+  "prompt": "Show me cost trends on Westfield over the last six months.",
+  "selectedProjectId": 43,
+  "sessionId": "894a3207-d25d-4e61-a209-6e5e607e7dae",
+  "sessionLabel": "eval-2026-05-02T14-03-13-539Z-historical-trends",
+  "startedAt": "2026-05-02T14:14:31.942Z",
+  "finishedAt": "2026-05-02T14:14:47.285Z",
+  "durationMs": 2,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "expected at least one of [getHistoricalTrends, getCostTrends] to fire — none did",
+      "mustInclude missing: \"trend\"",
+      "answer length 0 < min 100"
+    ],
+    "warnings": [
+      "expected family 'financial' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getHistoricalTrends",
+    "getCostTrends"
+  ],
+  "expectedToolFamilies": [
+    "financial"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

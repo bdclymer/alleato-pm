@@ -1,0 +1,4690 @@
+{
+  "id": "realworld-teams-this-week-signal",
+  "intent": "source_lookup",
+  "prompt": "Using Teams messages from this past week, what are people actually worried about?",
+  "selectedProjectId": null,
+  "sessionId": "3a49afab-d92b-4e80-bf59-baca6af3602b",
+  "sessionLabel": "eval-2026-06-09T09-19-20-227Z-d8005f0e-realworld-teams-this-week-signal",
+  "startedAt": "2026-06-09T09:21:36.920Z",
+  "finishedAt": "2026-06-09T09:22:43.769Z",
+  "durationMs": 66480,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 757,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "duration 66480ms exceeded max budget 60000ms"
+    ],
+    "warnings": [
+      "duration 66480ms exceeded warning budget 30000ms"
+    ],
+    "observations": [
+      "tools fired: sourceSpecificRagRetrieval, searchAppHelp, semanticSearch, searchDocuments"
+    ],
+    "toolNames": [
+      "sourceSpecificRagRetrieval",
+      "searchAppHelp",
+      "semanticSearch",
+      "searchDocuments"
+    ],
+    "familiesHit": [
+      "communications",
+      "documents",
+      "semantic",
+      "app_help"
+    ],
+    "finalTextLength": 2709,
+    "finalText": "What people are actually worried about this past week, based on the Teams activity I could retrieve, is pretty clear:\n\n- **Scope and drawing accuracy**\n  - Tony Courtney flagged that **the current drawings/numbers are off** in a June 8 Teams thread with Brandon. That’s not small chatter — that usually means pricing, layout, or execution is about to get contaminated if nobody resets the baseline.  \n  - Nick Jepson’s June 8 message about **“this is a surveyor…”** points the same direction: field layout / survey coordination uncertainty.\n\n- **Something needing immediate review**\n  - Alec Wehner had at least two June 8 messages that read like **“please take a look at…”** and **“good morning Misty…”**. The snippets are truncated, so I can’t overstate the exact issue, but the tone is operational: something needed attention now, likely an approval, clarification, or decision bottleneck.\n\n- **Cash / payment pressure**\n  - The Accounting Team thread from June 8 starts with **“If we don’t…”** from Brandon. The message body is cut off, but given the channel and wording, that reads like **consequence-driven accounting pressure**, not routine admin chatter — likely payment timing, collection, or a process deadline.\n\n- **Follow-through risk between people**\n  - Multiple chats this week are one-to-one nudges: **“please take a look,” “could you…,” “we got the number…”**  \n  - That pattern usually means the team is not debating strategy — they’re trying to **unstick pending items**. The real worry is less “big-picture panic” and more **things sitting on someone’s desk too long**.\n\nThe point of view:\n**This week’s Teams signal is not broad morale anxiety — it’s execution anxiety.** People are worried about bad or incomplete information getting acted on, numbers/drawings not lining up, and decisions or responses lagging long enough to hit field progress or money flow.\n\nWhat I can support directly from the retrieved signal:\n- **Drawing / number mismatch**\n- **Survey / field coordination uncertainty**\n- **Accounting consequence pressure**\n- **Decision-response lag**\n\nWhat I can’t fully confirm yet:\n- The live Teams snippets I have are **heavily truncated** in this result set, so I can identify the pressure themes but not quote every thread cleanly.\n- `searchDocuments` didn’t return fuller Teams bodies for this date range, so the detailed thread content is thin.\n\nWhat to do next:\n**I’d run a tighter Teams-only pass on the last 7 days and cluster by topic/person so I can give you a sharper read: who’s worried, about what, and which projects are driving it.** If you want, I’ll break it into:\n1. **Top worries by project**\n2. **Top worries by person**\n3. **Items that need action today**",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 60000,
+      "durationMs": 66480
+    }
+  },
+  "expectedToolNames": [
+    "sourceSpecificRagRetrieval",
+    "searchTeamsMessages",
+    "semanticSearch"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: source_specific_rag_recent_teams_discussions",
+        "status": "loading",
+        "timestamp": "2026-06-09T09:21:38.236Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (1 sources, 0 warnings)",
+        "status": "success",
+        "durations": {
+          "source_specific_rag": 14809
+        },
+        "timestamp": "2026-06-09T09:21:53.321Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "RL684MenciRExnat"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "toolName": "searchAppHelp"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": "Using"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": " Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": " messages"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": " from"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": " this"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": " past"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": " week"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": ","
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": " what"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": " are"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": " people"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": " actually"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": " worried"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": " about"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": "?\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "toolName": "searchAppHelp",
+      "input": {
+        "query": "Using Teams messages from this past week, what are people actually worried about?",
+        "limit": 5
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_2UhpTnWuumqgpoisZpSs52S5",
+      "output": {
+        "query": "Using Teams messages from this past week, what are people actually worried about?",
+        "category": "all",
+        "resultCount": 5,
+        "results": [
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "Get a Project Briefing from the AI",
+            "description": "Ask the AI for a status update on any project and it pulls from meetings, emails, Teams messages, financials, and schedule simultaneously.",
+            "href": "/docs/ai-project-updates",
+            "module": "ai-assistant",
+            "category": "AI & Intelligence",
+            "tags": [
+              "ai-assistant",
+              "project-update",
+              "briefing",
+              "portfolio",
+              "status"
+            ],
+            "relatedRoutes": [
+              "/ai-assistant"
+            ],
+            "relatedActions": [],
+            "actionCapabilities": [],
+            "score": 31,
+            "excerpt": "Get a Project Briefing from the AI Asking \"What's the latest on [project]?\" is the most powerful query you can send the AI assistant. It searches across all data sources simultaneously and returns a synthesized briefing — not a data dump. What the Assistant Searches When you ask for a project update, the assistant pulls from all of these at once: - **Meetings** — recent transcripts, decisions, action items, risks dis"
+          },
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "Microsoft Teams Integration",
+            "description": "Sync Teams messages and DMs into project intelligence with AI compilation.",
+            "href": "/docs/teams-integration",
+            "module": "integrations",
+            "category": "Integrations",
+            "tags": [
+              "teams",
+              "microsoft-365",
+              "chat",
+              "sync",
+              "intelligence"
+            ],
+            "relatedRoutes": [
+              "/team-chat",
+              "/settings/integrations"
+            ],
+            "relatedActions": [],
+            "actionCapabilities": [],
+            "score": 27,
+            "excerpt": "Microsoft Teams Integration Alleato OS connects to Microsoft Teams to sync channel messages and direct message conversations. The AI Intelligence Compiler reads these conversations, extracts tasks, decisions, risks, and project signals, and links them to the correct project. How It Works - The integration reads Teams channels and DMs you have access to. - Each conversation is processed by the Intelligence Compiler. -"
+          },
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "Ask the AI About Meetings",
+            "description": "How the AI assistant uses meeting transcripts, action items, and decisions from Fireflies to answer questions about project activity.",
+            "href": "/docs/ai-meeting-intelligence",
+            "module": "ai-assistant",
+            "category": "AI & Intelligence",
+            "tags": [
+              "ai-assistant",
+              "meetings",
+              "fireflies",
+              "transcripts",
+              "action-items",
+              "decisions"
+            ],
+            "relatedRoutes": [
+              "/ai-assistant",
+              "/[projectId]/meetings"
+            ],
+            "relatedActions": [],
+            "actionCapabilities": [],
+            "score": 26,
+            "excerpt": "Ask the AI About Meetings Meeting transcripts are the richest intelligence source in the platform. The AI assistant can search across all your meetings — by project, topic, date, or keyword — without you needing to specify a project or meeting ID. How It Works When a meeting is recorded and transcribed through Fireflies.ai, the transcript is automatically: 1. Ingested and stored in the platform 2. Processed to extrac"
+          },
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "What the AI Assistant Can Do (Actions)",
+            "description": "The AI assistant can create and update records directly from chat — learn which actions are available and how the confirmation flow works.",
+            "href": "/docs/ai-assistant-actions",
+            "module": "ai-assistant",
+            "category": "AI & Intelligence",
+            "tags": [
+              "ai-assistant",
+              "actions",
+              "create",
+              "rfi",
+              "change-order",
+              "tasks",
+              "confirmation"
+            ],
+            "relatedRoutes": [
+              "/ai-assistant"
+            ],
+            "relatedActions": [],
+            "actionCapabilities": [],
+            "score": 23,
+            "excerpt": "What the AI Assistant Can Do (Actions) Ask Alleato can create and update records directly from chat. For any action that writes to the database, the assistant shows you a preview and waits for your confirmation before making any changes. How the Confirmation Flow Works 1. You ask the assistant to create or update something (e.g., \"Create an RFI about the electrical panel clearance issue\"). 2. The assistant shows a **"
+          },
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "Ask the AI About Finances",
+            "description": "Use the CFO advisor to analyze budgets, margins, cash flow, change order exposure, and live ERP data from Acumatica.",
+            "href": "/docs/ai-financial-advisor",
+            "module": "ai-assistant",
+            "category": "AI & Intelligence",
+            "tags": [
+              "ai-assistant",
+              "cfo",
+              "budget",
+              "margin",
+              "cash-flow",
+              "acumatica",
+              "change-orders",
+              "commitments"
+            ],
+            "relatedRoutes": [
+              "/ai-assistant"
+            ],
+            "relatedActions": [],
+            "actionCapabilities": [],
+            "score": 19,
+            "excerpt": "Ask the AI About Finances The CFO advisor has live access to every financial record in the platform — and to your Acumatica accounting system. It analyzes through five lenses: margin protection, cash position, exposure, change order lifecycle, and billing and collections. Every financial answer is grounded in live data. The CFO never estimates or guesses — it tells you what the data shows and flags what it cannot det"
+          }
+        ],
+        "message": "Found 5 app help article(s)."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "toolName": "searchAppHelp"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": "Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": " messages"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": " worries"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": " concerns"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": " this"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": " past"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": " week"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": " summarize"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": " concerns"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": " from"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": " Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": " activity"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": "limit"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "toolName": "searchAppHelp",
+      "input": {
+        "query": "Teams messages worries concerns this past week summarize concerns from Teams activity",
+        "limit": 5
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_l5I3wlWIti0kOlVMGwKlmUwG",
+      "output": {
+        "query": "Teams messages worries concerns this past week summarize concerns from Teams activity",
+        "category": "all",
+        "resultCount": 5,
+        "results": [
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "Microsoft Teams Integration",
+            "description": "Sync Teams messages and DMs into project intelligence with AI compilation.",
+            "href": "/docs/teams-integration",
+            "module": "integrations",
+            "category": "Integrations",
+            "tags": [
+              "teams",
+              "microsoft-365",
+              "chat",
+              "sync",
+              "intelligence"
+            ],
+            "relatedRoutes": [
+              "/team-chat",
+              "/settings/integrations"
+            ],
+            "relatedActions": [],
+            "actionCapabilities": [],
+            "score": 43,
+            "excerpt": "Microsoft Teams Integration Alleato OS connects to Microsoft Teams to sync channel messages and direct message conversations. The AI Intelligence Compiler reads these conversations, extracts tasks, decisions, risks, and project signals, and links them to the correct project. How It Works - The integration reads Teams channels and DMs you have access to. - Each conversation is processed by the Intelligence Compiler. -"
+          },
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "Get a Project Briefing from the AI",
+            "description": "Ask the AI for a status update on any project and it pulls from meetings, emails, Teams messages, financials, and schedule simultaneously.",
+            "href": "/docs/ai-project-updates",
+            "module": "ai-assistant",
+            "category": "AI & Intelligence",
+            "tags": [
+              "ai-assistant",
+              "project-update",
+              "briefing",
+              "portfolio",
+              "status"
+            ],
+            "relatedRoutes": [
+              "/ai-assistant"
+            ],
+            "relatedActions": [],
+            "actionCapabilities": [],
+            "score": 36,
+            "excerpt": "Get a Project Briefing from the AI Asking \"What's the latest on [project]?\" is the most powerful query you can send the AI assistant. It searches across all data sources simultaneously and returns a synthesized briefing — not a data dump. What the Assistant Searches When you ask for a project update, the assistant pulls from all of these at once: - **Meetings** — recent transcripts, decisions, action items, risks dis"
+          },
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "Ask the AI About Meetings",
+            "description": "How the AI assistant uses meeting transcripts, action items, and decisions from Fireflies to answer questions about project activity.",
+            "href": "/docs/ai-meeting-intelligence",
+            "module": "ai-assistant",
+            "category": "AI & Intelligence",
+            "tags": [
+              "ai-assistant",
+              "meetings",
+              "fireflies",
+              "transcripts",
+              "action-items",
+              "decisions"
+            ],
+            "relatedRoutes": [
+              "/ai-assistant",
+              "/[projectId]/meetings"
+            ],
+            "relatedActions": [],
+            "actionCapabilities": [],
+            "score": 17,
+            "excerpt": "...able chunks and embedded for semantic search 4. Linked to the relevant project by topic matching The assistant searches this corpus whenever you ask about project activity, decisions, or follow-ups. What You Can Ask Project Updates - \"What's the latest on Vermillion Rise?\" - \"Catch me up on everything from this week.\" - \"Is there anything urgent I missed while I was out?\" When you ask for updates on a project, the as"
+          },
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "AI Chat Overview",
+            "description": "The AI Assistant chat — where it lives, what you can ask it, how conversations work, attachments, voice input, and the side panels that give you trace and source visibility.",
+            "href": "/docs/ai-chat-overview",
+            "module": "ai",
+            "category": "AI & Intelligence",
+            "tags": [
+              "ai",
+              "chat",
+              "assistant",
+              "conversations",
+              "voice",
+              "attachments",
+              "rag"
+            ],
+            "relatedRoutes": [
+              "/ai-assistant"
+            ],
+            "relatedActions": [],
+            "actionCapabilities": [],
+            "score": 8,
+            "excerpt": "...front door to every piece of project intelligence Alleato can see. Ask it a question in plain English; it pulls answers from your budgets, contracts, change orders, commitments, invoices, RFIs, submittals, meeting transcripts, Teams messages, emails, and accounting data — at the same time — and writes back a single grounded response with citations. This article is the **overview**: where to find it, what it looks lik"
+          },
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "AI Capabilities Index",
+            "description": "Every AI feature in Alleato OS — what it does, where to find it, and what to ask.",
+            "href": "/docs/ai-capabilities-index",
+            "module": "ai-assistant",
+            "category": "AI & Intelligence",
+            "tags": [
+              "ai-assistant",
+              "ask-alleato",
+              "c-suite",
+              "rag",
+              "intelligence",
+              "index",
+              "overview"
+            ],
+            "relatedRoutes": [
+              "/ai-assistant",
+              "/[projectId]/intelligence"
+            ],
+            "relatedActions": [],
+            "actionCapabilities": [],
+            "score": 8,
+            "excerpt": "...AI system built into the platform that has live access to your project data — financials, contracts, meetings, emails, Teams messages, schedule, and accounting. This page maps every AI capability in one place so you can see what's available and where to find it. --- Where to Access the AI | Entry Point | How to Open | Best For | |-------------|-------------|----------| | **Full-screen assistant** | Click **Ask Allea"
+          }
+        ],
+        "message": "Found 5 app help article(s)."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "toolName": "semanticSearch"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " messages"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " from"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " past"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " week"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " what"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " are"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " people"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " worried"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " about"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " concerns"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " blockers"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " pressure"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " risk"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " urgency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "06"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "02"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "06"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "09"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "match"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "Count"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "10"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "threshold"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "25"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "skip"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "R"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "er"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "ank"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "toolName": "semanticSearch",
+      "input": {
+        "query": "Teams messages from the past week what are people worried about concerns blockers pressure risk urgency 2026-06-02 to 2026-06-09",
+        "matchCount": 10,
+        "threshold": 0.25,
+        "skipRerank": false
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_QlnVvq2EdeO9ygblq2ywvg07",
+      "output": {
+        "query": "Teams messages from the past week what are people worried about concerns blockers pressure risk urgency 2026-06-02 to 2026-06-09",
+        "resultCount": 10,
+        "results": [
+          {
+            "content": "[Teams DM Conversation: 19:c4beb912-]\n\n[Teams Direct Message Conversation: 19:c4beb912-]\nDate: 2026-05-12\n\n[message:1778580337745] [2026-05-12 10:05:37] Unknown: Good morning, Brandon! Daily Brief - Tuesday, May 12 9 items from the last 3 days. Start with the decisions and follow-ups below. Start Here Start with 60 Alleato Finance: Finance reset needs approval on QuickBooks cutover, accounting controls, and accountant offer range. Financial impact, Customer relationship impact, Legal or contractual risk, Urgency, Brandon uniquely needed, Compounding risk, Blocking other people. Needs Your Decision (4) Finance reset needs approval on QuickBooks cutover, accounting controls, and accountant offer range - 60 Alleato Finance May 11: QuickBooks is favored over Acumatica because of complexity, poor support, and easier retainage handling; business impact is cleaner billing but blocker is a required full cutover... May 11: Misty proposed a two-check AP/AR model where Bob and the new hire handle project AP, AR, billing, and checks while Misty owns reconciliations, fixes, and monthly audits; business... Next: Approve the accountant offer position and require Misty to produce a written QuickBooks pilot/cutover plan plus an AP/AR control matrix before company-wide implementation. Value: The same decision set affects payment accuracy, retainage processing, job-cost reliability, and whether finance can scale without repeating reconciliation failures. Source: Meeting - Alleato QuickBooks transfer discussion - May 11, 2026 Fast Retailing/Uniqlo May 13 meeting needs scope-ownership strategy - 31 Uniqlo Phillipsburg NJ May 13 at 3 PM ET: Fast Retailing, Majestic, Exotec, Alleato, and Cogri are scheduled to meet; business impact is alignment on scope ownership before delays or cost increases harden. May 10: Brandon raised that Alleato taking ownership of fire suppression and design elements could improve efficiency and cost-effectiveness; decision blocker is whether stakeholders accept... Next: Use the May 13 meeting to lock ownership for fire suppression, racking coordination, MEP design/order timing, drawing-file format, and the updated layout path. Value: Unclear ownership now can create procurement delays, redesign, cost escalation, and accountability disputes across Fast Retailing, Majestic, Exotec, Cogri, and Alleato. Source: Email - Email: Re: FR California Concept Update - May 10, 2026 Westfield Collective has two invoices more than 60 days late - 43 Westfield Collect",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_b47843f759515cdb_2026-05-12",
+            "sourceDocumentId": "teamsdm_b47843f759515cdb_2026-05-12",
+            "sourceChunkId": "teamsdm_b47843f759515cdb_2026-05-12__chunk_0",
+            "similarity": 0.52,
+            "finalScore": 0.649,
+            "projectIds": [
+              1009
+            ],
+            "metadata": {
+              "title": "Teams DM Conversation: 19:c4beb912-",
+              "category": "teams_message",
+              "source": "microsoft_graph",
+              "source_type": "teams_dm",
+              "date": "2026-05-12T00:00:00+00:00",
+              "tags": "teams,direct_message,19:c4beb912-,project_auto:existing",
+              "type": "teams_dm_conversation",
+              "project_id": 1009,
+              "chunk_index": 0,
+              "participants": "Archon, Unknown, bclymer@alleatogroup.com",
+              "total_chunks": 17
+            },
+            "createdAt": "2026-05-12T00:00:00+00:00"
+          },
+          {
+            "content": "May 11: Brandon asked for payment status directly; blocker is the customer response from Katie Conner. Next: Send a follow-up requiring a payment date, payment confirmation, or written payment plan if the customer does not respond to Brandon’s May 11 request. Value: Aged receivables create cash drag and can normalize delayed payment behavior if payment status is not escalated quickly. Source: Email - Email: Re: TAG 02/25/26 Westfield Collective - Craving Crapes Proof of Funds - May 10, 2026 A141 contract terms still need final business positions - No project linked May 11: The A141 discussion made progress on dispute resolution, subcontractor approvals, indemnification, and payment timelines; business impact is closer contract finalization once open... May 11: Litigation was favored for dispute resolution because of flexibility, but final language still needs discussion; decision blocker is Brandon’s final business position. Next: Select the subcontractor approval threshold and dispute-resolution position, then have counsel convert the agreed business terms into final A141 language. Value: These terms govern approval speed, risk transfer, legal leverage, and how efficiently the project team can buy out work. Source: Meeting - A141 Discussion - May 11, 2026 Waiting on Others (4) Goodwill Allisonville door-frame submittals are threatening the schedule - 754 GW Allisonville Rd IN May 11: Demolition, steel framing, and concrete preparation are moving; business impact is field momentum that can be undermined if procurement lags. May 11: Plumbing pours are scheduled after framing; business impact is sequencing depends on continued coordination between trades. Follow-up: Identify the owner for plywood pricing and door-frame submittal resolution, then report the frame release date and schedule impact. Value: A six-to-eight-week frame lead time can become a critical-path delay if procurement is not released quickly. Source: Meeting - Weekly Schedule Review Goodwill Allisonville Road Teams Meeting - May 11, 2026 Exol Wilmer permit filing and Phase Two schedule depend on outside inputs - 760 Exol Wilmer May 11: Permit filing was scheduled for today; business impact is maintaining timeline integrity once required outside inputs are available. May 11: Major schedule adjustments are required to align with Symbotic construction dates; blocker is the revised Phase Two baseline. Follow-up: Confirm permit submission status and require the revised Phase Two baseline schedule",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_b47843f759515cdb_2026-05-12",
+            "sourceDocumentId": "teamsdm_b47843f759515cdb_2026-05-12",
+            "sourceChunkId": "teamsdm_b47843f759515cdb_2026-05-12__chunk_1",
+            "similarity": 0.513,
+            "finalScore": 0.643,
+            "projectIds": [
+              1009
+            ],
+            "metadata": {
+              "title": "Teams DM Conversation: 19:c4beb912-",
+              "category": "teams_message",
+              "source": "microsoft_graph",
+              "source_type": "teams_dm",
+              "date": "2026-05-12T00:00:00+00:00",
+              "tags": "teams,direct_message,19:c4beb912-,project_auto:existing",
+              "type": "teams_dm_conversation",
+              "project_id": 1009,
+              "chunk_index": 1,
+              "participants": "Archon, Unknown, bclymer@alleatogroup.com",
+              "total_chunks": 17
+            },
+            "createdAt": "2026-05-12T00:00:00+00:00"
+          },
+          {
+            "content": "The document is a Teams Direct Message conversation dated May 5, 2026, primarily involving Chad Tragesser. The purpose of this conversation appears to be to address ongoing tasks or issues that need resolution by the end of the week. This informal communication format suggests a collaborative effort among team members to ensure timely completion of responsibilities.\n\nKey topics discussed in the conversation include the status of certain tasks and the urgency of addressing them before the week's end. Chad Tragesser expresses a commitment to resolving these issues, indicating a proactive approach to team management and accountability. Although the specific tasks or issues are not detailed in the excerpt, the mention of a deadline implies that there are critical deliverables expected shortly.\n\nAn important detail noted in the conversation is the emphasis on completing tasks by the end of the week, which highlights the time-sensitive nature of the discussions. While no specific numbers or requirements are mentioned, the urgency suggests that these tasks may be linked to broader project timelines or objectives.\n\nThe action item stemming from this conversation is the need for team members to prioritize the identified tasks and ensure they are completed by the specified deadline. Chad's commitment to \"get them taken care of\" indicates a willingness to take the necessary steps to facilitate this process, suggesting that further follow-up may be required to track progress.",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_e71914a549cd603a_2026-05-05",
+            "sourceDocumentId": "teamsdm_e71914a549cd603a_2026-05-05",
+            "sourceChunkId": "teamsdm_e71914a549cd603a_2026-05-05__ff_meeting_summary_-1_0",
+            "similarity": 0.513,
+            "finalScore": 0.637,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM Conversation: 19:d5788d4ad",
+              "category": "meeting_summary",
+              "source": null,
+              "source_type": "teams_dm",
+              "date": null,
+              "doc_type": "meeting_summary",
+              "file_date": null,
+              "project_id": null,
+              "segment_id": null,
+              "chunk_index": 0,
+              "content_hash": "4d7dca36f1394909",
+              "participants": [],
+              "segment_index": -1
+            },
+            "createdAt": "2026-05-06T21:21:55.879768"
+          },
+          {
+            "content": "**Summary of Teams Direct Message: 19:81e9018c-**\n\nThe document is a direct message from a Teams communication platform, specifically detailing an update regarding a building review process. The purpose of this message is to inform team members about the current status of the review and to set expectations for upcoming communications.\n\nIn the message, Andrew Cannon provides a key update regarding the building review in Bentonville. He notes that the review is still pending completion and emphasizes that the team is awaiting feedback. The communication indicates that the relevant authorities have confirmed that the team will receive an update within the week of June 3, 2025.\n\nThe important detail highlighted in the message is the timeline for receiving feedback, which is expected within the current week. This sets a clear expectation for the team regarding when they can anticipate further information. As for action items, the next step involves monitoring for the feedback from Bentonville and preparing to respond or act based on the outcome of the review once it is received.",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_1748961260295",
+            "sourceDocumentId": "teamsdm_1748961260295",
+            "sourceChunkId": "teamsdm_1748961260295__ff_meeting_summary_-1_0",
+            "similarity": 0.521,
+            "finalScore": 0.636,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM: 19:81e9018c-",
+              "category": "meeting_summary",
+              "source": null,
+              "source_type": "teams_dm",
+              "date": null,
+              "doc_type": "meeting_summary",
+              "file_date": null,
+              "project_id": null,
+              "segment_id": null,
+              "chunk_index": 0,
+              "content_hash": "98aed35a29574d96",
+              "participants": [],
+              "segment_index": -1
+            },
+            "createdAt": "2026-04-30T13:49:23.509284"
+          },
+          {
+            "content": "### Summary of Teams Direct Message: 19:c4beb912-\n\nThe document is a direct message from Brandon Clymer dated February 6, 2026, which serves as a communication tool within a team, likely focusing on project management or operational updates. The purpose of this message is to ensure that specific reporting and compliance tasks are being addressed for two entities: GPC and CEVA.\n\nKey topics discussed in the message include the necessity of weekly reports for both GPC and CEVA, indicating an ongoing monitoring and evaluation process. Additionally, there is a reminder to stay on top of the permit requirements for CEVA, suggesting that compliance with regulatory or operational permits is crucial for the project's success.\n\nImportant details include the emphasis on weekly reporting, which implies a structured timeline for updates, and the specific mention of CEVA's permit, highlighting its significance in the overall project management. The action item clearly outlined is the need for the team to prioritize these reports and permit management, ensuring that all necessary documentation and compliance measures are in place moving forward.",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_1770384337493",
+            "sourceDocumentId": "teamsdm_1770384337493",
+            "sourceChunkId": "teamsdm_1770384337493__ff_meeting_summary_-1_0",
+            "similarity": 0.519,
+            "finalScore": 0.635,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM: 19:c4beb912-",
+              "category": "meeting_summary",
+              "source": null,
+              "source_type": "teams_dm",
+              "date": null,
+              "doc_type": "meeting_summary",
+              "file_date": null,
+              "project_id": null,
+              "segment_id": null,
+              "chunk_index": 0,
+              "content_hash": "d187550640c70688",
+              "participants": [],
+              "segment_index": -1
+            },
+            "createdAt": "2026-04-30T10:54:17.960754"
+          },
+          {
+            "content": "**Summary of Teams Direct Message: 19:05e7f199-**\n\nThe document is a Teams Direct Message dated April 8, 2026, authored by Brandon Clymer. The primary purpose of this communication is to address concerns regarding the submittals related to the Allisonville Road project. It highlights issues with the current status of these submittals, which appear to be overdue and lack proper attribution to responsible parties.\n\nKey topics discussed in the message include the overdue nature of the submittals and the urgency of upcoming construction activities, specifically saw cutting and earthwork scheduled to commence the following week. Clymer expresses frustration over the lack of accountability in the submittals, indicating that this could impact the project's timeline and execution.\n\nImportant details include the mention that most submittals are not tied to any individual, suggesting a potential oversight in project management. The urgency is underscored by the impending start of construction activities, which necessitate timely and organized submittals to avoid delays. \n\nThe action item stemming from this message is clear: there is an immediate need for the team to address the overdue submittals and ensure that all future submissions are properly assigned to responsible parties. This will help facilitate a smoother workflow as the project progresses into the next phase of construction.",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_1775673762839",
+            "sourceDocumentId": "teamsdm_1775673762839",
+            "sourceChunkId": "teamsdm_1775673762839__ff_meeting_summary_-1_0",
+            "similarity": 0.529,
+            "finalScore": 0.619,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM: 19:05e7f199-",
+              "category": "meeting_summary",
+              "source": null,
+              "source_type": "teams_dm",
+              "date": null,
+              "doc_type": "meeting_summary",
+              "file_date": null,
+              "project_id": null,
+              "segment_id": null,
+              "chunk_index": 0,
+              "content_hash": "4f2eb9490de972b1",
+              "participants": [],
+              "segment_index": -1
+            },
+            "createdAt": "2026-04-08T18:47:59.273782"
+          },
+          {
+            "content": "**Summary of Document: Teams DM: 19:2474de6b-**\n\nThe document is a direct message from Brandon Clymer, dated April 4, 2026, which serves as a communication regarding project deliverables. It emphasizes the need for proactive planning and coordination among team members to ensure that tasks are completed on schedule. This message is part of an ongoing dialogue within a team, likely related to project management or collaboration.\n\nThe key topic of the message is the urgency of sending an email to specific team members or stakeholders. Brandon highlights the necessity of this communication to ensure that those involved have clear deliverables due by Thursday. This indicates a structured timeline for project tasks, suggesting that the team is working towards a deadline that requires immediate attention.\n\nAn important detail in the message is the specific timeline mentioned: the email should be sent first thing on Monday, with deliverables expected by Thursday of the same week. This creates a clear action item for the recipient, emphasizing the need for timely communication to facilitate the completion of tasks. The next steps involve drafting and sending the email to the relevant parties to ensure they are prepared for the upcoming deadline.",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_1775322517303",
+            "sourceDocumentId": "teamsdm_1775322517303",
+            "sourceChunkId": "teamsdm_1775322517303__ff_meeting_summary_-1_0",
+            "similarity": 0.509,
+            "finalScore": 0.6,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM: 19:2474de6b-",
+              "category": "meeting_summary",
+              "source": null,
+              "source_type": "teams_dm",
+              "date": null,
+              "doc_type": "meeting_summary",
+              "file_date": null,
+              "project_id": null,
+              "segment_id": null,
+              "chunk_index": 0,
+              "content_hash": "be97638b7b468b02",
+              "participants": [],
+              "segment_index": -1
+            },
+            "createdAt": "2026-04-04T17:49:20.177557"
+          },
+          {
+            "content": "**Summary of Teams Direct Message: 19:c4beb912-**\n\nThe document is a direct message exchanged on Microsoft Teams, dated March 3, 2026, between Brandon Clymer and another participant. The purpose of this communication appears to be an inquiry regarding the timeline for a project or deliverable, which suggests that it may relate to a larger system implementation or development effort.\n\nIn the message, Brandon Clymer expresses concern about the duration it will take to release a certain item, questioning why it is expected to take until Friday to complete. He seeks clarification on whether the project is complex, indicating that the timeline may be influenced by the scale or intricacy of the system involved. Although the document does not provide specific details about the system or project, it highlights a sense of urgency and a need for transparency regarding the timeline.\n\nThere are no explicit action items or next steps outlined in the message, but the inquiry implies that further discussion or clarification may be necessary to address Brandon's concerns. The focus on the timeline suggests that stakeholders may need to evaluate project management strategies or resource allocation to ensure timely delivery.",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_1772548794550",
+            "sourceDocumentId": "teamsdm_1772548794550",
+            "sourceChunkId": "teamsdm_1772548794550__ff_meeting_summary_-1_0",
+            "similarity": 0.518,
+            "finalScore": 0.597,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM: 19:c4beb912-",
+              "category": "meeting_summary",
+              "source": null,
+              "source_type": "teams_dm",
+              "date": null,
+              "doc_type": "meeting_summary",
+              "file_date": null,
+              "project_id": null,
+              "segment_id": null,
+              "chunk_index": 0,
+              "content_hash": "05013e1af080cb13",
+              "participants": [],
+              "segment_index": -1
+            },
+            "createdAt": "2026-03-24T18:12:47.588218"
+          },
+          {
+            "content": "**Summary of Teams Direct Message: 19:c4beb912-**\n\nThe document is a direct message from a communication platform, specifically Teams, dated February 19, 2026. It appears to be a brief update or discussion regarding project timelines and financial considerations related to a specific operational aspect, likely in a construction or logistics context.\n\nKey topics discussed in the message include the increase in costs attributed to general conditions, fees, and insurance, which have risen by $171. The message emphasizes that the progress of the project is contingent upon the efficiency of the racking team, indicating that their pace directly impacts the overall timeline. The sender, Kebba Mass, estimates that this situation will persist for approximately 20 weeks, suggesting a significant duration for the project’s completion or a specific phase of work.\n\nWhile the document does not outline explicit action items or next steps, the mention of the 20-week timeline implies that stakeholders may need to monitor the racking team's performance closely and potentially adjust project schedules or resource allocations accordingly. The financial implications of the cost increase also suggest that budgeting reviews may be necessary to accommodate the additional expenses.",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_1771505626911",
+            "sourceDocumentId": "teamsdm_1771505626911",
+            "sourceChunkId": "teamsdm_1771505626911__ff_meeting_summary_-1_0",
+            "similarity": 0.514,
+            "finalScore": 0.594,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM: 19:c4beb912-",
+              "category": "meeting_summary",
+              "source": null,
+              "source_type": "teams_dm",
+              "date": null,
+              "doc_type": "meeting_summary",
+              "file_date": null,
+              "project_id": null,
+              "segment_id": null,
+              "chunk_index": 0,
+              "content_hash": "bef3a12a5b9fefa2",
+              "participants": [],
+              "segment_index": -1
+            },
+            "createdAt": "2026-03-24T18:16:28.970608"
+          },
+          {
+            "content": "**Summary of Document: Teams DM: 19:294326c9-**\n\nThe document is a direct message exchange on Microsoft Teams, dated July 17, 2024, primarily focusing on scheduling and timeline adjustments. It appears to serve as a communication tool among team members regarding project timelines or deliverables, rather than a formal report or contract.\n\nThe key topic discussed in this message is the timeline for a specific project or task, with Lee Buchanan indicating that the current status is not up to date. The message specifies that the relevant period under discussion is from June 30 to July 13, suggesting that there has been a delay or a holdback of one week in the project's progression.\n\nAn important detail highlighted in the message is the specific dates mentioned, which indicate a timeframe that is critical for understanding the project's current status. The mention of a one-week delay implies that there may be implications for project deadlines or deliverables that need to be addressed. As for action items or next steps, the message does not explicitly outline any, but it suggests that further discussion may be necessary to realign the team on the updated timeline and any subsequent impacts on the project.",
+            "sourceTable": "teams_dm",
+            "recordId": "teamsdm_1721241355687",
+            "sourceDocumentId": "teamsdm_1721241355687",
+            "sourceChunkId": "teamsdm_1721241355687__ff_meeting_summary_-1_0",
+            "similarity": 0.512,
+            "finalScore": 0.593,
+            "projectIds": [],
+            "metadata": {
+              "title": "Teams DM: 19:294326c9-",
+              "category": "meeting_summary",
+              "source": null,
+              "source_type": "teams_dm",
+              "date": null,
+              "doc_type": "meeting_summary",
+              "file_date": null,
+              "project_id": null,
+              "segment_id": null,
+              "chunk_index": 0,
+              "content_hash": "e3ed2ae933ec051d",
+              "participants": [],
+              "segment_index": -1
+            },
+            "createdAt": "2026-03-25T06:13:03.883741"
+          }
+        ],
+        "retrievalBreakdown": {
+          "knowledgeMatches": 0,
+          "externalChunkMatches": 20,
+          "activeRetrievalWeights": 0,
+          "usedProjectFilter": false,
+          "filteredAdminOnlySources": []
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "toolName": "searchDocuments"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "Teams"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": " message"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": " concern"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": " worried"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": " blocker"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": " urgent"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": " delay"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": " payment"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": " permit"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": " sub"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "mitt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "al"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": " schedule"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": " survey"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "or"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": " drawing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "06"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "02"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "06"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "09"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "10"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "toolName": "searchDocuments",
+      "input": {
+        "query": "Teams message concern worried blocker urgent delay payment permit submittal schedule surveyor drawing 2026-06-02 2026-06-09",
+        "maxResults": 10
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_a6bSTTnqH9fPw2usaXcX9gCX",
+      "output": {
+        "results": [],
+        "message": "No documents found matching \"Teams message concern worried blocker urgent delay payment permit submittal schedule surveyor drawing 2026-06-02 2026-06-09\". Try broader keywords or use semanticSearch for meaning-based results."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " people"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " worried"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " past"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " based"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " activity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " could"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieve"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pretty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clear"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " drawing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " accuracy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Tony"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Courtney"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " flagged"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " drawings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "umbers"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " off"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " June"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "8"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thread"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brandon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " small"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " chatter"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " usually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pricing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " layout"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " execution"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contaminated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " nobody"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " resets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " baseline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Nick"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Je"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "pson"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " June"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "8"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " message"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " survey"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "…”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " points"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " same"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " direction"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " layout"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " survey"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " uncertainty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Something"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " immediate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " review"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Alec"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " We"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "h"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " had"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " least"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " two"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " June"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "8"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " messages"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " like"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "please"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " take"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "…”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "good"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " morning"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Mist"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "y"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "…”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " snippets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " truncated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " over"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "state"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tone"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operational"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " something"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " attention"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " likely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " approval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clarification"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decision"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bott"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "leneck"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Cash"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " payment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pressure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Accounting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thread"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " June"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "8"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " starts"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " we"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " don"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "…”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brandon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " message"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " body"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cut"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " off"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " given"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " channel"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " wording"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reads"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " like"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "con"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "sequence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-driven"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " accounting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pressure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " routine"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " admin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " chatter"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " likely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " payment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " timing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " collection"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " process"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " deadline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Follow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-through"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " between"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " people"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Multiple"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " chats"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " nud"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ges"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "please"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " take"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "could"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "…"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "we"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " got"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " number"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "…”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pattern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " usually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " debating"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " strategy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trying"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "unst"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ick"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pending"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " worry"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " less"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "big"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-picture"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " panic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " more"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "things"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sitting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " someone"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " desk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " too"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " long"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " point"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " view"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " broad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " morale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " anxiety"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " execution"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " anxiety"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " People"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " worried"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " incomplete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " information"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " getting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " acted"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " numbers"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "raw"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lining"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " responses"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lag"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ging"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " long"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " progress"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " money"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " flow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " support"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " directly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retrieved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Drawing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " number"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mismatch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Survey"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " uncertainty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Accounting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " consequence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pressure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Decision"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-response"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lag"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confirm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " yet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " snippets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "he"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "av"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ily"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " truncated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " result"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " set"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " identify"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pressure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " themes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " quote"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " every"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thread"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " `"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "search"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Documents"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " didn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " return"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fuller"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bodies"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " date"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " range"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " detailed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thread"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " content"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " run"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tighter"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pass"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "7"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " days"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cluster"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " topic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/person"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " give"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sharper"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " who"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " worried"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " projects"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " driving"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’ll"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " break"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Top"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " worries"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Top"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " worries"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " person"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " today"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "finish",
+      "finishReason": "stop"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 149306,
+      "totalTokens": 150088,
+      "outputTokens": 782
+    },
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "retrieval-complete",
+          "status": "success",
+          "message": "Retrieved (1 sources, 0 warnings)",
+          "durations": {
+            "source_specific_rag": 14809
+          },
+          "timestamp": "2026-06-09T09:21:53.321Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": 5,
+    "tool_trace": [
+      {
+        "tool": "sourceSpecificRagRetrieval",
+        "agent": "retrieval-planner-v2",
+        "input": {
+          "kind": "recent_teams_discussions",
+          "message": "Using Teams messages from this past week, what are people actually worried about?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "rowCount": 10
+        },
+        "status": "success",
+        "toolName": "sourceSpecificRagRetrieval",
+        "timestamp": "2026-06-09T09:22:42.653Z",
+        "durationMs": 14809
+      },
+      {
+        "tool": "searchAppHelp",
+        "error": null,
+        "input": {
+          "message": "Using Teams messages from this past week, what are people actually worried about?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "searchAppHelp",
+        "timestamp": "2026-06-09T09:21:55.951Z"
+      },
+      {
+        "tool": "searchAppHelp",
+        "error": null,
+        "input": {
+          "message": "Using Teams messages from this past week, what are people actually worried about?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "searchAppHelp",
+        "timestamp": "2026-06-09T09:21:57.769Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "error": null,
+        "input": {
+          "message": "Using Teams messages from this past week, what are people actually worried about?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "semanticSearch",
+        "timestamp": "2026-06-09T09:22:09.408Z"
+      },
+      {
+        "tool": "searchDocuments",
+        "error": null,
+        "input": {
+          "message": "Using Teams messages from this past week, what are people actually worried about?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "searchDocuments",
+        "timestamp": "2026-06-09T09:22:27.906Z"
+      },
+      {
+        "tool": "searchAppHelp",
+        "input": {
+          "message": "Using Teams messages from this past week, what are people actually worried about?",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "searchAppHelp",
+        "timestamp": "2026-06-09T09:22:42.653Z"
+      },
+      {
+        "tool": "searchAppHelp",
+        "input": {
+          "message": "Using Teams messages from this past week, what are people actually worried about?",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "searchAppHelp",
+        "timestamp": "2026-06-09T09:22:42.653Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "input": {
+          "message": "Using Teams messages from this past week, what are people actually worried about?",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "semanticSearch",
+        "timestamp": "2026-06-09T09:22:42.653Z"
+      },
+      {
+        "tool": "searchDocuments",
+        "input": {
+          "message": "Using Teams messages from this past week, what are people actually worried about?",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "searchDocuments",
+        "timestamp": "2026-06-09T09:22:42.653Z"
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse.",
+          "projectId": null,
+          "visibility": "private"
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project.",
+          "projectId": null,
+          "visibility": "private"
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly.",
+          "projectId": null,
+          "visibility": "private"
+        }
+      ],
+      "teamUsed": 0,
+      "retrieved": {
+        "team": 0,
+        "relevant": 0,
+        "preferences": 3
+      },
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "source_debug": {
+      "memory": {
+        "memories": [
+          {
+            "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+            "type": "preference",
+            "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+            "type": "preference",
+            "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+            "type": "preference",
+            "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly.",
+            "projectId": null,
+            "visibility": "private"
+          }
+        ],
+        "teamUsed": 0,
+        "retrieved": {
+          "team": 0,
+          "relevant": 0,
+          "preferences": 3
+        },
+        "totalUsed": 3,
+        "relevantUsed": 0,
+        "preferencesUsed": 3,
+        "recentConversationsUsed": 3
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "sourceSpecificRagRetrieval",
+              "agent": "retrieval-planner-v2",
+              "status": "success",
+              "durationMs": 14809
+            }
+          ],
+          "failedCount": 0,
+          "totalMeasuredMs": 14809
+        },
+        "toolNames": [
+          "sourceSpecificRagRetrieval",
+          "searchAppHelp",
+          "searchAppHelp",
+          "semanticSearch",
+          "searchDocuments",
+          "searchAppHelp",
+          "searchAppHelp",
+          "semanticSearch",
+          "searchDocuments"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 9,
+        "sourceCoverage": []
+      },
+      "orchestrator": "retrieval-planner-v2",
+      "outputPolicy": {
+        "stopWhen": "stepCountIs(10)",
+        "maxOutputTokens": 8000
+      },
+      "retrievalPlan": {
+        "intent": "source_lookup",
+        "reason": "source_specific_rag_recent_teams_discussions",
+        "sources": [
+          "sourceSpecificRag"
+        ],
+        "responseFormat": "source_specific_rag"
+      }
+    },
+    "finish_reason": "stop",
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "source_specific_rag_recent_teams_discussions",
+      "sources": [
+        "sourceSpecificRag"
+      ],
+      "responseFormat": "source_specific_rag"
+    },
+    "synthesis_model": "openai/gpt-5.4",
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "retrieval trace included 10 source-bearing record(s) without inline citations"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "response_message_id": "RL684MenciRExnat",
+    "empty_model_response": false
+  }
+}

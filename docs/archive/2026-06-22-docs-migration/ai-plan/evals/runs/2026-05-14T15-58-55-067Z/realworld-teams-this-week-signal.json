@@ -1,0 +1,2343 @@
+{
+  "id": "realworld-teams-this-week-signal",
+  "intent": "source_lookup",
+  "prompt": "Using Teams messages from this past week, what are people actually worried about?",
+  "selectedProjectId": null,
+  "sessionId": "eeb24573-a00d-4a66-9adb-8c3e0823fe1c",
+  "sessionLabel": "eval-2026-05-14T15-58-55-067Z-realworld-teams-this-week-signal",
+  "startedAt": "2026-05-14T16:00:31.824Z",
+  "finishedAt": "2026-05-14T16:01:15.375Z",
+  "durationMs": 42908,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 228,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "expected family 'communications' not represented",
+      "global forbidden phrase: \"retrieval\""
+    ],
+    "observations": [
+      "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, getPeopleAndRoles, noToolRetry"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "assistantSourceHealth",
+      "semanticSearch",
+      "sourceLookupIntentRouter",
+      "messageDrivenToolRouter",
+      "mcpToolDiscovery",
+      "streamingToolPolicy",
+      "getPeopleAndRoles",
+      "noToolRetry"
+    ],
+    "familiesHit": [
+      "people",
+      "semantic",
+      "source_health"
+    ],
+    "finalTextLength": 888,
+    "finalText": "No usable Teams messages from this past week came back in the current retrieval—likely due to a syncing backlog on the Teams source pipeline. The sync health report flags critical exports for multiple user DMs, which means evidence is probably missing, not that there was nothing discussed.\n\nTranslation: I can’t reliably tell you what people are “actually worried about” based on Teams message content from this past week, because the data isn’t there to analyze.\n\nIf you need a broad temperature check right now, the only evidence I’d trust would come from meeting minutes, emails, or explicit project updates—Teams chat sentiment is a gap until the sync catches up.\n\nWant me to scan recent meetings, emails, or tasks instead for signals of what’s raising concerns? If you need specifics per project or person, clarify—otherwise, I’ll surface the loudest pain points from other sources."
+  },
+  "expectedToolNames": [
+    "sourceSpecificRagRetrieval",
+    "searchTeamsMessages",
+    "semanticSearch"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T16:00:34.368Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Searching source records for the requested discussion context",
+        "status": "loading",
+        "timestamp": "2026-05-14T16:00:36.321Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "synthesis",
+        "message": "Loaded source records — synthesizing answer",
+        "status": "success",
+        "timestamp": "2026-05-14T16:00:54.322Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "irvR6BqhzyhF3Ssj"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "toolName": "getPeopleAndRoles"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "inputTextDelta": "role"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "inputTextDelta": "\"\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "toolName": "getPeopleAndRoles",
+      "input": {
+        "projectId": 0,
+        "projectName": "",
+        "role": ""
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_nGLELFOZec0fiSWIC4SHqCXz",
+      "output": {
+        "error": "Provide either projectId or projectName"
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "toolName": "getPeopleAndRoles"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "inputTextDelta": "756"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "inputTextDelta": "role"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "inputTextDelta": "\"\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "toolName": "getPeopleAndRoles",
+      "input": {
+        "projectId": 756,
+        "projectName": "",
+        "role": ""
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_lIdww9rZrTyP9xVO1BgzQ3YY",
+      "output": {
+        "error": "Could not embed because more than one relationship was found for 'people' and 'companies'"
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "toolName": "getPeopleAndRoles"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "756"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "Alle"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "ato"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": " -"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": " Leads"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "role"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "\"\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "toolName": "getPeopleAndRoles",
+      "input": {
+        "projectId": 756,
+        "projectName": "Alleato - Leads",
+        "role": ""
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_bHdcxDYE3Lel3EUcNXSbcvGL",
+      "output": {
+        "error": "Could not embed because more than one relationship was found for 'people' and 'companies'"
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "toolName": "getPeopleAndRoles"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "inputTextDelta": "role"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "inputTextDelta": "\"\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "toolName": "getPeopleAndRoles",
+      "input": {
+        "projectId": 1,
+        "projectName": "",
+        "role": ""
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_0wr2DFhBn4V8BdhIbjTCOnkY",
+      "output": {
+        "error": "Project 1 not found"
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "toolName": "getPeopleAndRoles"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "inputTextDelta": "999"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "inputTextDelta": "999"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "inputTextDelta": "role"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "inputTextDelta": "\"\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "toolName": "getPeopleAndRoles",
+      "input": {
+        "projectId": 999999,
+        "projectName": "",
+        "role": ""
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_dtbC2dFPg02hdpWTT1OGG6w3",
+      "output": {
+        "error": "Project 999999 not found"
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "toolName": "getPeopleAndRoles"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "756"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "Alle"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "ato"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": " -"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": " Leads"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "role"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "Project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": " Manager"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "toolName": "getPeopleAndRoles",
+      "input": {
+        "projectId": 756,
+        "projectName": "Alleato - Leads",
+        "role": "Project Manager"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_5ceqHgbVLHjtW2Za3JxTRLCm",
+      "output": {
+        "error": "Could not embed because more than one relationship was found for 'people' and 'companies'"
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "toolName": "getPeopleAndRoles"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "756"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "Alle"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "ato"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": " -"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": " Leads"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "role"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "\"\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "toolName": "getPeopleAndRoles",
+      "input": {
+        "projectId": 756,
+        "projectName": "Alleato - Leads",
+        "role": ""
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_3CYjZF8gDzNQpto7ecMEI5Rb",
+      "output": {
+        "error": "Could not embed because more than one relationship was found for 'people' and 'companies'"
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "toolName": "getPeopleAndRoles"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "756"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "Alle"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "ato"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": " -"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": " Leads"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "role"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "\"\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "toolName": "getPeopleAndRoles",
+      "input": {
+        "projectId": 756,
+        "projectName": "Alleato - Leads",
+        "role": ""
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_uGF90VnqtVvTzua83kayt9d7",
+      "output": {
+        "error": "Could not embed because more than one relationship was found for 'people' and 'companies'"
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "toolName": "getPeopleAndRoles"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "756"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "Alle"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "ato"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": " -"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": " Leads"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "role"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "\"\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "toolName": "getPeopleAndRoles",
+      "input": {
+        "projectId": 756,
+        "projectName": "Alleato - Leads",
+        "role": ""
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_X9YhnrsFHlSeAP101CKHq7ve",
+      "output": {
+        "error": "Could not embed because more than one relationship was found for 'people' and 'companies'"
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "toolName": "getPeopleAndRoles"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "756"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "Alle"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "ato"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": " -"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": " Leads"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "role"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "\"\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "toolName": "getPeopleAndRoles",
+      "input": {
+        "projectId": 756,
+        "projectName": "Alleato - Leads",
+        "role": ""
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_owI9OyPEtTXTraIGVQahG5Mo",
+      "output": {
+        "error": "Could not embed because more than one relationship was found for 'people' and 'companies'"
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-failure-response"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "No usable Teams messages from this past week came back in the current retrieval—likely due "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "to a syncing backlog on the Teams source pipeline. The sync health report flags critical "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "exports for multiple user DMs, which means evidence is probably missing, not that there "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "was nothing discussed.\n\nTranslation: I can’t reliably tell you what people are “actually "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "worried about” based on Teams message content from this past week, because the data isn’t "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "there to analyze.\n\nIf you need a broad temperature check right now, the only evidence I’d "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "trust would come from meeting minutes, emails, or explicit project updates—Teams chat "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "sentiment is a gap until the sync catches up.\n\nWant me to scan recent meetings, emails, or "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "tasks instead for signals of what’s raising concerns? If you need specifics per project or "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "person, clarify—otherwise, I’ll surface the loudest pain points from other sources."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-failure-response"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 67632,
+      "totalTokens": 67944,
+      "outputTokens": 312,
+      "cacheHitRatio": 0.835,
+      "cachedInputTokens": 56448
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Using Teams messages from this past week, what are people actually worried about?",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "source_lookup",
+          "sourceSpecificRagKind": "recent_teams_discussions",
+          "messageDrivenToolNames": [
+            "getPeopleAndRoles",
+            "searchTeamsMessages",
+            "semanticSearch"
+          ],
+          "recentEmailInboxRequest": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "source_lookup",
+          "planner": "model",
+          "rationale": "The user wants evidence-based insight derived specifically from internal Teams messages from the past week. That requires retrieving and analyzing internal communication sources rather than general project status or external research.",
+          "confidence": "high",
+          "responseMode": "retrieve_sources",
+          "requiredTools": [
+            "recent_teams_discussions"
+          ],
+          "deterministicIntent": "source_lookup",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T16:00:34.367Z"
+      },
+      {
+        "tool": "assistantSourceHealth",
+        "input": {
+          "reason": "source_status_request"
+        },
+        "output": {
+          "alerts": [
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: jdawson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:jdawson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: acannon@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:acannon@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: njepson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "njepson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: mparsons@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "mparsons@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: jdawson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "jdawson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "ctragesser@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: crusin@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "crusin@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: awehner@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "awehner@alleatogroup.com"
+            }
+          ],
+          "counts": {
+            "sources": 30,
+            "uncompiled": 11376,
+            "unembedded": 1063,
+            "warningSources": 0,
+            "criticalSources": 30,
+            "failedSubscriptions": 0,
+            "expiringSubscriptions": 0
+          },
+          "reason": "source_status_request",
+          "sources": [
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-14T08:40:46.370016+00:00",
+              "resourceId": "user:jdawson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: jdawson@alleatogroup.com",
+              "staleMinutes": 425,
+              "lastSuccessAt": "2026-05-14T08:40:46.370016+00:00",
+              "uncompiledCount": 937,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-14T11:40:22.34886+00:00",
+              "resourceId": "user:acannon@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: acannon@alleatogroup.com",
+              "staleMinutes": 245,
+              "lastSuccessAt": "2026-05-14T11:40:22.34886+00:00",
+              "uncompiledCount": 937,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+              "resourceId": "njepson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: njepson@alleatogroup.com",
+              "staleMinutes": 20307,
+              "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+              "resourceId": "mparsons@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: mparsons@alleatogroup.com",
+              "staleMinutes": 20308,
+              "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+              "resourceId": "jdawson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: jdawson@alleatogroup.com",
+              "staleMinutes": 20309,
+              "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+              "resourceId": "ctragesser@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: ctragesser@alleatogroup.com",
+              "staleMinutes": 4186,
+              "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+              "resourceId": "crusin@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: crusin@alleatogroup.com",
+              "staleMinutes": 20310,
+              "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+              "resourceId": "awehner@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: awehner@alleatogroup.com",
+              "staleMinutes": 20311,
+              "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+              "resourceId": "accounting@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: accounting@alleatogroup.com",
+              "staleMinutes": 20310,
+              "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T18:14:44.817404+00:00",
+              "resourceId": "acannon@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: acannon@alleatogroup.com",
+              "staleMinutes": 1291,
+              "lastSuccessAt": "2026-05-13T18:14:44.817404+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T20:06:20.616839+00:00",
+              "resourceId": "38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: 38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+              "staleMinutes": 1179,
+              "lastSuccessAt": "2026-05-13T20:06:20.616839+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T00:00:00+00:00",
+              "resourceId": "document_metadata",
+              "lastErrorAt": null,
+              "resourceName": "Outlook email",
+              "staleMinutes": 2385,
+              "lastSuccessAt": "2026-05-13T00:00:00+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            }
+          ],
+          "generatedAt": "2026-05-14T16:00:36.202Z",
+          "missingStage": "embedding_backlog",
+          "overallStatus": "degraded"
+        },
+        "timestamp": "2026-05-14T16:00:36.202Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "error": "semanticSearch timed out during source lookup retrieval",
+        "input": {
+          "query": "Using Teams messages from this past week, what are people actually worried about?",
+          "projectId": null,
+          "threshold": 0.5,
+          "matchCount": 12,
+          "skipRerank": false
+        },
+        "timestamp": "2026-05-14T16:00:54.322Z"
+      },
+      {
+        "tool": "sourceLookupIntentRouter",
+        "input": {
+          "query": "Using Teams messages from this past week, what are people actually worried about?",
+          "intent": "source_lookup",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": "additive-context",
+          "resultCount": 0,
+          "recentTeamsWindow": null,
+          "usedProjectBriefingTemplate": false
+        },
+        "timestamp": "2026-05-14T16:00:54.322Z"
+      },
+      {
+        "tool": "messageDrivenToolRouter",
+        "input": {
+          "intent": "source_lookup",
+          "message": "Using Teams messages from this past week, what are people actually worried about?"
+        },
+        "output": {
+          "requiredToolNames": [
+            "getPeopleAndRoles",
+            "searchTeamsMessages",
+            "semanticSearch"
+          ]
+        },
+        "timestamp": "2026-05-14T16:00:54.322Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.excalidraw.com/mcp",
+          "server": "excalidraw"
+        },
+        "output": {
+          "allowedTools": [
+            "read_me",
+            "create_view",
+            "export_to_excalidraw",
+            "save_checkpoint",
+            "read_checkpoint"
+          ],
+          "enabledTools": [
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "enabledToolCount": 5,
+          "discoveredToolCount": 5
+        },
+        "timestamp": "2026-05-14T16:00:54.478Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.supabase.com/mcp?project_ref=lgveqfnpkxvzbnnwuled",
+          "server": "supabase"
+        },
+        "output": {
+          "error": "MCP HTTP Transport Error: POSTing to endpoint (HTTP 401): {\"message\":\"JWT could not be decoded\"}"
+        },
+        "timestamp": "2026-05-14T16:00:54.513Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "promptMode": "full_strategist",
+          "toolChoice": {
+            "type": "tool",
+            "toolName": "getPeopleAndRoles"
+          },
+          "fullToolCount": 99,
+          "modelToolCount": 3,
+          "modelToolNames": [
+            "getPeopleAndRoles",
+            "searchTeamsMessages",
+            "semanticSearch"
+          ],
+          "streamMaxSteps": 10,
+          "scopedToolCount": 3,
+          "streamMaxOutputTokens": 4000,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": false
+        },
+        "timestamp": "2026-05-14T16:00:54.513Z"
+      },
+      {
+        "tool": "getPeopleAndRoles",
+        "input": {
+          "role": "",
+          "projectId": 0,
+          "projectName": ""
+        },
+        "output": {
+          "error": "Provide either projectId or projectName"
+        },
+        "timestamp": "2026-05-14T16:00:56.700Z"
+      },
+      {
+        "tool": "getPeopleAndRoles",
+        "input": {
+          "role": "",
+          "projectId": 756,
+          "projectName": ""
+        },
+        "output": {
+          "error": "Could not embed because more than one relationship was found for 'people' and 'companies'"
+        },
+        "timestamp": "2026-05-14T16:00:58.510Z"
+      },
+      {
+        "tool": "getPeopleAndRoles",
+        "input": {
+          "role": "",
+          "projectId": 756,
+          "projectName": "Alleato - Leads"
+        },
+        "output": {
+          "error": "Could not embed because more than one relationship was found for 'people' and 'companies'"
+        },
+        "timestamp": "2026-05-14T16:00:59.694Z"
+      },
+      {
+        "tool": "getPeopleAndRoles",
+        "input": {
+          "role": "",
+          "projectId": 1,
+          "projectName": ""
+        },
+        "output": {
+          "error": "Project 1 not found"
+        },
+        "timestamp": "2026-05-14T16:01:01.277Z"
+      },
+      {
+        "tool": "getPeopleAndRoles",
+        "input": {
+          "role": "",
+          "projectId": 999999,
+          "projectName": ""
+        },
+        "output": {
+          "error": "Project 999999 not found"
+        },
+        "timestamp": "2026-05-14T16:01:02.230Z"
+      },
+      {
+        "tool": "getPeopleAndRoles",
+        "input": {
+          "role": "Project Manager",
+          "projectId": 756,
+          "projectName": "Alleato - Leads"
+        },
+        "output": {
+          "error": "Could not embed because more than one relationship was found for 'people' and 'companies'"
+        },
+        "timestamp": "2026-05-14T16:01:05.404Z"
+      },
+      {
+        "tool": "getPeopleAndRoles",
+        "input": {
+          "role": "",
+          "projectId": 756,
+          "projectName": "Alleato - Leads"
+        },
+        "output": {
+          "error": "Could not embed because more than one relationship was found for 'people' and 'companies'"
+        },
+        "timestamp": "2026-05-14T16:01:06.492Z"
+      },
+      {
+        "tool": "getPeopleAndRoles",
+        "input": {
+          "role": "",
+          "projectId": 756,
+          "projectName": "Alleato - Leads"
+        },
+        "output": {
+          "error": "Could not embed because more than one relationship was found for 'people' and 'companies'"
+        },
+        "timestamp": "2026-05-14T16:01:07.798Z"
+      },
+      {
+        "tool": "getPeopleAndRoles",
+        "input": {
+          "role": "",
+          "projectId": 756,
+          "projectName": "Alleato - Leads"
+        },
+        "output": {
+          "error": "Could not embed because more than one relationship was found for 'people' and 'companies'"
+        },
+        "timestamp": "2026-05-14T16:01:09.445Z"
+      },
+      {
+        "tool": "getPeopleAndRoles",
+        "input": {
+          "role": "",
+          "projectId": 756,
+          "projectName": "Alleato - Leads"
+        },
+        "output": {
+          "error": "Could not embed because more than one relationship was found for 'people' and 'companies'"
+        },
+        "timestamp": "2026-05-14T16:01:11.075Z"
+      },
+      {
+        "tool": "noToolRetry",
+        "input": {
+          "reason": "The model/tool run completed without returning final assistant text.",
+          "retryModel": "openai/gpt-4.1",
+          "primaryModel": "openai/gpt-5.4"
+        },
+        "output": {
+          "succeeded": true,
+          "contentLength": 888
+        },
+        "timestamp": "2026-05-14T16:01:13.698Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": {
+      "alerts": [
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: jdawson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:jdawson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: acannon@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:acannon@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: njepson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "njepson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: mparsons@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "mparsons@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: jdawson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "jdawson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "ctragesser@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: crusin@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "crusin@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: awehner@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "awehner@alleatogroup.com"
+        }
+      ],
+      "counts": {
+        "sources": 30,
+        "uncompiled": 11376,
+        "unembedded": 1063,
+        "warningSources": 0,
+        "criticalSources": 30,
+        "failedSubscriptions": 0,
+        "expiringSubscriptions": 0
+      },
+      "reason": "source_status_request",
+      "sources": [
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-14T08:40:46.370016+00:00",
+          "resourceId": "user:jdawson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: jdawson@alleatogroup.com",
+          "staleMinutes": 425,
+          "lastSuccessAt": "2026-05-14T08:40:46.370016+00:00",
+          "uncompiledCount": 937,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-14T11:40:22.34886+00:00",
+          "resourceId": "user:acannon@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: acannon@alleatogroup.com",
+          "staleMinutes": 245,
+          "lastSuccessAt": "2026-05-14T11:40:22.34886+00:00",
+          "uncompiledCount": 937,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+          "resourceId": "njepson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: njepson@alleatogroup.com",
+          "staleMinutes": 20307,
+          "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+          "resourceId": "mparsons@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: mparsons@alleatogroup.com",
+          "staleMinutes": 20308,
+          "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+          "resourceId": "jdawson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: jdawson@alleatogroup.com",
+          "staleMinutes": 20309,
+          "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+          "resourceId": "ctragesser@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: ctragesser@alleatogroup.com",
+          "staleMinutes": 4186,
+          "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+          "resourceId": "crusin@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: crusin@alleatogroup.com",
+          "staleMinutes": 20310,
+          "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+          "resourceId": "awehner@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: awehner@alleatogroup.com",
+          "staleMinutes": 20311,
+          "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+          "resourceId": "accounting@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: accounting@alleatogroup.com",
+          "staleMinutes": 20310,
+          "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T18:14:44.817404+00:00",
+          "resourceId": "acannon@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: acannon@alleatogroup.com",
+          "staleMinutes": 1291,
+          "lastSuccessAt": "2026-05-13T18:14:44.817404+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T20:06:20.616839+00:00",
+          "resourceId": "38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: 38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+          "staleMinutes": 1179,
+          "lastSuccessAt": "2026-05-13T20:06:20.616839+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T00:00:00+00:00",
+          "resourceId": "document_metadata",
+          "lastErrorAt": null,
+          "resourceName": "Outlook email",
+          "staleMinutes": 2385,
+          "lastSuccessAt": "2026-05-13T00:00:00+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        }
+      ],
+      "generatedAt": "2026-05-14T16:00:36.202Z",
+      "missingStage": "embedding_backlog",
+      "overallStatus": "degraded"
+    },
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 6494,
+          "finishReason": "tool-calls",
+          "outputTokens": 28,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getPeopleAndRoles"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 6546,
+          "finishReason": "tool-calls",
+          "outputTokens": 28,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getPeopleAndRoles"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 2,
+          "inputTokens": 6609,
+          "finishReason": "tool-calls",
+          "outputTokens": 33,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getPeopleAndRoles"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 3,
+          "inputTokens": 6677,
+          "finishReason": "tool-calls",
+          "outputTokens": 28,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getPeopleAndRoles"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 4,
+          "inputTokens": 6727,
+          "finishReason": "tool-calls",
+          "outputTokens": 29,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getPeopleAndRoles"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 5,
+          "inputTokens": 6779,
+          "finishReason": "tool-calls",
+          "outputTokens": 34,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getPeopleAndRoles"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 6,
+          "inputTokens": 6848,
+          "finishReason": "tool-calls",
+          "outputTokens": 33,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getPeopleAndRoles"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 7,
+          "inputTokens": 6916,
+          "finishReason": "tool-calls",
+          "outputTokens": 33,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getPeopleAndRoles"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 8,
+          "inputTokens": 6984,
+          "finishReason": "tool-calls",
+          "outputTokens": 33,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getPeopleAndRoles"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 9,
+          "inputTokens": 7052,
+          "finishReason": "tool-calls",
+          "outputTokens": 33,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getPeopleAndRoles"
+          ]
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getPeopleAndRoles\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getPeopleAndRoles",
+            "searchTeamsMessages",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getPeopleAndRoles\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getPeopleAndRoles",
+            "searchTeamsMessages",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 2,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getPeopleAndRoles\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getPeopleAndRoles",
+            "searchTeamsMessages",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 3,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getPeopleAndRoles\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getPeopleAndRoles",
+            "searchTeamsMessages",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 4,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getPeopleAndRoles\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getPeopleAndRoles",
+            "searchTeamsMessages",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 5,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getPeopleAndRoles\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getPeopleAndRoles",
+            "searchTeamsMessages",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 6,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getPeopleAndRoles\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getPeopleAndRoles",
+            "searchTeamsMessages",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 7,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getPeopleAndRoles\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getPeopleAndRoles",
+            "searchTeamsMessages",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 8,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getPeopleAndRoles\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getPeopleAndRoles",
+            "searchTeamsMessages",
+            "semanticSearch"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 9,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getPeopleAndRoles\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getPeopleAndRoles",
+            "searchTeamsMessages",
+            "semanticSearch"
+          ]
+        }
+      ],
+      "totalStepCount": 10,
+      "finalFinishReason": "tool-calls",
+      "preparedStepCount": 10,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 10
+    },
+    "response_quality": {
+      "score": 70,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response",
+        "1 tool call failure(s)"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

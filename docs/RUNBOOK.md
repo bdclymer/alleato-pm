@@ -274,14 +274,18 @@ npm run rag:sharepoint:import-rfis
 # Backfill chunk embeddings for recent meetings
 npm run rag:backfill:meeting-chunks
 
-# Backfill embeddings for AI insights (decisions, risks, opportunities)
-node scripts/backfill-insights-embeddings.mjs [--dry-run] [--limit N] [--type decision|risk|opportunity]
+# Backfill Fireflies transcript chunks from storage
+npm run rag:backfill:fireflies-transcript-chunks
 
-# Backfill meeting summary embeddings
-node scripts/backfill-meeting-summary-embeddings.mjs [--dry-run] [--limit N]
+# Backfill source lifecycle/project assignment metadata used by current health checks
+npm run rag:backfill:source-lifecycle
+npm run rag:backfill:project-assignments
+npm run rag:backfill:onedrive-project-paths
 
-# Backfill summary embeddings (general)
-node scripts/backfill-summary-embeddings.mjs
+# Verify the resulting source and chunk health
+npm run rag:verify:chunk-integrity
+npm run rag:verify:meetings
+npm run rag:verify:source-lifecycle -- --days 14 --min-embedded-ratio 1 --min-project-assigned-ratio 0 --min-task-assigned-ratio 0 --require-lifecycle-rows false
 ```
 
 ### Enrichment
@@ -296,17 +300,12 @@ node scripts/run-enrichment.mjs --snapshots
 ### Test RAG layers
 
 ```bash
-# Test embedding → vector search → chat completion
-node scripts/test-rag-terminal.mjs
-node scripts/test-rag-terminal.mjs "what's the status of Vermillion Rise?"
-node scripts/test-rag-terminal.mjs "budget overruns" --project-id 67
-node scripts/test-rag-terminal.mjs --layer 1   # embeddings only
-node scripts/test-rag-terminal.mjs --layer 2   # vector search only
-node scripts/test-rag-terminal.mjs --layer 3   # chat completion only
-
-# Test AI tool queries
-node scripts/test-ai-tools.mjs
-node scripts/test-ai-tool-queries.mjs
+# Verify retrieval, routing, source contracts, and assistant tool registry
+npm run rag:verify:financial
+npm run rag:verify:source-specific
+npm run rag:verify:response-contract
+npm run rag:verify:assistant-tool-registry
+npm run rag:verify:assistant-operational-readiness
 
 # Query RAG via API
 ./scripts/cli/query-rag.sh "your question here"

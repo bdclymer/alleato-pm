@@ -9,7 +9,7 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import type { Json } from "@/types/database.types";
 
 const DEFAULT_BRANDON_VOICE_PROFILE_PATH =
-  "docs/ai-plan/brandon-email-voice-profile.md";
+  "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md";
 const DEFAULT_BRANDON_VOICE_PROFILE_VERSION = "2026-05-19";
 
 const emailDraftFeedbackSchema = z.object({

@@ -1,5 +1,5 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { requireAdmin } from "@/app/api/admin/intelligence-compiler/_shared";
+import { requireAdmin } from "@/app/api/admin/_shared";
 import {
   createRagServiceClient,
   createServiceClient,
@@ -11,6 +11,8 @@ export const dynamic = "force-dynamic";
 const WHERE = "api.admin.ai-system-health#GET";
 const SAMPLE_LIMIT = 5000;
 const DAYS_BACK = 30;
+const SOURCE_COVERAGE_DAYS = 14;
+const SOURCE_COVERAGE_LIMIT = 1500;
 
 type MetricsWindow = {
   conversations: number;
@@ -22,12 +24,88 @@ type MetricsWindow = {
   feedbackDown: number;
 };
 
+type SourceCoverageRow = {
+  family: string;
+  label: string;
+  sourceRows14d: number;
+  docsWithEmbeddedChunks: number;
+  terminalUnembeddable: number;
+  actionableMissingEmbeddings: number;
+  coverageRatio: number | null;
+  newestSourceCreatedAt: string | null;
+  missingSamples: { id: string; title: string | null; createdAt: string | null }[];
+};
+
 function emptyWindow(): MetricsWindow {
   return { conversations: 0, messages: 0, inputTokens: 0, outputTokens: 0, cost: 0, feedbackUp: 0, feedbackDown: 0 };
 }
 
 function msAgo(hours: number) {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+}
+
+function sourceFamily(row: Record<string, unknown>): SourceCoverageRow["family"] | null {
+  const source = String(row.source ?? "");
+  const category = String(row.category ?? "");
+  const sourceSystem = String(row.source_system ?? "");
+
+  if (source === "fireflies") return "meeting_transcripts";
+  if (source !== "microsoft_graph") return null;
+  if (category === "email") return "emails";
+  if (category === "teams_message") return "teams_messages";
+  if (category === "document" && sourceSystem === "sharepoint") return "sharepoint_documents";
+  if (category === "document") return "onedrive_documents";
+  return null;
+}
+
+function familyLabel(family: string): string {
+  switch (family) {
+    case "meeting_transcripts":
+      return "Meeting transcripts";
+    case "emails":
+      return "Emails";
+    case "teams_messages":
+      return "Teams messages";
+    case "sharepoint_documents":
+      return "SharePoint documents";
+    case "onedrive_documents":
+      return "OneDrive documents";
+    default:
+      return family.replaceAll("_", " ");
+  }
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
+async function addEmbeddedChunkDocumentIds(
+  ragSupabase: ReturnType<typeof createRagServiceClient>,
+  documentIds: string[],
+  target: Set<string>,
+) {
+  const pageSize = 1000;
+  for (const batch of chunk(documentIds, 100)) {
+    let offset = 0;
+    while (true) {
+      const { data: chunkRows, error: chunkError } = await ragSupabase
+        .from("document_chunks")
+        .select("document_id")
+        .in("document_id", batch)
+        .not("embedding", "is", null)
+        .range(offset, offset + pageSize - 1);
+      if (chunkError) throw new Error(`source coverage document_chunks query failed: ${chunkError.message}`);
+      for (const row of chunkRows ?? []) {
+        if (row.document_id) target.add(String(row.document_id));
+      }
+      if (!chunkRows || chunkRows.length < pageSize) break;
+      offset += pageSize;
+    }
+  }
 }
 
 export const GET = withApiGuardrails(WHERE, async () => {
@@ -194,6 +272,127 @@ export const GET = withApiGuardrails(WHERE, async () => {
   const candidateLearnings = candidateResult.count ?? 0;
   const activeLearnings = activeResult.count ?? 0;
 
+  const sinceCoverage = msAgo(24 * SOURCE_COVERAGE_DAYS);
+  const { data: sourceDocs, error: sourceDocsError } = await supabase
+    .from("document_metadata")
+    .select("id,title,source,category,type,source_system,status,created_at")
+    .is("deleted_at", null)
+    .gte("created_at", sinceCoverage)
+    .in("source", ["fireflies", "microsoft_graph"])
+    .order("created_at", { ascending: false })
+    .limit(SOURCE_COVERAGE_LIMIT);
+
+  if (sourceDocsError) throw new Error(`source coverage document_metadata query failed: ${sourceDocsError.message}`);
+
+  const coveredDocs = (sourceDocs ?? [])
+    .map((row) => ({ ...row, family: sourceFamily(row as Record<string, unknown>) }))
+    .filter((row): row is typeof row & { family: string } => Boolean(row.family));
+  const sourceIds = coveredDocs.map((row) => String(row.id));
+  const chunkDocumentIds = new Set<string>();
+  await addEmbeddedChunkDocumentIds(ragSupabase, sourceIds, chunkDocumentIds);
+
+  const terminalDocumentIds = new Set<string>();
+  for (const batch of chunk(sourceIds, 100)) {
+    const { data: terminalRows, error: terminalError } = await ragSupabase
+      .from("source_processing_jobs")
+      .select("source_document_id,error_code,status")
+      .in("source_document_id", batch)
+      .eq("status", "failed_permanent")
+      .in("error_code", [
+        "skipped_low_content",
+        "interview_title_excluded",
+        "graph_content_missing",
+        "graph_content_empty",
+        "no_chunks",
+        "ocr_failed",
+      ]);
+    if (terminalError) throw new Error(`source coverage source_processing_jobs query failed: ${terminalError.message}`);
+    for (const row of terminalRows ?? []) {
+      if (row.source_document_id) terminalDocumentIds.add(String(row.source_document_id));
+    }
+  }
+
+  const ragMetadataRows: {
+    id: string | null;
+    embedding_status: string | null;
+    parsing_status: string | null;
+  }[] = [];
+  for (const batch of chunk(sourceIds, 100)) {
+    const { data: batchRows, error: ragMetadataError } = await ragSupabase
+      .from("rag_document_metadata")
+      .select("id,embedding_status,parsing_status")
+      .in("id", batch);
+    if (ragMetadataError) {
+      throw new Error(
+        `source coverage rag_document_metadata query failed: ${ragMetadataError.message || "unknown Supabase REST error"}`,
+      );
+    }
+    ragMetadataRows.push(...(batchRows ?? []));
+  }
+
+  const terminalStatuses = new Set([
+    "intentionally_excluded",
+    "deleted_no_transcript",
+    "metadata_only",
+    "not_vectorizable",
+    "skipped",
+    "skipped_low_content",
+    "graph_content_missing",
+    "graph_content_empty",
+    "no_chunks",
+    "ocr_failed",
+  ]);
+  for (const row of ragMetadataRows ?? []) {
+    if (
+      row.id &&
+      (terminalStatuses.has(String(row.embedding_status ?? "")) ||
+        terminalStatuses.has(String(row.parsing_status ?? "")))
+    ) {
+      terminalDocumentIds.add(String(row.id));
+    }
+  }
+  for (const row of coveredDocs) {
+    if (terminalStatuses.has(String(row.status ?? ""))) {
+      terminalDocumentIds.add(String(row.id));
+    }
+  }
+
+  const families = [
+    "meeting_transcripts",
+    "emails",
+    "teams_messages",
+    "sharepoint_documents",
+    "onedrive_documents",
+  ];
+  const sourceCoverage: SourceCoverageRow[] = families.map((family) => {
+    const rows = coveredDocs.filter((row) => row.family === family);
+    const terminalRows = rows.filter((row) => terminalDocumentIds.has(String(row.id)));
+    const terminalRowIds = new Set(terminalRows.map((row) => String(row.id)));
+    const embeddedRows = rows.filter(
+      (row) => chunkDocumentIds.has(String(row.id)) && !terminalRowIds.has(String(row.id)),
+    );
+    const missingRows = rows.filter(
+      (row) => !chunkDocumentIds.has(String(row.id)) && !terminalDocumentIds.has(String(row.id)),
+    );
+    const denominator = rows.length - terminalRows.length;
+
+    return {
+      family,
+      label: familyLabel(family),
+      sourceRows14d: rows.length,
+      docsWithEmbeddedChunks: embeddedRows.length,
+      terminalUnembeddable: terminalRows.length,
+      actionableMissingEmbeddings: missingRows.length,
+      coverageRatio: denominator > 0 ? embeddedRows.length / denominator : null,
+      newestSourceCreatedAt: rows[0]?.created_at ?? null,
+      missingSamples: missingRows.slice(0, 5).map((row) => ({
+        id: String(row.id),
+        title: row.title ?? null,
+        createdAt: row.created_at ?? null,
+      })),
+    };
+  });
+
   // Pipeline health: last 24h sync runs
   const since24h = msAgo(24);
   const { data: syncRuns, error: syncError } = await ragSupabase
@@ -227,6 +426,10 @@ export const GET = withApiGuardrails(WHERE, async () => {
       feedbackEvents7d,
       candidateLearnings,
       activeLearnings,
+    },
+    sourceCoverage: {
+      days: SOURCE_COVERAGE_DAYS,
+      rows: sourceCoverage,
     },
     pipeline: {
       succeeded,

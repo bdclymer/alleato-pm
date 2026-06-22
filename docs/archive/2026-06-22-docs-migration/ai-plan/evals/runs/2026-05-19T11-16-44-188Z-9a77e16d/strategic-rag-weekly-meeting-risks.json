@@ -1,0 +1,8404 @@
+{
+  "id": "strategic-rag-weekly-meeting-risks",
+  "intent": "meeting_query",
+  "prompt": "Tell me the biggest insights, risks, or hurdles from the past week's meetings.",
+  "selectedProjectId": null,
+  "sessionId": "21cd0069-3c21-430e-9975-0b0d7e7c4da3",
+  "sessionLabel": "eval-2026-05-19T11-16-44-188Z-9a77e16d-strategic-rag-weekly-meeting-risks",
+  "startedAt": "2026-05-19T11:18:16.403Z",
+  "finishedAt": "2026-05-19T11:19:06.403Z",
+  "durationMs": 44932,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 1560,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "expected family 'meetings' not represented"
+    ],
+    "observations": [
+      "tools fired: backendDeepAgentExecutiveBriefing, getMeetingIntelligence, sourceSpecificRagRetrieval",
+      "judge strategic_advisor: pass (5/4)"
+    ],
+    "toolNames": [
+      "backendDeepAgentExecutiveBriefing",
+      "getMeetingIntelligence",
+      "sourceSpecificRagRetrieval"
+    ],
+    "familiesHit": [
+      "project",
+      "financial",
+      "risk",
+      "actions",
+      "task_management",
+      "source_health"
+    ],
+    "finalTextLength": 7368,
+    "finalText": "The biggest takeaway from the past week’s meetings: **the company is carrying too much operational friction at once** — not one catastrophic issue, but a pile of manual processes, unresolved design details, and deadline-driven decisions that can turn into real cost and schedule damage if they keep stacking.\n\n### 1. Internal accounting / systems are still too manual\nThis showed up over and over in the accounting meetings.\n\n- **Alleato Finance / TimeCo / Notion / Acumatica** meetings all point to the same problem: payroll, transaction coding, and reporting still rely on **manual exports, manual verification, and person-dependent workflows**.\n- Repeated references to **missing job numbers, missing dates, no bulk posting, memo code uncertainty, and sync/configuration issues** mean the process is functioning, but it is not stable.\n- The work is also concentrated around a few people — especially **Jose and Maria** — which creates a bottleneck and a continuity risk.\n\nWhy it matters:\n- That’s not just an admin nuisance. It creates **error risk in payroll, transaction coding, and financial reporting**.\n- It also means scaling the team gets harder because new people are being trained into a process that still depends on tribal knowledge.\n\nWhat I’d pay attention to:\n- Whether the TimeCo/Venture/Acumatica workflow gets standardized quickly\n- Whether SOPs actually get produced and used\n- Whether Lauren’s onboarding reduces load or just adds another person dependent on Jose’s availability\n\n### 2. Exol Wilmer has real precon/design risk right now\n**Exol Wilmer** was one of the clearest project-level concerns.\n\nWhat came through in the meetings:\n- The team is still **collecting bids with scope gaps** in doors, roofing, electrical, finishing, metal, and glass.\n- There are also **app access and document visibility issues** affecting bid tracking and coordination.\n- Scope is still being clarified through **inclusions/exclusions documents**, which usually means the estimate is not locked as tightly as it should be.\n- On the framing side, they’re making **cost-driven redesign decisions** — wall height reductions, shifting to a pre-built control room, alternate stud pricing.\n\nWhy it matters:\n- That combination — incomplete bid coverage, active scope clarification, and cost-cutting redesign before final pricing — is where buyout problems start.\n- It’s manageable, but it’s not clean. If this gets pushed to proposal/final pricing without the gaps closed, you risk either **carrying holes** or **winning with bad assumptions**.\n\nWhat needs watching:\n- Final bid completeness by trade\n- Whether the exclusions list is explicit enough to defend later\n- Whether design simplifications actually hold through coordination\n\n### 3. Uniqlo is close to the field finish line, but closeout/control is messy\n**Uniqlo Phillipsburg NJ** looks like a project near completion that can still get tripped up by execution noise.\n\nWhat surfaced:\n- Water, hydro, and air testing are active and being prioritized.\n- There are **surplus material and inventory reconciliation issues** at Siva.\n- The team is still chasing **missing exit sign information, punch list details, testing results, and monitoring log interpretation**.\n- Prior meeting notes also flagged **material logging problems, wrong-address delivery, and incomplete tracking of what’s onsite vs ordered**.\n\nWhy it matters:\n- This is classic late-stage risk. The job is not blowing up — but **closeout gets slower and more expensive when field teams are still sorting inventory, punch details, and test documentation at the same time**.\n- The danger isn’t just schedule drag; it’s unnecessary labor burn and billing/credit leakage on materials.\n\n### 4. Exol Morrisville has active design coordination risk\nFor **Exol Morrisville**, the issue is not chaos — it’s unresolved technical coordination that can become schedule trouble.\n\nKey signals:\n- Structural updates are due this week.\n- Mechanical design needs airtight coordination.\n- The team is still resolving **ceiling heights, insulation conditions, charging station location, risers, and possible firewall/code requirements**.\n\nWhy it matters:\n- These are exactly the kinds of details that seem manageable until they hit permitting, landlord review, or cross-discipline coordination.\n- If those answers don’t land quickly, they turn into redesign loops.\n\n### 5. Westfield Collective may have a viability problem, not just a pricing problem\nThis one stood out because the language was stronger than normal.\n\nFrom the **Union Site Review / Westfield Collective** meeting:\n- The site has major **grading, earthwork, parking, detention, and sewer fee constraints**.\n- Brandon explicitly warned that if pricing is not revised around those realities, **the project could be lost**.\n- The team also questioned whether the project is even **viable as currently conceived**.\n\nThat’s the most serious project-level hurdle in the set.\n\nWhy it matters:\n- This is beyond “we need refinement.” This is **scope/site reality threatening deal viability**.\n- If the design and pricing don’t get re-based fast, the team risks spending effort on a version of the project that doesn’t pencil.\n\n### 6. Staffing strain is showing up in multiple places\nThe hiring/interview meetings surfaced a real internal issue:\n\n- Leadership bandwidth is being described as **stretched thin**.\n- Hiring is being framed as a way to relieve **knowledge bottlenecks**.\n- Candidate compensation expectations are high enough to matter, especially for experienced roles.\n\nWhy it matters:\n- This lines up with the process bottlenecks showing up elsewhere.\n- When operations depend on a few key people and leaders are stretched, small issues stay small for less time.\n\n## The pattern across all of it\nThe recurring pattern is this:\n\n**The company is not short on activity. It’s short on slack.**\n\nAcross the meetings, the same themes keep repeating:\n- manual process dependence\n- key-person bottlenecks\n- design details being solved late\n- procurement/bid completeness gaps\n- field inventory/control issues\n- hard deadlines forcing decisions before everything is fully clean\n\nThat doesn’t mean things are failing. It means **there’s less margin for error than there should be**.\n\n## What deserves leadership attention first\nIf I were prioritizing this week, I’d focus here:\n\n1. **Westfield Collective** — decide quickly whether the current concept is financially/site viable or needs a reset.\n2. **Exol Wilmer** — close trade coverage gaps and lock scope assumptions before bad pricing gets baked in.\n3. **Accounting systems workflow** — reduce dependence on Jose/Maria and get the TimeCo/Notion/Acumatica process documented.\n4. **Uniqlo closeout discipline** — tighten material reconciliation, test documentation, and punch control so the finish doesn’t drag.\n\n## Confidence / data gap\nStrong signal from meeting intelligence: **15 meetings, 50 risk signals, 29 decisions, 60 action items** in the last week.  \nWhat I can say confidently is where the pressure is showing up. What I can’t confirm from this meeting summary alone is **which of those action items have already been completed**.\n\nIf you want, I can turn this into a sharper executive readout:\n- **top 5 risks only**\n- **project-by-project weekly briefing**\n- or **who owns the most important unresolved actions from these meetings**.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 45000,
+      "maxDurationMs": 150000,
+      "durationMs": 44932
+    },
+    "judge": {
+      "status": "pass",
+      "rubric": "strategic_advisor",
+      "score": 5,
+      "minScore": 4,
+      "summary": "Strong executive synthesis with clear prioritization, concrete project-level risks, and honest uncertainty. It does more than recap meetings: it identifies a cross-cutting pattern of low slack, then ties that pattern to specific implications for schedule, cost, closeout, and staffing. The answer is appropriately anchored to the cited projects and distinguishes background process issues from project-specific risks. It also avoids overclaiming by explicitly noting what cannot be confirmed from the summary alone.",
+      "strengths": [
+        "Starts with a decisive point of view: the core issue is not isolated problems but accumulated operational friction and lack of slack.",
+        "Connects evidence to business implications well, especially around cost/schedule risk, buyout exposure, late-stage closeout drag, and viability concerns.",
+        "Uses specific project examples rather than generic construction commentary: Exol Wilmer, Uniqlo Phillipsburg NJ, Exol Morrisville, and Westfield Collective.",
+        "Surfaces second-order risks the user did not explicitly ask for, such as key-person dependence, billing/credit leakage, and the possibility that a project may not be viable as currently conceived.",
+        "Honest about evidence limits and includes a confidence/data-gap note instead of fabricating completion status."
+      ],
+      "weaknesses": [
+        "Operational next steps are directional but not consistently owner/timing specific; only the prioritization list is concrete, not a full action plan.",
+        "Some phrasing is still broad at the executive level and could be sharper on what leadership should decide this week versus monitor.",
+        "The answer relies on meeting intelligence aggregation counts, but does not explain which counts map to which projects or actions, limiting auditability.",
+        "Could have been even more explicit about tradeoffs, for example where cost-cutting redesign may reduce scope quality or future change-order risk."
+      ],
+      "dimensionScores": {
+        "leads_with_clear_executive_point_of_view": 5,
+        "connects_evidence_into_business_implications": 5,
+        "gives_specific_operational_next_steps_with_owners_timing_when_supported": 4,
+        "surfaces_what_user_did_not_ask_but_should_be_thinking_about": 5,
+        "sounds_like_high_level_strategist": 5,
+        "stays_honest_about_missing_or_weak_evidence": 5,
+        "keeps_project_specific_claims_anchored_and_labels_background": 5
+      },
+      "provider": "vercel_gateway",
+      "model": "openai/gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "getMeetingIntelligence",
+    "getMeetingsByDate",
+    "searchMeetingsByTopic",
+    "getActionItemsAndInsights",
+    "backendDeepAgentExecutiveBriefing"
+  ],
+  "expectedToolFamilies": [
+    "meetings",
+    "actions",
+    "risk"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: source_specific_rag_recent_meetings",
+        "status": "loading",
+        "timestamp": "2026-05-19T11:18:17.439Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Checking Render Deep Agents executive briefing",
+        "status": "loading",
+        "timestamp": "2026-05-19T11:18:17.687Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Render Deep Agents executive bridge failed; falling back to local retrieval: backend.deep-agent-executive-briefing did not complete within retry policy.",
+        "status": "warning",
+        "timestamp": "2026-05-19T11:18:25.693Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (1 sources, 0 warnings)",
+        "status": "success",
+        "durations": {
+          "source_specific_rag": 706
+        },
+        "timestamp": "2026-05-19T11:18:27.380Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "PIFrCggqAGmYziNJ"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "toolName": "getMeetingIntelligence"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "start"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "12"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "end"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "19"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "intent"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "summary"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "limit"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "15"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "time"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "Zone"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "America"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "/New"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "_Y"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "ork"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "toolName": "getMeetingIntelligence",
+      "input": {
+        "startDate": "2026-05-12",
+        "endDate": "2026-05-19",
+        "relativeWindow": "today",
+        "intent": "summary",
+        "limit": 15,
+        "timeZone": "America/New_York"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_soAH9DseVPTyUMOvGRMtR7Po",
+      "output": {
+        "type": "meeting_intelligence",
+        "id": "meeting-intelligence",
+        "title": "Meeting summary",
+        "subtitle": "Structured readout from meeting records, extracted insights, and transcript summaries",
+        "dateLabel": "2026-05-12 to 2026-05-19",
+        "meetingCount": 15,
+        "criticalRiskCount": 50,
+        "decisionCount": 29,
+        "actionItemCount": 60,
+        "topInsights": [
+          "15 meeting records matched this window.",
+          "50 risk signals found across the matched meetings.",
+          "29 decision signals found across the matched meetings.",
+          "Opportunity tracking is not available in the current intelligence pipeline; only risks, decisions, and actions are surfaced."
+        ],
+        "recommendedNextActions": [
+          "Open the meeting cards with risk or action badges first.",
+          "Convert verified ownership items into Tasks page records.",
+          "Use the linked meeting records as the evidence trail before sending an owner update."
+        ],
+        "emptyState": "No meeting rows matched this request.",
+        "meetings": [
+          {
+            "id": "01KRXWMFT6JYS2Q6ARNBB6GJG8",
+            "title": "FW: Timeco Config Discussion - Alleato LLC",
+            "projectId": null,
+            "projectName": null,
+            "date": "2026-05-18T20:30:00+00:00",
+            "source": "fireflies",
+            "summary": "📊 Cost Code Integration: Mapping cost codes to Venture divisions enables accurate time tracking and payroll exports for projects.\n👥 Employee Access: Workers will have configurable access to relevant cost codes, enhancing control over time allocation.\n⚙️ Pay...",
+            "criticalRisks": [
+              "The accounting function is working across Notion, Acumatica, Venture, and TimeCo, with repeated references to manual uploads, access setup, memo code questions, and sync issues. The work suggests the stack is functional but not yet integra...",
+              "TimeCo, Venture, Notion, Acumatica, and the proposed QuickBooks transition all appear in the documents as part of the accounting operating system. The team is simultaneously configuring, syncing, and cross-checking these tools rather than ...",
+              "The accounting and systems documents repeatedly route training and approvals through specific individuals, especially Jose and Maria. TimeCo setup, payroll automation, transaction coding, and reporting improvements all rely on those same p...",
+              "TimeCo discussions say the current payroll process is manual and needs automation for hourly and salaried employees. The team is also mapping cost codes, handling time off in separate systems to avoid duplication, and exploring API options..."
+            ],
+            "decisions": [
+              "TimeCo configuration is being finalized for employee permissions, locations, overtime, and approvals, while the TimeCo/Venture setup discussion shows manual payroll exports and API exploration still underway. Cost code mapping and employee...",
+              "Exploring API integration for better data transfer between TimeCo and Acumatica was identified, and the team agreed on maintaining clear communication for effective implementation."
+            ],
+            "actionItems": [
+              "Coordinate with Jesse to finalize which cost codes from the existing list to retain or eliminate (39:30)",
+              "Share example Excel export templates from Jose with all participants for review (24:50)",
+              "Collaborate with Maria to determine relevant cost codes and review export templates (39:30)",
+              "Create cost codes as divisions in Venture based on finalized list from Maria and Jesse (39:50)",
+              "Investigate whether memo codes are supported in current Venture configuration and report back (33:10)"
+            ],
+            "href": "/meetings/01KRXWMFT6JYS2Q6ARNBB6GJG8"
+          },
+          {
+            "id": "01KRXZVQA9N0WX5CBRVA5Y3NR9",
+            "title": "Notion Transaction Process",
+            "projectId": 60,
+            "projectName": "Alleato Finance",
+            "date": "2026-05-18T19:00:00+00:00",
+            "source": "fireflies",
+            "summary": "📅 Weekly Credit Card Transactions: Download occurs Mondays, with transactions picked to avoid duplicates; flow led by Jose.\n🔍 Manual Data Verification Needed: Missing job numbers and dates require cross-checking before Acumatica upload for accuracy.\n⚙️ Sequ...",
+            "criticalRisks": [
+              "The accounting function is working across Notion, Acumatica, Venture, and TimeCo, with repeated references to manual uploads, access setup, memo code questions, and sync issues. The work suggests the stack is functional but not yet integra...",
+              "The accounting and systems documents repeatedly route training and approvals through specific individuals, especially Jose and Maria. TimeCo setup, payroll automation, transaction coding, and reporting improvements all rely on those same p...",
+              "🔍 Manual Data Verification Needed: Missing job numbers and dates require cross-checking before Acumatica upload for accuracy.",
+              "⚙️ Sequential Acumatica Posting Process: Manual posting without bulk options increases error risk; posting must be done individually."
+            ],
+            "decisions": [
+              "Lauren’s onboarding is centered on credit card transactions, Notion workflows, and weekly accounting meeting participation, while access issues and incorrect contact details are still being corrected. The same documents call for SOP video ...",
+              "The documents show onboarding and process training being anchored to specific people, especially Jose Mendez for accounting workflows and Lauren’s training, rather than a formalized training system. The team also discussed creating an SOP ...",
+              "The onboarding and transaction documents both point to a need for training and knowledge transfer rather than a stable, repeatable workflow. New hires are being supported through access issues, SOP video initiatives are underway, and Jose ...",
+              "Lauren’s onboarding depends on Jose for credit card transactions and Notion workflows, while several documents mention shadowing, training sessions, and SOP videos to transfer knowledge. That suggests key accounting processes are still per..."
+            ],
+            "actionItems": [
+              "Share Capital One login credentials with Lauren to enable her access for downloading transaction data (02:00)",
+              "Assist Lauren in practicing the full transaction upload and coding process during a scheduled session on Friday and send calendar invite for the training (39:07)",
+              "Ensure Lauren receives the Capital One login credentials securely and assist in investigating bulk editing options for transaction statuses in Acumatica and Notion (02:24)",
+              "Provide support by obtaining MFA codes for Capital One access when needed, investigate and confirm bulk editing capabilities in Notion for transaction status changes, and create instructional materials or video guide (44:21)",
+              "Prepare to perform the credit card transaction upload and coding process under Jose’s supervision during the follow-up training session (39:07)"
+            ],
+            "href": "/60/meetings/01KRXZVQA9N0WX5CBRVA5Y3NR9"
+          },
+          {
+            "id": "01KRHAK401TDMWHR846BZ5QH4P",
+            "title": "Rojelio's Interview Alleato Group",
+            "projectId": 90,
+            "projectName": "Alleato Internal Ops",
+            "date": "2026-05-18T18:00:00+00:00",
+            "source": "fireflies",
+            "summary": "🔧 Candidate Experience: Rojelio has hands-on experience in automation management and construction, successfully completing five projects.\n🎯 Career Goals: He aims to enhance automation skills while managing turnkey projects, showing interest in a Traveling S...",
+            "criticalRisks": [
+              "Rojelio Martinez’s interview notes his current salary of $130K and references competitive benefits and market trends. That suggests compensation is already a meaningful part of hiring feasibility for experienced candidates, especially as t..."
+            ],
+            "decisions": [
+              "Jon Knapp’s interview centered on a preconstruction director role while noting current leadership was stretched thin, and Rojelio Martinez discussed interest in a Traveling Superintendent role while finishing the California Paris project. ...",
+              "Candidate discussions show the company evaluating senior talent for fit and future needs, while compensation expectations are explicitly part of the conversation. Rojelio’s interview notes his current $130K earnings and desire for competit...",
+              "Rojelio’s interview shows the company evaluating a candidate with relevant experience while also noting his current $130K pay and interest in competitive compensation. Jon Knapp’s interview shows leadership viewing hiring as a way to relie..."
+            ],
+            "actionItems": [
+              "Send updated resume to Brandon for HR and recruitment review (20:58)",
+              "Review Rojelio’s resume once received and coordinate next steps with HR and COO Jesse McCaletero (24:55)",
+              "Provide Rojelio with detailed company benefits information via HR (16:45)",
+              "Cover apartment lease termination fees if Rojelio transitions before lease end (19:10)",
+              "Prepare for Wilmer and Philadelphia project kickoffs anticipated in June-July 2023 with early contract buyout and scheduling tasks (19:25)"
+            ],
+            "href": "/90/meetings/01KRHAK401TDMWHR846BZ5QH4P"
+          },
+          {
+            "id": "01KRXW2A5KZXQSCFYQ2XS0XBWV",
+            "title": "Exol Wilmer - Review on GC's",
+            "projectId": 760,
+            "projectName": "Exol Wilmer",
+            "date": "2026-05-18T18:00:00+00:00",
+            "source": "fireflies",
+            "summary": "🗓️ Project Duration: The Wilmer job schedule targets a year-long duration with 50-60% drawing completion before finalizing.\n💰 Budget Overview: Project value is estimated near $30 million, with soft costs around $1.3 million and GC fees at 8-10%.\n📑 Bid Coll...",
+            "criticalRisks": [
+              "In the Ace Hardware Champaign Teams DM, Brandon Clymer said the number needs to match the proposal already submitted and that the team must find a way to design and build to that budget. Exol Wilmer also shows active budget assumptions, wi...",
+              "Exol Wilmer shows bids being collected but still missing coverage in doors, roofing, electrical, finishing, metal, and glass scopes. The estimating meeting also emphasized persistent vendor follow-up to reach three bids per division, and B...",
+              "The Wilmer review noted app access problems that affected bid tracking and document sharing, while onboarding also surfaced Bluebeam, Notion, and credential/license issues. The recurring pattern is that project execution is being slowed by...",
+              "Several meetings show teams still clarifying what is actually included in scope, what the schedule is, and what milestones or deliverables are expected. In one case Douglas Franklin said he did not see a schedule in the job folder and woul..."
+            ],
+            "decisions": [],
+            "actionItems": [
+              "Share Job Planner projects access with team members to improve coordination and visibility (01:47)",
+              "Train new team members, including Tony, on proposal processes and scheduling tasks to ensure smooth workflow (33:10)",
+              "Create and provide a scope clarifications document listing inclusions and exclusions to align proposal elements and share it with the team (33:50)",
+              "Coordinate with Tony on proposal review and inclusions/exclusions to ensure clarity and completeness (33:05)",
+              "Follow up with Isaac and other subcontractors to secure and verify pricing for doors and windows (24:29)"
+            ],
+            "href": "/760/meetings/01KRXW2A5KZXQSCFYQ2XS0XBWV"
+          },
+          {
+            "id": "01KRHA0Q90STTKQHJGDYRT9BK1",
+            "title": "Jon Knapp Interview (PM)",
+            "projectId": null,
+            "projectName": null,
+            "date": "2026-05-18T14:30:00+00:00",
+            "source": "fireflies",
+            "summary": "📈 DCPS Growth: General contracting division grew from 6 to 55 employees, projected revenue of $80 million this year.\n🏗️ Market Niche: Focus on commercial construction defect remediation, subcontracting all trades, major relationships with engineers and prop...",
+            "criticalRisks": [
+              "In the Jon Knapp interview, leadership strain was called out directly, with current leaders described as stretched thin across multiple projects and hiring framed as a way to alleviate knowledge bottlenecks. That same theme appears elsewhe..."
+            ],
+            "decisions": [
+              "Jon Knapp’s interview centered on a preconstruction director role while noting current leadership was stretched thin, and Rojelio Martinez discussed interest in a Traveling Superintendent role while finishing the California Paris project. ...",
+              "Candidate discussions show the company evaluating senior talent for fit and future needs, while compensation expectations are explicitly part of the conversation. Rojelio’s interview notes his current $130K earnings and desire for competit...",
+              "Rojelio’s interview shows the company evaluating a candidate with relevant experience while also noting his current $130K pay and interest in competitive compensation. Jon Knapp’s interview shows leadership viewing hiring as a way to relie..."
+            ],
+            "actionItems": [
+              "Coordinate internally with Jesse to evaluate Jonathon Knapp's fit for the director of preconstruction role and determine next steps in the hiring process (39:48)",
+              "Prepare for relocation to the Indianapolis area within 2 to 3 weeks after receiving an offer, including securing rental housing in Fishers or McCordsville (38:10)",
+              "🚧 Strategic Limitations: Expansion focused in western U.S., no plans for Midwest due to distance and market alignment.",
+              "- **Strategic Limitations**: Expansion focused in western U.S., no plans for Midwest due to distance and market alignment."
+            ],
+            "href": "/meetings/01KRHA0Q90STTKQHJGDYRT9BK1"
+          },
+          {
+            "id": "01KRECDQKFJ0ZWYAAM8KRGVF2P",
+            "title": "Lauren Rohlfs- Accountant onboarding",
+            "projectId": null,
+            "projectName": null,
+            "date": "2026-05-18T14:00:00+00:00",
+            "source": "fireflies",
+            "summary": "📚 Training plan established: A training plan for Lauren with Jose mentoring on credit card transactions and Notion workflows to ensure consistency.\n🔑 Access issues resolved: Lauren now has Notion access, corrected contact details, and will join weekly accou...",
+            "criticalRisks": [
+              "Several documents reference Notion access issues, Bluebeam login problems, printer setup, hardware issues, and the transition to Venture/TimeCo for timesheets. These are being handled case by case as they arise.",
+              "The onboarding documents repeatedly mention access problems across Notion, Bluebeam, Job Planner, Teams, Outlook, and account login setup, with several follow-ups needed to resolve them. In one case, Lauren’s Notion access and contact deta...",
+              "The accounting and systems documents repeatedly route training and approvals through specific individuals, especially Jose and Maria. TimeCo setup, payroll automation, transaction coding, and reporting improvements all rely on those same p..."
+            ],
+            "decisions": [
+              "Lauren’s onboarding requires Notion access fixes, contact corrections, weekly meeting invites, email setup, and training on credit card transactions and Notion workflows. The surrounding onboarding messages also show broader access issues ...",
+              "Lauren’s onboarding explicitly assigns Jose to mentor credit card transactions and Notion workflows, with Misty providing ongoing support. The broader onboarding note also points to SOP video development because the team is trying to make ...",
+              "Lauren’s onboarding is centered on credit card transactions, Notion workflows, and weekly accounting meeting participation, while access issues and incorrect contact details are still being corrected. The same documents call for SOP video ...",
+              "The documents show onboarding and process training being anchored to specific people, especially Jose Mendez for accounting workflows and Lauren’s training, rather than a formalized training system. The team also discussed creating an SOP ..."
+            ],
+            "actionItems": [
+              "Resend proper invitation to Lauren in Notion with correct spelling of her last name to ensure full access (03:10)",
+              "Correct Lauren’s last name spelling in internal contact information and systems for proper communication setup (04:15)",
+              "Send weekly accounting meeting calendar invite for Tuesdays to Lauren to ensure her participation (05:25)",
+              "Spend time with Lauren to train her on credit card transactions and usage of the Notion platform, covering Chase bank integration and workflows (01:40)",
+              "Assist Lauren with setting up her professional email signature to finalize her email setup (05:10)"
+            ],
+            "href": "/meetings/01KRECDQKFJ0ZWYAAM8KRGVF2P"
+          },
+          {
+            "id": "01KRXFF17H3GX0QNZ7NCKXGGVV",
+            "title": "Onboarding Welcome!",
+            "projectId": null,
+            "projectName": null,
+            "date": "2026-05-18T13:30:00+00:00",
+            "source": "fireflies",
+            "summary": "✅ Onboarding Setup Progress: Most new hires logged into required apps; some face issues with Bluebeam and Notion access.\n📝 Application Usage Reminder: Onboarding documents must be signed; update professional photos by day's end for recognition.\n⏳ Time Tracki...",
+            "criticalRisks": [
+              "TimeCo configuration is being finalized for employee access, permissions, and approvals, while the onboarding materials say the team is moving to Venture for timesheets in the next one to two weeks. The documents show multiple systems in p...",
+              "Several documents reference Notion access issues, Bluebeam login problems, printer setup, hardware issues, and the transition to Venture/TimeCo for timesheets. These are being handled case by case as they arise.",
+              "The accounting function is working across Notion, Acumatica, Venture, and TimeCo, with repeated references to manual uploads, access setup, memo code questions, and sync issues. The work suggests the stack is functional but not yet integra...",
+              "The Wilmer review noted app access problems that affected bid tracking and document sharing, while onboarding also surfaced Bluebeam, Notion, and credential/license issues. The recurring pattern is that project execution is being slowed by..."
+            ],
+            "decisions": [
+              "Lauren’s onboarding requires Notion access fixes, contact corrections, weekly meeting invites, email setup, and training on credit card transactions and Notion workflows. The surrounding onboarding messages also show broader access issues ...",
+              "Onboarding notes show Bluebeam, Notion, Teams, Outlook, printer, and laptop setup problems, alongside a planned shift to Venture for timesheets. Those issues are being handled in the same operational channel that supports project execution...",
+              "Lauren’s onboarding explicitly assigns Jose to mentor credit card transactions and Notion workflows, with Misty providing ongoing support. The broader onboarding note also points to SOP video development because the team is trying to make ...",
+              "Lauren’s onboarding is centered on credit card transactions, Notion workflows, and weekly accounting meeting participation, while access issues and incorrect contact details are still being corrected. The same documents call for SOP video ..."
+            ],
+            "actionItems": [
+              "Handle distribution and size verification of shirts and coordinate vest/hard hat supplies with Maria (05:00)",
+              "Manage printer connection setup with Andrew for new hires (03:23)",
+              "Support Demetrius with ongoing laptop and software setup issues, including Teams and Outlook (38:54)",
+              "Process signed manual acknowledgment documents, collect and file electronically (28:24)",
+              "Serve as point of contact for Indiana office material orders and support (05:52)"
+            ],
+            "href": "/meetings/01KRXFF17H3GX0QNZ7NCKXGGVV"
+          },
+          {
+            "id": "01KRBB8C04Y1311W5J40BB62VM",
+            "title": "Weekly design coordination Exol PA",
+            "projectId": 876,
+            "projectName": "Exol Morrisville",
+            "date": "2026-05-18T13:00:00+00:00",
+            "source": "fireflies",
+            "summary": "🏗️ Structural Updates On Track: Key updates due Thursday, focusing on foundation issues and structural plans for landlord approval.\n💨 Mechanical Challenges: Airtight designs for HVAC systems needed; exhaust ducting must minimize short-circuiting near equipm...",
+            "criticalRisks": [
+              "Across Exol Wilmer, Wilmer design coordination, Hillsdale, Superior Beverage, and the sprinkler reviews, the recurring pattern is technical ambiguity surfacing around fire protection, HVAC, electrical, structural, and code assumptions. The...",
+              "Several pursuits show late-stage design adjustment: ceilings, structural details, MEP coordination, sprinkler assumptions, and site constraints are still being resolved after the initial direction has been set. In Ace Champaign, Brandon ex...",
+              "Several documents show proposal progress hinging on structural, mechanical, electrical, and fire-protection coordination. Wilmer, Exol/PA, Hillsdale, and other reviews all require drawing updates, code checks, or cross-discipline alignment..."
+            ],
+            "decisions": [],
+            "actionItems": [
+              "Confirm with Steve the exact location of the battery charging station and incorporate it into the phase two plans (03:14)",
+              "Confirm ceiling height adjustments and insulation presence in existing precast panels to support mechanical/plenum requirements (33:36)",
+              "Deliver structural drawings and reinforcement details excluding Symbotic’s items to Brandon Clymer and team by Thursday this week (13:39)",
+              "Show charging station and risers on drawings for coordination with the electrical team (43:57)",
+              "Verify if firewalls are needed for the main office area and confirm with building code authorities (51:29)"
+            ],
+            "href": "/876/meetings/01KRBB8C04Y1311W5J40BB62VM"
+          },
+          {
+            "id": "01KRBB72KPP2FSKEVQTTJ22HAH",
+            "title": "Uniqlo & GPC Huddle",
+            "projectId": 31,
+            "projectName": "Uniqlo Phillipsburg NJ",
+            "date": "2026-05-18T12:30:00+00:00",
+            "source": "fireflies",
+            "summary": "💧 System Testing: Water and air tests for system three underway; hydro and pressure tests prioritized to ensure readiness.\n📦 Inventory Audit: Unmanaged surplus materials at Siva; plans to verify items and return excess to Accufire for credit.\n🔧 Installatio...",
+            "criticalRisks": [
+              "Multiple projects are pushing hydro, air, pressure, final inspection, and punch-list closure, but the notes repeatedly flag missing items, limited supervision windows, or unresolved field conditions. Examples include deferred water testing...",
+              "Several field threads show uncertainty around what is on site, what was ordered, and what needs to be returned or reconciled. Notes mention surplus materials at Siva, discrepancies between received and ordered quantities, and the need to c...",
+              "Several documents show work nearing completion while closeout artifacts remain incomplete or being requested late. Uniqlo still needs photos, final inspection requirements, punch list follow-up, and testing documentation; Wilmer had an ext...",
+              "Wilmer and Uniqlo/GPC both show active chasing of subcontractor bids, material verification, and update discipline. Wilmer needs follow-ups on doors, roofing, electrical, and finishing trades; Uniqlo/GPC is tracking surplus materials, miss..."
+            ],
+            "decisions": [],
+            "actionItems": [
+              "Have Mark and Caleb perform the hydro test and water testing for system three to ensure system integrity after the recent fire department visit (00:00)",
+              "Provide detailed information on the missing exit sign location and punch list items for Uniqlo to facilitate planning and resource allocation (19:52)",
+              "Conduct a pre-inventory at Siva to identify all materials present, determine corrective actions for improperly stored items, and coordinate return of misplaced materials to Accufire (02:13)",
+              "Perform air testing at Uniqlo, promptly report results and any leaks, and reschedule riser work accordingly (04:14)",
+              "Review and teach the team how to access and interpret monitoring system logs at fire rooms to identify system trip events (07:07)"
+            ],
+            "href": "/31/meetings/01KRBB72KPP2FSKEVQTTJ22HAH"
+          },
+          {
+            "id": "01KRPHXJSAQ0MV9ZZPHDWXV9RD",
+            "title": "Exol Framing Meeting AZ Interiors",
+            "projectId": 760,
+            "projectName": "Exol Wilmer",
+            "date": "2026-05-15T19:30:00+00:00",
+            "source": "fireflies",
+            "summary": "✅ Simplified Control Room Design: Eliminated complex framing for control room, using a pre-built option to save time and costs.\n📏 Standardized Wall Heights: Restroom and office walls capped at 12 feet, optimizing design and fit with mechanical systems.\n🧊 In...",
+            "criticalRisks": [
+              "Multiple project meetings show cost-driven redesigns, procurement tracking problems, and billing error risks: material logs need consolidation, product discrepancies were flagged to prevent billing errors, and several projects are actively...",
+              "In the Ace Hardware DM, Brandon said the number needs to match the proposal already submitted and the team needs to design and build to that budget. Similar pressure shows up in Ace Champaign scope review, where the greenhouse is treated a...",
+              "Several documents show proposal progress hinging on structural, mechanical, electrical, and fire-protection coordination. Wilmer, Exol/PA, Hillsdale, and other reviews all require drawing updates, code checks, or cross-discipline alignment...",
+              "Client engagement strengthens project execution and issue resolution."
+            ],
+            "decisions": [
+              "🧊 Insulation Strategy Confirmed: Rigid insulation will extend to deck, enhancing noise and thermal control in office boundaries.",
+              "- **Insulation Strategy Confirmed:** Rigid insulation will extend to deck, enhancing noise and thermal control in office boundaries.",
+              "Key decisions included eliminating complex control room framing in favor of a pre-built solution, which was approved by the client."
+            ],
+            "actionItems": [
+              "Break out tile-related cement board work as a separate bid line item for accurate bidding due to plenum return versus ducted return differences (09:33)",
+              "Furnish and install standard 16x16 white recessed access panels in hard ceilings as specified (10:19)",
+              "Provide an alternate pricing proposal using lighter 20 gauge steel studs for partition walls, including a credit value for cost savings (19:54)",
+              "Confirm with client the possibility of lowering ceiling heights in janitor's closet and other areas from 10 feet to 9 feet 6 inches and adjust wall heights accordingly after client feedback (07:52)",
+              "Communicate with client regarding eliminating return ductwork to explore cost savings and feasibility of point return air systems (09:50)"
+            ],
+            "href": "/760/meetings/01KRPHXJSAQ0MV9ZZPHDWXV9RD"
+          },
+          {
+            "id": "01KRPF0JTKEFD264H1ZA5YY10S",
+            "title": "Exol Framing Review",
+            "projectId": 760,
+            "projectName": "Exol Wilmer",
+            "date": "2026-05-15T18:40:00+00:00",
+            "source": "fireflies",
+            "summary": "The meeting centered on adjusting wall heights to 12 feet in specific areas like the trucker’s lounge and bathrooms to cut costs while ensuring compliance with codes. A pre-built control room will replace the complex construction previously planned. Insulatio...",
+            "criticalRisks": [
+              "Multiple project meetings show cost-driven redesigns, procurement tracking problems, and billing error risks: material logs need consolidation, product discrepancies were flagged to prevent billing errors, and several projects are actively...",
+              "Several meetings show hard timing pressure driving decisions and follow-up: final bid timing for Exol, early June permit targets at Ace Hardware, June 1 notice-to-proceed pressure in the Chino warehouse work, and meeting reschedules due to...",
+              "Multiple projects are operating against hard deadlines: Ace Hardware is targeting permit submission in three weeks, Uniqlo/Majestic has a May 18 watertight deadline and June 1 notice to proceed, and Exol Framing has a final bid due Monday....",
+              "The documents repeatedly reference urgent deadlines: final bids due Monday, permit submissions in early June, a three-week permit target, June 1 notice to proceed, May 18 watertight deadlines, and loan-driven timing pressure. Teams are bei..."
+            ],
+            "decisions": [
+              "Several design meetings show teams actively revising layouts to fit code, cost, or operational needs: wall heights and control rooms on Exol, sprinkler and electrical concerns on Hillsdale, and structural/MEP dependencies on Ace Hardware a...",
+              "Several jobs remain in active revision on items that affect field execution: wall heights and control room approach on Exol Framing, greenhouse scope and energy-code decisions on Ace Hardware, and structural/MEP coordination on Vermillion ...",
+              "- **Wall Height Adjustments:** Capped walls at 12 feet approved to cut costs; full height required for office areas for code compliance.",
+              "- **Control Room Change:** Client agreed to a pre-built control room to simplify construction and reduce expenses."
+            ],
+            "actionItems": [
+              "A focus on timely communication was emphasized due to the approaching bid deadline, aiming for transparency and efficiency in project execution.",
+              "- **Project Timeline:** Final bid due Monday; emphasis on continued communication to clarify details before submission."
+            ],
+            "href": "/760/meetings/01KRPF0JTKEFD264H1ZA5YY10S"
+          },
+          {
+            "id": "01KQGE62CKKXYH9YYT9Q7AF8W2",
+            "title": "Nashville Mastermind",
+            "projectId": null,
+            "projectName": null,
+            "date": "2026-05-15T15:00:00+00:00",
+            "source": "fireflies",
+            "summary": "The recent Formula One event disappointed attendees, mainly due to high costs that did not align with the offered experiences, including a canceled owner's experience and an underwhelming networking opportunity. Funding initiatives resulted in over $1 million...",
+            "criticalRisks": [
+              "Multiple sprinkler-related threads show the same pattern: teams are debating levels of protection, storage type, K-factors, and code interpretation while trying to keep the client moving. Ronnie Mitchell said the Superior Beverage design n...",
+              "The packet includes final documentation for a former partner’s resignation, including non-compete and non-solicitation agreements. That indicates an ongoing need to close out departures cleanly and legally.",
+              "The team is finalizing documentation for a former partner’s resignation, including non-compete and non-solicitation agreements, and separately addressing what authority Brandon needs to handle financial affairs for Alleato LLC. These are s...",
+              "In the Jon Knapp interview, leadership strain was called out directly, with current leaders described as stretched thin across multiple projects and hiring framed as a way to alleviate knowledge bottlenecks. That same theme appears elsewhe..."
+            ],
+            "decisions": [],
+            "actionItems": [
+              "The recent Formula One event disappointed attendees, mainly due to high costs that did not align with the offered experiences, including a canceled owner's experience and an underwhelming networking opportunity.",
+              "Operational updates highlighted delays in the $40 million hotel project due to financing issues, while leadership changes aimed to enhance team development and reduce costs.",
+              "- **Construction project delays noted**: $40 million hotel project postponed due to financing issues; new project estimates needed urgently."
+            ],
+            "href": "/meetings/01KQGE62CKKXYH9YYT9Q7AF8W2"
+          },
+          {
+            "id": "01KRKFEABY1EF044JCWJJ56SHD",
+            "title": "Union Site Review Meeting",
+            "projectId": 43,
+            "projectName": "Westfield Collective",
+            "date": "2026-05-15T13:30:00+00:00",
+            "source": "fireflies",
+            "summary": "The team discussed the complexities of site planning, which involve extensive earthwork due to steep topography and elevation changes. This necessitates managing a grading volume that impacts both budget and project timelines. Parking capacity has been reduce...",
+            "criticalRisks": [
+              "Multiple active opportunities still depend on unresolved design and site constraints before pricing can be trusted. In Union, the second building may trigger more parking, detention, and zoning issues; in Ace Champaign, the greenhouse is b...",
+              "In the Union site planning thread, Brandon said he did not account for a 265-space parking lot or moving all that dirt and warned they would need to hold up on design and send a pricing revision or the project would be lost. This is a dire...",
+              "Union Collective is still being evaluated for parking, detention, access, and allowed use, and the team is explicitly saying it may not be viable as proposed. Similar site and scope complexity is visible in the greenhouse/addition pursuits...",
+              "In Ace Champaign, Brandon explicitly said the number needs to match the proposal already submitted, and the estimating team is working to produce pricing to preserve that budget. Similar budget pressure appears in Union, where parking and ..."
+            ],
+            "decisions": [
+              "Urgent design adjustments are needed due to loan timelines, pushing rapid decision-making and collaboration among the team members."
+            ],
+            "actionItems": [
+              "Front-load site-condition and utility coordination reviews before final pricing and permit submission.",
+              "The team discussed the complexities of site planning, which involve extensive earthwork due to steep topography and elevation changes.",
+              "Specifically, stormwater management requires substantial storage due to local regulations, and the sanitary sewer connection involves significant fees and process approvals.",
+              "Urgent design adjustments are needed due to loan timelines, pushing rapid decision-making and collaboration among the team members."
+            ],
+            "href": "/43/meetings/01KRKFEABY1EF044JCWJJ56SHD"
+          },
+          {
+            "id": "01KRGQ8TK4YAWQD2F8SQP9E0HF",
+            "title": "Sprinkler Division - Credit Card Coding",
+            "projectId": null,
+            "projectName": null,
+            "date": "2026-05-15T13:00:00+00:00",
+            "source": "fireflies",
+            "summary": "The session aimed to establish better practices for expense management within the team by stressing the importance of timely receipt submission, with a deadline set for the 10th of each month. Alec Wehner led discussions on effective receipt capture methods, ...",
+            "criticalRisks": [
+              "Douglas Franklin noted he did not see a schedule in the job folder and would build one if none existed, while multiple projects are working against fixed deadline pressure. Several meetings also show rescheduling around availability, deliv...",
+              "Several field threads show uncertainty around what is on site, what was ordered, and what needs to be returned or reconciled. Notes mention surplus materials at Siva, discrepancies between received and ordered quantities, and the need to c..."
+            ],
+            "decisions": [
+              "The Sprinkler Division session emphasized the need to submit receipts by the 10th, use mobile tools, store documents in monthly project folders, and code expenses correctly to preserve budget integrity. The emphasis on support sessions sug..."
+            ],
+            "actionItems": [],
+            "href": "/meetings/01KRGQ8TK4YAWQD2F8SQP9E0HF"
+          },
+          {
+            "id": "01KR3MGZPP9D56CK7HGVGQ2DQD",
+            "title": "Uniqlo & GPC Huddle",
+            "projectId": 31,
+            "projectName": "Uniqlo Phillipsburg NJ",
+            "date": "2026-05-15T12:30:00+00:00",
+            "source": "fireflies",
+            "summary": "The team focused on finalizing material orders essential for project installation and enhancing procurement tracking to aid cost control. Gregory reported that half of the needed materials are on site, but additional items were identified, necessitating updat...",
+            "criticalRisks": [
+              "Safety/quality concerns appear in several places: water pressure tests were delayed for supervision, injured workers were noted, sprinkler design corrections were needed to prevent flooding risk, and Wilmer closeout asked about electrical ...",
+              "Multiple project meetings show cost-driven redesigns, procurement tracking problems, and billing error risks: material logs need consolidation, product discrepancies were flagged to prevent billing errors, and several projects are actively...",
+              "Several documents show material flow issues: half the materials were onsite but additional items needed logging, weekend testing was deferred for supervision, truck deliveries were delayed, and a dishwasher delivery went to the wrong addre...",
+              "The field is dealing with avoidable delivery and sequencing issues, including a dishwasher delivery going to the wrong address and subcontractor uncertainty around weekend work/testing. Other meetings also call for clearer material consoli..."
+            ],
+            "decisions": [],
+            "actionItems": [
+              "- **Material orders and procurement tracked**: Half of required materials are onsite; additional items must be consolidated for clarity and cost control.",
+              "# Uniqlo & GPC Huddle **Date:** 5/15/2026, 12:30:00 PM **Duration:** 0 minutes **Participants:** kmass@alleatogroup.com,mparsons@alleatogroup.com,bclymer@alleatogroup.com,fireflies@alleatogroup.com,gdavis@alleatogroup.com,tgraves@alleatogroup.com,awehner@alleatogroup.com,jdawson@alleatogroup.com, mparsons@alleatogroup.com, bclymer@alleatogroup.com, fireflies@alleatogroup.com, gdavis@alleatogroup.com, tgraves@alleatogroup.com, awehner@alleatogroup.com, jdawson@alleatogroup.com ## Summary - **Material orders and procurement tracked**: Half of required materials are onsite; additional items must be consolidated for clarity and cost control."
+            ],
+            "href": "/31/meetings/01KR3MGZPP9D56CK7HGVGQ2DQD"
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " biggest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " takeaway"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " past"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " company"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " carrying"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " too"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " much"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operational"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " friction"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " once"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " catastrophic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pile"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " manual"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " processes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " details"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " deadline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-driven"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " turn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " damage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " keep"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stacking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Internal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " accounting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " systems"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " too"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " manual"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " showed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " over"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " over"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " accounting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ato"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Finance"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Time"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Co"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "umat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ica"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " all"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " point"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " same"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " problem"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " payroll"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " transaction"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reporting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "manual"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exports"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " manual"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " verification"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " person"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-dependent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " workflows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "peated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " references"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "missing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " job"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " numbers"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " missing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bulk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " posting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " memo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " code"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " uncertainty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/config"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "uration"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " process"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " functioning"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " concentrated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " around"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " few"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " people"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " especially"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Jose"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Maria"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " creates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bott"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "leneck"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " continuity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " just"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " admin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " nuisance"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " It"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " creates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "error"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " payroll"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " transaction"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " financial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reporting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " It"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scaling"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " harder"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " new"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " people"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trained"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " process"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " depends"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tribal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " knowledge"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pay"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " attention"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Time"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Co"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/V"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "enture"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "umat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ica"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " workflow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " standardized"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " quickly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " SOP"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " produced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " used"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Lauren"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " onboarding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reduces"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " load"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " just"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " adds"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " another"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " person"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dependent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Jose"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " availability"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pre"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "con"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "arest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-level"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " concerns"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " came"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " through"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "collect"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bids"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gaps"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " doors"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " roofing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " electrical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " finishing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " metal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " glass"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "app"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " access"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " document"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " visibility"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " affecting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bid"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tracking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clarified"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " through"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "clusions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "clusions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " documents"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " usually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " estimate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " locked"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tightly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " should"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " On"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " framing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " side"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " making"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-driven"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " redesign"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " wall"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " height"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reductions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shifting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pre"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-built"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " control"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " room"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alternate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stud"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pricing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " combination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " incomplete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bid"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clarification"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-cut"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " redesign"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " before"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " final"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pricing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " where"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " buy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " problems"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " start"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " It"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " manageable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pushed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " proposal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/f"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "inal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pricing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " without"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gaps"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " closed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " either"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "car"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "rying"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " holes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "winning"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " assumptions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " watching"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Final"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bid"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " completeness"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trade"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exclusions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " explicit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " defend"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " later"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " simpl"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ifications"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hold"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " through"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "iq"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "lo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " finish"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/control"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " messy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Uni"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "q"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "lo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Phillips"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "burg"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " NJ"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " looks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " like"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " near"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " completion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ipped"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " execution"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " noise"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " surfaced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Water"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hydro"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " air"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " testing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " prioritized"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " There"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "sur"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "plus"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " material"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " inventory"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reconciliation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " S"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "iva"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " chasing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "missing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sign"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " information"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " punch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " details"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " testing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " results"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " monitoring"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " log"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " interpretation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Prior"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " notes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " flagged"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "material"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " logging"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " problems"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " wrong"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-address"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " delivery"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " incomplete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tracking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " onsite"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ordered"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " classic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " late"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-stage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " job"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " blowing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " slower"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " more"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " expensive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " when"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sorting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " inventory"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " punch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " details"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " test"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " documentation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " same"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " time"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " danger"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " isn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " just"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " drag"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ";"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unnecessary"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " labor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " burn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " billing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "credit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " leakage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " materials"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "4"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Morris"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "For"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Morris"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ville"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " chaos"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " technical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " become"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trouble"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Key"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signals"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Structural"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " updates"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " due"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Mechanical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " airtight"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " resolving"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ce"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "iling"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " heights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " insulation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " conditions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " charging"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " station"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " location"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ris"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ers"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " possible"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " firewall"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/code"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " requirements"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " These"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exactly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " kinds"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " details"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " seem"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " manageable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " until"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " permitting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " landlord"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " review"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cross"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "iscipline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " those"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answers"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " don"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " land"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " quickly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " turn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " redesign"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " loops"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " may"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " viability"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " problem"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " just"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pricing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " problem"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stood"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " language"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stronger"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " than"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " normal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "From"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Union"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Site"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Review"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " site"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " major"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "grading"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " earth"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " parking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " detention"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sewer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fee"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " constraints"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brandon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " explicitly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " warned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pricing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " revised"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " around"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " those"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " realities"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " could"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " questioned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " even"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "vi"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "able"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " currently"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " conceived"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " most"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " serious"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-level"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hurdle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " set"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " beyond"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "we"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " refinement"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/site"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reality"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " threatening"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " deal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " viability"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pricing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " don"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-based"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fast"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " team"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " spending"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " effort"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " version"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " doesn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pencil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "###"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Staffing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " strain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " showing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " multiple"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " places"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hiring"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/inter"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "view"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " surfaced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " internal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Leadership"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bandwidth"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " described"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "st"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "retched"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Hiring"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " framed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " way"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " relieve"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "knowledge"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bott"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "lene"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Candidate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " compensation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " expectations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " high"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " enough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matter"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " especially"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " experienced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " roles"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lines"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " process"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bott"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "lene"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " showing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " elsewhere"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " When"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " depend"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " few"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " key"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " people"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " leaders"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stretched"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " small"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stay"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " small"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " less"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " time"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pattern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " across"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " all"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recurring"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pattern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " company"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " short"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " activity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " It"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " short"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " slack"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Across"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " same"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " themes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " keep"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " repeating"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " manual"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " process"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dependence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " key"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-person"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bott"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "lene"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " details"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " solved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " late"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " procurement"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/b"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "id"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " completeness"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gaps"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " inventory"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/control"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hard"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " deadlines"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " forcing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " before"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " everything"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fully"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " doesn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " things"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " failing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " It"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " less"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " margin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " error"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " than"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " should"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " deserves"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " leadership"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " attention"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " first"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " were"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " priorit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "izing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " focus"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " here"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decide"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " quickly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " concept"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " financially"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/site"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " viable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reset"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trade"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gaps"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lock"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " assumptions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " before"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bad"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pricing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gets"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " baked"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Accounting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " systems"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " workflow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reduce"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dependence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Jose"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "aria"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " get"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Time"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Co"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "umat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ica"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " process"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " documented"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "4"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Uni"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "q"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "lo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " discipline"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tighten"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " material"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " reconciliation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " test"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " documentation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " punch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " control"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " finish"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " doesn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " drag"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Confidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " data"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Strong"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " intelligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "15"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "50"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signals"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "29"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " decisions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "60"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " last"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " week"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " say"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confidently"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " where"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pressure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " showing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confirm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " summary"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alone"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " those"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " already"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " been"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " completed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " turn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sharper"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " executive"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "top"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " weekly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " briefing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "who"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owns"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " most"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " important"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " these"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "finish",
+      "finishReason": "stop"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 58783,
+      "totalTokens": 60347,
+      "outputTokens": 1564
+    },
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "retrieval-complete",
+          "status": "success",
+          "message": "Retrieved (1 sources, 0 warnings)",
+          "durations": {
+            "source_specific_rag": 706
+          },
+          "timestamp": "2026-05-19T11:18:27.380Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": 2,
+    "tool_trace": [
+      {
+        "tool": "backendDeepAgentExecutiveBriefing",
+        "agent": "frontend-ai-assistant",
+        "input": {
+          "message": "Tell me the biggest insights, risks, or hurdles from the past week's meetings.",
+          "selectedProjectId": null
+        },
+        "detail": "backend.deep-agent-executive-briefing did not complete within retry policy.",
+        "status": "failed",
+        "toolName": "backendDeepAgentExecutiveBriefing",
+        "timestamp": "2026-05-19T11:18:25.693Z",
+        "durationMs": 0
+      },
+      {
+        "tool": "getMeetingIntelligence",
+        "error": null,
+        "input": {
+          "message": "Tell me the biggest insights, risks, or hurdles from the past week's meetings.",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "getMeetingIntelligence",
+        "timestamp": "2026-05-19T11:18:30.241Z"
+      },
+      {
+        "tool": "getMeetingIntelligence",
+        "input": {
+          "message": "Tell me the biggest insights, risks, or hurdles from the past week's meetings.",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "getMeetingIntelligence",
+        "timestamp": "2026-05-19T11:19:00.815Z"
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "finish_reason": "stop",
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "risk_review",
+      "reason": "source_specific_rag_recent_meetings",
+      "sources": [
+        "sourceSpecificRag"
+      ],
+      "responseFormat": "source_specific_rag"
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "response_message_id": "PIFrCggqAGmYziNJ",
+    "empty_model_response": false
+  }
+}

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const repoRoot = process.cwd();
-const kbPath = path.join(repoRoot, "docs/ai-plan/AI_KNOWLEDGE_BASE.md");
+const kbPath = path.join(repoRoot, "docs/archive/2026-06-22-docs-migration/ai-plan/AI_KNOWLEDGE_BASE.md");
 const content = fs.readFileSync(kbPath, "utf8");
 const chunks = content
   .split(/^### /m)

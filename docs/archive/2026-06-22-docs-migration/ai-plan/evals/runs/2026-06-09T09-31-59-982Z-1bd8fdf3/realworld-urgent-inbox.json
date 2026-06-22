@@ -1,0 +1,224 @@
+{
+  "id": "realworld-urgent-inbox",
+  "intent": "source_lookup",
+  "prompt": "Is there anything urgent in my inbox?",
+  "selectedProjectId": null,
+  "sessionId": "30440160-8425-4cb6-9e06-0db6cf2448ec",
+  "sessionLabel": "eval-2026-06-09T09-31-59-982Z-1bd8fdf3-realworld-urgent-inbox",
+  "startedAt": "2026-06-09T09:32:07.789Z",
+  "finishedAt": "2026-06-09T09:32:26.478Z",
+  "durationMs": 15404,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 8,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [consultMicrosoftExecutiveAssistant] to fire — none did",
+      "expected required tool 'consultMicrosoftExecutiveAssistant' to fire",
+      "mustIncludeAny missing one of: \"urgent\", \"email\", \"inbox\", \"reply\", \"no urgent\"",
+      "consultMicrosoftExecutiveAssistant trace sources [(none)] did not include required microsoft_graph_live",
+      "judge email_operator score 1 < 4: No inbox analysis was performed. The response is a provider failure notice, not an answer to whether anything urgent exists in the inbox."
+    ],
+    "warnings": [
+      "expected family 'communications' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)",
+      "judge email_operator: fail (1/4)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 293,
+    "finalText": "The assistant could not get a usable response from the AI provider. This usually means the provider account is out of credits, over quota, or blocked by billing. I saved your question so it is not lost; after the provider billing issue is fixed, retry this message or choose a different model.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 15404
+    },
+    "judge": {
+      "status": "fail",
+      "rubric": "email_operator",
+      "score": 1,
+      "minScore": 4,
+      "summary": "No inbox analysis was performed. The response is a provider failure notice, not an answer to whether anything urgent exists in the inbox.",
+      "strengths": [
+        "Does not invent email content or claim any message was sent."
+      ],
+      "weaknesses": [
+        "Fails to separate urgent email from normal inbox noise because no inbox items were reviewed.",
+        "Does not identify who needs a response, why it matters, or consequences of ignoring anything.",
+        "Does not summarize any thread or email content.",
+        "Does not recommend a concrete action path for any inbox item.",
+        "Does not address draft quality because no draft was produced."
+      ],
+      "dimensionScores": {
+        "separates_urgent_critical_email_from_normal_inbox_noise": 1,
+        "identifies_who_needs_response_why_it_matters_and_consequences": 1,
+        "summarizes_threads_efficiently": 1,
+        "recommends_concrete_response_path": 1,
+        "draft_quality_short_direct_practical": 1,
+        "never_claims_email_sent_or_invents_details": 5,
+        "separates_confirmed_user_owned_actions_from_inbox_items": 1,
+        "labels_suspicious_phishing_urgency_or_ignore_as_evidence_backed": 1
+      },
+      "provider": "openai",
+      "model": "gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "consultMicrosoftExecutiveAssistant"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "status": "loading",
+        "timestamp": "2026-06-09T09:32:07.828Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Delegating Microsoft operator work",
+        "status": "loading",
+        "timestamp": "2026-06-09T09:32:07.868Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T09:32:10.869Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T09:32:13.869Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T09:32:16.869Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T09:32:19.869Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T09:32:22.871Z"
+      }
+    },
+    {
+      "type": "error",
+      "errorText": "The Microsoft Executive Assistant could not complete this request. Failed capability: deepagents_microsoft_executive_assistant_runtime. Detail: Error code: 402 - {'error': {'message': 'A positive credit balance is required for all requests, including BYOK, so fallback providers remain available. Add credits at https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dtop-up to continue.', 'type': 'insufficient_funds'}}"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": null,
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "microsoft-specialist",
+          "status": "loading",
+          "message": "Still delegating to Microsoft operator…",
+          "timestamp": "2026-06-09T09:32:22.871Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": null,
+    "tool_trace": [],
+    "architecture": "retrieval-planner-v2",
+    "source_debug": {
+      "memory": {
+        "reason": "This answer was produced by a delegated specialist/direct Deep Agents path; inspect delegated trace and backend memory metadata for specialist-side context.",
+        "status": "not_loaded_in_frontend"
+      },
+      "sources": {
+        "timing": {
+          "slowest": [],
+          "failedCount": 0,
+          "totalMeasuredMs": 0
+        },
+        "toolNames": [],
+        "evidenceCount": null,
+        "toolCallCount": 0,
+        "sourceCoverage": []
+      },
+      "orchestrator": "retrieval-planner-v2",
+      "outputPolicy": {
+        "stopWhen": "stepCountIs(10)",
+        "maxOutputTokens": 8000
+      },
+      "retrievalPlan": {
+        "intent": "source_lookup",
+        "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "sources": [],
+        "responseFormat": "conversational"
+      }
+    },
+    "finish_reason": null,
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+      "sources": [],
+      "responseFormat": "conversational"
+    },
+    "synthesis_model": "openai/gpt-5.4",
+    "response_quality": {
+      "score": 50,
+      "reasons": [
+        "no successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "low",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "response_message_id": "gmCX3ISDsu1MQ0U1",
+    "empty_model_response": true
+  }
+}

@@ -15,7 +15,7 @@ export type AssistantToolCallingDecision = {
 };
 
 export const AI_TOOL_CALLING_PROVIDER_MATRIX_ARTIFACT =
-  "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json";
+  "docs/archive/2026-06-22-docs-migration/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json";
 
 const VALIDATED_AT = "2026-05-01T21:48:00.000Z";
 

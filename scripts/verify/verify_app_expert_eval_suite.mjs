@@ -3,7 +3,7 @@
 /**
  * App Expert Eval Suite Runner
  * ----------------------------
- * Runs docs/ai-plan/evals/app-expert-eval-suite.json directly against the
+ * Runs docs/archive/2026-06-22-docs-migration/ai-plan/evals/app-expert-eval-suite.json directly against the
  * backend read-only App Expert endpoint. This is intentionally separate from
  * the production chat eval runner so the specialist can be evaluated before it
  * is promoted into the full assistant orchestration loop.
@@ -23,7 +23,7 @@ dotenv.config({ path: path.join(repoRoot, "frontend/.env.local"), quiet: true })
 
 const SUITE_PATH = path.join(
   repoRoot,
-  "docs/ai-plan/evals/app-expert-eval-suite.json",
+  "docs/archive/2026-06-22-docs-migration/ai-plan/evals/app-expert-eval-suite.json",
 );
 const BACKEND_URL = (
   process.env.APP_EXPERT_EVAL_BACKEND_URL ||
@@ -200,7 +200,7 @@ async function main() {
 
   const runDir = path.join(
     repoRoot,
-    "docs/ai-plan/evals/runs",
+    "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs",
     `${nowRunId()}-app-expert`,
   );
   await fs.mkdir(runDir, { recursive: true });

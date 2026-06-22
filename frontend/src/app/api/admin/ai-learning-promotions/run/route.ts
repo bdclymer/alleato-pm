@@ -9,7 +9,7 @@ import {
   generateTaskPromotionCandidates,
 } from "@/lib/ai/services/feedback-event-service";
 
-import { requireAdmin } from "../../intelligence-compiler/_shared";
+import { requireAdmin } from "../../_shared";
 
 const RunLearningPromotionsSchema = z.object({
   scope: z

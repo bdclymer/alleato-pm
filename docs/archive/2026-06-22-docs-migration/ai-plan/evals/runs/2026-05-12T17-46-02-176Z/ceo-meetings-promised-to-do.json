@@ -1,0 +1,991 @@
+{
+  "id": "ceo-meetings-promised-to-do",
+  "intent": "meeting_query",
+  "prompt": "What did I promise people in the last week of meetings?",
+  "selectedProjectId": null,
+  "sessionId": "1d59be63-30f7-48e7-ad30-08677aee6cfa",
+  "sessionLabel": "eval-2026-05-12T17-46-02-176Z-ceo-meetings-promised-to-do",
+  "startedAt": "2026-05-12T18:26:10.366Z",
+  "finishedAt": "2026-05-12T18:26:20.373Z",
+  "durationMs": 9894,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 62,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [getMeetingsByDate, getActionItemsAndInsights] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'meetings' not represented",
+      "expected family 'actions' not represented",
+      "global forbidden phrase: \"RAG\""
+    ],
+    "observations": [
+      "tools fired: intentPlanner, sourceSpecificRagRetrieval, assistantComponentRegistry"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "sourceSpecificRagRetrieval",
+      "assistantComponentRegistry"
+    ],
+    "familiesHit": [],
+    "finalTextLength": 4425,
+    "finalText": "**Recent Meetings**\n\n1. **Exol - Morrisville PA - Weekly Status Call - Exol/Alleato** — 2026-05-05\n   # Exol - Morrisville PA - Weekly Status Call - Exol/Alleato **Date:** 5/5/2026, 7:00:00 PM **Duration:** 0 minutes **Participants:** heather.jutras@exol.com,bclymer@alleatogroup.com,dhumphreys@rjskelding.com,eandrade@alleatogroup.com,jerome.daksiewicz@dkgrar.com,nwilliams@smithmiller.net,parker.asmu... [Source: 01KQ9YS4T4C36W925F86WZYJ0H]\n2. **Union Collective: PEMB vs Structural Steel** — 2026-05-05\n   # Union Collective: PEMB vs Structural Steel **Date:** 5/5/2026, 6:30:00 PM **Duration:** 0 minutes **Participants:** acannon@alleatogroup.com,eandrade@alleatogroup.com,dfranklin@alleatogroup.com,jdawson@alleatogroup.com, eandrade@alleatogroup.com, dfranklin@alleatogroup.com, jdawson@alleatogroup.co... [Source: 01KQW2EB1693FKP6WF307YJB8C]\n3. **Weekly Accounting Meeting** — 2026-05-05\n   # Weekly Accounting Meeting **Date:** 5/5/2026, 6:00:00 PM **Duration:** 0 minutes **Participants:** mcalcetero@alleatogroup.com,zzita@llum.com,jmendez@alleatogroup.com,accounting@alleatogroup.com,mrogers@alleatogroup.com,bclymer@alleatogroup.com,jdawson@alleatogroup.com,aortiz@alleatogroup.com,mgus... [Source: 01KQ9W66FZE1E6CKFGE1MDYR78]\n4. **Goodwill Kokomo Drawing Review** — 2026-05-05\n   # Goodwill Kokomo Drawing Review **Date:** 5/5/2026, 5:30:00 PM **Duration:** 0 minutes **Participants:** njepson@alleatogroup.com,bryce.clendenning@goodwillindy.org,dfranklin@alleatogroup.com,kgreen@alleatogroup.com, bryce.clendenning@goodwillindy.org, dfranklin@alleatogroup.com, kgreen@alleatogrou... [Source: 01KQWJFKVT3N3J7T7VA9CFDTC7]\n5. **Union Collective Steel Review Meeting** — 2026-05-05\n   # Union Collective Steel Review Meeting **Date:** 5/5/2026, 5:15:00 PM **Duration:** 0 minutes **Participants:** dfranklin@alleatogroup.com,acannon@alleatogroup.com,cspringer@jpsconsultingengineers.com,dan@eckertwelding.com,jdawson@alleatogroup.com,eandrade@alleatogroup.com,bclymer@alleatogroup.com,... [Source: 01KQWCHM2BM1GRCCJ2WV4N9VD5]\n6. **Alleato Quoting Cost** — 2026-05-05\n   # Alleato Quoting Cost **Date:** 5/5/2026, 2:00:00 PM **Duration:** 0 minutes **Participants:** bclymer@alleatogroup.com,fireflies@alleatogroup.com,dave.willis@hy-tek.com,spencer.geissel@hy-tek.com,aaron.pitzer@hy-tek.com,mcalcetero@alleatogroup.com, bclymer@alleatogroup.com, fireflies@alleatogroup.... [Source: 01KQDFAR2Q0S39PKGXP4YVX8XK]\n7. **Uniqlo & GPC Huddle** — 2026-05-05\n   # Uniqlo & GPC Huddle **Date:** 5/5/2026, 2:00:00 PM **Duration:** 0 minutes **Participants:** kmass@alleatogroup.com,mparsons@alleatogroup.com,jdawson@alleatogroup.com,bclymer@alleatogroup.com,fireflies@alleatogroup.com,gdavis@alleatogroup.com,tgraves@alleatogroup.com,awehner@alleatogroup.com,pholl... [Source: 01KQ9W66GE34Y2EEJAWVJKTX44]\n8. **Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am** — 2026-05-05\n   # Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am **Date:** 5/5/2026, 1:30:00 PM **Duration:** 0 minutes **Participants:** kgreen@alleatogroup.com,amulder@goodwilllegacygroup.org,bryce.clendenning@goodwillindy.org,jared.rains@goodwillindy.org,nbrimie@alleatogroup.com,bclymer@allea... [Source: 01KQ9YS4T3ER3ZD9C2DA7M85H6]\n9. **Goodwill Weekly OAC Meeting** — 2026-05-05\n   # Goodwill Weekly OAC Meeting **Date:** 5/5/2026, 1:00:00 PM **Duration:** 0 minutes **Participants:** njepson@alleatogroup.com,amulder@goodwillindy.org,bclymer@alleatogroup.com,jdawson@alleatogroup.com,bryce.clendenning@goodwillindy.org,fireflies@alleatogroup.com,ctragesser@alleatogroup.com,tinman@... [Source: 01KQ9W66GF26Y36FXHHG06YNT5]\n10. **Cost Coding and Approval CC Transactions & Time Sheets** — 2026-05-04\n   # Cost Coding and Approval CC Transactions & Time Sheets **Date:** 5/4/2026, 7:30:00 PM **Duration:** 0 minutes **Participants:** jdawson@alleatogroup.com,kmass@alleatogroup.com,ataylor@alleatogroup.com,awehner@alleatogroup.com,crusin@alleatogroup.com,acannon@alleatogroup.com,njepson@alleatogroup.co... [Source: 01KQ7GPMQJSFVKWG3GWWD2BCMN]\n\n**Observability**\n- Source checked: Recent meeting transcripts in Supabase document_metadata/document_chunks-backed RAG index.\n- Retrieved 10 row(s) from Recent meeting transcripts; answer titles/dates are copied from Supabase rows.\n\n**Next Step**\n- Use this same source-specific check as a regression gate so generic source questions cannot fall back to tool discovery only."
+  },
+  "expectedToolNames": [
+    "getMeetingsByDate",
+    "getActionItemsAndInsights"
+  ],
+  "expectedToolFamilies": [
+    "meetings",
+    "actions"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T18:26:16.125Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Searching Recent meeting transcripts in Supabase RAG",
+        "status": "loading",
+        "timestamp": "2026-05-12T18:26:18.670Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-meeting-intelligence",
+      "data": {
+        "widget": {
+          "type": "meeting_intelligence",
+          "id": "meeting-intelligence",
+          "title": "Recent meeting intelligence",
+          "subtitle": "Structured readout from meeting source retrieval",
+          "dateLabel": "Last 60 days",
+          "meetingCount": 10,
+          "criticalRiskCount": 13,
+          "decisionCount": 4,
+          "actionItemCount": 11,
+          "topInsights": [
+            "Retrieved 10 meeting records from source-specific meeting retrieval.",
+            "13 risk-oriented excerpts matched the meeting text.",
+            "4 decision-oriented excerpts matched the meeting text."
+          ],
+          "recommendedNextActions": [
+            "Open the meeting records with risk or action badges first.",
+            "Convert verified action items into Tasks page records when ownership is clear."
+          ],
+          "emptyState": "No meeting rows matched this request.",
+          "meetings": [
+            {
+              "id": "01KQ9YS4T4C36W925F86WZYJ0H",
+              "title": "Exol - Morrisville PA - Weekly Status Call - Exol/Alleato",
+              "projectId": 876,
+              "projectName": null,
+              "date": "2026-05-05T19:00:00+00:00",
+              "source": "fireflies",
+              "summary": "# Exol - Morrisville PA - Weekly Status Call - Exol/Alleato **Date:** 5/5/2026, 7:00:00 PM **Duration:** 0 minutes **Participants:** heather.jutras@exol.com,bclymer@alleatogroup.com,dhumphreys@rjskelding.com,eandrade@all...",
+              "criticalRisks": [],
+              "decisions": [],
+              "actionItems": [],
+              "href": "/876/meetings/01KQ9YS4T4C36W925F86WZYJ0H"
+            },
+            {
+              "id": "01KQW2EB1693FKP6WF307YJB8C",
+              "title": "Union Collective: PEMB vs Structural Steel",
+              "projectId": 1009,
+              "projectName": null,
+              "date": "2026-05-05T18:30:00+00:00",
+              "source": "fireflies",
+              "summary": "# Union Collective: PEMB vs Structural Steel **Date:** 5/5/2026, 6:30:00 PM **Duration:** 0 minutes **Participants:** acannon@alleatogroup.com,eandrade@alleatogroup.com,dfranklin@alleatogroup.com,jdawson@alleatogroup.com...",
+              "criticalRisks": [
+                "- **Ulta Greenwood Technicality:** Permit delay due to typed signatures; state release pending by May 19th, contractor needs to start by May 15th.",
+                "- **Designer Change Risks:** Potential interior designer switch could delay project start by up to a month; timelines tightly managed for vetting new firms.",
+                "## Keywords fire sprinkler, permit delay, Ulta Greenwood, PEMB, structural steel, interior design"
+              ],
+              "decisions": [],
+              "actionItems": [
+                "- **Ulta Greenwood Technicality:** Permit delay due to typed signatures; state release pending by May 19th, contractor needs to start by May 15th.",
+                "- **Cost Analysis:** PEMB proposal totals $1.4 million; conventional steel favored due to building complexity and favorable lead times anticipated.",
+                "- **Budget Tracking:** Remaining design budget is about $86,000; structural design fees expected to increase by $15,000 to $20,000 due to changes."
+              ],
+              "href": "/1009/meetings/01KQW2EB1693FKP6WF307YJB8C"
+            },
+            {
+              "id": "01KQ9W66FZE1E6CKFGE1MDYR78",
+              "title": "Weekly Accounting Meeting",
+              "projectId": 60,
+              "projectName": null,
+              "date": "2026-05-05T18:00:00+00:00",
+              "source": "fireflies",
+              "summary": "# Weekly Accounting Meeting **Date:** 5/5/2026, 6:00:00 PM **Duration:** 0 minutes **Participants:** mcalcetero@alleatogroup.com,zzita@llum.com,jmendez@alleatogroup.com,accounting@alleatogroup.com,mrogers@alleatogroup.co...",
+              "criticalRisks": [
+                "- **AP Cleanup Priority:** Addressing overdue invoices; Misty leading cleanup; $470,000 in payments processed recently impacting cash flow.",
+                "- **Communication Improvements:** Monthly updates proposed for better alignment; roles in report review clarified; screen sharing aids issue resolution.",
+                "As for accounts payable, efforts to clean overdue invoices were highlighted, with Misty leading the charge and processing nearly $470,000 in recent payments."
+              ],
+              "decisions": [],
+              "actionItems": [
+                "# Weekly Accounting Meeting **Date:** 5/5/2026, 6:00:00 PM **Duration:** 0 minutes **Participants:** mcalcetero@alleatogroup.com,zzita@llum.com,jmendez@alleatogroup.com,accounting@alleatogroup.com,mrogers@alleatogroup.com,bclymer@alleatogroup.com,jdawson@alleatogroup.com,aortiz@alleatogroup.com,mgusi@alleatogroup.com,sjohnson@alleatogroup.com,fireflies@alleatogroup.com,jgaona@alleatogroup.com, zzita@llum.com, jmendez@alleatogroup.com, accounting@alleatogroup.com, mrogers@alleatogroup.com, bclymer@alleatogroup.com, jdawson@alleatogroup.com, aortiz@alleatogroup.com, mgusi@alleatogroup.com, sjohnson@alleatogroup.com ## Summary - **Accounts Receivable Discrepancies:** $1 million increase due to billing errors; inaccurate reports require urgent support ticket for fix.",
+                "It was identified that accounts receivable increased by approximately $1 million due to errors, including misclassified invoices like one for Craven Crepes."
+              ],
+              "href": "/60/meetings/01KQ9W66FZE1E6CKFGE1MDYR78"
+            },
+            {
+              "id": "01KQWJFKVT3N3J7T7VA9CFDTC7",
+              "title": "Goodwill Kokomo Drawing Review",
+              "projectId": 47,
+              "projectName": null,
+              "date": "2026-05-05T17:30:00+00:00",
+              "source": "fireflies",
+              "summary": "# Goodwill Kokomo Drawing Review **Date:** 5/5/2026, 5:30:00 PM **Duration:** 0 minutes **Participants:** njepson@alleatogroup.com,bryce.clendenning@goodwillindy.org,dfranklin@alleatogroup.com,kgreen@alleatogroup.com, br...",
+              "criticalRisks": [],
+              "decisions": [
+                "The readiness of the architectural plans for submission was confirmed, with distinctions between tenant and landlord responsibilities, while the landlord's demolition scope was also clarified to avoid delays and maintain project momentum."
+              ],
+              "actionItems": [],
+              "href": "/47/meetings/01KQWJFKVT3N3J7T7VA9CFDTC7"
+            },
+            {
+              "id": "01KQWCHM2BM1GRCCJ2WV4N9VD5",
+              "title": "Union Collective Steel Review Meeting",
+              "projectId": 1009,
+              "projectName": null,
+              "date": "2026-05-05T17:15:00+00:00",
+              "source": "fireflies",
+              "summary": "# Union Collective Steel Review Meeting **Date:** 5/5/2026, 5:15:00 PM **Duration:** 0 minutes **Participants:** dfranklin@alleatogroup.com,acannon@alleatogroup.com,cspringer@jpsconsultingengineers.com,dan@eckertwelding....",
+              "criticalRisks": [],
+              "decisions": [
+                "- **Maintenance Considerations**: Steel selected for longevity; hardware concealed to enhance outdoor aesthetics and minimize upkeep.",
+                "## Short Summary The meeting focused on the decision to use conventional steel framing over pre-engineered metal buildings, emphasizing its flexibility, cost-effectiveness, and design benefits."
+              ],
+              "actionItems": [
+                "- **Budget Preparation**: Dan to submit cost estimate tomorrow; must factor in structural details and scope with teams.",
+                "- **Durable Materials Preferred**: Steel framing on exteriors due to weather resistance; wood reconsidered for balconies and patios.",
+                "Dan was assigned to create a preliminary cost estimate, collaborating with Enzo for structural details."
+              ],
+              "href": "/1009/meetings/01KQWCHM2BM1GRCCJ2WV4N9VD5"
+            },
+            {
+              "id": "01KQDFAR2Q0S39PKGXP4YVX8XK",
+              "title": "Alleato Quoting Cost",
+              "projectId": 31,
+              "projectName": null,
+              "date": "2026-05-05T14:00:00+00:00",
+              "source": "fireflies",
+              "summary": "# Alleato Quoting Cost **Date:** 5/5/2026, 2:00:00 PM **Duration:** 0 minutes **Participants:** bclymer@alleatogroup.com,fireflies@alleatogroup.com,dave.willis@hy-tek.com,spencer.geissel@hy-tek.com,aaron.pitzer@hy-tek.co...",
+              "criticalRisks": [
+                "- **Vertical Integration Benefits**: Alito's in-house teams reduce risk and improve quality, avoiding issues from less experienced subcontractors.",
+                "Challenges presented by next-generation installation systems were discussed, emphasizing the importance of vertical integration to mitigate risk and improve quality in projects."
+              ],
+              "decisions": [],
+              "actionItems": [
+                "# Alleato Quoting Cost **Date:** 5/5/2026, 2:00:00 PM **Duration:** 0 minutes **Participants:** bclymer@alleatogroup.com,fireflies@alleatogroup.com,dave.willis@hy-tek.com,spencer.geissel@hy-tek.com,aaron.pitzer@hy-tek.com,mcalcetero@alleatogroup.com, bclymer@alleatogroup.com, fireflies@alleatogroup.com, dave.willis@hy-tek.com, spencer.geissel@hy-tek.com, aaron.pitzer@hy-tek.com ## Summary - **Union Labor Costs**: Superior Beverage faces high costs due to union labor at $150/hour for 4,100 hours, affecting competitiveness.",
+                "- **Schedule Misalignment**: Superior Beverage's installation duration adjusted to 14 weeks due to scheduling gaps, preventing labor cost underestimation."
+              ],
+              "href": "/31/meetings/01KQDFAR2Q0S39PKGXP4YVX8XK"
+            },
+            {
+              "id": "01KQ9W66GE34Y2EEJAWVJKTX44",
+              "title": "Uniqlo & GPC Huddle",
+              "projectId": 31,
+              "projectName": null,
+              "date": "2026-05-05T14:00:00+00:00",
+              "source": "fireflies",
+              "summary": "# Uniqlo & GPC Huddle **Date:** 5/5/2026, 2:00:00 PM **Duration:** 0 minutes **Participants:** kmass@alleatogroup.com,mparsons@alleatogroup.com,jdawson@alleatogroup.com,bclymer@alleatogroup.com,fireflies@alleatogroup.com...",
+              "criticalRisks": [
+                "# Uniqlo & GPC Huddle **Date:** 5/5/2026, 2:00:00 PM **Duration:** 0 minutes **Participants:** kmass@alleatogroup.com,mparsons@alleatogroup.com,jdawson@alleatogroup.com,bclymer@alleatogroup.com,fireflies@alleatogroup.com,gdavis@alleatogroup.com,tgraves@alleatogroup.com,awehner@alleatogroup.com,phollingsworth@alleatogroup.com, mparsons@alleatogroup.com, jdawson@alleatogroup.com, bclymer@alleatogroup.com, fireflies@alleatogroup.com, gdavis@alleatogroup.com, tgraves@alleatogroup.com, awehner@alleatogroup.com, phollingsworth@alleatogroup.com ## Summary - **Supply Shortcomings:** 22 pipes missing from shipment risk delays; immediate escalation needed for next delivery.",
+                "## Gist The meeting focused on addressing supply chain issues, particularly critical shortages impacting project timelines.",
+                "## Short Summary The team discussed urgent supply chain challenges, notably the shortfall of 22 pipes from a recent shipment, which could delay project progress."
+              ],
+              "decisions": [],
+              "actionItems": [],
+              "href": "/31/meetings/01KQ9W66GE34Y2EEJAWVJKTX44"
+            },
+            {
+              "id": "01KQ9YS4T3ER3ZD9C2DA7M85H6",
+              "title": "Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am",
+              "projectId": 47,
+              "projectName": null,
+              "date": "2026-05-05T13:30:00+00:00",
+              "source": "fireflies",
+              "summary": "# Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am **Date:** 5/5/2026, 1:30:00 PM **Duration:** 0 minutes **Participants:** kgreen@alleatogroup.com,amulder@goodwilllegacygroup.org,bryce.clendenning@good...",
+              "criticalRisks": [
+                "- **Canton Repairs Ongoing:** Roof leak identified as critical, patching needed; drywall and window sill work completed for improved layout.",
+                "Canton is addressing critical structural issues, particularly a roof leak, with drywall and window sill improvements already completed."
+              ],
+              "decisions": [
+                "- **Washington Site Cost Adjustments:** HVAC placement revision saves $6,000; electrical panel move costs doubled to $61,000, decision pending."
+              ],
+              "actionItems": [],
+              "href": "/47/meetings/01KQ9YS4T3ER3ZD9C2DA7M85H6"
+            },
+            {
+              "id": "01KQ9W66GF26Y36FXHHG06YNT5",
+              "title": "Goodwill Weekly OAC Meeting",
+              "projectId": 47,
+              "projectName": null,
+              "date": "2026-05-05T13:00:00+00:00",
+              "source": "fireflies",
+              "summary": "# Goodwill Weekly OAC Meeting **Date:** 5/5/2026, 1:00:00 PM **Duration:** 0 minutes **Participants:** njepson@alleatogroup.com,amulder@goodwillindy.org,bclymer@alleatogroup.com,jdawson@alleatogroup.com,bryce.clendenning...",
+              "criticalRisks": [],
+              "decisions": [],
+              "actionItems": [
+                "## Short Summary The meeting addressed the advancement of multiple construction projects, highlighting key areas such as the pending city approval for exterior painting, which is limited to black letters only due to regulations."
+              ],
+              "href": "/47/meetings/01KQ9W66GF26Y36FXHHG06YNT5"
+            },
+            {
+              "id": "01KQ7GPMQJSFVKWG3GWWD2BCMN",
+              "title": "Cost Coding and Approval CC Transactions & Time Sheets",
+              "projectId": 31,
+              "projectName": null,
+              "date": "2026-05-04T19:30:00+00:00",
+              "source": "fireflies",
+              "summary": "# Cost Coding and Approval CC Transactions & Time Sheets **Date:** 5/4/2026, 7:30:00 PM **Duration:** 0 minutes **Participants:** jdawson@alleatogroup.com,kmass@alleatogroup.com,ataylor@alleatogroup.com,awehner@alleatogr...",
+              "criticalRisks": [],
+              "decisions": [],
+              "actionItems": [],
+              "href": "/31/meetings/01KQ7GPMQJSFVKWG3GWWD2BCMN"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "synthesis",
+        "message": "Writing sourced Recent meeting transcripts answer",
+        "status": "loading",
+        "timestamp": "2026-05-12T18:26:19.285Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-source-specific-rag"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Recent Meetings**\n\n1. **Exol - Morrisville PA - Weekly Status Call - Exol/Alleato** — "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "2026-05-05\n   # Exol - Morrisville PA - Weekly Status Call - Exol/Alleato **Date:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "5/5/2026, 7:00:00 PM **Duration:** 0 minutes **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "heather.jutras@exol.com,bclymer@alleatogroup.com,dhumphreys@rjskelding.com,eandrade@alleat"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "ogroup.com,jerome.daksiewicz@dkgrar.com,nwilliams@smithmiller.net,parker.asmu... [Source: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "01KQ9YS4T4C36W925F86WZYJ0H]\n2. **Union Collective: PEMB vs Structural Steel** — 2026-05-05\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "   # Union Collective: PEMB vs Structural Steel **Date:** 5/5/2026, 6:30:00 PM "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Duration:** 0 minutes **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "acannon@alleatogroup.com,eandrade@alleatogroup.com,dfranklin@alleatogroup.com,jdawson@alle"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "atogroup.com, eandrade@alleatogroup.com, dfranklin@alleatogroup.com, "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "jdawson@alleatogroup.co... [Source: 01KQW2EB1693FKP6WF307YJB8C]\n3. **Weekly Accounting "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Meeting** — 2026-05-05\n   # Weekly Accounting Meeting **Date:** 5/5/2026, 6:00:00 PM "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Duration:** 0 minutes **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "mcalcetero@alleatogroup.com,zzita@llum.com,jmendez@alleatogroup.com,accounting@alleatogrou"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "p.com,mrogers@alleatogroup.com,bclymer@alleatogroup.com,jdawson@alleatogroup.com,aortiz@al"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "leatogroup.com,mgus... [Source: 01KQ9W66FZE1E6CKFGE1MDYR78]\n4. **Goodwill Kokomo Drawing "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Review** — 2026-05-05\n   # Goodwill Kokomo Drawing Review **Date:** 5/5/2026, 5:30:00 PM "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Duration:** 0 minutes **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "njepson@alleatogroup.com,bryce.clendenning@goodwillindy.org,dfranklin@alleatogroup.com,kgr"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "een@alleatogroup.com, bryce.clendenning@goodwillindy.org, dfranklin@alleatogroup.com, "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "kgreen@alleatogrou... [Source: 01KQWJFKVT3N3J7T7VA9CFDTC7]\n5. **Union Collective Steel "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Review Meeting** — 2026-05-05\n   # Union Collective Steel Review Meeting **Date:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "5/5/2026, 5:15:00 PM **Duration:** 0 minutes **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "dfranklin@alleatogroup.com,acannon@alleatogroup.com,cspringer@jpsconsultingengineers.com,d"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "an@eckertwelding.com,jdawson@alleatogroup.com,eandrade@alleatogroup.com,bclymer@alleatogro"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "up.com,... [Source: 01KQWCHM2BM1GRCCJ2WV4N9VD5]\n6. **Alleato Quoting Cost** — 2026-05-05\n  "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": " # Alleato Quoting Cost **Date:** 5/5/2026, 2:00:00 PM **Duration:** 0 minutes "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Participants:** bclymer@alleatogroup.com,fireflies@alleatogroup.com,dave.willis@hy-tek.c"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "om,spencer.geissel@hy-tek.com,aaron.pitzer@hy-tek.com,mcalcetero@alleatogroup.com, "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "bclymer@alleatogroup.com, fireflies@alleatogroup.... [Source: 01KQDFAR2Q0S39PKGXP4YVX8XK]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "7. **Uniqlo & GPC Huddle** — 2026-05-05\n   # Uniqlo & GPC Huddle **Date:** 5/5/2026, "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "2:00:00 PM **Duration:** 0 minutes **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "kmass@alleatogroup.com,mparsons@alleatogroup.com,jdawson@alleatogroup.com,bclymer@alleatog"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "roup.com,fireflies@alleatogroup.com,gdavis@alleatogroup.com,tgraves@alleatogroup.com,awehn"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "er@alleatogroup.com,pholl... [Source: 01KQ9W66GE34Y2EEJAWVJKTX44]\n8. **Goodwill IL // "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Alleato Weekly Huddle: Every Tuesday 9:30am to 10am** — 2026-05-05\n   # Goodwill IL // "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Alleato Weekly Huddle: Every Tuesday 9:30am to 10am **Date:** 5/5/2026, 1:30:00 PM "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Duration:** 0 minutes **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "kgreen@alleatogroup.com,amulder@goodwilllegacygroup.org,bryce.clendenning@goodwillindy.org"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": ",jared.rains@goodwillindy.org,nbrimie@alleatogroup.com,bclymer@allea... [Source: "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "01KQ9YS4T3ER3ZD9C2DA7M85H6]\n9. **Goodwill Weekly OAC Meeting** — 2026-05-05\n   # Goodwill "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Weekly OAC Meeting **Date:** 5/5/2026, 1:00:00 PM **Duration:** 0 minutes "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "**Participants:** njepson@alleatogroup.com,amulder@goodwillindy.org,bclymer@alleatogroup.c"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "om,jdawson@alleatogroup.com,bryce.clendenning@goodwillindy.org,fireflies@alleatogroup.com,"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "ctragesser@alleatogroup.com,tinman@... [Source: 01KQ9W66GF26Y36FXHHG06YNT5]\n10. **Cost "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Coding and Approval CC Transactions & Time Sheets** — 2026-05-04\n   # Cost Coding and "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "Approval CC Transactions & Time Sheets **Date:** 5/4/2026, 7:30:00 PM **Duration:** 0 "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "minutes **Participants:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "jdawson@alleatogroup.com,kmass@alleatogroup.com,ataylor@alleatogroup.com,awehner@alleatogr"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "oup.com,crusin@alleatogroup.com,acannon@alleatogroup.com,njepson@alleatogroup.co... "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "[Source: 01KQ7GPMQJSFVKWG3GWWD2BCMN]\n\n**Observability**\n- Source checked: Recent meeting "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "transcripts in Supabase document_metadata/document_chunks-backed RAG index.\n- Retrieved 10 "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "row(s) from Recent meeting transcripts; answer titles/dates are copied from Supabase rows.\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "\n**Next Step**\n- Use this same source-specific check as a regression gate so generic "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-source-specific-rag",
+      "delta": "source questions cannot fall back to tool discovery only."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-source-specific-rag"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Recent meeting transcripts check complete",
+        "status": "success",
+        "timestamp": "2026-05-12T18:26:20.257Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": null,
+    "data_parts": [
+      {
+        "id": "assistant-widget-meeting-intelligence",
+        "data": {
+          "widget": {
+            "id": "meeting-intelligence",
+            "type": "meeting_intelligence",
+            "title": "Recent meeting intelligence",
+            "meetings": [
+              {
+                "id": "01KQ9YS4T4C36W925F86WZYJ0H",
+                "date": "2026-05-05T19:00:00+00:00",
+                "href": "/876/meetings/01KQ9YS4T4C36W925F86WZYJ0H",
+                "title": "Exol - Morrisville PA - Weekly Status Call - Exol/Alleato",
+                "source": "fireflies",
+                "summary": "# Exol - Morrisville PA - Weekly Status Call - Exol/Alleato **Date:** 5/5/2026, 7:00:00 PM **Duration:** 0 minutes **Participants:** heather.jutras@exol.com,bclymer@alleatogroup.com,dhumphreys@rjskelding.com,eandrade@all...",
+                "decisions": [],
+                "projectId": 876,
+                "actionItems": [],
+                "projectName": null,
+                "criticalRisks": []
+              },
+              {
+                "id": "01KQW2EB1693FKP6WF307YJB8C",
+                "date": "2026-05-05T18:30:00+00:00",
+                "href": "/1009/meetings/01KQW2EB1693FKP6WF307YJB8C",
+                "title": "Union Collective: PEMB vs Structural Steel",
+                "source": "fireflies",
+                "summary": "# Union Collective: PEMB vs Structural Steel **Date:** 5/5/2026, 6:30:00 PM **Duration:** 0 minutes **Participants:** acannon@alleatogroup.com,eandrade@alleatogroup.com,dfranklin@alleatogroup.com,jdawson@alleatogroup.com...",
+                "decisions": [],
+                "projectId": 1009,
+                "actionItems": [
+                  "- **Ulta Greenwood Technicality:** Permit delay due to typed signatures; state release pending by May 19th, contractor needs to start by May 15th.",
+                  "- **Cost Analysis:** PEMB proposal totals $1.4 million; conventional steel favored due to building complexity and favorable lead times anticipated.",
+                  "- **Budget Tracking:** Remaining design budget is about $86,000; structural design fees expected to increase by $15,000 to $20,000 due to changes."
+                ],
+                "projectName": null,
+                "criticalRisks": [
+                  "- **Ulta Greenwood Technicality:** Permit delay due to typed signatures; state release pending by May 19th, contractor needs to start by May 15th.",
+                  "- **Designer Change Risks:** Potential interior designer switch could delay project start by up to a month; timelines tightly managed for vetting new firms.",
+                  "## Keywords fire sprinkler, permit delay, Ulta Greenwood, PEMB, structural steel, interior design"
+                ]
+              },
+              {
+                "id": "01KQ9W66FZE1E6CKFGE1MDYR78",
+                "date": "2026-05-05T18:00:00+00:00",
+                "href": "/60/meetings/01KQ9W66FZE1E6CKFGE1MDYR78",
+                "title": "Weekly Accounting Meeting",
+                "source": "fireflies",
+                "summary": "# Weekly Accounting Meeting **Date:** 5/5/2026, 6:00:00 PM **Duration:** 0 minutes **Participants:** mcalcetero@alleatogroup.com,zzita@llum.com,jmendez@alleatogroup.com,accounting@alleatogroup.com,mrogers@alleatogroup.co...",
+                "decisions": [],
+                "projectId": 60,
+                "actionItems": [
+                  "# Weekly Accounting Meeting **Date:** 5/5/2026, 6:00:00 PM **Duration:** 0 minutes **Participants:** mcalcetero@alleatogroup.com,zzita@llum.com,jmendez@alleatogroup.com,accounting@alleatogroup.com,mrogers@alleatogroup.com,bclymer@alleatogroup.com,jdawson@alleatogroup.com,aortiz@alleatogroup.com,mgusi@alleatogroup.com,sjohnson@alleatogroup.com,fireflies@alleatogroup.com,jgaona@alleatogroup.com, zzita@llum.com, jmendez@alleatogroup.com, accounting@alleatogroup.com, mrogers@alleatogroup.com, bclymer@alleatogroup.com, jdawson@alleatogroup.com, aortiz@alleatogroup.com, mgusi@alleatogroup.com, sjohnson@alleatogroup.com ## Summary - **Accounts Receivable Discrepancies:** $1 million increase due to billing errors; inaccurate reports require urgent support ticket for fix.",
+                  "It was identified that accounts receivable increased by approximately $1 million due to errors, including misclassified invoices like one for Craven Crepes."
+                ],
+                "projectName": null,
+                "criticalRisks": [
+                  "- **AP Cleanup Priority:** Addressing overdue invoices; Misty leading cleanup; $470,000 in payments processed recently impacting cash flow.",
+                  "- **Communication Improvements:** Monthly updates proposed for better alignment; roles in report review clarified; screen sharing aids issue resolution.",
+                  "As for accounts payable, efforts to clean overdue invoices were highlighted, with Misty leading the charge and processing nearly $470,000 in recent payments."
+                ]
+              },
+              {
+                "id": "01KQWJFKVT3N3J7T7VA9CFDTC7",
+                "date": "2026-05-05T17:30:00+00:00",
+                "href": "/47/meetings/01KQWJFKVT3N3J7T7VA9CFDTC7",
+                "title": "Goodwill Kokomo Drawing Review",
+                "source": "fireflies",
+                "summary": "# Goodwill Kokomo Drawing Review **Date:** 5/5/2026, 5:30:00 PM **Duration:** 0 minutes **Participants:** njepson@alleatogroup.com,bryce.clendenning@goodwillindy.org,dfranklin@alleatogroup.com,kgreen@alleatogroup.com, br...",
+                "decisions": [
+                  "The readiness of the architectural plans for submission was confirmed, with distinctions between tenant and landlord responsibilities, while the landlord's demolition scope was also clarified to avoid delays and maintain project momentum."
+                ],
+                "projectId": 47,
+                "actionItems": [],
+                "projectName": null,
+                "criticalRisks": []
+              },
+              {
+                "id": "01KQWCHM2BM1GRCCJ2WV4N9VD5",
+                "date": "2026-05-05T17:15:00+00:00",
+                "href": "/1009/meetings/01KQWCHM2BM1GRCCJ2WV4N9VD5",
+                "title": "Union Collective Steel Review Meeting",
+                "source": "fireflies",
+                "summary": "# Union Collective Steel Review Meeting **Date:** 5/5/2026, 5:15:00 PM **Duration:** 0 minutes **Participants:** dfranklin@alleatogroup.com,acannon@alleatogroup.com,cspringer@jpsconsultingengineers.com,dan@eckertwelding....",
+                "decisions": [
+                  "- **Maintenance Considerations**: Steel selected for longevity; hardware concealed to enhance outdoor aesthetics and minimize upkeep.",
+                  "## Short Summary The meeting focused on the decision to use conventional steel framing over pre-engineered metal buildings, emphasizing its flexibility, cost-effectiveness, and design benefits."
+                ],
+                "projectId": 1009,
+                "actionItems": [
+                  "- **Budget Preparation**: Dan to submit cost estimate tomorrow; must factor in structural details and scope with teams.",
+                  "- **Durable Materials Preferred**: Steel framing on exteriors due to weather resistance; wood reconsidered for balconies and patios.",
+                  "Dan was assigned to create a preliminary cost estimate, collaborating with Enzo for structural details."
+                ],
+                "projectName": null,
+                "criticalRisks": []
+              },
+              {
+                "id": "01KQDFAR2Q0S39PKGXP4YVX8XK",
+                "date": "2026-05-05T14:00:00+00:00",
+                "href": "/31/meetings/01KQDFAR2Q0S39PKGXP4YVX8XK",
+                "title": "Alleato Quoting Cost",
+                "source": "fireflies",
+                "summary": "# Alleato Quoting Cost **Date:** 5/5/2026, 2:00:00 PM **Duration:** 0 minutes **Participants:** bclymer@alleatogroup.com,fireflies@alleatogroup.com,dave.willis@hy-tek.com,spencer.geissel@hy-tek.com,aaron.pitzer@hy-tek.co...",
+                "decisions": [],
+                "projectId": 31,
+                "actionItems": [
+                  "# Alleato Quoting Cost **Date:** 5/5/2026, 2:00:00 PM **Duration:** 0 minutes **Participants:** bclymer@alleatogroup.com,fireflies@alleatogroup.com,dave.willis@hy-tek.com,spencer.geissel@hy-tek.com,aaron.pitzer@hy-tek.com,mcalcetero@alleatogroup.com, bclymer@alleatogroup.com, fireflies@alleatogroup.com, dave.willis@hy-tek.com, spencer.geissel@hy-tek.com, aaron.pitzer@hy-tek.com ## Summary - **Union Labor Costs**: Superior Beverage faces high costs due to union labor at $150/hour for 4,100 hours, affecting competitiveness.",
+                  "- **Schedule Misalignment**: Superior Beverage's installation duration adjusted to 14 weeks due to scheduling gaps, preventing labor cost underestimation."
+                ],
+                "projectName": null,
+                "criticalRisks": [
+                  "- **Vertical Integration Benefits**: Alito's in-house teams reduce risk and improve quality, avoiding issues from less experienced subcontractors.",
+                  "Challenges presented by next-generation installation systems were discussed, emphasizing the importance of vertical integration to mitigate risk and improve quality in projects."
+                ]
+              },
+              {
+                "id": "01KQ9W66GE34Y2EEJAWVJKTX44",
+                "date": "2026-05-05T14:00:00+00:00",
+                "href": "/31/meetings/01KQ9W66GE34Y2EEJAWVJKTX44",
+                "title": "Uniqlo & GPC Huddle",
+                "source": "fireflies",
+                "summary": "# Uniqlo & GPC Huddle **Date:** 5/5/2026, 2:00:00 PM **Duration:** 0 minutes **Participants:** kmass@alleatogroup.com,mparsons@alleatogroup.com,jdawson@alleatogroup.com,bclymer@alleatogroup.com,fireflies@alleatogroup.com...",
+                "decisions": [],
+                "projectId": 31,
+                "actionItems": [],
+                "projectName": null,
+                "criticalRisks": [
+                  "# Uniqlo & GPC Huddle **Date:** 5/5/2026, 2:00:00 PM **Duration:** 0 minutes **Participants:** kmass@alleatogroup.com,mparsons@alleatogroup.com,jdawson@alleatogroup.com,bclymer@alleatogroup.com,fireflies@alleatogroup.com,gdavis@alleatogroup.com,tgraves@alleatogroup.com,awehner@alleatogroup.com,phollingsworth@alleatogroup.com, mparsons@alleatogroup.com, jdawson@alleatogroup.com, bclymer@alleatogroup.com, fireflies@alleatogroup.com, gdavis@alleatogroup.com, tgraves@alleatogroup.com, awehner@alleatogroup.com, phollingsworth@alleatogroup.com ## Summary - **Supply Shortcomings:** 22 pipes missing from shipment risk delays; immediate escalation needed for next delivery.",
+                  "## Gist The meeting focused on addressing supply chain issues, particularly critical shortages impacting project timelines.",
+                  "## Short Summary The team discussed urgent supply chain challenges, notably the shortfall of 22 pipes from a recent shipment, which could delay project progress."
+                ]
+              },
+              {
+                "id": "01KQ9YS4T3ER3ZD9C2DA7M85H6",
+                "date": "2026-05-05T13:30:00+00:00",
+                "href": "/47/meetings/01KQ9YS4T3ER3ZD9C2DA7M85H6",
+                "title": "Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am",
+                "source": "fireflies",
+                "summary": "# Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am **Date:** 5/5/2026, 1:30:00 PM **Duration:** 0 minutes **Participants:** kgreen@alleatogroup.com,amulder@goodwilllegacygroup.org,bryce.clendenning@good...",
+                "decisions": [
+                  "- **Washington Site Cost Adjustments:** HVAC placement revision saves $6,000; electrical panel move costs doubled to $61,000, decision pending."
+                ],
+                "projectId": 47,
+                "actionItems": [],
+                "projectName": null,
+                "criticalRisks": [
+                  "- **Canton Repairs Ongoing:** Roof leak identified as critical, patching needed; drywall and window sill work completed for improved layout.",
+                  "Canton is addressing critical structural issues, particularly a roof leak, with drywall and window sill improvements already completed."
+                ]
+              },
+              {
+                "id": "01KQ9W66GF26Y36FXHHG06YNT5",
+                "date": "2026-05-05T13:00:00+00:00",
+                "href": "/47/meetings/01KQ9W66GF26Y36FXHHG06YNT5",
+                "title": "Goodwill Weekly OAC Meeting",
+                "source": "fireflies",
+                "summary": "# Goodwill Weekly OAC Meeting **Date:** 5/5/2026, 1:00:00 PM **Duration:** 0 minutes **Participants:** njepson@alleatogroup.com,amulder@goodwillindy.org,bclymer@alleatogroup.com,jdawson@alleatogroup.com,bryce.clendenning...",
+                "decisions": [],
+                "projectId": 47,
+                "actionItems": [
+                  "## Short Summary The meeting addressed the advancement of multiple construction projects, highlighting key areas such as the pending city approval for exterior painting, which is limited to black letters only due to regulations."
+                ],
+                "projectName": null,
+                "criticalRisks": []
+              },
+              {
+                "id": "01KQ7GPMQJSFVKWG3GWWD2BCMN",
+                "date": "2026-05-04T19:30:00+00:00",
+                "href": "/31/meetings/01KQ7GPMQJSFVKWG3GWWD2BCMN",
+                "title": "Cost Coding and Approval CC Transactions & Time Sheets",
+                "source": "fireflies",
+                "summary": "# Cost Coding and Approval CC Transactions & Time Sheets **Date:** 5/4/2026, 7:30:00 PM **Duration:** 0 minutes **Participants:** jdawson@alleatogroup.com,kmass@alleatogroup.com,ataylor@alleatogroup.com,awehner@alleatogr...",
+                "decisions": [],
+                "projectId": 31,
+                "actionItems": [],
+                "projectName": null,
+                "criticalRisks": []
+              }
+            ],
+            "subtitle": "Structured readout from meeting source retrieval",
+            "dateLabel": "Last 60 days",
+            "emptyState": "No meeting rows matched this request.",
+            "topInsights": [
+              "Retrieved 10 meeting records from source-specific meeting retrieval.",
+              "13 risk-oriented excerpts matched the meeting text.",
+              "4 decision-oriented excerpts matched the meeting text."
+            ],
+            "meetingCount": 10,
+            "decisionCount": 4,
+            "actionItemCount": 11,
+            "criticalRiskCount": 13,
+            "recommendedNextActions": [
+              "Open the meeting records with risk or action badges first.",
+              "Convert verified action items into Tasks page records when ownership is clear."
+            ]
+          }
+        },
+        "type": "data-assistant-widget"
+      }
+    ],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "What did I promise people in the last week of meetings?",
+          "selectedProjectId": null,
+          "deterministicIntent": "general_conversation",
+          "sourceSpecificRagKind": "recent_meetings",
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "source_lookup",
+          "planner": "model",
+          "rationale": "The user is asking for exact commitments they made in recent meetings, which requires extracting evidence from meeting transcripts/notes. This is a source-specific lookup over recent meetings rather than a general summary.",
+          "confidence": "high",
+          "responseMode": "retrieve_sources",
+          "requiredTools": [
+            "recent_meetings"
+          ],
+          "deterministicIntent": "general_conversation",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-12T18:26:16.125Z"
+      },
+      {
+        "tool": "sourceSpecificRagRetrieval",
+        "input": {
+          "kind": "recent_meetings",
+          "label": "Recent meeting transcripts",
+          "limit": 10,
+          "endDate": "2026-05-05",
+          "startDate": "2026-04-28"
+        },
+        "output": {
+          "rows": [
+            {
+              "id": "01KQ9YS4T4C36W925F86WZYJ0H",
+              "date": "2026-05-05T19:00:00+00:00",
+              "type": "meeting",
+              "title": "Exol - Morrisville PA - Weekly Status Call - Exol/Alleato",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 876,
+              "documentId": "01KQ9YS4T4C36W925F86WZYJ0H"
+            },
+            {
+              "id": "01KQW2EB1693FKP6WF307YJB8C",
+              "date": "2026-05-05T18:30:00+00:00",
+              "type": "meeting",
+              "title": "Union Collective: PEMB vs Structural Steel",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 1009,
+              "documentId": "01KQW2EB1693FKP6WF307YJB8C"
+            },
+            {
+              "id": "01KQ9W66FZE1E6CKFGE1MDYR78",
+              "date": "2026-05-05T18:00:00+00:00",
+              "type": "meeting",
+              "title": "Weekly Accounting Meeting",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 60,
+              "documentId": "01KQ9W66FZE1E6CKFGE1MDYR78"
+            },
+            {
+              "id": "01KQWJFKVT3N3J7T7VA9CFDTC7",
+              "date": "2026-05-05T17:30:00+00:00",
+              "type": "meeting",
+              "title": "Goodwill Kokomo Drawing Review",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 47,
+              "documentId": "01KQWJFKVT3N3J7T7VA9CFDTC7"
+            },
+            {
+              "id": "01KQWCHM2BM1GRCCJ2WV4N9VD5",
+              "date": "2026-05-05T17:15:00+00:00",
+              "type": "meeting",
+              "title": "Union Collective Steel Review Meeting",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 1009,
+              "documentId": "01KQWCHM2BM1GRCCJ2WV4N9VD5"
+            },
+            {
+              "id": "01KQDFAR2Q0S39PKGXP4YVX8XK",
+              "date": "2026-05-05T14:00:00+00:00",
+              "type": "meeting",
+              "title": "Alleato Quoting Cost",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 31,
+              "documentId": "01KQDFAR2Q0S39PKGXP4YVX8XK"
+            },
+            {
+              "id": "01KQ9W66GE34Y2EEJAWVJKTX44",
+              "date": "2026-05-05T14:00:00+00:00",
+              "type": "meeting",
+              "title": "Uniqlo & GPC Huddle",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 31,
+              "documentId": "01KQ9W66GE34Y2EEJAWVJKTX44"
+            },
+            {
+              "id": "01KQ9YS4T3ER3ZD9C2DA7M85H6",
+              "date": "2026-05-05T13:30:00+00:00",
+              "type": "meeting",
+              "title": "Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 47,
+              "documentId": "01KQ9YS4T3ER3ZD9C2DA7M85H6"
+            },
+            {
+              "id": "01KQ9W66GF26Y36FXHHG06YNT5",
+              "date": "2026-05-05T13:00:00+00:00",
+              "type": "meeting",
+              "title": "Goodwill Weekly OAC Meeting",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 47,
+              "documentId": "01KQ9W66GF26Y36FXHHG06YNT5"
+            },
+            {
+              "id": "01KQ7GPMQJSFVKWG3GWWD2BCMN",
+              "date": "2026-05-04T19:30:00+00:00",
+              "type": "meeting",
+              "title": "Cost Coding and Approval CC Transactions & Time Sheets",
+              "source": "fireflies",
+              "category": null,
+              "projectId": 31,
+              "documentId": "01KQ7GPMQJSFVKWG3GWWD2BCMN"
+            }
+          ],
+          "rowCount": 10
+        },
+        "timestamp": "2026-05-12T18:26:19.284Z"
+      },
+      {
+        "tool": "assistantComponentRegistry",
+        "input": {
+          "kind": "recent_meetings",
+          "sourceTool": "sourceSpecificRagRetrieval"
+        },
+        "output": {
+          "widgetId": "meeting-intelligence",
+          "widgetType": "meeting_intelligence",
+          "meetingCount": 10
+        },
+        "timestamp": "2026-05-12T18:26:19.285Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [],
+      "stepStarts": [],
+      "totalStepCount": 0,
+      "finalFinishReason": "unknown",
+      "preparedStepCount": 0,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 90,
+      "reasons": [
+        "multiple successful tool calls",
+        "multiple source citations"
+      ],
+      "confidence": "high",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

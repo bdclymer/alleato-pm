@@ -1,0 +1,41 @@
+{
+  "id": "ceo-task-list-todo",
+  "intent": "task_management",
+  "prompt": "Pull up my todo list.",
+  "selectedProjectId": null,
+  "sessionId": "afe8e5e4-9c0c-47c9-b3b2-44e3b61dfaa1",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-ceo-task-list-todo",
+  "startedAt": "2026-05-12T19:39:42.739Z",
+  "finishedAt": "2026-05-12T19:39:58.047Z",
+  "durationMs": 1,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "assistant message was not persisted to chat_history",
+      "expected required tool 'getMyTasks' to fire",
+      "mustIncludeAny missing one of: \"task\", \"to-do\", \"todo\", \"open\", \"due\"",
+      "answer length 0 < min 100"
+    ],
+    "warnings": [
+      "expected family 'task_management' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "task_management"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

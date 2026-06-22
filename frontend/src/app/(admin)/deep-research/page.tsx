@@ -2,13 +2,12 @@
 
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { BookOpen, FileText, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 import {
   Button,
   EmptyState,
   ErrorState,
-  StatusBadge,
 } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
@@ -82,9 +81,11 @@ export default function DeepResearchArchivePage() {
   const [selectedArtifactPath, setSelectedArtifactPath] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isArtifactLoading, setIsArtifactLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [artifactError, setArtifactError] = React.useState<string | null>(null);
 
-  // Loads the full project list without filtering — never collapses the left panel
+  // Load the full project list without filtering so the workspace list stays stable.
   const loadProjects = React.useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -107,6 +108,9 @@ export default function DeepResearchArchivePage() {
       sessionId: project.sessionId,
       limit: "1",
     });
+    setIsArtifactLoading(true);
+    setArtifactError(null);
+    setSelectedProject(project);
     try {
       const response = await apiFetch<WikiArchiveResponse>(`/api/admin/deep-research/archive?${params.toString()}`);
       setSelectedProject(response.selectedProject ?? project);
@@ -114,6 +118,11 @@ export default function DeepResearchArchivePage() {
       setSelectedArtifactPath(response.artifacts[0]?.path ?? null);
     } catch (err) {
       console.error("Failed to load project artifacts", err);
+      setArtifacts([]);
+      setSelectedArtifactPath(null);
+      setArtifactError(err instanceof Error ? err.message : `Artifact load failed: ${JSON.stringify(err)}`);
+    } finally {
+      setIsArtifactLoading(false);
     }
   }, []);
 
@@ -161,7 +170,7 @@ export default function DeepResearchArchivePage() {
 
   const selectedArtifact = artifacts.find((artifact) => artifact.path === selectedArtifactPath) ?? artifacts[0] ?? null;
 
-  // Update URL only — the searchParams effect handles loading artifacts (no double fetch)
+  // Update URL only; the searchParams effect handles loading artifacts.
   function selectProject(project: WikiArchiveProject) {
     const params = new URLSearchParams({
       userId: project.userId,
@@ -173,9 +182,8 @@ export default function DeepResearchArchivePage() {
 
   return (
     <PageShell
-      variant="dashboard"
+      variant="detailWide"
       title="Deep Research Archive"
-      description="Browse prior Deep Agents LLM wiki research projects, saved source files, durable answers, and change logs."
       actions={
         <Button variant="outline" onClick={() => void loadProjects()} disabled={isLoading}>
           <RefreshCw className={cn("mr-2 size-4", isLoading && "animate-spin")} />
@@ -183,9 +191,13 @@ export default function DeepResearchArchivePage() {
         </Button>
       }
     >
-      <div className="grid gap-8 xl:grid-cols-[minmax(320px,420px)_1fr]">
+      <div className="grid gap-8 lg:grid-cols-3">
         <section className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Workspaces</h2>
+              <p className="text-sm text-muted-foreground">{filteredProjects.length} archived runs</p>
+            </div>
             <ExpandableSearch
               value={query}
               onChange={setQuery}
@@ -198,7 +210,7 @@ export default function DeepResearchArchivePage() {
             <ErrorState title="Couldn't load the archive" description={error} />
           ) : null}
 
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
+          <div className="divide-y divide-border overflow-hidden border-y border-border">
             {filteredProjects.map((project) => {
               const isSelected = selectedProject?.topicSlug === project.topicSlug && selectedProject?.sessionId === project.sessionId;
               return (
@@ -208,57 +220,62 @@ export default function DeepResearchArchivePage() {
                   variant="ghost"
                   onClick={() => selectProject(project)}
                   className={cn(
-                    "h-auto justify-start whitespace-normal rounded-md border border-border/70 bg-background p-0 text-left transition-colors hover:border-foreground/20 hover:bg-muted/20",
-                    isSelected && "border-foreground/25 bg-muted/30",
+                    "h-auto min-h-16 w-full flex-col items-start justify-start gap-2 rounded-none px-1 py-3 text-left whitespace-normal transition-colors hover:bg-muted/50",
+                    isSelected && "bg-muted/60",
                   )}
                 >
-                  <span className="flex h-full w-full flex-col gap-4 p-4">
-                    <span className="flex items-start justify-between gap-3">
-                      <span className="min-w-0 space-y-1">
-                        <span className="block truncate text-sm font-medium text-foreground">{project.topic}</span>
-                        <span className="text-xs text-muted-foreground">Updated {formatDateTime(project.updatedAt)}</span>
-                      </span>
-                      <span className="shrink-0">
-                        <StatusBadge status={project.sourceCount > 0 ? "active" : "draft"} />
-                      </span>
-                    </span>
-                    <span className="line-clamp-3 text-xs text-muted-foreground">
-                      {project.logSummary ?? "No change-log summary has been recorded yet."}
-                    </span>
-                    <span className="mt-auto flex flex-wrap gap-3 text-xs text-muted-foreground">
-                      <span>{project.markdownCount} wiki pages</span>
-                      <span>{project.sourceCount} sources</span>
-                      <span className="truncate">{project.sessionId}</span>
-                    </span>
+                  <span className="block truncate text-sm font-medium text-foreground">{project.topic}</span>
+                  <span className="line-clamp-2 text-sm leading-5 text-muted-foreground">
+                    {project.logSummary ?? `Updated ${formatDateTime(project.updatedAt)}`}
+                  </span>
+                  <span className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                    <span>{project.markdownCount} wiki</span>
+                    <span>{project.sourceCount} sources</span>
+                    <span>{formatDateTime(project.updatedAt)}</span>
                   </span>
                 </Button>
               );
             })}
             {!isLoading && filteredProjects.length === 0 ? (
               <EmptyState
-                icon={<BookOpen />}
                 title="No archived research found"
-                description="Run an LLM wiki workflow first, then refresh this archive to browse saved projects."
+                description="Run an LLM wiki workflow, then refresh this archive."
               />
             ) : null}
           </div>
         </section>
 
-        <section className="space-y-6">
+        <section className="space-y-6 lg:col-span-2">
           {selectedProject ? (
             <>
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-3">
-                  <p className="text-lg font-semibold text-foreground">{selectedProject.title}</p>
-                  <StatusBadge status="active" />
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 space-y-1">
+                  <h2 className="truncate text-lg font-semibold text-foreground">{selectedProject.title}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedProject.artifactCount} files, session {selectedProject.sessionId}
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {selectedProject.artifactCount} files · session {selectedProject.sessionId}
-                </p>
+                {artifactError ? (
+                  <Button variant="outline" size="sm" onClick={() => void loadArtifacts(selectedProject)} disabled={isArtifactLoading}>
+                    Retry
+                  </Button>
+                ) : null}
               </div>
 
-              <div className="grid gap-6 lg:grid-cols-[minmax(220px,280px)_1fr]">
-                <div className="divide-y divide-border/60 overflow-hidden rounded-md border border-border/70">
+              {artifactError ? (
+                <ErrorState
+                  title="Couldn't load files"
+                  description={artifactError}
+                  onRetry={() => void loadArtifacts(selectedProject)}
+                  className="border-y border-border py-10"
+                />
+              ) : null}
+
+              <div className="grid gap-6 xl:grid-cols-3">
+                <div className="divide-y divide-border overflow-hidden border-y border-border">
+                  {isArtifactLoading ? (
+                    <div className="px-1 py-3 text-sm text-muted-foreground">Loading files...</div>
+                  ) : null}
                   {artifacts.map((artifact) => {
                     const isSelected = selectedArtifact?.path === artifact.path;
                     return (
@@ -268,27 +285,24 @@ export default function DeepResearchArchivePage() {
                         variant="ghost"
                         onClick={() => setSelectedArtifactPath(artifact.path)}
                         className={cn(
-                          "h-auto w-full items-start justify-start gap-3 rounded-none px-3 py-3 text-left whitespace-normal hover:bg-muted/40",
+                          "h-auto min-h-14 w-full flex-col items-start justify-start gap-1 rounded-none px-1 py-3 text-left whitespace-normal transition-colors hover:bg-muted/50",
                           isSelected && "bg-muted/60",
                         )}
                       >
-                        <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-medium text-foreground">{artifact.path}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {artifactLabel(artifact.kind)} - {formatBytes(artifact.bytes)}
-                          </span>
+                        <span className="block w-full truncate text-sm font-medium text-foreground">{artifact.path}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {artifactLabel(artifact.kind)} - {formatBytes(artifact.bytes)}
                         </span>
                       </Button>
                     );
                   })}
-                  {artifacts.length === 0 ? (
+                  {!isArtifactLoading && artifacts.length === 0 && !artifactError ? (
                     <div className="p-4 text-sm text-muted-foreground">No saved files in this workspace.</div>
                   ) : null}
                 </div>
 
-                <div className="min-h-96 overflow-hidden rounded-md border border-border/70">
-                  <div className="flex items-center justify-between gap-4 border-b border-border/70 px-4 py-3">
+                <div className="min-h-96 overflow-hidden border-y border-border xl:col-span-2">
+                  <div className="flex items-center justify-between gap-4 border-b border-border px-1 py-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground">{selectedArtifact?.path ?? "No file selected"}</p>
                       <p className="text-xs text-muted-foreground">
@@ -296,7 +310,7 @@ export default function DeepResearchArchivePage() {
                       </p>
                     </div>
                   </div>
-                  <pre className="max-h-96 overflow-auto whitespace-pre-wrap p-4 text-sm leading-6 text-foreground">
+                  <pre className="max-h-96 overflow-auto whitespace-pre-wrap px-1 py-4 text-sm leading-6 text-foreground">
                     {previewText(selectedArtifact?.content)}
                   </pre>
                 </div>
@@ -304,9 +318,8 @@ export default function DeepResearchArchivePage() {
             </>
           ) : (
             <EmptyState
-              icon={<BookOpen />}
               title="No workspace selected"
-              description="Choose a workspace card to inspect its saved sources, wiki pages, and durable answers."
+              description="Choose a workspace to inspect saved sources, wiki pages, and logs."
             />
           )}
         </section>

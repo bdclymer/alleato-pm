@@ -1,0 +1,54 @@
+{
+  "id": "assistant-capability-ai-actions",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 5783,
+  "question": "What AI assistant actions are live versus planned?",
+  "response": {
+    "answer": "Based on the curated docs, AI assistant actions are not split into a separate “live vs planned” list in the metadata I checked. What is documented as live is:\n\n- `docs/help/articles/ai-assistant-actions.md`\n- Route: `/ai-assistant`\n\nThat article says Ask Alleato can create and update records directly from chat, with these **available write actions**:\n\n**Requires confirmation**\n- Create Change Order\n- Create Change Event\n- Update Project Status\n- Create RFI\n- Flag Project Risk\n- Create Commitment\n\n**No confirmation required**\n- Create Task\n- Update RFI Status\n- Create Meeting Note\n- Create Submittal\n- Log Daily Report\n- Save to Knowledge Base\n- Save Insight\n\nWhat I checked:\n- App Expert artifact status: fresh and available\n- Feature registry entries for AI assistant actions\n- Help article `docs/help/articles/ai-assistant-actions.md`\n\nWhat remains uncertain:\n- I did not find any curated metadata that explicitly labels some AI assistant actions as “planned.”\n- The feature registry’s `relatedActions` field was empty for the action article, so there is no registry-backed planned/live split to cite.\n\nImplementation-backed note:\n- The docs are tied to `frontend/src/app/(main)/ai-assistant/page.tsx`, but I did not use route-discovered evidence beyond that because curated help was available.\n\nIf you want, I can also check whether any specific assistant action is present in the route inventory but missing from the help docs.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/ai-assistant-actions.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-assistant-actions.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/live",
+        "sourceType": "sitemap",
+        "route": "/live",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/ai-assistant/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/ai-assistant/page.tsx",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 5777,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

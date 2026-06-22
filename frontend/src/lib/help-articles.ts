@@ -207,7 +207,7 @@ export async function validateHelpArticles(): Promise<HelpArticleValidationResul
       const duplicatePath = seenSlugs.get(location.slug);
       if (duplicatePath) {
         errors.push(
-          `${relativePath}: slug "${location.slug}" already used by ${duplicatePath}. File names under docs/help must be unique.`,
+          `${relativePath}: slug "${location.slug}" already used by ${duplicatePath}. File names under docs/archive/2026-06-22-docs-migration/help must be unique.`,
         );
         continue;
       }
@@ -263,7 +263,7 @@ function parseArticleLocation(relativePath: string, errors: string[]) {
   const segments = relativePath.split("/");
   if (segments.length !== 3) {
     errors.push(
-      `${relativePath}: docs must live in docs/help/<section>/<category>/<file>.md`,
+      `${relativePath}: docs must live in docs/archive/2026-06-22-docs-migration/help/<section>/<category>/<file>.md`,
     );
     return null;
   }

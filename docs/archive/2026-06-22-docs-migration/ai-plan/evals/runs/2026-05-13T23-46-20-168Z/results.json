@@ -1,0 +1,494 @@
+{
+  "generatedAt": "2026-05-13T23:48:48.666Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "totalCases": 10,
+  "passed": 10,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 10,
+    "mcpToolDiscovery": 6,
+    "streamingToolPolicy": 6,
+    "promptContextReducer": 4,
+    "sourceSpecificRagRetrieval": 3,
+    "assistantWidgetPlanner": 2,
+    "getActionItemsAndInsights": 2,
+    "assistantSourceHealth": 2,
+    "calendarActionIntentRouter": 2,
+    "assistantComponentRegistry": 1,
+    "getProjectsWithRisks": 1,
+    "getPortfolioOverview": 1,
+    "getFinancialAnalysis": 1,
+    "getCompanyKnowledge": 1,
+    "semanticSearch": 1,
+    "emailActionIntentRouter": 1,
+    "getRecentOutlookEmails": 1,
+    "readOutlookEmailThread": 1,
+    "draftOutlookEmail": 1,
+    "emailActionFastPath": 1,
+    "createOutlookCalendarInvite": 1
+  },
+  "intentDistribution": {
+    "meeting_query": 1,
+    "task_management": 2,
+    "risk_review": 1,
+    "implementation_planning": 1,
+    "source_lookup": 2,
+    "email_action": 1,
+    "calendar_action": 2
+  },
+  "results": [
+    {
+      "id": "realworld-todays-meetings",
+      "intent": "meeting_query",
+      "prompt": "Tell me about today's meetings. What decisions, risks, or commitments should I know about?",
+      "selectedProjectId": null,
+      "sessionId": "96ccd313-fd70-477e-8a66-68686d79dc28",
+      "sessionLabel": "eval-2026-05-13T23-46-20-168Z-realworld-todays-meetings",
+      "startedAt": "2026-05-13T23:46:20.170Z",
+      "finishedAt": "2026-05-13T23:46:28.968Z",
+      "durationMs": 8311,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 25,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'meetings' not represented",
+          "expected family 'actions' not represented",
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, assistantWidgetPlanner, sourceSpecificRagRetrieval, assistantComponentRegistry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "assistantWidgetPlanner",
+          "sourceSpecificRagRetrieval",
+          "assistantComponentRegistry"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 1453,
+        "finalText": "**Meetings Conducted on 2026-05-13**\n\n1. **Uniqlo+Alleato Group** — 2026-05-13 [Source: 01KQYS0S95N8FJQQD1C00V1F4M]\n2. **FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting** — 2026-05-13 [Source: 01KRHBD8KNN3W6CC0CCD2EN1NS]\n3. **FW: Uniqlo/Majestic - Chino CA Warehouse - Weekly TI Scope Meeting** — 2026-05-13 [Source: 01KRBNYM8VEH65W9XTPYDACXYC]\n4. **Superior Bev Sprinkler Review** — 2026-05-13 [Source: 01KRH0BZF3H520AKEXJGZERA76]\n5. **Alleato PM Software** — 2026-05-13 [Source: 01KRFGCG4XJHN6Q2H3DQ5FDYB9]\n6. **Union Collective (Architectural and Civil Design Approval)** — 2026-05-13 [Source: 01KRET7P70FNJYK2C7HJH8GDX2]\n7. **Hillsdale Holdings // Alleato Weekly** — 2026-05-13 [Source: 01KQYS0S93Z9KXD4VSG2YM8VB3]\n8. **Estimating Meeting | Enzo A. & Jake R.** — 2026-05-13 [Source: 01KRF1SC2AACV3JK64NPZ6PFTT]\n9. **Review Superintendent SOP** — 2026-05-13 [Source: 01KRGK0PYXTZBAB9JNFN0W27K9]\n10. **Uniqlo & GPC Huddle** — 2026-05-13 [Source: 01KQYFRYD72Y18B5ZCJKQ30RQV]\n11. **Ace Champaign Scope & Estimate Review** — 2026-05-13 [Source: 01KRF2AY3CS725470FEXFS1ZTV]\n\n**Observability**\n- Source checked: Meeting transcripts in Supabase document_metadata/document_chunks-backed RAG index.\n- Retrieved 11 row(s) from Meeting transcripts; answer titles/dates are copied from Supabase rows.\n\n**Next Step**\n- Use this same source-specific check as a regression gate so generic source questions cannot fall back to tool discovery only."
+      },
+      "expectedToolNames": [
+        "sourceSpecificRagRetrieval",
+        "getMeetingIntelligence",
+        "getActionItemsAndInsights",
+        "searchMeetingsByTopic"
+      ],
+      "expectedToolFamilies": [
+        "meetings",
+        "actions"
+      ]
+    },
+    {
+      "id": "realworld-most-important-tasks",
+      "intent": "task_management",
+      "prompt": "What are my most important tasks right now?",
+      "selectedProjectId": null,
+      "sessionId": "b5863212-c693-4663-b919-a711a15217f4",
+      "sessionLabel": "eval-2026-05-13T23-46-20-168Z-realworld-most-important-tasks",
+      "startedAt": "2026-05-13T23:46:28.969Z",
+      "finishedAt": "2026-05-13T23:46:37.600Z",
+      "durationMs": 8579,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 145,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, mcpToolDiscovery, streamingToolPolicy, getActionItemsAndInsights"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getActionItemsAndInsights"
+        ],
+        "familiesHit": [
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 566,
+        "finalText": "You don’t have any active action items showing up right now.\n\nWhat matters most:\n- No open tasks found\n- No priority follow-ups from recent meetings\n- No unresolved insights flagged by the system\n- No overdue RFIs in the current packet\n\nBottom line:\n- There’s nothing currently surfaced as urgent or assigned that needs your attention right now.\n\nOne caveat:\n- This result depends on what’s been captured in the action-item/insight sources. If people are assigning work in email, Teams, or meetings without formal task tagging, those items may not be reflected here."
+      },
+      "expectedToolNames": [
+        "getMyTasks",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions"
+      ]
+    },
+    {
+      "id": "realworld-waiting-on-team",
+      "intent": "task_management",
+      "prompt": "What am I waiting on from my team?",
+      "selectedProjectId": null,
+      "sessionId": "8f62ac50-9b97-49ed-b0dc-e9a3f0d84551",
+      "sessionLabel": "eval-2026-05-13T23-46-20-168Z-realworld-waiting-on-team",
+      "startedAt": "2026-05-13T23:46:37.601Z",
+      "finishedAt": "2026-05-13T23:46:46.297Z",
+      "durationMs": 8645,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 142,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'people' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, mcpToolDiscovery, streamingToolPolicy, getActionItemsAndInsights"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getActionItemsAndInsights"
+        ],
+        "familiesHit": [
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 483,
+        "finalText": "Right now, I’m not seeing any tracked follow-ups pending from your team.\n\n- Open tasks: 0\n- Priority action items: 0\n- Unresolved insights: 0\n- Overdue RFIs: 0\n\nWhat that means: there’s nothing currently captured in the action-item/insight feed that indicates your team owes you something.\n\nWatch-out:\n- This could mean the team is clear, or\n- follow-ups may not be getting logged in the system.\n\nSo the practical answer is: no outstanding team dependencies are showing up right now."
+      },
+      "expectedToolNames": [
+        "getMyTasks",
+        "getActionItemsAndInsights",
+        "getPeopleAndRoles"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions",
+        "people"
+      ]
+    },
+    {
+      "id": "realworld-business-risks",
+      "intent": "risk_review",
+      "prompt": "What risks exist in the business right now?",
+      "selectedProjectId": null,
+      "sessionId": "5ff92ba1-2f79-4da2-b00f-768a5fac181d",
+      "sessionLabel": "eval-2026-05-13T23-46-20-168Z-realworld-business-risks",
+      "startedAt": "2026-05-13T23:46:46.298Z",
+      "finishedAt": "2026-05-13T23:47:15.072Z",
+      "durationMs": 28274,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1014,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'source_health' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, assistantWidgetPlanner, mcpToolDiscovery, streamingToolPolicy, getProjectsWithRisks, getPortfolioOverview, getFinancialAnalysis"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "assistantWidgetPlanner",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getProjectsWithRisks",
+          "getPortfolioOverview",
+          "getFinancialAnalysis"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk"
+        ],
+        "finalTextLength": 4928,
+        "finalText": "Yes. The business has **three immediate risk areas** right now: **execution capacity**, **design/change exposure**, and **back-office/compliance drag**. The biggest concern is that these are showing up across active work with **thin hard financial controls in the data**.\n\n## What matters most now\n\n### 1) Capacity risk is real\nAlleato appears to be running lean against active workload. In a recent internal/project discussion, leadership flagged difficulty finding **qualified PMs and superintendents**, with reliance on subs and limited internal project leads while managing roughly **20 ongoing projects**. That creates risk to field oversight, subcontractor coordination, quality, and margin protection.  \n**Why it matters:** This is the kind of risk that turns manageable jobs into rework, missed commitments, and late cost recognition.\n\n### 2) Design and scope are still moving on active jobs\nThe clearest project-side exposure is in **Vermillion Rise Warehouse**:\n- **7 tracked issues**\n- **10 open change events**\n- meeting discussion around major design decisions, demolition strategy, HVAC layout revisions, structural coordination, and a decision that avoids a potential **$500k roof drain rebuild**\n- pricing still being refined and separated between office/warehouse scope\n\nThat says the project is still carrying **scope definition and coordination risk**, with cost and schedule exposure if decisions are delayed or assumptions are wrong.  \n**Why it matters:** Open design movement plus multiple change events is usually where margin leaks start.\n\n### 3) Operational/finance process risk is surfacing internally\nInternal operations and finance meetings point to:\n- **mail and tax document backlog**\n- audit-prep cleanup\n- unresolved accounting/support issues, including a **double retainage billing error** that had been open for over two weeks\n- process workarounds in check processing and document handling\n- multi-state licensing work still in progress for places like **California and Nevada**\n\n**Why it matters:** These are not just admin nuisances. They create risk around billing accuracy, collections, licensing compliance, and the company’s ability to scale cleanly.\n\n## Highest-risk projects showing now\n\n### Goodwill Tremont\nFlagged with **1 high/critical AI insight** and **1 critical health item**. Recent meeting notes show active permitting and field coordination issues around:\n- signage permit review\n- fire alarm permit requirements\n- door closure/site-specific issues\n- purchase orders still in approval flow\n\n**Risk:** permit/approval friction and unresolved field items.\n\n### Uniqlo Phillipsburg NJ\nAlso flagged with **1 high/critical AI insight** and **1 critical health item**. Recent meetings show:\n- material delivery timing sensitivity\n- alignment checks on early strut installation\n- guard coordination with another trade\n- return of unused material to recover cost\n- fire suppression/server room coordination\n\n**Risk:** coordination and installation execution risk as work ramps.\n\n### Vermillion Rise Warehouse\nFlagged by issue volume rather than a single critical alert:\n- **7 open issues**\n- **10 open change events**\n\n**Risk:** active design development and cost exposure.\n\n## What changed\nRecent meeting traffic suggests the portfolio is active and moving, but the signal is that **coordination intensity is rising faster than control maturity**:\n- 38 current-phase projects in the portfolio\n- 100 meetings recorded, with insight in 97 of them\n- 22 open change events across current projects\n- only 3 projects are currently lighting up on the risk radar, but broader meeting content shows business-level strain beyond those three\n\n## First actions\n1. **Make a capacity decision this week.** Either add PM/superintendent bandwidth or deliberately limit new starts until field leadership coverage is clear.  \n2. **Run an executive scrub on open change exposure**, starting with Vermillion Rise and any project with active design revisions. Force owner/architect decisions and assign dates.  \n3. **Escalate back-office cleanup as a business risk, not an admin task**: close the retainage/billing issue, clear tax/mail backlog, and confirm licensing status by state with one owner and due dates.\n\n## Source gaps / confidence limits\n- Financial portfolio data is **thin/incomplete** in the current packet; many active projects show **no contract data**, so I would not treat the absence of budget alarms as proof that margin risk is low.\n- Several meeting records have **missing meeting dates**, which weakens trend timing.\n- The risk radar shows **no structured risks logged**, which usually means the business is relying more on meeting signals than formal risk register discipline.\n\nBottom line: **the business is not in crisis, but it is exposed**—primarily from **lean staffing, unresolved design/change movement on active jobs, and internal finance/compliance process friction**."
+      },
+      "expectedToolNames": [
+        "getProjectsWithRisks",
+        "getPortfolioOverview",
+        "getFinancialAnalysis",
+        "assistantSourceHealth"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "risk",
+        "financial",
+        "source_health"
+      ]
+    },
+    {
+      "id": "realworld-systems-processes-needed",
+      "intent": "implementation_planning",
+      "prompt": "What systems and processes do you think we need to put in place?",
+      "selectedProjectId": null,
+      "sessionId": "ea501377-6609-448c-baa1-24ae09b4bce4",
+      "sessionLabel": "eval-2026-05-13T23-46-20-168Z-realworld-systems-processes-needed",
+      "startedAt": "2026-05-13T23:47:15.075Z",
+      "finishedAt": "2026-05-13T23:48:16.473Z",
+      "durationMs": 60819,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1929,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'actions' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, mcpToolDiscovery, streamingToolPolicy, getCompanyKnowledge, semanticSearch"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getCompanyKnowledge",
+          "semanticSearch"
+        ],
+        "familiesHit": [
+          "semantic",
+          "knowledge",
+          "source_health"
+        ],
+        "finalTextLength": 8691,
+        "finalText": "You need operating discipline more than more software.\n\nThe pattern in your environment is pretty clear even from the gaps: a lot of critical project intelligence lives in meetings, emails, and Teams, while structured company knowledge is thin and source sync is degraded. That means people probably know what’s happening, but the company doesn’t reliably retain it, standardize it, or turn it into repeatable execution. That’s where the systems need to go.\n\nHere’s what I’d put in place.\n\n## 1. One operating rhythm for every active project\n\nIf this isn’t standardized, everything else gets noisy.\n\nPut in a required weekly project rhythm:\n- **Weekly project health review** for every current job\n- Same agenda every time:\n  - budget status\n  - pending and approved change orders\n  - procurement log\n  - schedule look-ahead\n  - RFIs/submittals aging\n  - owner decisions needed\n  - top 3 risks\n  - committed action items with owners/dates\n\nWhat matters is not the meeting. What matters is that every project gets reviewed through the same lens, every week, with visible accountability.\n\nWhy this matters:\n- It forces earlier escalation\n- It makes cross-project comparison possible\n- It exposes projects that “feel okay” but are actually drifting\n\n## 2. A real action-item management process\n\nThis is usually where projects quietly fail.\n\nYou need one standard for action items:\n- every action item has:\n  - clear verb\n  - single owner\n  - due date\n  - linked project\n  - linked meeting/email context if possible\n- no group-owned tasks\n- no undated follow-ups\n- overdue items reviewed weekly\n\nI’d also separate:\n- **verified tasks** from your task system\n- **candidate follow-ups** surfaced from meetings/emails\n\nThat distinction matters. Otherwise people either ignore the system or distrust it.\n\n## 3. A change management process that starts before pricing is complete\n\nA lot of companies wait too long to operationalize change events.\n\nYou need a standard pipeline:\n1. change identified\n2. change logged immediately\n3. ROM assigned if final pricing isn’t ready\n4. owner exposure communicated early\n5. pricing deadline assigned\n6. status reviewed weekly until resolved\n\nThe goal is simple: no meaningful scope change should exist only in conversation.\n\nIf a PM can’t answer, at any point, “what is pending, what is priced, what is approved, and what is at risk of being missed,” the process is too loose.\n\n## 4. Procurement tracking tied to schedule, not just a buyout list\n\nMost teams track commitments. Fewer track whether procurement timing is actually protecting the schedule.\n\nYou need a live procurement log with:\n- package/trade\n- required on-site date\n- decision date needed\n- submittal due date\n- release date\n- fabrication lead time\n- current blocker\n- owner\n\nThen review it in look-ahead meetings.\n\nWhy this matters:\n- A “bought out” trade can still be a schedule problem\n- Late decisions kill field productivity before the budget visibly shows it\n\n## 5. A risk register that is actually used\n\nNot a corporate artifact. A working one.\n\nFor each active project:\n- top cost risks\n- top schedule risks\n- top owner/decision risks\n- top subcontractor/performance risks\n- mitigation action\n- owner\n- next review date\n\nThen at the portfolio level:\n- rank jobs by risk\n- identify common failure modes across jobs\n\nThis is where leadership gets leverage. Individual PMs see their project. Leadership needs to see patterns:\n- recurring procurement delays\n- unpriced change exposure\n- slow owner decision cycles\n- RFIs aging on certain design teams\n- the same subs causing drag on multiple jobs\n\n## 6. A meeting-to-decision capture process\n\nRight now, a lot of value is likely trapped in transcripts and side conversations.\n\nAfter every meaningful meeting, capture only five things:\n- decisions made\n- risks raised\n- commitments made\n- owner inputs needed\n- next deadlines\n\nNot full notes. Just the operational output.\n\nIf a meeting ends without those five items being cleanly captured, the company pays for the meeting twice: once in time, and again in rework.\n\n## 7. A preconstruction-to-operations handoff system\n\nThis is a common leak.\n\nYou need a formal handoff from estimating/precon into project execution with a required checklist:\n- estimate assumptions\n- allowances/alternates\n- exclusions\n- long-lead concerns\n- scope gaps\n- owner expectations\n- permit assumptions\n- schedule assumptions\n- VE items still unresolved\n\nA lot of downstream conflict starts because the job team inherits a number, not the logic behind the number.\n\n## 8. A company knowledge capture habit for lessons learned\n\nI searched for company process and lessons-learned material and got nothing usable back. That’s a problem by itself.\n\nYou need a lightweight knowledge system for:\n- lessons learned by project\n- vendor/subcontractor performance notes\n- pricing intel\n- owner/client preferences\n- jurisdiction/permit quirks\n- repeatable playbooks\n\nNot a giant wiki nobody reads. Short, reusable operating knowledge.\n\nExample categories:\n- “What burns us in GMP reviews”\n- “What to lock down before owner-facing estimates”\n- “Subcontractors that need tighter scope control”\n- “Municipalities with slow review cycles”\n- “Owner groups that need more decision structure”\n\nThat turns experience into margin.\n\n## 9. A portfolio-level exception dashboard\n\nNot a dashboard for vanity. One for intervention.\n\nLeadership should only see exceptions:\n- projects with aging action items\n- projects with unpriced change exposure\n- projects with overdue procurement decisions\n- projects with RFIs or submittals beyond threshold\n- projects with weak meeting cadence\n- projects with no recent documented movement\n- projects with margin erosion or unresolved contract risk\n\nThis should answer one question:\n**Where does leadership attention change the outcome right now?**\n\n## 10. Data hygiene and system reliability ownership\n\nThis is more important than people admit.\n\nYour source sync health is degraded, with backlog in embeddings/compilation and several critical Outlook/Teams sources flagged. That means even good process can get undermined by stale visibility.\n\nYou need explicit ownership for:\n- source sync monitoring\n- failed connectors\n- stale project data\n- missing meeting capture\n- task integrity\n- project naming consistency\n\nIf no one owns data reliability, people stop trusting the system, and then everything moves back to private inboxes and memory.\n\n## 11. Defined decision rights\n\nA lot of delay is not from workload. It’s from ambiguity.\n\nYou need clarity on:\n- who can approve owner communications on cost exposure\n- who owns buyout timing\n- who escalates stale RFIs\n- who decides when to issue ROM vs wait for full pricing\n- who owns subcontractor performance intervention\n- who calls portfolio-level risk escalation\n\nGood companies don’t just assign work. They assign decisions.\n\n## 12. A standard owner-facing escalation process\n\nWhen jobs go sideways, teams often wait too long to say hard things externally.\n\nYou need a process for early owner communication on:\n- cost exposure\n- delayed decisions\n- schedule impact\n- incomplete design\n- scope ambiguity\n- procurement deadlines\n\nNot to create claims posture on every issue — just to avoid silent exposure.\n\nIf the team knows the problem internally but the owner has not been clearly informed, that’s unmanaged risk.\n\n## My read on priority\n\nIf you try to do all of this at once, it’ll stall.\n\nI’d prioritize in this order:\n\n1. **Weekly project operating rhythm**\n2. **Action item discipline**\n3. **Change event / cost exposure management**\n4. **Procurement tracking tied to schedule**\n5. **Meeting decision capture**\n6. **Precon handoff**\n7. **Portfolio exception view**\n8. **Knowledge capture**\n9. **Data reliability ownership**\n\nThat sequence gives you control first, then foresight, then institutional memory.\n\n## What this means in plain terms\n\nYou do not need ten new systems.\nYou need:\n- one way to review jobs\n- one way to assign and track commitments\n- one way to surface risk early\n- one way to capture what the company learns\n\nEverything else is support.\n\n## The move I’d make next\n\nPick **one active project** and pilot the full operating cadence for 30 days:\n- weekly health review\n- action-item standard\n- procurement log\n- change log\n- risk register\n- meeting output capture\n\nThen see where the friction actually is. That will tell you whether your problem is tooling, role clarity, or management discipline.\n\nIf you want, I can turn this into a **practical operating system for Alleato**:\n- the exact meeting cadence\n- required fields\n- project review template\n- risk thresholds\n- owner roles\n- and the minimum process stack to run it."
+      },
+      "expectedToolNames": [
+        "getPortfolioOverview",
+        "getActionItemsAndInsights",
+        "assistantSourceHealth"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "actions",
+        "source_health"
+      ]
+    },
+    {
+      "id": "realworld-last-five-emails",
+      "intent": "source_lookup",
+      "prompt": "Can you tell me my last five emails?",
+      "selectedProjectId": null,
+      "sessionId": "b8baec86-8fe0-41b1-92bd-44a2c3c91ad2",
+      "sessionLabel": "eval-2026-05-13T23-46-20-168Z-realworld-last-five-emails",
+      "startedAt": "2026-05-13T23:48:16.474Z",
+      "finishedAt": "2026-05-13T23:48:21.055Z",
+      "durationMs": 4519,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 25,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'communications' not represented",
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: intentPlanner, sourceSpecificRagRetrieval"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "sourceSpecificRagRetrieval"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 1614,
+        "finalText": "**Last Five Emails in Supabase**\n\n1. **Email: AI Assistant Calendar Invite Test** — 2026-05-13 [Source: outlook_AAMkAGNhMTc5ZDAwLTYwNjEtNGE5Mi04ZTI4LTllODdiY2RhNjliNABGAAAAAADrAAP0kly5Tp7uNi2CrItPBwA7VpBaSF70Sqm32W6tK4ohAAAAAAEMAAA7VpBaSF70Sqm32W6tK4ohAABkz143AAA=]\n2. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXIAAA=]\n3. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXKAAA=]\n4. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXOAAA=]\n5. **Email: Re: Fire Supression Deckers** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQmLY4sAAA=]\n\n**Observability**\n- Source checked: Outlook emails in Supabase document_metadata/document_chunks-backed RAG index.\n- Retrieved 5 row(s) from Outlook emails; answer titles/dates are copied from Supabase rows.\n\n**Next Step**\n- Use this same source-specific check as a regression gate so generic source questions cannot fall back to tool discovery only."
+      },
+      "expectedToolNames": [
+        "sourceSpecificRagRetrieval",
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-urgent-inbox",
+      "intent": "source_lookup",
+      "prompt": "Is there anything urgent in my inbox?",
+      "selectedProjectId": null,
+      "sessionId": "6ffb00d0-5025-43e5-8460-9bbcb315e5df",
+      "sessionLabel": "eval-2026-05-13T23-46-20-168Z-realworld-urgent-inbox",
+      "startedAt": "2026-05-13T23:48:21.056Z",
+      "finishedAt": "2026-05-13T23:48:25.403Z",
+      "durationMs": 4289,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 25,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'communications' not represented",
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: intentPlanner, sourceSpecificRagRetrieval"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "sourceSpecificRagRetrieval"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 1614,
+        "finalText": "**Last Five Emails in Supabase**\n\n1. **Email: AI Assistant Calendar Invite Test** — 2026-05-13 [Source: outlook_AAMkAGNhMTc5ZDAwLTYwNjEtNGE5Mi04ZTI4LTllODdiY2RhNjliNABGAAAAAADrAAP0kly5Tp7uNi2CrItPBwA7VpBaSF70Sqm32W6tK4ohAAAAAAEMAAA7VpBaSF70Sqm32W6tK4ohAABkz143AAA=]\n2. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXIAAA=]\n3. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXKAAA=]\n4. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXOAAA=]\n5. **Email: Re: Fire Supression Deckers** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQmLY4sAAA=]\n\n**Observability**\n- Source checked: Outlook emails in Supabase document_metadata/document_chunks-backed RAG index.\n- Retrieved 5 row(s) from Outlook emails; answer titles/dates are copied from Supabase rows.\n\n**Next Step**\n- Use this same source-specific check as a regression gate so generic source questions cannot fall back to tool discovery only."
+      },
+      "expectedToolNames": [
+        "sourceSpecificRagRetrieval",
+        "getRecentEmails",
+        "getRecentOutlookEmails",
+        "searchEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-draft-email-response",
+      "intent": "email_action",
+      "prompt": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+      "selectedProjectId": null,
+      "sessionId": "74e74873-cf99-4973-8948-2724b752aafa",
+      "sessionLabel": "eval-2026-05-13T23-46-20-168Z-realworld-draft-email-response",
+      "startedAt": "2026-05-13T23:48:25.404Z",
+      "finishedAt": "2026-05-13T23:48:31.120Z",
+      "durationMs": 5614,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, emailActionIntentRouter, getRecentOutlookEmails, readOutlookEmailThread, draftOutlookEmail, emailActionFastPath"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "emailActionIntentRouter",
+          "getRecentOutlookEmails",
+          "readOutlookEmailThread",
+          "draftOutlookEmail",
+          "emailActionFastPath"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 432,
+        "finalText": "I found the latest matching email thread and prepared a short Outlook reply draft.\n\nSubject: Re: Your Linear Business trial ends in 7 days\n\nDraft:\nThank you for following up. We are reviewing our options ahead of the trial end date and will provide an update once a decision has been made.\n\nReply **confirm** and I will save this reply draft to Outlook. If this is the wrong thread, tell me which email to use and I will redraft it."
+      },
+      "expectedToolNames": [
+        "draftOutlookEmail",
+        "getRecentEmails",
+        "getRecentOutlookEmails",
+        "readOutlookEmailThread"
+      ],
+      "expectedToolFamilies": [
+        "email_action",
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-meeting-invite-clarify",
+      "intent": "calendar_action",
+      "prompt": "Send a meeting invite to Megan Harrison.",
+      "selectedProjectId": null,
+      "sessionId": "34081064-893f-4a2c-b435-b59c2a68b7e9",
+      "sessionLabel": "eval-2026-05-13T23-46-20-168Z-realworld-meeting-invite-clarify",
+      "startedAt": "2026-05-13T23:48:31.121Z",
+      "finishedAt": "2026-05-13T23:48:38.053Z",
+      "durationMs": 6876,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 103,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'calendar_action' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, calendarActionIntentRouter, mcpToolDiscovery, streamingToolPolicy"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "calendarActionIntentRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 371,
+        "finalText": "I need the basics first:\n\n- **Subject**\n- **Date**\n- **Start time**\n- **Duration or end time**\n- **Megan’s email** if you want me to send it and it’s not already implied elsewhere\n\nIf you want, send it in one line like:\n**“Coordination call with Megan Harrison tomorrow at 2 PM for 30 minutes, megan@company.com”**\n\nOnce I have that, I’ll put together the invite preview."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "calendar_action"
+      ]
+    },
+    {
+      "id": "realworld-meeting-invite-preview",
+      "intent": "calendar_action",
+      "prompt": "Send a 30 minute Teams meeting invite to Megan Harrison tomorrow at 2pm about Deep Agents production readiness.",
+      "selectedProjectId": null,
+      "sessionId": "1a037d4a-8c41-4f09-a30b-bfe61d8bf928",
+      "sessionLabel": "eval-2026-05-13T23-46-20-168Z-realworld-meeting-invite-preview",
+      "startedAt": "2026-05-13T23:48:38.059Z",
+      "finishedAt": "2026-05-13T23:48:48.666Z",
+      "durationMs": 10137,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 215,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, calendarActionIntentRouter, mcpToolDiscovery, streamingToolPolicy, createOutlookCalendarInvite"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "calendarActionIntentRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "createOutlookCalendarInvite"
+        ],
+        "familiesHit": [
+          "calendar_action",
+          "source_health"
+        ],
+        "finalTextLength": 292,
+        "finalText": "I can prep it, but I’m missing Megan Harrison’s email.\n\nWhat I have:\n- Subject: **Deep Agents production readiness**\n- Time: **tomorrow, May 14 at 2:00 PM**\n- Duration: **30 minutes**\n- Format: **Teams meeting**\n\nSend me Megan’s email address and I’ll generate the invite preview immediately."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "calendar_action"
+      ]
+    }
+  ]
+}

@@ -6,7 +6,7 @@ const basePath = `/${projectId}/change-events`;
 test.describe('Change Events UI', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(basePath, { waitUntil: 'domcontentloaded' });
-    // Use element wait instead of networkidle — Liveblocks keeps WS connections open indefinitely
+    // Use element wait instead of networkidle; realtime connections can keep the page busy indefinitely.
     await page.waitForSelector('h1:has-text("Change Events")', {
       timeout: 15_000,
     });

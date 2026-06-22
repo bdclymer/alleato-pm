@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { requireAdmin } from "@/app/api/admin/intelligence-compiler/_shared";
+import { requireAdmin } from "@/app/api/admin/_shared";
 import {
   assembleAssistantPromptDiagnostics,
   redactSystemPrompt,

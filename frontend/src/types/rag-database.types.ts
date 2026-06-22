@@ -824,6 +824,66 @@ export type Database = {
         }
         Relationships: []
       }
+      source_processing_jobs: {
+        Row: {
+          completed_at: string | null
+          content_hash: string
+          error_code: string | null
+          error_message: string | null
+          first_seen_at: string
+          id: string
+          metadata: Json | null
+          occurred_at: string | null
+          project_id: number | null
+          retry_count: number
+          source_document_id: string
+          source_item_id: string
+          source_system: string
+          source_title: string | null
+          source_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          content_hash: string
+          error_code?: string | null
+          error_message?: string | null
+          first_seen_at?: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string | null
+          project_id?: number | null
+          retry_count?: number
+          source_document_id: string
+          source_item_id: string
+          source_system: string
+          source_title?: string | null
+          source_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          content_hash?: string
+          error_code?: string | null
+          error_message?: string | null
+          first_seen_at?: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string | null
+          project_id?: number | null
+          retry_count?: number
+          source_document_id?: string
+          source_item_id?: string
+          source_system?: string
+          source_title?: string | null
+          source_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       source_signal_candidates: {
         Row: {
           compiler_version: string

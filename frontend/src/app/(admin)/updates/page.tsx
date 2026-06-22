@@ -175,7 +175,7 @@ const RELEASES: Release[] = [
         area: "infrastructure",
         title: "Vercel Build — Deep Type Instantiation Errors",
         description:
-          "Resolved TypeScript errors from excessively deep type instantiation in issue-tracker and Liveblocks components that were blocking production deploys.",
+          "Resolved TypeScript errors from excessively deep type instantiation in retired collaboration-demo components that were blocking production deploys.",
       },
     ],
   },

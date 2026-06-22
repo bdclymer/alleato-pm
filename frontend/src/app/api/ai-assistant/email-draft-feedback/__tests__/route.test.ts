@@ -63,7 +63,7 @@ describe("/api/ai-assistant/email-draft-feedback", () => {
       success: true,
       eventId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
       storedIn: "ai_feedback_events",
-      voiceProfilePath: "docs/ai-plan/brandon-email-voice-profile.md",
+      voiceProfilePath: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md",
       voiceProfileVersion: "2026-05-19",
     });
     expect(recordEmailDraftFeedbackMock).toHaveBeenCalledWith(
@@ -75,7 +75,7 @@ describe("/api/ai-assistant/email-draft-feedback", () => {
         conversationId: "conversation-id",
         signal: "edited",
         reasonCategory: "too_formal",
-        voiceProfilePath: "docs/ai-plan/brandon-email-voice-profile.md",
+        voiceProfilePath: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md",
         voiceProfileVersion: "2026-05-19",
       }),
     );

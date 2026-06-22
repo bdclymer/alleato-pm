@@ -1,0 +1,93 @@
+{
+  "id": "appnav-rfis-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6124,
+  "question": "Where do RFIs live in the app?",
+  "mustInclude": [
+    "/[projectId]/rfis",
+    "RFI"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "RFIs live in the project area.\n\nDocumented route:\n- `/[projectId]/rfis` — RFIs log\n- `/[projectId]/rfis/new` — create RFI\n- `/[projectId]/rfis/[rfiId]` — individual RFI page\n\nCurated help confirms the workflow:\n- `docs/help/articles/rfis.md`\n  - “Open RFIs”: select a project, then open **RFIs** from the sidebar\n  - The log lists every RFI with number, title, status, ball-in-court, and due date\n  - You can create, answer, and close RFIs there\n\nImplementation evidence from route discovery:\n- `frontend/src/app/(main)/[projectId]/rfis/page.tsx`\n- `frontend/src/app/(main)/[projectId]/rfis/new/page.tsx`\n- `frontend/src/app/(main)/[projectId]/rfis/[rfiId]/page.tsx`\n\nSo the direct answer is: RFIs live under each project at `/[projectId]/rfis`, accessed from the project sidebar.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/rfis",
+        "sourceType": "sitemap",
+        "route": "/rfis",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/rfis/new",
+        "sourceType": "sitemap",
+        "route": "/rfis/new",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/rfis/[rfiId]",
+        "sourceType": "sitemap",
+        "route": "/rfis/[rfiId]",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/rfis.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/rfis.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/rfis/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/rfis/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/rfis/new/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/rfis/new/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/rfis/[rfiId]/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/rfis/[rfiId]/page.tsx",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6026,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

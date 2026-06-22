@@ -1,0 +1,65 @@
+{
+  "generatedAt": "2026-05-12T22:01:33.341Z",
+  "baseUrl": "http://localhost:3000",
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "streamingToolPolicy": 1,
+    "getPortfolioOverview": 1,
+    "getProjectsWithRisks": 1,
+    "getActionItemsAndInsights": 1
+  },
+  "intentDistribution": {
+    "portfolio_briefing": 1
+  },
+  "results": [
+    {
+      "id": "portfolio-overview",
+      "intent": "portfolio_briefing",
+      "prompt": "I have ten minutes before calls start. Which active jobs need my attention this week and why?",
+      "selectedProjectId": null,
+      "sessionId": "c6ff3c89-a398-48aa-8ed0-c436503e97d9",
+      "sessionLabel": "eval-2026-05-12T22-00-42-546Z-portfolio-overview",
+      "startedAt": "2026-05-12T22:00:42.549Z",
+      "finishedAt": "2026-05-12T22:01:33.340Z",
+      "durationMs": 50145,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1031,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, streamingToolPolicy, getPortfolioOverview, getProjectsWithRisks, getActionItemsAndInsights"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "streamingToolPolicy",
+          "getPortfolioOverview",
+          "getProjectsWithRisks",
+          "getActionItemsAndInsights"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 4681,
+        "finalText": "Three active jobs stand out this week. The rest of the portfolio looks comparatively quiet or just thin on usable data.\n\n### 1. Vermillion Rise Warehouse\nThis is the one I'd keep at the top of the list.\n\n- It has **10 open change events** and **7 tracked issues**. That’s the biggest visible pile of unresolved project noise in the active portfolio. [Source: Portfolio Overview - Current Projects]\n- Recent meeting signal is still design-and-pricing heavy, not execution-clean. The team was working through **HVAC layout changes, wall penetrations, pricing separation between office and warehouse, and urgent client pricing requests**. [Source: Meeting - \"Vermillion Rise Existing building discussions\" - null]\n- Another recent discussion shows meaningful design/cost sensitivity: the team is trying to **avoid a roof drain rebuild estimated at $500,000**, reuse equipment, confirm gas piping, and work through electrical service and compactor decisions. That tells me scope is still being actively shaped, not just documented. [Source: Meeting - \"Hillsdale Holdings // Alleato Weekly\" - null]\n\nWhat it means: this job is still vulnerable to drift because design coordination, pricing clarity, and issue resolution are all moving at once.\n\nWhat to do: get one clean status read this week on:\n- which of the **10 change events** are priced vs unpriced,\n- which of the **7 issues** are actually schedule-threatening,\n- and whether the design team is on track for the next decision deadline.\n\n### 2. Uniqlo Phillipsburg NJ\nThis needs attention because there’s a flagged critical item even though the meeting tone sounds mostly positive.\n\n- It shows **1 open critical item** and a **risk score of 7**. [Source: Project Risk Radar - Current projects]\n- The latest meeting says field progress is moving — **pipes and struts are being installed, air pressure testing prep is underway, staffing looks adequate, and deliveries are aligned**. [Source: Meeting - \"Uniqlo, Martinsville, CEVA, & GPC Huddle\" - null]\n- But the same update also mentions **ongoing coordination with Accufire for guard installation** and careful alignment checks as work ramps up. That usually means the job is fine until one coordination miss creates rework.\n\nWhat it means: this isn’t a broad project failure signal. It’s a “don’t look away right now” job. The field work is gaining speed, which is exactly when a small coordination miss turns into a bigger problem.\n\nWhat to do: find out what the **critical item** actually is and whether it ties to guard installation, testing readiness, or material sequencing.\n\n### 3. Goodwill Tremont\nThis one is less obviously bad, but it still has a real flag on it.\n\n- It also shows **1 open critical item** and a **risk score of 7**. [Source: Project Risk Radar - Current projects]\n- The meeting summary sounds generally healthy across the Goodwill workstream — **drywall nearing completion, inspections next week, signage permit in review, pricing received for door access control, civil permit submissions and electrical safe-off starting**. [Source: Meeting - \"Goodwill Weekly OAC Meeting\" - null]\n- That said, the summary also includes **door closure issues, fire alarm permit requirements, and multiple purchase orders still in approval**. Those are exactly the kind of “small” items that can stall momentum if nobody owns them hard.\n\nWhat it means: the job doesn’t read as distressed, but it has enough permitting/approval friction that it deserves a check-in before it becomes a preventable delay.\n\nWhat to do: confirm this week:\n- status of the **fire alarm permit**,\n- whether the **door/access control pricing** has been approved,\n- and whether any **PO approvals** are holding up field progress.\n\n### My read on the week\nIf you only have bandwidth for one hard intervention, use it on **Vermillion Rise**. It has the clearest combination of unresolved scope, pricing pressure, and active coordination risk.\n\nIf you have time for two more quick checks, do **Uniqlo Phillipsburg NJ** and **Goodwill Tremont** just to flush out those flagged critical items before they surprise you.\n\n### One important data gap\nThe task register came back essentially empty:\n- **0 open tasks**\n- **0 overdue tasks**\n- **0 structured action items**\n- **0 overdue RFIs**  \n[Source: Action Items & Insights]\n\nI don’t trust that as a sign the jobs are clean. I trust it as a sign the live action-item/task layer is thin right now. So this answer is driven mostly by portfolio risk and meeting signal, which is still useful — just not as complete as I'd want.\n\nIf you want, I can turn this into a tighter **call-prep list with the exact questions to ask on each of those three jobs**."
+      },
+      "expectedToolNames": [
+        "getPortfolioOverview",
+        "getProjectsWithRisks"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "risk"
+      ]
+    }
+  ]
+}

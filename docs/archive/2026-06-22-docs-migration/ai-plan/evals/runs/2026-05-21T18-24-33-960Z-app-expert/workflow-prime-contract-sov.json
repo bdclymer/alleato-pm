@@ -1,0 +1,117 @@
+{
+  "id": "workflow-prime-contract-sov",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 8323,
+  "question": "Where does schedule of values fit into prime contracts?",
+  "response": {
+    "answer": "Schedule of values fits into **Prime Contracts** as the owner-facing billing SOV.\n\nWhat I checked:\n- Artifact status: both generated artifacts are present and current:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry:\n  - **Prime Contracts**: “Manage the owner contract, schedule of values, and prime contract modifications.”\n  - **Estimates**: “Build quantity takeoff estimates in Alleato, then import them directly into a prime contract schedule of values.”\n  - **Commitments**: also mentions SOV, but for subcontracts/purchase orders, not the owner prime contract.\n- Help articles:\n  - `docs/help/articles/prime-contracts.md`\n  - `docs/help/articles/estimates.md`\n  - `docs/help/articles/commitments.md`\n\nDocumented behavior:\n- In `docs/help/articles/prime-contracts.md`, the Prime Contract **SOV is what owner pay applications bill against**.\n- The SOV is edited under the **Schedule of Values** tab on route:\n  - `/[projectId]/prime-contracts`\n- Estimates can be imported into the prime contract SOV from:\n  - `/[projectId]/estimates`\n  - `/[projectId]/estimates/[estimateId]`\n- Commitments have their own SOV for subcontractors/POs, on route:\n  - `/[projectId]/commitments`\n\nShort answer:\n- **Prime Contracts is where the project’s owner contract SOV lives.**\n- **Estimates can feed that SOV.**\n- **Commitments use a separate SOV for subcontract/PO billing.**\n\nIf you want, I can also map the full SOV workflow across Prime Contracts, Estimates, Invoicing, and Commitments.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/purchase",
+        "sourceType": "sitemap",
+        "route": "/purchase",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/prime-contracts.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/prime-contracts.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/estimates.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/estimates.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/commitments.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/commitments.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/prime-contracts",
+        "sourceType": "sitemap",
+        "route": "/prime-contracts",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/estimates",
+        "sourceType": "sitemap",
+        "route": "/estimates",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/estimates/[estimateId]",
+        "sourceType": "sitemap",
+        "route": "/estimates/[estimateId]",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/POs,",
+        "sourceType": "sitemap",
+        "route": "/POs,",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/commitments",
+        "sourceType": "sitemap",
+        "route": "/commitments",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/PO",
+        "sourceType": "sitemap",
+        "route": "/PO",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 8320,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

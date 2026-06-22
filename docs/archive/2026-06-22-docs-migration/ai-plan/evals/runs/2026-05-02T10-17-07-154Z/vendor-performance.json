@@ -1,0 +1,44 @@
+{
+  "id": "vendor-performance",
+  "intent": "people_or_capacity",
+  "prompt": "How are our top vendors performing across active projects?",
+  "selectedProjectId": null,
+  "sessionId": "a3950e09-11d2-44e7-bf76-d7165bb00c40",
+  "sessionLabel": "eval-2026-05-02T10-17-07-154Z-vendor-performance",
+  "startedAt": "2026-05-02T10:20:51.924Z",
+  "finishedAt": "2026-05-02T10:21:07.655Z",
+  "durationMs": 409,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"739b65f2-5268-4fac-b38a-144b25219397\",\"timestamp\":\"2026-05-02T10:20:52.331Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"739b65f2-5268-4fac-b38a-144b25219397\",\"timestamp\":\"2026-05-02T10:20:52.331Z\"}",
+      "HTTP 401",
+      "expected at least one of [getVendorPerformance] to fire — none did",
+      "mustInclude missing: \"vendor\""
+    ],
+    "warnings": [
+      "expected family 'people' not represented",
+      "expected family 'financial' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"739b65f2-5268-4fac-b38a-144b25219397\",\"timestamp\":\"2026-05-02T10:20:52.331Z\"}"
+  },
+  "expectedToolNames": [
+    "getVendorPerformance"
+  ],
+  "expectedToolFamilies": [
+    "people",
+    "financial"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

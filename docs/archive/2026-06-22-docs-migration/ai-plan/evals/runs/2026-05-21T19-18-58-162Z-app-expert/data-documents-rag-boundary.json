@@ -1,0 +1,47 @@
+{
+  "id": "data-documents-rag-boundary",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4318,
+  "question": "What is the difference between project documents and RAG knowledge?",
+  "response": {
+    "answer": "I can’t answer this reliably from App Expert artifacts right now because the required generated docs are missing.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search for `project documents RAG knowledge` also failed for the same reason.\n\nWhat remains uncertain:\n- Whether “project documents” and “RAG knowledge” are distinct product concepts in this app, and if so, their documented differences.\n- Any exact routes, help articles, or source-backed implementation details.\n\nTo proceed, the docs need to be generated first:\n- `npm run docs:generate-app-expert`\n\nIf you want, I can still help by explaining the likely conceptual difference in general terms, but it would not be app-specific or source-backed.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 4207,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

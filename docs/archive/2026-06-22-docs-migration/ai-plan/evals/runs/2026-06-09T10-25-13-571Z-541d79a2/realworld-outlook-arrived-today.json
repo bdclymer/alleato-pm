@@ -1,0 +1,361 @@
+{
+  "id": "realworld-outlook-arrived-today",
+  "intent": "source_lookup",
+  "prompt": "What came in through Outlook today that needs my attention?",
+  "selectedProjectId": null,
+  "sessionId": "d2e7f32f-6b7e-471c-a65c-dcf98a56d436",
+  "sessionLabel": "eval-2026-06-09T10-25-13-571Z-541d79a2-realworld-outlook-arrived-today",
+  "startedAt": "2026-06-09T10:26:40.780Z",
+  "finishedAt": "2026-06-09T10:27:17.469Z",
+  "durationMs": 32676,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 16,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "judge email_operator score 3 < 4: The answer does a decent job separating urgent from non-urgent items and gives concrete next steps, but it overstates certainty in places, mixes inbox items with inferred ownership, and includes thread details that are not clearly evidenced. It is useful operationally, but not strong enough on evidence discipline and response-path precision to pass."
+    ],
+    "warnings": [
+      "duration 32676ms exceeded warning budget 30000ms"
+    ],
+    "observations": [
+      "tools fired: consultMicrosoftExecutiveAssistant",
+      "judge email_operator: fail (3/4)"
+    ],
+    "toolNames": [
+      "consultMicrosoftExecutiveAssistant"
+    ],
+    "familiesHit": [
+      "communications",
+      "email_action"
+    ],
+    "finalTextLength": 4239,
+    "finalText": "Today’s Outlook items that need attention from the 25-message live inbox read:\n\nHighest-priority\n- Ulta / roof penetration follow-up\n  - From: Walter Allen, Ulta Beauty\n  - Received: 9:59 AM UTC\n  - Ask: “Can you confirm by Thursday afternoon on the roof penetration?”\n  - Why it matters: active client follow-up with a deadline.\n  - Recommended action: respond with confirmation/status and ETA.\n\n- Exol Morrisville PA / scope clarification\n  - From: Steve Fischer\n  - Received: 2:59 AM UTC\n  - Ask: notes that MDF room needs dry fire suppression (FM200 style), anti-static VCT floor, and UPS power requirements are being discussed.\n  - Why it matters: project scope/spec clarification that may affect design and pricing.\n  - Recommended action: review with project team and reply with consolidated scope response.\n\n- Exol Morrisville PA / proposal and structural items\n  - From: Bob Wright and related thread\n  - Received: 8:57 PM / 8:18 PM UTC yesterday, but still likely active work\n  - Ask: proposal sent, compressed air system vendor selected, stamped structural drawings attached, budget/proposal follow-up in progress.\n  - Why it matters: ongoing project execution with attachments and pricing decisions.\n  - Recommended action: review attachments and coordinate response if you own the thread.\n\n- Re: Champaign Pay App\n  - From: Glendon Griesbaum\n  - Received: 8:39 PM UTC yesterday\n  - Ask: confirms they want to ensure timely payment and has a question about the pay app.\n  - Why it matters: payment-related operational follow-up.\n  - Recommended action: check billing/pay app status and reply if needed.\n\nPotentially important, but not urgent\n- Microsoft 365 security quarantine notice\n  - From: quarantine@messaging.microsoft.com\n  - Received: 10:46 PM UTC yesterday\n  - Says 1 message is held in quarantine and needs review within 15 days.\n  - Why it matters: security/admin attention required.\n  - Recommended action: review quarantine in Security Center when available.\n\n- Capital One Business “approaching spend limit”\n  - From: Capital One Business\n  - Received: 7:56 PM UTC yesterday\n  - Why it matters: could require finance attention, but no immediate crisis indicated.\n  - Recommended action: check card spend against limits.\n\n- “Action Required: Welcome to Innovative Private Wealth”\n  - From: Info & Compliance\n  - Received: 7:59 PM UTC yesterday\n  - Why it matters: appears financial/compliance-related and says action required regarding share transfer.\n  - Recommended action: verify legitimacy before acting; likely needs finance/legal review.\n\n- Acumatica scheduled maintenance\n  - From: Revive Support\n  - Received: 6:47 PM UTC yesterday\n  - Why it matters: operational notice, not urgent unless tied to a live business process.\n  - Recommended action: note maintenance window.\n\nUrgent escalation assessment\n- I do not see a true emergency, legal emergency, or clear security incident in today’s live inbox read.\n- The only item that warrants concise escalation as a client-action item is the Ulta roof penetration confirmation.\n\nDraft Teams escalation for review\n- Recipient: Megan / project lead for Ulta\n- Message:\n  - Urgent client follow-up: Ulta asked for confirmation by Thursday afternoon on the roof penetration. We should confirm status/ETA today so they’re not left waiting.\n\nCapability check\n- Live Outlook inbox read: succeeded.\n- Teams search: succeeded, no matching urgent messages found.\n- Microsoft file search: succeeded, no matching urgent files found.\n- Calendar review: not run because no calendar-linked action rose above the inbox items and no meeting request needed verification.\n\nRecommended next steps for Megan\n1. Confirm who owns the Ulta roof penetration response and send a same-day status update.\n2. Review the Exol Morrisville scope changes and decide whether a consolidated reply is needed.\n3. Check the quarantine item in Security Center.\n4. Review the Capital One spend-limit alert if finance oversight is yours.\n5. Decide whether you want me to draft a reply for the Ulta thread or the Exol thread.\n\nApprovals needed\n- None to review and prioritize.\n- Approval would be needed if you want me to prepare an email draft or Teams message payload for a specific recipient/thread.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 32676
+    },
+    "judge": {
+      "status": "fail",
+      "rubric": "email_operator",
+      "score": 3,
+      "minScore": 4,
+      "summary": "The answer does a decent job separating urgent from non-urgent items and gives concrete next steps, but it overstates certainty in places, mixes inbox items with inferred ownership, and includes thread details that are not clearly evidenced. It is useful operationally, but not strong enough on evidence discipline and response-path precision to pass.",
+      "strengths": [
+        "Clearly separates highest-priority items from potentially important but not urgent items.",
+        "Identifies why several emails matter, especially the Ulta deadline and payment/scope-related threads.",
+        "Provides concrete recommended actions instead of just listing messages.",
+        "Includes a short draft escalation message for review, which is practical and concise.",
+        "Avoids claiming any email was sent."
+      ],
+      "weaknesses": [
+        "Uses unsupported certainty in places, such as calling the Ulta item the only client-action escalation and labeling some items as likely active without enough evidence.",
+        "Mixes confirmed inbox items with inferred user-owned actions, especially in the 'Recommended next steps' section.",
+        "Thread summaries sometimes include extra detail that may not be necessary and could be interpreted as thread reconstruction beyond the prompt.",
+        "Does not consistently distinguish between what Brandon/Megan owns versus what merely exists in the inbox.",
+        "Suspicious/security-related items are labeled as needing review, but the phishing/compliance judgment is not strongly evidence-backed."
+      ],
+      "dimensionScores": {
+        "separates_urgent_from_noise": 4,
+        "identifies_who_needs_response_and_impact": 4,
+        "summarizes_threads_efficiently": 3,
+        "recommends_concrete_response_path": 4,
+        "draft_is_short_direct_practical": 4,
+        "no_false_sent_or_invented_details": 2,
+        "separates_owned_actions_from_inbox_items": 2,
+        "evidence_backed_suspicious_or_ignore_judgments": 3
+      },
+      "provider": "openai",
+      "model": "gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "consultMicrosoftExecutiveAssistant"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:26:42.110Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Delegating Microsoft operator work",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:26:42.276Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:26:45.277Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:26:48.277Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:26:51.277Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:26:54.278Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:26:57.278Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:27:00.278Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:27:03.278Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:27:06.278Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:27:09.279Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:27:12.279Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-microsoft-executive-assistant"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-microsoft-executive-assistant",
+      "delta": "Today’s Outlook items that need attention from the 25-message live inbox read:\n\nHighest-priority\n- Ulta / roof penetration follow-up\n  - From: Walter Allen, Ulta Beauty\n  - Received: 9:59 AM UTC\n  - Ask: “Can you confirm by Thursday afternoon on the roof penetration?”\n  - Why it matters: active client follow-up with a deadline.\n  - Recommended action: respond with confirmation/status and ETA.\n\n- Exol Morrisville PA / scope clarification\n  - From: Steve Fischer\n  - Received: 2:59 AM UTC\n  - Ask: notes that MDF room needs dry fire suppression (FM200 style), anti-static VCT floor, and UPS power requirements are being discussed.\n  - Why it matters: project scope/spec clarification that may affect design and pricing.\n  - Recommended action: review with project team and reply with consolidated scope response.\n\n- Exol Morrisville PA / proposal and structural items\n  - From: Bob Wright and related thread\n  - Received: 8:57 PM / 8:18 PM UTC yesterday, but still likely active work\n  - Ask: proposal sent, compressed air system vendor selected, stamped structural drawings attached, budget/proposal follow-up in progress.\n  - Why it matters: ongoing project execution with attachments and pricing decisions.\n  - Recommended action: review attachments and coordinate response if you own the thread.\n\n- Re: Champaign Pay App\n  - From: Glendon Griesbaum\n  - Received: 8:39 PM UTC yesterday\n  - Ask: confirms they want to ensure timely payment and has a question about the pay app.\n  - Why it matters: payment-related operational follow-up.\n  - Recommended action: check billing/pay app status and reply if needed.\n\nPotentially important, but not urgent\n- Microsoft 365 security quarantine notice\n  - From: quarantine@messaging.microsoft.com\n  - Received: 10:46 PM UTC yesterday\n  - Says 1 message is held in quarantine and needs review within 15 days.\n  - Why it matters: security/admin attention required.\n  - Recommended action: review quarantine in Security Center when available.\n\n- Capital One Business “approaching spend limit”\n  - From: Capital One Business\n  - Received: 7:56 PM UTC yesterday\n  - Why it matters: could require finance attention, but no immediate crisis indicated.\n  - Recommended action: check card spend against limits.\n\n- “Action Required: Welcome to Innovative Private Wealth”\n  - From: Info & Compliance\n  - Received: 7:59 PM UTC yesterday\n  - Why it matters: appears financial/compliance-related and says action required regarding share transfer.\n  - Recommended action: verify legitimacy before acting; likely needs finance/legal review.\n\n- Acumatica scheduled maintenance\n  - From: Revive Support\n  - Received: 6:47 PM UTC yesterday\n  - Why it matters: operational notice, not urgent unless tied to a live business process.\n  - Recommended action: note maintenance window.\n\nUrgent escalation assessment\n- I do not see a true emergency, legal emergency, or clear security incident in today’s live inbox read.\n- The only item that warrants concise escalation as a client-action item is the Ulta roof penetration confirmation.\n\nDraft Teams escalation for review\n- Recipient: Megan / project lead for Ulta\n- Message:\n  - Urgent client follow-up: Ulta asked for confirmation by Thursday afternoon on the roof penetration. We should confirm status/ETA today so they’re not left waiting.\n\nCapability check\n- Live Outlook inbox read: succeeded.\n- Teams search: succeeded, no matching urgent messages found.\n- Microsoft file search: succeeded, no matching urgent files found.\n- Calendar review: not run because no calendar-linked action rose above the inbox items and no meeting request needed verification.\n\nRecommended next steps for Megan\n1. Confirm who owns the Ulta roof penetration response and send a same-day status update.\n2. Review the Exol Morrisville scope changes and decide whether a consolidated reply is needed.\n3. Check the quarantine item in Security Center.\n4. Review the Capital One spend-limit alert if finance oversight is yours.\n5. Decide whether you want me to draft a reply for the Ulta thread or the Exol thread.\n\nApprovals needed\n- None to review and prioritize.\n- Approval would be needed if you want me to prepare an email draft or Teams message payload for a specific recipient/thread."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-microsoft-executive-assistant"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Microsoft Executive Assistant answer returned",
+        "status": "success",
+        "timestamp": "2026-06-09T10:27:13.448Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "tool_trace": [
+      {
+        "tool": "consultMicrosoftExecutiveAssistant",
+        "error": null,
+        "input": {
+          "message": "What came in through Outlook today that needs my attention?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": "deep_agents",
+          "count": null,
+          "error": null,
+          "source": "microsoft_graph_live",
+          "summary": "Today’s Outlook items that need attention from the 25-message live inbox read:\n\nHighest-priority\n- Ulta / roof penetration follow-up\n  - From: Walter Allen, Ulta Beauty\n  - Received: 9:59 AM UTC\n  - Ask: “Can you confirm by Thursday afternoon on the roof penetration?”\n  - Why it matters: active client follow-up with a deadline.\n  - Recommended action: respond with confirmation/status and ETA.\n\n- Exol Morrisville PA / scope clarification\n  - From: Steve Fischer\n  - Received: 2:59 AM UTC\n  - Ask: ",
+          "toolTrace": [
+            {
+              "tool": "read_live_outlook_inbox",
+              "agent": "microsoft-executive-assistant",
+              "detail": "read_live_outlook_inbox completed.",
+              "output": {
+                "ok": true,
+                "count": 25,
+                "source": "microsoft_graph_live",
+                "fetchedAt": "2026-06-09T10:26:48.595379+00:00",
+                "truncated": true,
+                "mailboxUserId": "bclymer@alleatogroup.com"
+              },
+              "source": "microsoft_graph_live",
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "search_outlook_emails",
+              "agent": "microsoft-executive-assistant",
+              "detail": "search_outlook_emails completed.",
+              "output": {},
+              "source": null,
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "search_microsoft_teams_messages",
+              "agent": "microsoft-executive-assistant",
+              "detail": "search_microsoft_teams_messages completed.",
+              "output": {},
+              "source": null,
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "search_microsoft_files",
+              "agent": "microsoft-executive-assistant",
+              "detail": "search_microsoft_files completed.",
+              "output": {},
+              "source": null,
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "deepagents_microsoft_executive_assistant_runtime",
+              "agent": "microsoft-executive-assistant",
+              "detail": "Microsoft Executive Assistant produced an answer.",
+              "output": null,
+              "source": null,
+              "status": "success",
+              "durationMs": 26047
+            }
+          ],
+          "actionCount": 0,
+          "orchestrator": "microsoft-executive-assistant"
+        },
+        "status": "success",
+        "toolName": "consultMicrosoftExecutiveAssistant",
+        "timestamp": "2026-06-09T10:27:13.191Z",
+        "durationMs": 30913
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "source_debug": {
+      "memory": {
+        "reason": "This answer was produced by a delegated specialist/direct Deep Agents path; inspect delegated trace and backend memory metadata for specialist-side context.",
+        "status": "not_loaded_in_frontend"
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "consultMicrosoftExecutiveAssistant",
+              "agent": "unknown-agent",
+              "status": "success",
+              "durationMs": 30913
+            }
+          ],
+          "failedCount": 0,
+          "totalMeasuredMs": 30913
+        },
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 1,
+        "sourceCoverage": []
+      },
+      "orchestrator": "microsoft-executive-assistant",
+      "outputPolicy": null,
+      "retrievalPlan": {
+        "intent": "source_lookup",
+        "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "sources": [],
+        "responseFormat": "conversational"
+      }
+    },
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+      "sources": [],
+      "responseFormat": "conversational"
+    },
+    "response_quality": {
+      "score": 62,
+      "reasons": [
+        "at least one successful tool call",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "delegated_orchestrator": "microsoft-executive-assistant"
+  }
+}

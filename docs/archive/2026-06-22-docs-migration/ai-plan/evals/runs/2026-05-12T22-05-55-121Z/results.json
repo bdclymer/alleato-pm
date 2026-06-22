@@ -1,0 +1,70 @@
+{
+  "generatedAt": "2026-05-12T22:06:57.374Z",
+  "baseUrl": "http://localhost:3000",
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "assistantWidgetPlanner": 1,
+    "clientProjectIntelligencePacket": 1,
+    "streamingToolPolicy": 1,
+    "getProjectRiskAnalysis": 1,
+    "getActionItemsAndInsights": 1,
+    "getProjectBriefingSnapshot": 1
+  },
+  "intentDistribution": {
+    "risk_review": 1
+  },
+  "results": [
+    {
+      "id": "risk-review-single-project",
+      "intent": "risk_review",
+      "prompt": "What could bite us on Westfield right now? Rank the risks and tell me what I should do first.",
+      "selectedProjectId": 43,
+      "sessionId": "f30d4a00-16fd-4d03-9f8e-2b42c0badf03",
+      "sessionLabel": "eval-2026-05-12T22-05-55-121Z-risk-review-single-project",
+      "startedAt": "2026-05-12T22:05:55.123Z",
+      "finishedAt": "2026-05-12T22:06:57.373Z",
+      "durationMs": 61515,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1702,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "global forbidden phrase: \"RAG\""
+        ],
+        "observations": [
+          "tools fired: intentPlanner, assistantWidgetPlanner, clientProjectIntelligencePacket, streamingToolPolicy, getProjectRiskAnalysis, getActionItemsAndInsights, getProjectBriefingSnapshot"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantWidgetPlanner",
+          "clientProjectIntelligencePacket",
+          "streamingToolPolicy",
+          "getProjectRiskAnalysis",
+          "getActionItemsAndInsights",
+          "getProjectBriefingSnapshot"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 7523,
+        "finalText": "Westfield’s biggest risk is **not one dramatic issue** — it’s a closeout job with too many loose ends, weak schedule hygiene, and a pile of pending commercial cleanup that can turn into margin leakage and owner frustration fast.\n\n## Ranked risks\n\n### 1. Warranty / performance issue on the door is the most immediate reputational risk\n**Why it matters:** There’s a live owner-facing complaint today. Mike Ewers said the door is **not rated for a controlled environment**, that it appears to be **R2**, and that it should be **no less than R8**. He also said cold weather made it obvious outside air was coming through the entire door, not just the perimeter.  \n**Evidence:** Email from Mike Ewers to Andrew Cannon on **2026-05-12** [Source: Email: RE: Westfield Collective: Warranty and O&M Manuals].  \n**What could bite you:** If this turns into “installed wrong product” instead of a manageable warranty correction, you’ve got owner confidence damage and potential backcharge/rework exposure.\n\n**Do first:**  \n- Get a written technical position by tomorrow: **what door was specified, what was installed, what its actual rating is, and who approved it**.  \n- Assign one owner-facing response through **Andrew Cannon** so this doesn’t splinter into partial explanations.  \n- If the installed assembly is truly under-spec, stop treating it like weatherstripping and treat it like a **scope / liability decision**.\n\n---\n\n### 2. Pending change orders are too large and too old to ignore\n**Why it matters:** The job has **25 pending change orders totaling $2,329,102.80 proposed** and **$1,204,203.55 in pending contract changes** with **$0 approved** in the snapshot. That’s too much unresolved commercial exposure for a project this far along.  \n**Evidence:** [Source: Project Briefing Snapshot - Westfield Collective].  \n**What could bite you:** Even if some are bookkeeping noise, this volume creates three problems:\n- margin uncertainty,\n- owner dispute risk,\n- and closeout drag because nobody knows what’s settled.\n\nThere’s also a data warning: the separate risk analysis shows **pending change order exposure of -$1,112,916.18**, which conflicts with the snapshot. That tells me the change log is messy enough to be a risk by itself.\n\n**Do first:**  \n- Have Andrew and accounting do a **same-day scrub of the top 10 dollar-value pending COs**.  \n- Split them into 3 buckets: **collectible, dead, and needs backup**.  \n- Anything that is a duplicate, reversed, or administrative correction needs to get cleaned up now.  \n- Anything real needs an owner decision path this week.\n\n---\n\n### 3. The task register is stale enough that it’s hiding real risk\n**Why it matters:** The system shows **44 overdue tasks** in risk analysis and **144 overdue/incomplete schedule tasks** in the briefing snapshot, many tied to early 2025 design and permit activities. On a project that already had its grand opening, that means the schedule record is not being maintained.  \n**Evidence:** [Source: Risk Analysis - Westfield Collective], [Source: Project Briefing Snapshot - Westfield Collective].  \n**What could bite you:** When the schedule is this stale, it stops being a control tool. Then punch, warranty, and closeout issues live in email only — which is exactly how claims and missed commitments sneak through.\n\n**My read:** This is probably more of a **controls risk than a literal active schedule delay**, but controls risk still bites. People think the job is done while the record says otherwise.\n\n**Do first:**  \n- Don’t try to clean 144 tasks manually.  \n- Have PM ops do a **schedule reset**: archive obsolete preconstruction tasks, isolate true closeout/warranty items, and rebuild a short active list.  \n- Goal: by end of week, Westfield should have a **clean 10-15 item closeout list**, not a zombie schedule.\n\n---\n\n### 4. Open punch / warranty follow-ups are aging and making the team look slower than they are\n**Why it matters:** You’ve got multiple overdue action items from early May tied to field corrections:\n- patio pricing and submittals from **Bperkins**\n- chipped casework / glue cleanup / piano hinge dates from **Mark Will / Mwill**\n- bar bulkhead light visit confirmation from **James Baughman**\n- site visit follow-up with **Colin Gillespie / Chad**  \nAll are showing overdue.  \n**Evidence:** [Source: Action Items & Insights].  \n**What could bite you:** None of these individually are fatal. Together they create the exact owner experience that kills confidence on a nearly finished job: “Why are basic follow-ups still hanging out there?”\n\n**Do first:**  \n- Run a **48-hour closeout sweep** on every overdue item dated **2026-05-05 to 2026-05-06**.  \n- Force each one into one of four statuses: **done, scheduled, waiting on vendor, or no longer needed**.  \n- Anything with no response gets escalated same day.\n\n---\n\n### 5. Receivables / payment friction is now visible\n**Why it matters:** Brandon emailed that the last **two invoices are over 60 days late** and asked for payment status. There’s also ongoing email traffic on app payment and retainage release issues.  \n**Evidence:** Email from Brandon Clymer on **2026-05-11** regarding overdue invoices [Source: Email: Re: TAG 02/25/26 Westfield Collective - Craving Crapes Proof of Funds]; retainage/payment emails on **2026-05-07** [Source: Email: Re:[## 2381 ##] Westfield Collective: Merritt Retainage; Email: Re: 25033 Westfield Collective App 7 payment].  \n**What could bite you:** On a closeout job, collections friction and unresolved retainage issues can turn into leverage against unresolved warranty items.\n\n**Do first:**  \n- Pair the commercial cleanup with the warranty cleanup.  \n- Before asking hard for final money, know exactly what owner-side complaints are still active and what subcontractor retainage blockers still exist.\n\n---\n\n## What I’d do first, in order\n\n1. **Resolve the door issue factually within 24 hours.**  \n   Get the spec, installed product, rating, approval trail, and correction options in one memo. This is the cleanest near-term owner risk.\n\n2. **Triage pending change orders by dollars, not count.**  \n   Don’t review 25 equally. Review the biggest 10 and classify them: collectible, dead, needs support.\n\n3. **Kill the stale task noise.**  \n   Reset the schedule/action-item record so the team is managing a real closeout list, not an archaeological dig.\n\n4. **Close or reschedule every overdue punch/warranty item from last week.**  \n   Especially patio, casework, hinges, and lighting.\n\n5. **Align collections with open owner issues.**  \n   Don’t let finance push one message while ops is still negotiating warranty corrections.\n\n## The point of view\n\nWestfield is **operationally survivable**, but it’s vulnerable to **death by unresolved closeout detail**. The job doesn’t look like a construction crisis. It looks like a project that can lose money and goodwill because the final 5% isn’t being managed with enough discipline.\n\n## Confidence / gaps\n\nConfidence is **moderate**. The live email signals are useful, and the overdue action items are concrete. But the schedule and change-order data are messy:\n- schedule shows massive overdue counts that don’t match the project’s apparent stage,\n- change-order exposure is inconsistent across tools,\n- no current budget-line detail beyond the snapshot fallback.\n\nIf you want, I can do the next useful pass now: **pull the pending change orders and rank the top dollar exposures**, or **build a 1-page Westfield closeout hit list with owners and deadlines**."
+      },
+      "expectedToolNames": [
+        "getProjectRiskAnalysis"
+      ],
+      "expectedToolFamilies": [
+        "risk",
+        "project"
+      ]
+    }
+  ]
+}

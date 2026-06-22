@@ -60,7 +60,7 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Path / env bootstrap (mirrors enqueue_periodic_packet_refresh.py)
+# Path / env bootstrap for direct script execution.
 # ---------------------------------------------------------------------------
 def _load_backend() -> None:
     backend_root = Path(__file__).resolve().parents[2]

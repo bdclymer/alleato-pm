@@ -22,7 +22,7 @@ import { generateDailyBrief } from "@/lib/executive/daily-brief";
 import type { SourceSpecificRagKind } from "@/lib/ai/detect-rag-request";
 import { buildSourceSpecificRagAnswer } from "@/lib/ai/retrieval/source-specific-rag";
 import { loadReusableBriefingContext } from "@/lib/ai/retrieval/reusable-briefing";
-import { fetchDeepAgentAppExpert } from "@/lib/ai/deep-agent-project-status";
+import { fetchDeepAgentAppExpert } from "@/lib/ai/deep-agent-bridge";
 import { buildSkillInjectionContext } from "@/lib/ai/services/skill-injection-service";
 
 import type { ExecutorDeps } from "./executor";

@@ -14,9 +14,9 @@ from src.services.agents.app_expert.contracts import (
     AppExpertTraceItem,
 )
 from src.services.agents.app_expert.tools import app_expert_tools
-from src.services.agents.deep_project_intelligence import (
-    _extract_agent_text,
-    _resolve_deep_agents_model,
+from src.services.agents.runtime_common import (
+    extract_agent_text as _extract_agent_text,
+    resolve_deep_agents_model as _resolve_deep_agents_model,
 )
 
 
@@ -139,11 +139,11 @@ def _extract_sources(answer: str) -> list[AppExpertSource]:
         if key not in seen:
             seen.add(key)
             sources.append(AppExpertSource(title=route, sourceType="sitemap", route=route))
-    for file_path in re.findall(r"(docs/help/articles/[A-Za-z0-9._~!$&'()*+,;=:@%/-]+\\.md|frontend/src/app/[A-Za-z0-9._~!$&'()*+,;=:@%/\\[\\]-]+/page\\.(?:tsx|ts|jsx|js))", answer):
+    for file_path in re.findall(r"(docs/archive/2026-06-22-docs-migration/help/articles/[A-Za-z0-9._~!$&'()*+,;=:@%/-]+\\.md|frontend/src/app/[A-Za-z0-9._~!$&'()*+,;=:@%/\\[\\]-]+/page\\.(?:tsx|ts|jsx|js))", answer):
         key = ("file", file_path)
         if key not in seen:
             seen.add(key)
-            source_type = "help_article" if file_path.startswith("docs/help") else "source_map"
+            source_type = "help_article" if file_path.startswith("docs/archive/2026-06-22-docs-migration/help") else "source_map"
             sources.append(AppExpertSource(title=file_path, sourceType=source_type, filePath=file_path))
     return sources[:20]
 

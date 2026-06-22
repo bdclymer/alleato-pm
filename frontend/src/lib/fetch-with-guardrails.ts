@@ -143,7 +143,6 @@ function inferDependency(url: string | URL): string {
     if (hostname.includes("onrender.com")) return "render-backend";
     if (hostname.includes("openai.com")) return "openai";
     if (hostname.includes("supabase.co")) return "supabase";
-    if (hostname.includes("liveblocks.io")) return "liveblocks";
     if (hostname.includes("resend.com")) return "resend";
     return hostname;
   } catch {

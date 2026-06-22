@@ -1,0 +1,268 @@
+{
+  "id": "ceo-task-create-throw-on-list",
+  "intent": "action_preview",
+  "prompt": "Throw this on my list: confirm with Acme Roofing that the submittal package is in by EOD Thursday.",
+  "selectedProjectId": null,
+  "sessionId": "30f7f1be-ddfb-4a07-bcff-9f99a0faa66a",
+  "sessionLabel": "eval-2026-05-14T13-08-06-523Z-ceo-task-create-throw-on-list",
+  "startedAt": "2026-05-14T13:36:09.019Z",
+  "finishedAt": "2026-05-14T13:36:12.696Z",
+  "durationMs": 3598,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 9,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [createGeneratedTask] to fire — none did",
+      "mustIncludeAny missing one of: \"Acme\", \"submittal\", \"Thursday\", \"EOD\""
+    ],
+    "warnings": [
+      "expected family 'action_write' not represented"
+    ],
+    "observations": [
+      "tools fired: intentPlanner, promptContextReducer, getMyTasks"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "promptContextReducer",
+      "getMyTasks"
+    ],
+    "familiesHit": [
+      "task_management"
+    ],
+    "finalTextLength": 281,
+    "finalText": "I checked the task register for Test User.\n\nI did not find any open task rows directly assigned to you in the checked task sources.\n\n**Sources Checked**\n- tasks.assignee_person_id / assignee_email / assignee_name\n- schedule_tasks.assignee text\n- executive_briefing_follow_ups.owner"
+  },
+  "expectedToolNames": [
+    "createGeneratedTask"
+  ],
+  "expectedToolFamilies": [
+    "action_write",
+    "task_management"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:36:11.408Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking your assigned task sources",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:36:11.409Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-my-tasks"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-my-tasks",
+      "delta": "I checked the task register for Test User.\n\nI did not find any open task rows directly "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-my-tasks",
+      "delta": "assigned to you in the checked task sources.\n\n**Sources Checked**\n- "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-my-tasks",
+      "delta": "tasks.assignee_person_id / assignee_email / assignee_name\n- schedule_tasks.assignee text\n- "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-my-tasks",
+      "delta": "executive_briefing_follow_ups.owner"
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-my-tasks"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Task register checked",
+        "status": "success",
+        "timestamp": "2026-05-14T13:36:12.606Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": null,
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Throw this on my list: confirm with Acme Roofing that the submittal package is in by EOD Thursday.",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "task_write",
+          "sourceSpecificRagKind": null,
+          "recentEmailInboxRequest": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "task_write",
+          "planner": "model",
+          "rationale": "The user is explicitly asking to create a new task/action item ('Throw this on my list'). Per policy, this must be classified as task_write rather than task_followup. No project is selected, but a safe draft action can still be prepared without clarification.",
+          "confidence": "high",
+          "responseMode": "draft_safe_action",
+          "requiredTools": [],
+          "deterministicIntent": "task_write",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T13:36:11.408Z"
+      },
+      {
+        "tool": "promptContextReducer",
+        "input": {
+          "intent": "task_write",
+          "message": "Throw this on my list: confirm with Acme Roofing that the submittal package is in by EOD Thursday."
+        },
+        "output": {
+          "promptMode": "task_write_lean",
+          "skippedSourceHealth": true,
+          "skippedGeneralMemory": true,
+          "skippedExecutivePacket": true,
+          "skippedWorkspaceArtifacts": true
+        },
+        "timestamp": "2026-05-14T13:36:11.409Z"
+      },
+      {
+        "tool": "getMyTasks",
+        "input": {
+          "message": "Throw this on my list: confirm with Acme Roofing that the submittal package is in by EOD Thursday.",
+          "hadExecutivePagePacket": false
+        },
+        "output": {
+          "personId": "1c9f4adc-bd8e-42ae-b29c-b2f2d21210a0",
+          "displayName": "Test User",
+          "sourceErrors": [],
+          "checkedSources": [
+            "tasks.assignee_person_id / assignee_email / assignee_name",
+            "schedule_tasks.assignee text",
+            "executive_briefing_follow_ups.owner"
+          ],
+          "briefingTaskCount": 0,
+          "scheduleTaskCount": 0,
+          "verifiedTaskCount": 0
+        },
+        "timestamp": "2026-05-14T13:36:12.410Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": null,
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": null,
+    "loop_diagnostic": {
+      "steps": [],
+      "stepStarts": [],
+      "totalStepCount": 0,
+      "finalFinishReason": "unknown",
+      "preparedStepCount": 0,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

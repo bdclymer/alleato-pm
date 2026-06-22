@@ -1,0 +1,68 @@
+{
+  "id": "permissions-employee-email-privacy",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 8126,
+  "question": "What if someone can see another employee's emails?",
+  "response": {
+    "answer": "I can’t verify this in App Expert right now because the required generated artifacts are missing:\n\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nChecked:\n- App Expert artifact status: missing/stale\n- Feature registry searches for:\n  - “someone can see another employee's emails”\n  - “employee emails visibility permissions”\n  - “emails access employee”\n\nResult:\n- No usable feature/help metadata is available, so I can’t confirm documented behavior or route-backed implementation.\n\nWhat remains uncertain:\n- Whether employees can see other employees’ emails\n- Whether this is a permission issue, a role-based view, or an unintended exposure\n- Any exact route, help article, or source file evidence\n\nIf you want, I can still help you frame the issue as a likely permissions/privacy bug report, but I can’t claim the app’s behavior from the current evidence.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/stale",
+        "sourceType": "sitemap",
+        "route": "/stale",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help",
+        "sourceType": "sitemap",
+        "route": "/help",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/privacy",
+        "sourceType": "sitemap",
+        "route": "/privacy",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 8030,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

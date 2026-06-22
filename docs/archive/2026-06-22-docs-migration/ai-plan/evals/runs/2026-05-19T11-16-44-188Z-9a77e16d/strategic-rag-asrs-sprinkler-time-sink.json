@@ -1,0 +1,2822 @@
+{
+  "id": "strategic-rag-asrs-sprinkler-time-sink",
+  "intent": "strategic_rag",
+  "prompt": "For Exol Wilmer / 26-103 specifically, what is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages? If the direct Exol Wilmer ASRS sprinkler evidence is missing, say that clearly instead of using another project as proof.",
+  "selectedProjectId": 760,
+  "sessionId": "f1b2e412-37a0-4eb0-8f7d-a2374447a060",
+  "sessionLabel": "eval-2026-05-19T11-16-44-188Z-9a77e16d-strategic-rag-asrs-sprinkler-time-sink",
+  "startedAt": "2026-05-19T11:16:44.217Z",
+  "finishedAt": "2026-05-19T11:17:30.447Z",
+  "durationMs": 42276,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 455,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "response_quality.sourceQuality low < medium"
+    ],
+    "warnings": [],
+    "observations": [
+      "tools fired: searchDocuments, searchMeetingsByTopic, semanticSearch",
+      "judge strategic_advisor: pass (5/4)"
+    ],
+    "toolNames": [
+      "searchDocuments",
+      "searchMeetingsByTopic",
+      "semanticSearch"
+    ],
+    "familiesHit": [
+      "meetings",
+      "communications",
+      "documents",
+      "semantic"
+    ],
+    "finalTextLength": 1765,
+    "finalText": "I can’t support a real answer to that from **Exol Wilmer / 26-103** evidence.\n\nWhat I found for **Exol Wilmer** was:\n- **No meetings** on the topic returned for **“ASRS sprinkler”**.  \n- **No document-content hits** for Exol Wilmer tying ASRS sprinkler design to a specific bottleneck.  \n- The semantic hits that did come back for Exol Wilmer were mostly about:\n  - **fire alarm work and permitting**, not ASRS sprinkler design  \n  - closeout / inspections / electrical changes  \n  - a fire alarm clarifications package and weekly report mentioning **fire alarm design** and AHJ submission, not ASRS sprinkler design.  \n  Sources: Exol Wilmer weekly report / fire alarm clarification docs and emails on 2026-05-14.\n\nSo the clean answer is:\n\n**For Exol Wilmer specifically, I do not have direct meeting, email, or message evidence showing what the most time-consuming part of designing the ASRS sprinkler system was.**\n\nAnd to your point, I’m **not** going to use the separate **Exotec In-Rack Sprinkler CO-01** thread as proof for Exol Wilmer. That would be the wrong project.\n\nWhat I *can* say from the Exol Wilmer evidence:\n- The recorded design/admin effort I can actually trace is around **fire alarm design, permitting, rough-in coordination, and electrical/interface clarification**, not ASRS sprinkler design.  \n  Sources: **Exol Wilmer Weekly Report 022026** and **Exol Wilmer FA Clarifications**; Exol Wilmer email thread on **2026-05-14**.\n\nIf you want, I can take one more pass with broader Exol-specific terms like:\n- **“sprinkler”**\n- **“fire suppression”**\n- **“rack” / “in-rack”**\n- **“FM Global”**\n- **“hydraulic calculations”**\n\nThat’s the right next move if you want to confirm whether the ASRS sprinkler discussion exists under different wording.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 45000,
+      "maxDurationMs": 150000,
+      "durationMs": 42276
+    },
+    "judge": {
+      "status": "pass",
+      "rubric": "strategic_advisor",
+      "score": 5,
+      "minScore": 4,
+      "summary": "The answer does the most important thing correctly: it refuses to manufacture a project-specific conclusion for Exol Wilmer / 26-103 when the direct ASRS sprinkler evidence is missing. It cleanly separates adjacent fire-alarm/permitting material from ASRS sprinkler design and explicitly warns against using the Exotec In-Rack Sprinkler CO-01 thread as proof. That is strong evidence discipline and project anchoring.",
+      "strengths": [
+        "Leads with an executive-level conclusion: no direct evidence supports a real answer for Exol Wilmer / 26-103.",
+        "Clearly distinguishes Exol Wilmer evidence from adjacent fire alarm / permitting work and labels it as not the same issue.",
+        "Honest about missing evidence and avoids fabricating a likely bottleneck.",
+        "Explicitly rejects using another project as substitute proof, which directly matches the prompt's instruction.",
+        "Offers practical next search terms that could uncover the topic under alternate wording."
+      ],
+      "weaknesses": [
+        "Does not identify the actual most time-consuming part because the record appears insufficient; this is appropriate, but leaves the user without the requested substantive answer.",
+        "Could have been slightly more specific about which source types were checked and which exact artifacts were negative hits, though it is still adequate.",
+        "No owners/timing next steps are provided, but the prompt did not require them given the evidence gap."
+      ],
+      "dimensionScores": {
+        "clear_executive_point_of_view": 5,
+        "business_implications_and_tradeoffs": 5,
+        "specific_operational_next_steps": 4,
+        "surfaces_unasked_questions": 5,
+        "high_level_strategist_voice": 5,
+        "honest_about_missing_evidence": 5,
+        "project_specific_anchoring": 5
+      },
+      "provider": "vercel_gateway",
+      "model": "openai/gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "semanticSearch",
+    "searchMeetingsByTopic",
+    "searchEmails",
+    "searchTeamsMessages",
+    "sourceLookupIntentRouter",
+    "consultMicrosoftExecutiveAssistant"
+  ],
+  "expectedToolFamilies": [
+    "meetings",
+    "communications",
+    "semantic"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: source_lookup_intent",
+        "status": "loading",
+        "timestamp": "2026-05-19T11:16:45.812Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (1 sources, 0 warnings)",
+        "status": "success",
+        "durations": {
+          "semantic_search": 6565
+        },
+        "timestamp": "2026-05-19T11:16:53.563Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "KbfrVKz9yoIwseWl"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_2guanPGqpJY6bqGrSKoraQPp",
+      "toolName": "semanticSearch"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2guanPGqpJY6bqGrSKoraQPp",
+      "inputTextDelta": "{\"query\":\"Exol Wilmer 26-103 ASRS sprinkler design time consuming part meetings emails messages\",\"projectName\":\"Exol Wilmer\",\"matchCount\":10,\"threshold\":0.3,\"skipRerank\":false}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_2guanPGqpJY6bqGrSKoraQPp",
+      "toolName": "semanticSearch",
+      "input": {
+        "query": "Exol Wilmer 26-103 ASRS sprinkler design time consuming part meetings emails messages",
+        "projectName": "Exol Wilmer",
+        "matchCount": 10,
+        "threshold": 0.3,
+        "skipRerank": false
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_yEcWFSa65WRe1sBh8oA7FTKg",
+      "toolName": "searchMeetingsByTopic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_yEcWFSa65WRe1sBh8oA7FTKg",
+      "inputTextDelta": "{\"topic\":\"ASRS sprinkler\",\"projectName\":\"Exol Wilmer\",\"maxResults\":10}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_yEcWFSa65WRe1sBh8oA7FTKg",
+      "toolName": "searchMeetingsByTopic",
+      "input": {
+        "topic": "ASRS sprinkler",
+        "projectName": "Exol Wilmer",
+        "maxResults": 10
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_6XC9fpoZUHqp74nKSJRrjpkW",
+      "toolName": "searchDocuments"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6XC9fpoZUHqp74nKSJRrjpkW",
+      "inputTextDelta": "{\"query\":\"ASRS sprinkler design time consuming design hydraulic calculations FM Global NFPA Exol Wilmer\",\"projectName\":\"Exol Wilmer\",\"maxResults\":10}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_6XC9fpoZUHqp74nKSJRrjpkW",
+      "toolName": "searchDocuments",
+      "input": {
+        "query": "ASRS sprinkler design time consuming design hydraulic calculations FM Global NFPA Exol Wilmer",
+        "projectName": "Exol Wilmer",
+        "maxResults": 10
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_6XC9fpoZUHqp74nKSJRrjpkW",
+      "output": {
+        "results": [],
+        "message": "No documents found matching \"ASRS sprinkler design time consuming design hydraulic calculations FM Global NFPA Exol Wilmer\". Try broader keywords or use semanticSearch for meaning-based results."
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_yEcWFSa65WRe1sBh8oA7FTKg",
+      "output": {
+        "searchScope": "Filtered to project 760",
+        "topic": "ASRS sprinkler",
+        "totalResults": 0,
+        "results": []
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_2guanPGqpJY6bqGrSKoraQPp",
+      "output": {
+        "query": "Exol Wilmer 26-103 ASRS sprinkler design time consuming part meetings emails messages",
+        "resultCount": 10,
+        "results": [
+          {
+            "content": "[Email: RE: Exol Wilmer ]\n\nSubject: RE: Exol Wilmer \nDate: 2026-05-14T16:06:04Z\nFrom: Steve Fischer <steve.fischer@exol.com>\nTo: Parker Hollingsworth <phollingsworth@alleatogroup.com>, Parker Asmus <parker.asmus@exol.com>, Brandon Clymer <bclymer@alleatogroup.com>\n\nParker, &nbsp; Do you have all the close out documents for Wilmer? Was anything documented for the electrical changes that Core Electric performed? &nbsp; Steve Fischer Senior Director, Facilities M: +1 610-764-3984 The Robotic Logistics Platform ™ built for tomorrow. | www.exol.com &nbsp; From: Parker Hollingsworth &lt;phollingsworth@alleatogroup.com&gt; Sent: Thursday, April 9, 2026 2:25 PM To: Steve Fischer &lt;steve.fischer@exol.com&gt;; Parker Asmus &lt;parker.asmus@exol.com&gt;; Brandon Clymer &lt;bclymer@alleatogroup.com&gt; Subject: Exol Wilmer &nbsp; Team, We have passed our Electrical inspection for Wilmer. We have the fire alarm inspection scheduled for Monday at 11:30 am. I will provide an update once I hear back from the city on the result. I am working on getting all final photos and NkdkJdXPPEBannerStart External Sender - From: (Parker Hollingsworth &lt;phollingsworth@alleatogroup.com&gt;) This message came from outside your organization. &nbsp; NkdkJdXPPEBannerEnd Team,&nbsp; We have passed our Electrical inspection for Wilmer. We have the fire alarm inspection scheduled for Monday at 11:30 am. I will provide an update once I hear back from the city on the result. I am working on getting all final photos and close out/warranty documents sent over.&nbsp; &nbsp; Thanks,&nbsp; Parker&nbsp; &nbsp; Parker Hollingsworth Superintendent at Alleato Group&nbsp; Mobile &nbsp;479-432-0082 &nbsp; | &nbsp; Email &nbsp; phollingsworth@alleatogroup.com Web &nbsp; www.alleatogroup.com &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp; &nbsp; Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250&nbsp; Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702 &nbsp;",
+            "sourceTable": "email",
+            "recordId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijwgAAA=",
+            "sourceDocumentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijwgAAA=",
+            "sourceChunkId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijwgAAA=__chunk_0",
+            "similarity": 0.533,
+            "finalScore": 0.577,
+            "projectIds": [
+              760
+            ],
+            "metadata": {
+              "title": "Email: RE: Exol Wilmer ",
+              "category": "email",
+              "source": "microsoft_graph",
+              "source_type": "email",
+              "date": "2026-05-14T00:00:00+00:00",
+              "tags": "email,outlook,project_auto:attribution_rule:title_keyword",
+              "type": "email",
+              "project_id": 760,
+              "chunk_index": 0,
+              "participants": "Steve Fischer <steve.fischer@exol.com>, Parker Hollingsworth <phollingsworth@alleatogroup.com>, Parker Asmus <parker.asmus@exol.com>, Brandon Clymer <bclymer@alleatogroup.com>",
+              "total_chunks": 1
+            },
+            "createdAt": "2026-05-14T00:00:00+00:00"
+          },
+          {
+            "content": "[Email: Re: Exol Wilmer ]\n\nSubject: Re: Exol Wilmer \nDate: 2026-05-14T16:12:18Z\nFrom: Parker Hollingsworth <phollingsworth@alleatogroup.com>\nTo: Steve Fischer <steve.fischer@exol.com>, Parker Asmus <parker.asmus@exol.com>, Brandon Clymer <bclymer@alleatogroup.com>\n\nSteve,&nbsp; Please see attached from Core and SFSDFW&nbsp; Thanks,&nbsp; Parker&nbsp; Parker Hollingsworth Superintendent at Alleato Group&nbsp; Mobile &nbsp;479-432-0082 &nbsp; | &nbsp; Email &nbsp;phollingsworth@alleatogroup.com Web &nbsp; www.alleatogroup.com &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp; &nbsp; Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250&nbsp; Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702 From: Steve Fischer &lt;steve.fischer@exol.com&gt; Sent: Thursday, May 14, 2026 12:05 PM To: Parker Hollingsworth &lt;phollingsworth@alleatogroup.com&gt;; Parker Asmus &lt;parker.asmus@exol.com&gt;; Brandon Clymer &lt;bclymer@alleatogroup.com&gt; Subject: RE: Exol Wilmer &nbsp; Parker, &nbsp; Do you have all the close out documents for Wilmer? Was anything documented for the electrical changes that Core Electric performed? &nbsp; Steve Fischer Senior Director, Facilities M: +1 610-764-3984 The Robotic Logistics Platform ™ built for tomorrow. | www.exol.com &nbsp; From: Parker Hollingsworth &lt;phollingsworth@alleatogroup.com&gt; Sent: Thursday, April 9, 2026 2:25 PM To: Steve Fischer &lt;steve.fischer@exol.com&gt;; Parker Asmus &lt;parker.asmus@exol.com&gt;; Brandon Clymer &lt;bclymer@alleatogroup.com&gt; Subject: Exol Wilmer &nbsp; Team, We have passed our Electrical inspection for Wilmer. We have the fire alarm inspection scheduled for Monday at 11:30 am. I will provide an update once I hear back from the city on the result. I am working on getting all final photos and NkdkJdXPPEBannerStart External Sender - From: (Parker Hollingsworth &lt;phollingsworth@alleatogroup.com&gt;) This message came from outside your organization. &nbsp; NkdkJdXPPEBannerEnd Team,&nbsp; We have passed our Electrical inspection for Wilmer. We have the fire alarm inspection scheduled for Monday at 11:30 am. I will provide an update once I hear back from the city on the result. I am working on getting all final photos and close out/warranty documents sent over.&nbsp; &nbsp; Thanks,&nbsp; Parker&nbsp; &nbsp; Parker Hollingsworth Superintendent at Alleato Group&nbsp; Mobile &nbsp;479-432-0082 &nbsp; | &nbsp; Email &nbsp; phollingsworth@alleatogroup.com Web &nbsp; www.alleato",
+            "sourceTable": "email",
+            "recordId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijwiAAA=",
+            "sourceDocumentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijwiAAA=",
+            "sourceChunkId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijwiAAA=__chunk_0",
+            "similarity": 0.516,
+            "finalScore": 0.561,
+            "projectIds": [
+              760
+            ],
+            "metadata": {
+              "title": "Email: Re: Exol Wilmer ",
+              "category": "email",
+              "source": "microsoft_graph",
+              "source_type": "email",
+              "date": "2026-05-14T00:00:00+00:00",
+              "tags": "email,outlook,project_auto:attribution_rule:title_keyword,intake_sync_error",
+              "type": "email",
+              "project_id": 760,
+              "chunk_index": 0,
+              "participants": "Parker Hollingsworth <phollingsworth@alleatogroup.com>, Steve Fischer <steve.fischer@exol.com>, Parker Asmus <parker.asmus@exol.com>, Brandon Clymer <bclymer@alleatogroup.com>",
+              "total_chunks": 1
+            },
+            "createdAt": "2026-05-14T00:00:00+00:00"
+          },
+          {
+            "content": "[Email: Exol Wilmer ]\n\nSubject: Exol Wilmer \nDate: 2026-05-14T19:57:28Z\nFrom: Mark Purvis <mpurvis@corelectrictx.com>\nTo: Brandon Clymer <bclymer@alleatogroup.com>, eandrade@alleatogroupe.com <eandrade@alleatogroupe.com>\n\nBrandon, Enzo &nbsp; Good afternoon. We have one RFI please see attached. We would also ask if there is any additional pictures of existing electrical installations at similar facilities of the equipment conduit routing as the drawings ask us to coordinate all with installers. We can take these off as runs from the outlets and/ or equipment connections from floor to ceiling but would like to confirm that is the method they prefer? &nbsp; &nbsp; Thank You&nbsp; Mark Purvis&nbsp; 817-891-5417 &nbsp;&nbsp; 140 Loy Street&nbsp;&nbsp; Burleson, Texas 76028 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TECL 36103 &nbsp;",
+            "sourceTable": "email",
+            "recordId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijxFAAA=",
+            "sourceDocumentId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijxFAAA=",
+            "sourceChunkId": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmijxFAAA=__chunk_0",
+            "similarity": 0.51,
+            "finalScore": 0.556,
+            "projectIds": [
+              760
+            ],
+            "metadata": {
+              "title": "Email: Exol Wilmer ",
+              "category": "email",
+              "source": "microsoft_graph",
+              "source_type": "email",
+              "date": "2026-05-14T00:00:00+00:00",
+              "tags": "email,outlook,project_auto:attribution_rule:title_keyword",
+              "type": "email",
+              "project_id": 760,
+              "chunk_index": 0,
+              "participants": "Mark Purvis <mpurvis@corelectrictx.com>, Brandon Clymer <bclymer@alleatogroup.com>, eandrade@alleatogroupe.com <eandrade@alleatogroupe.com>, Skyler Courville <scourville@corelectrictx.com>",
+              "total_chunks": 1
+            },
+            "createdAt": "2026-05-14T00:00:00+00:00"
+          },
+          {
+            "content": "The document titled \"Exol Wilmer Weekly Report 022026\" serves as a progress report for a construction project in Wilmer, Texas, covering the week of February 15 to February 21, 2026. The report outlines the ongoing activities related to the installation of a fire alarm system, detailing the completion of various tasks and the plans for the upcoming week. It is structured into several key sections, including past week highlights, upcoming activities, critical items, and project contacts.\n\nIn the ",
+            "sourceTable": "onedrive_document",
+            "recordId": "onedrive_012BEZDVWPXPAFIGMAZJGYIJG4C7BIZUVC",
+            "sourceDocumentId": "onedrive_012BEZDVWPXPAFIGMAZJGYIJG4C7BIZUVC",
+            "sourceChunkId": "onedrive_012BEZDVWPXPAFIGMAZJGYIJG4C7BIZUVC__ff_segment_summary_0_0",
+            "similarity": 0.572,
+            "finalScore": 0.609,
+            "projectIds": [
+              760
+            ],
+            "metadata": {
+              "title": "Exol Wilmer Weekly Report 022026.pdf",
+              "category": "segment_summary",
+              "source": null,
+              "source_type": "onedrive_document",
+              "date": null,
+              "doc_type": "segment_summary",
+              "file_date": null,
+              "project_id": 760,
+              "segment_id": "2835dcc9-e5dc-4912-88f5-0b11e5d595e0",
+              "chunk_index": 0,
+              "content_hash": "06944eacabb877b2",
+              "participants": [],
+              "segment_index": 0
+            },
+            "createdAt": "2026-05-08T11:12:03.627263"
+          },
+          {
+            "content": "The document titled \"Exol Wilmer Weekly Report 022026\" serves as a progress report for the construction activities at the Exol Wilmer site in Wilmer, TX, during the week of February 15 to February 21, 2026. It outlines the current status of the project, highlights key accomplishments, and details upcoming tasks, providing stakeholders with a comprehensive overview of the project's progress.\n\nKey topics in the report include the completion of the fire alarm design and the initiation of fire alarm",
+            "sourceTable": "onedrive_document",
+            "recordId": "onedrive_012BEZDVU6XFVZSHL42BC2FN3GHNM7DLH5",
+            "sourceDocumentId": "onedrive_012BEZDVU6XFVZSHL42BC2FN3GHNM7DLH5",
+            "sourceChunkId": "onedrive_012BEZDVU6XFVZSHL42BC2FN3GHNM7DLH5__ff_segment_summary_0_0",
+            "similarity": 0.571,
+            "finalScore": 0.608,
+            "projectIds": [
+              760
+            ],
+            "metadata": {
+              "title": "Exol Wilmer Weekly Report 022026.docx",
+              "category": "segment_summary",
+              "source": null,
+              "source_type": "onedrive_document",
+              "date": null,
+              "doc_type": "segment_summary",
+              "file_date": null,
+              "project_id": 760,
+              "segment_id": "a50ac074-fd13-466f-90ec-19fcf9ffa8d3",
+              "chunk_index": 0,
+              "content_hash": "e2bf56945f0e55ae",
+              "participants": [],
+              "segment_index": 0
+            },
+            "createdAt": "2026-05-08T11:09:22.813082"
+          },
+          {
+            "content": "The document titled \"Exol Wilmer Weekly Report 022026\" serves as a progress report for the construction activities at the Exol Wilmer site in Wilmer, TX, during the week of February 15 to February 21, 2026. It outlines the current status of the project, highlights key accomplishments, and details upcoming tasks, providing stakeholders with a comprehensive overview of the project's progress.\n\nKey topics in the report include the completion of the fire alarm design and the initiation of fire alarm wire installation, which began on February 16, 2026. The report notes that the rough-in for horns and strobes is 90% complete, while the rough-in for pull stations is at 50%. Additionally, it mentions the receipt of audio/visual devices starting February 20. Upcoming activities include submitting plans to the Authority Having Jurisdiction (AHJ) for permitting on February 23, finishing the rough-ins for horns/strobes and pull stations by February 23 and February 26, respectively, and beginning the rough-in for the fire alarm power supply and panel.\n\nCritical items highlighted in the report include the need to finalize the electrical pricing and release it, as well as the dock leveler release. The report also provides contact information for key project personnel, including the CEO, Brandon Clymer, and Project Executive, AJ Taylor. The next steps involve completing the rough-ins and obtaining the necessary permits to ensure the project remains on schedule.",
+            "sourceTable": "onedrive_document",
+            "recordId": "onedrive_012BEZDVU6XFVZSHL42BC2FN3GHNM7DLH5",
+            "sourceDocumentId": "onedrive_012BEZDVU6XFVZSHL42BC2FN3GHNM7DLH5",
+            "sourceChunkId": "onedrive_012BEZDVU6XFVZSHL42BC2FN3GHNM7DLH5__ff_meeting_summary_-1_0",
+            "similarity": 0.569,
+            "finalScore": 0.606,
+            "projectIds": [
+              760
+            ],
+            "metadata": {
+              "title": "Exol Wilmer Weekly Report 022026.docx",
+              "category": "meeting_summary",
+              "source": null,
+              "source_type": "onedrive_document",
+              "date": null,
+              "doc_type": "meeting_summary",
+              "file_date": null,
+              "project_id": 760,
+              "segment_id": null,
+              "chunk_index": 0,
+              "content_hash": "78a98c3c52ba3de8",
+              "participants": [],
+              "segment_index": -1
+            },
+            "createdAt": "2026-05-08T11:09:22.53757"
+          },
+          {
+            "content": "The document titled \"Exol Wilmer Weekly Report 022026\" serves as a progress report for a construction project in Wilmer, Texas, covering the week of February 15 to February 21, 2026. The report outlines the ongoing activities related to the installation of a fire alarm system, detailing the completion of various tasks and the plans for the upcoming week. It is structured into several key sections, including past week highlights, upcoming activities, critical items, and project contacts.\n\nIn the past week, significant progress was made, including the finalization of the fire alarm design and the initiation of wire installation for the fire alarm system. The report notes that the rough-in for horns and strobes is 90% complete, while the rough-in for pull stations is 50% complete. Additionally, audio/visual devices began arriving on February 20. Looking ahead, the report outlines action items such as submitting for permitting to the Authority Having Jurisdiction (AHJ) on February 23, completing the rough-in for horns/strobes and pull stations by February 23 and 26, respectively, and starting the rough-in for the fire alarm power supply and panel.\n\nCritical items highlighted in the report include the need to finalize electrical pricing and the release of the dock leveler. The document also provides contact information for key personnel involved in the project, including the CEO and Project Executive, ensuring that stakeholders can easily reach out for further inquiries or clarifications. Overall, the report effectively communicates the current status and next steps in the construction project, emphasizing the importance of timely completion and coordination among team members.",
+            "sourceTable": "onedrive_document",
+            "recordId": "onedrive_012BEZDVWPXPAFIGMAZJGYIJG4C7BIZUVC",
+            "sourceDocumentId": "onedrive_012BEZDVWPXPAFIGMAZJGYIJG4C7BIZUVC",
+            "sourceChunkId": "onedrive_012BEZDVWPXPAFIGMAZJGYIJG4C7BIZUVC__ff_meeting_summary_-1_0",
+            "similarity": 0.567,
+            "finalScore": 0.604,
+            "projectIds": [
+              760
+            ],
+            "metadata": {
+              "title": "Exol Wilmer Weekly Report 022026.pdf",
+              "category": "meeting_summary",
+              "source": null,
+              "source_type": "onedrive_document",
+              "date": null,
+              "doc_type": "meeting_summary",
+              "file_date": null,
+              "project_id": 760,
+              "segment_id": null,
+              "chunk_index": 0,
+              "content_hash": "76fb3ff8185be46d",
+              "participants": [],
+              "segment_index": -1
+            },
+            "createdAt": "2026-05-08T11:12:03.274752"
+          },
+          {
+            "content": "The document titled \"Exol Wilmer Fire Alarm Clarifications\" serves as a proposal for the installation of a complete fire alarm system at Exol's Wilmer location, dated February 9, 2026. It outlines the scope of work, inclusions, exclusions, and compliance requirements for the project. The proposal is addressed to a recipient named Steve and is prepared by Brandon Clymer from Alleato Group, indicating a professional context focused on fire safety compliance.\n\nKey sections of the document include i",
+            "sourceTable": "onedrive_document",
+            "recordId": "onedrive_012BEZDVUXYIYX5QMYKRBYEC6JWSPLTFFX",
+            "sourceDocumentId": "onedrive_012BEZDVUXYIYX5QMYKRBYEC6JWSPLTFFX",
+            "sourceChunkId": "onedrive_012BEZDVUXYIYX5QMYKRBYEC6JWSPLTFFX__ff_segment_summary_0_0",
+            "similarity": 0.562,
+            "finalScore": 0.6,
+            "projectIds": [
+              760
+            ],
+            "metadata": {
+              "title": "Exol Wilmer FA Clarifications.pdf",
+              "category": "segment_summary",
+              "source": null,
+              "source_type": "onedrive_document",
+              "date": null,
+              "doc_type": "segment_summary",
+              "file_date": null,
+              "project_id": 760,
+              "segment_id": "bdd8f358-40a9-433f-bda3-a6ea6d6db57a",
+              "chunk_index": 0,
+              "content_hash": "ffab3063b5612c63",
+              "participants": [],
+              "segment_index": 0
+            },
+            "createdAt": "2026-05-08T15:51:53.848422"
+          },
+          {
+            "content": "The document titled \"Exol Wilmer Fire Alarm Clarifications\" serves as a proposal for the installation of a complete fire alarm system at Exol’s Wilmer location. It outlines the scope of work, inclusions, exclusions, and clarifications related to the project. The proposal is addressed to a contact named Steve and is dated February 9, 2026, indicating a planned timeline for the project.\n\nKey sections of the document include inclusions categorized under General Conditions, Electrical, and Electronic Safety and Security. The General Conditions cover project management, supervision, and permitting. The Electrical section specifies the installation of 120v power to approximately 15 locations and the new fire alarm panel. The Electronic Safety and Security section details the installation of a code-compliant fire alarm system, including the replacement of the existing control panel and initiating devices, while excluding the replacement of notification appliances. Notable equipment listed includes one Fire Alarm Control Panel, 25 addressable smoke detectors, and approximately 425 audio/visual devices.\n\nThe proposal emphasizes compliance with various safety standards, including NFPA Standard 72-2019 and the International Building Code (2021). It also outlines that the project will occur during normal working hours and assumes the availability of architectural backgrounds for design purposes. Action items include reviewing the proposal for approval and ensuring that all necessary architectural documents are available to facilitate the project’s progression.",
+            "sourceTable": "onedrive_document",
+            "recordId": "onedrive_012BEZDVWFIDURV3D4J5BY2W7LC2V4VV3Q",
+            "sourceDocumentId": "onedrive_012BEZDVWFIDURV3D4J5BY2W7LC2V4VV3Q",
+            "sourceChunkId": "onedrive_012BEZDVWFIDURV3D4J5BY2W7LC2V4VV3Q__ff_meeting_summary_-1_0",
+            "similarity": 0.555,
+            "finalScore": 0.594,
+            "projectIds": [
+              760
+            ],
+            "metadata": {
+              "title": "exol clarifications.pdf",
+              "category": "meeting_summary",
+              "source": null,
+              "source_type": "onedrive_document",
+              "date": null,
+              "doc_type": "meeting_summary",
+              "file_date": null,
+              "project_id": 760,
+              "segment_id": null,
+              "chunk_index": 0,
+              "content_hash": "3749e82cf750146d",
+              "participants": [],
+              "segment_index": -1
+            },
+            "createdAt": "2026-05-08T18:12:01.051145"
+          },
+          {
+            "content": "The document titled \"Exol Wilmer Fire Alarm Clarifications\" serves as a proposal for the installation of a complete fire alarm system at Exol’s Wilmer location. It outlines the scope of work, inclusions, exclusions, and clarifications related to the project. The proposal is addressed to a contact named Steve and is dated February 9, 2026, indicating a planned timeline for the project.\n\nKey sections of the document include inclusions categorized under General Conditions, Electrical, and Electroni",
+            "sourceTable": "onedrive_document",
+            "recordId": "onedrive_012BEZDVWFIDURV3D4J5BY2W7LC2V4VV3Q",
+            "sourceDocumentId": "onedrive_012BEZDVWFIDURV3D4J5BY2W7LC2V4VV3Q",
+            "sourceChunkId": "onedrive_012BEZDVWFIDURV3D4J5BY2W7LC2V4VV3Q__ff_segment_summary_0_0",
+            "similarity": 0.554,
+            "finalScore": 0.593,
+            "projectIds": [
+              760
+            ],
+            "metadata": {
+              "title": "exol clarifications.pdf",
+              "category": "segment_summary",
+              "source": null,
+              "source_type": "onedrive_document",
+              "date": null,
+              "doc_type": "segment_summary",
+              "file_date": null,
+              "project_id": 760,
+              "segment_id": "f22f734f-d0cd-4b93-a20b-60aef6bff0da",
+              "chunk_index": 0,
+              "content_hash": "8e2c2fafa30159f9",
+              "participants": [],
+              "segment_index": 0
+            },
+            "createdAt": "2026-05-08T18:12:01.467429"
+          }
+        ],
+        "retrievalBreakdown": {
+          "knowledgeMatches": 0,
+          "externalChunkMatches": 20,
+          "activeRetrievalWeights": 0,
+          "usedProjectFilter": true,
+          "filteredAdminOnlySources": []
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " support"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "103"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " found"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "No"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " topic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " returned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "AS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "RS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sprinkler"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "No"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " document"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-content"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hits"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tying"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "RS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sprinkler"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " specific"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " bott"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "leneck"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " semantic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " hits"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " did"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " come"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " were"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mostly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "fire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alarm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " permitting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "RS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sprinkler"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " inspections"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " electrical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " changes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alarm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clar"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ifications"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " package"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " weekly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " report"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mentioning"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "fire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alarm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AH"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "J"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " submission"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "RS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sprinkler"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Sources"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " weekly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " report"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alarm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clarification"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " docs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " emails"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "14"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "So"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "For"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " specifically"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " direct"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " message"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " showing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " what"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " most"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " time"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-consuming"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " part"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " designing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "RS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sprinkler"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "And"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " your"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " point"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’m"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " going"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " use"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " separate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "otec"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " In"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-R"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ack"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Spr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ink"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ler"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "01"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thread"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " proof"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " would"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " wrong"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " *"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "*"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " say"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recorded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/admin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " effort"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trace"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " around"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "fire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " alarm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " permitting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rough"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " electrical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/interface"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clarification"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "RS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sprinkler"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Sources"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Weekly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Report"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "022"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "026"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " FA"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Clar"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ifications"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ";"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Wil"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " thread"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "14"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " take"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " more"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pass"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " broader"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-specific"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " terms"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " like"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "spr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ink"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ler"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "fire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " suppression"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "rack"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-r"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ack"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "FM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Global"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "“"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "hyd"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "raulic"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " calculations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " move"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confirm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "RS"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sprinkler"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " discussion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exists"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " under"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " different"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " wording"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "finish",
+      "finishReason": "stop"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 59172,
+      "totalTokens": 59761,
+      "outputTokens": 589
+    },
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "retrieval-complete",
+          "status": "success",
+          "message": "Retrieved (1 sources, 0 warnings)",
+          "durations": {
+            "semantic_search": 6565
+          },
+          "timestamp": "2026-05-19T11:16:53.563Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": 2,
+    "tool_trace": [
+      {
+        "tool": "searchDocuments",
+        "error": null,
+        "input": {
+          "message": "For Exol Wilmer / 26-103 specifically, what is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages? If the direct Exol Wilmer ASRS sprinkler evidence is missing, say that clearly inst",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "searchDocuments",
+        "timestamp": "2026-05-19T11:17:11.411Z"
+      },
+      {
+        "tool": "searchMeetingsByTopic",
+        "error": null,
+        "input": {
+          "message": "For Exol Wilmer / 26-103 specifically, what is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages? If the direct Exol Wilmer ASRS sprinkler evidence is missing, say that clearly inst",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "searchMeetingsByTopic",
+        "timestamp": "2026-05-19T11:17:11.799Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "error": null,
+        "input": {
+          "message": "For Exol Wilmer / 26-103 specifically, what is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages? If the direct Exol Wilmer ASRS sprinkler evidence is missing, say that clearly inst",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": null,
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "semanticSearch",
+        "timestamp": "2026-05-19T11:17:17.015Z"
+      },
+      {
+        "tool": "semanticSearch",
+        "input": {
+          "message": "For Exol Wilmer / 26-103 specifically, what is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages? If the direct Exol Wilmer ASRS sprinkler evidence is missing, say that clearly inst",
+          "selectedProjectId": 760
+        },
+        "status": "success",
+        "toolName": "semanticSearch",
+        "timestamp": "2026-05-19T11:17:26.232Z"
+      },
+      {
+        "tool": "searchMeetingsByTopic",
+        "input": {
+          "message": "For Exol Wilmer / 26-103 specifically, what is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages? If the direct Exol Wilmer ASRS sprinkler evidence is missing, say that clearly inst",
+          "selectedProjectId": 760
+        },
+        "status": "success",
+        "toolName": "searchMeetingsByTopic",
+        "timestamp": "2026-05-19T11:17:26.232Z"
+      },
+      {
+        "tool": "searchDocuments",
+        "input": {
+          "message": "For Exol Wilmer / 26-103 specifically, what is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages? If the direct Exol Wilmer ASRS sprinkler evidence is missing, say that clearly inst",
+          "selectedProjectId": 760
+        },
+        "status": "success",
+        "toolName": "searchDocuments",
+        "timestamp": "2026-05-19T11:17:26.232Z"
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "finish_reason": "stop",
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "source_lookup_intent",
+      "sources": [
+        "semanticVectorSearch"
+      ],
+      "responseFormat": "source_lookup"
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "response_message_id": "KbfrVKz9yoIwseWl",
+    "empty_model_response": false
+  }
+}

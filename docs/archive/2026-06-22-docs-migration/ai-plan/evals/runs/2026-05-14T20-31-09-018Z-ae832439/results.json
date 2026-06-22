@@ -1,0 +1,60 @@
+{
+  "generatedAt": "2026-05-14T20:31:42.868Z",
+  "baseUrl": "http://localhost:3000",
+  "bundle": null,
+  "filter": null,
+  "totalCases": 1,
+  "passed": 0,
+  "failed": 1,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "taskSourceReview": 1
+  },
+  "intentDistribution": {
+    "action_preview": 1
+  },
+  "results": [
+    {
+      "id": "action-task-preview-no-write",
+      "intent": "action_preview",
+      "prompt": "Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm.",
+      "selectedProjectId": null,
+      "sessionId": "00c48292-e428-4821-8c71-8a4f2a13422b",
+      "sessionLabel": "eval-2026-05-14T20-31-09-018Z-ae832439-action-task-preview-no-write",
+      "startedAt": "2026-05-14T20:31:09.136Z",
+      "finishedAt": "2026-05-14T20:31:42.867Z",
+      "durationMs": 33242,
+      "httpStatus": 200,
+      "streamError": "stream read error: terminated",
+      "streamEventCount": 4,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: stream read error: terminated",
+          "expected required tool 'createGeneratedTask' to fire",
+          "mustInclude missing: \"Preview\"",
+          "mustInclude missing: \"AC1\"",
+          "mustIncludeAny missing one of: \"not created\", \"No task was created\", \"Reply confirm\", \"confirmed: false\""
+        ],
+        "warnings": [
+          "expected family 'action_write' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, taskSourceReview"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "taskSourceReview"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 1043,
+        "finalText": "**Verdict: meeting outcome / owner-side responsibility, not an internal Alleato task.**\n\n**Evidence:**  \nThe meeting notes say **“Oversee local permitting process and sign CDR applications as needed”** and also clarify the workflow: **“Jerome DKGR will distribute CDR applications to MEP teams for signatures, with ownership signatory planned via Brandon Clymer.”** That means the actual signing is tied to the designated owner/signatory, not a general internal Alleato team action item. The task row also has **no assignee**, which fits that this was not a clearly assigned internal execution task.\n\n**Recommended correction:**  \n- **Do not keep this as an internal Alleato task** in its current form.  \n- Reclassify it as **client/owner responsibility** or, better, convert it into an internal follow-up task such as:  \n  **“Confirm designated owner/signatory for CDR applications and track signature status.”**  \n- If kept, assign it specifically to the actual signatory/owner contact rather than leaving it as a generic open internal task."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "action_write"
+      ]
+    }
+  ]
+}

@@ -70,6 +70,20 @@ interface HealthData {
     candidateLearnings: number;
     activeLearnings: number;
   };
+  sourceCoverage: {
+    days: number;
+    rows: {
+      family: string;
+      label: string;
+      sourceRows14d: number;
+      docsWithEmbeddedChunks: number;
+      terminalUnembeddable: number;
+      actionableMissingEmbeddings: number;
+      coverageRatio: number | null;
+      newestSourceCreatedAt: string | null;
+      missingSamples: { id: string; title: string | null; createdAt: string | null }[];
+    }[];
+  };
   pipeline: {
     succeeded: number;
     failed: number;
@@ -100,6 +114,11 @@ function formatCompact(n: number): string {
   if (n >= 1_000_000) return `${formatNumber(n / 1_000_000, 1)}M`;
   if (n >= 1_000) return `${formatNumber(n / 1_000, 1)}K`;
   return formatNumber(n, 0);
+}
+
+function formatPercent(value: number | null): string {
+  if (value === null) return "n/a";
+  return `${formatNumber(value * 100, 1)}%`;
 }
 
 function satisfactionRatio(up: number, down: number): { value: string; positive: boolean } {
@@ -222,7 +241,7 @@ export function AiSystemHealthPanel() {
     );
   }
 
-  const { windows, series, modelBreakdown, quality, learning, pipeline, flags, generatedAt } = data;
+  const { windows, series, modelBreakdown, quality, learning, sourceCoverage, pipeline, flags, generatedAt } = data;
   const w24 = windows.last24h;
   const w30 = windows.last30d;
   const sat = satisfactionRatio(w24.feedbackUp, w24.feedbackDown);
@@ -288,6 +307,66 @@ export function AiSystemHealthPanel() {
     { key: "error", header: "Error", render: (r) => <span className="text-[11px] text-destructive">{r.errorMessage}</span> },
   ];
   const failureRows: FailureRow[] = pipeline.lastFailures.map((f, i) => ({ ...f, id: `fail-${i}` }));
+
+  type SourceCoverageTableRow = HealthData["sourceCoverage"]["rows"][number] & { id: string };
+  const sourceCoverageColumns: TableColumn<SourceCoverageTableRow>[] = [
+    {
+      key: "source",
+      header: "Source",
+      primary: true,
+      render: (row) => (
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span>{row.label}</span>
+            {row.actionableMissingEmbeddings > 0 ? (
+              <Badge variant="destructive" className="text-[10px]">
+                {formatNumber(row.actionableMissingEmbeddings, 0)} missing
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="text-[10px]">
+                covered
+              </Badge>
+            )}
+          </div>
+          {row.missingSamples.length > 0 && (
+            <p className="max-w-2xl text-[11px] text-muted-foreground">
+              Examples: {row.missingSamples.map((sample) => sample.title || sample.id).join("; ")}
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "coverage",
+      header: "Embedded",
+      align: "right",
+      render: (row) => (
+        <span className={cn(row.actionableMissingEmbeddings > 0 && "text-destructive")}>
+          {formatNumber(row.docsWithEmbeddedChunks, 0)}/
+          {formatNumber(row.sourceRows14d - row.terminalUnembeddable, 0)}
+        </span>
+      ),
+    },
+    {
+      key: "coveragePct",
+      header: "Coverage",
+      align: "right",
+      render: (row) => formatPercent(row.coverageRatio),
+    },
+    {
+      key: "excluded",
+      header: "Excluded",
+      align: "right",
+      render: (row) => formatNumber(row.terminalUnembeddable, 0),
+    },
+    {
+      key: "newest",
+      header: "Newest source",
+      align: "right",
+      render: (row) => row.newestSourceCreatedAt ? formatRelative(row.newestSourceCreatedAt) : "n/a",
+    },
+  ];
+  const sourceCoverageRows = sourceCoverage.rows.map((row) => ({ ...row, id: row.family }));
 
   return (
     <div className="space-y-8">
@@ -425,6 +504,15 @@ export function AiSystemHealthPanel() {
             />
           </div>
         )}
+      </div>
+
+      <div>
+        <SectionRuleHeading label={`Source embedding coverage · ${sourceCoverage.days}d`} />
+        <DataTable
+          columns={sourceCoverageColumns}
+          rows={sourceCoverageRows}
+          emptyMessage="No source coverage rows found."
+        />
       </div>
     </div>
   );

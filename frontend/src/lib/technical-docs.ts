@@ -63,7 +63,7 @@ const TECHNICAL_DOC_SOURCES: TechnicalDocSource[] = [
   },
   {
     category: "API & Backend",
-    directory: "docs/api",
+    directory: "docs/archive/2026-06-22-docs-migration/api",
     slugPrefix: "api",
     description: "Backend API references, schemas, authentication, and integration examples.",
   },
@@ -128,7 +128,7 @@ const FEATURED_SOURCE_PATHS = new Map<string, number>([
   ["docs/architecture/AI-RAG-ARCHITECTURE.md", 1],
   ["docs/architecture/AI-ASSISTANT-ARCHITECTURE-REFERENCE.md", 2],
   ["docs/architecture/COMMUNICATIONS-DATA-PIPELINE.md", 3],
-  ["docs/api/BACKEND-API.md", 4],
+  ["docs/archive/2026-06-22-docs-migration/api/BACKEND-API.md", 4],
 ]);
 
 const EXCLUDED_SEGMENTS = new Set([

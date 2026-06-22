@@ -1,0 +1,61 @@
+{
+  "id": "troubleshooting-missing-button",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4127,
+  "question": "Why might a button be missing on a page?",
+  "response": {
+    "answer": "I checked App Expert artifacts first, and they’re missing:\n\n- `docs/architecture/generated/app-sitemap.generated.json` — missing\n- `docs/architecture/generated/feature-registry.generated.json` — missing\n\nBecause the curated sitemap and feature registry are unavailable, I can’t verify any documented reason a button would be missing on a specific page, and I can’t inspect route-based evidence without a current route or project ID.\n\nWhat remains uncertain:\n- Whether the button is hidden by permission, feature flag, state, or page-specific workflow\n- Whether this is intended behavior vs a defect\n- Which exact page/route you mean\n\nIf you want a precise answer, provide:\n- the current route, and/or\n- a project ID\n\nThen I can check route-specific evidence.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/route",
+        "sourceType": "sitemap",
+        "route": "/route",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/or",
+        "sourceType": "sitemap",
+        "route": "/or",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 4023,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

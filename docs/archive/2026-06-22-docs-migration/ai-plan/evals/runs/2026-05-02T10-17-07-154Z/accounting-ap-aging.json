@@ -1,0 +1,41 @@
+{
+  "id": "accounting-ap-aging",
+  "intent": "financial_analysis",
+  "prompt": "What's our AP aging look like right now?",
+  "selectedProjectId": null,
+  "sessionId": "68a60c0b-238f-4edf-8292-fb7e2e6c38b6",
+  "sessionLabel": "eval-2026-05-02T10-17-07-154Z-accounting-ap-aging",
+  "startedAt": "2026-05-02T10:23:57.568Z",
+  "finishedAt": "2026-05-02T10:24:12.880Z",
+  "durationMs": 110,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d8a4dec6-6eab-4961-88cd-bd11a9b1b30d\",\"timestamp\":\"2026-05-02T10:23:57.677Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d8a4dec6-6eab-4961-88cd-bd11a9b1b30d\",\"timestamp\":\"2026-05-02T10:23:57.677Z\"}",
+      "HTTP 401",
+      "expected at least one of [getAPAgingReport] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'accounting' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d8a4dec6-6eab-4961-88cd-bd11a9b1b30d\",\"timestamp\":\"2026-05-02T10:23:57.677Z\"}"
+  },
+  "expectedToolNames": [
+    "getAPAgingReport"
+  ],
+  "expectedToolFamilies": [
+    "accounting"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

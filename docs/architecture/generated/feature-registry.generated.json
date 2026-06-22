@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-05-21T18:31:24.877Z",
+  "generatedAt": "2026-06-22T14:05:29.087Z",
   "source": "scripts/docs/generate-app-expert-artifacts.mjs",
-  "featureCount": 290,
-  "documentedFeatureCount": 58,
-  "routeDiscoveredFeatureCount": 232,
+  "featureCount": 310,
+  "documentedFeatureCount": 0,
+  "routeDiscoveredFeatureCount": 310,
   "features": [
     {
       "id": "route:/accounting",
@@ -122,6 +122,52 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/ai/admin/agents",
+      "title": "Agents",
+      "description": "Route discovered from frontend/src/app/(admin)/ai/admin/agents/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "admin"
+      ],
+      "routes": [
+        "/ai/admin/agents"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/ai/admin/agents/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/ai-agents",
+      "title": "Ai Agents",
+      "description": "Route discovered from frontend/src/app/(admin)/ai-agents/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "page"
+      ],
+      "routes": [
+        "/ai-agents"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/ai-agents/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/ai-learning-promotions",
       "title": "Ai Learning Promotions",
       "description": "Route discovered from frontend/src/app/(admin)/ai-learning-promotions/page.tsx. User-facing help article not yet linked.",
@@ -191,6 +237,29 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/ai-skills",
+      "title": "Ai Skills",
+      "description": "Route discovered from frontend/src/app/(admin)/ai-skills/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "page"
+      ],
+      "routes": [
+        "/ai-skills"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/ai-skills/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/ai-system-health",
       "title": "Ai System Health",
       "description": "Route discovered from frontend/src/app/(admin)/ai-system-health/page.tsx. User-facing help article not yet linked.",
@@ -208,6 +277,52 @@
       ],
       "routeFiles": [
         "frontend/src/app/(admin)/ai-system-health/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/ai-vision",
+      "title": "Ai Vision",
+      "description": "Route discovered from frontend/src/app/(admin)/ai-vision/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "page"
+      ],
+      "routes": [
+        "/ai-vision"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/ai-vision/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/ai-work-runs",
+      "title": "Ai Work Runs",
+      "description": "Route discovered from frontend/src/app/(admin)/ai-work-runs/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "page"
+      ],
+      "routes": [
+        "/ai-work-runs"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/ai-work-runs/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -559,6 +674,29 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/deep-research",
+      "title": "Deep Research",
+      "description": "Route discovered from frontend/src/app/(admin)/deep-research/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "page"
+      ],
+      "routes": [
+        "/deep-research"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/deep-research/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/design",
       "title": "Design",
       "description": "Route discovered from frontend/src/app/(admin)/design/page.tsx. User-facing help article not yet linked.",
@@ -697,6 +835,29 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/document-metadata",
+      "title": "Document Metadata",
+      "description": "Route discovered from frontend/src/app/(admin)/document-metadata/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "page"
+      ],
+      "routes": [
+        "/document-metadata"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/document-metadata/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/admin/errors",
       "title": "Errors",
       "description": "Route discovered from frontend/src/app/admin/errors/page.tsx. User-facing help article not yet linked.",
@@ -737,6 +898,52 @@
       ],
       "routeFiles": [
         "frontend/src/app/(admin)/errors/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/eval-runs",
+      "title": "Eval Runs",
+      "description": "Route discovered from frontend/src/app/(admin)/eval-runs/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "page"
+      ],
+      "routes": [
+        "/eval-runs"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/eval-runs/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/feedback-inbox",
+      "title": "Feedback Inbox",
+      "description": "Route discovered from frontend/src/app/(admin)/feedback-inbox/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "page"
+      ],
+      "routes": [
+        "/feedback-inbox"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/feedback-inbox/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -812,29 +1019,6 @@
       "source": "route_inventory"
     },
     {
-      "id": "route:/intelligence-compiler",
-      "title": "Intelligence Compiler",
-      "description": "Route discovered from frontend/src/app/(admin)/intelligence-compiler/page.tsx. User-facing help article not yet linked.",
-      "module": "admin",
-      "category": "Admin",
-      "status": "route_discovered",
-      "clientVisible": false,
-      "aiVisible": true,
-      "tags": [
-        "admin",
-        "page"
-      ],
-      "routes": [
-        "/intelligence-compiler"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(admin)/intelligence-compiler/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": null,
-      "source": "route_inventory"
-    },
-    {
       "id": "route:/intelligence-packets",
       "title": "Intelligence Packets",
       "description": "Route discovered from frontend/src/app/(admin)/intelligence-packets/page.tsx. User-facing help article not yet linked.",
@@ -898,6 +1082,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(admin)/docs/ai-overview/learning/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/ai/learning-promotions",
+      "title": "Learning Promotions",
+      "description": "Route discovered from frontend/src/app/(admin)/ai/learning-promotions/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "page"
+      ],
+      "routes": [
+        "/ai/learning-promotions"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/ai/learning-promotions/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -1272,6 +1479,29 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/project-attribution",
+      "title": "Project Attribution",
+      "description": "Route discovered from frontend/src/app/(admin)/project-attribution/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "page"
+      ],
+      "routes": [
+        "/project-attribution"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/project-attribution/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/motion/project-created-preview",
       "title": "Project Created Preview",
       "description": "Route discovered from frontend/src/app/(admin)/motion/project-created-preview/page.tsx. User-facing help article not yet linked.",
@@ -1410,6 +1640,29 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/accounting/reconciliation",
+      "title": "Reconciliation",
+      "description": "Route discovered from frontend/src/app/(admin)/accounting/reconciliation/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "page"
+      ],
+      "routes": [
+        "/accounting/reconciliation"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/accounting/reconciliation/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/redoc",
       "title": "Redoc",
       "description": "Route discovered from frontend/src/app/(admin)/redoc/page.tsx. User-facing help article not yet linked.",
@@ -1479,6 +1732,52 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/site-map",
+      "title": "Site Map",
+      "description": "Route discovered from frontend/src/app/(admin)/site-map/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "page"
+      ],
+      "routes": [
+        "/site-map"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/site-map/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/ai/admin/skills",
+      "title": "Skills",
+      "description": "Route discovered from frontend/src/app/(admin)/ai/admin/skills/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "admin"
+      ],
+      "routes": [
+        "/ai/admin/skills"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/ai/admin/skills/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/accounting/sop-backlog",
       "title": "Sop Backlog",
       "description": "Route discovered from frontend/src/app/(admin)/accounting/sop-backlog/page.tsx. User-facing help article not yet linked.",
@@ -1519,29 +1818,6 @@
       ],
       "routeFiles": [
         "frontend/src/app/(admin)/source-sync/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": null,
-      "source": "route_inventory"
-    },
-    {
-      "id": "route:/spreadsheet-demo",
-      "title": "Spreadsheet Demo",
-      "description": "Route discovered from frontend/src/app/(admin)/spreadsheet-demo/page.tsx. User-facing help article not yet linked.",
-      "module": "admin",
-      "category": "Admin",
-      "status": "route_discovered",
-      "clientVisible": false,
-      "aiVisible": true,
-      "tags": [
-        "admin",
-        "page"
-      ],
-      "routes": [
-        "/spreadsheet-demo"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(admin)/spreadsheet-demo/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -1916,6 +2192,52 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/updates",
+      "title": "Updates",
+      "description": "Route discovered from frontend/src/app/(admin)/updates/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "page"
+      ],
+      "routes": [
+        "/updates"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/updates/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/user-management",
+      "title": "User Management",
+      "description": "Route discovered from frontend/src/app/(admin)/user-management/page.tsx. User-facing help article not yet linked.",
+      "module": "admin",
+      "category": "Admin",
+      "status": "route_discovered",
+      "clientVisible": false,
+      "aiVisible": true,
+      "tags": [
+        "admin",
+        "page"
+      ],
+      "routes": [
+        "/user-management"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(admin)/user-management/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/permissions/users/[personId]",
       "title": "Users",
       "description": "Route discovered from frontend/src/app/(admin)/permissions/users/[personId]/page.tsx. User-facing help article not yet linked.",
@@ -1979,6 +2301,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(admin)/accounting/wip/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/ai-assistant",
+      "title": "Ai Assistant",
+      "description": "Route discovered from frontend/src/app/(main)/ai-assistant/page.tsx. User-facing help article not yet linked.",
+      "module": "ai",
+      "category": "AI",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "global",
+        "chat"
+      ],
+      "routes": [
+        "/ai-assistant"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/ai-assistant/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -2054,309 +2399,50 @@
       "source": "route_inventory"
     },
     {
-      "id": "ai-assistant-overview",
-      "title": "AI Assistant Overview",
-      "description": "Understand Ask Alleato — the multi-agent AI system with C-Suite advisors embedded in the platform.",
-      "module": "ai-assistant",
-      "category": "AI & Intelligence",
-      "status": "documented",
+      "id": "route:/ai-assistant/skills",
+      "title": "Skills",
+      "description": "Route discovered from frontend/src/app/(main)/ai-assistant/skills/page.tsx. User-facing help article not yet linked.",
+      "module": "ai",
+      "category": "AI",
+      "status": "route_discovered",
       "clientVisible": true,
       "aiVisible": true,
       "tags": [
-        "ai-assistant",
-        "ask-alleato",
-        "c-suite",
-        "cfo",
-        "coo",
-        "cro",
-        "chro",
-        "vpbd"
+        "global",
+        "chat"
       ],
       "routes": [
-        "/ai-assistant"
+        "/ai-assistant/skills"
       ],
       "routeFiles": [
-        "frontend/src/app/(main)/ai-assistant/page.tsx"
+        "frontend/src/app/(main)/ai-assistant/skills/page.tsx"
       ],
       "relatedActions": [],
-      "helpArticle": "docs/help/articles/ai-assistant-overview.md",
-      "source": "help_article"
+      "helpArticle": null,
+      "source": "route_inventory"
     },
     {
-      "id": "ai-capabilities-index",
-      "title": "AI Capabilities Index",
-      "description": "Every AI feature in Alleato OS — what it does, where to find it, and what to ask.",
-      "module": "ai-assistant",
-      "category": "AI & Intelligence",
-      "status": "documented",
+      "id": "route:/ai-assistant/teach",
+      "title": "Teach",
+      "description": "Route discovered from frontend/src/app/(main)/ai-assistant/teach/page.tsx. User-facing help article not yet linked.",
+      "module": "ai",
+      "category": "AI",
+      "status": "route_discovered",
       "clientVisible": true,
       "aiVisible": true,
       "tags": [
-        "ai-assistant",
-        "ask-alleato",
-        "c-suite",
-        "rag",
-        "intelligence",
-        "index",
-        "overview"
+        "global",
+        "chat"
       ],
       "routes": [
-        "/ai-assistant",
-        "/[projectId]/intelligence"
+        "/ai-assistant/teach"
       ],
       "routeFiles": [
-        "frontend/src/app/(main)/ai-assistant/page.tsx",
-        "frontend/src/app/(main)/[projectId]/intelligence/page.tsx"
+        "frontend/src/app/(main)/ai-assistant/teach/page.tsx"
       ],
       "relatedActions": [],
-      "helpArticle": "docs/help/articles/ai-capabilities-index.md",
-      "source": "help_article"
-    },
-    {
-      "id": "ai-memory",
-      "title": "AI Memory",
-      "description": "View and manage the facts, preferences, and context the AI assistant remembers about you across sessions.",
-      "module": "ai-assistant",
-      "category": "AI & Intelligence",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "ai-memory",
-        "preferences",
-        "context",
-        "personalization"
-      ],
-      "routes": [
-        "/settings/memory"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/settings/memory/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/ai-memory.md",
-      "source": "help_article"
-    },
-    {
-      "id": "ai-financial-advisor",
-      "title": "Ask the AI About Finances",
-      "description": "Use the CFO advisor to analyze budgets, margins, cash flow, change order exposure, and live ERP data from Acumatica.",
-      "module": "ai-assistant",
-      "category": "AI & Intelligence",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "ai-assistant",
-        "cfo",
-        "budget",
-        "margin",
-        "cash-flow",
-        "acumatica",
-        "change-orders",
-        "commitments"
-      ],
-      "routes": [
-        "/ai-assistant"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/ai-assistant/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/ai-financial-advisor.md",
-      "source": "help_article"
-    },
-    {
-      "id": "ai-meeting-intelligence",
-      "title": "Ask the AI About Meetings",
-      "description": "How the AI assistant uses meeting transcripts, action items, and decisions from Fireflies to answer questions about project activity.",
-      "module": "ai-assistant",
-      "category": "AI & Intelligence",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "ai-assistant",
-        "meetings",
-        "fireflies",
-        "transcripts",
-        "action-items",
-        "decisions"
-      ],
-      "routes": [
-        "/ai-assistant",
-        "/[projectId]/meetings"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/ai-assistant/page.tsx",
-        "frontend/src/app/(main)/[projectId]/meetings/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/ai-meeting-intelligence.md",
-      "source": "help_article"
-    },
-    {
-      "id": "ask-the-ai-assistant",
-      "title": "Ask the AI Assistant for Help",
-      "description": "Use Ask Alleato when you need help finding information or understanding how to use the platform.",
-      "module": "ai-assistant",
-      "category": "Getting Started",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "ai-assistant",
-        "help",
-        "onboarding"
-      ],
-      "routes": [
-        "/ai-assistant"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/ai-assistant/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/ask-the-ai-assistant.md",
-      "source": "help_article"
-    },
-    {
-      "id": "ai-project-updates",
-      "title": "Get a Project Briefing from the AI",
-      "description": "Ask the AI for a status update on any project and it pulls from meetings, emails, Teams messages, financials, and schedule simultaneously.",
-      "module": "ai-assistant",
-      "category": "AI & Intelligence",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "ai-assistant",
-        "project-update",
-        "briefing",
-        "portfolio",
-        "status"
-      ],
-      "routes": [
-        "/ai-assistant"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/ai-assistant/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/ai-project-updates.md",
-      "source": "help_article"
-    },
-    {
-      "id": "self-learning-intelligence-architecture",
-      "title": "Self-Learning Intelligence Architecture",
-      "description": "Internal implementation blueprint for Alleato AI feedback loops, promotion rules, retrieval scoring, and packet-first learning.",
-      "module": "ai-assistant",
-      "category": "AI & Intelligence",
-      "status": "documented",
-      "clientVisible": false,
-      "aiVisible": false,
-      "tags": [
-        "ai",
-        "feedback",
-        "memory",
-        "rag",
-        "project-intelligence",
-        "architecture"
-      ],
-      "routes": [
-        "/ai-assistant",
-        "/docs/project-intelligence"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/ai-assistant/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/self-learning-intelligence-architecture.md",
-      "source": "help_article"
-    },
-    {
-      "id": "ai-assistant-actions",
-      "title": "What the AI Assistant Can Do (Actions)",
-      "description": "The AI assistant can create and update records directly from chat — learn which actions are available and how the confirmation flow works.",
-      "module": "ai-assistant",
-      "category": "AI & Intelligence",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "ai-assistant",
-        "actions",
-        "create",
-        "rfi",
-        "change-order",
-        "tasks",
-        "confirmation"
-      ],
-      "routes": [
-        "/ai-assistant"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/ai-assistant/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/ai-assistant-actions.md",
-      "source": "help_article"
-    },
-    {
-      "id": "app-feature-status-and-limitations",
-      "title": "Understand Feature Status",
-      "description": "Learn how Alleato PM distinguishes live, partial, planned, blocked, and deprecated app behavior.",
-      "module": "app-expert",
-      "category": "AI Assistant",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "feature-status",
-        "limitations",
-        "app-expert",
-        "ai-assistant"
-      ],
-      "routes": [
-        "/ai-assistant",
-        "/docs"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/ai-assistant/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/app-feature-status-and-limitations.md",
-      "source": "help_article"
-    },
-    {
-      "id": "app-navigation-and-feature-map",
-      "title": "Navigate Alleato PM",
-      "description": "Understand project pages, global tools, admin areas, and how Ask Alleato should point you to the right place.",
-      "module": "app-navigation",
-      "category": "Getting Started",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "navigation",
-        "sitemap",
-        "projects",
-        "ai-assistant"
-      ],
-      "routes": [
-        "/",
-        "/[projectId]/home",
-        "/site-map",
-        "/ai-assistant"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/page.tsx",
-        "frontend/src/app/(main)/[projectId]/home/page.tsx",
-        "frontend/src/app/(admin)/site-map/page.tsx",
-        "frontend/src/app/(main)/ai-assistant/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/app-navigation-and-feature-map.md",
-      "source": "help_article"
+      "helpArticle": null,
+      "source": "route_inventory"
     },
     {
       "id": "route:/auth/ai-widget-gallery",
@@ -2589,275 +2675,6 @@
       "source": "route_inventory"
     },
     {
-      "id": "budget-line-items",
-      "title": "Budget Line Items",
-      "description": "Add, edit, and modify budget line items and apply budget modifications.",
-      "module": "budget",
-      "category": "Financial Tools",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "budget",
-        "line-items",
-        "modifications",
-        "cost-codes"
-      ],
-      "routes": [
-        "/[projectId]/budget"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/budget/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/budget-line-items.md",
-      "source": "help_article"
-    },
-    {
-      "id": "budget-overview",
-      "title": "Budget Overview",
-      "description": "Understand the budget tool, its columns, and how to navigate budget line items.",
-      "module": "budget",
-      "category": "Financial Tools",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "budget",
-        "line-items",
-        "cost-codes",
-        "forecast",
-        "actual"
-      ],
-      "routes": [
-        "/[projectId]/budget"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/budget/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/budget-overview.md",
-      "source": "help_article"
-    },
-    {
-      "id": "budget-reference",
-      "title": "Budget Reference",
-      "description": "Complete column-by-column reference for the Budget tool — definitions, formulas, source data, forecast methods, permissions, and how Budget connects to the rest of the system.",
-      "module": "budget",
-      "category": "Financial Tools",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "budget",
-        "reference",
-        "columns",
-        "forecast",
-        "variance",
-        "committed",
-        "direct-costs",
-        "change-orders"
-      ],
-      "routes": [
-        "/[projectId]/budget",
-        "/[projectId]/budget/line-item",
-        "/[projectId]/budget/setup"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/budget/page.tsx",
-        "frontend/src/app/(main)/[projectId]/budget/setup/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/budget-reference.md",
-      "source": "help_article"
-    },
-    {
-      "id": "change-events",
-      "title": "Change Events",
-      "description": "Track potential changes to the project before they become approved change orders.",
-      "module": "change-events",
-      "category": "Financial Tools",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "change-events",
-        "pco",
-        "pricing",
-        "scope-change"
-      ],
-      "routes": [
-        "/[projectId]/change-events"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/change-events/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/change-events.md",
-      "source": "help_article"
-    },
-    {
-      "id": "change-orders",
-      "title": "Change Orders",
-      "description": "Generate, approve, and issue prime contract change orders from approved change events.",
-      "module": "change-orders",
-      "category": "Financial Tools",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "change-orders",
-        "prime-contract",
-        "approval",
-        "pdf"
-      ],
-      "routes": [
-        "/[projectId]/change-orders"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/change-orders/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/change-orders.md",
-      "source": "help_article"
-    },
-    {
-      "id": "changelog",
-      "title": "What's New",
-      "description": "Read recent release notes covering new features, improvements, and fixes.",
-      "module": "changelog",
-      "category": "Reference",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "changelog",
-        "releases",
-        "updates",
-        "whats-new"
-      ],
-      "routes": [
-        "/updates"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(admin)/updates/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/changelog.md",
-      "source": "help_article"
-    },
-    {
-      "id": "commitments",
-      "title": "Commitments (Subcontracts and Purchase Orders)",
-      "description": "Manage subcontracts, purchase orders, schedule of values, and commitment change orders.",
-      "module": "commitments",
-      "category": "Financial Tools",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "commitments",
-        "subcontracts",
-        "purchase-orders",
-        "sov",
-        "vendors"
-      ],
-      "routes": [
-        "/[projectId]/commitments"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/commitments/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/commitments.md",
-      "source": "help_article"
-    },
-    {
-      "id": "commitments-reference",
-      "title": "Commitments Reference",
-      "description": "Complete reference for the Commitments tool — subcontracts and purchase orders, statuses, columns, change orders, SOV, retainage, and how Commitments drive the Budget table.",
-      "module": "commitments",
-      "category": "Financial Tools",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "commitments",
-        "subcontracts",
-        "purchase-orders",
-        "change-orders",
-        "sov",
-        "retainage",
-        "reference"
-      ],
-      "routes": [
-        "/[projectId]/commitments",
-        "/[projectId]/commitments/new",
-        "/[projectId]/commitments/[commitmentId]",
-        "/[projectId]/commitments/[commitmentId]/edit"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/commitments/page.tsx",
-        "frontend/src/app/(main)/[projectId]/commitments/new/page.tsx",
-        "frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx",
-        "frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/edit/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/commitments-reference.md",
-      "source": "help_article"
-    },
-    {
-      "id": "daily-log",
-      "title": "Daily Log",
-      "description": "Record daily field reports including labor, equipment, weather, and notes.",
-      "module": "daily-log",
-      "category": "Field Operations",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "daily-log",
-        "field-report",
-        "labor",
-        "equipment",
-        "weather"
-      ],
-      "routes": [
-        "/[projectId]/daily-log"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/daily-log/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/daily-log.md",
-      "source": "help_article"
-    },
-    {
-      "id": "direct-costs",
-      "title": "Direct Costs",
-      "description": "Record non-contract project costs like labor, materials, equipment, and reimbursements.",
-      "module": "direct-costs",
-      "category": "Financial Tools",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "direct-costs",
-        "labor",
-        "materials",
-        "equipment"
-      ],
-      "routes": [
-        "/[projectId]/direct-costs"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/direct-costs/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/direct-costs.md",
-      "source": "help_article"
-    },
-    {
       "id": "route:/directory/clients",
       "title": "Clients",
       "description": "Route discovered from frontend/src/app/(main)/directory/clients/page.tsx. User-facing help article not yet linked.",
@@ -2927,32 +2744,6 @@
       "source": "route_inventory"
     },
     {
-      "id": "company-directory",
-      "title": "Company Directory",
-      "description": "Manage the global directory of companies, clients, contacts, vendors, prospects, distribution groups, and employees.",
-      "module": "directory",
-      "category": "Directory & People",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "directory",
-        "companies",
-        "contacts",
-        "vendors",
-        "clients"
-      ],
-      "routes": [
-        "/directory"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/directory/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/company-directory.md",
-      "source": "help_article"
-    },
-    {
       "id": "route:/directory/contacts",
       "title": "Contacts",
       "description": "Route discovered from frontend/src/app/(main)/directory/contacts/page.tsx. User-facing help article not yet linked.",
@@ -2993,6 +2784,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(main)/directory/contacts/[contactId]/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/directory",
+      "title": "Directory",
+      "description": "Route discovered from frontend/src/app/(main)/directory/page.tsx. User-facing help article not yet linked.",
+      "module": "directory",
+      "category": "Directory",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "global",
+        "page"
+      ],
+      "routes": [
+        "/directory"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/directory/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -3043,31 +2857,6 @@
       "relatedActions": [],
       "helpArticle": null,
       "source": "route_inventory"
-    },
-    {
-      "id": "project-directory",
-      "title": "Project Directory",
-      "description": "Manage the project team roster with roles, contact info, and company affiliation.",
-      "module": "directory",
-      "category": "Directory & People",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "directory",
-        "project-team",
-        "roster",
-        "roles"
-      ],
-      "routes": [
-        "/[projectId]/directory"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/directory/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/project-directory.md",
-      "source": "help_article"
     },
     {
       "id": "route:/directory/prospects",
@@ -3139,142 +2928,6 @@
       "source": "route_inventory"
     },
     {
-      "id": "documents",
-      "title": "Documents",
-      "description": "Manage project files in folders with version tracking, upload, and download.",
-      "module": "documents",
-      "category": "Documents & Drawings",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "documents",
-        "files",
-        "folders",
-        "versions"
-      ],
-      "routes": [
-        "/[projectId]/documents"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/documents/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/documents.md",
-      "source": "help_article"
-    },
-    {
-      "id": "drawings-viewer",
-      "title": "Drawing Viewer and Annotations",
-      "description": "Use the PDF viewer to mark up drawings and link pins to RFIs, punch items, and photos.",
-      "module": "drawings",
-      "category": "Documents & Drawings",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "drawings",
-        "viewer",
-        "annotations",
-        "markup",
-        "pins"
-      ],
-      "routes": [
-        "/[projectId]/drawings"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/drawings/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/drawings-viewer.md",
-      "source": "help_article"
-    },
-    {
-      "id": "drawings",
-      "title": "Drawings",
-      "description": "Upload, version, and organize construction drawings with sets, areas, and revisions.",
-      "module": "drawings",
-      "category": "Documents & Drawings",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "drawings",
-        "sets",
-        "revisions",
-        "versioning"
-      ],
-      "routes": [
-        "/[projectId]/drawings",
-        "/[projectId]/drawings/sets",
-        "/[projectId]/drawings/revisions-report"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/drawings/page.tsx",
-        "frontend/src/app/(main)/[projectId]/drawings/sets/page.tsx",
-        "frontend/src/app/(main)/[projectId]/drawings/revisions-report/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/drawings.md",
-      "source": "help_article"
-    },
-    {
-      "id": "estimates",
-      "title": "Estimates",
-      "description": "Build quantity takeoff estimates in Alleato, then import them directly into a prime contract schedule of values.",
-      "module": "estimates",
-      "category": "Financial Tools",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "estimates",
-        "qto",
-        "quantity-takeoff",
-        "sov",
-        "cost-codes"
-      ],
-      "routes": [
-        "/[projectId]/estimates",
-        "/[projectId]/estimates/new",
-        "/[projectId]/estimates/[estimateId]"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/estimates/page.tsx",
-        "frontend/src/app/(main)/[projectId]/estimates/new/page.tsx",
-        "frontend/src/app/(main)/[projectId]/estimates/[estimateId]/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/estimates.md",
-      "source": "help_article"
-    },
-    {
-      "id": "submit-feedback",
-      "title": "Submit Feedback",
-      "description": "Send feedback from inside the app when something is wrong, confusing, or missing.",
-      "module": "feedback",
-      "category": "Feedback",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "feedback",
-        "support",
-        "issue",
-        "request",
-        "annotation"
-      ],
-      "routes": [
-        "/feedback-inbox"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(admin)/feedback-inbox/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/submit-feedback.md",
-      "source": "help_article"
-    },
-    {
       "id": "route:/invoice/add",
       "title": "Add",
       "description": "Route discovered from frontend/src/app/(dashboard)/invoice/add/page.tsx. User-facing help article not yet linked.",
@@ -3292,6 +2945,52 @@
       ],
       "routeFiles": [
         "frontend/src/app/(dashboard)/invoice/add/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/budget",
+      "title": "Budget",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/budget/page.tsx. User-facing help article not yet linked.",
+      "module": "financial",
+      "category": "Financial",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/budget"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/budget/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/change-events",
+      "title": "Change Events",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/change-events/page.tsx. User-facing help article not yet linked.",
+      "module": "financial",
+      "category": "Financial",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/change-events"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/change-events/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -3361,6 +3060,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(main)/[projectId]/change-management/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/change-orders",
+      "title": "Change Orders",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/change-orders/page.tsx. User-facing help article not yet linked.",
+      "module": "financial",
+      "category": "Financial",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/change-orders"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/change-orders/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -3459,6 +3181,52 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/[projectId]/commitments",
+      "title": "Commitments",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/commitments/page.tsx. User-facing help article not yet linked.",
+      "module": "financial",
+      "category": "Financial",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/commitments"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/commitments/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/commitments/[commitmentId]",
+      "title": "Commitments",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx. User-facing help article not yet linked.",
+      "module": "financial",
+      "category": "Financial",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/commitments/[commitmentId]"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/[projectId]/commitments/configure",
       "title": "Configure",
       "description": "Route discovered from frontend/src/app/(main)/[projectId]/commitments/configure/page.tsx. User-facing help article not yet linked.",
@@ -3522,6 +3290,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(main)/[projectId]/change-orders/[changeOrderId]/edit/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/commitments/[commitmentId]/edit",
+      "title": "Edit",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/edit/page.tsx. User-facing help article not yet linked.",
+      "module": "financial",
+      "category": "Financial",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "form"
+      ],
+      "routes": [
+        "/[projectId]/commitments/[commitmentId]/edit"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/edit/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -3827,6 +3618,29 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/[projectId]/commitments/new",
+      "title": "New",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/commitments/new/page.tsx. User-facing help article not yet linked.",
+      "module": "financial",
+      "category": "Financial",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "form"
+      ],
+      "routes": [
+        "/[projectId]/commitments/new"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/commitments/new/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/[projectId]/invoices/new",
       "title": "New",
       "description": "Route discovered from frontend/src/app/(main)/[projectId]/invoices/new/page.tsx. User-facing help article not yet linked.",
@@ -4034,219 +3848,27 @@
       "source": "route_inventory"
     },
     {
-      "id": "use-help-center-and-ai-assistant",
-      "title": "Use Help Center and Ask Alleato Together",
-      "description": "Find written guides in Help Center and ask the AI assistant follow-up questions.",
-      "module": "help",
-      "category": "Getting Started",
-      "status": "documented",
+      "id": "route:/[projectId]/budget/setup",
+      "title": "Setup",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/budget/setup/page.tsx. User-facing help article not yet linked.",
+      "module": "financial",
+      "category": "Financial",
+      "status": "route_discovered",
       "clientVisible": true,
       "aiVisible": true,
       "tags": [
-        "help-center",
-        "ai-assistant",
-        "ask-alleato",
-        "support"
+        "project",
+        "page"
       ],
       "routes": [
-        "/docs",
-        "/ai-assistant"
+        "/[projectId]/budget/setup"
       ],
       "routeFiles": [
-        "frontend/src/app/(main)/ai-assistant/page.tsx"
+        "frontend/src/app/(main)/[projectId]/budget/setup/page.tsx"
       ],
       "relatedActions": [],
-      "helpArticle": "docs/help/articles/use-help-center-and-ai-assistant.md",
-      "source": "help_article"
-    },
-    {
-      "id": "acumatica-integration",
-      "title": "Acumatica ERP Integration",
-      "description": "Live connection to Acumatica accounting for AP/AR aging, cash position, and ERP project budget data.",
-      "module": "integrations",
-      "category": "Integrations",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "acumatica",
-        "erp",
-        "accounting",
-        "ap",
-        "ar",
-        "cash"
-      ],
-      "routes": [
-        "/settings/integrations"
-      ],
-      "routeFiles": [],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/acumatica-integration.md",
-      "source": "help_article"
-    },
-    {
-      "id": "outlook-integration",
-      "title": "Microsoft Outlook Integration",
-      "description": "Sync incoming Microsoft 365 emails into project records with attachment search.",
-      "module": "integrations",
-      "category": "Integrations",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "outlook",
-        "microsoft-365",
-        "email",
-        "sync"
-      ],
-      "routes": [
-        "/settings/integrations",
-        "/[projectId]/emails"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/emails/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/outlook-integration.md",
-      "source": "help_article"
-    },
-    {
-      "id": "teams-integration",
-      "title": "Microsoft Teams Integration",
-      "description": "Sync Teams messages and DMs into project intelligence with AI compilation.",
-      "module": "integrations",
-      "category": "Integrations",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "teams",
-        "microsoft-365",
-        "chat",
-        "sync",
-        "intelligence"
-      ],
-      "routes": [
-        "/team-chat",
-        "/settings/integrations"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/team-chat/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/teams-integration.md",
-      "source": "help_article"
-    },
-    {
-      "id": "ai-proactive-alerts",
-      "title": "Proactive AI Alerts",
-      "description": "The platform automatically flags budget variance, overdue RFIs, late tasks, and stale change events so issues surface before you have to look for them.",
-      "module": "intelligence",
-      "category": "AI & Intelligence",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "alerts",
-        "proactive",
-        "budget-variance",
-        "rfi",
-        "schedule",
-        "cron",
-        "daily-flags"
-      ],
-      "routes": [
-        "/[projectId]/intelligence"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/intelligence/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/ai-proactive-alerts.md",
-      "source": "help_article"
-    },
-    {
-      "id": "project-intelligence",
-      "title": "Project Intelligence",
-      "description": "Review the AI-compiled intelligence packet with KPIs, insight cards, freshness status, and evidence citations for a project.",
-      "module": "intelligence",
-      "category": "AI & Intelligence",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "intelligence",
-        "insights",
-        "ai",
-        "kpis",
-        "risk",
-        "decisions",
-        "blockers",
-        "financial-exposure"
-      ],
-      "routes": [
-        "/[projectId]/intelligence"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/intelligence/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/project-intelligence.md",
-      "source": "help_article"
-    },
-    {
-      "id": "teams-chat-compiler",
-      "title": "Teams Chat Compiler",
-      "description": "Understand how raw Microsoft Teams conversations become project intelligence, tasks, risks, and decisions.",
-      "module": "intelligence",
-      "category": "Features",
-      "status": "documented",
-      "clientVisible": false,
-      "aiVisible": false,
-      "tags": [
-        "teams",
-        "microsoft-graph",
-        "compiler",
-        "intelligence",
-        "tasks",
-        "risks"
-      ],
-      "routes": [
-        "/project-attribution",
-        "/document-metadata"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(admin)/project-attribution/page.tsx",
-        "frontend/src/app/(admin)/document-metadata/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/teams-chat-compiler.md",
-      "source": "help_article"
-    },
-    {
-      "id": "invoicing",
-      "title": "Invoicing",
-      "description": "Manage owner pay applications and subcontractor invoices against the schedule of values.",
-      "module": "invoicing",
-      "category": "Financial Tools",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "invoicing",
-        "pay-application",
-        "sov",
-        "billing"
-      ],
-      "routes": [
-        "/[projectId]/invoicing"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/invoicing/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/invoicing.md",
-      "source": "help_article"
+      "helpArticle": null,
+      "source": "route_inventory"
     },
     {
       "id": "route:/access-denied",
@@ -4266,6 +3888,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(main)/access-denied/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/ai",
+      "title": "Ai",
+      "description": "Route discovered from frontend/src/app/(main)/ai/page.tsx. User-facing help article not yet linked.",
+      "module": "main",
+      "category": "Main",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "global",
+        "page"
+      ],
+      "routes": [
+        "/ai"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/ai/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -4335,6 +3980,52 @@
       ],
       "routeFiles": [
         "frontend/src/app/(main)/calendar/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/executive/capabilities",
+      "title": "Capabilities",
+      "description": "Route discovered from frontend/src/app/(main)/executive/capabilities/page.tsx. User-facing help article not yet linked.",
+      "module": "main",
+      "category": "Main",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "global",
+        "page"
+      ],
+      "routes": [
+        "/executive/capabilities"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/executive/capabilities/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/comments",
+      "title": "Comments",
+      "description": "Route discovered from frontend/src/app/(main)/comments/page.tsx. User-facing help article not yet linked.",
+      "module": "main",
+      "category": "Main",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "global",
+        "page"
+      ],
+      "routes": [
+        "/comments"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/comments/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -4479,6 +4170,29 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/executive/intelligence-brief",
+      "title": "Intelligence Brief",
+      "description": "Route discovered from frontend/src/app/(main)/executive/intelligence-brief/page.tsx. User-facing help article not yet linked.",
+      "module": "main",
+      "category": "Main",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "global",
+        "page"
+      ],
+      "routes": [
+        "/executive/intelligence-brief"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/executive/intelligence-brief/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/knowledge",
       "title": "Knowledge",
       "description": "Route discovered from frontend/src/app/(main)/knowledge/page.tsx. User-facing help article not yet linked.",
@@ -4525,6 +4239,52 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/manpower",
+      "title": "Manpower",
+      "description": "Route discovered from frontend/src/app/(main)/manpower/page.tsx. User-facing help article not yet linked.",
+      "module": "main",
+      "category": "Main",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "global",
+        "page"
+      ],
+      "routes": [
+        "/manpower"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/manpower/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/notifications",
+      "title": "Notifications",
+      "description": "Route discovered from frontend/src/app/(main)/notifications/page.tsx. User-facing help article not yet linked.",
+      "module": "main",
+      "category": "Main",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "global",
+        "page"
+      ],
+      "routes": [
+        "/notifications"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/notifications/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/pipeline",
       "title": "Pipeline",
       "description": "Route discovered from frontend/src/app/(main)/pipeline/page.tsx. User-facing help article not yet linked.",
@@ -4542,6 +4302,52 @@
       ],
       "routeFiles": [
         "frontend/src/app/(main)/pipeline/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/",
+      "title": "Portfolio",
+      "description": "Route discovered from frontend/src/app/(main)/page.tsx. User-facing help article not yet linked.",
+      "module": "main",
+      "category": "Main",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "global",
+        "page"
+      ],
+      "routes": [
+        "/"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/ai/skills",
+      "title": "Skills",
+      "description": "Route discovered from frontend/src/app/(main)/ai/skills/page.tsx. User-facing help article not yet linked.",
+      "module": "main",
+      "category": "Main",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "global",
+        "page"
+      ],
+      "routes": [
+        "/ai/skills"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/ai/skills/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -4617,127 +4423,63 @@
       "source": "route_inventory"
     },
     {
-      "id": "meetings",
-      "title": "Meetings",
-      "description": "Review meeting transcripts, AI-generated insights, action items, and meeting prep documents.",
-      "module": "meetings",
-      "category": "Communication",
-      "status": "documented",
+      "id": "route:/ai/teach",
+      "title": "Teach",
+      "description": "Route discovered from frontend/src/app/(main)/ai/teach/page.tsx. User-facing help article not yet linked.",
+      "module": "main",
+      "category": "Main",
+      "status": "route_discovered",
       "clientVisible": true,
       "aiVisible": true,
       "tags": [
-        "meetings",
-        "fireflies",
-        "transcripts",
-        "action-items",
-        "ai-insights"
+        "global",
+        "page"
       ],
       "routes": [
-        "/[projectId]/meetings"
+        "/ai/teach"
       ],
       "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/meetings/page.tsx"
+        "frontend/src/app/(main)/ai/teach/page.tsx"
       ],
       "relatedActions": [],
-      "helpArticle": "docs/help/articles/meetings.md",
-      "source": "help_article"
+      "helpArticle": null,
+      "source": "route_inventory"
     },
     {
-      "id": "INDEX",
-      "title": "Help Article Index",
-      "description": "Categorized index of every help article in Alleato OS.",
-      "module": "navigation",
-      "category": "Reference",
-      "status": "documented",
+      "id": "route:/team-chat",
+      "title": "Team Chat",
+      "description": "Route discovered from frontend/src/app/(main)/team-chat/page.tsx. User-facing help article not yet linked.",
+      "module": "main",
+      "category": "Main",
+      "status": "route_discovered",
       "clientVisible": true,
       "aiVisible": true,
       "tags": [
-        "index",
-        "articles",
-        "help",
-        "reference"
+        "global",
+        "page"
       ],
       "routes": [
-        "/docs"
-      ],
-      "routeFiles": [],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/INDEX.md",
-      "source": "help_article"
-    },
-    {
-      "id": "navigate-projects",
-      "title": "Navigate Projects",
-      "description": "Switch between projects, open the project home page, and find project tools.",
-      "module": "navigation",
-      "category": "Getting Started",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "projects",
-        "navigation",
-        "project-selector",
-        "project-home"
-      ],
-      "routes": [
-        "/projects",
-        "/[projectId]/home"
+        "/team-chat"
       ],
       "routeFiles": [
-        "frontend/src/app/(tables)/projects/page.tsx",
-        "frontend/src/app/(main)/[projectId]/home/page.tsx"
+        "frontend/src/app/(main)/team-chat/page.tsx"
       ],
       "relatedActions": [],
-      "helpArticle": "docs/help/articles/navigate-projects.md",
-      "source": "help_article"
+      "helpArticle": null,
+      "source": "route_inventory"
     },
     {
-      "id": "manage-permissions",
-      "title": "Manage User Access",
-      "description": "Manage users, roles, project access, and sensitive modules.",
-      "module": "permissions",
-      "category": "User Management",
-      "status": "documented",
+      "id": "route:/[projectId]/admin",
+      "title": "Admin",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/admin/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
       "clientVisible": true,
       "aiVisible": true,
       "tags": [
-        "permissions",
-        "users",
-        "roles",
-        "access",
-        "templates"
-      ],
-      "routes": [
-        "/user-management",
-        "/[projectId]/user-management"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(admin)/user-management/page.tsx",
-        "frontend/src/app/(main)/[projectId]/user-management/page.tsx"
-      ],
-      "relatedActions": [
-        "assign_permissions",
-        "update_permission_template"
-      ],
-      "helpArticle": "docs/help/articles/manage-permissions.md",
-      "source": "help_article"
-    },
-    {
-      "id": "permissions-admin",
-      "title": "Permissions and Access Control",
-      "description": "Configure role-based permissions, capability flags, and per-user overrides at the project level.",
-      "module": "permissions",
-      "category": "Settings & Administration",
-      "status": "documented",
-      "clientVisible": false,
-      "aiVisible": false,
-      "tags": [
-        "permissions",
-        "admin",
-        "roles",
-        "capabilities",
-        "audit"
+        "project",
+        "admin"
       ],
       "routes": [
         "/[projectId]/admin"
@@ -4745,123 +4487,9 @@
       "routeFiles": [
         "frontend/src/app/(main)/[projectId]/admin/page.tsx"
       ],
-      "relatedActions": [
-        "assign_permissions",
-        "update_permission_template"
-      ],
-      "helpArticle": "docs/help/articles/permissions-admin.md",
-      "source": "help_article"
-    },
-    {
-      "id": "app-permissions-and-visibility",
-      "title": "Understand Permissions And Visibility",
-      "description": "Learn why pages, records, employee information, or actions may be visible or hidden.",
-      "module": "permissions",
-      "category": "Users & Permissions",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "permissions",
-        "visibility",
-        "roles",
-        "privacy",
-        "app-expert"
-      ],
-      "routes": [
-        "/user-management",
-        "/[projectId]/user-management",
-        "/settings"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(admin)/user-management/page.tsx",
-        "frontend/src/app/(main)/[projectId]/user-management/page.tsx",
-        "frontend/src/app/(main)/settings/page.tsx"
-      ],
-      "relatedActions": [
-        "assign_permissions"
-      ],
-      "helpArticle": "docs/help/articles/app-permissions-and-visibility.md",
-      "source": "help_article"
-    },
-    {
-      "id": "photos",
-      "title": "Photos",
-      "description": "Manage project photos with albums, geotagged map pins, favorites, and grid views.",
-      "module": "photos",
-      "category": "Field Operations",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "photos",
-        "albums",
-        "map",
-        "geotag",
-        "favorites"
-      ],
-      "routes": [
-        "/[projectId]/photos"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/photos/page.tsx"
-      ],
       "relatedActions": [],
-      "helpArticle": "docs/help/articles/photos.md",
-      "source": "help_article"
-    },
-    {
-      "id": "prime-contracts",
-      "title": "Prime Contracts",
-      "description": "Manage the owner contract, schedule of values, and prime contract modifications.",
-      "module": "prime-contracts",
-      "category": "Financial Tools",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "prime-contract",
-        "owner",
-        "sov",
-        "modifications"
-      ],
-      "routes": [
-        "/[projectId]/prime-contracts"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/prime-contracts.md",
-      "source": "help_article"
-    },
-    {
-      "id": "progress-reports",
-      "title": "Progress Reports",
-      "description": "Generate, approve, and export periodic project status reports with AI assistance.",
-      "module": "progress-reports",
-      "category": "Reporting",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "progress-reports",
-        "status",
-        "ai",
-        "pdf",
-        "owner"
-      ],
-      "routes": [
-        "/progress-reports",
-        "/[projectId]/progress-reports"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(tables)/progress-reports/page.tsx",
-        "frontend/src/app/(main)/[projectId]/progress-reports/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/progress-reports.md",
-      "source": "help_article"
+      "helpArticle": null,
+      "source": "route_inventory"
     },
     {
       "id": "route:/[projectId]/drawings/areas",
@@ -4979,6 +4607,52 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/[projectId]/daily-log",
+      "title": "Daily Log",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/daily-log/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/daily-log"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/daily-log/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/direct-costs",
+      "title": "Direct Costs",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/direct-costs/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/direct-costs"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/direct-costs/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/[projectId]/direct-costs/[costId]",
       "title": "Direct Costs",
       "description": "Route discovered from frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx. User-facing help article not yet linked.",
@@ -5002,6 +4676,98 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/[projectId]/directory",
+      "title": "Directory",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/directory/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/directory"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/directory/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/documents",
+      "title": "Documents",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/documents/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/documents"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/documents/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/documents/[documentId]",
+      "title": "Documents",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/documents/[documentId]/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/documents/[documentId]"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/documents/[documentId]/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/drawings",
+      "title": "Drawings",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/drawings/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/drawings"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/drawings/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/[projectId]/drawings/[drawingId]",
       "title": "Drawings",
       "description": "Route discovered from frontend/src/app/(main)/[projectId]/drawings/[drawingId]/page.tsx. User-facing help article not yet linked.",
@@ -5019,6 +4785,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(main)/[projectId]/drawings/[drawingId]/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/daily-log/[dailyLogId]/edit",
+      "title": "Edit",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/daily-log/[dailyLogId]/edit/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "form"
+      ],
+      "routes": [
+        "/[projectId]/daily-log/[dailyLogId]/edit"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/daily-log/[dailyLogId]/edit/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -5140,6 +4929,98 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/[projectId]/emails",
+      "title": "Emails",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/emails/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/emails"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/emails/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/estimates",
+      "title": "Estimates",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/estimates/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/estimates"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/estimates/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/estimates/[estimateId]",
+      "title": "Estimates",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/estimates/[estimateId]/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/estimates/[estimateId]"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/estimates/[estimateId]/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/home",
+      "title": "Home",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/home/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "dashboard"
+      ],
+      "routes": [
+        "/[projectId]/home"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/home/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/[projectId]/hub",
       "title": "Hub",
       "description": "Route discovered from frontend/src/app/(main)/[projectId]/hub/page.tsx. User-facing help article not yet linked.",
@@ -5186,6 +5067,52 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/[projectId]/intelligence",
+      "title": "Intelligence",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/intelligence/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/intelligence"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/intelligence/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/invoicing",
+      "title": "Invoicing",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/invoicing/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/invoicing"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/invoicing/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/[projectId]/invoicing/[invoiceId]",
       "title": "Invoicing",
       "description": "Route discovered from frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx. User-facing help article not yet linked.",
@@ -5209,6 +5136,52 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/[projectId]/tasks/kanban",
+      "title": "Kanban",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/tasks/kanban/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/tasks/kanban"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/tasks/kanban/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/meetings",
+      "title": "Meetings",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/meetings/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/meetings"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/meetings/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/[projectId]/meetings/[meetingId]",
       "title": "Meetings",
       "description": "Route discovered from frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx. User-facing help article not yet linked.",
@@ -5226,6 +5199,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/my-work",
+      "title": "My Work",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/my-work/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/my-work"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/my-work/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -5278,6 +5274,29 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/[projectId]/estimates/new",
+      "title": "New",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/estimates/new/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "form"
+      ],
+      "routes": [
+        "/[projectId]/estimates/new"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/estimates/new/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/[projectId]/invoicing/new",
       "title": "New",
       "description": "Route discovered from frontend/src/app/(main)/[projectId]/invoicing/new/page.tsx. User-facing help article not yet linked.",
@@ -5295,6 +5314,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(main)/[projectId]/invoicing/new/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/invoicing/subcontractor/new",
+      "title": "New",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "form"
+      ],
+      "routes": [
+        "/[projectId]/invoicing/subcontractor/new"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -5508,6 +5550,29 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/[projectId]/photos",
+      "title": "Photos",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/photos/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/photos"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/photos/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/[projectId]/meetings/[meetingId]/prep",
       "title": "Prep",
       "description": "Route discovered from frontend/src/app/(main)/[projectId]/meetings/[meetingId]/prep/page.tsx. User-facing help article not yet linked.",
@@ -5577,6 +5642,29 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/[projectId]/prime-contracts",
+      "title": "Prime Contracts",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/prime-contracts"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/[projectId]/prime-contracts/[contractId]",
       "title": "Prime Contracts",
       "description": "Route discovered from frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/page.tsx. User-facing help article not yet linked.",
@@ -5594,6 +5682,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/progress-reports",
+      "title": "Progress Reports",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/progress-reports/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/progress-reports"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/progress-reports/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -5640,6 +5751,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(main)/[projectId]/project-status-report/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/punch-list",
+      "title": "Punch List",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/punch-list/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/punch-list"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/punch-list/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -5715,6 +5849,52 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/[projectId]/drawings/revisions-report",
+      "title": "Revisions Report",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/drawings/revisions-report/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/drawings/revisions-report"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/drawings/revisions-report/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/rfis",
+      "title": "Rfis",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/rfis/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/rfis"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/rfis/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/[projectId]/rfis/[rfiId]",
       "title": "Rfis",
       "description": "Route discovered from frontend/src/app/(main)/[projectId]/rfis/[rfiId]/page.tsx. User-facing help article not yet linked.",
@@ -5761,6 +5941,52 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/[projectId]/schedule",
+      "title": "Schedule",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/schedule/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/schedule"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/schedule/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/drawings/sets",
+      "title": "Sets",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/drawings/sets/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/drawings/sets"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/drawings/sets/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/[projectId]/setup",
       "title": "Setup",
       "description": "Route discovered from frontend/src/app/(main)/[projectId]/setup/page.tsx. User-facing help article not yet linked.",
@@ -5778,6 +6004,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(main)/[projectId]/setup/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/daily-log/site-scribe",
+      "title": "Site Scribe",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/daily-log/site-scribe/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/daily-log/site-scribe"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/daily-log/site-scribe/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -5824,6 +6073,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(main)/[projectId]/sov/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/specifications",
+      "title": "Specifications",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/specifications/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/specifications"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/specifications/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -5899,6 +6171,29 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/[projectId]/submittals",
+      "title": "Submittals",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/submittals/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/submittals"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/submittals/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/[projectId]/submittals/[submittalId]",
       "title": "Submittals",
       "description": "Route discovered from frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx. User-facing help article not yet linked.",
@@ -5968,6 +6263,52 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/[projectId]/transmittals",
+      "title": "Transmittals",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/transmittals/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/transmittals"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/transmittals/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/[projectId]/user-management",
+      "title": "User Management",
+      "description": "Route discovered from frontend/src/app/(main)/[projectId]/user-management/page.tsx. User-facing help article not yet linked.",
+      "module": "project",
+      "category": "Project",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "project",
+        "page"
+      ],
+      "routes": [
+        "/[projectId]/user-management"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/[projectId]/user-management/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/[projectId]/drawings/viewer/[drawingId]",
       "title": "Viewer",
       "description": "Route discovered from frontend/src/app/(main)/[projectId]/drawings/viewer/[drawingId]/page.tsx. User-facing help article not yet linked.",
@@ -6012,31 +6353,6 @@
       "relatedActions": [],
       "helpArticle": null,
       "source": "route_inventory"
-    },
-    {
-      "id": "project-home",
-      "title": "Project Home",
-      "description": "Use the per-project dashboard for a quick read on KPIs, team, open items, and budget.",
-      "module": "project-home",
-      "category": "Project Management",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "project-home",
-        "dashboard",
-        "kpis",
-        "overview"
-      ],
-      "routes": [
-        "/[projectId]/home"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/home/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/project-home.md",
-      "source": "help_article"
     },
     {
       "id": "route:/fm-global/form",
@@ -6085,82 +6401,6 @@
       "source": "route_inventory"
     },
     {
-      "id": "punch-list",
-      "title": "Punch List",
-      "description": "Track close-out punch items with assignees, locations, and due dates.",
-      "module": "punch-list",
-      "category": "Field Operations",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "punch-list",
-        "closeout",
-        "deficiencies",
-        "qa-qc"
-      ],
-      "routes": [
-        "/[projectId]/punch-list"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/punch-list/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/punch-list.md",
-      "source": "help_article"
-    },
-    {
-      "id": "rfis",
-      "title": "RFIs",
-      "description": "Create, track, and close requests for information with assignees and due dates.",
-      "module": "rfis",
-      "category": "Communication",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "rfis",
-        "requests-for-information",
-        "ball-in-court",
-        "design"
-      ],
-      "routes": [
-        "/[projectId]/rfis"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/rfis/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/rfis.md",
-      "source": "help_article"
-    },
-    {
-      "id": "schedule",
-      "title": "Schedule",
-      "description": "View and manage the project schedule across grid, board, Gantt, timeline, and calendar views.",
-      "module": "schedule",
-      "category": "Field Operations",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "schedule",
-        "gantt",
-        "kanban",
-        "tasks",
-        "dependencies"
-      ],
-      "routes": [
-        "/[projectId]/schedule"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/schedule/page.tsx"
-      ],
-      "relatedActions": [],
-      "helpArticle": "docs/help/articles/schedule.md",
-      "source": "help_article"
-    },
-    {
       "id": "route:/settings/account",
       "title": "Account",
       "description": "Route discovered from frontend/src/app/(main)/settings/account/page.tsx. User-facing help article not yet linked.",
@@ -6207,54 +6447,27 @@
       "source": "route_inventory"
     },
     {
-      "id": "create-or-invite-a-user",
-      "title": "Create or Invite a User",
-      "description": "Add an app user from User Management and explain how the invited person finishes login setup.",
+      "id": "route:/settings/memory",
+      "title": "Memory",
+      "description": "Route discovered from frontend/src/app/(main)/settings/memory/page.tsx. User-facing help article not yet linked.",
       "module": "settings",
-      "category": "User Management",
-      "status": "documented",
+      "category": "Settings",
+      "status": "route_discovered",
       "clientVisible": true,
       "aiVisible": true,
       "tags": [
-        "users",
-        "invite",
-        "account",
-        "onboarding"
+        "user_settings",
+        "settings"
       ],
       "routes": [
-        "/user-management"
+        "/settings/memory"
       ],
       "routeFiles": [
-        "frontend/src/app/(admin)/user-management/page.tsx"
+        "frontend/src/app/(main)/settings/memory/page.tsx"
       ],
-      "relatedActions": [
-        "invite_user"
-      ],
-      "helpArticle": "docs/help/articles/create-or-invite-a-user.md",
-      "source": "help_article"
-    },
-    {
-      "id": "notifications",
-      "title": "Notifications",
-      "description": "Set notification preferences for budget alerts, deadlines, and the weekly digest.",
-      "module": "settings",
-      "category": "Settings & Administration",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "notifications",
-        "alerts",
-        "digest",
-        "preferences"
-      ],
-      "routes": [
-        "/settings/notifications"
-      ],
-      "routeFiles": [],
       "relatedActions": [],
-      "helpArticle": "docs/help/articles/notifications.md",
-      "source": "help_article"
+      "helpArticle": null,
+      "source": "route_inventory"
     },
     {
       "id": "route:/settings/preferences",
@@ -6274,6 +6487,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(main)/settings/preferences/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/settings/profile",
+      "title": "Profile",
+      "description": "Route discovered from frontend/src/app/(main)/settings/profile/page.tsx. User-facing help article not yet linked.",
+      "module": "settings",
+      "category": "Settings",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "user_settings",
+        "settings"
+      ],
+      "routes": [
+        "/settings/profile"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(main)/settings/profile/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -6303,165 +6539,96 @@
       "source": "route_inventory"
     },
     {
-      "id": "update-your-profile",
-      "title": "Update Your Profile",
-      "description": "Review your profile details and update your profile image.",
+      "id": "route:/settings",
+      "title": "Settings",
+      "description": "Route discovered from frontend/src/app/(main)/settings/page.tsx. User-facing help article not yet linked.",
       "module": "settings",
-      "category": "User Management",
-      "status": "documented",
+      "category": "Settings",
+      "status": "route_discovered",
       "clientVisible": true,
       "aiVisible": true,
       "tags": [
-        "profile",
-        "settings",
-        "account",
-        "avatar"
+        "user_settings",
+        "settings"
       ],
       "routes": [
-        "/settings/profile",
-        "/user-management"
+        "/settings"
       ],
       "routeFiles": [
-        "frontend/src/app/(main)/settings/profile/page.tsx",
-        "frontend/src/app/(admin)/user-management/page.tsx"
-      ],
-      "relatedActions": [
-        "update_profile"
-      ],
-      "helpArticle": "docs/help/articles/update-your-profile.md",
-      "source": "help_article"
-    },
-    {
-      "id": "user-management",
-      "title": "User Management",
-      "description": "Create users, manage existing users, and assign project access at the company level.",
-      "module": "settings",
-      "category": "Settings & Administration",
-      "status": "documented",
-      "clientVisible": false,
-      "aiVisible": false,
-      "tags": [
-        "users",
-        "admin",
-        "user-management",
-        "access"
-      ],
-      "routes": [
-        "/admin/users",
-        "/user-management"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(admin)/user-management/page.tsx"
-      ],
-      "relatedActions": [
-        "invite_user",
-        "assign_permissions"
-      ],
-      "helpArticle": "docs/help/articles/user-management.md",
-      "source": "help_article"
-    },
-    {
-      "id": "specifications",
-      "title": "Specifications",
-      "description": "Browse spec sections, subscribe to revisions, and download spec files.",
-      "module": "specifications",
-      "category": "Documents & Drawings",
-      "status": "documented",
-      "clientVisible": true,
-      "aiVisible": true,
-      "tags": [
-        "specifications",
-        "specs",
-        "csi",
-        "divisions",
-        "revisions"
-      ],
-      "routes": [
-        "/[projectId]/specifications"
-      ],
-      "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/specifications/page.tsx"
+        "frontend/src/app/(main)/settings/page.tsx"
       ],
       "relatedActions": [],
-      "helpArticle": "docs/help/articles/specifications.md",
-      "source": "help_article"
+      "helpArticle": null,
+      "source": "route_inventory"
     },
     {
-      "id": "my-work",
-      "title": "My Work (Subcontractor Portal)",
-      "description": "Subcontractor view of assigned RFIs, submittals, SOV status, and invoice submission.",
-      "module": "subcontractor-portal",
-      "category": "For Subcontractors",
-      "status": "documented",
+      "id": "route:/assignment-inbox",
+      "title": "Assignment Inbox",
+      "description": "Route discovered from frontend/src/app/(tables)/assignment-inbox/page.tsx. User-facing help article not yet linked.",
+      "module": "tables",
+      "category": "Tables",
+      "status": "route_discovered",
       "clientVisible": true,
       "aiVisible": true,
       "tags": [
-        "my-work",
-        "subcontractor",
-        "portal",
-        "rfis",
-        "submittals",
-        "invoices"
+        "global",
+        "page"
       ],
       "routes": [
-        "/[projectId]/my-work"
+        "/assignment-inbox"
       ],
       "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/my-work/page.tsx"
+        "frontend/src/app/(tables)/assignment-inbox/page.tsx"
       ],
       "relatedActions": [],
-      "helpArticle": "docs/help/articles/my-work.md",
-      "source": "help_article"
+      "helpArticle": null,
+      "source": "route_inventory"
     },
     {
-      "id": "submit-invoice",
-      "title": "Submit an Invoice (Subcontractor)",
-      "description": "Submit a pay application against your schedule of values.",
-      "module": "subcontractor-portal",
-      "category": "For Subcontractors",
-      "status": "documented",
+      "id": "route:/daily-briefs",
+      "title": "Daily Briefs",
+      "description": "Route discovered from frontend/src/app/(tables)/daily-briefs/page.tsx. User-facing help article not yet linked.",
+      "module": "tables",
+      "category": "Tables",
+      "status": "route_discovered",
       "clientVisible": true,
       "aiVisible": true,
       "tags": [
-        "invoice",
-        "pay-application",
-        "sov",
-        "subcontractor"
+        "global",
+        "page"
       ],
       "routes": [
-        "/[projectId]/invoicing/subcontractor/new"
+        "/daily-briefs"
       ],
       "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx"
+        "frontend/src/app/(tables)/daily-briefs/page.tsx"
       ],
       "relatedActions": [],
-      "helpArticle": "docs/help/articles/submit-invoice.md",
-      "source": "help_article"
+      "helpArticle": null,
+      "source": "route_inventory"
     },
     {
-      "id": "submittals",
-      "title": "Submittals",
-      "description": "Manage the submittal log, review workflow, and revision tracking.",
-      "module": "submittals",
-      "category": "Communication",
-      "status": "documented",
+      "id": "route:/daily-briefs/[briefId]",
+      "title": "Daily Briefs",
+      "description": "Route discovered from frontend/src/app/(tables)/daily-briefs/[briefId]/page.tsx. User-facing help article not yet linked.",
+      "module": "tables",
+      "category": "Tables",
+      "status": "route_discovered",
       "clientVisible": true,
       "aiVisible": true,
       "tags": [
-        "submittals",
-        "shop-drawings",
-        "review",
-        "approval"
+        "global",
+        "page"
       ],
       "routes": [
-        "/[projectId]/submittals"
+        "/daily-briefs/[briefId]"
       ],
       "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/submittals/page.tsx"
+        "frontend/src/app/(tables)/daily-briefs/[briefId]/page.tsx"
       ],
       "relatedActions": [],
-      "helpArticle": "docs/help/articles/submittals.md",
-      "source": "help_article"
+      "helpArticle": null,
+      "source": "route_inventory"
     },
     {
       "id": "route:/daily-logs",
@@ -6832,6 +6999,29 @@
       "source": "route_inventory"
     },
     {
+      "id": "route:/progress-reports",
+      "title": "Progress Reports",
+      "description": "Route discovered from frontend/src/app/(tables)/progress-reports/page.tsx. User-facing help article not yet linked.",
+      "module": "tables",
+      "category": "Tables",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "global",
+        "page"
+      ],
+      "routes": [
+        "/progress-reports"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(tables)/progress-reports/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
       "id": "route:/project-documents",
       "title": "Project Documents",
       "description": "Route discovered from frontend/src/app/(tables)/project-documents/page.tsx. User-facing help article not yet linked.",
@@ -6849,6 +7039,29 @@
       ],
       "routeFiles": [
         "frontend/src/app/(tables)/project-documents/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/projects",
+      "title": "Projects",
+      "description": "Route discovered from frontend/src/app/(tables)/projects/page.tsx. User-facing help article not yet linked.",
+      "module": "tables",
+      "category": "Tables",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "global",
+        "page"
+      ],
+      "routes": [
+        "/projects"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(tables)/projects/page.tsx"
       ],
       "relatedActions": [],
       "helpArticle": null,
@@ -6878,29 +7091,50 @@
       "source": "route_inventory"
     },
     {
-      "id": "transmittals",
-      "title": "Transmittals",
-      "description": "Create formal transmittal cover sheets for documents sent or received.",
-      "module": "transmittals",
-      "category": "Documents & Drawings",
-      "status": "documented",
+      "id": "route:/teams-conversations",
+      "title": "Teams Conversations",
+      "description": "Route discovered from frontend/src/app/(tables)/teams-conversations/page.tsx. User-facing help article not yet linked.",
+      "module": "tables",
+      "category": "Tables",
+      "status": "route_discovered",
       "clientVisible": true,
       "aiVisible": true,
       "tags": [
-        "transmittals",
-        "delivery",
-        "tracking",
-        "formal"
+        "global",
+        "page"
       ],
       "routes": [
-        "/[projectId]/transmittals"
+        "/teams-conversations"
       ],
       "routeFiles": [
-        "frontend/src/app/(main)/[projectId]/transmittals/page.tsx"
+        "frontend/src/app/(tables)/teams-conversations/page.tsx"
       ],
       "relatedActions": [],
-      "helpArticle": "docs/help/articles/transmittals.md",
-      "source": "help_article"
+      "helpArticle": null,
+      "source": "route_inventory"
+    },
+    {
+      "id": "route:/teams-conversations/[sourceDocumentId]",
+      "title": "Teams Conversations",
+      "description": "Route discovered from frontend/src/app/(tables)/teams-conversations/[sourceDocumentId]/page.tsx. User-facing help article not yet linked.",
+      "module": "tables",
+      "category": "Tables",
+      "status": "route_discovered",
+      "clientVisible": true,
+      "aiVisible": true,
+      "tags": [
+        "global",
+        "page"
+      ],
+      "routes": [
+        "/teams-conversations/[sourceDocumentId]"
+      ],
+      "routeFiles": [
+        "frontend/src/app/(tables)/teams-conversations/[sourceDocumentId]/page.tsx"
+      ],
+      "relatedActions": [],
+      "helpArticle": null,
+      "source": "route_inventory"
     }
   ]
 }

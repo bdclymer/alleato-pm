@@ -1,0 +1,79 @@
+{
+  "id": "appnav-submittals-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 14950,
+  "question": "Which page owns submittals?",
+  "mustInclude": [
+    "/[projectId]/submittals",
+    "submittal"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "The page that owns submittals is:\n\n- **Route:** `/[projectId]/submittals`\n- **Page title:** **Submittals**\n- **Source file:** `frontend/src/app/(main)/[projectId]/submittals/page.tsx`\n- **Help article:** `docs/help/articles/submittals.md`\n\nWhat I checked:\n- Artifact freshness/status: both sitemap and feature registry are available and current.\n- Feature registry entry for **Submittals** points to the help article above.\n- Help article confirms this is the tool for managing the submittal log, review workflow, and revision tracking.\n\nImplementation evidence:\n- There is also a submittal detail page at `/[projectId]/submittals/[submittalId]`, but the owning list page is `/[projectId]/submittals`.\n\nIf you meant a different “owns” question — for example, which role is the **Responsible Contractor**, **Submittal Coordinator**, or **Reviewer** — I can answer that from the help article too.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/submittals",
+        "sourceType": "sitemap",
+        "route": "/submittals",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/submittals/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/submittals/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/submittals.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/submittals.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/status:",
+        "sourceType": "sitemap",
+        "route": "/status:",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/submittals/[submittalId]",
+        "sourceType": "sitemap",
+        "route": "/submittals/[submittalId]",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 14866,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

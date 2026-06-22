@@ -1,0 +1,845 @@
+{
+  "generatedAt": "2026-05-19T06:22:57.332Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "email-operator-quality",
+    "description": "LLM-judge eval for Brandon inbox monitoring, urgent email triage, morning/evening brief usefulness, and draft-readiness.",
+    "criteria": [
+      "The assistant must use structured recent Outlook retrieval for inbox questions.",
+      "The assistant must separate urgent response-needed email from normal inbox noise.",
+      "The assistant must provide a concise executive brief suitable for Teams/morning/evening reporting.",
+      "Draft requests must produce short, direct Brandon-style drafts or approval previews, never claim sent email.",
+      "The answer must make the next action obvious: reply, draft, delegate, watch, or ignore."
+    ]
+  },
+  "filter": "realworld-(last-five-emails|urgent-inbox|important-emails-this-morning|outlook-arrived-today|email-reply-triage|draft-email-response|brandon-email-critical-monitor|brandon-email-morning-brief|brandon-email-draft-like-brandon)$",
+  "totalCases": 9,
+  "passed": 1,
+  "failed": 8,
+  "warningCount": 2,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": true,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 9,
+    "passed": 2,
+    "failed": 7,
+    "errors": 0,
+    "averageScore": 3.11
+  },
+  "slowestCases": [
+    {
+      "id": "realworld-urgent-inbox",
+      "intent": "source_lookup",
+      "durationMs": 67663,
+      "status": "fail",
+      "warnings": [
+        "duration 67663ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "realworld-draft-email-response",
+      "intent": "email_action",
+      "durationMs": 17099,
+      "status": "fail",
+      "warnings": [
+        "duration 17099ms exceeded warning budget 15000ms"
+      ]
+    },
+    {
+      "id": "realworld-brandon-email-critical-monitor",
+      "intent": "source_lookup",
+      "durationMs": 12807,
+      "status": "fail",
+      "warnings": []
+    },
+    {
+      "id": "realworld-last-five-emails",
+      "intent": "source_lookup",
+      "durationMs": 12261,
+      "status": "fail",
+      "warnings": []
+    },
+    {
+      "id": "realworld-important-emails-this-morning",
+      "intent": "source_lookup",
+      "durationMs": 11334,
+      "status": "fail",
+      "warnings": []
+    },
+    {
+      "id": "realworld-brandon-email-morning-brief",
+      "intent": "source_lookup",
+      "durationMs": 10788,
+      "status": "fail",
+      "warnings": []
+    },
+    {
+      "id": "realworld-email-reply-triage",
+      "intent": "source_lookup",
+      "durationMs": 10243,
+      "status": "fail",
+      "warnings": []
+    },
+    {
+      "id": "realworld-outlook-arrived-today",
+      "intent": "source_lookup",
+      "durationMs": 9170,
+      "status": "pass",
+      "warnings": []
+    },
+    {
+      "id": "realworld-brandon-email-draft-like-brandon",
+      "intent": "email_action",
+      "durationMs": 8142,
+      "status": "fail",
+      "warnings": []
+    }
+  ],
+  "toolCoverage": {
+    "getRecentEmails": 9,
+    "draftOutlookEmail": 1
+  },
+  "intentDistribution": {
+    "source_lookup": 7,
+    "email_action": 2
+  },
+  "results": [
+    {
+      "id": "realworld-last-five-emails",
+      "intent": "source_lookup",
+      "prompt": "Can you tell me my last five emails?",
+      "selectedProjectId": null,
+      "sessionId": "6cf73955-68b5-4990-8a46-fc369083b4e1",
+      "sessionLabel": "eval-2026-05-19T06-19-41-280Z-21a1f014-realworld-last-five-emails",
+      "startedAt": "2026-05-19T06:19:41.324Z",
+      "finishedAt": "2026-05-19T06:19:59.895Z",
+      "durationMs": 12261,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 447,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "getRecentEmails mailbox (missing) did not match required bclymer@alleatogroup.com",
+          "getRecentEmails missing sync cutoff or error evidence",
+          "judge email_operator score 3 < 4: The answer retrieves five recent emails and gives brief takeaways, but it does not fully satisfy the prompt or the rubric. It adds unsupported detail about Outlook sync timing and includes a claim (“have been resolved”) that may be plausible but is not clearly grounded in the visible prompt. It also does not distinguish urgent from non-urgent beyond light summarization, and it only partially addresses the email-operator goals."
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: getRecentEmails",
+          "judge email_operator: fail (3/4)"
+        ],
+        "toolNames": [
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 1422,
+        "finalText": "Your last five synced emails in **bclymer@alleatogroup.com**:\n\n1. **Capital One** — *A new Capital One document is ready for you*  \n   Received: **May 18, 12:55 PM ET**  \n   Takeaway: Fraud resolution / account document posted to your Capital One account.\n\n2. **Kebba Mass** — *Re: RI-3959-0012 May Final Pay App*  \n   Received: **May 18, 12:35 PM ET**  \n   Takeaway: Kebba said the Radial pay app / PO issue was **already resolved**.\n\n3. **Accounting** — *Re: RI-3959-0012 May Final Pay App*  \n   Received: **May 18, 12:26 PM ET**  \n   Takeaway: Accounting told JP they would **re-send the invoices with the PO referenced**.\n\n4. **Jonathon Knapp** — *Re: Interview Follow Up - Jon Knapp*  \n   Received: **May 18, 12:19 PM ET**  \n   Takeaway: Candidate follow-up email after your conversation; appreciative note and positioning around operations, risk, and reconstruction background.\n\n5. **Maria Calcetero** — *Re: Cover Story Feature for Brandon Clymer in The Prime Today Magazine*  \n   Received: **May 18, 12:15 PM ET**  \n   Takeaway: Maria said **this edition doesn’t fit your profile** since it’s focused on restaurants / food industry.\n\nOne thing to know: the synced Outlook data is only current through **May 18, 1:24 PM ET**, so anything after that may not be in here yet.\n\nIf you want, I can also give you:\n- the **last five by thread** instead of individual messages, or\n- the **ones that actually need a reply**.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 120000,
+          "durationMs": 12261
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 3,
+          "minScore": 4,
+          "summary": "The answer retrieves five recent emails and gives brief takeaways, but it does not fully satisfy the prompt or the rubric. It adds unsupported detail about Outlook sync timing and includes a claim (“have been resolved”) that may be plausible but is not clearly grounded in the visible prompt. It also does not distinguish urgent from non-urgent beyond light summarization, and it only partially addresses the email-operator goals.",
+          "strengths": [
+            "Correctly provides five recent emails rather than inventing unrelated content.",
+            "Summaries are concise and avoid dumping full raw message bodies.",
+            "Does not claim any email was sent.",
+            "Offers a useful next-step option to identify which emails need a reply."
+          ],
+          "weaknesses": [
+            "The case prompt asked for the last five emails; the response goes beyond that with an unsupported note about sync cutoff time.",
+            "Does not separate urgent/critical messages from routine inbox items in any meaningful way.",
+            "Does not identify who needs a response, why it matters, or consequences of ignoring the emails.",
+            "No concrete action recommendation per email (reply now, delegate, watch, draft, ignore).",
+            "Thread summaries include some inference that may not be fully supported by the visible message snippet."
+          ],
+          "dimensionScores": {
+            "separates_urgent_from_noise": 2,
+            "identifies_who_needs_response_why_consequences": 2,
+            "summarizes_threads_efficiently": 4,
+            "recommends_concrete_response_path": 1,
+            "draft_quality_short_direct_practical": 1,
+            "never_claims_sent_or_invents_details": 3
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-urgent-inbox",
+      "intent": "source_lookup",
+      "prompt": "Is there anything urgent in my inbox?",
+      "selectedProjectId": null,
+      "sessionId": "9ada7e65-b306-47af-8a41-e758a5a2c8be",
+      "sessionLabel": "eval-2026-05-19T06-19-41-280Z-21a1f014-realworld-urgent-inbox",
+      "startedAt": "2026-05-19T06:19:59.897Z",
+      "finishedAt": "2026-05-19T06:21:12.163Z",
+      "durationMs": 67663,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 519,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "getRecentEmails mailbox (missing) did not match required bclymer@alleatogroup.com",
+          "getRecentEmails missing sync cutoff or error evidence"
+        ],
+        "warnings": [
+          "duration 67663ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: getRecentEmails",
+          "judge email_operator: pass (4/4)"
+        ],
+        "toolNames": [
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 2211,
+        "finalText": "Yes — but the inbox view is **stale**.\n\nThe latest synced Outlook data for **bclymer@alleatogroup.com** only goes through **May 18 at 1:24 PM ET**, so anything after that may be missing. I’m not going to pretend I checked this morning’s mail if the sync hasn’t caught up.\n\nFrom what is in the last synced batch, the things that look most likely to need attention are:\n\n- **RI-3959-0012 May Final Pay App**  \n  Multi-message thread with **Accounting, JP Kennedy at Radial, and Kebba Mass**. Latest note says **“This has already been resolved.”**  \n  So this was important, but it does **not** look urgent anymore.\n\n- **GOODWILL-ALLISONVILLE BI - Kimley-Horn April 2026 Invoice - 170569001**  \n  Invoice thread involving **Nick Jepson, Jessica Barrett, Jesse Dawson, and Misty Rogers**.  \n  Anything tied to an active consultant invoice can turn into a payment bottleneck fast. Worth checking if you still owe a decision or approval.\n\n- **GW Illinois Weekly OAC Meeting - All Stores - Meeting Minutes**  \n  Has attachments. If you haven’t reviewed it yet, this could contain decisions, action items, or issue tracking that matter operationally.\n\n- **Exol, Morrisville, PA, Phase 1, Revit Models**  \n  Attachments included. That usually means model/package coordination, which can matter if someone is waiting on direction.\n\n- **Exol Wilmer**  \n  Looks active with trade/vendor communication. Not enough from the preview alone to call it critical, but it’s more likely business-relevant than the generic inbox noise.\n\nProbably **not urgent**:\n- Capital One notification\n- Magazine cover story thread\n- Interview follow-up from Jon Knapp\n- Clinic location thread unless you’re actively scheduling it\n- Forward about profile/account setup\n\nBottom line:\n- **No confirmed fire drill** in the synced inbox snapshot.\n- **Most business-relevant items** are the **Goodwill invoice**, **GW Illinois OAC minutes**, and the **two Exol threads**.\n- **Biggest issue is data freshness** — I can’t reliably tell you what’s urgent **today** from a sync that stopped yesterday afternoon.\n\nNext move: if you want, I can go one level deeper and identify **which specific threads most likely need a reply** from the synced inbox data.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 120000,
+          "durationMs": 67663
+        },
+        "judge": {
+          "status": "pass",
+          "rubric": "email_operator",
+          "score": 4,
+          "minScore": 4,
+          "summary": "Good handling of urgency triage with an important caveat about stale inbox data. The answer separates likely-business-relevant threads from obvious noise, avoids claiming an email was sent, and does not invent details beyond the previews provided. It is somewhat weaker on concrete action-path guidance because it stops at “worth checking” rather than clearly recommending reply/delegate/watch for each item.",
+          "strengths": [
+            "Explicitly flags inbox staleness and avoids overclaiming current coverage.",
+            "Separates likely important threads from probably non-urgent noise.",
+            "Does not say a message was sent or fabricate thread details.",
+            "Uses business context to explain why invoices, OAC minutes, and model threads may matter.",
+            "Keeps the response concise enough for operational inbox triage."
+          ],
+          "weaknesses": [
+            "Does not clearly state who specifically needs a response on each urgent item.",
+            "Does not strongly articulate consequences if ignored beyond general business impact.",
+            "Only partially recommends concrete next steps; several items are described as 'worth checking' rather than reply now/delegate/watch/ignore.",
+            "Thread summaries are efficient but a bit generic for some items.",
+            "Could be more decisive on whether any item is truly urgent versus merely important."
+          ],
+          "dimensionScores": {
+            "separates_urgent_from_noise": 5,
+            "identifies_who_needs_response_why_matters_what_happens_if_ignored": 4,
+            "summarizes_threads_efficiently": 4,
+            "recommends_concrete_response_path": 3,
+            "drafts_short_direct_practical": 4,
+            "never_claims_sent_never_invents_details": 5
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails",
+        "searchEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-important-emails-this-morning",
+      "intent": "source_lookup",
+      "prompt": "What important emails have I received this morning?",
+      "selectedProjectId": null,
+      "sessionId": "dbf6ddec-9713-4f88-8753-95066879fa78",
+      "sessionLabel": "eval-2026-05-19T06-19-41-280Z-21a1f014-realworld-important-emails-this-morning",
+      "startedAt": "2026-05-19T06:21:12.165Z",
+      "finishedAt": "2026-05-19T06:21:27.265Z",
+      "durationMs": 11334,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 188,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "judge email_operator score 3 < 4: The answer is honest about source limits and avoids fabricating email content, but it does not actually identify important emails received this morning because it reports none verified. It provides a useful sync-status caveat and next-step options, but little inbox triage value for the prompt asked."
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: getRecentEmails",
+          "judge email_operator: fail (3/4)"
+        ],
+        "toolNames": [
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 577,
+        "finalText": "Nothing verified from this morning.\n\nThe inbox lookup for **bclymer@alleatogroup.com** shows **no emails received today** in the synced Outlook data.\n\nWhat matters: the Outlook sync is stale. Last completed sync was **May 18 at 1:24 PM ET**, so anything that hit your inbox after that may not be in the system yet. I can’t honestly tell you what was important this morning from this source alone.\n\nIf you want, I can still do one of two useful next moves:\n1. check whether Outlook monitoring/sync is broken, or\n2. search recent project/topic email content you’re worried about.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 120000,
+          "durationMs": 11334
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 3,
+          "minScore": 4,
+          "summary": "The answer is honest about source limits and avoids fabricating email content, but it does not actually identify important emails received this morning because it reports none verified. It provides a useful sync-status caveat and next-step options, but little inbox triage value for the prompt asked.",
+          "strengths": [
+            "Does not invent thread details or claim emails were sent.",
+            "Clearly flags that the Outlook data may be stale and explains why the result may be incomplete.",
+            "Avoids dumping raw message data and gives a concise, practical follow-up path."
+          ],
+          "weaknesses": [
+            "Fails the core task of separating important emails from noise because it reports no specific emails at all.",
+            "Does not identify who needs a response, why it matters, or what could happen if ignored.",
+            "No thread summary or concrete disposition of any actual email; only a null result.",
+            "Does not provide a draft, delegate, watch, or ignore recommendation for any message because none are surfaced."
+          ],
+          "dimensionScores": {
+            "separates_urgent_from_noise": 2,
+            "identifies_who_needs_response_and_impact": 1,
+            "summarizes_threads_efficiently": 1,
+            "recommends_concrete_response_path": 2,
+            "draft_quality_short_direct_practical": 1,
+            "never_claims_sent_or_invents_details": 5
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-outlook-arrived-today",
+      "intent": "source_lookup",
+      "prompt": "What came in through Outlook today that needs my attention?",
+      "selectedProjectId": null,
+      "sessionId": "e1e4c7cd-2574-4aeb-a829-8a72b464f66a",
+      "sessionLabel": "eval-2026-05-19T06-19-41-280Z-21a1f014-realworld-outlook-arrived-today",
+      "startedAt": "2026-05-19T06:21:27.267Z",
+      "finishedAt": "2026-05-19T06:21:39.845Z",
+      "durationMs": 9170,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 201,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: getRecentEmails",
+          "judge email_operator: pass (4/4)"
+        ],
+        "toolNames": [
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 649,
+        "finalText": "Nothing verified came in today that needs attention.\n\nI checked Brandon’s Outlook mailbox for **today** and the synced inbox shows **no emails received**.\n\nWhat matters: the Outlook sync is stale. Last sync completed **May 18 at 1:24 PM ET**, so anything received after that may not be in the system yet.\n\nSo the real answer is:\n- **Verified from synced Outlook:** no emails today\n- **Confidence:** low for live inbox coverage until sync catches up\n\nIf you want, I can do one of these next:\n1. check whether Outlook monitoring/sync is broken,\n2. search recent project emails by topic anyway, or\n3. help you triage yesterday’s latest visible threads.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 120000,
+          "durationMs": 9170
+        },
+        "judge": {
+          "status": "pass",
+          "rubric": "email_operator",
+          "score": 4,
+          "minScore": 4,
+          "summary": "The answer correctly avoids inventing email content and clearly separates verified inbox status from uncertainty caused by stale sync. It gives a concrete caveat and next-step options, but it does not identify any actual urgent sender/thread because none were visible in the synced data.",
+          "strengths": [
+            "Does not claim any email was sent or fabricate thread details.",
+            "Separates verified inbox state from sync-risk uncertainty.",
+            "Uses a clear business-safe summary: no verified emails today, low confidence until sync catches up.",
+            "Provides concrete next actions instead of vague advice."
+          ],
+          "weaknesses": [
+            "No urgent/critical email is actually identified, so dimension 1 is only partially demonstrated.",
+            "Does not name who would need a response, why it matters, or consequences if ignored because no messages were surfaced.",
+            "Does not provide a response path tied to a specific email thread, only general troubleshooting options.",
+            "This is more a system-status report than an email-operator triage answer."
+          ],
+          "dimensionScores": {
+            "separates_urgent_critical_email_from_normal_inbox_noise": 4,
+            "identifies_who_needs_a_response_why_it_matters_and_consequences": 2,
+            "summarizes_email_threads_efficiently_without_dumping_raw_message_data": 4,
+            "recommends_a_concrete_response_path_reply_now_delegate_watch_draft_or_ignore": 4,
+            "for_draft_requests_sounds_short_direct_and_practical_enough_for_Brandon_to_review_and_send": 3,
+            "never_claims_an_email_was_sent_and_never_invents_thread_details_not_present_in_the_answer": 5
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-email-reply-triage",
+      "intent": "source_lookup",
+      "prompt": "Show me any emails from today that need a reply.",
+      "selectedProjectId": null,
+      "sessionId": "d106ce52-c37e-490d-afdb-1bc9ad2d54d5",
+      "sessionLabel": "eval-2026-05-19T06-19-41-280Z-21a1f014-realworld-email-reply-triage",
+      "startedAt": "2026-05-19T06:21:39.846Z",
+      "finishedAt": "2026-05-19T06:21:53.500Z",
+      "durationMs": 10243,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 223,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "judge email_operator score 3 < 4: The answer is cautious and does not fabricate a sent email, but it fails the core task: it does not actually identify any emails from today needing a reply. It treats lack of synced data as a generic sync issue instead of answering the user’s request from the available mailbox results. The response path is also weak because it offers tooling follow-up rather than classifying any email as reply/ignore/watch. There are no thread-specific details, which is appropriate only if none were found, but the answer does not clearly distinguish “no emails” from “no synced data.”"
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: getRecentEmails",
+          "judge email_operator: fail (3/4)"
+        ],
+        "toolNames": [
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 726,
+        "finalText": "Nothing verified from today.\n\nI checked Brandon’s mailbox for **today’s** email intake and there are **no synced emails showing yet**, so I can’t identify anything that needs a reply from the data currently available.\n\nWhat matters: the inbox sync is stale.\n- Last Outlook sync completed: **May 18, 1:24 PM ET**\n- So emails received **after that** may not be in the system yet\n\nThat means one of two things is true:\n- there really haven’t been any emails today, or\n- today’s emails just haven’t synced in yet\n\nBest next move:\n- If you want, I can check **Outlook sync status** right now to see whether monitoring is behind or broken.\n- Or I can search **recent project/topic emails** if you’re worried about a specific thread.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 120000,
+          "durationMs": 10243
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 3,
+          "minScore": 4,
+          "summary": "The answer is cautious and does not fabricate a sent email, but it fails the core task: it does not actually identify any emails from today needing a reply. It treats lack of synced data as a generic sync issue instead of answering the user’s request from the available mailbox results. The response path is also weak because it offers tooling follow-up rather than classifying any email as reply/ignore/watch. There are no thread-specific details, which is appropriate only if none were found, but the answer does not clearly distinguish “no emails” from “no synced data.”",
+          "strengths": [
+            "Does not claim any email was sent.",
+            "Avoids inventing specific thread contents that are not present.",
+            "States uncertainty about mailbox sync instead of overstating certainty."
+          ],
+          "weaknesses": [
+            "Does not separate urgent emails from normal inbox noise because it does not identify any actual emails.",
+            "Does not identify who needs a response, why it matters, or the consequence of ignoring anything.",
+            "Does not summarize any thread or email because none are surfaced, despite the prompt asking for emails from today.",
+            "Does not recommend a concrete action for any email; it only suggests checking sync status or searching by topic.",
+            "Fails to provide a direct answer to the user’s request and appears to rely on stale sync status rather than current email evidence."
+          ],
+          "dimensionScores": {
+            "separates_urgent_from_noise": 1,
+            "identifies_response_why_risk": 1,
+            "summarizes_threads_efficiently": 1,
+            "recommends_concrete_response_path": 2,
+            "draft_quality": 3,
+            "never_claims_sent_or_invents_details": 5
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-draft-email-response",
+      "intent": "email_action",
+      "prompt": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+      "selectedProjectId": null,
+      "sessionId": "5bd47383-3f44-4f33-9663-3fda0c6c20a3",
+      "sessionLabel": "eval-2026-05-19T06-19-41-280Z-21a1f014-realworld-draft-email-response",
+      "startedAt": "2026-05-19T06:21:53.502Z",
+      "finishedAt": "2026-05-19T06:22:14.339Z",
+      "durationMs": 17099,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 445,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "judge email_operator score 2 < 4: The response identifies a likely thread, but it invents context (meeting yesterday, background, reconstruction/remediation) and is not clearly an update reply. It also asks for confirmation to save a draft instead of directly providing the draft, which is weak for the requested action."
+        ],
+        "warnings": [
+          "duration 17099ms exceeded warning budget 15000ms"
+        ],
+        "observations": [
+          "tools fired: getRecentEmails, draftOutlookEmail",
+          "judge email_operator: fail (2/4)"
+        ],
+        "toolNames": [
+          "getRecentEmails",
+          "draftOutlookEmail"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 576,
+        "finalText": "Latest message asking for an update looks like **Jon Knapp’s follow-up email**.\n\nDraft:\n\nJon,\n\nThank you for the follow-up and for taking the time to meet yesterday. I appreciated the conversation as well.\n\nYour background brings a strong operational perspective, and I can see the value in the reconstruction and remediation experience you described. We’re still working through next steps on our end and I’ll be back in touch once we’ve had a chance to complete that process.\n\nThank you,  \nBrandon\n\nIf that’s the one, say **confirm** and I’ll save it to your Outlook drafts.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 15000,
+          "maxDurationMs": 30000,
+          "durationMs": 17099
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 2,
+          "minScore": 4,
+          "summary": "The response identifies a likely thread, but it invents context (meeting yesterday, background, reconstruction/remediation) and is not clearly an update reply. It also asks for confirmation to save a draft instead of directly providing the draft, which is weak for the requested action.",
+          "strengths": [
+            "Correctly avoids claiming the email was sent.",
+            "Keeps the draft short and professional in tone."
+          ],
+          "weaknesses": [
+            "Invents thread details not present in the prompt, including a meeting yesterday and specific background comments.",
+            "Does not clearly separate urgent or important email from inbox noise; it simply guesses at the latest message.",
+            "Fails to explain who needs a response, why it matters, or what happens if ignored.",
+            "Does not provide a concrete action path; it asks for confirmation instead of directly drafting for review.",
+            "The draft is generic and not clearly tailored to a simple update request."
+          ],
+          "dimensionScores": {
+            "separates_urgent_critical_email_from_normal_inbox_noise": 2,
+            "identifies_who_needs_a_response_why_it_matters_and_what_could_happen_if_ignored": 1,
+            "summarizes_email_threads_efficiently_without_dumping_raw_message_data": 2,
+            "recommends_a_concrete_response_path_reply_now_delegate_watch_draft_or_ignore": 2,
+            "for_draft_requests_sounds_short_direct_and_practical_enough_for_Brandon_to_review_and_send": 2,
+            "never_claims_an_email_was_sent_and_never_invents_thread_details_not_present_in_the_answer": 1
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "draftOutlookEmail",
+        "getRecentEmails",
+        "getRecentOutlookEmails",
+        "readOutlookEmailThread"
+      ],
+      "expectedToolFamilies": [
+        "email_action",
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-brandon-email-critical-monitor",
+      "intent": "source_lookup",
+      "prompt": "Act like Brandon's inbox monitor. Scan today's Outlook emails and tell me if anything is critical enough that he should get a Teams alert now versus wait for the evening brief.",
+      "selectedProjectId": null,
+      "sessionId": "d50beae8-cb31-40a7-bdd5-d795a2b8cfd5",
+      "sessionLabel": "eval-2026-05-19T06-19-41-280Z-21a1f014-realworld-brandon-email-critical-monitor",
+      "startedAt": "2026-05-19T06:22:14.342Z",
+      "finishedAt": "2026-05-19T06:22:30.962Z",
+      "durationMs": 12807,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 306,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "judge email_operator score 3 < 4: The answer is cautious and avoids inventing urgency, but it does not fully satisfy the task because it cannot actually identify whether anything is critical enough for a Teams alert now. It also leans on sync-health diagnostics instead of delivering a concrete inbox-monitor decision from today's emails. No false claim of sending occurred, and it does handle stale-data uncertainty honestly."
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: getRecentEmails",
+          "judge email_operator: fail (3/4)"
+        ],
+        "toolNames": [
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 1003,
+        "finalText": "Nothing I can verify from the synced inbox rises to a **send-a-Teams-alert-now** level.\n\nWhat I found:\n- **No emails received today** in **bclymer@alleatogroup.com** from the structured Outlook inbox feed.\n\nThe catch:\n- That inbox sync is **stale**. Last completed sync was **May 18 at 1:24 PM ET**.\n- So I can’t honestly say Brandon’s inbox is clear for today — only that **the synced feed hasn’t captured any of today’s mail yet**.\n\nMy read:\n- **No verified critical email right now**\n- **Low confidence**, because the source is behind\n- I would **not** tell him “all clear” based on this alone\n\nWhat to do:\n- Treat this as **inconclusive**, not clean.\n- If you want, I can next:\n  1. **check Outlook operations status** to see why sync is behind, and/or  \n  2. **search recent Teams/messages/emails by topic** for likely urgent items that may already be surfacing elsewhere\n\nBest next move: **let me check Outlook sync health now** so we know whether the monitor is reliable before the evening brief.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 120000,
+          "durationMs": 12807
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 3,
+          "minScore": 4,
+          "summary": "The answer is cautious and avoids inventing urgency, but it does not fully satisfy the task because it cannot actually identify whether anything is critical enough for a Teams alert now. It also leans on sync-health diagnostics instead of delivering a concrete inbox-monitor decision from today's emails. No false claim of sending occurred, and it does handle stale-data uncertainty honestly.",
+          "strengths": [
+            "Does not claim an email was sent.",
+            "Explicitly states the source is stale and avoids pretending today's inbox is fully visible.",
+            "Separates 'no verified critical email right now' from 'all clear,' which is a useful operational distinction.",
+            "Does not invent thread details or content not present in the source.",
+            "Provides a next step to investigate reliability of the inbox feed."
+          ],
+          "weaknesses": [
+            "Fails the main decision question: it does not clearly classify any item as critical vs. wait for evening brief because it found no emails in the stale feed.",
+            "No concrete response path for an actual email because none are summarized or assessed.",
+            "Does not identify who needs a response, why it matters, or consequences of ignoring any specific message.",
+            "No efficient thread summary because there were no thread details, but the answer does not compensate by clearly stating the monitoring limitation relative to today's inbox.",
+            "The recommendation drifts into system troubleshooting rather than inbox triage, which is off-target for Brandon's alert decision."
+          ],
+          "dimensionScores": {
+            "urgent_critical_separation": 3,
+            "response_need_why_consequence": 1,
+            "thread_summarization_efficiency": 4,
+            "concrete_response_path": 2,
+            "draft_quality": 1,
+            "no_false_claims_no_invented_details": 5
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-brandon-email-morning-brief",
+      "intent": "source_lookup",
+      "prompt": "Give me Brandon's morning email brief: what came in, what needs a response, what can wait, and what should be delegated.",
+      "selectedProjectId": null,
+      "sessionId": "5d42baef-49e1-4808-9476-7e660e6acad9",
+      "sessionLabel": "eval-2026-05-19T06-19-41-280Z-21a1f014-realworld-brandon-email-morning-brief",
+      "startedAt": "2026-05-19T06:22:30.964Z",
+      "finishedAt": "2026-05-19T06:22:45.359Z",
+      "durationMs": 10788,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 281,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "judge email_operator score 3 < 4: The answer is cautious and correctly flags stale sync risk, but it does not deliver a usable morning brief. It reports no visible emails without distinguishing confirmed inbox state from missing data, and it gives no concrete response/delegation recommendations because it found nothing. It also avoids inventing thread details, which is good, but overall it is too thin for an operator brief."
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: getRecentEmails",
+          "judge email_operator: fail (3/4)"
+        ],
+        "toolNames": [
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 969,
+        "finalText": "Nothing new is showing in Brandon’s mailbox this morning.\n\nWhat I can confirm:\n- **Inbox checked:** `bclymer@alleatogroup.com`\n- **Result:** no emails received today in the synced mailbox data\n- **Important caveat:** the Outlook sync is stale — last completed **May 18 at 1:24 PM ET**. So anything that came in after that may not be reflected yet.\n\nWhat came in\n- **No emails currently visible for today** in the synced intake.\n\nWhat needs a response\n- **Nothing I can verify** from today’s synced data.\n\nWhat can wait\n- **Nothing I can classify** from today’s synced data.\n\nWhat should be delegated\n- **Nothing I can verify** from today’s synced data.\n\nThe real point: this is a **data freshness problem**, not necessarily a quiet inbox. I would not trust this as a true morning brief until the Outlook sync catches up.\n\nNext move:\n- If you want, I can check **Outlook operations status** next and tell you whether the mailbox sync/webhooks are broken or just delayed.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 120000,
+          "durationMs": 10788
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 3,
+          "minScore": 4,
+          "summary": "The answer is cautious and correctly flags stale sync risk, but it does not deliver a usable morning brief. It reports no visible emails without distinguishing confirmed inbox state from missing data, and it gives no concrete response/delegation recommendations because it found nothing. It also avoids inventing thread details, which is good, but overall it is too thin for an operator brief.",
+          "strengths": [
+            "Does not claim any email was sent.",
+            "Explicitly warns that Outlook sync is stale, which is important evidence handling.",
+            "Avoids inventing thread details not present in the data."
+          ],
+          "weaknesses": [
+            "Does not separate urgent/critical items from normal noise because it effectively says there are no items.",
+            "Does not identify who needs a response, why it matters, or consequences if ignored.",
+            "Does not summarize any threads efficiently because there were no thread details presented and no attempt to distinguish confirmed emptiness from incomplete sync.",
+            "Does not recommend a concrete action path for actual emails; everything is labeled as nothing to classify.",
+            "Fails the practical morning-brief goal by not giving Brandon a decision-oriented inbox triage."
+          ],
+          "dimensionScores": {
+            "separates_urgent_from_noise": 2,
+            "identifies_response_need_and_risk": 1,
+            "summarizes_threads_efficiently": 2,
+            "recommends_concrete_response_path": 1,
+            "drafts_short_direct_practical": 2,
+            "never_claims_sent_or_invents_details": 5
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-brandon-email-draft-like-brandon",
+      "intent": "email_action",
+      "prompt": "Find the most important email from today that needs Brandon's reply and draft a short response in his voice. Do not send it; make it review-ready.",
+      "selectedProjectId": null,
+      "sessionId": "87f21633-eb76-4a8e-ab96-0cb32686c6f8",
+      "sessionLabel": "eval-2026-05-19T06-19-41-280Z-21a1f014-realworld-brandon-email-draft-like-brandon",
+      "startedAt": "2026-05-19T06:22:45.363Z",
+      "finishedAt": "2026-05-19T06:22:57.331Z",
+      "durationMs": 8142,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 206,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "judge email_operator score 3 < 4: The answer is cautious and avoids inventing a reply, but it does not complete the task. It focuses on sync staleness instead of identifying the most important email from today or drafting a response in Brandon’s voice. No concrete response path is recommended for an actual email, and it provides no thread-specific evidence because it claims there is nothing to flag."
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: getRecentEmails",
+          "judge email_operator: fail (3/4)"
+        ],
+        "toolNames": [
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 672,
+        "finalText": "I checked Brandon’s mailbox. There’s nothing in the synced inbox for today that I can confidently flag for reply.\n\nWhat matters: the Outlook sync is stale. Last sync completed **May 18 at 1:24 PM ET**, so anything received after that may not be in the system yet. That means I can’t reliably identify the most important email from today without a fresher inbox read.\n\nIf you want, I can still take the next best angle:\n1. **Search recent synced Outlook rows** for Brandon’s latest messages and see what likely needs a response, or\n2. **Check Outlook operations status** to confirm whether the email sync is broken/stalled.\n\nIf you want me to proceed, I’d do the first one.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 120000,
+          "durationMs": 8142
+        },
+        "judge": {
+          "status": "fail",
+          "rubric": "email_operator",
+          "score": 3,
+          "minScore": 4,
+          "summary": "The answer is cautious and avoids inventing a reply, but it does not complete the task. It focuses on sync staleness instead of identifying the most important email from today or drafting a response in Brandon’s voice. No concrete response path is recommended for an actual email, and it provides no thread-specific evidence because it claims there is nothing to flag.",
+          "strengths": [
+            "Does not claim a message was sent.",
+            "Does not invent specific thread content.",
+            "Flags an operational limitation instead of bluffing certainty."
+          ],
+          "weaknesses": [
+            "Fails the core request: no identification of the most important email from today.",
+            "No draft response is provided.",
+            "Does not separate urgent email from normal noise because it says there is nothing actionable.",
+            "No response path is recommended for a real email (reply now, delegate, watch, draft, ignore).",
+            "The explanation is about mailbox sync status, not email importance or business impact."
+          ],
+          "dimensionScores": {
+            "separates_urgent_critical_email_from_normal_inbox_noise": 2,
+            "identifies_who_needs_response_why_it_matters_and_risk_if_ignored": 1,
+            "summarizes_email_threads_efficiently_without_dumping_raw_message_data": 3,
+            "recommends_concrete_response_path": 1,
+            "draft_requests_sounds_short_direct_and_practical": 1,
+            "never_claims_email_sent_or_invents_thread_details": 5
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails",
+        "readOutlookEmailThread",
+        "draftOutlookEmail"
+      ],
+      "expectedToolFamilies": [
+        "email_action",
+        "communications"
+      ]
+    }
+  ]
+}

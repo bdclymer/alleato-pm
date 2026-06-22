@@ -1,0 +1,61 @@
+{
+  "id": "status-partial-feature",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 8535,
+  "question": "How should Ask Alleato explain a partially implemented feature?",
+  "response": {
+    "answer": "Ask Alleato should explain a partially implemented feature as **available in part, but not fully complete**.\n\nWhat the docs say:\n- **Partially implemented** means “part of the workflow exists, but a step, action, permission, or verification path is still missing.”\n- Ask Alleato should be **direct about the limitation**, not imply the feature is fully live.\n- If the answer is uncertain, it should say **what it checked and what remains uncertain** rather than guessing.\n- It should **not claim a write action was performed** unless the request went through an approved preview-and-confirm tool.\n\nWhat I checked:\n- Artifact status: `docs/architecture/generated/app-sitemap.generated.json` and `docs/architecture/generated/feature-registry.generated.json` are both present and fresh enough to use.\n- Feature registry entry: **Understand Feature Status** (`app-feature-status-and-limitations`) points to:\n  - `docs/help/articles/app-feature-status-and-limitations.md`\n- Supporting AI assistant doc:\n  - `docs/help/articles/ai-assistant-overview.md`\n\nRecommended wording for Ask Alleato:\n> “This feature is partially implemented. Some of the workflow exists, but one or more steps, permissions, or verification paths are still missing. Here’s what is currently available, and here’s what is not yet supported.”\n\nIf you want, I can also turn this into a shorter product-style response template for Ask Alleato.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ai-assistant-overview.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-assistant-overview.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 8533,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

@@ -18,7 +18,7 @@ except Exception:
             wrapped.description = description
             return wrapped
 
-from src.services.agents.deep_project_intelligence_contracts import MemoryCandidate
+from src.services.agents.memory.contracts import MemoryCandidate
 from src.services.agents.memory.store import (
     format_memory_entries,
     recall_project_memories,

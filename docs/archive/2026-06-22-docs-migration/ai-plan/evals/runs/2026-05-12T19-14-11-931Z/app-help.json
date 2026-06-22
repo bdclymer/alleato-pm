@@ -1,0 +1,1602 @@
+{
+  "id": "app-help",
+  "intent": "app_help",
+  "prompt": "How do I create a commitment in this app?",
+  "selectedProjectId": null,
+  "sessionId": "9b47698e-0e10-446e-b700-300a274bfc73",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-app-help",
+  "startedAt": "2026-05-12T19:36:22.892Z",
+  "finishedAt": "2026-05-12T19:37:04.507Z",
+  "durationMs": 26529,
+  "httpStatus": 200,
+  "streamError": "stream read error: terminated",
+  "streamEventCount": 285,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: terminated",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [searchAppHelp] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'app_help' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 1039,
+    "finalText": "Go to the project first, then:\n\n1. Open **Commitments** from the project sidebar  \n2. Click **New Commitment**\n3. Choose the type:\n   - **Subcontract** for trade/labor scope\n   - **Purchase Order** for materials, equipment, or services\n4. Fill in the core fields:\n   - **Vendor**\n   - **Title**\n   - **Contract number** if you want to override the auto-number\n   - **Status**\n   - **Scope/description**\n   - **Start date**\n   - **Estimated completion date**\n   - **Default retainage %**\n5. Save it\n6. After that, you can build the **Schedule of Values**, track **commitment change orders**, and invoice against it\n\nWhere it lives:\n- Route: **/[projectId]/commitments**\n- Help article: **Commitments (Subcontracts and Purchase Orders)**\n\nWhat a commitment is in this app:\n- **Subcontract** = contract with a trade partner\n- **PO** = order for materials/equipment/services\n\nOne important point: commitments are tied to a **project vendor/company**, so if the vendor is not already in the project directory, you may need to add them first.\n\nI"
+  },
+  "expectedToolNames": [
+    "searchAppHelp"
+  ],
+  "expectedToolFamilies": [
+    "app_help"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:36:34.752Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "ogK4eRmu6cHzJww1"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "toolName": "searchAppHelp"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": "query"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": "how"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": " do"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": " I"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": " create"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": " a"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": " commitment"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": " subcontract"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": " purchase"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": " order"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": " create"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": " commitment"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": " in"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": " app"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": "category"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": "limit"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "toolName": "searchAppHelp",
+      "input": {
+        "query": "how do I create a commitment subcontract purchase order create commitment in app",
+        "category": "",
+        "limit": 5
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_03CW5B1WpbJM2xV6TpM9b6Yz",
+      "output": {
+        "query": "how do I create a commitment subcontract purchase order create commitment in app",
+        "category": "",
+        "resultCount": 5,
+        "results": [
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "Commitments (Subcontracts and Purchase Orders)",
+            "description": "Manage subcontracts, purchase orders, schedule of values, and commitment change orders.",
+            "href": "/docs/commitments",
+            "module": "commitments",
+            "category": "Financial Tools",
+            "tags": [
+              "commitments",
+              "subcontracts",
+              "purchase-orders",
+              "sov",
+              "vendors"
+            ],
+            "relatedRoutes": [
+              "/[projectId]/commitments"
+            ],
+            "relatedActions": [],
+            "actionCapabilities": [],
+            "score": 116,
+            "excerpt": "Commitments Commitments are the subcontracts and purchase orders issued for the project. Each commitment has a vendor, a schedule of values (SOV), and a workflow for change orders and invoices. Commitment Types - **Subcontract** — a contract with a trade subcontractor for labor and materials. - **Purchase Order (PO)** — a one-time or recurring order for materials, equipment, or services. Open Commitments 1. Select th"
+          },
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "Create or Invite a User",
+            "description": "Add an app user from User Management and explain how the invited person finishes login setup.",
+            "href": "/docs/create-or-invite-a-user",
+            "module": "settings",
+            "category": "User Management",
+            "tags": [
+              "users",
+              "invite",
+              "account",
+              "onboarding"
+            ],
+            "relatedRoutes": [
+              "/user-management"
+            ],
+            "relatedActions": [
+              "invite_user"
+            ],
+            "actionCapabilities": [
+              {
+                "id": "invite_user",
+                "label": "Invite user",
+                "description": "Prepare and send an invitation for a new Alleato OS user from User Management.",
+                "status": "planned",
+                "safetyLevel": "admin_confirm",
+                "toolName": null,
+                "unavailableReason": "The assistant can explain the invitation flow, but the invite-user write tool is not implemented yet."
+              }
+            ],
+            "score": 57,
+            "excerpt": "Create or Invite a User New users are added from User Management. In the current workflow, an administrator creates the user record, chooses the user's access, and sends an invitation email. The invited person accepts the invitation and creates their own password. The user's email address is their username. There is no separate username to give them. Steps 1. Open User Management. 2. Stay on the **App Users** tab. 3."
+          },
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "Submit an Invoice (Subcontractor)",
+            "description": "Submit a pay application against your schedule of values.",
+            "href": "/docs/submit-invoice",
+            "module": "subcontractor-portal",
+            "category": "For Subcontractors",
+            "tags": [
+              "invoice",
+              "pay-application",
+              "sov",
+              "subcontractor"
+            ],
+            "relatedRoutes": [
+              "/[projectId]/invoicing/subcontractor/new"
+            ],
+            "relatedActions": [],
+            "actionCapabilities": [],
+            "score": 57,
+            "excerpt": "Submit an Invoice Subcontractors submit pay applications against the schedule of values (SOV) on their commitment. Each invoice bills a portion of each SOV line based on percent complete or amount earned. Open the Submission Form 1. Select the project. 2. Open **My Work**. 3. From the SOV section, select **Submit Invoice**, or 4. Open **Invoicing** > **New Subcontractor Invoice**. Fill in the Invoice 1. Select the **"
+          },
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "Invoicing",
+            "description": "Manage owner pay applications and subcontractor invoices against the schedule of values.",
+            "href": "/docs/invoicing",
+            "module": "invoicing",
+            "category": "Financial Tools",
+            "tags": [
+              "invoicing",
+              "pay-application",
+              "sov",
+              "billing"
+            ],
+            "relatedRoutes": [
+              "/[projectId]/invoicing"
+            ],
+            "relatedActions": [],
+            "actionCapabilities": [],
+            "score": 48,
+            "excerpt": "Invoicing The Invoicing tool handles two flows: owner pay applications (billing the owner) and subcontractor invoices (subs billing the project). Both bill against an approved schedule of values. Open Invoicing 1. Select the project. 2. Open **Invoicing** from the sidebar. 3. Use the tabs to switch between **Owner Invoices** and **Subcontractor Invoices**. Owner Pay Applications Owner invoices are pay applications su"
+          },
+          {
+            "sourceLabel": "App Help",
+            "knowledgeType": "app_help",
+            "title": "What the AI Assistant Can Do (Actions)",
+            "description": "The AI assistant can create and update records directly from chat — learn which actions are available and how the confirmation flow works.",
+            "href": "/docs/ai-assistant-actions",
+            "module": "ai-assistant",
+            "category": "AI & Intelligence",
+            "tags": [
+              "ai-assistant",
+              "actions",
+              "create",
+              "rfi",
+              "change-order",
+              "tasks",
+              "confirmation"
+            ],
+            "relatedRoutes": [
+              "/ai-assistant"
+            ],
+            "relatedActions": [],
+            "actionCapabilities": [],
+            "score": 48,
+            "excerpt": "What the AI Assistant Can Do (Actions) Ask Alleato can create and update records directly from chat. For any action that writes to the database, the assistant shows you a preview and waits for your confirmation before making any changes. How the Confirmation Flow Works 1. You ask the assistant to create or update something (e.g., \"Create an RFI about the electrical panel clearance issue\"). 2. The assistant shows a **"
+          }
+        ],
+        "message": "Found 5 app help article(s)."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Go"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " first"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " then"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Commit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ments"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sidebar"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Click"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "New"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Commitment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Choose"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " type"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Sub"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trade"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/l"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "abor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Purchase"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Order"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " materials"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " equipment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " services"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "4"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Fill"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " core"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fields"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Vendor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Title"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " number"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " override"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " auto"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-number"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "description"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Start"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " date"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Estimated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " completion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " date"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Default"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "age"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " %"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Save"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " After"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " build"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Values"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " track"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "commit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " orders"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " invoice"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " against"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Where"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lives"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Route"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Id"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "commit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ments"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Help"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " article"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Commit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ments"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ("
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Sub"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "contracts"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Purchase"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Orders"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ")**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " app"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Sub"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ="
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " trade"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " partner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "PO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ="
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " order"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " materials"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/e"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "quipment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/services"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "One"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " important"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " point"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commitments"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tied"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vendor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/company"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vendor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " already"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " directory"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " may"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " add"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " them"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " first"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    }
+  ],
+  "persistedMetadata": null
+}

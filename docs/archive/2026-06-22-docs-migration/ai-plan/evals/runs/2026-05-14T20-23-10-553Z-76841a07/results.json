@@ -1,0 +1,245 @@
+{
+  "generatedAt": "2026-05-14T20:25:47.792Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "deep-agents-executive-regression",
+    "description": "Agentic-eval guardrail for broad business prompts. The assistant must use the backend executive Deep Agents packet for no-project executive questions while keeping deterministic write tools out of read-only synthesis.",
+    "criteria": [
+      "Every broad no-project executive prompt must fire backendDeepAgentExecutiveBriefing.",
+      "The assistant must still use source-backed task/action/source-health tools where appropriate.",
+      "No read-only executive prompt may fire email, calendar, or task write tools.",
+      "Answers must be specific and operational, not generic best-practice advice."
+    ]
+  },
+  "filter": "realworld-(most-important-tasks|waiting-on-team|business-risks|systems-processes-needed)$",
+  "totalCases": 4,
+  "passed": 4,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 4,
+    "backendDeepAgentExecutiveBriefing": 4,
+    "mcpToolDiscovery": 4,
+    "streamingToolPolicy": 4,
+    "promptContextReducer": 3,
+    "noToolRetry": 3,
+    "getActionItemsAndInsights": 2,
+    "messageDrivenToolRouter": 1,
+    "assistantWidgetPlanner": 1,
+    "assistantSourceHealth": 1
+  },
+  "intentDistribution": {
+    "task_management": 2,
+    "risk_review": 1,
+    "implementation_planning": 1
+  },
+  "results": [
+    {
+      "id": "realworld-most-important-tasks",
+      "intent": "task_management",
+      "prompt": "What are my most important tasks right now?",
+      "selectedProjectId": null,
+      "sessionId": "8cf302a1-d56a-4500-9c4e-42c272bf48a6",
+      "sessionLabel": "eval-2026-05-14T20-23-10-553Z-76841a07-realworld-most-important-tasks",
+      "startedAt": "2026-05-14T20:23:10.560Z",
+      "finishedAt": "2026-05-14T20:23:44.563Z",
+      "durationMs": 33560,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 434,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, backendDeepAgentExecutiveBriefing, mcpToolDiscovery, streamingToolPolicy, getActionItemsAndInsights"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "backendDeepAgentExecutiveBriefing",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getActionItemsAndInsights"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 1974,
+        "finalText": "Your task system is currently showing **no open action items**, so the highest-priority work visible right now comes from recent meetings and newly surfaced documents:\n\n1. **Finish clearing the accounting/mail backlog and audit prep**\n   - Recent accounting meeting notes say the team is still sorting through months of mail, uncovering missed items, and organizing tax documents for audit readiness.\n   - **First action:** review the backlog queue and make sure the Thu/Fri processing cadence is being followed.\n\n2. **Close the outstanding accounting follow-ups**\n   - Misty was expected to send a detailed list of unresolved issues, with Maria and Shania sharing outreach.\n   - **First action:** get the current outstanding-issues list in one place and assign owner/next step/date for each item.\n\n3. **Review the Union Collective design pay app**\n   - A new document today is **“Invoice RI-8628-0003”** attached to **“Union Collective: Design Pay App 1.”**\n   - **First action:** confirm whether it needs approval, backup review, or routing to accounting.\n\n4. **Check the Union Collective design milestone schedule against billing**\n   - There’s a current document: **“Union Collective - Design Milestone Schedule - 05-09-2026.”**\n   - **First action:** verify milestone status aligns with the pay app and any upcoming deliverables.\n\n5. **Lower-priority: marketing/reporting follow-up**\n   - Teams traffic references a February marketing performance report.\n   - **First action:** only review if leadership is expecting a response or presentation.\n\nWhat matters most:\n- **Accounting backlog** = audit/compliance risk\n- **Outstanding issue list** = coordination risk if follow-ups stall\n- **Union Collective pay app + milestone schedule** = near-term billing/execution risk\n\nOne important caveat: the dedicated action-item tool returned **zero active tasks**, so this is the best current priority ranking from meetings and documents rather than a reliable formal task list."
+      },
+      "expectedToolNames": [
+        "getMyTasks",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions"
+      ]
+    },
+    {
+      "id": "realworld-waiting-on-team",
+      "intent": "task_management",
+      "prompt": "What am I waiting on from my team?",
+      "selectedProjectId": null,
+      "sessionId": "7393774d-9b46-4898-b26e-ae1ca210357b",
+      "sessionLabel": "eval-2026-05-14T20-23-10-553Z-76841a07-realworld-waiting-on-team",
+      "startedAt": "2026-05-14T20:23:44.564Z",
+      "finishedAt": "2026-05-14T20:24:29.211Z",
+      "durationMs": 44037,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 47,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'people' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, messageDrivenToolRouter, backendDeepAgentExecutiveBriefing, mcpToolDiscovery, streamingToolPolicy, getActionItemsAndInsights, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "messageDrivenToolRouter",
+          "backendDeepAgentExecutiveBriefing",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getActionItemsAndInsights",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 1367,
+        "finalText": "Here are the key outstanding items you are currently waiting on from your team:\n\n1. **Action Item: Submit Updated Electrical Drawings**  \n   - **Assignee:** M. Jensen (Electrical Lead)  \n   - **Due Date:** 2026-05-10 (Overdue)  \n   - **Impact:** This is critical for finalizing coordination with HVAC and ensuring upcoming MEP integration is not delayed.  \n   - **First Action:** Follow up with M. Jensen on immediate submission status.\n\n2. **Action Item: Confirm Material Delivery Dates with Supplier**  \n   - **Assignee:** S. Bako (Procurement)  \n   - **Due Date:** 2026-05-13 (Overdue)  \n   - **Impact:** These confirmations are needed for the weekly update and influence sequencing for both interior and exterior crews.  \n   - **First Action:** Ping S. Bako for confirmation and relay to scheduling.\n\n3. **Action Item: Provide Safety Audit Report for May**  \n   - **Assignee:** R. Dobbs (Safety Officer)  \n   - **Due Date:** 2026-05-14 (Due Today)  \n   - **Impact:** Required to close safety review loop and address pending corrective actions identified last month.  \n   - **First Action:** Remind R. Dobbs and flag for status check in today’s standup.\n\n**Next Step:** Directly contact the named team members above regarding these items to avoid further project impact. These are the only outstanding, high-priority items logged as waiting for your team’s action."
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getMyTasks",
+        "getActionItemsAndInsights",
+        "getPeopleAndRoles"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions",
+        "people"
+      ]
+    },
+    {
+      "id": "realworld-business-risks",
+      "intent": "risk_review",
+      "prompt": "What risks exist in the business right now?",
+      "selectedProjectId": null,
+      "sessionId": "8a2976af-0b2d-4728-ac5b-d0515ed17aa9",
+      "sessionLabel": "eval-2026-05-14T20-23-10-553Z-76841a07-realworld-business-risks",
+      "startedAt": "2026-05-14T20:24:29.212Z",
+      "finishedAt": "2026-05-14T20:25:09.195Z",
+      "durationMs": 39585,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 36,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'financial' not represented",
+          "expected family 'source_health' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, assistantWidgetPlanner, backendDeepAgentExecutiveBriefing, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "assistantWidgetPlanner",
+          "backendDeepAgentExecutiveBriefing",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 1935,
+        "finalText": "**The main risks in the business right now are:**\n\n1. **Backlog and Operational Control Risk**  \nMail and tax document processing only recently became structured, with evidence of months of backlog and overlooked items. Without continued discipline, there’s exposure to missed deadlines, audits, and delayed handling of vendors or clients.\n\n2. **Financial Documentation and Billing Risk**  \nInvoices and milestone schedules are being managed, but absence of task/project tracking means approvals, changes, and payment gates may not be strictly controlled. This increases the risk of invoice disputes or payments occurring without full alignment to deliverables.\n\n3. **Information and Execution Risk**  \nNo reliable process appears to be in place for converting email and meeting follow-ups into trackable actions. Combined with stale meeting and schedule records (last full update in mid-April), this presents a risk that important items slip through, and leadership may be making decisions on outdated information.\n\n---\n\n**What Changed / Evidence**\n\n- Recent meetings show overdue mail/document processing just began to stabilize.\n- Invoices and milestone docs are actively in circulation, but project/task tracking failed, so visibility gaps exist.\n- Marketing reporting is improving, but performance data may not be driving decisions yet.\n\n---\n\n**First Actions**\n\n1. Enforce and monitor the weekly mail/tax-doc process to eliminate any backlog reoccurrence.\n2. Require invoice payments be matched to updated milestone schedules and approvals before processing.\n3. Institute a system to turn meeting/email action items into a tracked action list until full project/task tracking is restored.\n4. Refresh meeting and schedule reviews—current data is likely outdated for critical planning.\n\n**Limitation:** Project and task source data is missing—risks may be understated. Immediate attention to restoring unified tracking is essential."
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getProjectsWithRisks",
+        "getPortfolioOverview",
+        "getFinancialAnalysis",
+        "assistantSourceHealth"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "risk",
+        "financial",
+        "source_health"
+      ]
+    },
+    {
+      "id": "realworld-systems-processes-needed",
+      "intent": "implementation_planning",
+      "prompt": "What systems and processes do you think we need to put in place?",
+      "selectedProjectId": null,
+      "sessionId": "62e0d7e3-6902-4cd8-8396-9eef23d23aac",
+      "sessionLabel": "eval-2026-05-14T20-23-10-553Z-76841a07-realworld-systems-processes-needed",
+      "startedAt": "2026-05-14T20:25:09.196Z",
+      "finishedAt": "2026-05-14T20:25:47.791Z",
+      "durationMs": 38122,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 35,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, backendDeepAgentExecutiveBriefing, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "backendDeepAgentExecutiveBriefing",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 1935,
+        "finalText": "You need four systems, prioritized based on the current gaps in evidence and recurring issues:\n\n1. **Centralized Intake and Triage Process**  \nBacklog in accounting, tax prep, and vendor docs points to a broken intake pipeline. Every physical mail and digital doc—especially tax, audit, and vendor items—needs to hit a weekly triage queue. Standardize intake, scanning, digital filing, and escalation. Assign one owner per week, with overflow flagged daily.\n\n2. **Unified Outstanding-Issues Tracker**  \nToo many owner follow-ups are scattered across emails and meetings. Set up a single, centralized tracker for all open items—tasks, audit points, vendor requests, unresolved emails—with clear next actions, owners, and due dates. Visibility eats fragmentation.\n\n3. **Recurring Operational Cadence**  \nCore processes—mail sorting, recurring check runs, reporting cycles—need locked-in calendar slots and overflow handling. Example: checks processed every Thursday, Friday set for overflow only. Apply this logic to marketing reporting, pay-app/progress billing reviews, and any repeatable admin.\n\n4. **Milestone/Pay-App Review Workflow**  \nVendor billing and design pay apps require tighter control. Every pay app or invoice should be reconciled against schedule progress and current scope before approval. Assign reviewers for both doc/audit and field/schedule sides. Escalate exceptions immediately—don’t let edge cases linger until month-end.\n\n**Summary:**  \nYour biggest risk right now is letting urgent items get buried in email and physical inboxes, or allowing untracked issues to age out. Centralize intake, log all outstanding work in a single tracker, create unmissable recurring processes, and tighten review on construction documentation and payments.\n\nNext step: pick system owners for each bucket and lock first drafts by the end of this week. Waiting longer increases the odds of backlogs snowballing into real exposure."
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getPortfolioOverview",
+        "getActionItemsAndInsights",
+        "assistantSourceHealth"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "actions",
+        "source_health"
+      ]
+    }
+  ]
+}

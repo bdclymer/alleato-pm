@@ -1,0 +1,83 @@
+{
+  "id": "status-live-feature",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 9964,
+  "question": "How should Ask Alleato answer when a feature is live?",
+  "mustInclude": [
+    "live"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Ask Alleato should answer a live feature with direct confirmation, but only when the evidence supports it.\n\nWhat I checked:\n- Artifact status: both generated artifacts are fresh and OK\n  - `/app/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json`\n  - `/app/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json`\n- Curated help docs:\n  - `docs/help/articles/app-feature-status-and-limitations.md`\n  - `docs/help/articles/ai-assistant-overview.md`\n- Generated metadata:\n  - Feature registry entry `app-feature-status-and-limitations`\n  - Feature registry entry `ai-assistant-overview`\n\nWhat the docs say:\n- **Live** means the workflow is available in the app today.\n- Ask Alleato should be **direct about the difference** between live, partial, planned, blocked, and deprecated behavior.\n- It should **not claim it performed a write action** unless the request went through an approved preview-and-confirm tool.\n\nSo the correct response pattern is:\n\n- If the feature is verified live: say it is live, briefly describe what it does, and point to the relevant route/help article.\n- If only part of it is live: say it is **partially implemented**, name the missing piece, and avoid implying full availability.\n- If uncertain: say what was checked and what remains uncertain instead of guessing.\n\nExample answer style:\n> Yes — that feature is live in Alleato PM. It’s available at `/ai-assistant` and documented in `docs/help/articles/...`. If you want, I can also check whether the specific action or page flow is fully supported.\n\nIf you want, I can also look up a specific feature and tell you whether Ask Alleato should describe it as live, partial, planned, or blocked.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ai-assistant-overview.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-assistant-overview.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help",
+        "sourceType": "sitemap",
+        "route": "/help",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/...",
+        "sourceType": "sitemap",
+        "route": "/help/articles/...",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 9804,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

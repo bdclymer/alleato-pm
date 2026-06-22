@@ -1,0 +1,62 @@
+{
+  "generatedAt": "2026-05-02T16:00:09.455Z",
+  "baseUrl": "http://localhost:3000",
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "getMeetingDetails": 4,
+    "intentPlanner": 1,
+    "streamingToolPolicy": 1,
+    "getMeetingsByDate": 1
+  },
+  "intentDistribution": {
+    "meeting_query": 1
+  },
+  "results": [
+    {
+      "id": "recent-meetings-portfolio",
+      "intent": "meeting_query",
+      "prompt": "Were there any issues from the meetings in the last couple days?",
+      "selectedProjectId": null,
+      "sessionId": "8db7915a-b4ae-451d-a90e-c427248a03d2",
+      "sessionLabel": "eval-2026-05-02T15-59-38-122Z-recent-meetings-portfolio",
+      "startedAt": "2026-05-02T15:59:38.124Z",
+      "finishedAt": "2026-05-02T16:00:09.452Z",
+      "durationMs": 30389,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 577,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, streamingToolPolicy, getMeetingsByDate, getMeetingDetails, getMeetingDetails, getMeetingDetails, getMeetingDetails"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "streamingToolPolicy",
+          "getMeetingsByDate",
+          "getMeetingDetails",
+          "getMeetingDetails",
+          "getMeetingDetails",
+          "getMeetingDetails"
+        ],
+        "familiesHit": [
+          "meetings"
+        ],
+        "finalTextLength": 2357,
+        "finalText": "Yes. A few things from the last couple days look like real issues or at least early blockers.\n\n### What stands out\n\n- **Ace Hardware Champaign IL**\n  - The **greenhouse design is still unapproved**.\n  - It’s **missing irrigation** and still needs **client feedback**.\n  - **Civil work is stalled** until a surveyor is hired.\n  - **Electrical/heating/ventilation specs are still being developed**.\n  - There are still **unresolved client decisions** on things like door relocation and lighting.\n  - What that means: this one has multiple preconstruction dependencies stacked on top of each other. If client decisions and surveyor engagement don’t happen quickly, it will keep slipping.\n\n- **Eye Surgeons – Anderson floor plan**\n  - The team discussed **scope expansion** — clinic + surgery build-out and two added exam rooms.\n  - They need **high-level cost estimates** for decision-making.\n  - Final construction is **waiting on state approvals**.\n  - What that means: not a field issue yet, but definitely a **budget + timeline risk**. Scope is growing before approvals are locked.\n\n- **Licensing / compliance discussion**\n  - There was explicit concern about **license renewals, insurance certificates, and surety bond documentation**.\n  - The meeting summary called out the **risk of expired licenses and penalties** if this slips.\n  - What that means: this is a real administrative risk, not project-field risk, but it matters because it can affect ability to operate cleanly in certain states.\n\n### What does not look like a problem\n- The **company quarterly meeting** was mostly positive: strong Q1 performance, hiring, workflow improvements, tech adoption. The real caution there was **PM capacity** and the need for **timely billing**, but it didn’t read like an acute incident.\n- The **VP candidate meeting** didn’t surface any issue detail in the available record.\n\n### My read\nThe most actionable issue from the last two days is **Ace Hardware Champaign IL**. It has the clearest set of unresolved items blocking progress:\n1. client decisions,\n2. surveyor hire,\n3. unapproved design,\n4. incomplete technical definition.\n\nThat’s the one I’d treat as an active coordination problem.\n\nIf you want, I can turn this into a tighter list of:\n- **project issues only**\n- **company/admin issues only**\n- or **top 3 items that need owner follow-up today**."
+      },
+      "expectedToolNames": [
+        "getMeetingsByDate",
+        "searchMeetingsByTopic"
+      ],
+      "expectedToolFamilies": [
+        "meetings"
+      ]
+    }
+  ]
+}

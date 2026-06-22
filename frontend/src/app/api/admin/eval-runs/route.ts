@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { NextResponse } from "next/server";
 
-import { requireAdmin } from "@/app/api/admin/intelligence-compiler/_shared";
+import { requireAdmin } from "@/app/api/admin/_shared";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 
 export const dynamic = "force-dynamic";
@@ -51,7 +51,7 @@ interface RawRun {
   results?: RawCase[];
 }
 
-// Eval runs are written to repo-root docs/ai-plan/evals/runs/ by the CLI runner
+// Eval runs are written to repo-root docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/ by the CLI runner
 // (gitignored — local only). The API route process runs from frontend/, so the
 // directory is one level up. We check both locations to stay robust.
 async function findRunsDir(): Promise<string | null> {

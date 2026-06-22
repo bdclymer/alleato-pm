@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2026-05-02T08:37:56.811Z",
+  "baseUrl": "http://localhost:3000",
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "streamingToolPolicy": 1,
+    "searchAppHelp": 1
+  },
+  "intentDistribution": {
+    "app_help": 1
+  },
+  "results": [
+    {
+      "id": "app-help",
+      "intent": "app_help",
+      "prompt": "How do I create a commitment in this app?",
+      "selectedProjectId": null,
+      "sessionId": "ccc0683a-441d-4466-b631-be630ad84c3d",
+      "sessionLabel": "eval-2026-05-02T08-37-42-985Z-app-help",
+      "startedAt": "2026-05-02T08:37:42.988Z",
+      "finishedAt": "2026-05-02T08:37:56.810Z",
+      "durationMs": 13392,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 378,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: streamingToolPolicy, searchAppHelp"
+        ],
+        "toolNames": [
+          "streamingToolPolicy",
+          "searchAppHelp"
+        ],
+        "familiesHit": [
+          "app_help"
+        ],
+        "finalTextLength": 1544,
+        "finalText": "I don’t have a help article for **creating a commitment** yet.\n\nWhat the help center does confirm is the general pattern: **select the project first**, then work inside the project-specific tool. The commitment workflow itself just isn’t documented in the published app help right now.\n\nWhat I can tell you:\n- Commitments in this app are your **subcontracts and purchase orders**\n- They’re **project-specific**\n- You should start by opening the **correct project** first\n\nLikely workflow in the app:\n1. Select the project in the header.\n2. Open the project’s **Commitments** or **Procurement/Cost** area.\n3. Choose **New Commitment**.\n4. Pick the type:\n   - **Subcontract**\n   - **Purchase Order**\n5. Enter the vendor, scope/title, contract/PO number if required, schedule of values or amount, and status.\n6. Save, then route for whatever approval process your team uses.\n\nWhat’s missing:\n- I can’t confirm the exact menu label, field sequence, or approval flow from the current help docs.\n- There also isn’t a published action in app help that lets me walk you through it step-by-step from a controlled article.\n\nBest next move:\n- If you want, I can help two ways:\n  1. **Find the exact workflow** by searching project/process documentation and prior discussions, or\n  2. **Draft feedback** that says “Create Commitment needs a help article,” so this gets documented properly.\n\nIf you want the practical version, I can also give you a **field-by-field checklist for creating a subcontract or PO** so your team enters it cleanly the first time."
+      },
+      "expectedToolNames": [
+        "searchAppHelp"
+      ],
+      "expectedToolFamilies": [
+        "app_help"
+      ]
+    }
+  ]
+}

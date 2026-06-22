@@ -1,0 +1,103 @@
+{
+  "id": "project-document-exact-spec-lookup",
+  "intent": "document_question",
+  "prompt": "For Westfield, find the exact spec or document evidence behind any current door, finish, warranty, closeout, or submittal obligation. Start with the project operating context, then drill into the source.",
+  "selectedProjectId": 43,
+  "sessionId": "5c72d25f-2987-4a48-88ea-a8def07723c5",
+  "sessionLabel": "eval-2026-06-08T17-33-44-366Z-acb2eca0-project-document-exact-spec-lookup",
+  "startedAt": "2026-06-08T17:36:01.278Z",
+  "finishedAt": "2026-06-08T17:38:16.798Z",
+  "durationMs": 120073,
+  "httpStatus": 200,
+  "streamError": "stream read error: This operation was aborted",
+  "streamEventCount": 3,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: This operation was aborted",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [searchDocuments, sourceSpecificRagRetrieval, queryDocumentRows] to fire — none did",
+      "expected required tool 'clientProjectIntelligencePacket' to fire",
+      "mustInclude missing: \"Westfield\"",
+      "mustIncludeAny missing one of: \"spec\", \"document\", \"source\", \"evidence\", \"clause\", \"excerpt\"",
+      "mustIncludeAny missing one of: \"door\", \"finish\", \"warranty\", \"closeout\", \"submittal\"",
+      "mustIncludeAny missing one of: \"packet\", \"context\", \"baseline\", \"operating\"",
+      "answer length 0 < min 220",
+      "duration 120073ms exceeded max budget 90000ms",
+      "required metadata missing: tool_trace",
+      "required metadata missing: retrieval_plan",
+      "required metadata missing: source_debug"
+    ],
+    "warnings": [
+      "expected family 'documents' not represented",
+      "duration 120073ms exceeded warning budget 30000ms"
+    ],
+    "observations": [
+      "tools fired: semanticSearch, getProjectBriefingSnapshot, loadIntelligencePacket"
+    ],
+    "toolNames": [
+      "semanticSearch",
+      "getProjectBriefingSnapshot",
+      "loadIntelligencePacket"
+    ],
+    "familiesHit": [
+      "project",
+      "communications",
+      "semantic"
+    ],
+    "finalTextLength": 0,
+    "finalText": "",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 90000,
+      "durationMs": 120073
+    }
+  },
+  "expectedToolNames": [
+    "searchDocuments",
+    "sourceSpecificRagRetrieval",
+    "queryDocumentRows"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "documents",
+    "semantic"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: project_context_source_lookup_intent",
+        "status": "loading",
+        "timestamp": "2026-06-08T17:36:22.277Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (3 sources, 0 warnings)",
+        "status": "success",
+        "durations": {
+          "semantic_search": 10641,
+          "project_snapshot": 15568,
+          "intelligence_packet": 21407
+        },
+        "timestamp": "2026-06-08T17:36:45.035Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "tFmzmnfGb8fpGbaC"
+    }
+  ],
+  "persistedMetadata": null
+}

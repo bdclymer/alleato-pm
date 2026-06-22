@@ -217,7 +217,7 @@ rm -rf frontend/src/lib/acumatica/sync/  # delete the broken TS sync
 # Keep frontend/src/lib/acumatica/client.ts — AI tools still read via it
 ```
 
-Update `docs/patterns/integration-errors.md` to mark TS sync as removed.
+Update `docs/archive/2026-06-22-docs-migration/patterns/integration-errors.md` to mark TS sync as removed.
 
 ### Verification
 
@@ -495,7 +495,7 @@ drop table documents_access_audit cascade;
 
 ## §9. Phase 8 — `/admin/database-inventory` Frontend Tool
 
-**Handoff is ready.** See `docs/PRPs/database-inventory-tool/PRP.md` and `README.md`.
+**Handoff is ready.** See `docs/archive/2026-06-22-docs-migration/PRPs/database-inventory-tool/PRP.md` and `README.md`.
 
 Assign in a separate Claude Code session. Recommended model: Sonnet 4.6, no reasoning.
 
@@ -532,7 +532,7 @@ After Phase 1–9 changes ship, patch the architecture docs:
 2. ✅ **DATABASE-ARCHITECTURE.md** — Pattern C section added (2026-05-17).
 3. ✅ **AI-RAG-ARCHITECTURE.md** — `findProjectDocuments` updated to reference `document_type` enum (2026-05-17).
 4. ✅ **COMMUNICATIONS-DATA-PIPELINE.md** — Outlook attachment promotion subsection added (2026-05-17).
-5. ⏳ **New runbook:** `docs/deployment/AUTH-MIGRATION-RUNBOOK.md` — JWT custom claim hook + force-refresh procedure. **Not yet written.**
+5. ⏳ **New runbook:** `docs/archive/2026-06-22-docs-migration/deployment/AUTH-MIGRATION-RUNBOOK.md` — JWT custom claim hook + force-refresh procedure. **Not yet written.**
 
 ---
 
@@ -544,7 +544,7 @@ After Phase 1–9 changes ship, patch the architecture docs:
 | **Per-entity attachment tables → document_metadata** (§5.7) | ✅ Done | Browser-verified and reconciled; legacy PURT/entity attachment tables dropped by `20260524030000_drop_legacy_pattern_c_attachment_tables.sql` |
 | **LLM categorization backfill** (§10.2) | ⏳ Outstanding | 6,567 rows with generic `category` remain. No script written yet. Use gpt-4.1-nano, batch 100 |
 | **TABLE-INVENTORY.md updates** (§11 item 1) | ✅ Done | Pattern C tables, row counts, and dropped tables all reflected — verified 2026-05-18 |
-| **AUTH-MIGRATION-RUNBOOK.md** (§11 item 5) | ✅ Done | `docs/deployment/AUTH-MIGRATION-RUNBOOK.md` exists — verified 2026-05-18 |
+| **AUTH-MIGRATION-RUNBOOK.md** (§11 item 5) | ✅ Done | `docs/archive/2026-06-22-docs-migration/deployment/AUTH-MIGRATION-RUNBOOK.md` exists — verified 2026-05-18 |
 | **Azure OCR** | ✅ Done | Env vars were already on Render. Backfill triggered 2026-05-18 — 5 docs OCR'd, queue now empty. Runs automatically every 30 min via `run_graph_sync()`. |
 | **Deep Agents rollout** | ⏳ Separate track | Test page lives at `/ai-assistant-v2`. Once validated there, switch main AI assistant over. Not gated on a feature flag. |
 | **Low-confidence review queue UI** | ⏳ Deferred | `document_attribution_candidates` has no frontend |

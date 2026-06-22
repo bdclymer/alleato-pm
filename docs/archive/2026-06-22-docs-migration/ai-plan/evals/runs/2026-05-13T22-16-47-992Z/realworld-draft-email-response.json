@@ -1,0 +1,49 @@
+{
+  "id": "realworld-draft-email-response",
+  "intent": "email_action",
+  "prompt": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+  "selectedProjectId": null,
+  "sessionId": "7fb567f8-6b34-4978-ba6d-eb7706210ede",
+  "sessionLabel": "eval-2026-05-13T22-16-47-992Z-realworld-draft-email-response",
+  "startedAt": "2026-05-13T22:16:47.995Z",
+  "finishedAt": "2026-05-13T22:17:09.126Z",
+  "durationMs": 5400,
+  "httpStatus": 500,
+  "streamError": "HTTP 500: Internal Server Error",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 500: Internal Server Error",
+      "HTTP 500",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [draftOutlookEmail, getRecentEmails, getRecentOutlookEmails, readOutlookEmailThread] to fire — none did",
+      "mustIncludeAny missing one of: \"draft\", \"subject\", \"reply\", \"confirm\", \"Outlook\"",
+      "answer length 21 < min 120"
+    ],
+    "warnings": [
+      "expected family 'email_action' not represented",
+      "expected family 'communications' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 21,
+    "finalText": "Internal Server Error"
+  },
+  "expectedToolNames": [
+    "draftOutlookEmail",
+    "getRecentEmails",
+    "getRecentOutlookEmails",
+    "readOutlookEmailThread"
+  ],
+  "expectedToolFamilies": [
+    "email_action",
+    "communications"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

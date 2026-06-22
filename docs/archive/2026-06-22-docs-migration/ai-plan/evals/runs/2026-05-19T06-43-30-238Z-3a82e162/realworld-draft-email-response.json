@@ -1,0 +1,2783 @@
+{
+  "id": "realworld-draft-email-response",
+  "intent": "email_action",
+  "prompt": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+  "selectedProjectId": null,
+  "sessionId": "23019dc2-9a1c-4e22-a70f-77db71b56354",
+  "sessionLabel": "eval-2026-05-19T06-43-30-238Z-3a82e162-realworld-draft-email-response",
+  "startedAt": "2026-05-19T06:45:28.338Z",
+  "finishedAt": "2026-05-19T06:45:49.496Z",
+  "durationMs": 17741,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 424,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "judge email_operator score 2 < 4: The assistant produced a short draft, but it likely hallucinated thread details by naming Jon and referencing a meeting that may not be in the latest email. It also implied a draft would be saved only after confirmation, rather than clearly providing a ready-to-review draft. It does not demonstrate email triage or response-path judgment beyond the draft itself."
+    ],
+    "warnings": [
+      "duration 17741ms exceeded warning budget 15000ms"
+    ],
+    "observations": [
+      "tools fired: getRecentEmails, getRecentOutlookEmails, readOutlookEmailThread, draftOutlookEmail",
+      "judge email_operator: fail (2/4)"
+    ],
+    "toolNames": [
+      "getRecentEmails",
+      "getRecentOutlookEmails",
+      "readOutlookEmailThread",
+      "draftOutlookEmail"
+    ],
+    "familiesHit": [
+      "communications",
+      "email_action"
+    ],
+    "finalTextLength": 251,
+    "finalText": "Draft is ready:\n\nJon,\n\nThank you for the follow-up and for taking the time to meet.\n\nWe’re wrapping up conversations on our end and will be back in touch soon with an update.\n\nBest,  \nBrandon\n\nReply **confirm** and I’ll save it to your Outlook drafts.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 15000,
+      "maxDurationMs": 30000,
+      "durationMs": 17741
+    },
+    "judge": {
+      "status": "fail",
+      "rubric": "email_operator",
+      "score": 2,
+      "minScore": 4,
+      "summary": "The assistant produced a short draft, but it likely hallucinated thread details by naming Jon and referencing a meeting that may not be in the latest email. It also implied a draft would be saved only after confirmation, rather than clearly providing a ready-to-review draft. It does not demonstrate email triage or response-path judgment beyond the draft itself.",
+      "strengths": [
+        "The response is concise and professional.",
+        "It attempts to provide a practical reply the user could send."
+      ],
+      "weaknesses": [
+        "Invents or assumes thread details not evidenced in the prompt, such as 'Jon' and 'taking the time to meet.'",
+        "Does not separate urgent email from normal noise or explain why this message matters.",
+        "Does not identify the exact reason for the reply or consequences of ignoring it.",
+        "No explicit recommendation among reply now, delegate, watch, draft, or ignore beyond a vague draft offer.",
+        "The wording is generic and not clearly tailored to the latest message asking for an update."
+      ],
+      "dimensionScores": {
+        "separates_urgent_from_noise": 1,
+        "identifies_who_needs_response_why_it_matters_what_happens_if_ignored": 1,
+        "summarizes_threads_efficiently": 2,
+        "recommends_concrete_response_path": 2,
+        "draft_short_direct_practical": 3,
+        "never_claims_sent_or_invents_details": 1
+      },
+      "provider": "vercel_gateway",
+      "model": "openai/gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "draftOutlookEmail",
+    "getRecentEmails",
+    "getRecentOutlookEmails",
+    "readOutlookEmailThread"
+  ],
+  "expectedToolFamilies": [
+    "email_action",
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: structured_outlook_inbox_query",
+        "status": "loading",
+        "timestamp": "2026-05-19T06:45:28.572Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (1 sources, 0 warnings)",
+        "status": "success",
+        "durations": {
+          "recent_emails": 1469
+        },
+        "timestamp": "2026-05-19T06:45:30.959Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "U6VfymunNJDsdiOb"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "toolName": "getRecentOutlookEmails"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "mail"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "box"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "User"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "bc"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "ly"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "mer"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "@"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "alle"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "og"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "roup"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": ".com"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "limit"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "10"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "toolName": "getRecentOutlookEmails",
+      "input": {
+        "mailboxUserId": "bclymer@alleatogroup.com",
+        "limit": 10
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_QUnGdvy3VTGmRJeQEcUb3E2U",
+      "output": {
+        "source": "outlook_email_intake",
+        "count": 10,
+        "emails": [
+          {
+            "id": 1728,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPyAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQALvab7VGkctGtXBWpZBxIKk=",
+            "subject": "A new Capital One document is ready for you",
+            "fromName": "Capital One",
+            "fromEmail": "capitalone@notification.capitalone.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-18T16:55:09+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQpTVPyAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: A new Capital One document is ready for you Date: 2026-05-18T16:55:09Z From: Capital One <capitalone@notification.capitalone.com> To: Brandon Clymer <bclymer@alleatogroup.com> Sign in and view it securely. ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ­ ­ ­ ­ ..."
+          },
+          {
+            "id": 1729,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPxAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAPBZtUzuHFBGlnydCQ-gW2s=",
+            "subject": "Re: RI-3959-0012 May Final Pay App ",
+            "fromName": "Kebba Mass",
+            "fromEmail": "kmass@alleatogroup.com",
+            "toList": [
+              "accounting@alleatogroup.com",
+              "jpkennedy@radial.com",
+              "radial.apna@genpact.com"
+            ],
+            "ccList": [
+              "jdawson@alleatogroup.com",
+              "bclymer@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-18T16:35:08+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQpTVPxAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: RI-3959-0012 May Final Pay App Date: 2026-05-18T16:35:08Z From: Kebba Mass <kmass@alleatogroup.com> To: Accounting <accounting@alleatogroup.com>, Kennedy, JP <jpkennedy@radial.com>, apna, radial <radial.apna@genpact.com> This has already been resolved. Thanks! ... Kebba Mass Assistant Project Manager at Alleato Group&nbsp; Mobile &nbsp; 917.244.3918 &nbsp; | &nbsp; Email &nbsp; kmass@alleatogroup.com Web &nbsp; www.alleatogroup.com &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp; &nbsp; Indian..."
+          },
+          {
+            "id": 1730,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPwAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAPBZtUzuHFBGlnydCQ-gW2s=",
+            "subject": "Re: RI-3959-0012 May Final Pay App ",
+            "fromName": "Accounting",
+            "fromEmail": "accounting@alleatogroup.com",
+            "toList": [
+              "jpkennedy@radial.com",
+              "radial.apna@genpact.com"
+            ],
+            "ccList": [
+              "kmass@alleatogroup.com",
+              "jdawson@alleatogroup.com",
+              "bclymer@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-18T16:26:51+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQpTVPwAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: RI-3959-0012 May Final Pay App Date: 2026-05-18T16:26:51Z From: Accounting <accounting@alleatogroup.com> To: Kennedy, JP <jpkennedy@radial.com>, apna, radial <radial.apna@genpact.com> Hello JP, I will re-send the invoices with this PO referenced. I had not received your PO# previously. Apologies for the miscommunication. Thank you!&nbsp; &nbsp; &nbsp; Alleato Accounting Team Email &nbsp; accounting @alleatogroup.com Web &nbsp; www.alleatogroup.com &nbsp; &nbsp; | &nbsp; &nbsp; &nbs..."
+          },
+          {
+            "id": 1719,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPvAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAD0h0CqfZwtIovcrY2EfLrs=",
+            "subject": "Re: Interview Follow Up - Jon Knapp",
+            "fromName": "Jonathon Knapp",
+            "fromEmail": "jonathon.knapp@icloud.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [
+              "jdawson@alleatogroup.com",
+              "jgaona@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-18T16:19:04+00:00",
+            "status": "Received",
+            "matchStatus": "matched",
+            "projectId": 90,
+            "project": {
+              "id": 90,
+              "name": "Alleato Internal Ops",
+              "projectNumber": null
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQpTVPvAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: Interview Follow Up - Jon Knapp Date: 2026-05-18T16:19:04Z From: Jonathon Knapp <jonathon.knapp@icloud.com> To: Brandon Clymer <bclymer@alleatogroup.com> You don't often get email from jonathon.knapp@icloud.com. Learn why this is important Brandon, Thank you again for taking the time to connect this morning. I appreciated the opportunity to learn more about your vision for the company and the direction the team is heading. I also appreciated the direct conversation around design-bu..."
+          },
+          {
+            "id": 1720,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPuAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQADC2IpRY4fxNnDVwe7DRXpM=",
+            "subject": "Re: Cover Story Feature for Brandon Clymer in The Prime Today Magazine",
+            "fromName": "Maria Calcetero",
+            "fromEmail": "Mcalcetero@alleatogroup.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-18T16:15:00+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQpTVPuAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: Cover Story Feature for Brandon Clymer in The Prime Today Magazine Date: 2026-05-18T16:15:00Z From: Maria Calcetero <Mcalcetero@alleatogroup.com> To: Brandon Clymer <bclymer@alleatogroup.com> I don’t think this edition matches your profile, it’s about restaurants and food industry.&nbsp; Top 10 Pioneering Leaders Driving Food Industry Innovation &amp; Restaurant Business Growth for 2026. María Alejandra Calcetero &nbsp; Executive Assistant to Brandon Clymer | Marketing Specialist M..."
+          },
+          {
+            "id": 1721,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPtAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAAgzm8K5j0_jsM8e047h-cQ=",
+            "subject": "RE: clinic location",
+            "fromName": "Sharp, Steve",
+            "fromEmail": "ssharp@financialguide.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-18T16:12:06+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQpTVPtAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: RE: clinic location Date: 2026-05-18T16:12:06Z From: Sharp, Steve <ssharp@financialguide.com> To: Brandon Clymer <bclymer@alleatogroup.com> If they can’t do either of those times let me know and I’ll find a company that can.&nbsp; They should be able to though. &nbsp; Steve Sharp WestPoint Financial Partner W: 317-208-6356 C: 219-508-9118 (calls only) C: 463-214-9390( call or text) F: 317-469-2500 &nbsp; 8888 Keystone Crossing Suite 1600 Indianapolis, IN 46240 &nbsp; One of the highest..."
+          },
+          {
+            "id": 1722,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPsAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAAgzm8K5j0_jsM8e047h-cQ=",
+            "subject": "RE: clinic location",
+            "fromName": "Sharp, Steve",
+            "fromEmail": "ssharp@financialguide.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-18T16:11:51+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQpTVPsAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: RE: clinic location Date: 2026-05-18T16:11:51Z From: Sharp, Steve <ssharp@financialguide.com> To: Brandon Clymer <bclymer@alleatogroup.com> They’ll call you to set it up and you can pick an exact time that works for them. &nbsp; Steve Sharp WestPoint Financial Partner W: 317-208-6356 C: 219-508-9118 (calls only) C: 463-214-9390( call or text) F: 317-469-2500 &nbsp; 8888 Keystone Crossing Suite 1600 Indianapolis, IN 46240 &nbsp; One of the highest compliments I can receive is an introdu..."
+          },
+          {
+            "id": 1725,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQpTcKyAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAAgzm8K5j0_jsM8e047h-cQ=",
+            "subject": "Re: clinic location",
+            "fromName": "Brandon Clymer",
+            "fromEmail": "bclymer@alleatogroup.com",
+            "toList": [
+              "ssharp@financialguide.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-18T16:06:55+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEJAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQpTcKyAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: clinic location Date: 2026-05-18T16:06:55Z From: Brandon Clymer <bclymer@alleatogroup.com> To: Sharp, Steve <ssharp@financialguide.com> Yes, set them up for Wednesday or Thursday mornings please. Thank You&nbsp; Brandon Clymer CEO at Alleato Group&nbsp; Mobile &nbsp; 317.760.0088 &nbsp; | &nbsp; Email &nbsp; bclymer@alleatogroup.com Web &nbsp; www.alleatogroup.com &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp; &nbsp; Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250&nbsp; Ta..."
+          },
+          {
+            "id": 1723,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPrAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAAgzm8K5j0_jsM8e047h-cQ=",
+            "subject": "RE: clinic location",
+            "fromName": "Sharp, Steve",
+            "fromEmail": "ssharp@financialguide.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-18T16:05:50+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQpTVPrAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: RE: clinic location Date: 2026-05-18T16:05:50Z From: Sharp, Steve <ssharp@financialguide.com> To: Brandon Clymer <bclymer@alleatogroup.com> No they can.&nbsp; I’ll have them reach out about dong that. &nbsp; Steve Sharp WestPoint Financial Partner W: 317-208-6356 C: 219-508-9118 (calls only) C: 463-214-9390( call or text) F: 317-469-2500 &nbsp; 8888 Keystone Crossing Suite 1600 Indianapolis, IN 46240 &nbsp; One of the highest compliments I can receive is an introduction to anyone you k..."
+          },
+          {
+            "id": 1726,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQpTcKxAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQADC2IpRY4fxNnDVwe7DRXpM=",
+            "subject": "Fw: Cover Story Feature for Brandon Clymer in The Prime Today Magazine",
+            "fromName": "Brandon Clymer",
+            "fromEmail": "bclymer@alleatogroup.com",
+            "toList": [
+              "Mcalcetero@alleatogroup.com"
+            ],
+            "ccList": [],
+            "receivedAt": "2026-05-18T16:05:42+00:00",
+            "status": "Received",
+            "matchStatus": "unassigned",
+            "projectId": null,
+            "project": null,
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEJAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQpTcKxAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Fw: Cover Story Feature for Brandon Clymer in The Prime Today Magazine Date: 2026-05-18T16:05:42Z From: Brandon Clymer <bclymer@alleatogroup.com> To: Maria Calcetero <Mcalcetero@alleatogroup.com> Brandon Clymer CEO at Alleato Group&nbsp; Mobile &nbsp; 317.760.0088 &nbsp; | &nbsp; Email &nbsp; bclymer@alleatogroup.com Web &nbsp; www.alleatogroup.com &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp; &nbsp; Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250&nbsp; Tampa/St Pete - 701 94..."
+          }
+        ],
+        "operationalNote": "These are synced Outlook rows. For exact mailbox freshness, also call getOutlookOperationsStatus."
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "toolName": "readOutlookEmailThread"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "graph"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "Message"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "A"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "AM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "k"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "AD"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "Aw"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "N"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "zg"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "3"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "Z"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "TA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "LT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "J"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "m"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "MW"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "Et"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "ND"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "cz"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "Ni"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "04"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "OD"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "cx"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "LT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "k"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "TA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "OD"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "hm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "Ym"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "Iy"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "N"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "AB"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "G"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "AAAA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "AA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "AU"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "WT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "Kt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "G"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "ci"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "Qa"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "9"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "go"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "e"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "R"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "AG"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "9"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "JB"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "w"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "D"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "__"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "y"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "9"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "h"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "Pl"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "JR"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "RY"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "x"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "FT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "QN"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "_M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "go"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "AAAA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "AA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "EMA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "AD"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "__"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "y"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "9"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "h"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "Pl"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "JR"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "RY"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "x"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "FT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "QN"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "_M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "go"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "AA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "Q"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "p"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "TV"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "Pv"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "AAA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "=\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "limit"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "10"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "toolName": "readOutlookEmailThread",
+      "input": {
+        "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPvAAA=",
+        "limit": 10
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_TafynHZS5tTQfAwYIWfpyZFB",
+      "output": {
+        "source": "outlook_email_intake",
+        "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAD0h0CqfZwtIovcrY2EfLrs=",
+        "messageCount": 2,
+        "messages": [
+          {
+            "id": 468,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQk4VZCAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAD0h0CqfZwtIovcrY2EfLrs=",
+            "subject": "Re: Interview Follow Up - Jon Knapp",
+            "fromName": "Jonathon Knapp",
+            "fromEmail": "jonathon.knapp@icloud.com",
+            "toList": [
+              "jdawson@alleatogroup.com"
+            ],
+            "ccList": [
+              "jgaona@alleatogroup.com",
+              "bclymer@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-11T15:28:04+00:00",
+            "status": "Received",
+            "matchStatus": "matched",
+            "projectId": 90,
+            "project": {
+              "id": 90,
+              "name": "Alleato Internal Ops",
+              "projectNumber": null
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQk4VZCAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: Interview Follow Up - Jon Knapp Date: 2026-05-11T15:28:04Z From: Jonathon Knapp <jonathon.knapp@icloud.com> To: Jesse Dawson <jdawson@alleatogroup.com> You don't often get email from jonathon.knapp@icloud.com. Learn why this is important Sounds good, Jesse. I appreciate it."
+          },
+          {
+            "id": 1719,
+            "graphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPvAAA=",
+            "mailboxUserId": "bclymer@alleatogroup.com",
+            "conversationId": "AAQkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNAAQAD0h0CqfZwtIovcrY2EfLrs=",
+            "subject": "Re: Interview Follow Up - Jon Knapp",
+            "fromName": "Jonathon Knapp",
+            "fromEmail": "jonathon.knapp@icloud.com",
+            "toList": [
+              "bclymer@alleatogroup.com"
+            ],
+            "ccList": [
+              "jdawson@alleatogroup.com",
+              "jgaona@alleatogroup.com"
+            ],
+            "receivedAt": "2026-05-18T16:19:04+00:00",
+            "status": "Received",
+            "matchStatus": "matched",
+            "projectId": 90,
+            "project": {
+              "id": 90,
+              "name": "Alleato Internal Ops",
+              "projectNumber": null
+            },
+            "hasAttachments": false,
+            "webLink": "https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAAQpTVPvAAA%3D&exvsurl=1&viewmodel=ReadMessageItem",
+            "preview": "Subject: Re: Interview Follow Up - Jon Knapp Date: 2026-05-18T16:19:04Z From: Jonathon Knapp <jonathon.knapp@icloud.com> To: Brandon Clymer <bclymer@alleatogroup.com> You don't often get email from jonathon.knapp@icloud.com. Learn why this is important Brandon, Thank you again for taking the time to connect this morning. I appreciated the opportunity to learn more about your vision for the company and the direction the team is heading. I also appreciated the direct conversation around design-bu..."
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "toolName": "draftOutlookEmail"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "mail"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "box"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "User"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "bc"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "ly"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "mer"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "@"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "alle"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "og"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "roup"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": ".com"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "reply"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "To"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Graph"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Message"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "A"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "AM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "k"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "AD"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Aw"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "N"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "zg"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "3"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Z"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "TA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "LT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "J"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "m"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "MW"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Et"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "ND"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "cz"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Ni"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "04"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "OD"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "cx"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "LT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "k"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "TA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "OD"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "hm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Ym"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Iy"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "N"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "AB"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "G"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "AAAA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "AA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "AU"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "WT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Kt"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "G"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "ci"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Qa"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "9"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "go"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "e"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "R"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "AG"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "9"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "JB"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "w"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "D"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "__"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "y"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "9"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "h"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Pl"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "JR"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "RY"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "x"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "FT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "QN"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "_M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "go"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "AAAA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "AA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "EMA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "AD"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "__"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "y"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "9"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "h"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Pl"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "JR"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "RY"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "x"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "FT"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "QN"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "_M"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "go"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "AA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Q"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "p"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "TV"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Pv"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "AAA"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "=\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "subject"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " Interview"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " Follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " Up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " -"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " Jon"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " Kn"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "app"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "body"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Jon"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": ",\\"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "n"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\\n"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Thank"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " you"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " for"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " follow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "-up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " for"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " taking"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " time"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " meet"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": ".\\"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "n"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\\n"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "We"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "’re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " wrapping"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " up"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " conversations"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " on"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " our"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " end"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " will"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " be"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " back"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " in"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " touch"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " soon"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " with"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " an"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": " update"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": ".\\"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "n"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\\n"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Best"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": ",\\"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "n"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Br"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "andon"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Recipients"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\":[]"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "cc"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Recipients"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\":[]"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "bcc"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Recipients"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\":[]"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "importance"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "90"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "draft"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "-re"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "ply"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "jon"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "-kn"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "app"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "-update"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "19"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "toolName": "draftOutlookEmail",
+      "input": {
+        "mailboxUserId": "bclymer@alleatogroup.com",
+        "replyToGraphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPvAAA=",
+        "subject": "Re: Interview Follow Up - Jon Knapp",
+        "body": "Jon,\n\nThank you for the follow-up and for taking the time to meet.\n\nWe’re wrapping up conversations on our end and will be back in touch soon with an update.\n\nBest,\nBrandon",
+        "toRecipients": [],
+        "ccRecipients": [],
+        "bccRecipients": [],
+        "importance": "normal",
+        "projectId": 90,
+        "confirmed": false,
+        "idempotencyKey": "draft-reply-jon-knapp-update-2026-05-19"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_qQ3mR2hcycPmrIKpKhONKSWy",
+      "output": {
+        "action": "preview",
+        "message": "Here's the Outlook email draft I'll create. Reply **confirm** to save it to Outlook drafts.",
+        "mailboxUserId": "bclymer@alleatogroup.com",
+        "mode": "reply",
+        "subject": "Re: Interview Follow Up - Jon Knapp",
+        "body": "Jon,\n\nThank you for the follow-up and for taking the time to meet.\n\nWe’re wrapping up conversations on our end and will be back in touch soon with an update.\n\nBest,\nBrandon",
+        "toRecipients": [],
+        "ccRecipients": [],
+        "bccRecipients": [],
+        "replyToGraphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPvAAA=",
+        "voiceProfile": {
+          "path": "docs/ai-plan/brandon-email-voice-profile.md",
+          "version": "2026-05-13",
+          "summary": "For Brandon's Outlook drafts, write short, direct, action-oriented replies. Start with the ask or answer, skip formal re-addressing in active reply chains, use plain construction/business language, and avoid consultant phrasing."
+        },
+        "adaptiveCard": {
+          "type": "AdaptiveCard",
+          "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+          "version": "1.5",
+          "body": [
+            {
+              "type": "TextBlock",
+              "text": "Re: Interview Follow Up - Jon Knapp",
+              "weight": "Bolder",
+              "size": "Medium",
+              "wrap": true
+            },
+            {
+              "type": "FactSet",
+              "facts": [
+                {
+                  "title": "Mailbox",
+                  "value": "bclymer@alleatogroup.com"
+                },
+                {
+                  "title": "Recipients",
+                  "value": "inferred from original message"
+                },
+                {
+                  "title": "Mode",
+                  "value": "Reply draft"
+                },
+                {
+                  "title": "Status",
+                  "value": "draft"
+                }
+              ]
+            }
+          ],
+          "actions": []
+        },
+        "widget": {
+          "type": "outlook_email_draft",
+          "id": "outlook-email-draft-preview",
+          "title": "Outlook email draft",
+          "status": "draft",
+          "mailboxUserId": "bclymer@alleatogroup.com",
+          "mode": "reply",
+          "subject": "Re: Interview Follow Up - Jon Knapp",
+          "body": "Jon,\n\nThank you for the follow-up and for taking the time to meet.\n\nWe’re wrapping up conversations on our end and will be back in touch soon with an update.\n\nBest,\nBrandon",
+          "toRecipients": [],
+          "ccRecipients": [],
+          "bccRecipients": [],
+          "replyToGraphMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQpTVPvAAA=",
+          "voiceProfile": {
+            "path": "docs/ai-plan/brandon-email-voice-profile.md",
+            "version": "2026-05-13",
+            "summary": "For Brandon's Outlook drafts, write short, direct, action-oriented replies. Start with the ask or answer, skip formal re-addressing in active reply chains, use plain construction/business language, and avoid consultant phrasing."
+          },
+          "adaptiveCard": {
+            "type": "AdaptiveCard",
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "version": "1.5",
+            "body": [
+              {
+                "type": "TextBlock",
+                "text": "Re: Interview Follow Up - Jon Knapp",
+                "weight": "Bolder",
+                "size": "Medium",
+                "wrap": true
+              },
+              {
+                "type": "FactSet",
+                "facts": [
+                  {
+                    "title": "Mailbox",
+                    "value": "bclymer@alleatogroup.com"
+                  },
+                  {
+                    "title": "Recipients",
+                    "value": "inferred from original message"
+                  },
+                  {
+                    "title": "Mode",
+                    "value": "Reply draft"
+                  },
+                  {
+                    "title": "Status",
+                    "value": "draft"
+                  }
+                ]
+              }
+            ],
+            "actions": []
+          },
+          "confirmPrompt": "Confirm this Outlook email draft and create it with draftOutlookEmail."
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Draft"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ready"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Jon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Thank"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " follow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " taking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " time"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "We"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " wrapping"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " conversations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " our"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " end"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " will"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " touch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " soon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " update"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Best"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Br"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "andon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Reply"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "confirm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’ll"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " save"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " your"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Outlook"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " drafts"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "finish",
+      "finishReason": "stop"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 137651,
+      "totalTokens": 138104,
+      "outputTokens": 453
+    },
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "retrieval-complete",
+          "status": "success",
+          "message": "Retrieved (1 sources, 0 warnings)",
+          "durations": {
+            "recent_emails": 1469
+          },
+          "timestamp": "2026-05-19T06:45:30.959Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": 4,
+    "tool_trace": [
+      {
+        "tool": "getRecentEmails",
+        "input": {
+          "since": "2026-05-18T04:00:00.000Z",
+          "mailbox": "bclymer@alleatogroup.com",
+          "message": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+          "timeZone": "America/New_York",
+          "direction": "mailbox"
+        },
+        "output": {
+          "count": 35,
+          "error": null,
+          "summary": "Found 35 emails in 19 threads received the last 1 day for bclymer@alleatogroup.com (mailbox).",
+          "threadCount": 19,
+          "appliedFilter": {
+            "email": "bclymer@alleatogroup.com",
+            "since": "2026-05-18T04:00:00.000Z",
+            "timeZone": "America/New_York",
+            "direction": "mailbox"
+          },
+          "dataCutoffNote": "Outlook email sync last completed May 18, 1:24 PM ET. Syncs run hourly, so emails received after that sync may not appear yet.",
+          "requestedWindowEmpty": null,
+          "mailboxResolutionNote": "The signed-in account test1@mail.com is not a company-synced Outlook mailbox, so I used the primary synced operator mailbox bclymer@alleatogroup.com.",
+          "latestAvailableFallback": null,
+          "latestAvailableReceivedAt": null
+        },
+        "status": "success",
+        "toolName": "getRecentEmails",
+        "timestamp": "2026-05-19T06:45:45.849Z"
+      },
+      {
+        "tool": "getRecentOutlookEmails",
+        "error": null,
+        "input": {
+          "message": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+          "selectedProjectId": null
+        },
+        "output": {
+          "count": 10,
+          "error": null,
+          "summary": null
+        },
+        "status": "success",
+        "toolName": "getRecentOutlookEmails",
+        "timestamp": "2026-05-19T06:45:33.613Z"
+      },
+      {
+        "tool": "readOutlookEmailThread",
+        "error": null,
+        "input": {
+          "message": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+          "selectedProjectId": null
+        },
+        "output": {
+          "count": null,
+          "error": null,
+          "summary": null
+        },
+        "status": "success",
+        "toolName": "readOutlookEmailThread",
+        "timestamp": "2026-05-19T06:45:36.685Z"
+      },
+      {
+        "tool": "draftOutlookEmail",
+        "error": null,
+        "input": {
+          "message": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+          "selectedProjectId": 90
+        },
+        "output": {
+          "count": null,
+          "error": null,
+          "summary": null
+        },
+        "status": "success",
+        "toolName": "draftOutlookEmail",
+        "timestamp": "2026-05-19T06:45:41.190Z"
+      },
+      {
+        "tool": "getRecentOutlookEmails",
+        "input": {
+          "message": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "getRecentOutlookEmails",
+        "timestamp": "2026-05-19T06:45:45.849Z"
+      },
+      {
+        "tool": "readOutlookEmailThread",
+        "input": {
+          "message": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "readOutlookEmailThread",
+        "timestamp": "2026-05-19T06:45:45.849Z"
+      },
+      {
+        "tool": "draftOutlookEmail",
+        "input": {
+          "message": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "draftOutlookEmail",
+        "timestamp": "2026-05-19T06:45:45.849Z"
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "finish_reason": "stop",
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "email_action",
+      "reason": "structured_outlook_inbox_query",
+      "sources": [
+        "recentEmails"
+      ],
+      "responseFormat": "recent_email_inbox"
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "response_message_id": "U6VfymunNJDsdiOb",
+    "empty_model_response": false
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "id": "workflow-commitment-sov",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 7026,
+  "question": "Where does a subcontractor SOV belong?",
+  "mustInclude": [
+    "commitment",
+    "SOV"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "A subcontractor SOV belongs on the subcontractor’s commitment, not on the prime contract.\n\nWhat I checked:\n- Artifact status: both sitemap and feature registry are current.\n- Feature registry:\n  - **Commitments (Subcontracts and Purchase Orders)** — `/[projectId]/commitments`\n  - **Submit an Invoice (Subcontractor)** — `/[projectId]/invoicing/subcontractor/new`\n  - **My Work (Subcontractor Portal)** — `/[projectId]/my-work`\n- Help articles:\n  - `docs/help/articles/commitments-reference.md`\n  - `docs/help/articles/submit-invoice.md`\n\nDocumented behavior:\n- The **Commitments Reference** says commitments cover **subcontracts and purchase orders**, and that every commitment has an **SOV (Schedule of Values)**.\n- It also says invoices are billed against that commitment’s SOV.\n- The **Submit an Invoice** article says subcontractors submit pay applications against the **schedule of values on their commitment**.\n- The **My Work** article says subcontractors can see **SOV status** there.\n\nSo the documented place for a subcontractor SOV is:\n- **Commitments**: `/[projectId]/commitments`\n- Related subcontractor workflow: `/[projectId]/my-work`\n- Invoice submission against that SOV: `/[projectId]/invoicing/subcontractor/new`\n\nImplementation evidence:\n- There is also a route-discovered page at `/[projectId]/invoicing/subcontractor` with no linked help article, but it’s not needed to answer the SOV placement.\n\nIf you want, I can also trace whether the SOV is edited in the subcontract detail page or only from the commitments list/detail flow.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/commitments",
+        "sourceType": "sitemap",
+        "route": "/commitments",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/invoicing/subcontractor/new",
+        "sourceType": "sitemap",
+        "route": "/invoicing/subcontractor/new",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/my-work",
+        "sourceType": "sitemap",
+        "route": "/my-work",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/commitments-reference.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/commitments-reference.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/submit-invoice.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/submit-invoice.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/invoicing/subcontractor",
+        "sourceType": "sitemap",
+        "route": "/invoicing/subcontractor",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/detail",
+        "sourceType": "sitemap",
+        "route": "/detail",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6935,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

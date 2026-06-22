@@ -625,19 +625,6 @@ export default function DrawingViewerPage() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2 mr-1 gap-1 text-xs"
-                  onClick={() => router.push(`/${projectId}/drawings/viewer-v2/${drawingId}`)}
-                >
-                  Try v2 prototype
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Open the OpenSeadragon-based prototype viewer</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
                   variant="ghost" size="sm"
                   className="h-7 w-7 p-0 text-foreground/80 hover:text-foreground hover:bg-muted"
                   onClick={handleDownload}

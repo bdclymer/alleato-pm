@@ -1,0 +1,54 @@
+{
+  "id": "status-live-feature",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 20716,
+  "question": "How should Ask Alleato answer when a feature is live?",
+  "response": {
+    "answer": "When a feature is live, Ask Alleato should say it is **available in the app today** and keep the answer specific to the documented workflow.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are fresh and available\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Curated feature metadata:\n  - `app-feature-status-and-limitations`\n- Curated help article:\n  - `docs/help/articles/app-feature-status-and-limitations.md`\n\nDocumented behavior from the help article:\n- **Live** means the workflow is available in the app today.\n- Ask Alleato should be direct about status differences.\n- If the answer is not fully known, it should say what it checked and what remains uncertain instead of guessing.\n- It should not claim a write action was performed unless the request went through an approved preview-and-confirm tool.\n\nSo the right answer pattern is:\n\n- “Yes, this feature is live.”\n- “Here’s where to find it / how to use it.”\n- “If relevant, here’s the route or help article.”\n- If only partially supported, say that instead of calling it fully live.\n\nUseful source:\n- Help article: `docs/help/articles/app-feature-status-and-limitations.md`\n\nIf you want, I can also give you the exact Ask Alleato phrasing to use for a live feature response.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 20714,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

@@ -1,0 +1,228 @@
+{
+  "generatedAt": "2026-05-14T20:22:44.487Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "inbox-outlook-regression",
+    "description": "Agentic-eval guardrail for live inbox/date/triage prompts. The assistant must use structured Outlook intake, avoid source-specific RAG, and avoid stale fallback language.",
+    "criteria": [
+      "Every case must fire getRecentEmails.",
+      "No case may fire sourceSpecificRagRetrieval.",
+      "Answers must not tell the user to wait for live Outlook tools.",
+      "Answers must be long enough to explain the inbox result or failure clearly."
+    ]
+  },
+  "filter": "realworld-(last-five-emails|urgent-inbox|important-emails-this-morning|outlook-arrived-today|email-reply-triage)$",
+  "totalCases": 5,
+  "passed": 5,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 5,
+    "getRecentEmails": 5
+  },
+  "intentDistribution": {
+    "source_lookup": 5
+  },
+  "results": [
+    {
+      "id": "realworld-last-five-emails",
+      "intent": "source_lookup",
+      "prompt": "Can you tell me my last five emails?",
+      "selectedProjectId": null,
+      "sessionId": "15a98a75-e8b3-4887-8143-b28e933196a4",
+      "sessionLabel": "eval-2026-05-14T20-22-16-220Z-13845aa1-realworld-last-five-emails",
+      "startedAt": "2026-05-14T20:22:16.227Z",
+      "finishedAt": "2026-05-14T20:22:23.624Z",
+      "durationMs": 6982,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, getRecentEmails"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 246,
+        "finalText": "I found 0 emails received last day for test1@mail.com. No email action items were found for this range.\n\nOutlook email sync time is unknown, so emails received since the last completed sync may not appear.\n\nNo Outlook emails matched this request."
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-urgent-inbox",
+      "intent": "source_lookup",
+      "prompt": "Is there anything urgent in my inbox?",
+      "selectedProjectId": null,
+      "sessionId": "50c52a6d-a9c3-49b9-b451-09a3954941d2",
+      "sessionLabel": "eval-2026-05-14T20-22-16-220Z-13845aa1-realworld-urgent-inbox",
+      "startedAt": "2026-05-14T20:22:23.625Z",
+      "finishedAt": "2026-05-14T20:22:29.270Z",
+      "durationMs": 5590,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, getRecentEmails"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 246,
+        "finalText": "I found 0 emails received last day for test1@mail.com. No email action items were found for this range.\n\nOutlook email sync time is unknown, so emails received since the last completed sync may not appear.\n\nNo Outlook emails matched this request."
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails",
+        "searchEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-important-emails-this-morning",
+      "intent": "source_lookup",
+      "prompt": "What important emails have I received this morning?",
+      "selectedProjectId": null,
+      "sessionId": "dc25e54d-3c10-400a-90da-7242c78558a2",
+      "sessionLabel": "eval-2026-05-14T20-22-16-220Z-13845aa1-realworld-important-emails-this-morning",
+      "startedAt": "2026-05-14T20:22:29.270Z",
+      "finishedAt": "2026-05-14T20:22:33.615Z",
+      "durationMs": 4270,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, getRecentEmails"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 243,
+        "finalText": "I found 0 emails received today for test1@mail.com. No email action items were found for this range.\n\nOutlook email sync time is unknown, so emails received since the last completed sync may not appear.\n\nNo Outlook emails matched this request."
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-outlook-arrived-today",
+      "intent": "source_lookup",
+      "prompt": "What came in through Outlook today that needs my attention?",
+      "selectedProjectId": null,
+      "sessionId": "0c3e6801-838f-46ba-bde0-89d12a9bbfe4",
+      "sessionLabel": "eval-2026-05-14T20-22-16-220Z-13845aa1-realworld-outlook-arrived-today",
+      "startedAt": "2026-05-14T20:22:33.616Z",
+      "finishedAt": "2026-05-14T20:22:37.928Z",
+      "durationMs": 4225,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, getRecentEmails"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 243,
+        "finalText": "I found 0 emails received today for test1@mail.com. No email action items were found for this range.\n\nOutlook email sync time is unknown, so emails received since the last completed sync may not appear.\n\nNo Outlook emails matched this request."
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-email-reply-triage",
+      "intent": "source_lookup",
+      "prompt": "Show me any emails from today that need a reply.",
+      "selectedProjectId": null,
+      "sessionId": "7fed0439-0db9-453a-b2cf-92c668a812e8",
+      "sessionLabel": "eval-2026-05-14T20-22-16-220Z-13845aa1-realworld-email-reply-triage",
+      "startedAt": "2026-05-14T20:22:37.929Z",
+      "finishedAt": "2026-05-14T20:22:44.486Z",
+      "durationMs": 6504,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, getRecentEmails"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 243,
+        "finalText": "I found 0 emails received today for test1@mail.com. No email action items were found for this range.\n\nOutlook email sync time is unknown, so emails received since the last completed sync may not appear.\n\nNo Outlook emails matched this request."
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    }
+  ]
+}

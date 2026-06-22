@@ -1,0 +1,253 @@
+{
+  "id": "source-freshness-rag-health",
+  "intent": "source_health",
+  "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+  "selectedProjectId": null,
+  "sessionId": "98ba75d0-b97f-4951-8081-c7ae626c04a7",
+  "sessionLabel": "eval-2026-05-14T20-02-42-791Z-ee61dded-source-freshness-rag-health",
+  "startedAt": "2026-05-14T20:06:04.967Z",
+  "finishedAt": "2026-05-14T20:07:06.282Z",
+  "durationMs": 45889,
+  "httpStatus": 200,
+  "streamError": "stream read error: terminated",
+  "streamEventCount": 36,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: terminated",
+      "assistant message was not persisted to chat_history",
+      "expected required tool 'assistantSourceHealth' to fire",
+      "mustInclude missing: \"Teams\"",
+      "mustInclude missing: \"Outlook\"",
+      "mustInclude missing: \"meeting\"",
+      "mustInclude missing: \"packet\"",
+      "mustIncludeAny missing one of: \"stale\", \"fresh\", \"up to date\", \"unembedded\", \"uncompiled\", \"source health\"",
+      "answer length 0 < min 250",
+      "required metadata missing: source_health",
+      "required metadata missing: tool_trace",
+      "required metadata missing: response_quality"
+    ],
+    "warnings": [
+      "expected family 'source_health' not represented"
+    ],
+    "observations": [
+      "tools fired: getMeetingsByDate"
+    ],
+    "toolNames": [
+      "getMeetingsByDate"
+    ],
+    "familiesHit": [
+      "meetings"
+    ],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "source_health"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T20:06:12.264Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Searching source records for the requested discussion context",
+        "status": "loading",
+        "timestamp": "2026-05-14T20:06:17.633Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "synthesis",
+        "message": "Loaded source records — synthesizing answer",
+        "status": "success",
+        "timestamp": "2026-05-14T20:06:36.064Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "rTjsktykxAfCwxhf"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "toolName": "getMeetingsByDate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "start"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "end"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_kPNz2IVuKYrXMVddnSpnY1ut",
+      "toolName": "getMeetingsByDate",
+      "input": {
+        "projectId": 0,
+        "projectName": "",
+        "date": "2026-05-14",
+        "startDate": "",
+        "endDate": "",
+        "maxResults": 5
+      }
+    }
+  ],
+  "persistedMetadata": null
+}

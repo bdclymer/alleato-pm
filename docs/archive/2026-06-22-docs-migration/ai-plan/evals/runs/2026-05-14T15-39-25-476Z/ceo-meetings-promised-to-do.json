@@ -1,0 +1,1616 @@
+{
+  "id": "ceo-meetings-promised-to-do",
+  "intent": "meeting_query",
+  "prompt": "What did I commit to in meetings this past week?",
+  "selectedProjectId": null,
+  "sessionId": "562b1a1e-0fe2-4d88-a30d-f06b3ff32e72",
+  "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-meetings-promised-to-do",
+  "startedAt": "2026-05-14T15:50:45.781Z",
+  "finishedAt": "2026-05-14T15:53:01.485Z",
+  "durationMs": 120006,
+  "httpStatus": 200,
+  "streamError": "stream read error: This operation was aborted",
+  "streamEventCount": 231,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: This operation was aborted",
+      "assistant message was not persisted to chat_history",
+      "mustIncludeAny missing one of: \"promise\", \"committed\", \"action\", \"owe\", \"meeting\"",
+      "answer length 0 < min 180"
+    ],
+    "warnings": [
+      "expected family 'actions' not represented"
+    ],
+    "observations": [
+      "tools fired: searchMeetingsByTopic"
+    ],
+    "toolNames": [
+      "searchMeetingsByTopic"
+    ],
+    "familiesHit": [
+      "meetings"
+    ],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getMeetingsByDate",
+    "getActionItemsAndInsights",
+    "getMeetingIntelligence",
+    "searchMeetingsByTopic"
+  ],
+  "expectedToolFamilies": [
+    "meetings",
+    "actions"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T15:50:52.317Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Searching source records for the requested discussion context",
+        "status": "loading",
+        "timestamp": "2026-05-14T15:50:53.753Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "synthesis",
+        "message": "Loaded source records — synthesizing answer",
+        "status": "success",
+        "timestamp": "2026-05-14T15:51:11.899Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "LVTKRHz9lO7WOlgq"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "toolName": "searchMeetingsByTopic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "topic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": " commitments"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": " past"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": " week"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": " meetings"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "10"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "toolName": "searchMeetingsByTopic",
+      "input": {
+        "topic": "user commitments past week meetings",
+        "projectId": 0,
+        "projectName": "",
+        "maxResults": 10
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_hlTyVetEPaOiKmHp2SJzyUUi",
+      "output": {
+        "searchScope": "All projects",
+        "topic": "user commitments past week meetings",
+        "totalResults": 10,
+        "results": [
+          {
+            "sourceRef": "[Source: Meeting - \"Alleato Group Team Intro\" - 2026-03-13T18:00:00+00:00]",
+            "id": "01KKKW0NXER1QKC09VZ1S40P0X",
+            "title": "Alleato Group Team Intro",
+            "date": "2026-03-13T18:00:00+00:00",
+            "project": "Alleato Finance",
+            "projectId": 60,
+            "participants": "fnjie@llum.com, bclymer@alleatogroup.com, jdawson@alleatogroup.com, tstone@llum.com, zzita@llum.com, ymontesano@llum.com, mcalcetero@alleatogroup.com, bclymer@alleatogroup.com, jdawson@alleatogroup.com, tstone@llum.com, zzita@llum.com, ymontesano@llum.com, mcalcetero@alleatogroup.com",
+            "summary": "👥 Team Introductions: Tim Stone joins as CFO with construction experience, ensuring reliable financials for Alito Aliado and WIP understanding.\n⚙️ Accounting Improvements: Standardized systems and automation prioritized to enhance accuracy and speed in WIP reporting and invoicing.\n🔍 Billing Transparency: Issues with unexplained bills addressed; approval limits adjusted to enforce clarity and accountability on charges.\n📜 Licensing Support: Tim to assist with contractor licensing across 22 states, aiming to streamline processes and reduce administrative delays.\n📈 Financial Reporting Goals: Emphasis on timely financials and cash flow statements to support strategic planning discussions for 2026.\n🔄 Transition Planning: Fatima ensures seamless handoff by maintaining access and coordinating",
+            "actionItems": "Provide Zhenna access to all necessary tools and systems including Teams, Job Planner, and Procore accounting logins (11:36)\nAdd Zhenna and Tim to the accounting Teams group and manage communication handover (15:28)\nSchedule future meetings with Brandon and Tim for ongoing collaboration (18:03)\nSchedule weekly accounting meetings to address bottlenecks for timely financial delivery (06:10)\nCoordinate with Maria and the internal team for system access and familiarize with internal workflows (11:36)\nSend alito group@loom.com email credentials and Notion/SharePoint access details to Maria and Zhenna (15:39)\nForward Zhenna’s and Tim’s email addresses for accounting communication setup (15:43)\nAssist with transition period by maintaining access until end of month and supporting as needed (11:36)\nWork with Tim on goal setting around cash flow statements and budgets for 2026 (16:44)\nEnsure clear communication flow with project managers directing accounting inquiries through Misty (14:31)\nAddress billing transparency issues with Loom to avoid unexplained charges (08:56)\nGet up to speed on Alleato’s accounting processes and be a resource for licensing and financial system improvements (04:02)\nCollaborate with Brandon on meeting project financial goals and improving reporting systems (16:44)"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Union Collective Kickoff Call\" - 2026-03-05T15:00:00+00:00]",
+            "id": "01KJTKWKCAGQP6PDFAYPSP0449",
+            "title": "Union Collective Kickoff Call",
+            "date": "2026-03-05T15:00:00+00:00",
+            "project": "Union Collective",
+            "projectId": 1009,
+            "participants": "mewers@medellasprings.com, dooner2552@gmail.com, bclymer@alleatogroup.com, philip@ibexdevgroup.com, tony@ibexdevgroup.com, dooner2552@gmail.com, bclymer@alleatogroup.com, philip@ibexdevgroup.com, tony@ibexdevgroup.com",
+            "summary": "💰 Financing Strategy: Partnering with District Capital for 5-6 refined lending options; term sheet expected within seven days post-call.\n📄 Project Documentation: IRS requires significant work and at least 5% of project costs incurred for tax credits; front-load costs for audit protection.\n🏗️ Construction Timeline: Design mobilization planned two weeks after financing call; construction phase to begin with earthwork by June.\n🥃 Distillery Integration: Considering partnership with Never Say Die Bourbon; space planning for a distillery and speakeasy bar under discussion.\n👥 Team Roles Defined: Brandon Clymer as General Contractor; Tony Frisone for financial liaison; Philip Johnson for tax credits and compliance.",
+            "actionItems": "Send the conceptual site plan to Patrick for city planning use (32:00)\nLead follow-up with Brian regarding Never Say Die Bourbon distillery details and integration into design (40:35)\nContinue coordination on political outreach and local connections with Patrick (46:50)\nArrange and lead weekly project calls; send calendar invites for Thursdays at 10:00am (50:05)\nContact city official Kevin Costello to clarify what drawings/conceptual plans the city requires to expedite approval (48:35)\nContact Brian from Bluegrass to gather more details on distillery needs and site integration (51:23)\nCoordinate with Brandon to review the water main and internal utilities at the old building for potential reuse (36:00)\nShare conceptual site plan and city zoning updates with Mike and Brandon to assist city communications (31:55)\nProvide existing Westfield Collective plans to team as the design baseline for Union Collective and incorporate design tweaks based on feedback (03:25)\nSource cooler equipment specifications from FG Schaefer kitchen vendor and coordinate with design team to build around (07:50)\nEvaluate prefabricated wall system versus onsite build and present cost/time analysis (12:55)\nDevelop phased permitting approach including earthwork/dirt-moving permits to enable early construction start in June (17:00)\nReview zoning district and determine if Planned Unit Development (PUD) approval is needed (18:50)\nProvide technical guidance on permitting requirements including technical design committee's brick/glass specifications (38:45)\nAssist Mike and Patrick with utilities layout and assess best points for tying into water main and fire hydrant systems (36:10)\nPrepare rendered elevations if needed and manage schematic drawing timeline post-financing approval (29:00)\nServe as primary financial interface between the team and Alito (45:15)\nAssist in financial planning to maximize tax credit compliance by documenting qualifying work and advancing early project costs (20:00)\nContinue financial preparations and application submissions (45:55)\nSupport interpretation of tax credits and physical work test with relevant documentation (23:00)"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"McLane Salt Lake City - Exotec Instalaltion\" - 2026-03-03T18:30:00+00:00]",
+            "id": "01KJN73D49QRAXCXBHSS54SZSV",
+            "title": "McLane Salt Lake City - Exotec Instalaltion",
+            "date": "2026-03-03T18:30:00+00:00",
+            "project": "McLane Salt Lake City",
+            "projectId": 753,
+            "participants": "francisco.becerra@hy-tek.com, kmass@alleatogroup.com, bclymer@alleatogroup.com, mparsons@alleatogroup.com, gdavis@alleatogroup.com, sjones@npsgglobal.com, dadano.thouk@exotec.com, gonzalo.rivera@hy-tek.com, dan.smith@hy-tek.com, matt.blankenship@hy-tek.com, aaron.pitzer@hy-tek.com, ryan.frisch@hy-tek.com, kmass@alleatogroup.com, bclymer@alleatogroup.com, mparsons@alleatogroup.com, gdavis@alleatogroup.com, sjones@npsgglobal.com, dadano.thouk@exotec.com, gonzalo.rivera@hy-tek.com, dan.smith@hy-tek.com, matt.blankenship@hy-tek.com, aaron.pitzer@hy-tek.com, ryan.frisch@hy-tek.com",
+            "summary": "🗓️ Installation Timeline Set for April: Rack install starts April 13; fire suppression begins April 20 after layout confirmation.\n🔄 Overlap Planning for Efficiency: Fire suppression mains installed first, progressing with rack installation to minimize delays.\n🧪 Testing Scheduled for Early July: Full system build complete before robot testing; water tests coordinated with readiness.\n🏗️ Updated Rack Layout Required Adjustments: Fire suppression drawings will be amended for seismic differences; latest layout to be shared.\n📜 Permit Submission Under Racking Contractor: Fire suppression permit to use NPC’s number for early submission, preventing delays.\n📦 Supply Chain Preparedness Confirmed: Rack materials ahead of schedule; fire suppression supplies ordered based on estimates to avoid del",
+            "actionItems": "Confirm the exact date when rack layout team will be on site to coordinate fire suppression mains installation (04:15)\nSend current schedule showing project milestones and timeline to all participants as PDF (23:30)\nCoordinate with Gonzalo and others to have latest rack layout and elevations resent to Kebba Mass for review and updates (14:50)\nReview and update fire suppression drawings to reflect latest rack layout, including sprinkler offsets for Stage 3 bracing as noted by Exotec (09:40)\nSubmit final permit application for fire suppression system in coordination with racking permit by first of next week (19:40)\nShare updated fire suppression drawings with Exotec's Dodano for final review before permit submission (20:20)\nEstablish weekly coordination meetings prior to installation start and continue throughout project for alignment (17:45)\nAdd tentative water testing dates into the schedule for fire suppression system before any robotic testing (22:50)\nReview final fire suppression drawings once updated by Kebba Mass and provide rapid approval (within 20 minutes) (20:30)\nProvide final inputs related to Stage 3 rack complexities and brace layout requirements\nCoordinate with Kebba and Dodano for final review of fire suppression drawings and system coverage once finalized before installation (27:00)\nProvide permit number from NPC to Brandon Clymer to enable fire suppression permit submission (19:10)\nResend latest rack layout and elevation drawings to Kebba Mass for integration into fire suppression planning (14:50)\nContinue internal discussions to confirm which vendor is responsible for floor marking and layout survey points, and share info as needed with all parties (05:00)\nSupport coordination on sequencing floor marking and rack layout with fire suppression timelines (06:30)"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Superior Beverage Group SYS-24-0008319 - Alleato and NPSG Introduction Call\" - 2026-03-03T17:00:00+00:00]",
+            "id": "01KJN73D4AY0KEY1VG7TNEBV4D",
+            "title": "Superior Beverage Group SYS-24-0008319 - Alleato and NPSG Introduction Call",
+            "date": "2026-03-03T17:00:00+00:00",
+            "project": "Superior Beverae Exotec ",
+            "projectId": 178,
+            "participants": "joe.metz@hy-tek.com, sjones@npsgglobal.com, mparsons@alleatogroup.com, kmass@alleatogroup.com, bclymer@alleatogroup.com, connor.clark@hy-tek.com, gdavis@alleatogroup.com, sjones@npsgglobal.com, mparsons@alleatogroup.com, kmass@alleatogroup.com, bclymer@alleatogroup.com, connor.clark@hy-tek.com, gdavis@alleatogroup.com",
+            "summary": "✅ Uniform Rack Elevation Confirmed: Racks will have consistent elevation for accurate installation and compliance with standards.\n💧 Sprinkler Coordination Required: 6mm clearance between pipes and turnbuckles essential for proper adjustments; confirm feasibility for 10ft and 20ft levels.\n📦 Material Shipping Timeline: Shipment begins June 23; installation expected to last 14 weeks; team setup starts 1-2 weeks prior.\n🤝 Inter-Team Coordination Critical: Sprinkler team to start 1-1.5 hours ahead of racking team; daily communication emphasized for smooth workflow.\n🔧 Technical Adjustments Discussed: Main sprinkler pipes should be routed outside racks to minimize conflicts; changes must be verified with Exotech.\n📅 Ongoing Meeting Commitment: Weekly meetings will continue, focusing on schedul",
+            "actionItems": "Reach out to Exotech to confirm if sprinkler heads can be relocated in the racking layout as needed (20:23)\nArrange for project manager to send the drafted installation schedule to the team post-meeting (19:30)\nConsult with the sprinkler designer regarding the feasibility and compliance of sprinkler head placements at 10ft and 20ft heights (10:56)\nConfirm internally on sprinkler adjustability and inform Joe Metz of findings (20:51)\nCoordinate weekly meetings with racking team and superintendent for smooth communication (17:50)\nEnsure team members who missed the initial invite are informed and involved in ongoing meetings (02:46)\nMaintain close daily communication and coordination between racking and sprinkler teams onsite to avoid work stoppages, particularly during the sandwich pipe installation phase (15:59)"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Weekly Accounting Meeting\" - 2026-02-24T19:00:00+00:00]",
+            "id": "01KHRZ8K7DYSVMQ2RARWVHBEZ9",
+            "title": "Weekly Accounting Meeting",
+            "date": "2026-02-24T19:00:00+00:00",
+            "project": "Alleato Finance",
+            "projectId": 60,
+            "participants": "mcalcetero@alleatogroup.com, jmendez@alleatogroup.com, accounting@alleatogroup.com, bclymer@alleatogroup.com, jdawson@alleatogroup.com, aortiz@alleatogroup.com, fnjie@llum.com, mgusi@alleatogroup.com, mrogers@alleatogroup.com, jmendez@alleatogroup.com, accounting@alleatogroup.com, bclymer@alleatogroup.com, jdawson@alleatogroup.com, aortiz@alleatogroup.com, fnjie@llum.com, mgusi@alleatogroup.com, mrogers@alleatogroup.com",
+            "summary": "💰 Outstanding Payments: Craving Grapes overdue balance at $48,455; $15,000 weekly payments scheduled; $37,000 currently overdue.\n🤝 Goodwill Negotiations: Goodwill PO balance insufficient for a $50,000 invoice; negotiations ongoing; no immediate escalation needed.\n📄 Fargo LLC Invoice: $20,000 invoice open; AJ managing credit notes; previous overpayment requires a change order.\n🗓️ Payroll Schedule: Payroll for the week of January 27 is pending confirmation; posted by Friday to ensure timely payments.\n🔧 Acumatica Support Changes: Shift to Revive for Acumatica support; phase out Loom to cut costs and enhance service.\n📢 Enhanced Communication: Coordination for payments initiated by Misty; reminder for timesheet updates to avoid payroll delays.",
+            "actionItems": "Prepare and send checks for payments received, coordinating money transfers as needed (08:18)\nReach out after the meeting with Melanie Gusi and Jose Mendez to request portal access from Revive and tag all for shared visibility (12:28)\nFinalize and send a list of Acumatica questions prior to the next meeting with Chris (12:42)\nFollow up on subcontractor payment status including contacting relevant parties for updates (14:30)\nShare AR aging screen and support review of delinquent accounts (01:17)\nContinue managing communications and resolution efforts for outstanding Goodwill PO and other invoice issues (03:31)\nAllocate pending January transactions and confirm timesheet updates for payroll preparation; remind Alec to update (07:29)\nCollaborate with Misty Rogers and Melanie Gusi to request Revive portal access and manage monthly payroll submission process (12:28)\nAssist in following up with AJ on outstanding Fargo LLC invoice and credit note application (05:51)\nSend December bank and credit card statements including AMEX and Forum to Misty and Jose (08:48)\nContinue working on CVS Nevada documentation requests following the meeting (10:29)\nConfirm team timesheet submission status and ensure payroll allowance items are forwarded for approval and payroll processing (15:09)"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Goodwill Illinois Huddle\" - 2026-02-13T15:30:00+00:00]",
+            "id": "01KH9WVANG92HYF599PW2HPZ3S",
+            "title": "Goodwill Illinois Huddle",
+            "date": "2026-02-13T15:30:00+00:00",
+            "project": "Goodwill Noblesville",
+            "projectId": 25125,
+            "participants": "ataylor@alleatogroup.com, nbrimie@alleatogroup.com, fireflies@alleatogroup.com, nbrimie@alleatogroup.com, fireflies@alleatogroup.com",
+            "summary": "📅 Project Schedule Finalized: Updated schedule aligns current progress with tasks; targets completion by early March with flexibility for adjustments.\n🏗️ RTU and Roofing Coordination: Critical path identified; RTUs expected next Tuesday to ensure timely installation of roofing and ductwork.\n📊 Weekly Reporting System Established: New process improves transparency; reports include project percentage complete, updates, and key milestones for clarity.\n⚡ Construction Progress Reported: Electrical work almost done, concrete ceiling nearing completion by February 14; flooring work has started.\n💻 Technical Tools Expanded: Microsoft Project and Bluebeam software introduced; training planned to enhance project management and reporting capabilities.\n🤝 Communication Routine Enhanced: Weekly meeti",
+            "actionItems": "Attend weekly coordination meetings with AJ Taylor for training and project updates (01:10)\nFollow up with electricians on the lighting switch and clarify functionality (10:23)\nAccess and review submittals on Job Planner and seek AJ's help for Bluebeam usage training next week (11:24)\nConfirm delivery status of RTUs and coordinate schedule with roofer and steel installation teams (13:14)\nManage scheduling of heater demolition with HVAC or electricians for week of 02/24 (26:26)\nAssist with filing and accessing updated project schedules and weekly reports (31:26)\nTake and provide quality photos for weekly reports ensuring PPE compliance (43:37)\nDocument and communicate concrete floor discoloration issues to client with supporting photos (49:58)\nGradually assume responsibility for weekly report preparation and submit for AJ’s review (58:57)\nCoordinate with painters and roofers to confirm start dates and scheduling (01:00:07)\nFollow up with dumpster company and accounting to complete required signatures/waivers (01:00:58)\nProvide Nicholas a rundown on Microsoft Project and Bluebeam software next week (06:51)\nActualize project schedules weekly and adjust task dependencies to reflect progress (18:44)\nAssist in verifying lighting controls via submittals and advise on occupancy sensor presence (10:34)\nContact RTU supplier Britt to confirm delivery and facilitate coordination with roofers (13:27)\nLead weekly walkthroughs of schedule updates, photo additions, and report formatting (34:56)\nForward finalized weekly report PDFs to project stakeholders (57:30)\nCollaborate with Nicholas to review and approve weekly reports before distribution (58:57)\nSupport scheduling and coordination of subcontractors for pending work including painters and roofers (01:00:13)\nSign off on dumpster company waiver pending review and approval by Nicholas (01:01:16)"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Goodwill Noblesville Casework Concepts Scope of Work Review\" - 2026-02-11T15:30:00+00:00]",
+            "id": "01KH6H15QQN1ZR6ZE69DGMQRVE",
+            "title": "Goodwill Noblesville Casework Concepts Scope of Work Review",
+            "date": "2026-02-11T15:30:00+00:00",
+            "project": "Goodwill Noblesville",
+            "projectId": 25125,
+            "participants": "njepson@alleatogroup.com, mwill@caseworkconceptsllc.com, gcloud@alleatogroup.com, fireflies@alleatogroup.com, mwill@caseworkconceptsllc.com, gcloud@alleatogroup.com, fireflies@alleatogroup.com",
+            "summary": "✅ Installation Scope Confirmed: Complete install covers labor, materials, tools, and includes weekly schedule meetings for management.\n🔨 Blocking Specifications Detailed: Two-by-six blocking required behind wall-hung countertops and cabinets at approximately 92-inch height, mainly for bathrooms.\n📦 Material Specifications Established: White thermal fused melamine cabinets with solid surface countertops for multiple areas ensuring industry standards.\n📅 Schedule and Coordination Planned: Shop drawings due within one week, while physical samples sent for approval to maintain quality checks.\n⚠️ Risk Mitigation Strategies Explained: Simplified lock systems and sink installation plans to prevent delays and complications from architectural requirements.\n🚀 Future Projects Discussed: New Goodwil",
+            "actionItems": "Coordinate blocking installation details, confirm heights and materials with Nick Jepson via email (10:03)\nProceed to measure site areas as soon as superintendent contact is provided and site access arranged (28:25)\nSend shop drawings to draftsman for cabinet and countertop fabrication; expect draft return in about one week (28:56)\nProvide physical samples of solid surface and laminate materials for approval (29:40)\nAwait sink submittals to determine if sinks need shipping to shop or can be installed on site; prepare to cut holes if undermount sinks are confirmed (26:19)\nConfirm blocking installation height and materials with Mark via email (10:03)\nObtain and send appliance cut sheets (microwave, fridge, ADA dishwasher) to Mark for kitchen coordinate openings (16:36)\nSend plumber’s sink submittal documents to Mark to clarify installation details (26:19)\nSupply superintendent’s name and phone number to Mark to facilitate site communication (28:29)\nSend contract documents to Mark for signature to formalize work agreement (31:27)\nProvide upcoming Goodwill project drawings for another location to Mark for review and potential bidding (33:34)"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Weekly OPS (AJ & Enzo)\" - 2026-02-09T19:30:00+00:00]",
+            "id": "01KGF7829ET84JCY7P7X009X7R",
+            "title": "Weekly OPS (AJ & Enzo)",
+            "date": "2026-02-09T19:30:00+00:00",
+            "project": "Union Collective",
+            "projectId": 1009,
+            "participants": "mcalcetero@alleatogroup.com, bclymer@alleatogroup.com, jdawson@alleatogroup.com, ataylor@alleatogroup.com, eandrade@alleatogroup.com, aortiz@alleatogroup.com, fireflies@alleatogroup.com, bclymer@alleatogroup.com, jdawson@alleatogroup.com, ataylor@alleatogroup.com, eandrade@alleatogroup.com, aortiz@alleatogroup.com, fireflies@alleatogroup.com",
+            "summary": "🏗️ 440 Condos Project: Client appraisal pending; HVAC pricing needs adjustment for fire sprinkler work following design changes.\n📑 Bid Management: Bids for Goodwill Olives and Road expected after drawings arrive on February 11; complete scope sheets essential.\n⏰ Project Timelines: Ace Hardware meeting next week; optimistic about Champagne project decision after previous positive meeting.\n👥 Resource Distribution: Nick to support PM tasks for Illinois Goodwill projects; Enzo managing scope sheets and bid coordination efficiently.\n🏢 Design Focus: Local firms prioritized for Union Collective MEP design due to collaboration needs; negative past experience with Spencer Engineering noted.\n📈 Market Awareness: AI's impact on staffing discussed; ongoing upgrades aim to enhance workplace environ",
+            "actionItems": "Plug Goodwill Olives and Road drawings into Building Connected and send to selected subs upon receipt (03:25)\nWork on detailed scope sheets for Goodwill Brookville project to enable bid solicitation (18:00)\nUpdate project folder status for estimate sent out (45:20)\nProvide finalized site layout info and initiate contact with local MEP design firm for Union Collective project (05:00)\nFollow up with Jim Parker regarding potential travel schedule and project updates (10:20)\nOversee combining project management cost summaries for 440 Condos including super/PM labor and cleanup (40:40)\nDiscuss MEP design options with Jerome in design meeting; assess subcontractor candidates and pricing (03:50)\nPrepare for Ace Hardware Missouri meeting next week (15:00)\nCoordinate with Nick to assess scope gaps and initiate subs outreach on Goodwill Illinois projects (26:40)\nComplete modified bid submissions for Bella Vegas and Bella Maryland projects to client (29:10)\nFinalize fire alarm pricing coordination and construction timeline for Wilmer Texas project (24:00)\nText Brian to acknowledge delay on Bella Vegas and Maryland bids (29:50)\nResume sending out sprinkler job estimates by Friday the 13th as planned (19:30)"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Weekly Company Operations Meeting\" - 2025-08-11T00:00:00+00:00]",
+            "id": "16693ad0-695f-41bc-ac36-edb6c54fa74c",
+            "title": "Weekly Company Operations Meeting",
+            "date": "2025-08-11T00:00:00+00:00",
+            "project": "Westfield Collective",
+            "projectId": 43,
+            "participants": null,
+            "summary": "**Executive Summary of Weekly Company Operations Meeting**\n\n**Meeting Purpose and Key Participants**  \nThe Weekly Company Operations Meeting was held on October 10, 2023, with the primary objective of reviewing ongoing projects, addressing operational challenges, and aligning on strategic initiatives for the upcoming quarter. Key participants included Sarah Thompson, Chief Operations Officer; Mark Johnson, Head of Product Development; Lisa Chen, Director of Marketing; and Tom Rivera, Financial Analyst. The meeting aimed to facilitate cross-departmental communication and ensure that all teams are aligned with the company's operational goals.\n\n**Main Topics Discussed**  \nThe meeting covered several critical topics, including the status of the new product launch scheduled for November 15, 202",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Weekly Company Operations Meeting\" - 2025-02-24T00:00:00+00:00]",
+            "id": "693489ba-2ffe-49c6-aeb7-2d7d3008d23c",
+            "title": "Weekly Company Operations Meeting",
+            "date": "2025-02-24T00:00:00+00:00",
+            "project": null,
+            "projectId": 25108,
+            "participants": null,
+            "summary": "### Executive Summary of Weekly Company Operations Meeting\n\n**Meeting Purpose and Key Participants**  \nThe Weekly Company Operations Meeting convened to discuss ongoing projects, address operational challenges, and streamline task management. Key participants included Jesse Ataylor, Nick Jepson, Maria Calcetero, and Brandon Clymer, among others. The meeting aimed to enhance communication regarding project statuses and allocate responsibilities effectively.\n\n**Main Topics Discussed**  \nThe discussion primarily revolved around project management tools and the need for a more efficient way to track assignments. Jesse Ataylor proposed the idea of filtering tasks by individual team members to simplify the overview of responsibilities. The team also addressed specific projects, including the per",
+            "actionItems": null
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "toolName": "searchMeetingsByTopic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "topic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "commit"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "ments"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": " this"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": " past"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": " week"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": " Brandon"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": " C"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "ly"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "mer"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": " bc"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "ly"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "mer"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": " said"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": " I"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": " will"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": " I'll"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": " handle"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": " I'll"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": " send"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "10"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "toolName": "searchMeetingsByTopic",
+      "input": {
+        "topic": "commitments this past week Brandon Clymer bclymer user said I will I'll handle I'll send",
+        "projectId": 0,
+        "projectName": "",
+        "maxResults": 10
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_2WxGk2tKX7lakYqpuEsfaVdQ",
+      "output": {
+        "searchScope": "All projects",
+        "topic": "commitments this past week Brandon Clymer bclymer user said I will I'll handle I'll send",
+        "totalResults": 10,
+        "results": [
+          {
+            "sourceRef": "[Source: Meeting - \"Email: Re: A Commitment has been shared with you for 25-103 Niemann Foods TI\" - 2026-05-12T00:00:00+00:00]",
+            "id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHQgM-rAAA=",
+            "title": "Email: Re: A Commitment has been shared with you for 25-103 Niemann Foods TI",
+            "date": "2026-05-12T00:00:00+00:00",
+            "project": "Niemann Foods TI",
+            "projectId": 38,
+            "participants": "Andrew Cannon <acannon@alleatogroup.com>, Blake Schneider <Blake.Schneider@lfp-1.com>",
+            "summary": "The document is an email correspondence regarding a commitment related to the project \"25-103 Niemann Foods TI,\" which involves a change order (CO) and contract adjustments due to material cost escalations. The primary purpose of this email exchange is to facilitate the review, signing, and return of the attached contract by Blake Schneider, President of Central Indiana Legacy Fire Protection, to Andrew Cannon, Assistant Project Manager at Alleato Group.\n\nKey topics discussed include the approval of the commitment, the necessity for a change order due to a $675 increase in material costs that took effect on May 11, 2025, and the urgency of obtaining ACAD drawings for the project to expedite design and ordering processes. The correspondence highlights the importance of addressing material c",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Email: FW: A Commitment has been shared with you for 25-103 Niemann Foods TI\" - 2026-05-12T00:00:00+00:00]",
+            "id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHQf-ZuAAA=",
+            "title": "Email: FW: A Commitment has been shared with you for 25-103 Niemann Foods TI",
+            "date": "2026-05-12T00:00:00+00:00",
+            "project": "Niemann Foods TI",
+            "projectId": 38,
+            "participants": "Blake Schneider <Blake.Schneider@lfp-1.com>, Andrew Cannon <acannon@alleatogroup.com>",
+            "summary": "The document is an email chain regarding a commitment related to the project \"25-103 Niemann Foods TI,\" primarily focusing on contract approval and material cost escalations. The correspondence involves key stakeholders from Legacy Fire Protection and Alleato Group, specifically Blake Schneider, the President of Legacy Fire Protection, and AJ Taylor, a Project Executive at Alleato Group.\n\nKey topics discussed include the approval of a contract commitment, the impact of recent material cost escalations, and the need for updated project documentation. Blake Schneider informs AJ Taylor of a significant increase in material costs amounting to $675, which arose due to escalations effective May 11, 2025. Schneider seeks guidance on how to amend the contract to reflect these changes and requests ",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Teams DM Conversation: 19:5ccd645d-\" - 2026-05-11T00:00:00+00:00]",
+            "id": "teamsdm_fa6033a35c57ae68_2026-05-11",
+            "title": "Teams DM Conversation: 19:5ccd645d-",
+            "date": "2026-05-11T00:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": "Brandon Clymer, bclymer@alleatogroup.com",
+            "summary": "The document is a transcript of a Teams direct message conversation dated May 11, 2026, primarily between Brandon Clymer and Jazmin Gaona. The conversation revolves around the sharing of documents requested by Sarah during a Trust meeting. This informal communication highlights the importance of timely document distribution and proper email etiquette, specifically regarding the inclusion of recipients in correspondence.\n\nKey topics discussed include the status of the documents that were supposed to be sent to Sarah and the oversight regarding the CC (carbon copy) in the email. Brandon inquires if he was included in the email communication, to which Jazmin responds that she had CC'd Maria but mistakenly omitted Brandon. This exchange emphasizes the need for clarity and accountability in tea",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Teams DM Conversation: 19:9107cc15-\" - 2026-05-07T00:00:00+00:00]",
+            "id": "teamsdm_c1059031cc3cc2f8_2026-05-07",
+            "title": "Teams DM Conversation: 19:9107cc15-",
+            "date": "2026-05-07T00:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": "Alec Wehner, bclymer@alleatogroup.com",
+            "summary": "The document is a transcript of a direct message conversation on Microsoft Teams, dated May 7, 2026, between Brandon Clymer and Alec Wehner. The primary purpose of this conversation is to discuss the tasks related to the Mclane project, specifically focusing on budget entry and document uploads into the job planner system.\n\nKey topics covered in the conversation include the need for entering the Mclane budget into the job planner and uploading the permit set of drawings. Brandon Clymer initiates the conversation by reminding Alec Wehner about these tasks, emphasizing the importance of completing them promptly. Alec acknowledges the requests and assures Brandon that he will complete both tasks on the same day, despite mentioning that it has been a while since he last performed a budget uplo",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Email: Alleato Group - Brandon Clymer contact information\" - 2026-04-20T00:00:00+00:00]",
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQWZUdlAAA=",
+            "title": "Email: Alleato Group - Brandon Clymer contact information",
+            "date": "2026-04-20T00:00:00+00:00",
+            "project": "Exol Morrisville",
+            "projectId": 876,
+            "participants": "[\"Steve Fischer\"]",
+            "summary": "The document is an email from Steve Fischer, Senior Director at Exol, to James Jones, providing contact information for Brandon Clymer, the CEO of Alleato Group. The purpose of this email is to facilitate future communication and collaboration following an in-person meeting between Fischer and Jones.\n\nKey topics covered in the email include the introduction of Brandon Clymer and his role at Alleato Group, as well as his contact details. The email lists Clymer's mobile number (317-760-0088), email address (bclymer@alleatogroup.com), and the company’s website (www.alleatogroup.com). Additionally, it provides the physical addresses of Alleato Group's offices in Indianapolis and St. Petersburg, Florida.\n\nImportant details include the date of the email, April 20, 2026, and the mention of a fort",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Email: Accepted: Union Collective Weekly Project Meeting\" - 2026-03-18T00:00:00+00:00]",
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQCR86gAAA=",
+            "title": "Email: Accepted: Union Collective Weekly Project Meeting",
+            "date": "2026-03-18T00:00:00+00:00",
+            "project": "Union Collective",
+            "projectId": 1009,
+            "participants": "[\"Brandon Clymer\"]",
+            "summary": "The document is an email confirming the acceptance of an invitation to the Union Collective Weekly Project Meeting. It serves as a communication tool to inform the recipient, Mike Ewers, about the scheduling and acknowledgment of participation in the meeting. The email is dated March 18, 2026, and is sent by Brandon Clymer from the All Eato Group.\n\nKey topics addressed in the email include the confirmation of attendance at the weekly project meeting, which is likely focused on collaborative efforts within the Union Collective. While the specific agenda of the meeting is not detailed in the email, the context suggests that it will involve discussions pertinent to ongoing projects and initiatives within the Union Collective framework.\n\nImportant details include the date of the email and the ",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Executive Weekly meeting\" - 2025-12-15T14:00:00+00:00]",
+            "id": "01KCC1QYMV1A6BHR87V28XQPNB",
+            "title": "Executive Weekly meeting",
+            "date": "2025-12-15T14:00:00+00:00",
+            "project": "Alleato Internal Ops",
+            "projectId": 90,
+            "participants": "{\"mcalcetero@alleatogroup.com,bclymer@alleatogroup.com\",bclymer@alleatogroup.com}",
+            "summary": "The team discussed strategies to enhance Brandon Clymer's LinkedIn presence by increasing his connections to at least 1,000. Maria Calcetero will manage connection requests, prioritizing engagements with CEOs and business owners while filtering out job seekers. Additionally, the California project portal showed minimal activity, prompting follow-ups and an upcoming event where lunch will be provided. The team is transitioning to an automated timesheet system in Notion for better payroll efficiency and has prepared job postings for direct hiring on Indeed and LinkedIn. Finally, content updates for Brandon's profile are pending, aiming to boost his online authority and engagement.",
+            "actionItems": "{}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Executive Weekly meeting\" - 2025-09-22T00:00:00+00:00]",
+            "id": "42fd56e0-e0d6-4e06-884a-0bb35eb953ef",
+            "title": "Executive Weekly meeting",
+            "date": "2025-09-22T00:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": null,
+            "summary": "- Glenn's PTO discrepancies revealed through Prisma; system shows 65 available hours while actual usage is 41 hours, indicating a malfunction affecting multiple employees.\n- Half-day PTO request on September 11th missing; incidents of no-shows documented for September 15th.\n- Ryder Cup event preparations confirmed with finalized transportation and accommodations; 6 tickets available via SeatGeek.\n- Joshua's travel arrangements impacted by single-engine aircraft rejection; alternative option is a 1 PM American Airlines flight from Charlotte.\n- Pendings: August statement documentation from Jose requires Brandonâs attention to finalize.\n- Captive insurance paperwork completed and awaiting confirmation; 2024 tax documentation needs additional charity paperwork.\n- Weekly report formatting mee",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Alleato Budget demo\" - 2025-04-23T00:00:00+00:00]",
+            "id": "3f92cc19-85d5-40b5-a33f-9e3c032bb382",
+            "title": "Alleato Budget demo",
+            "date": "2025-04-23T00:00:00+00:00",
+            "project": "Alleato Finance",
+            "projectId": 60,
+            "participants": null,
+            "summary": "### Executive Summary: Alleato Budget Demo Meeting\n\n**Meeting Purpose and Key Participants**  \nThe Alleato Budget demo meeting was convened to address specific intricacies between Acumatica and Job Planner, particularly focusing on the synchronization of project tasks and budget management. Key participants included Evan Schulte, G. DuCharme, B. Clymer, J. Mendez, F. Njie, A. Taylor, and Glenn. The meeting aimed to clarify existing issues related to project task creation and associated costs within the Acumatica system.\n\n**Main Topics Discussed**  \nThe discussion centered around the synchronization of project tasks between Job Planner and Acumatica, specifically the creation of default project tasks when budgets are pushed from Job Planner. J. Mendez highlighted issues with costs being inc",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Weekly Company Operations Meeting\" - 2025-02-24T00:00:00+00:00]",
+            "id": "693489ba-2ffe-49c6-aeb7-2d7d3008d23c",
+            "title": "Weekly Company Operations Meeting",
+            "date": "2025-02-24T00:00:00+00:00",
+            "project": null,
+            "projectId": 25108,
+            "participants": null,
+            "summary": "### Executive Summary of Weekly Company Operations Meeting\n\n**Meeting Purpose and Key Participants**  \nThe Weekly Company Operations Meeting convened to discuss ongoing projects, address operational challenges, and streamline task management. Key participants included Jesse Ataylor, Nick Jepson, Maria Calcetero, and Brandon Clymer, among others. The meeting aimed to enhance communication regarding project statuses and allocate responsibilities effectively.\n\n**Main Topics Discussed**  \nThe discussion primarily revolved around project management tools and the need for a more efficient way to track assignments. Jesse Ataylor proposed the idea of filtering tasks by individual team members to simplify the overview of responsibilities. The team also addressed specific projects, including the per",
+            "actionItems": null
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "toolName": "searchMeetingsByTopic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "topic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "past"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": " week"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": " meeting"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": " commitments"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": " Brandon"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": " C"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "ly"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "mer"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": " bc"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "ly"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "mer"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "08"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "10"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "toolName": "searchMeetingsByTopic",
+      "input": {
+        "topic": "past week meeting commitments Brandon Clymer bclymer 2026-05-08 to 2026-05-14",
+        "projectId": 0,
+        "projectName": "",
+        "maxResults": 10
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_py5jcZ1WRVbTiUn2A0kS5TSK",
+      "output": {
+        "searchScope": "All projects",
+        "topic": "past week meeting commitments Brandon Clymer bclymer 2026-05-08 to 2026-05-14",
+        "totalResults": 1,
+        "results": [
+          {
+            "sourceRef": "[Source: Meeting - \"Weekly OPS (Estimators)\" - 2026-05-12T20:00:00+00:00]",
+            "id": "01KRC96D5XYZTC6SB2C566F0AB",
+            "title": "Weekly OPS (Estimators)",
+            "date": "2026-05-12T20:00:00+00:00",
+            "project": "Uniqlo Phillipsburg NJ",
+            "projectId": 31,
+            "participants": "{\"mcalcetero@alleatogroup.com,bclymer@alleatogroup.com,bwright@alleatogroup.com,jdawson@alleatogroup.com,eandrade@alleatogroup.com,jrichardson@alleatogroup.com,fireflies@alleatogroup.com,dfranklin@alleatogroup.com\",bclymer@alleatogroup.com,bwright@alleatogroup.com,jdawson@alleatogroup.com,eandrade@alleatogroup.com,jrichardson@alleatogroup.com,fireflies@alleatogroup.com,dfranklin@alleatogroup.com}",
+            "summary": "The meeting was aimed at aligning teams on the Union project, where conventional structural steel was chosen for its cost-effectiveness and reliability over pre-engineered metal buildings, despite some lingering uncertainties regarding exterior finishes. Design elements such as wood trusses and roofing options are due for pricing by May 20, while the exterior cladding is under review pending PUD approval. Traffic studies and site layout discussions are scheduled for upcoming leadership meetings, particularly the one with the owner on May 14. Concerning bids, multiple packages are due soon, with proactive efforts to ensure timely submissions. New project managers and engineers will join the team next week to support ongoing projects, and communication protocols have been emphasized to maint",
+            "actionItems": "{}"
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "toolName": "searchMeetingsByTopic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "topic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "commit"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "ments"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": " made"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": " by"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": " Brandon"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "/user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": " in"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": " meetings"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": " during"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": " past"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": " week"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "10"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "toolName": "searchMeetingsByTopic",
+      "input": {
+        "topic": "commitments made by Brandon/user in meetings during past week",
+        "projectId": 0,
+        "projectName": "",
+        "maxResults": 10
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_dkySXUg38uJPTMK1mvgkHwFL",
+      "output": {
+        "searchScope": "All projects",
+        "topic": "commitments made by Brandon/user in meetings during past week",
+        "totalResults": 10,
+        "results": [
+          {
+            "sourceRef": "[Source: Meeting - \"Teams DM Conversation: 19:c4beb912-\" - 2026-05-08T00:00:00+00:00]",
+            "id": "teamsdm_b47843f759515cdb_2026-05-08",
+            "title": "Teams DM Conversation: 19:c4beb912-",
+            "date": "2026-05-08T00:00:00+00:00",
+            "project": "Exol Morrisville",
+            "projectId": 876,
+            "participants": "Archon, Unknown, bclymer@alleatogroup.com",
+            "summary": "The document is a Teams Direct Message conversation dated May 8, 2026, serving as a daily operating brief for an individual named Brandon. It outlines critical items requiring attention, ongoing issues, and scheduled project updates. The brief is structured to provide a clear overview of tasks and priorities for the day, facilitating effective communication and action planning within the team.\n\nKey topics in the document include three items that need immediate attention, one item waiting on external input, and updates on three ongoing projects. The urgent matters involve resolving an insurance, Certificate of Insurance (COI), or permit issue related to \"178 Superior Beverae Exotec,\" confirming payment release details for \"60 Alleato Finance,\" and ensuring follow-through on a finance thread",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Rob and Brandon - Connect for this week & Next steps\" - 2026-04-28T14:30:00+00:00]",
+            "id": "01KPRSV73C0WCCZJV0GH7KGB8Z",
+            "title": "Rob and Brandon - Connect for this week & Next steps",
+            "date": "2026-04-28T14:30:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": "{\"rob@theceoadvisor.com,rslee333@gmail.com,bclymer@alleatogroup.com\",rslee333@gmail.com,bclymer@alleatogroup.com}",
+            "summary": "The meeting led to the assignment of Brandon to reconnect with Maria to either reschedule or replace an existing meeting. Rob Lee emphasized the importance of this action to maintain meeting continuity and address any scheduling conflicts. Fireflies AI highlighted a limitation in its abilities, stating it cannot create tasks automatically due to lack of access, necessitating manual entry into the task tracking system. This gap underscores the need for human intervention to ensure the task is logged properly. The overall aim is to facilitate timely follow-up to prevent delays in collaboration and project progress.",
+            "actionItems": "{}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Alleato Quarterly Meeting Schedule - Brainstorm\" - 2026-04-08T18:00:00+00:00]",
+            "id": "01KNPQQ1PJ1CW12JC9YXA0K3TS",
+            "title": "Alleato Quarterly Meeting Schedule - Brainstorm",
+            "date": "2026-04-08T18:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": "{\"aortiz@alleatogroup.com,mcalcetero@alleatogroup.com\",mcalcetero@alleatogroup.com}",
+            "summary": "The team organized a quarterly meeting initiative to begin on April 24, focusing on project updates, financials, new hires, and departmental improvements, driven by Jesse's desire for enhanced communication and cohesion. Ashley and Maria discussed scheduling on Thursdays to ensure maximum attendance, while Brandon confirmed his availability for the two-hour meeting. A preliminary agenda will be drafted and communicated two weeks prior, with a reminder one week before the meeting. The team also reviewed the Nevada license approval expected soon, introduced a new transaction coding requirement for better budget tracking, and prepared a detailed onboarding plan for new hire Jasmine to facilitate her smooth integration into the team, reflecting a culture of mentorship and communication.",
+            "actionItems": "{}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Linkedin recruitment Brandon\" - 2026-03-20T18:00:00+00:00]",
+            "id": "01KM642TPPW611G02JG0T6K5XM",
+            "title": "Linkedin recruitment Brandon",
+            "date": "2026-03-20T18:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": "{\"sjohnson@alleatogroup.com,mcalcetero@alleatogroup.com\",sjohnson@alleatogroup.com}",
+            "summary": "The discussion revolved around boosting Brandon's LinkedIn profile to engage potential candidates in commercial construction, utilizing tools like Notion and Sales Navigator. The marketing team collaborated to enhance Brandon's visibility through leadership content, which generated significant impressions and positioned him as a thought leader. Ongoing management processes were outlined to monitor connection requests and maintain engagement. Additionally, the team addressed logistical challenges regarding vehicle inspections, discovered temporary plates for trucks, and established coordination plans. Efforts to reorganize recruitment materials and enhance office comfort were also emphasized, including plans to order bottled water and an air diffuser to improve the workspace environment.",
+            "actionItems": "{}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Executive Weekly meeting\" - 2025-11-03T00:00:00+00:00]",
+            "id": "04063f60-943f-4f68-81b2-85e96ce5c930",
+            "title": "Executive Weekly meeting",
+            "date": "2025-11-03T00:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": "**Pending Confirmations:** Flight and hotel arrangements in progress with 2 confirmations needed from Jim, Keva, and Mike Parsons., **New Accounting Code:** Introduced code 7510 for uncertain project expenses, simplifying future transaction classification., **Operational Workflows:** Ashley awaits Brandon's approval on LinkedIn workflows; Maria supports accounting meeting preparations., **Aspire Health Contacts Verified:** CEO's email confirmed; alternative contact found for CFO to aid payment discussions., **Video Content Schedule:** Brandon to record management video by Wednesday; ongoing collaboration with Sophia for Wealth Advisor projects.",
+            "summary": "- **California Trip Ready:** 11 attendees confirmed to travel tomorrow; Maria will send final documents for accuracy.\n\n- **Pending Confirmations:** Flight and hotel arrangements in progress with 2 confirmations needed from Jim, Keva, and Mike Parsons.\n\n- **New Accounting Code:** Introduced code 7510 for uncertain project expenses, simplifying future transaction classification.\n\n- **Operational Workflows:** Ashley awaits Brandon's approval on LinkedIn workflows; Maria supports accounting meeting preparations.\n\n- **Aspire Health Contacts Verified:** CEO's email confirmed; alternative contact found for CFO to aid payment discussions.\n\n- **Video Content Schedule:** Brandon to record management video by Wednesday; ongoing collaboration with Sophia for Wealth Advisor projects.",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Executive Weekly meeting\" - 2025-10-20T00:00:00+00:00]",
+            "id": "95e895a8-695f-427f-865b-e8f520c19699",
+            "title": "Executive Weekly meeting",
+            "date": "2025-10-20T00:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": null,
+            "summary": "- The team is set to finalize client deliverables for California this week, awaiting critical approval from Steve to proceed with exams without further corrections.  \n- Brandon resolved Amazon delivery issues by updating the delivery address, ensuring materials arrive today and improving workflow continuity.  \n- New estimator onboarding with Ashley is scheduled, aiming to minimize ramp-up time for new hires and enhance integration into workflows.  \n- Candidate review is in progress, with Brandon expected to approve shortlisted candidates today to speed up hiring decisions.  \n- Recurring errors in vacation and schedule tracking must be addressed, emphasizing the need for a root cause analysis to prevent payroll confusion.  \n- Maria has escalated recurring scheduling discrepancies to Angela ",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Executive Weekly meeting\" - 2025-09-15T00:00:00+00:00]",
+            "id": "4dbb901f-c928-45a6-9337-8e0bb4dd7c38",
+            "title": "Executive Weekly meeting",
+            "date": "2025-09-15T00:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": "bclymer@alleatogroup.com,mcalcetero@alleatogroup.com, bclymer@alleatogroup.com",
+            "summary": "- Updated travel policy shifts from company-managed accommodation to a direct reimbursement system to mitigate liability issues for damages, enhancing employee flexibility.\n- Brandon to review and sign all personal tax returns, with a dedicated folder structure established for efficient document organi",
+            "actionItems": "*Brandon Clymer**"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Executive Weekly meeting\" - 2025-07-23T00:00:00+00:00]",
+            "id": "96c336bf-4f90-4b2f-aa55-ed51bf05c965",
+            "title": "Executive Weekly meeting",
+            "date": "2025-07-23T00:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": null,
+            "summary": "### Executive Summary of the Executive Weekly Meeting\n\n**Meeting Purpose and Key Participants**  \nThe Executive Weekly Meeting was convened to discuss ongoing projects, updates on operational matters, and address any pressing issues within the organization. Key participants included Brendan (Speaker 1) and Bclymer, who led the discussion on various topics, including project timelines, licensing issues, and IT security.\n\n**Main Topics Discussed**  \nThe meeting covered several significant topics, including the status of a ticket from Georgia regarding a merger, updates on events at the aquarium and zoo in Tampa, and the ongoing licensing process in California and Puerto Rico. Bclymer reported that the website had been updated with necessary licenses and that they were awaiting a form from Ar",
+            "actionItems": null
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"30 Minute Meeting - Brandon Clymer and Bill Upleger\" - 2024-11-07T00:00:00+00:00]",
+            "id": "369c66ee-da16-4dde-a6ec-86566989e5c4",
+            "title": "30 Minute Meeting - Brandon Clymer and Bill Upleger",
+            "date": "2024-11-07T00:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": "Meeting ID, Date, Duration, Transcript, Participants, Bclymer",
+            "summary": "### Executive Summary of Meeting: Brandon Clymer and Bill Upleger\n\n**Meeting Purpose and Key Participants**  \nThe meeting, held on [insert date], was convened primarily between Brandon Clymer and Bill Upleger to discuss ongoing projects and address any immediate concerns. The session was intended to facilitate communication and ensure alignment on key initiatives.\n\n**Main Topics Discussed**  \nDuring the meeting, Brandon Clymer experienced technical difficulties, which delayed the conversation. The initial focus was on project updates and the status of deliverables. Brandon attempted to connect with Bill but faced challenges in hearing him, indicating potential issues with the meeting platform. This prompted Brandon to suggest alternative communication methods, such as a quick phone call, t",
+            "actionItems": ""
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"TWC//Alleato Weekly\" - 2024-07-15T00:00:00+00:00]",
+            "id": "be3a7559-d5df-4071-b7f3-0f9d15b7f390",
+            "title": "TWC//Alleato Weekly",
+            "date": "2024-07-15T00:00:00+00:00",
+            "project": null,
+            "projectId": null,
+            "participants": "Meeting ID, Date, Duration, Transcript, Participants, Bclymer, Edwina, Colej, Acannon, Lbuchanan, Todd",
+            "summary": "### Executive Summary of TWC//Alleato Weekly Meeting\n\n**Meeting Purpose and Key Participants**  \nThe TWC//Alleato Weekly meeting convened to discuss ongoing project developments, specifically focusing on site preparations and responsibilities among team members. Key participants included Brandon Clymer (Bclymer), Edwina (last name not provided), Jesse (Acannon), Andrew (Colej), and Todd (Lbuchanan). The meeting aimed to ensure clarity on roles and timelines as the team progresses through the demolition and renovation phases.\n\n**Main Topics Discussed**  \nThe discussion centered around the current status of the project, including the completion of demolition work, which is expected to conclude within a day. The team reviewed flooring selections, with Todd noting that carpet samples were anti",
+            "actionItems": ""
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "toolName": "searchMeetingsByTopic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "topic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "Br"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "andon"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": " C"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "ly"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "mer"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": " commitments"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": " action"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": " items"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": " meetings"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "08"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "20"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "toolName": "searchMeetingsByTopic",
+      "input": {
+        "topic": "Brandon Clymer commitments action items meetings 2026-05-08 2026-05-14",
+        "projectId": 0,
+        "projectName": "",
+        "maxResults": 20
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_VK11nPTtzuoLcetdr7ohS7cA",
+      "output": {
+        "searchScope": "All projects",
+        "topic": "Brandon Clymer commitments action items meetings 2026-05-08 2026-05-14",
+        "totalResults": 1,
+        "results": [
+          {
+            "sourceRef": "[Source: Meeting - \"Weekly OPS (Estimators)\" - 2026-05-12T20:00:00+00:00]",
+            "id": "01KRC96D5XYZTC6SB2C566F0AB",
+            "title": "Weekly OPS (Estimators)",
+            "date": "2026-05-12T20:00:00+00:00",
+            "project": "Uniqlo Phillipsburg NJ",
+            "projectId": 31,
+            "participants": "{\"mcalcetero@alleatogroup.com,bclymer@alleatogroup.com,bwright@alleatogroup.com,jdawson@alleatogroup.com,eandrade@alleatogroup.com,jrichardson@alleatogroup.com,fireflies@alleatogroup.com,dfranklin@alleatogroup.com\",bclymer@alleatogroup.com,bwright@alleatogroup.com,jdawson@alleatogroup.com,eandrade@alleatogroup.com,jrichardson@alleatogroup.com,fireflies@alleatogroup.com,dfranklin@alleatogroup.com}",
+            "summary": "The meeting was aimed at aligning teams on the Union project, where conventional structural steel was chosen for its cost-effectiveness and reliability over pre-engineered metal buildings, despite some lingering uncertainties regarding exterior finishes. Design elements such as wood trusses and roofing options are due for pricing by May 20, while the exterior cladding is under review pending PUD approval. Traffic studies and site layout discussions are scheduled for upcoming leadership meetings, particularly the one with the owner on May 14. Concerning bids, multiple packages are due soon, with proactive efforts to ensure timely submissions. New project managers and engineers will join the team next week to support ongoing projects, and communication protocols have been emphasized to maint",
+            "actionItems": "{}"
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "toolName": "searchMeetingsByTopic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "topic"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "past"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": " week"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": " meetings"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": " commitments"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": " Brandon"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": " C"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "ly"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "mer"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": " bc"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "ly"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "mer"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "20"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_6BYARIA9AN50aB1FOThEqGLX",
+      "toolName": "searchMeetingsByTopic",
+      "input": {
+        "topic": "past week meetings user commitments Brandon Clymer bclymer",
+        "projectId": 0,
+        "projectName": "",
+        "maxResults": 20
+      }
+    }
+  ],
+  "persistedMetadata": null
+}

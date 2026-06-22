@@ -1,0 +1,36 @@
+{
+  "id": "thought-partner-bid",
+  "intent": "brainstorming",
+  "prompt": "Help me think through whether we should bid on a $4M warehouse renovation in a market we haven't worked in. What are the tradeoffs?",
+  "selectedProjectId": null,
+  "sessionId": "675f76c5-5d80-435d-bfe6-8565e0e06ac2",
+  "sessionLabel": "eval-2026-05-02T10-17-07-154Z-thought-partner-bid",
+  "startedAt": "2026-05-02T10:24:28.194Z",
+  "finishedAt": "2026-05-02T10:24:44.010Z",
+  "durationMs": 94,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d9cc5217-a056-4e55-abb7-4e591a2257d5\",\"timestamp\":\"2026-05-02T10:24:28.287Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d9cc5217-a056-4e55-abb7-4e591a2257d5\",\"timestamp\":\"2026-05-02T10:24:28.287Z\"}",
+      "HTTP 401",
+      "mustInclude missing: \"tradeoff\"",
+      "answer length 210 < min 250"
+    ],
+    "warnings": [],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d9cc5217-a056-4e55-abb7-4e591a2257d5\",\"timestamp\":\"2026-05-02T10:24:28.287Z\"}"
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

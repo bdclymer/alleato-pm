@@ -1,0 +1,69 @@
+{
+  "id": "status-deprecated-feature",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 11486,
+  "question": "How should Ask Alleato explain deprecated behavior?",
+  "mustInclude": [
+    "deprecated"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Ask Alleato should explain deprecated behavior plainly as **an older route, table, or workflow that should not be treated as the current source of truth**.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are fresh and available\n  - `/app/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json`\n  - `/app/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json`\n- Feature registry entry:\n  - **Understand Feature Status** (`app-feature-status-and-limitations`)\n  - Help article: `docs/help/articles/app-feature-status-and-limitations.md`\n- Help article content confirms:\n  - **Deprecated** = “an older route, table, or workflow should not be treated as the current source of truth.”\n\nWhat Ask Alleato should do:\n- Say the behavior is deprecated, not current\n- Point users to the current workflow if known\n- If the current path is unclear, say what was checked and what remains uncertain\n- Avoid claiming a write action is available unless approved action metadata says so\n\nRelevant route/help references:\n- `/ai-assistant`\n- `/docs`\n- Help article: `docs/help/articles/app-feature-status-and-limitations.md`\n\nIf you want, I can also check whether a specific deprecated route or workflow has a documented replacement.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/src/services/agents/app_expert/runtime/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/src/services/agents/app_expert/runtime/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help",
+        "sourceType": "sitemap",
+        "route": "/help",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 11379,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

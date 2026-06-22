@@ -1,0 +1,67 @@
+{
+  "id": "ceo-task-create-schedule-activity",
+  "intent": "action_preview",
+  "prompt": "Add a Gantt task on Westfield for site mobilization starting June 3rd, 5 days, assigned to the field super.",
+  "selectedProjectId": 43,
+  "sessionId": "28b28420-2ace-43b3-8f51-85e30d7b96dd",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-ceo-task-create-schedule-activity",
+  "startedAt": "2026-05-12T19:53:45.026Z",
+  "finishedAt": "2026-05-12T19:54:53.255Z",
+  "durationMs": 52434,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 3,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "assistant message was not persisted to chat_history",
+      "expected required tool 'createTask' to fire",
+      "mustInclude missing: \"Preview\"",
+      "mustInclude missing: \"confirm\"",
+      "mustIncludeAny missing one of: \"mobilization\", \"June\", \"Gantt\", \"schedule\"",
+      "answer length 0 < min 160"
+    ],
+    "warnings": [
+      "expected family 'action_write' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "action_write"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:53:54.623Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:54:35.237Z"
+      }
+    },
+    {
+      "type": "error",
+      "errorText": "I hit a retrieval/generation failure before I could give you a trustworthy strategist answer.\n\nWhat happened: Failed to resolve selected intelligence project: Could not query the database for the schema cache. Retrying.\nWhat I could confirm: I checked 1 source successfully.\nWhat that means: The pinned project context was included, so the failure is in retrieval or generation rather than project selection.\nI still need a successful retrieval pass before I can give a sourced strategic read on: \"Add a Gantt task on Westfield for site mobilization starting June 3rd, 5 days, assigned to the field super.\".\n\nThe right next move is to retry the same question with the project or decision you care about most. If this repeats, the persisted tool trace now shows exactly which source failed instead of leaving the chat blank."
+    }
+  ],
+  "persistedMetadata": null
+}

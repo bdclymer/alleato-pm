@@ -1,0 +1,755 @@
+{
+  "id": "toolcov-read-structured-financial-rows",
+  "intent": "structured_financial",
+  "prompt": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+  "selectedProjectId": 43,
+  "sessionId": "33e566d6-062c-478a-acda-022e831622e8",
+  "sessionLabel": "eval-2026-06-09T14-39-29-493Z-cf9adf03-toolcov-read-structured-financial-rows",
+  "startedAt": "2026-06-09T14:39:31.255Z",
+  "finishedAt": "2026-06-09T14:40:04.758Z",
+  "durationMs": 33185,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 18,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [searchStructuredFinancialRows] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'structured' not represented"
+    ],
+    "observations": [
+      "tools fired: backendDeepAgentProjectStatus, project_lookup, packet_reader, teams_reader, meetings_reader, emails_reader, documents_reader, financials_reader, schedule_reader, rfi_reader, submittal_reader, deepagents_runtime",
+      "backend Deep Agents memory candidates: 0"
+    ],
+    "toolNames": [
+      "backendDeepAgentProjectStatus",
+      "project_lookup",
+      "packet_reader",
+      "teams_reader",
+      "meetings_reader",
+      "emails_reader",
+      "documents_reader",
+      "financials_reader",
+      "schedule_reader",
+      "rfi_reader",
+      "submittal_reader",
+      "deepagents_runtime"
+    ],
+    "familiesHit": [
+      "project",
+      "risk"
+    ],
+    "finalTextLength": 2374,
+    "finalText": "Direct answer\n\nWestfield has three structured budget line rows that mention concrete, totaling $818,612 in original budget. The line items are Foundations, Concrete Subbase, and Concrete Unit Masonry-Block.\n\nEvidence\n\n- Foundations — cost code 03-2000, description “Foundations.Subcontract,” original_amount $652,762.00. Source: `budget_lines` query on Westfield Collective (project 43).\n- Concrete Subbase — cost code 03-2500, description “Concrete Subbase.Subcontract,” original_amount $38,350.00. Source: `budget_lines` query on Westfield Collective (project 43).\n- Concrete Unit Masonry-Block — cost code 04-2200, description “Concrete Unit Masonry-Block.Subcontract,” original_amount $127,500.00. Source: `budget_lines` query on Westfield Collective (project 43).\n- These are the only concrete-related rows returned from the structured financial line search I ran on the budget lines table. Source: `budget_lines` query on Westfield Collective (project 43).\n- Broader project context: Westfield shows $1,204,204 in pending owner change orders and 181 overdue schedule tasks. Source: project budget summary and risk snapshot for Westfield Collective.\n\nWhat this means\n\nThe concrete scope is real and material, but the direct line-item read is still just original budget. I do not have revised, committed, or actual line-level exposure from this table, so this is not a cost overrun read yet. The bigger issue is execution pressure: Westfield is carrying a heavy overdue task load, so any concrete-related field changes or rework could turn into schedule drag fast.\n\nRecommended next steps\n\n- PM / cost lead: pull the concrete cost codes against commitments, change events, and actuals before using these numbers in an owner update.\n- PM: verify whether any of the concrete scope sits inside the $1,204,204 pending owner changes before the next billing or update cycle.\n- Project team: keep an eye on schedule impacts tied to concrete work, because the project’s overdue task stack is already high.\n\nUncertainty\n\n- The `budget_lines` table gives original amounts, not revised/actual/committed line-level exposure.\n- I did not find additional concrete rows beyond the three listed above in the structured line search I ran.\n\nSource coverage note: meetings: missing; rfi: missing; submittal: missing. I did not use unavailable or stale source categories as factual support.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 45000,
+      "maxDurationMs": 120000,
+      "durationMs": 33185
+    }
+  },
+  "expectedToolNames": [
+    "searchStructuredFinancialRows"
+  ],
+  "expectedToolFamilies": [
+    "structured"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: packet_first_with_project",
+        "status": "loading",
+        "timestamp": "2026-06-09T14:39:31.339Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "project-intelligence-packet",
+        "message": "Checking current compiled project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-06-09T14:39:31.434Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Checking Render Deep Agents project intelligence",
+        "status": "loading",
+        "timestamp": "2026-06-09T14:39:31.435Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents project status…",
+        "status": "loading",
+        "timestamp": "2026-06-09T14:39:34.435Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents project status…",
+        "status": "loading",
+        "timestamp": "2026-06-09T14:39:37.434Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents project status…",
+        "status": "loading",
+        "timestamp": "2026-06-09T14:39:40.434Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents project status…",
+        "status": "loading",
+        "timestamp": "2026-06-09T14:39:43.435Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents project status…",
+        "status": "loading",
+        "timestamp": "2026-06-09T14:39:46.435Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents project status…",
+        "status": "loading",
+        "timestamp": "2026-06-09T14:39:49.436Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents project status…",
+        "status": "loading",
+        "timestamp": "2026-06-09T14:39:52.436Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents project status…",
+        "status": "loading",
+        "timestamp": "2026-06-09T14:39:55.437Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents project status…",
+        "status": "loading",
+        "timestamp": "2026-06-09T14:39:58.438Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents project status…",
+        "status": "loading",
+        "timestamp": "2026-06-09T14:40:01.439Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-deep-agent-project-status",
+      "data": {
+        "widget": {
+          "type": "source_evidence_drawer",
+          "id": "deep-agent-project-status-evidence",
+          "title": "Westfield Collective source coverage",
+          "sources": [
+            {
+              "id": "75216a3a-3684-46f9-813f-05cc3e9a7163",
+              "title": "current",
+              "sourceType": "project_record",
+              "date": "2026-06-09T12:45:26.157907+00:00",
+              "snippet": "Westfield Collective is in closeout / activation mode, with grand opening completed or imminent, but several warranty, punch-list, and payment workflow issues still need resolution.",
+              "confidence": "medium"
+            },
+            {
+              "id": "cd227659-a957-4be1-85e8-551498fb0d9c",
+              "title": "manual_gold_standard",
+              "sourceType": "project_record",
+              "date": "2026-04-30T10:01:58.039123+00:00",
+              "snippet": "Westfield Collective has enough current communication coverage to answer as a project advisor, but V1 must label the packet as a working sample and verify formal cost/status values with structured tools.",
+              "confidence": "medium"
+            },
+            {
+              "id": "teamsdm_1764111425482",
+              "title": "Teams DM: Westfield Collective",
+              "sourceType": "teams",
+              "date": "2026-03-24T17:59:42.948666",
+              "snippet": "[Teams Direct Message: Westfield Collective]\n\n[2025-11-25] Chad Tragesser: Brandon just a heads up that we are scheduled to be resurfacing 181 st street tomorrow",
+              "confidence": "medium"
+            },
+            {
+              "id": "teamsdm_1764023817110",
+              "title": "Teams DM: Westfield Collective",
+              "sourceType": "teams",
+              "date": "2026-03-24T17:59:47.735749",
+              "snippet": "[Teams Direct Message: Westfield Collective]\n\n[2025-11-24] Chad Tragesser: I am assuming it was the material that they used on the ceiling at Liberty It is tongue and groove",
+              "confidence": "medium"
+            },
+            {
+              "id": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHjHxFfAAA=",
+              "title": "RE: Alleato Group: Westfield Collective: Roll Up Counter Doors",
+              "sourceType": "email",
+              "date": "2026-06-08T19:29:04.917989+00:00",
+              "snippet": "Subject: RE: Alleato Group: Westfield Collective: Roll Up Counter Doors\nDate: 2026-06-08T12:18:19Z\nFrom: James Wallace <james@midwestgaragedoors.com>\nTo: Andrew Cannon <acannon@alleatogroup.com>\n\nAndrew The rolling door manufacturers have a way of dragging things out so I would not count on them getting back with me today. I will let you know as soon as I hear something. &nbsp; &nbsp; &nbsp; James Wallace Midwest Garage Doors 437 east stop 18 road Greenwood, Indiana 46143 1-317-889-9500 &nbsp; F",
+              "confidence": "medium"
+            },
+            {
+              "id": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHjIAIQAAA=",
+              "title": "Re: Alleato Group: Westfield Collective: Roll Up Counter Doors",
+              "sourceType": "email",
+              "date": "2026-06-08T20:21:06.83308+00:00",
+              "snippet": "Subject: Re: Alleato Group: Westfield Collective: Roll Up Counter Doors\nDate: 2026-06-08T11:56:51Z\nFrom: Andrew Cannon <acannon@alleatogroup.com>\nTo: James Wallace <james@midwestgaragedoors.com>\n\nJames,&nbsp; Understood, I will keep my eye out for a call or email. It would be great to have an update back today or tomorrow if possible.&nbsp; Thank you, Andrew Cannon&nbsp; &nbsp; Assistant Project Manager at Alleato Group Mobile &nbsp;317.315.3968 | &nbsp; Email &nbsp; acannon@alleatogroup.com Web",
+              "confidence": "medium"
+            },
+            {
+              "id": "outlook_attachment_dec0f859953cb5837a9002f1_11f706836d290348363b538c",
+              "title": "Contract Change Order PC-2403-0001 (31).pdf",
+              "sourceType": "document",
+              "date": "2026-06-08T21:42:44.689941+00:00",
+              "snippet": "Attachment from Outlook email: Westfield Collective: Added Electrical for exterior walk in cooler",
+              "confidence": "medium"
+            },
+            {
+              "id": "outlook_attachment_6e0c03588ff10d0e6effdae9_8c74107692acfff21d0498d8",
+              "title": "06.04.26.Alleato Westfield Counter Shutter Drawing 1.pdf",
+              "sourceType": "document",
+              "date": "2026-06-08T20:41:19.774417+00:00",
+              "snippet": "Attachment from Outlook email: Re: Alleato Group: Westfield Collective: Roll Up Counter Doors",
+              "confidence": "medium"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-deep-agent-project-status"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-deep-agent-project-status",
+      "delta": "Direct answer\n\nWestfield has three structured budget line rows that mention concrete, totaling $818,612 in original budget. The line items are Foundations, Concrete Subbase, and Concrete Unit Masonry-Block.\n\nEvidence\n\n- Foundations — cost code 03-2000, description “Foundations.Subcontract,” original_amount $652,762.00. Source: `budget_lines` query on Westfield Collective (project 43).\n- Concrete Subbase — cost code 03-2500, description “Concrete Subbase.Subcontract,” original_amount $38,350.00. Source: `budget_lines` query on Westfield Collective (project 43).\n- Concrete Unit Masonry-Block — cost code 04-2200, description “Concrete Unit Masonry-Block.Subcontract,” original_amount $127,500.00. Source: `budget_lines` query on Westfield Collective (project 43).\n- These are the only concrete-related rows returned from the structured financial line search I ran on the budget lines table. Source: `budget_lines` query on Westfield Collective (project 43).\n- Broader project context: Westfield shows $1,204,204 in pending owner change orders and 181 overdue schedule tasks. Source: project budget summary and risk snapshot for Westfield Collective.\n\nWhat this means\n\nThe concrete scope is real and material, but the direct line-item read is still just original budget. I do not have revised, committed, or actual line-level exposure from this table, so this is not a cost overrun read yet. The bigger issue is execution pressure: Westfield is carrying a heavy overdue task load, so any concrete-related field changes or rework could turn into schedule drag fast.\n\nRecommended next steps\n\n- PM / cost lead: pull the concrete cost codes against commitments, change events, and actuals before using these numbers in an owner update.\n- PM: verify whether any of the concrete scope sits inside the $1,204,204 pending owner changes before the next billing or update cycle.\n- Project team: keep an eye on schedule impacts tied to concrete work, because the project’s overdue task stack is already high.\n\nUncertainty\n\n- The `budget_lines` table gives original amounts, not revised/actual/committed line-level exposure.\n- I did not find additional concrete rows beyond the three listed above in the structured line search I ran.\n\nSource coverage note: meetings: missing; rfi: missing; submittal: missing. I did not use unavailable or stale source categories as factual support."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-deep-agent-project-status"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Render Deep Agents project answer returned",
+        "status": "success",
+        "timestamp": "2026-06-09T14:40:04.409Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": null,
+    "data_parts": [
+      {
+        "id": "assistant-widget-deep-agent-project-status",
+        "data": {
+          "widget": {
+            "id": "deep-agent-project-status-evidence",
+            "type": "source_evidence_drawer",
+            "title": "Westfield Collective source coverage",
+            "sources": [
+              {
+                "id": "75216a3a-3684-46f9-813f-05cc3e9a7163",
+                "date": "2026-06-09T12:45:26.157907+00:00",
+                "title": "current",
+                "snippet": "Westfield Collective is in closeout / activation mode, with grand opening completed or imminent, but several warranty, punch-list, and payment workflow issues still need resolution.",
+                "confidence": "medium",
+                "sourceType": "project_record"
+              },
+              {
+                "id": "cd227659-a957-4be1-85e8-551498fb0d9c",
+                "date": "2026-04-30T10:01:58.039123+00:00",
+                "title": "manual_gold_standard",
+                "snippet": "Westfield Collective has enough current communication coverage to answer as a project advisor, but V1 must label the packet as a working sample and verify formal cost/status values with structured tools.",
+                "confidence": "medium",
+                "sourceType": "project_record"
+              },
+              {
+                "id": "teamsdm_1764111425482",
+                "date": "2026-03-24T17:59:42.948666",
+                "title": "Teams DM: Westfield Collective",
+                "snippet": "[Teams Direct Message: Westfield Collective]\n\n[2025-11-25] Chad Tragesser: Brandon just a heads up that we are scheduled to be resurfacing 181 st street tomorrow",
+                "confidence": "medium",
+                "sourceType": "teams"
+              },
+              {
+                "id": "teamsdm_1764023817110",
+                "date": "2026-03-24T17:59:47.735749",
+                "title": "Teams DM: Westfield Collective",
+                "snippet": "[Teams Direct Message: Westfield Collective]\n\n[2025-11-24] Chad Tragesser: I am assuming it was the material that they used on the ceiling at Liberty It is tongue and groove",
+                "confidence": "medium",
+                "sourceType": "teams"
+              },
+              {
+                "id": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHjHxFfAAA=",
+                "date": "2026-06-08T19:29:04.917989+00:00",
+                "title": "RE: Alleato Group: Westfield Collective: Roll Up Counter Doors",
+                "snippet": "Subject: RE: Alleato Group: Westfield Collective: Roll Up Counter Doors\nDate: 2026-06-08T12:18:19Z\nFrom: James Wallace <james@midwestgaragedoors.com>\nTo: Andrew Cannon <acannon@alleatogroup.com>\n\nAndrew The rolling door manufacturers have a way of dragging things out so I would not count on them getting back with me today. I will let you know as soon as I hear something. &nbsp; &nbsp; &nbsp; James Wallace Midwest Garage Doors 437 east stop 18 road Greenwood, Indiana 46143 1-317-889-9500 &nbsp; F",
+                "confidence": "medium",
+                "sourceType": "email"
+              },
+              {
+                "id": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHjIAIQAAA=",
+                "date": "2026-06-08T20:21:06.83308+00:00",
+                "title": "Re: Alleato Group: Westfield Collective: Roll Up Counter Doors",
+                "snippet": "Subject: Re: Alleato Group: Westfield Collective: Roll Up Counter Doors\nDate: 2026-06-08T11:56:51Z\nFrom: Andrew Cannon <acannon@alleatogroup.com>\nTo: James Wallace <james@midwestgaragedoors.com>\n\nJames,&nbsp; Understood, I will keep my eye out for a call or email. It would be great to have an update back today or tomorrow if possible.&nbsp; Thank you, Andrew Cannon&nbsp; &nbsp; Assistant Project Manager at Alleato Group Mobile &nbsp;317.315.3968 | &nbsp; Email &nbsp; acannon@alleatogroup.com Web",
+                "confidence": "medium",
+                "sourceType": "email"
+              },
+              {
+                "id": "outlook_attachment_dec0f859953cb5837a9002f1_11f706836d290348363b538c",
+                "date": "2026-06-08T21:42:44.689941+00:00",
+                "title": "Contract Change Order PC-2403-0001 (31).pdf",
+                "snippet": "Attachment from Outlook email: Westfield Collective: Added Electrical for exterior walk in cooler",
+                "confidence": "medium",
+                "sourceType": "document"
+              },
+              {
+                "id": "outlook_attachment_6e0c03588ff10d0e6effdae9_8c74107692acfff21d0498d8",
+                "date": "2026-06-08T20:41:19.774417+00:00",
+                "title": "06.04.26.Alleato Westfield Counter Shutter Drawing 1.pdf",
+                "snippet": "Attachment from Outlook email: Re: Alleato Group: Westfield Collective: Roll Up Counter Doors",
+                "confidence": "medium",
+                "sourceType": "document"
+              }
+            ]
+          }
+        },
+        "type": "data-assistant-widget"
+      }
+    ],
+    "tool_trace": [
+      {
+        "tool": "backendDeepAgentProjectStatus",
+        "agent": "frontend-ai-assistant",
+        "input": {
+          "message": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+          "selectedProjectId": 43
+        },
+        "detail": null,
+        "status": "success",
+        "toolName": "backendDeepAgentProjectStatus",
+        "timestamp": "2026-06-09T14:40:04.211Z",
+        "durationMs": 32775
+      },
+      {
+        "tool": "project_lookup",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+          "selectedProjectId": 43
+        },
+        "detail": "Resolved project row before contract-spike response.",
+        "status": "success",
+        "toolName": "project_lookup",
+        "timestamp": "2026-06-09T14:40:04.211Z",
+        "durationMs": 1332
+      },
+      {
+        "tool": "packet_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+          "selectedProjectId": 43
+        },
+        "detail": "Found 2 current intelligence packet row(s) across 1 target(s).",
+        "status": "success",
+        "toolName": "packet_reader",
+        "timestamp": "2026-06-09T14:40:04.211Z",
+        "durationMs": 716
+      },
+      {
+        "tool": "teams_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+          "selectedProjectId": 43
+        },
+        "detail": "Read-only probe found 37 teams row(s) from `document_metadata`.",
+        "status": "success",
+        "toolName": "teams_reader",
+        "timestamp": "2026-06-09T14:40:04.211Z",
+        "durationMs": 943
+      },
+      {
+        "tool": "meetings_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+          "selectedProjectId": 43
+        },
+        "detail": "No meetings rows found in `document_metadata` for this project.",
+        "status": "success",
+        "toolName": "meetings_reader",
+        "timestamp": "2026-06-09T14:40:04.211Z",
+        "durationMs": 1056
+      },
+      {
+        "tool": "emails_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+          "selectedProjectId": 43
+        },
+        "detail": "Read-only probe found 100 emails row(s) from `project_emails`.",
+        "status": "success",
+        "toolName": "emails_reader",
+        "timestamp": "2026-06-09T14:40:04.211Z",
+        "durationMs": 811
+      },
+      {
+        "tool": "documents_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+          "selectedProjectId": 43
+        },
+        "detail": "Read-only probe found 26 documents row(s) from `project_documents`.",
+        "status": "success",
+        "toolName": "documents_reader",
+        "timestamp": "2026-06-09T14:40:04.211Z",
+        "durationMs": 190
+      },
+      {
+        "tool": "financials_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+          "selectedProjectId": 43
+        },
+        "detail": "Read-only probe found 100 financials row(s) from `acumatica_project_budgets`.",
+        "status": "success",
+        "toolName": "financials_reader",
+        "timestamp": "2026-06-09T14:40:04.211Z",
+        "durationMs": 424
+      },
+      {
+        "tool": "schedule_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+          "selectedProjectId": 43
+        },
+        "detail": "Read-only probe found 100 schedule row(s) from `schedule_tasks`.",
+        "status": "success",
+        "toolName": "schedule_reader",
+        "timestamp": "2026-06-09T14:40:04.211Z",
+        "durationMs": 194
+      },
+      {
+        "tool": "rfi_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+          "selectedProjectId": 43
+        },
+        "detail": "No rfi rows found in `rfis` for this project.",
+        "status": "success",
+        "toolName": "rfi_reader",
+        "timestamp": "2026-06-09T14:40:04.211Z",
+        "durationMs": 122
+      },
+      {
+        "tool": "submittal_reader",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+          "selectedProjectId": 43
+        },
+        "detail": "No submittal rows found in `submittals` for this project.",
+        "status": "success",
+        "toolName": "submittal_reader",
+        "timestamp": "2026-06-09T14:40:04.211Z",
+        "durationMs": 113
+      },
+      {
+        "tool": "deepagents_runtime",
+        "agent": "project-intelligence-orchestrator",
+        "input": {
+          "message": "Search the structured financial line rows on Westfield for anything mentioning concrete and show the amounts.",
+          "selectedProjectId": 43
+        },
+        "detail": "Deep Agents runtime produced a synthesis from checked source coverage with durable memory.",
+        "status": "success",
+        "toolName": "deepagents_runtime",
+        "timestamp": "2026-06-09T14:40:04.211Z",
+        "durationMs": 26702
+      }
+    ],
+    "architecture": "render-backend-deep-agents-v1",
+    "source_debug": {
+      "memory": {
+        "reason": "This answer was produced by a delegated specialist/direct Deep Agents path; inspect delegated trace and backend memory metadata for specialist-side context.",
+        "status": "not_loaded_in_frontend"
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "backendDeepAgentProjectStatus",
+              "agent": "frontend-ai-assistant",
+              "status": "success",
+              "durationMs": 32775
+            },
+            {
+              "tool": "deepagents_runtime",
+              "agent": "project-intelligence-orchestrator",
+              "status": "success",
+              "durationMs": 26702
+            },
+            {
+              "tool": "project_lookup",
+              "agent": "project-intelligence-orchestrator",
+              "status": "success",
+              "durationMs": 1332
+            },
+            {
+              "tool": "meetings_reader",
+              "agent": "project-intelligence-orchestrator",
+              "status": "success",
+              "durationMs": 1056
+            },
+            {
+              "tool": "teams_reader",
+              "agent": "project-intelligence-orchestrator",
+              "status": "success",
+              "durationMs": 943
+            },
+            {
+              "tool": "emails_reader",
+              "agent": "project-intelligence-orchestrator",
+              "status": "success",
+              "durationMs": 811
+            },
+            {
+              "tool": "packet_reader",
+              "agent": "project-intelligence-orchestrator",
+              "status": "success",
+              "durationMs": 716
+            },
+            {
+              "tool": "financials_reader",
+              "agent": "project-intelligence-orchestrator",
+              "status": "success",
+              "durationMs": 424
+            }
+          ],
+          "failedCount": 0,
+          "totalMeasuredMs": 65378
+        },
+        "toolNames": [
+          "backendDeepAgentProjectStatus",
+          "project_lookup",
+          "packet_reader",
+          "teams_reader",
+          "meetings_reader",
+          "emails_reader",
+          "documents_reader",
+          "financials_reader",
+          "schedule_reader",
+          "rfi_reader",
+          "submittal_reader",
+          "deepagents_runtime"
+        ],
+        "evidenceCount": 12,
+        "toolCallCount": 12,
+        "sourceCoverage": [
+          {
+            "status": "checked",
+            "sourceType": "packet",
+            "recordCount": 2
+          },
+          {
+            "status": "checked",
+            "sourceType": "teams",
+            "recordCount": 37
+          },
+          {
+            "status": "missing",
+            "sourceType": "meetings",
+            "recordCount": 0
+          },
+          {
+            "status": "checked",
+            "sourceType": "emails",
+            "recordCount": 100
+          },
+          {
+            "status": "checked",
+            "sourceType": "documents",
+            "recordCount": 26
+          },
+          {
+            "status": "checked",
+            "sourceType": "financials",
+            "recordCount": 100
+          },
+          {
+            "status": "checked",
+            "sourceType": "schedule",
+            "recordCount": 100
+          },
+          {
+            "status": "missing",
+            "sourceType": "rfi",
+            "recordCount": 0
+          },
+          {
+            "status": "missing",
+            "sourceType": "submittal",
+            "recordCount": 0
+          }
+        ]
+      },
+      "orchestrator": "backend-deep-agent-project-status",
+      "outputPolicy": null,
+      "retrievalPlan": {
+        "intent": "financial_analysis",
+        "reason": "packet_first_with_project",
+        "sources": [
+          "intelligencePacket",
+          "projectSnapshot",
+          "semanticVectorSearch"
+        ],
+        "responseFormat": "briefing_template"
+      }
+    },
+    "provider_path": "render-backend-ai-gateway",
+    "retrieval_plan": {
+      "intent": "financial_analysis",
+      "reason": "packet_first_with_project",
+      "sources": [
+        "intelligencePacket",
+        "projectSnapshot",
+        "semanticVectorSearch"
+      ],
+      "responseFormat": "briefing_template"
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "backend_deep_agent": {
+      "mode": "deep_agents",
+      "project": {
+        "id": 43,
+        "name": "Westfield Collective"
+      },
+      "endpoint": "project-status",
+      "confidence": "medium",
+      "orchestrator": "deep-agents-project-intelligence",
+      "evidence_count": 12,
+      "source_coverage": [
+        {
+          "status": "checked",
+          "sourceType": "packet",
+          "recordCount": 2
+        },
+        {
+          "status": "checked",
+          "sourceType": "teams",
+          "recordCount": 37
+        },
+        {
+          "status": "missing",
+          "sourceType": "meetings",
+          "recordCount": 0
+        },
+        {
+          "status": "checked",
+          "sourceType": "emails",
+          "recordCount": 100
+        },
+        {
+          "status": "checked",
+          "sourceType": "documents",
+          "recordCount": 26
+        },
+        {
+          "status": "checked",
+          "sourceType": "financials",
+          "recordCount": 100
+        },
+        {
+          "status": "checked",
+          "sourceType": "schedule",
+          "recordCount": 100
+        },
+        {
+          "status": "missing",
+          "sourceType": "rfi",
+          "recordCount": 0
+        },
+        {
+          "status": "missing",
+          "sourceType": "submittal",
+          "recordCount": 0
+        }
+      ],
+      "memory_candidates": [],
+      "memory_candidate_count": 0,
+      "recommended_action_count": 1
+    }
+  }
+}

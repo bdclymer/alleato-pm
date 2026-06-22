@@ -1,0 +1,2258 @@
+{
+  "id": "ceo-context-aware-decisions-needed",
+  "intent": "operations_analysis",
+  "prompt": "What decisions am I holding up?",
+  "selectedProjectId": null,
+  "sessionId": "9b387c73-5f26-4b81-a80c-fd01213322bb",
+  "sessionLabel": "eval-2026-05-14T16-00-27-694Z-ceo-context-aware-decisions-needed",
+  "startedAt": "2026-05-14T16:09:16.970Z",
+  "finishedAt": "2026-05-14T16:10:20.926Z",
+  "durationMs": 62437,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 207,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "answer length 78 < min 150"
+    ],
+    "warnings": [
+      "expected family 'operations' not represented"
+    ],
+    "observations": [
+      "tools fired: intentPlanner, assistantWidgetPlanner, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, getActionItemsAndInsights, noToolRetry"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "assistantWidgetPlanner",
+      "messageDrivenToolRouter",
+      "mcpToolDiscovery",
+      "streamingToolPolicy",
+      "getActionItemsAndInsights",
+      "noToolRetry"
+    ],
+    "familiesHit": [
+      "actions",
+      "task_management"
+    ],
+    "finalTextLength": 78,
+    "finalText": "I'm pulling all open owner action items and pending decision points. Stand by."
+  },
+  "expectedToolNames": [
+    "getActionItemsAndInsights",
+    "getRFIStatus"
+  ],
+  "expectedToolFamilies": [
+    "actions",
+    "operations"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T16:09:22.173Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-decision-packet",
+      "data": {
+        "widget": {
+          "type": "decision_packet",
+          "id": "decision-packet",
+          "title": "Decision packet",
+          "recommendation": "Treat this as a review item until the assistant confirms the supporting project evidence.",
+          "confidence": "medium",
+          "impacts": [
+            {
+              "label": "Financial impact",
+              "value": "Needs source-backed amount"
+            },
+            {
+              "label": "Schedule impact",
+              "value": "Needs current project context"
+            },
+            {
+              "label": "Owner action",
+              "value": "Confirm responsible party before executing"
+            }
+          ],
+          "risks": [
+            "Missing source evidence could lead to the wrong owner or cost treatment.",
+            "A write action should stay preview-only until the final fields are confirmed."
+          ],
+          "nextActions": [
+            "Ask the assistant to pull source evidence for this decision.",
+            "Convert the decision into an RFI, change event, task, or email draft once the fields are confirmed."
+          ]
+        }
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-14T16:09:34.094Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "6OE12lzxuvVjsD7l"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": "20"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "projectId": 0,
+        "assigneeName": "",
+        "maxResults": 20
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_4iXRmYisuxx4RKd56CACg8lZ",
+      "output": {
+        "sourceRef": "[Source: Action Items & Insights]",
+        "openTasks": [],
+        "priorityItems": [],
+        "structuredActionItems": [],
+        "unresolvedInsights": [],
+        "meetingInsights": [],
+        "overdueRFIs": [],
+        "summary": {
+          "openTaskCount": 0,
+          "overdueTaskCount": 0,
+          "insightCount": 0,
+          "structuredActionItemCount": 0,
+          "overdueRFICount": 0,
+          "sourceErrorCount": 0
+        },
+        "sourceErrors": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": "20"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "projectId": 0,
+        "assigneeName": "",
+        "maxResults": 20
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_w0QXcEb317sL6T9MWFACQduI",
+      "output": {
+        "sourceRef": "[Source: Action Items & Insights]",
+        "openTasks": [],
+        "priorityItems": [],
+        "structuredActionItems": [],
+        "unresolvedInsights": [],
+        "meetingInsights": [],
+        "overdueRFIs": [],
+        "summary": {
+          "openTaskCount": 0,
+          "overdueTaskCount": 0,
+          "insightCount": 0,
+          "structuredActionItemCount": 0,
+          "overdueRFICount": 0,
+          "sourceErrorCount": 0
+        },
+        "sourceErrors": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": "20"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "projectId": 0,
+        "assigneeName": "",
+        "maxResults": 20
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_5jrbyuQQfmtV9DxNdLk0BWpr",
+      "output": {
+        "sourceRef": "[Source: Action Items & Insights]",
+        "openTasks": [],
+        "priorityItems": [],
+        "structuredActionItems": [],
+        "unresolvedInsights": [],
+        "meetingInsights": [],
+        "overdueRFIs": [],
+        "summary": {
+          "openTaskCount": 0,
+          "overdueTaskCount": 0,
+          "insightCount": 0,
+          "structuredActionItemCount": 0,
+          "overdueRFICount": 0,
+          "sourceErrorCount": 0
+        },
+        "sourceErrors": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": "20"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "projectId": 0,
+        "assigneeName": "",
+        "maxResults": 20
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_cnzwzcnQHvANLHbF3A3qqnfA",
+      "output": {
+        "sourceRef": "[Source: Action Items & Insights]",
+        "openTasks": [],
+        "priorityItems": [],
+        "structuredActionItems": [],
+        "unresolvedInsights": [],
+        "meetingInsights": [],
+        "overdueRFIs": [],
+        "summary": {
+          "openTaskCount": 0,
+          "overdueTaskCount": 0,
+          "insightCount": 0,
+          "structuredActionItemCount": 0,
+          "overdueRFICount": 0,
+          "sourceErrorCount": 0
+        },
+        "sourceErrors": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": "20"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "projectId": 0,
+        "assigneeName": "",
+        "maxResults": 20
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_qGKFU7qs749T6wmUh5xVnGmL",
+      "output": {
+        "sourceRef": "[Source: Action Items & Insights]",
+        "openTasks": [],
+        "priorityItems": [],
+        "structuredActionItems": [],
+        "unresolvedInsights": [],
+        "meetingInsights": [],
+        "overdueRFIs": [],
+        "summary": {
+          "openTaskCount": 0,
+          "overdueTaskCount": 0,
+          "insightCount": 0,
+          "structuredActionItemCount": 0,
+          "overdueRFICount": 0,
+          "sourceErrorCount": 0
+        },
+        "sourceErrors": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": "20"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "projectId": 0,
+        "assigneeName": "",
+        "maxResults": 20
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_fEKWr5Aq8dsENp5xYXg8Ojea",
+      "output": {
+        "sourceRef": "[Source: Action Items & Insights]",
+        "openTasks": [],
+        "priorityItems": [],
+        "structuredActionItems": [],
+        "unresolvedInsights": [],
+        "meetingInsights": [],
+        "overdueRFIs": [],
+        "summary": {
+          "openTaskCount": 0,
+          "overdueTaskCount": 0,
+          "insightCount": 0,
+          "structuredActionItemCount": 0,
+          "overdueRFICount": 0,
+          "sourceErrorCount": 0
+        },
+        "sourceErrors": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": "20"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "projectId": 0,
+        "assigneeName": "",
+        "maxResults": 20
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_y4eN9MRLbS5o6BOnG8zPfi88",
+      "output": {
+        "sourceRef": "[Source: Action Items & Insights]",
+        "openTasks": [],
+        "priorityItems": [],
+        "structuredActionItems": [],
+        "unresolvedInsights": [],
+        "meetingInsights": [],
+        "overdueRFIs": [],
+        "summary": {
+          "openTaskCount": 0,
+          "overdueTaskCount": 0,
+          "insightCount": 0,
+          "structuredActionItemCount": 0,
+          "overdueRFICount": 0,
+          "sourceErrorCount": 0
+        },
+        "sourceErrors": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": "20"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "projectId": 0,
+        "assigneeName": "",
+        "maxResults": 20
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_IQ1UZNtmDCVcuZkUSICyvyiy",
+      "output": {
+        "sourceRef": "[Source: Action Items & Insights]",
+        "openTasks": [],
+        "priorityItems": [],
+        "structuredActionItems": [],
+        "unresolvedInsights": [],
+        "meetingInsights": [],
+        "overdueRFIs": [],
+        "summary": {
+          "openTaskCount": 0,
+          "overdueTaskCount": 0,
+          "insightCount": 0,
+          "structuredActionItemCount": 0,
+          "overdueRFICount": 0,
+          "sourceErrorCount": 0
+        },
+        "sourceErrors": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": "20"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "projectId": 0,
+        "assigneeName": "",
+        "maxResults": 20
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_MHm6i6b2meTEm3LtX39ty7DC",
+      "output": {
+        "sourceRef": "[Source: Action Items & Insights]",
+        "openTasks": [],
+        "priorityItems": [],
+        "structuredActionItems": [],
+        "unresolvedInsights": [],
+        "meetingInsights": [],
+        "overdueRFIs": [],
+        "summary": {
+          "openTaskCount": 0,
+          "overdueTaskCount": 0,
+          "insightCount": 0,
+          "structuredActionItemCount": 0,
+          "overdueRFICount": 0,
+          "sourceErrorCount": 0
+        },
+        "sourceErrors": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": "\":\"\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": "20"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "projectId": 0,
+        "assigneeName": "",
+        "maxResults": 20
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_AKQVW8cUHFwPOnFWJ0QylbpL",
+      "output": {
+        "sourceRef": "[Source: Action Items & Insights]",
+        "openTasks": [],
+        "priorityItems": [],
+        "structuredActionItems": [],
+        "unresolvedInsights": [],
+        "meetingInsights": [],
+        "overdueRFIs": [],
+        "summary": {
+          "openTaskCount": 0,
+          "overdueTaskCount": 0,
+          "insightCount": 0,
+          "structuredActionItemCount": 0,
+          "overdueRFICount": 0,
+          "sourceErrorCount": 0
+        },
+        "sourceErrors": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-failure-response"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "I'm pulling all open owner action items and pending decision points. Stand by."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-failure-response"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 77660,
+      "totalTokens": 77970,
+      "outputTokens": 310,
+      "cacheHitRatio": 0.86,
+      "cachedInputTokens": 66816
+    },
+    "data_parts": [
+      {
+        "id": "assistant-widget-decision-packet",
+        "data": {
+          "widget": {
+            "id": "decision-packet",
+            "type": "decision_packet",
+            "risks": [
+              "Missing source evidence could lead to the wrong owner or cost treatment.",
+              "A write action should stay preview-only until the final fields are confirmed."
+            ],
+            "title": "Decision packet",
+            "impacts": [
+              {
+                "label": "Financial impact",
+                "value": "Needs source-backed amount"
+              },
+              {
+                "label": "Schedule impact",
+                "value": "Needs current project context"
+              },
+              {
+                "label": "Owner action",
+                "value": "Confirm responsible party before executing"
+              }
+            ],
+            "confidence": "medium",
+            "nextActions": [
+              "Ask the assistant to pull source evidence for this decision.",
+              "Convert the decision into an RFI, change event, task, or email draft once the fields are confirmed."
+            ],
+            "recommendation": "Treat this as a review item until the assistant confirms the supporting project evidence."
+          }
+        },
+        "type": "data-assistant-widget"
+      }
+    ],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "What decisions am I holding up?",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "general_conversation",
+          "sourceSpecificRagKind": null,
+          "messageDrivenToolNames": [
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus"
+          ],
+          "recentEmailInboxRequest": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "decision_lookup",
+          "planner": "model",
+          "rationale": "The user is asking to identify decisions they are currently blocking or delaying, which is a request to read existing project decision records/status rather than create a task or draft a message. This maps directly to decision_lookup. To answer well, the assistant should retrieve relevant decision logs, approvals, or pending items associated with the user.",
+          "confidence": "high",
+          "responseMode": "retrieve_sources",
+          "requiredTools": [],
+          "deterministicIntent": "general_conversation",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T16:09:22.171Z"
+      },
+      {
+        "tool": "assistantWidgetPlanner",
+        "input": {
+          "message": "What decisions am I holding up?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "widgets": [
+            {
+              "id": "decision-packet",
+              "type": "decision_packet"
+            }
+          ]
+        },
+        "timestamp": "2026-05-14T16:09:34.094Z"
+      },
+      {
+        "tool": "messageDrivenToolRouter",
+        "input": {
+          "intent": "decision_lookup",
+          "message": "What decisions am I holding up?"
+        },
+        "output": {
+          "requiredToolNames": [
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus"
+          ]
+        },
+        "timestamp": "2026-05-14T16:09:34.094Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.excalidraw.com/mcp",
+          "server": "excalidraw"
+        },
+        "output": {
+          "allowedTools": [
+            "read_me",
+            "create_view",
+            "export_to_excalidraw",
+            "save_checkpoint",
+            "read_checkpoint"
+          ],
+          "enabledTools": [
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "enabledToolCount": 5,
+          "discoveredToolCount": 5
+        },
+        "timestamp": "2026-05-14T16:09:35.622Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.supabase.com/mcp?project_ref=lgveqfnpkxvzbnnwuled",
+          "server": "supabase"
+        },
+        "output": {
+          "error": "MCP HTTP Transport Error: POSTing to endpoint (HTTP 401): {\"message\":\"JWT could not be decoded\"}"
+        },
+        "timestamp": "2026-05-14T16:09:35.658Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "promptMode": "full_strategist",
+          "toolChoice": {
+            "type": "tool",
+            "toolName": "getActionItemsAndInsights"
+          },
+          "fullToolCount": 99,
+          "modelToolCount": 16,
+          "modelToolNames": [
+            "getProjectBriefingSnapshot",
+            "getMeetingIntelligence",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "semanticSearch",
+            "findProject",
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "streamMaxSteps": 10,
+          "scopedToolCount": 16,
+          "streamMaxOutputTokens": 4000,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": false
+        },
+        "timestamp": "2026-05-14T16:09:35.658Z"
+      },
+      {
+        "tool": "getActionItemsAndInsights",
+        "input": {
+          "projectId": 0,
+          "maxResults": 20,
+          "assigneeName": ""
+        },
+        "output": {
+          "summary": {
+            "insightCount": 0,
+            "openTaskCount": 0,
+            "overdueRFICount": 0,
+            "overdueTaskCount": 0,
+            "sourceErrorCount": 0,
+            "structuredActionItemCount": 0
+          },
+          "openTasks": [],
+          "sourceRef": "[Source: Action Items & Insights]",
+          "overdueRFIs": [],
+          "sourceErrors": [],
+          "priorityItems": [],
+          "meetingInsights": [],
+          "unresolvedInsights": [],
+          "structuredActionItems": []
+        },
+        "timestamp": "2026-05-14T16:09:43.070Z"
+      },
+      {
+        "tool": "getActionItemsAndInsights",
+        "input": {
+          "projectId": 0,
+          "maxResults": 20,
+          "assigneeName": ""
+        },
+        "output": {
+          "summary": {
+            "insightCount": 0,
+            "openTaskCount": 0,
+            "overdueRFICount": 0,
+            "overdueTaskCount": 0,
+            "sourceErrorCount": 0,
+            "structuredActionItemCount": 0
+          },
+          "openTasks": [],
+          "sourceRef": "[Source: Action Items & Insights]",
+          "overdueRFIs": [],
+          "sourceErrors": [],
+          "priorityItems": [],
+          "meetingInsights": [],
+          "unresolvedInsights": [],
+          "structuredActionItems": []
+        },
+        "timestamp": "2026-05-14T16:09:47.296Z"
+      },
+      {
+        "tool": "getActionItemsAndInsights",
+        "input": {
+          "projectId": 0,
+          "maxResults": 20,
+          "assigneeName": ""
+        },
+        "output": {
+          "summary": {
+            "insightCount": 0,
+            "openTaskCount": 0,
+            "overdueRFICount": 0,
+            "overdueTaskCount": 0,
+            "sourceErrorCount": 0,
+            "structuredActionItemCount": 0
+          },
+          "openTasks": [],
+          "sourceRef": "[Source: Action Items & Insights]",
+          "overdueRFIs": [],
+          "sourceErrors": [],
+          "priorityItems": [],
+          "meetingInsights": [],
+          "unresolvedInsights": [],
+          "structuredActionItems": []
+        },
+        "timestamp": "2026-05-14T16:09:53.466Z"
+      },
+      {
+        "tool": "getActionItemsAndInsights",
+        "input": {
+          "projectId": 0,
+          "maxResults": 20,
+          "assigneeName": ""
+        },
+        "output": {
+          "summary": {
+            "insightCount": 0,
+            "openTaskCount": 0,
+            "overdueRFICount": 0,
+            "overdueTaskCount": 0,
+            "sourceErrorCount": 0,
+            "structuredActionItemCount": 0
+          },
+          "openTasks": [],
+          "sourceRef": "[Source: Action Items & Insights]",
+          "overdueRFIs": [],
+          "sourceErrors": [],
+          "priorityItems": [],
+          "meetingInsights": [],
+          "unresolvedInsights": [],
+          "structuredActionItems": []
+        },
+        "timestamp": "2026-05-14T16:09:56.832Z"
+      },
+      {
+        "tool": "getActionItemsAndInsights",
+        "input": {
+          "projectId": 0,
+          "maxResults": 20,
+          "assigneeName": ""
+        },
+        "output": {
+          "summary": {
+            "insightCount": 0,
+            "openTaskCount": 0,
+            "overdueRFICount": 0,
+            "overdueTaskCount": 0,
+            "sourceErrorCount": 0,
+            "structuredActionItemCount": 0
+          },
+          "openTasks": [],
+          "sourceRef": "[Source: Action Items & Insights]",
+          "overdueRFIs": [],
+          "sourceErrors": [],
+          "priorityItems": [],
+          "meetingInsights": [],
+          "unresolvedInsights": [],
+          "structuredActionItems": []
+        },
+        "timestamp": "2026-05-14T16:10:00.788Z"
+      },
+      {
+        "tool": "getActionItemsAndInsights",
+        "input": {
+          "projectId": 0,
+          "maxResults": 20,
+          "assigneeName": ""
+        },
+        "output": {
+          "summary": {
+            "insightCount": 0,
+            "openTaskCount": 0,
+            "overdueRFICount": 0,
+            "overdueTaskCount": 0,
+            "sourceErrorCount": 0,
+            "structuredActionItemCount": 0
+          },
+          "openTasks": [],
+          "sourceRef": "[Source: Action Items & Insights]",
+          "overdueRFIs": [],
+          "sourceErrors": [],
+          "priorityItems": [],
+          "meetingInsights": [],
+          "unresolvedInsights": [],
+          "structuredActionItems": []
+        },
+        "timestamp": "2026-05-14T16:10:02.875Z"
+      },
+      {
+        "tool": "getActionItemsAndInsights",
+        "input": {
+          "projectId": 0,
+          "maxResults": 20,
+          "assigneeName": ""
+        },
+        "output": {
+          "summary": {
+            "insightCount": 0,
+            "openTaskCount": 0,
+            "overdueRFICount": 0,
+            "overdueTaskCount": 0,
+            "sourceErrorCount": 0,
+            "structuredActionItemCount": 0
+          },
+          "openTasks": [],
+          "sourceRef": "[Source: Action Items & Insights]",
+          "overdueRFIs": [],
+          "sourceErrors": [],
+          "priorityItems": [],
+          "meetingInsights": [],
+          "unresolvedInsights": [],
+          "structuredActionItems": []
+        },
+        "timestamp": "2026-05-14T16:10:05.579Z"
+      },
+      {
+        "tool": "getActionItemsAndInsights",
+        "input": {
+          "projectId": 0,
+          "maxResults": 20,
+          "assigneeName": ""
+        },
+        "output": {
+          "summary": {
+            "insightCount": 0,
+            "openTaskCount": 0,
+            "overdueRFICount": 0,
+            "overdueTaskCount": 0,
+            "sourceErrorCount": 0,
+            "structuredActionItemCount": 0
+          },
+          "openTasks": [],
+          "sourceRef": "[Source: Action Items & Insights]",
+          "overdueRFIs": [],
+          "sourceErrors": [],
+          "priorityItems": [],
+          "meetingInsights": [],
+          "unresolvedInsights": [],
+          "structuredActionItems": []
+        },
+        "timestamp": "2026-05-14T16:10:08.311Z"
+      },
+      {
+        "tool": "getActionItemsAndInsights",
+        "input": {
+          "projectId": 0,
+          "maxResults": 20,
+          "assigneeName": ""
+        },
+        "output": {
+          "summary": {
+            "insightCount": 0,
+            "openTaskCount": 0,
+            "overdueRFICount": 0,
+            "overdueTaskCount": 0,
+            "sourceErrorCount": 0,
+            "structuredActionItemCount": 0
+          },
+          "openTasks": [],
+          "sourceRef": "[Source: Action Items & Insights]",
+          "overdueRFIs": [],
+          "sourceErrors": [],
+          "priorityItems": [],
+          "meetingInsights": [],
+          "unresolvedInsights": [],
+          "structuredActionItems": []
+        },
+        "timestamp": "2026-05-14T16:10:10.165Z"
+      },
+      {
+        "tool": "getActionItemsAndInsights",
+        "input": {
+          "projectId": 0,
+          "maxResults": 20,
+          "assigneeName": ""
+        },
+        "output": {
+          "summary": {
+            "insightCount": 0,
+            "openTaskCount": 0,
+            "overdueRFICount": 0,
+            "overdueTaskCount": 0,
+            "sourceErrorCount": 0,
+            "structuredActionItemCount": 0
+          },
+          "openTasks": [],
+          "sourceRef": "[Source: Action Items & Insights]",
+          "overdueRFIs": [],
+          "sourceErrors": [],
+          "priorityItems": [],
+          "meetingInsights": [],
+          "unresolvedInsights": [],
+          "structuredActionItems": []
+        },
+        "timestamp": "2026-05-14T16:10:14.443Z"
+      },
+      {
+        "tool": "noToolRetry",
+        "input": {
+          "reason": "The model/tool run completed without returning final assistant text.",
+          "retryModel": "openai/gpt-4.1",
+          "primaryModel": "openai/gpt-5.4"
+        },
+        "output": {
+          "succeeded": true,
+          "contentLength": 78
+        },
+        "timestamp": "2026-05-14T16:10:17.419Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 7172,
+          "finishReason": "tool-calls",
+          "outputTokens": 31,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getActionItemsAndInsights"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 7304,
+          "finishReason": "tool-calls",
+          "outputTokens": 31,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getActionItemsAndInsights"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 2,
+          "inputTokens": 7436,
+          "finishReason": "tool-calls",
+          "outputTokens": 31,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getActionItemsAndInsights"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 3,
+          "inputTokens": 7568,
+          "finishReason": "tool-calls",
+          "outputTokens": 31,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getActionItemsAndInsights"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 4,
+          "inputTokens": 7700,
+          "finishReason": "tool-calls",
+          "outputTokens": 31,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getActionItemsAndInsights"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 5,
+          "inputTokens": 7832,
+          "finishReason": "tool-calls",
+          "outputTokens": 31,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getActionItemsAndInsights"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 6,
+          "inputTokens": 7964,
+          "finishReason": "tool-calls",
+          "outputTokens": 31,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getActionItemsAndInsights"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 7,
+          "inputTokens": 8096,
+          "finishReason": "tool-calls",
+          "outputTokens": 31,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getActionItemsAndInsights"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 8,
+          "inputTokens": 8228,
+          "finishReason": "tool-calls",
+          "outputTokens": 31,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getActionItemsAndInsights"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 9,
+          "inputTokens": 8360,
+          "finishReason": "tool-calls",
+          "outputTokens": 31,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getActionItemsAndInsights"
+          ]
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getActionItemsAndInsights\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getProjectBriefingSnapshot",
+            "getMeetingIntelligence",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "semanticSearch",
+            "findProject",
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getActionItemsAndInsights\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getProjectBriefingSnapshot",
+            "getMeetingIntelligence",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "semanticSearch",
+            "findProject",
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 2,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getActionItemsAndInsights\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getProjectBriefingSnapshot",
+            "getMeetingIntelligence",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "semanticSearch",
+            "findProject",
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 3,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getActionItemsAndInsights\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getProjectBriefingSnapshot",
+            "getMeetingIntelligence",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "semanticSearch",
+            "findProject",
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 4,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getActionItemsAndInsights\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getProjectBriefingSnapshot",
+            "getMeetingIntelligence",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "semanticSearch",
+            "findProject",
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 5,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getActionItemsAndInsights\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getProjectBriefingSnapshot",
+            "getMeetingIntelligence",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "semanticSearch",
+            "findProject",
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 6,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getActionItemsAndInsights\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getProjectBriefingSnapshot",
+            "getMeetingIntelligence",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "semanticSearch",
+            "findProject",
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 7,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getActionItemsAndInsights\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getProjectBriefingSnapshot",
+            "getMeetingIntelligence",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "semanticSearch",
+            "findProject",
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 8,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getActionItemsAndInsights\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getProjectBriefingSnapshot",
+            "getMeetingIntelligence",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "semanticSearch",
+            "findProject",
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 9,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"getActionItemsAndInsights\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getProjectBriefingSnapshot",
+            "getMeetingIntelligence",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "semanticSearch",
+            "findProject",
+            "getActionItemsAndInsights",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        }
+      ],
+      "totalStepCount": 10,
+      "finalFinishReason": "tool-calls",
+      "preparedStepCount": 10,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 10
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

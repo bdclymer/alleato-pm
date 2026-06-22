@@ -1,0 +1,65 @@
+{
+  "id": "appnav-change-events-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 5734,
+  "question": "Where do I create a change event for a project?",
+  "mustInclude": [
+    "/[projectId]/change-events",
+    "change event"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "Create it from the project-scoped Change Events page:\n\n- **Route:** `/[projectId]/change-events/new`\n- **Where to access it:** open the project, then go to **Change Events** in the sidebar, then select **Create Change Event**\n- **Help article:** `docs/help/articles/change-events.md`\n\nDocumented workflow says:\n1. Select the project.\n2. Open **Change Events**.\n3. Select **Create Change Event**.\n4. Fill in title, description, type, originator/date, add line items, attach documents, then save.\n\nWhat I checked:\n- App expert artifact status: fresh and available\n- Feature registry: documented **Change Events** feature with help article\n- Help article: confirms creation flow and project-scoped usage\n- Route metadata: confirms the create page exists at `/[projectId]/change-events/new`\n\nUncertainty:\n- You did not supply a project ID, so I can confirm the route pattern but not a concrete URL for your project.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/change-events/new",
+        "sourceType": "sitemap",
+        "route": "/change-events/new",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/change-events.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/change-events.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/date,",
+        "sourceType": "sitemap",
+        "route": "/date,",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 5515,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

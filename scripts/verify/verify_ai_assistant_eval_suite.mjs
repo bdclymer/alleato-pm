@@ -3,7 +3,7 @@
 /**
  * AI Assistant Eval Suite Runner
  * ------------------------------
- * Loads the prompt corpus from docs/ai-plan/evals/assistant-eval-suite.json,
+ * Loads the prompt corpus from docs/archive/2026-06-22-docs-migration/ai-plan/evals/assistant-eval-suite.json,
  * POSTs each prompt to /api/ai-assistant/chat using the saved Playwright auth
  * cookies, drains the SSE stream, then queries chat_history.metadata.tool_trace
  * to score tool coverage and answer-quality assertions.
@@ -16,9 +16,9 @@
  *   AI_EVAL_BASE_URL=https://alleato.example.com node ... # remote target
  *
  * Outputs:
- *   docs/ai-plan/evals/runs/<timestamp>/results.json
- *   docs/ai-plan/evals/runs/<timestamp>/summary.md
- *   docs/ai-plan/evals/runs/<timestamp>/<case-id>.json (per-case full trace)
+ *   docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/<timestamp>/results.json
+ *   docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/<timestamp>/summary.md
+ *   docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/<timestamp>/<case-id>.json (per-case full trace)
  */
 
 import fs from "node:fs/promises";
@@ -45,7 +45,7 @@ dotenv.config({
 
 const SUITE_PATH = path.join(
   repoRoot,
-  "docs/ai-plan/evals/assistant-eval-suite.json",
+  "docs/archive/2026-06-22-docs-migration/ai-plan/evals/assistant-eval-suite.json",
 );
 const AUTH_PATH = path.join(repoRoot, "frontend/tests/.auth/user.json");
 const PUBLISHED_ASSISTANT_EVAL_RUNS_PATH = path.join(
@@ -150,10 +150,12 @@ let cookieHeader = (authState.cookies ?? [])
 // ─────────────────────────────────────────────────────── Auth refresh
 const SUPABASE_URL =
   process.env.AI_EVAL_SUPABASE_URL ||
-  "https://lgveqfnpkxvzbnnwuled.supabase.co";
+  process.env.SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY =
   process.env.AI_EVAL_SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndmVxZm5wa3h2emJubnd1bGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNTQxNjYsImV4cCI6MjA3MDgzMDE2Nn0.g56kDPUokoJpWY7vXd3GTMXpOc4WFOU0hDVWfGMZtO8";
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_EMAIL = process.env.AI_EVAL_SUPABASE_EMAIL || "test1@mail.com";
 const SUPABASE_PASSWORD =
   process.env.AI_EVAL_SUPABASE_PASSWORD || "test12026!!!";
@@ -162,6 +164,13 @@ const SUPABASE_PROJECT_REF = "lgveqfnpkxvzbnnwuled";
 const SUPABASE_POOLER_HOST = "aws-1-us-east-2.pooler.supabase.com";
 const REFRESH_BUFFER_SEC = 5 * 60; // refresh if expiring within 5 minutes
 const AUTH_REFRESH_RETRIES = 3;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error(
+    "Missing Supabase auth refresh config. Set AI_EVAL_SUPABASE_URL/SUPABASE_URL/NEXT_PUBLIC_SUPABASE_URL and AI_EVAL_SUPABASE_ANON_KEY/SUPABASE_ANON_KEY/NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+  );
+  process.exit(1);
+}
 
 function getCookieExpiry(header) {
   // Find the auth cookie in the header string and decode its expiry.
@@ -292,7 +301,7 @@ async function refreshAuthIfNeeded() {
 }
 
 const runStamp = `${new Date().toISOString().replace(/[:.]/g, "-")}-${randomUUID().slice(0, 8)}`;
-const runDir = path.join(repoRoot, "docs/ai-plan/evals/runs", runStamp);
+const runDir = path.join(repoRoot, "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs", runStamp);
 mkdirSync(runDir, { recursive: true });
 
 // ─────────────────────────────────────────────────────────────── DB pool
@@ -1322,14 +1331,14 @@ function toPublishedRun(result, runId) {
             status: testCase.status,
             warnings: testCase.warnings,
           })),
-    file: `docs/ai-plan/evals/runs/${runId}/results.json`,
-    summaryFile: `docs/ai-plan/evals/runs/${runId}/summary.md`,
+    file: `docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/${runId}/results.json`,
+    summaryFile: `docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/${runId}/summary.md`,
     cases,
   };
 }
 
 async function refreshPublishedAssistantEvalRuns() {
-  const runsDir = path.join(repoRoot, "docs/ai-plan/evals/runs");
+  const runsDir = path.join(repoRoot, "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs");
   let runIds = [];
   try {
     runIds = (await fs.readdir(runsDir, { withFileTypes: true }))

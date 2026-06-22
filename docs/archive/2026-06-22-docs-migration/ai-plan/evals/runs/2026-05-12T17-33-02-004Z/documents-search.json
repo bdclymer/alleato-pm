@@ -1,0 +1,46 @@
+{
+  "id": "documents-search",
+  "intent": "document_question",
+  "prompt": "Find the latest contract or change order document on Westfield and summarize the key terms.",
+  "selectedProjectId": 43,
+  "sessionId": "cbc94384-03b7-4f56-8859-25da836bdfeb",
+  "sessionLabel": "eval-2026-05-12T17-33-02-004Z-documents-search",
+  "startedAt": "2026-05-12T17:38:50.311Z",
+  "finishedAt": "2026-05-12T17:39:06.817Z",
+  "durationMs": 1069,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"ac91e528-a43c-4405-8b70-4043d15dc1f1\",\"timestamp\":\"2026-05-12T17:38:51.377Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"ac91e528-a43c-4405-8b70-4043d15dc1f1\",\"timestamp\":\"2026-05-12T17:38:51.377Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [searchDocuments, searchExternalDocuments, queryDocumentRows] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'documents' not represented",
+      "expected family 'semantic' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"ac91e528-a43c-4405-8b70-4043d15dc1f1\",\"timestamp\":\"2026-05-12T17:38:51.377Z\"}"
+  },
+  "expectedToolNames": [
+    "searchDocuments",
+    "searchExternalDocuments",
+    "queryDocumentRows"
+  ],
+  "expectedToolFamilies": [
+    "documents",
+    "semantic"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

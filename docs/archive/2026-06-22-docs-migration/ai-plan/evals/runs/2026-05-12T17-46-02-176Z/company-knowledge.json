@@ -1,0 +1,472 @@
+{
+  "id": "company-knowledge",
+  "intent": "knowledge_capture",
+  "prompt": "What does Alleato consider best practice for handling owner-driven scope changes?",
+  "selectedProjectId": null,
+  "sessionId": "23559c65-303e-48e8-9d67-48fa33993e52",
+  "sessionLabel": "eval-2026-05-12T17-46-02-176Z-company-knowledge",
+  "startedAt": "2026-05-12T18:04:36.491Z",
+  "finishedAt": "2026-05-12T18:05:10.580Z",
+  "durationMs": 33434,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 36,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [getCompanyKnowledge, semanticSearch] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'knowledge' not represented"
+    ],
+    "observations": [
+      "tools fired: intentPlanner, streamingToolPolicy, noToolRetry"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "streamingToolPolicy",
+      "noToolRetry"
+    ],
+    "familiesHit": [],
+    "finalTextLength": 2320,
+    "finalText": "Alleato’s best practice for handling owner-driven scope changes is direct, disciplined, and all about controlling risk before it hits your bottom line. Here’s what’s actually expected:\n\n1. **Immediate Documentation:** Capture every scope change request in writing — even verbal “what ifs” from the owner get logged as potential changes. No undocumented promises, ever.\n\n2. **Formal Change Event Creation:** As soon as a scope change is raised, create a change event in the system. Assign an owner and a due date for scoping and pricing the change. Don’t let it float.\n\n3. **Early ROM Estimate (Rough Order of Magnitude):** Issue a preliminary cost and schedule impact within 2 business days, even if it’s a broad range. Owners will push for pricing before design details are firm — you get ahead of that pressure to protect your position.\n\n4. **Owner Written Authorization:** No work starts — not submittals, not procurement, not field — without written owner direction (email is fine, but it needs to be explicit on scope and cost assumption). Gentlemen’s agreements are how you eat unrecoverable costs.\n\n5. **Track Exposure Separately:** Every owner scope change gets tracked as **cost exposure** until it’s formally approved. This keeps your forecast honest and exposes unapproved risk before it spirals.\n\n6. **Documentation Trail:** Tie all communications, decisions, sketches, and approvals to the change event record, so there’s zero ambiguity later.\n\n7. **Owner Communication Cadence:** Report all open and pending owner-driven changes on your OAC meeting agenda and in written owner updates. Don’t let long-tail changes get lost in backlog.\n\n8. **No Backdating:** If field or vendor work starts before an official change order, document it as a controlled exception — including why it was allowed and who authorized the exposure.\n\n9. **Change Order Execution:** Push for formal change order approval (contract amendment or signed directive) before hitting the schedule impact point, not after.\n\n10. **Update the Forecast:** As soon as scope-driven changes are likely (not just approved), update project forecasting to account for probable cost and schedule exposure.\n\nIf you want this set as your standard operating procedure, I can capture it for your knowledge base or project playbooks right now. Let me know."
+  },
+  "expectedToolNames": [
+    "getCompanyKnowledge",
+    "semanticSearch"
+  ],
+  "expectedToolFamilies": [
+    "knowledge"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T18:04:42.087Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-12T18:04:44.823Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "Ms2emIDVGg1MdYJS"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-failure-response"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "Alleato’s best practice for handling owner-driven scope changes is direct, disciplined, "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "and all about controlling risk before it hits your bottom line. Here’s what’s actually "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "expected:\n\n1. **Immediate Documentation:** Capture every scope change request in writing — "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "even verbal “what ifs” from the owner get logged as potential changes. No undocumented "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "promises, ever.\n\n2. **Formal Change Event Creation:** As soon as a scope change is raised, "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "create a change event in the system. Assign an owner and a due date for scoping and "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "pricing the change. Don’t let it float.\n\n3. **Early ROM Estimate (Rough Order of "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "Magnitude):** Issue a preliminary cost and schedule impact within 2 business days, even if "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "it’s a broad range. Owners will push for pricing before design details are firm — you get "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "ahead of that pressure to protect your position.\n\n4. **Owner Written Authorization:** No "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "work starts — not submittals, not procurement, not field — without written owner direction "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "(email is fine, but it needs to be explicit on scope and cost assumption). Gentlemen’s "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "agreements are how you eat unrecoverable costs.\n\n5. **Track Exposure Separately:** Every "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "owner scope change gets tracked as **cost exposure** until it’s formally approved. This "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "keeps your forecast honest and exposes unapproved risk before it spirals.\n\n6. "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "**Documentation Trail:** Tie all communications, decisions, sketches, and approvals to the "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "change event record, so there’s zero ambiguity later.\n\n7. **Owner Communication Cadence:** "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "Report all open and pending owner-driven changes on your OAC meeting agenda and in written "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "owner updates. Don’t let long-tail changes get lost in backlog.\n\n8. **No Backdating:** If "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "field or vendor work starts before an official change order, document it as a controlled "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "exception — including why it was allowed and who authorized the exposure.\n\n9. **Change "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "Order Execution:** Push for formal change order approval (contract amendment or signed "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "directive) before hitting the schedule impact point, not after.\n\n10. **Update the "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "Forecast:** As soon as scope-driven changes are likely (not just approved), update project "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "forecasting to account for probable cost and schedule exposure.\n\nIf you want this set as "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "your standard operating procedure, I can capture it for your knowledge base or project "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "playbooks right now. Let me know."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-failure-response"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 0,
+      "totalTokens": 0,
+      "outputTokens": 0,
+      "cacheHitRatio": 0,
+      "cachedInputTokens": 0
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "What does Alleato consider best practice for handling owner-driven scope changes?",
+          "selectedProjectId": null,
+          "deterministicIntent": "task_followup",
+          "sourceSpecificRagKind": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "change_management_review",
+          "planner": "model",
+          "rationale": "The user is asking for guidance/best practice on managing owner-driven scope changes, which maps to change management rather than a project-specific status lookup. They are not requesting source evidence or app workflow help, and no project context is required to provide a general advisory answer.",
+          "confidence": "high",
+          "responseMode": "answer_directly",
+          "requiredTools": [],
+          "deterministicIntent": "task_followup",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-12T18:04:42.087Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "streamingModelToolsEnabled": true
+        },
+        "timestamp": "2026-05-12T18:04:45.078Z"
+      },
+      {
+        "tool": "noToolRetry",
+        "input": {
+          "reason": "The model/tool run completed without returning final assistant text.",
+          "retryModel": "openai/gpt-4.1",
+          "primaryModel": "openai/gpt-5.4"
+        },
+        "output": {
+          "succeeded": true,
+          "contentLength": 2320
+        },
+        "timestamp": "2026-05-12T18:05:09.178Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse."
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project."
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly."
+        }
+      ],
+      "teamUsed": 0,
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": {
+      "learnings": [],
+      "totalUsed": 0
+    },
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "finishReason": "other",
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "extractStructuredActionBrief",
+            "createChangeOrder",
+            "createChangeEvent",
+            "updateProjectStatus",
+            "createRFI",
+            "createTask",
+            "createGeneratedTask",
+            "createProjectCompany",
+            "createProjectContact",
+            "updateGeneratedTask",
+            "deleteGeneratedTask",
+            "flagProjectRisk",
+            "updateRFIStatus",
+            "createMeetingNote",
+            "createSubmittal",
+            "logDailyReport",
+            "generateProjectSummary",
+            "createInitiativeCard",
+            "createCommitment",
+            "submitFeedback",
+            "addBoardItem",
+            "sendTeamsMessage",
+            "findRelatedFeatureRequests",
+            "captureFeatureRequestPacket",
+            "updateFeatureRequestPacket",
+            "scoreFeatureRequestReadiness",
+            "generateImplementationPlan",
+            "generateClaudeCodeHandoff",
+            "draftLinearIssueFromFeatureRequest",
+            "draftLinearSubIssuesFromImplementationPlan",
+            "attachLinearIssueToFeatureRequest",
+            "attachLinearSubIssueToFeatureRequest",
+            "recordLinearStatusUpdateForFeatureRequest",
+            "createWeeklyProgressReportDraft",
+            "updateProgressReportSections",
+            "listProgressReportPhotos",
+            "selectProgressReportPhotos",
+            "generateProgressReportPdf",
+            "listWorkspaceArtifacts",
+            "getDraftArtifact",
+            "saveWorkspaceArtifact",
+            "promoteWorkspaceArtifact",
+            "getSubmittalLog",
+            "getSpecRequirements",
+            "detectMissingSubmittals",
+            "logFeedback",
+            "reviewDocument",
+            "consultCFO",
+            "consultCOO",
+            "consultCRO",
+            "consultCHRO",
+            "consultVPBD",
+            "consultCMO",
+            "getCommitmentsOverview",
+            "getChangeOrderDetails",
+            "getDirectCostsSummary",
+            "getBudgetLineItems",
+            "getCostTrends",
+            "getMarginAnalysis",
+            "getAPAgingReport",
+            "getARAgingReport",
+            "getCashPositionReport",
+            "getVendorSpendReport",
+            "getRecentBills",
+            "getRecentInvoices",
+            "getAcumaticaProjectBudget",
+            "getAcumaticaProjectList",
+            "getPurchaseOrderSummary",
+            "getPeopleAndRoles",
+            "getVendorPerformance",
+            "getRFIStatus",
+            "getSubmittalStatus",
+            "getCrossProjectComparison",
+            "getHistoricalTrends",
+            "semanticSearch",
+            "getCompanyKnowledge",
+            "recallPastConversations",
+            "searchMeetingsByTopic",
+            "getMeetingDetails",
+            "saveToKnowledgeBase",
+            "saveInsight",
+            "searchMemories",
+            "writeMemory",
+            "findProject",
+            "getRecentEmails",
+            "searchEmails",
+            "searchTeamsMessages",
+            "searchExternalDocuments",
+            "queryBudgetData",
+            "queryChangeOrders",
+            "queryCommitments",
+            "queryDirectCosts",
+            "queryScheduleTasks",
+            "queryDocumentRows",
+            "searchStructuredFinancialRows",
+            "getScheduleAnalysis",
+            "searchAppHelp",
+            "getForecastComparison",
+            "getMeetingIntelligence",
+            "getProjectBriefingSnapshot",
+            "getFinancialAnalysis",
+            "getProjectBudgetSummary",
+            "getActionItemsAndInsights",
+            "getMeetingsByDate",
+            "searchDocuments",
+            "getProjectDetails"
+          ]
+        }
+      ],
+      "totalStepCount": 1,
+      "finalFinishReason": "other",
+      "preparedStepCount": 1,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "id": "permissions-user-management",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6158,
+  "question": "Where should user management questions point?",
+  "response": {
+    "answer": "I can’t determine the user-management destination from the app artifacts because the generated App Expert docs are missing.\n\nWhat I checked:\n- `search_feature_registry(\"user management\")` → failed with `APP_EXPERT_ARTIFACT_MISSING`\n- `get_app_expert_artifact_status()` → both generated artifacts are missing:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n\nWhat remains uncertain:\n- The exact route, page title, or help article for user management\n- Whether user management is exposed as a route, feature, or help article\n\nIf you want, I can help once the App Expert artifacts are generated.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6072,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

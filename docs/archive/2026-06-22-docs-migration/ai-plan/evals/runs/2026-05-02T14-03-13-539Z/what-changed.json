@@ -1,0 +1,46 @@
+{
+  "id": "what-changed",
+  "intent": "project_briefing",
+  "prompt": "What changed on Westfield since the last time I asked?",
+  "selectedProjectId": 43,
+  "sessionId": "b810b6c3-6104-42b4-b430-02607b562158",
+  "sessionLabel": "eval-2026-05-02T14-03-13-539Z-what-changed",
+  "startedAt": "2026-05-02T14:16:19.072Z",
+  "finishedAt": "2026-05-02T14:16:34.520Z",
+  "durationMs": 1,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "expected at least one of [semanticSearch, recallPastConversations] to fire — none did",
+      "answer length 0 < min 120"
+    ],
+    "warnings": [
+      "expected family 'semantic' not represented",
+      "expected family 'communications' not represented",
+      "expected family 'memory' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "semanticSearch",
+    "recallPastConversations"
+  ],
+  "expectedToolFamilies": [
+    "semantic",
+    "communications",
+    "memory"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

@@ -22,8 +22,8 @@
           ]
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-19T17-11-56-784Z-f8ac2775/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-19T17-11-56-784Z-f8ac2775/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-19T17-11-56-784Z-f8ac2775/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-19T17-11-56-784Z-f8ac2775/summary.md",
       "cases": [
         {
           "id": "outbound_action_policy_high_risk_draft_only_guard",
@@ -86,8 +86,8 @@
           ]
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-10T02-04-08-340Z-0ba155f3/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-10T02-04-08-340Z-0ba155f3/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-10T02-04-08-340Z-0ba155f3/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-10T02-04-08-340Z-0ba155f3/summary.md",
       "cases": [
         {
           "id": "toolcov-read-web-search",
@@ -202,8 +202,8 @@
           ]
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-10T01-38-03-487Z-b1195b4c/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-10T01-38-03-487Z-b1195b4c/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-10T01-38-03-487Z-b1195b4c/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-10T01-38-03-487Z-b1195b4c/summary.md",
       "cases": [
         {
           "id": "toolcov-read-project-details",
@@ -410,8 +410,8 @@
           ]
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T15-07-42-031Z-25b84ec6/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T15-07-42-031Z-25b84ec6/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T15-07-42-031Z-25b84ec6/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T15-07-42-031Z-25b84ec6/summary.md",
       "cases": [
         {
           "id": "toolcov-read-structured-financial-rows",
@@ -622,8 +622,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T14-39-29-493Z-cf9adf03/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T14-39-29-493Z-cf9adf03/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T14-39-29-493Z-cf9adf03/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T14-39-29-493Z-cf9adf03/summary.md",
       "cases": [
         {
           "id": "toolcov-read-project-details",
@@ -1062,8 +1062,8 @@
           ]
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T14-38-42-682Z-3b834ccf/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T14-38-42-682Z-3b834ccf/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T14-38-42-682Z-3b834ccf/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T14-38-42-682Z-3b834ccf/summary.md",
       "cases": [
         {
           "id": "toolcov-read-company-knowledge",
@@ -1145,8 +1145,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T11-05-54-885Z-08af8995/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T11-05-54-885Z-08af8995/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T11-05-54-885Z-08af8995/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T11-05-54-885Z-08af8995/summary.md",
       "cases": [
         {
           "id": "realworld-last-five-emails",
@@ -1443,8 +1443,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T10-57-53-167Z-c0e72df1/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T10-57-53-167Z-c0e72df1/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-57-53-167Z-c0e72df1/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-57-53-167Z-c0e72df1/summary.md",
       "cases": [
         {
           "id": "realworld-last-five-emails",
@@ -1746,8 +1746,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T10-49-09-836Z-7b0ff65b/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T10-49-09-836Z-7b0ff65b/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-49-09-836Z-7b0ff65b/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-49-09-836Z-7b0ff65b/summary.md",
       "cases": [
         {
           "id": "realworld-last-five-emails",
@@ -2048,8 +2048,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T10-49-09-804Z-18cc050b/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T10-49-09-804Z-18cc050b/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-49-09-804Z-18cc050b/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-49-09-804Z-18cc050b/summary.md",
       "cases": [
         {
           "id": "realworld-last-five-emails",
@@ -2350,8 +2350,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T10-41-26-706Z-f1e1983e/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T10-41-26-706Z-f1e1983e/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-41-26-706Z-f1e1983e/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-41-26-706Z-f1e1983e/summary.md",
       "cases": [
         {
           "id": "realworld-last-five-emails",
@@ -2652,8 +2652,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T10-41-26-671Z-131e3f4b/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T10-41-26-671Z-131e3f4b/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-41-26-671Z-131e3f4b/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-41-26-671Z-131e3f4b/summary.md",
       "cases": [
         {
           "id": "realworld-last-five-emails",
@@ -2952,8 +2952,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T10-25-13-571Z-9d46d7e1/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T10-25-13-571Z-9d46d7e1/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-25-13-571Z-9d46d7e1/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-25-13-571Z-9d46d7e1/summary.md",
       "cases": [
         {
           "id": "realworld-last-five-emails",
@@ -3260,8 +3260,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T10-25-13-571Z-541d79a2/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T10-25-13-571Z-541d79a2/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-25-13-571Z-541d79a2/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-25-13-571Z-541d79a2/summary.md",
       "cases": [
         {
           "id": "realworld-last-five-emails",
@@ -3564,8 +3564,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T10-15-33-040Z-996e1225/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T10-15-33-040Z-996e1225/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-15-33-040Z-996e1225/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-15-33-040Z-996e1225/summary.md",
       "cases": [
         {
           "id": "realworld-last-five-emails",
@@ -3862,8 +3862,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T10-06-51-220Z-cbc9b0c8/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T10-06-51-220Z-cbc9b0c8/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-06-51-220Z-cbc9b0c8/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-06-51-220Z-cbc9b0c8/summary.md",
       "cases": [
         {
           "id": "realworld-last-five-emails",
@@ -4157,8 +4157,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T10-06-51-214Z-0f7a1d89/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T10-06-51-214Z-0f7a1d89/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-06-51-214Z-0f7a1d89/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-06-51-214Z-0f7a1d89/summary.md",
       "cases": [
         {
           "id": "source-lookup-teams",
@@ -4336,8 +4336,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T10-04-29-787Z-876fcd43/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T10-04-29-787Z-876fcd43/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-04-29-787Z-876fcd43/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T10-04-29-787Z-876fcd43/summary.md",
       "cases": [
         {
           "id": "tasks-list-of-action-items-canonical",
@@ -4630,8 +4630,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T09-49-09-129Z-09b31494/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T09-49-09-129Z-09b31494/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T09-49-09-129Z-09b31494/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T09-49-09-129Z-09b31494/summary.md",
       "cases": [
         {
           "id": "realworld-last-five-emails",
@@ -4915,8 +4915,8 @@
           "warnings": []
         }
       ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T09-49-09-043Z-d15be8c9/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T09-49-09-043Z-d15be8c9/summary.md",
+      "file": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T09-49-09-043Z-d15be8c9/results.json",
+      "summaryFile": "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-09T09-49-09-043Z-d15be8c9/summary.md",
       "cases": [
         {
           "id": "source-lookup-teams",

@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/app/api/admin/intelligence-compiler/_shared";
+import { requireAdmin } from "@/app/api/admin/_shared";
 import { SkillLibraryList } from "@/components/ai-skills/skill-library-list";
 import { PageShell } from "@/components/layout";
 

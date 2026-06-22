@@ -10,10 +10,7 @@ import {
   createServiceClient,
 } from "@/lib/supabase/service";
 
-import {
-  fetchBackendCompiler,
-  requireAdmin,
-} from "../../intelligence-compiler/_shared";
+import { requireAdmin } from "../../_shared";
 import { fetchBackendSourceSync } from "../../source-sync/_shared";
 
 const StatusMapSchema = z.record(z.string(), z.number());
@@ -631,7 +628,6 @@ export const GET = withApiGuardrails(
 
     const [
       rawSourceResult,
-      rawCompilerResult,
       newTasks,
       updatedTasks,
       dailyBrief,
@@ -649,19 +645,6 @@ export const GET = withApiGuardrails(
           ),
         SourceSyncStatusSchema,
       ),
-      fetchJson(
-        requestId,
-        "api.admin.operations-readiness.status.GET",
-        "compiler",
-        () =>
-          fetchBackendCompiler(
-            requestId,
-            "api.admin.operations-readiness.status.GET",
-            "status",
-            { method: "GET" },
-          ),
-        CompilerStatusSchema,
-      ),
       countTasksSince(since24h, "created_at"),
       countTasksSince(since24h, "updated_at"),
       loadLatestDailyBrief(),
@@ -677,13 +660,14 @@ export const GET = withApiGuardrails(
               error instanceof Error ? error.message : rawSourceResult.error,
           }))
         : rawSourceResult;
-    const compilerResult =
-      "error" in rawCompilerResult
-        ? await loadCompilerFallbackStatus(now).catch((error) => ({
-            error:
-              error instanceof Error ? error.message : rawCompilerResult.error,
-          }))
-        : rawCompilerResult;
+    const compilerResult = await loadCompilerFallbackStatus(now).catch(
+      (error) => ({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Project intelligence health read-back failed.",
+      }),
+    );
 
     const sourceUnavailable = "error" in sourceResult;
     const compilerUnavailable = "error" in compilerResult;
@@ -878,25 +862,10 @@ export const GET = withApiGuardrails(
         prevention:
           "Keep packet job failures and stale queued jobs as first-class readiness checks, not hidden in raw job tables.",
         primaryAction: {
-          label: "Open compiler health",
-          href: "/intelligence-compiler",
+          label: "Open AI system health",
+          href: "/ai-system-health",
         },
-        runActions: compilerUnavailable
-          ? []
-          : [
-              {
-                id: "run-compiler",
-                label: "Run compiler",
-                endpoint: "/api/admin/intelligence-compiler/run",
-                method: "POST",
-                body: {
-                  sourceLimit: 10,
-                  packetLimit: 10,
-                  background: true,
-                  maxProcessingTimeMs: 120000,
-                },
-              },
-            ],
+        runActions: [],
       },
       {
         id: "daily-brief",

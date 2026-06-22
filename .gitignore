@@ -25,6 +25,8 @@ build/
 liquid-metal-id-card/
 liquid-metal-id-card.zip
 tools/liveblocks-mcp-server/
+hermes-agent/
+openclaw/
 .playwright-mcp/
 .pnpm-store/
 .venv-crawl/
@@ -140,5 +142,12 @@ scripts/adversarial-harness/workspace/
 scripts/adversarial-harness/node_modules/
 scripts/adversarial-harness/bun.lock
 scripts/adversarial-harness/package-lock.json
+scripts/**/node_modules/
+scripts/**/__pycache__/
+scripts/change-events-crawl/html/
+scripts/change-events-crawl/screenshots/
+scripts/change-events-crawl/crawl-report.md
+scripts/playwright-crawl/outputs/
+scripts/visual-audit/output/
 /docs/ai-plan/evals/runs/
 /alleato-ai

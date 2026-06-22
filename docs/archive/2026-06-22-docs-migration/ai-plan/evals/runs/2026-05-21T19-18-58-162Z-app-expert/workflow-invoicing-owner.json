@@ -1,0 +1,54 @@
+{
+  "id": "workflow-invoicing-owner",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 3686,
+  "question": "Where do owner invoices belong?",
+  "response": {
+    "answer": "I can’t determine where owner invoices belong from App Expert metadata right now because the required generated artifacts are missing.\n\nChecked:\n- App Expert artifact status: missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search for `owner invoices`: failed for the same reason\n\nWhat this means:\n- I don’t have curated feature/help metadata to answer this reliably.\n- I also can’t safely fall back to route evidence because the sitemap artifact is missing too.\n\nTo proceed, the generated docs need to be created first:\n- `npm run docs:generate-app-expert`\n\nIf you want, I can also help interpret the result after those artifacts are regenerated.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help",
+        "sourceType": "sitemap",
+        "route": "/help",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3584,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

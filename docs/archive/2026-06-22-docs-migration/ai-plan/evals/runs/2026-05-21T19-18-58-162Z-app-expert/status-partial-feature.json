@@ -1,0 +1,54 @@
+{
+  "id": "status-partial-feature",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 3857,
+  "question": "How should Ask Alleato explain a partially implemented feature?",
+  "response": {
+    "answer": "I can’t verify an app-specific answer right now because the required App Expert artifacts are missing:\n\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nSo I can’t safely claim documented Ask Alleato behavior, help article guidance, or implementation-backed route evidence.\n\nWhat I can say from the checks:\n- No curated feature metadata was available.\n- No help article path could be resolved from feature metadata.\n- No route lookup was possible because no route was supplied and the generated sitemap is missing.\n\nIf you want the exact app behavior, regenerate the artifacts first:\n- `npm run docs:generate-app-expert`\n\nThen I can answer with:\n- the documented user-facing wording for partially implemented features,\n- exact route/source references,\n- and any implementation evidence if docs are incomplete.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/source",
+        "sourceType": "sitemap",
+        "route": "/source",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3768,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

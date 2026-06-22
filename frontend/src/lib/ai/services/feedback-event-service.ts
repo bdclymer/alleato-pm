@@ -303,7 +303,7 @@ export interface EmailVoicePromotionCandidatePreview {
   projectId: null;
   confidence: number;
   riskLevel: AiLearningRiskLevel;
-  destinationTable: "docs/ai-plan/brandon-email-voice-profile.md";
+  destinationTable: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md";
   destinationRecordId: string;
   sourceEventIds: string[];
   proposedLearning: Json;
@@ -1283,7 +1283,7 @@ function taskPromotionTitle(row: AiTaskFeedbackRow): string {
 }
 
 const BRANDON_EMAIL_VOICE_PROFILE_PATH =
-  "docs/ai-plan/brandon-email-voice-profile.md";
+  "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md";
 const BRANDON_EMAIL_VOICE_PROFILE_VERSION = "2026-05-19";
 
 const EMAIL_VOICE_REASON_RULES: Record<
@@ -1485,7 +1485,7 @@ export async function generateEmailVoicePromotionCandidates(
       projectId: null,
       confidence: emailVoiceConfidence(groupRows.length, rows.length),
       riskLevel: rule.riskLevel,
-      destinationTable: "docs/ai-plan/brandon-email-voice-profile.md",
+      destinationTable: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md",
       destinationRecordId: voiceProfilePath,
       sourceEventIds,
       proposedLearning,

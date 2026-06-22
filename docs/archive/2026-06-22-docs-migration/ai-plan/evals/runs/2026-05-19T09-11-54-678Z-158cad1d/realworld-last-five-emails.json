@@ -1,0 +1,176 @@
+{
+  "id": "realworld-last-five-emails",
+  "intent": "source_lookup",
+  "prompt": "Can you tell me my last five emails?",
+  "selectedProjectId": null,
+  "sessionId": "fec73a9e-0b18-4324-aad9-01e2770b62fc",
+  "sessionLabel": "eval-2026-05-19T09-11-54-678Z-158cad1d-realworld-last-five-emails",
+  "startedAt": "2026-05-19T09:11:54.733Z",
+  "finishedAt": "2026-05-19T09:12:11.139Z",
+  "durationMs": 15906,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 6,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+    ],
+    "observations": [
+      "tools fired: consultMicrosoftExecutiveAssistant",
+      "judge email_operator: skipped"
+    ],
+    "toolNames": [
+      "consultMicrosoftExecutiveAssistant"
+    ],
+    "familiesHit": [
+      "communications",
+      "email_action"
+    ],
+    "finalTextLength": 2032,
+    "finalText": "Last five inbox emails for bclymer@alleatogroup.com:\n\n1. Vercel — “Approaching your limits: Upgrade now to avoid service disruption”\n   - Received: 2026-05-19 06:40:41 UTC\n   - Notes: Possible operational action needed; usage warning. Not client-urgent, but time-sensitive.\n\n2. Alleato Group — “ERP Integrations Daily Summary”\n   - Received: 2026-05-19 06:16:11 UTC\n   - Notes: Internal/system summary. No immediate action evident from the snippet.\n\n3. Kenny / Alleato-related external sender — “Alleato group 2026 Pay Allowance Adjustment, Compensations Plans_REF - 6li4aon8GM”\n   - Received: 2026-05-19 01:54:16 UTC\n   - Notes: Attachment present. Sender looks unusual/spoof-like; treat as suspicious until verified.\n\n4. Mark Purvis — “Fw: Exol Wilmer”\n   - Received: 2026-05-19 01:29:42 UTC\n   - Notes: Project-related forwarded message with attachment. Likely routine follow-up.\n\n5. Connor Clark — “Re: Superior Beverage 8319 - In Rack Sprinkler Call Follow Up”\n   - Received: 2026-05-19 01:17:59 UTC\n   - Notes: Project follow-up; mentions ceiling height not yet available. No urgent escalation indicated.\n\nUrgent-item assessment:\n- I did not find a true emergency, legal, security, or client-critical escalation in the last five messages.\n- The most notable risk item is the suspicious pay/compensation email with a mismatched-looking sender/domain. That should be verified before opening attachments or replying.\n\nCapability status:\n- Live Outlook inbox read succeeded.\n- No stale context or tool failure occurred.\n- No Teams draft was created because no urgent escalation threshold was clearly met.\n\nRecommended next steps for Megan:\n- Review the Vercel usage warning if that site/app matters operationally.\n- Verify the suspicious compensation email before interacting with it.\n- Open the project follow-ups only if you want a response drafted or summarized further.\n\nApprovals needed:\n- None for reading the inbox.\n- Approval would be needed only if you want me to draft a reply, Teams escalation, or any send/post action.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 15906
+    },
+    "judge": {
+      "status": "skipped",
+      "rubric": "email_operator",
+      "score": null,
+      "minScore": 4,
+      "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+      "strengths": [],
+      "weaknesses": [],
+      "dimensionScores": {},
+      "provider": null,
+      "model": "openai/gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "consultMicrosoftExecutiveAssistant"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "status": "loading",
+        "timestamp": "2026-05-19T09:11:56.110Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Delegating Microsoft operator work",
+        "status": "loading",
+        "timestamp": "2026-05-19T09:11:56.541Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-microsoft-executive-assistant"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-microsoft-executive-assistant",
+      "delta": "Last five inbox emails for bclymer@alleatogroup.com:\n\n1. Vercel — “Approaching your limits: Upgrade now to avoid service disruption”\n   - Received: 2026-05-19 06:40:41 UTC\n   - Notes: Possible operational action needed; usage warning. Not client-urgent, but time-sensitive.\n\n2. Alleato Group — “ERP Integrations Daily Summary”\n   - Received: 2026-05-19 06:16:11 UTC\n   - Notes: Internal/system summary. No immediate action evident from the snippet.\n\n3. Kenny / Alleato-related external sender — “Alleato group 2026 Pay Allowance Adjustment, Compensations Plans_REF - 6li4aon8GM”\n   - Received: 2026-05-19 01:54:16 UTC\n   - Notes: Attachment present. Sender looks unusual/spoof-like; treat as suspicious until verified.\n\n4. Mark Purvis — “Fw: Exol Wilmer”\n   - Received: 2026-05-19 01:29:42 UTC\n   - Notes: Project-related forwarded message with attachment. Likely routine follow-up.\n\n5. Connor Clark — “Re: Superior Beverage 8319 - In Rack Sprinkler Call Follow Up”\n   - Received: 2026-05-19 01:17:59 UTC\n   - Notes: Project follow-up; mentions ceiling height not yet available. No urgent escalation indicated.\n\nUrgent-item assessment:\n- I did not find a true emergency, legal, security, or client-critical escalation in the last five messages.\n- The most notable risk item is the suspicious pay/compensation email with a mismatched-looking sender/domain. That should be verified before opening attachments or replying.\n\nCapability status:\n- Live Outlook inbox read succeeded.\n- No stale context or tool failure occurred.\n- No Teams draft was created because no urgent escalation threshold was clearly met.\n\nRecommended next steps for Megan:\n- Review the Vercel usage warning if that site/app matters operationally.\n- Verify the suspicious compensation email before interacting with it.\n- Open the project follow-ups only if you want a response drafted or summarized further.\n\nApprovals needed:\n- None for reading the inbox.\n- Approval would be needed only if you want me to draft a reply, Teams escalation, or any send/post action."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-microsoft-executive-assistant"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Microsoft Executive Assistant answer returned",
+        "status": "success",
+        "timestamp": "2026-05-19T09:12:10.624Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "tool_trace": [
+      {
+        "tool": "consultMicrosoftExecutiveAssistant",
+        "error": null,
+        "input": {
+          "message": "Can you tell me my last five emails?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": "deep_agents",
+          "count": null,
+          "error": null,
+          "source": "microsoft_graph_live",
+          "summary": "Last five inbox emails for bclymer@alleatogroup.com:\n\n1. Vercel — “Approaching your limits: Upgrade now to avoid service disruption”\n   - Received: 2026-05-19 06:40:41 UTC\n   - Notes: Possible operational action needed; usage warning. Not client-urgent, but time-sensitive.\n\n2. Alleato Group — “ERP Integrations Daily Summary”\n   - Received: 2026-05-19 06:16:11 UTC\n   - Notes: Internal/system summary. No immediate action evident from the snippet.\n\n3. Kenny / Alleato-related external sender — “Alle",
+          "toolTrace": [
+            {
+              "tool": "read_live_outlook_inbox",
+              "agent": "microsoft-executive-assistant",
+              "detail": "read_live_outlook_inbox completed.",
+              "output": {
+                "ok": true,
+                "count": 25,
+                "source": "microsoft_graph_live",
+                "fetchedAt": "2026-05-19T09:12:02.083402+00:00",
+                "truncated": true,
+                "mailboxUserId": "bclymer@alleatogroup.com"
+              },
+              "source": "microsoft_graph_live",
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "deepagents_microsoft_executive_assistant_runtime",
+              "agent": "microsoft-executive-assistant",
+              "detail": "Microsoft Executive Assistant produced an answer.",
+              "output": null,
+              "source": null,
+              "status": "success",
+              "durationMs": 13427
+            }
+          ],
+          "actionCount": 0,
+          "orchestrator": "microsoft-executive-assistant"
+        },
+        "status": "success",
+        "toolName": "consultMicrosoftExecutiveAssistant",
+        "timestamp": "2026-05-19T09:12:10.103Z"
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+      "sources": [],
+      "responseFormat": "conversational"
+    },
+    "response_quality": {
+      "score": 62,
+      "reasons": [
+        "at least one successful tool call",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "delegated_orchestrator": "microsoft-executive-assistant"
+  }
+}

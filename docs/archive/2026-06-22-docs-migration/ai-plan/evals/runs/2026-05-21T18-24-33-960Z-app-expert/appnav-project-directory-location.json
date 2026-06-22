@@ -1,0 +1,47 @@
+{
+  "id": "appnav-project-directory-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4971,
+  "question": "Where do I manage project team contacts?",
+  "response": {
+    "answer": "Manage project team contacts in the project-scoped **Directory** page:\n\n- Route: `/[projectId]/directory`\n- Help article: `docs/help/articles/project-directory.md`\n\nWhat the docs say:\n- The **Project Directory** is the roster for people and companies involved in a specific project.\n- Open it by selecting the project, then choosing **Directory** from the sidebar.\n- It has **People** and **Companies** tabs.\n- You can add people, assign project roles, and optionally grant project access.\n\nChecked:\n- Artifact status: current and available\n- Feature registry: `project-directory` → help article `docs/help/articles/project-directory.md`\n- Sitemap: route `/[projectId]/directory`\n\nIf you want, I can also tell you how this differs from the global **Company Directory** at `/directory`.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/directory",
+        "sourceType": "sitemap",
+        "route": "/directory",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/project-directory.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/project-directory.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 4967,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

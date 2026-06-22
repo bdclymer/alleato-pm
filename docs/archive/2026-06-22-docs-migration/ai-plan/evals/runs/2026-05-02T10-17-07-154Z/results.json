@@ -1,0 +1,1265 @@
+{
+  "generatedAt": "2026-05-02T10:24:59.821Z",
+  "baseUrl": "http://localhost:3000",
+  "totalCases": 30,
+  "passed": 0,
+  "failed": 30,
+  "toolCoverage": {},
+  "intentDistribution": {
+    "project_briefing": 3,
+    "portfolio_briefing": 2,
+    "risk_review": 1,
+    "financial_analysis": 9,
+    "operations_analysis": 4,
+    "people_or_capacity": 2,
+    "source_lookup": 3,
+    "meeting_query": 1,
+    "document_question": 1,
+    "knowledge_capture": 1,
+    "general_conversation": 1,
+    "app_help": 1,
+    "brainstorming": 1
+  },
+  "results": [
+    {
+      "id": "project-briefing-westfield",
+      "intent": "project_briefing",
+      "prompt": "What's the latest on Westfield Collective?",
+      "selectedProjectId": 43,
+      "sessionId": "0a7baee6-7a32-4c64-b1df-cc22de043cc8",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-project-briefing-westfield",
+      "startedAt": "2026-05-02T10:17:07.157Z",
+      "finishedAt": "2026-05-02T10:17:29.968Z",
+      "durationMs": 7179,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"ab570ece-1d92-4b54-80b7-6b2ca8b66b86\",\"timestamp\":\"2026-05-02T10:17:14.328Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"ab570ece-1d92-4b54-80b7-6b2ca8b66b86\",\"timestamp\":\"2026-05-02T10:17:14.328Z\"}",
+          "HTTP 401",
+          "expected at least one of [getProjectBriefingSnapshot, semanticSearch] to fire — none did",
+          "mustInclude missing: \"Westfield\""
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'semantic' not represented",
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"ab570ece-1d92-4b54-80b7-6b2ca8b66b86\",\"timestamp\":\"2026-05-02T10:17:14.328Z\"}"
+      },
+      "expectedToolNames": [
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic",
+        "communications"
+      ]
+    },
+    {
+      "id": "project-briefing-vermillion",
+      "intent": "project_briefing",
+      "prompt": "Give me a current read on Vermillion Rise Warehouse.",
+      "selectedProjectId": 67,
+      "sessionId": "f949bcae-5244-445f-8009-f84391637684",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-project-briefing-vermillion",
+      "startedAt": "2026-05-02T10:17:29.969Z",
+      "finishedAt": "2026-05-02T10:17:45.276Z",
+      "durationMs": 85,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3fc0995d-c9b2-4030-99d2-bb68421e05d3\",\"timestamp\":\"2026-05-02T10:17:30.051Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3fc0995d-c9b2-4030-99d2-bb68421e05d3\",\"timestamp\":\"2026-05-02T10:17:30.051Z\"}",
+          "HTTP 401",
+          "expected at least one of [getProjectBriefingSnapshot] to fire — none did",
+          "mustInclude missing: \"Vermillion\""
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'semantic' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3fc0995d-c9b2-4030-99d2-bb68421e05d3\",\"timestamp\":\"2026-05-02T10:17:30.051Z\"}"
+      },
+      "expectedToolNames": [
+        "getProjectBriefingSnapshot"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic"
+      ]
+    },
+    {
+      "id": "portfolio-overview",
+      "intent": "portfolio_briefing",
+      "prompt": "Across all active projects, what should I worry about this week?",
+      "selectedProjectId": null,
+      "sessionId": "2a4d1640-52d8-4cc8-af3e-158fe07ac9a2",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-portfolio-overview",
+      "startedAt": "2026-05-02T10:17:45.277Z",
+      "finishedAt": "2026-05-02T10:18:00.582Z",
+      "durationMs": 79,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"08187bb4-877c-463f-ab44-a8bc708fda82\",\"timestamp\":\"2026-05-02T10:17:45.355Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"08187bb4-877c-463f-ab44-a8bc708fda82\",\"timestamp\":\"2026-05-02T10:17:45.355Z\"}",
+          "HTTP 401",
+          "expected at least one of [getPortfolioOverview, getProjectsWithRisks] to fire — none did",
+          "answer length 210 < min 250"
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'risk' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"08187bb4-877c-463f-ab44-a8bc708fda82\",\"timestamp\":\"2026-05-02T10:17:45.355Z\"}"
+      },
+      "expectedToolNames": [
+        "getPortfolioOverview",
+        "getProjectsWithRisks"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "risk"
+      ]
+    },
+    {
+      "id": "risk-review-single-project",
+      "intent": "risk_review",
+      "prompt": "What are the biggest risks on Westfield Collective right now?",
+      "selectedProjectId": 43,
+      "sessionId": "cb1aeaf7-b212-4b01-805e-2dbd4a94389c",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-risk-review-single-project",
+      "startedAt": "2026-05-02T10:18:00.583Z",
+      "finishedAt": "2026-05-02T10:18:15.963Z",
+      "durationMs": 150,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"5f42d97c-cbbf-49b4-a11c-dac056505201\",\"timestamp\":\"2026-05-02T10:18:00.731Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"5f42d97c-cbbf-49b4-a11c-dac056505201\",\"timestamp\":\"2026-05-02T10:18:00.731Z\"}",
+          "HTTP 401",
+          "expected at least one of [getProjectRiskAnalysis] to fire — none did",
+          "mustInclude missing: \"risk\""
+        ],
+        "warnings": [
+          "expected family 'risk' not represented",
+          "expected family 'project' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"5f42d97c-cbbf-49b4-a11c-dac056505201\",\"timestamp\":\"2026-05-02T10:18:00.731Z\"}"
+      },
+      "expectedToolNames": [
+        "getProjectRiskAnalysis"
+      ],
+      "expectedToolFamilies": [
+        "risk",
+        "project"
+      ]
+    },
+    {
+      "id": "financial-budget-summary",
+      "intent": "financial_analysis",
+      "prompt": "What does the budget look like on Westfield? Are we tracking under or over?",
+      "selectedProjectId": 43,
+      "sessionId": "7d860c30-c14f-4e7c-9c3e-62404dcf2acd",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-financial-budget-summary",
+      "startedAt": "2026-05-02T10:18:15.963Z",
+      "finishedAt": "2026-05-02T10:18:33.179Z",
+      "durationMs": 2026,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"48acb16d-8b34-42ff-a24a-701ec01399c2\",\"timestamp\":\"2026-05-02T10:18:17.988Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"48acb16d-8b34-42ff-a24a-701ec01399c2\",\"timestamp\":\"2026-05-02T10:18:17.988Z\"}",
+          "HTTP 401",
+          "expected at least one of [getProjectBudgetSummary, queryBudgetData, getBudgetLineItems] to fire — none did",
+          "mustInclude missing: \"budget\""
+        ],
+        "warnings": [
+          "expected family 'financial' not represented",
+          "expected family 'structured' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"48acb16d-8b34-42ff-a24a-701ec01399c2\",\"timestamp\":\"2026-05-02T10:18:17.988Z\"}"
+      },
+      "expectedToolNames": [
+        "getProjectBudgetSummary",
+        "queryBudgetData",
+        "getBudgetLineItems"
+      ],
+      "expectedToolFamilies": [
+        "financial",
+        "structured"
+      ]
+    },
+    {
+      "id": "financial-commitments",
+      "intent": "financial_analysis",
+      "prompt": "Show me an overview of commitments on Westfield with their current status.",
+      "selectedProjectId": 43,
+      "sessionId": "8178b053-3f73-4a00-9f05-7dbcf67d1f5f",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-financial-commitments",
+      "startedAt": "2026-05-02T10:18:33.180Z",
+      "finishedAt": "2026-05-02T10:18:48.439Z",
+      "durationMs": 81,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"4091bb89-1de1-4f57-af8f-581aff2cf31f\",\"timestamp\":\"2026-05-02T10:18:33.259Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"4091bb89-1de1-4f57-af8f-581aff2cf31f\",\"timestamp\":\"2026-05-02T10:18:33.259Z\"}",
+          "HTTP 401",
+          "expected at least one of [getCommitmentsOverview, queryCommitments] to fire — none did",
+          "mustInclude missing: \"commitment\""
+        ],
+        "warnings": [
+          "expected family 'financial' not represented",
+          "expected family 'structured' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"4091bb89-1de1-4f57-af8f-581aff2cf31f\",\"timestamp\":\"2026-05-02T10:18:33.259Z\"}"
+      },
+      "expectedToolNames": [
+        "getCommitmentsOverview",
+        "queryCommitments"
+      ],
+      "expectedToolFamilies": [
+        "financial",
+        "structured"
+      ]
+    },
+    {
+      "id": "financial-change-orders",
+      "intent": "financial_analysis",
+      "prompt": "Walk me through the open change orders on Westfield and the cost exposure.",
+      "selectedProjectId": 43,
+      "sessionId": "645114a4-7431-4770-85ac-2ce68c96637e",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-financial-change-orders",
+      "startedAt": "2026-05-02T10:18:48.440Z",
+      "finishedAt": "2026-05-02T10:19:03.714Z",
+      "durationMs": 85,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"6a44368b-931c-4a75-a4fd-ffd5f0281ef0\",\"timestamp\":\"2026-05-02T10:18:48.523Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"6a44368b-931c-4a75-a4fd-ffd5f0281ef0\",\"timestamp\":\"2026-05-02T10:18:48.523Z\"}",
+          "HTTP 401",
+          "expected at least one of [getChangeOrderDetails, queryChangeOrders] to fire — none did",
+          "mustInclude missing: \"change order\""
+        ],
+        "warnings": [
+          "expected family 'financial' not represented",
+          "expected family 'structured' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"6a44368b-931c-4a75-a4fd-ffd5f0281ef0\",\"timestamp\":\"2026-05-02T10:18:48.523Z\"}"
+      },
+      "expectedToolNames": [
+        "getChangeOrderDetails",
+        "queryChangeOrders"
+      ],
+      "expectedToolFamilies": [
+        "financial",
+        "structured"
+      ]
+    },
+    {
+      "id": "financial-direct-costs",
+      "intent": "financial_analysis",
+      "prompt": "Summarize direct costs to date on Westfield.",
+      "selectedProjectId": 43,
+      "sessionId": "e2b95b96-711b-4b99-b417-6b30cf63722b",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-financial-direct-costs",
+      "startedAt": "2026-05-02T10:19:03.715Z",
+      "finishedAt": "2026-05-02T10:19:19.164Z",
+      "durationMs": 79,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"0b065394-703c-489a-9cbf-3cd0b3f5e692\",\"timestamp\":\"2026-05-02T10:19:03.793Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"0b065394-703c-489a-9cbf-3cd0b3f5e692\",\"timestamp\":\"2026-05-02T10:19:03.793Z\"}",
+          "HTTP 401",
+          "expected at least one of [getDirectCostsSummary, queryDirectCosts] to fire — none did",
+          "mustInclude missing: \"direct cost\""
+        ],
+        "warnings": [
+          "expected family 'financial' not represented",
+          "expected family 'structured' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"0b065394-703c-489a-9cbf-3cd0b3f5e692\",\"timestamp\":\"2026-05-02T10:19:03.793Z\"}"
+      },
+      "expectedToolNames": [
+        "getDirectCostsSummary",
+        "queryDirectCosts"
+      ],
+      "expectedToolFamilies": [
+        "financial",
+        "structured"
+      ]
+    },
+    {
+      "id": "financial-margin",
+      "intent": "financial_analysis",
+      "prompt": "What's the projected margin on Westfield Collective?",
+      "selectedProjectId": 43,
+      "sessionId": "5d67a733-8e0c-4127-9a46-4a843ef4371b",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-financial-margin",
+      "startedAt": "2026-05-02T10:19:19.165Z",
+      "finishedAt": "2026-05-02T10:19:34.734Z",
+      "durationMs": 268,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"153939ec-1b78-46cb-8453-4f71162c4095\",\"timestamp\":\"2026-05-02T10:19:19.430Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"153939ec-1b78-46cb-8453-4f71162c4095\",\"timestamp\":\"2026-05-02T10:19:19.430Z\"}",
+          "HTTP 401",
+          "expected at least one of [getMarginAnalysis, getFinancialAnalysis] to fire — none did",
+          "mustInclude missing: \"margin\""
+        ],
+        "warnings": [
+          "expected family 'financial' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"153939ec-1b78-46cb-8453-4f71162c4095\",\"timestamp\":\"2026-05-02T10:19:19.430Z\"}"
+      },
+      "expectedToolNames": [
+        "getMarginAnalysis",
+        "getFinancialAnalysis"
+      ],
+      "expectedToolFamilies": [
+        "financial"
+      ]
+    },
+    {
+      "id": "financial-forecast",
+      "intent": "financial_analysis",
+      "prompt": "How is our forecast tracking against the original budget on Westfield?",
+      "selectedProjectId": 43,
+      "sessionId": "b40ac878-4bf2-4056-be07-8a659ae43ecf",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-financial-forecast",
+      "startedAt": "2026-05-02T10:19:34.735Z",
+      "finishedAt": "2026-05-02T10:19:50.169Z",
+      "durationMs": 99,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"58d2a7ef-3f7d-4f0f-a3fb-264c16aed06d\",\"timestamp\":\"2026-05-02T10:19:34.833Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"58d2a7ef-3f7d-4f0f-a3fb-264c16aed06d\",\"timestamp\":\"2026-05-02T10:19:34.833Z\"}",
+          "HTTP 401",
+          "expected at least one of [getForecastComparison, getCostTrends] to fire — none did",
+          "mustInclude missing: \"forecast\""
+        ],
+        "warnings": [
+          "expected family 'financial' not represented",
+          "expected family 'forecast' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"58d2a7ef-3f7d-4f0f-a3fb-264c16aed06d\",\"timestamp\":\"2026-05-02T10:19:34.833Z\"}"
+      },
+      "expectedToolNames": [
+        "getForecastComparison",
+        "getCostTrends"
+      ],
+      "expectedToolFamilies": [
+        "financial",
+        "forecast"
+      ]
+    },
+    {
+      "id": "schedule-analysis",
+      "intent": "operations_analysis",
+      "prompt": "Where are we against the schedule on Westfield? Any tasks slipping?",
+      "selectedProjectId": 43,
+      "sessionId": "f52d89ec-b12c-41d2-9776-55b304583320",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-schedule-analysis",
+      "startedAt": "2026-05-02T10:19:50.170Z",
+      "finishedAt": "2026-05-02T10:20:05.576Z",
+      "durationMs": 95,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"e9303ffa-1d88-419a-ab9c-b8620fca5266\",\"timestamp\":\"2026-05-02T10:19:50.263Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"e9303ffa-1d88-419a-ab9c-b8620fca5266\",\"timestamp\":\"2026-05-02T10:19:50.263Z\"}",
+          "HTTP 401",
+          "expected at least one of [getScheduleAnalysis, queryScheduleTasks] to fire — none did",
+          "mustInclude missing: \"schedule\""
+        ],
+        "warnings": [
+          "expected family 'schedule' not represented",
+          "expected family 'structured' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"e9303ffa-1d88-419a-ab9c-b8620fca5266\",\"timestamp\":\"2026-05-02T10:19:50.263Z\"}"
+      },
+      "expectedToolNames": [
+        "getScheduleAnalysis",
+        "queryScheduleTasks"
+      ],
+      "expectedToolFamilies": [
+        "schedule",
+        "structured"
+      ]
+    },
+    {
+      "id": "rfis-open",
+      "intent": "operations_analysis",
+      "prompt": "What RFIs are still open on Westfield and who owes a response?",
+      "selectedProjectId": 43,
+      "sessionId": "3a997c2a-c698-4c82-8beb-472468e3e71a",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-rfis-open",
+      "startedAt": "2026-05-02T10:20:05.577Z",
+      "finishedAt": "2026-05-02T10:20:20.686Z",
+      "durationMs": 85,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"8f5f501a-a3d7-47ce-bdcb-a0f145d0399f\",\"timestamp\":\"2026-05-02T10:20:05.660Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"8f5f501a-a3d7-47ce-bdcb-a0f145d0399f\",\"timestamp\":\"2026-05-02T10:20:05.660Z\"}",
+          "HTTP 401",
+          "expected at least one of [getRFIStatus] to fire — none did",
+          "mustInclude missing: \"RFI\""
+        ],
+        "warnings": [
+          "expected family 'operations' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"8f5f501a-a3d7-47ce-bdcb-a0f145d0399f\",\"timestamp\":\"2026-05-02T10:20:05.660Z\"}"
+      },
+      "expectedToolNames": [
+        "getRFIStatus"
+      ],
+      "expectedToolFamilies": [
+        "operations"
+      ]
+    },
+    {
+      "id": "submittals-status",
+      "intent": "operations_analysis",
+      "prompt": "Give me the submittal status on Westfield — anything overdue?",
+      "selectedProjectId": 43,
+      "sessionId": "a7f09cf4-3c82-4011-92f7-292cf55e9472",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-submittals-status",
+      "startedAt": "2026-05-02T10:20:20.687Z",
+      "finishedAt": "2026-05-02T10:20:36.452Z",
+      "durationMs": 109,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"8745b13d-27cd-491e-b50b-8daca7ba37ab\",\"timestamp\":\"2026-05-02T10:20:20.794Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"8745b13d-27cd-491e-b50b-8daca7ba37ab\",\"timestamp\":\"2026-05-02T10:20:20.794Z\"}",
+          "HTTP 401",
+          "expected at least one of [getSubmittalStatus] to fire — none did",
+          "mustInclude missing: \"submittal\""
+        ],
+        "warnings": [
+          "expected family 'operations' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"8745b13d-27cd-491e-b50b-8daca7ba37ab\",\"timestamp\":\"2026-05-02T10:20:20.794Z\"}"
+      },
+      "expectedToolNames": [
+        "getSubmittalStatus"
+      ],
+      "expectedToolFamilies": [
+        "operations"
+      ]
+    },
+    {
+      "id": "people-roles",
+      "intent": "people_or_capacity",
+      "prompt": "Who is on the Westfield project team and what are their roles?",
+      "selectedProjectId": 43,
+      "sessionId": "082d1661-0670-4d0c-99a9-23f257514ead",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-people-roles",
+      "startedAt": "2026-05-02T10:20:36.454Z",
+      "finishedAt": "2026-05-02T10:20:51.922Z",
+      "durationMs": 129,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"eac75735-19bd-4f01-b33c-3619917bf8dd\",\"timestamp\":\"2026-05-02T10:20:36.581Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"eac75735-19bd-4f01-b33c-3619917bf8dd\",\"timestamp\":\"2026-05-02T10:20:36.581Z\"}",
+          "HTTP 401",
+          "expected at least one of [getPeopleAndRoles] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'people' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"eac75735-19bd-4f01-b33c-3619917bf8dd\",\"timestamp\":\"2026-05-02T10:20:36.581Z\"}"
+      },
+      "expectedToolNames": [
+        "getPeopleAndRoles"
+      ],
+      "expectedToolFamilies": [
+        "people"
+      ]
+    },
+    {
+      "id": "vendor-performance",
+      "intent": "people_or_capacity",
+      "prompt": "How are our top vendors performing across active projects?",
+      "selectedProjectId": null,
+      "sessionId": "a3950e09-11d2-44e7-bf76-d7165bb00c40",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-vendor-performance",
+      "startedAt": "2026-05-02T10:20:51.924Z",
+      "finishedAt": "2026-05-02T10:21:07.655Z",
+      "durationMs": 409,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"739b65f2-5268-4fac-b38a-144b25219397\",\"timestamp\":\"2026-05-02T10:20:52.331Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"739b65f2-5268-4fac-b38a-144b25219397\",\"timestamp\":\"2026-05-02T10:20:52.331Z\"}",
+          "HTTP 401",
+          "expected at least one of [getVendorPerformance] to fire — none did",
+          "mustInclude missing: \"vendor\""
+        ],
+        "warnings": [
+          "expected family 'people' not represented",
+          "expected family 'financial' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"739b65f2-5268-4fac-b38a-144b25219397\",\"timestamp\":\"2026-05-02T10:20:52.331Z\"}"
+      },
+      "expectedToolNames": [
+        "getVendorPerformance"
+      ],
+      "expectedToolFamilies": [
+        "people",
+        "financial"
+      ]
+    },
+    {
+      "id": "source-lookup-meetings",
+      "intent": "source_lookup",
+      "prompt": "What did Brandon say about billing in any recent meeting?",
+      "selectedProjectId": null,
+      "sessionId": "e2572e79-4c5b-43af-846e-90a204f22ad2",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-source-lookup-meetings",
+      "startedAt": "2026-05-02T10:21:07.656Z",
+      "finishedAt": "2026-05-02T10:21:23.590Z",
+      "durationMs": 352,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3c57b906-3096-4717-b9f3-e2aab873a347\",\"timestamp\":\"2026-05-02T10:21:08.007Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3c57b906-3096-4717-b9f3-e2aab873a347\",\"timestamp\":\"2026-05-02T10:21:08.007Z\"}",
+          "HTTP 401",
+          "expected at least one of [searchMeetingsByTopic, semanticSearch] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'meetings' not represented",
+          "expected family 'semantic' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3c57b906-3096-4717-b9f3-e2aab873a347\",\"timestamp\":\"2026-05-02T10:21:08.007Z\"}"
+      },
+      "expectedToolNames": [
+        "searchMeetingsByTopic",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "meetings",
+        "semantic"
+      ]
+    },
+    {
+      "id": "source-lookup-email",
+      "intent": "source_lookup",
+      "prompt": "Search emails for any schedule pressure on Westfield in the last two weeks.",
+      "selectedProjectId": 43,
+      "sessionId": "2bf41adf-9197-4727-8f0d-76a0d31b0998",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-source-lookup-email",
+      "startedAt": "2026-05-02T10:21:23.591Z",
+      "finishedAt": "2026-05-02T10:21:39.342Z",
+      "durationMs": 79,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"1fc326e9-c2af-49e8-87bd-90f26da9baeb\",\"timestamp\":\"2026-05-02T10:21:23.668Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"1fc326e9-c2af-49e8-87bd-90f26da9baeb\",\"timestamp\":\"2026-05-02T10:21:23.668Z\"}",
+          "HTTP 401",
+          "expected at least one of [searchEmails, semanticSearch] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"1fc326e9-c2af-49e8-87bd-90f26da9baeb\",\"timestamp\":\"2026-05-02T10:21:23.668Z\"}"
+      },
+      "expectedToolNames": [
+        "searchEmails",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "source-lookup-teams",
+      "intent": "source_lookup",
+      "prompt": "Find any Teams chats discussing punch list completion on Westfield.",
+      "selectedProjectId": 43,
+      "sessionId": "7da2646f-5a41-4d48-acad-f751ee96d49d",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-source-lookup-teams",
+      "startedAt": "2026-05-02T10:21:39.342Z",
+      "finishedAt": "2026-05-02T10:21:54.631Z",
+      "durationMs": 76,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"087ec6db-33f6-4424-9ca0-be2e98312787\",\"timestamp\":\"2026-05-02T10:21:39.417Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"087ec6db-33f6-4424-9ca0-be2e98312787\",\"timestamp\":\"2026-05-02T10:21:39.417Z\"}",
+          "HTTP 401",
+          "expected at least one of [searchTeamsMessages, semanticSearch] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"087ec6db-33f6-4424-9ca0-be2e98312787\",\"timestamp\":\"2026-05-02T10:21:39.417Z\"}"
+      },
+      "expectedToolNames": [
+        "searchTeamsMessages",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "meetings-by-date",
+      "intent": "meeting_query",
+      "prompt": "What meetings did we have on the Westfield project in the last 30 days?",
+      "selectedProjectId": 43,
+      "sessionId": "2b35a03e-d9c4-4fa1-a2cc-de4ed564e7c3",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-meetings-by-date",
+      "startedAt": "2026-05-02T10:21:54.632Z",
+      "finishedAt": "2026-05-02T10:22:09.922Z",
+      "durationMs": 83,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"0ec6c7e6-3ff5-46ff-bcda-11feca9e7aa2\",\"timestamp\":\"2026-05-02T10:21:54.714Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"0ec6c7e6-3ff5-46ff-bcda-11feca9e7aa2\",\"timestamp\":\"2026-05-02T10:21:54.714Z\"}",
+          "HTTP 401",
+          "expected at least one of [getMeetingsByDate] to fire — none did",
+          "mustInclude missing: \"meeting\""
+        ],
+        "warnings": [
+          "expected family 'meetings' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"0ec6c7e6-3ff5-46ff-bcda-11feca9e7aa2\",\"timestamp\":\"2026-05-02T10:21:54.714Z\"}"
+      },
+      "expectedToolNames": [
+        "getMeetingsByDate"
+      ],
+      "expectedToolFamilies": [
+        "meetings"
+      ]
+    },
+    {
+      "id": "documents-search",
+      "intent": "document_question",
+      "prompt": "Find the latest contract or change order document on Westfield and summarize the key terms.",
+      "selectedProjectId": 43,
+      "sessionId": "d1f60507-e055-4ca8-8826-61cd659f6ab1",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-documents-search",
+      "startedAt": "2026-05-02T10:22:09.923Z",
+      "finishedAt": "2026-05-02T10:22:25.225Z",
+      "durationMs": 96,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"2fbc8034-8f1f-4b01-96ff-4107f4ab6987\",\"timestamp\":\"2026-05-02T10:22:10.015Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"2fbc8034-8f1f-4b01-96ff-4107f4ab6987\",\"timestamp\":\"2026-05-02T10:22:10.015Z\"}",
+          "HTTP 401",
+          "expected at least one of [searchDocuments, searchExternalDocuments, queryDocumentRows] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'documents' not represented",
+          "expected family 'semantic' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"2fbc8034-8f1f-4b01-96ff-4107f4ab6987\",\"timestamp\":\"2026-05-02T10:22:10.015Z\"}"
+      },
+      "expectedToolNames": [
+        "searchDocuments",
+        "searchExternalDocuments",
+        "queryDocumentRows"
+      ],
+      "expectedToolFamilies": [
+        "documents",
+        "semantic"
+      ]
+    },
+    {
+      "id": "action-items",
+      "intent": "operations_analysis",
+      "prompt": "What action items came out of recent Westfield meetings and who owns them?",
+      "selectedProjectId": 43,
+      "sessionId": "947636a5-28e0-4cdb-b71c-5c302e9a68eb",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-action-items",
+      "startedAt": "2026-05-02T10:22:25.226Z",
+      "finishedAt": "2026-05-02T10:22:40.540Z",
+      "durationMs": 81,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"32d42826-f0ab-46fb-8f38-4ea9fb63b3b4\",\"timestamp\":\"2026-05-02T10:22:25.306Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"32d42826-f0ab-46fb-8f38-4ea9fb63b3b4\",\"timestamp\":\"2026-05-02T10:22:25.306Z\"}",
+          "HTTP 401",
+          "expected at least one of [getActionItemsAndInsights] to fire — none did",
+          "mustInclude missing: \"action\""
+        ],
+        "warnings": [
+          "expected family 'actions' not represented",
+          "expected family 'meetings' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"32d42826-f0ab-46fb-8f38-4ea9fb63b3b4\",\"timestamp\":\"2026-05-02T10:22:25.306Z\"}"
+      },
+      "expectedToolNames": [
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "actions",
+        "meetings"
+      ]
+    },
+    {
+      "id": "cross-project-comparison",
+      "intent": "portfolio_briefing",
+      "prompt": "Compare budget burn-rate across our three largest active projects.",
+      "selectedProjectId": null,
+      "sessionId": "3eab49b8-a5e1-49a8-bc2e-200c508982ad",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-cross-project-comparison",
+      "startedAt": "2026-05-02T10:22:40.542Z",
+      "finishedAt": "2026-05-02T10:22:55.858Z",
+      "durationMs": 78,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"b7c03c25-6574-4161-9d6d-f49c637e6cf6\",\"timestamp\":\"2026-05-02T10:22:40.618Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"b7c03c25-6574-4161-9d6d-f49c637e6cf6\",\"timestamp\":\"2026-05-02T10:22:40.618Z\"}",
+          "HTTP 401",
+          "expected at least one of [getCrossProjectComparison, getPortfolioOverview] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'financial' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"b7c03c25-6574-4161-9d6d-f49c637e6cf6\",\"timestamp\":\"2026-05-02T10:22:40.618Z\"}"
+      },
+      "expectedToolNames": [
+        "getCrossProjectComparison",
+        "getPortfolioOverview"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "financial"
+      ]
+    },
+    {
+      "id": "historical-trends",
+      "intent": "financial_analysis",
+      "prompt": "Show me cost trends on Westfield over the last six months.",
+      "selectedProjectId": 43,
+      "sessionId": "c738534b-2462-4132-afa2-91c11bf6fbe9",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-historical-trends",
+      "startedAt": "2026-05-02T10:22:55.859Z",
+      "finishedAt": "2026-05-02T10:23:11.411Z",
+      "durationMs": 82,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"560d14ff-26c7-4dce-b52d-3862d62addea\",\"timestamp\":\"2026-05-02T10:22:55.940Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"560d14ff-26c7-4dce-b52d-3862d62addea\",\"timestamp\":\"2026-05-02T10:22:55.940Z\"}",
+          "HTTP 401",
+          "expected at least one of [getHistoricalTrends, getCostTrends] to fire — none did",
+          "mustInclude missing: \"trend\""
+        ],
+        "warnings": [
+          "expected family 'financial' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"560d14ff-26c7-4dce-b52d-3862d62addea\",\"timestamp\":\"2026-05-02T10:22:55.940Z\"}"
+      },
+      "expectedToolNames": [
+        "getHistoricalTrends",
+        "getCostTrends"
+      ],
+      "expectedToolFamilies": [
+        "financial"
+      ]
+    },
+    {
+      "id": "company-knowledge",
+      "intent": "knowledge_capture",
+      "prompt": "What does Alleato consider best practice for handling owner-driven scope changes?",
+      "selectedProjectId": null,
+      "sessionId": "66404e7b-16d2-4a3b-b61b-9730e17fcd7e",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-company-knowledge",
+      "startedAt": "2026-05-02T10:23:11.411Z",
+      "finishedAt": "2026-05-02T10:23:26.760Z",
+      "durationMs": 85,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"276372ee-26b6-41ce-9b9a-f000ec663243\",\"timestamp\":\"2026-05-02T10:23:11.494Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"276372ee-26b6-41ce-9b9a-f000ec663243\",\"timestamp\":\"2026-05-02T10:23:11.494Z\"}",
+          "HTTP 401",
+          "expected at least one of [getCompanyKnowledge, semanticSearch] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'knowledge' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"276372ee-26b6-41ce-9b9a-f000ec663243\",\"timestamp\":\"2026-05-02T10:23:11.494Z\"}"
+      },
+      "expectedToolNames": [
+        "getCompanyKnowledge",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "knowledge"
+      ]
+    },
+    {
+      "id": "memory-recall",
+      "intent": "general_conversation",
+      "prompt": "What have we already discussed about Westfield in past sessions?",
+      "selectedProjectId": 43,
+      "sessionId": "69d85b24-67f4-4987-83ec-9e81d74cf1b1",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-memory-recall",
+      "startedAt": "2026-05-02T10:23:26.761Z",
+      "finishedAt": "2026-05-02T10:23:42.238Z",
+      "durationMs": 106,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"01c8fd9d-23fb-4748-8121-3f179b85e4c1\",\"timestamp\":\"2026-05-02T10:23:26.864Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"01c8fd9d-23fb-4748-8121-3f179b85e4c1\",\"timestamp\":\"2026-05-02T10:23:26.864Z\"}",
+          "HTTP 401",
+          "expected at least one of [recallPastConversations, searchMemories] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'memory' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"01c8fd9d-23fb-4748-8121-3f179b85e4c1\",\"timestamp\":\"2026-05-02T10:23:26.864Z\"}"
+      },
+      "expectedToolNames": [
+        "recallPastConversations",
+        "searchMemories"
+      ],
+      "expectedToolFamilies": [
+        "memory"
+      ]
+    },
+    {
+      "id": "app-help",
+      "intent": "app_help",
+      "prompt": "How do I create a commitment in this app?",
+      "selectedProjectId": null,
+      "sessionId": "ef4a997f-b88b-498b-9987-085e27e6b83d",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-app-help",
+      "startedAt": "2026-05-02T10:23:42.239Z",
+      "finishedAt": "2026-05-02T10:23:57.568Z",
+      "durationMs": 78,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d1504df3-c1d4-45a5-aaa6-66560ded04e1\",\"timestamp\":\"2026-05-02T10:23:42.316Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d1504df3-c1d4-45a5-aaa6-66560ded04e1\",\"timestamp\":\"2026-05-02T10:23:42.316Z\"}",
+          "HTTP 401",
+          "expected at least one of [searchAppHelp] to fire — none did",
+          "mustInclude missing: \"commitment\""
+        ],
+        "warnings": [
+          "expected family 'app_help' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d1504df3-c1d4-45a5-aaa6-66560ded04e1\",\"timestamp\":\"2026-05-02T10:23:42.316Z\"}"
+      },
+      "expectedToolNames": [
+        "searchAppHelp"
+      ],
+      "expectedToolFamilies": [
+        "app_help"
+      ]
+    },
+    {
+      "id": "accounting-ap-aging",
+      "intent": "financial_analysis",
+      "prompt": "What's our AP aging look like right now?",
+      "selectedProjectId": null,
+      "sessionId": "68a60c0b-238f-4edf-8292-fb7e2e6c38b6",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-accounting-ap-aging",
+      "startedAt": "2026-05-02T10:23:57.568Z",
+      "finishedAt": "2026-05-02T10:24:12.880Z",
+      "durationMs": 110,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d8a4dec6-6eab-4961-88cd-bd11a9b1b30d\",\"timestamp\":\"2026-05-02T10:23:57.677Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d8a4dec6-6eab-4961-88cd-bd11a9b1b30d\",\"timestamp\":\"2026-05-02T10:23:57.677Z\"}",
+          "HTTP 401",
+          "expected at least one of [getAPAgingReport] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'accounting' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d8a4dec6-6eab-4961-88cd-bd11a9b1b30d\",\"timestamp\":\"2026-05-02T10:23:57.677Z\"}"
+      },
+      "expectedToolNames": [
+        "getAPAgingReport"
+      ],
+      "expectedToolFamilies": [
+        "accounting"
+      ]
+    },
+    {
+      "id": "accounting-cash-position",
+      "intent": "financial_analysis",
+      "prompt": "What's our current cash position across accounts?",
+      "selectedProjectId": null,
+      "sessionId": "e4e2e5c4-2acc-48b1-b834-1a61c497ac51",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-accounting-cash-position",
+      "startedAt": "2026-05-02T10:24:12.885Z",
+      "finishedAt": "2026-05-02T10:24:28.192Z",
+      "durationMs": 100,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"c786f407-4d7d-4d42-a17c-6ce4e1677976\",\"timestamp\":\"2026-05-02T10:24:12.984Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"c786f407-4d7d-4d42-a17c-6ce4e1677976\",\"timestamp\":\"2026-05-02T10:24:12.984Z\"}",
+          "HTTP 401",
+          "expected at least one of [getCashPositionReport] to fire — none did",
+          "mustInclude missing: \"cash\""
+        ],
+        "warnings": [
+          "expected family 'accounting' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"c786f407-4d7d-4d42-a17c-6ce4e1677976\",\"timestamp\":\"2026-05-02T10:24:12.984Z\"}"
+      },
+      "expectedToolNames": [
+        "getCashPositionReport"
+      ],
+      "expectedToolFamilies": [
+        "accounting"
+      ]
+    },
+    {
+      "id": "thought-partner-bid",
+      "intent": "brainstorming",
+      "prompt": "Help me think through whether we should bid on a $4M warehouse renovation in a market we haven't worked in. What are the tradeoffs?",
+      "selectedProjectId": null,
+      "sessionId": "675f76c5-5d80-435d-bfe6-8565e0e06ac2",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-thought-partner-bid",
+      "startedAt": "2026-05-02T10:24:28.194Z",
+      "finishedAt": "2026-05-02T10:24:44.010Z",
+      "durationMs": 94,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d9cc5217-a056-4e55-abb7-4e591a2257d5\",\"timestamp\":\"2026-05-02T10:24:28.287Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d9cc5217-a056-4e55-abb7-4e591a2257d5\",\"timestamp\":\"2026-05-02T10:24:28.287Z\"}",
+          "HTTP 401",
+          "mustInclude missing: \"tradeoff\"",
+          "answer length 210 < min 250"
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"d9cc5217-a056-4e55-abb7-4e591a2257d5\",\"timestamp\":\"2026-05-02T10:24:28.287Z\"}"
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": []
+    },
+    {
+      "id": "what-changed",
+      "intent": "project_briefing",
+      "prompt": "What changed on Westfield since the last time I asked?",
+      "selectedProjectId": 43,
+      "sessionId": "84aa441d-d321-4590-bfd1-b1cdc3f3568d",
+      "sessionLabel": "eval-2026-05-02T10-17-07-154Z-what-changed",
+      "startedAt": "2026-05-02T10:24:44.013Z",
+      "finishedAt": "2026-05-02T10:24:59.821Z",
+      "durationMs": 101,
+      "httpStatus": 401,
+      "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"953c0237-dacc-40f7-a44f-a5798e8f5fc9\",\"timestamp\":\"2026-05-02T10:24:44.113Z\"}",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"953c0237-dacc-40f7-a44f-a5798e8f5fc9\",\"timestamp\":\"2026-05-02T10:24:44.113Z\"}",
+          "HTTP 401",
+          "expected at least one of [semanticSearch, recallPastConversations] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'semantic' not represented",
+          "expected family 'communications' not represented",
+          "expected family 'memory' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 210,
+        "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"953c0237-dacc-40f7-a44f-a5798e8f5fc9\",\"timestamp\":\"2026-05-02T10:24:44.113Z\"}"
+      },
+      "expectedToolNames": [
+        "semanticSearch",
+        "recallPastConversations"
+      ],
+      "expectedToolFamilies": [
+        "semantic",
+        "communications",
+        "memory"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "generatedAt": "2026-05-14T21:07:36.249Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": null,
+  "filter": "^source-lookup-teams$",
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "assistantSourceHealth": 1,
+    "semanticSearch": 1,
+    "sourceLookupIntentRouter": 1,
+    "messageDrivenToolRouter": 1,
+    "mcpToolDiscoverySkipped": 1,
+    "streamingToolPolicy": 1,
+    "noToolRetry": 1
+  },
+  "intentDistribution": {
+    "source_lookup": 1
+  },
+  "results": [
+    {
+      "id": "source-lookup-teams",
+      "intent": "source_lookup",
+      "prompt": "Look through Teams for Westfield punch-list chatter. What is the latest real signal?",
+      "selectedProjectId": 43,
+      "sessionId": "218721a8-9276-415a-8ec4-35af55c262a2",
+      "sessionLabel": "eval-2026-05-14T21-07-08-290Z-983a979c-source-lookup-teams",
+      "startedAt": "2026-05-14T21:07:08.412Z",
+      "finishedAt": "2026-05-14T21:07:36.247Z",
+      "durationMs": 27298,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 23,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "semanticSearch",
+          "sourceLookupIntentRouter",
+          "messageDrivenToolRouter",
+          "mcpToolDiscoverySkipped",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "communications",
+          "semantic",
+          "source_health"
+        ],
+        "finalTextLength": 1070,
+        "finalText": "There’s no current vectorized Teams chatter on punch-list for Westfield Collective — nothing recent or credible around punch-list work, issues, or decisions. That means there’s either a gap in source syncing (pipeline is degraded and there’s a known embedding backlog), or the punch-list is being handled outside Teams for now (direct email, meetings, or phone).\n\n**What I see:**  \n- No Teams channel or DM traffic on punch-list tasks, blockers, final walk coordination, or signoff as of the most recent source pass.  \n- Nothing showing new punch-list assignments, photos, field notes, or trades being directed to close outstanding items.\n\n**Bottom line:**  \nThere’s no new digital trail on punch-list coordination in Teams for Westfield. If you need actual punch signoff or completion confidence, you’ll have to check field logs, closeout tracking in Procore/ERP, or follow up with the lead super or PM directly.\n\n**Next step:**  \nTell me if you want a sweep of recent meetings or emails for the same — or if you want a broader status pull, since Teams is cold on this."
+      },
+      "expectedToolNames": [
+        "clientProjectIntelligencePacket",
+        "sourceSpecificRagRetrieval",
+        "searchTeamsMessages",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "generatedAt": "2026-05-14T17:28:28.705Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "inbox-outlook-regression",
+    "description": "Agentic-eval guardrail for live inbox/date/triage prompts. The assistant must use structured Outlook intake, avoid source-specific RAG, and avoid stale fallback language.",
+    "criteria": [
+      "Every case must fire getRecentEmails.",
+      "No case may fire sourceSpecificRagRetrieval.",
+      "Answers must not tell the user to wait for live Outlook tools.",
+      "Answers must be long enough to explain the inbox result or failure clearly."
+    ]
+  },
+  "filter": "realworld-(last-five-emails|urgent-inbox|important-emails-this-morning|outlook-arrived-today|email-reply-triage)$",
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "getRecentEmails": 1
+  },
+  "intentDistribution": {
+    "source_lookup": 1
+  },
+  "results": [
+    {
+      "id": "realworld-important-emails-this-morning",
+      "intent": "source_lookup",
+      "prompt": "What important emails have I received this morning?",
+      "selectedProjectId": null,
+      "sessionId": "0c8ec62f-b9a1-4e07-8ccd-bda34ce32237",
+      "sessionLabel": "eval-2026-05-14T17-28-22-547Z-585000cc-realworld-important-emails-this-morning",
+      "startedAt": "2026-05-14T17:28:22.646Z",
+      "finishedAt": "2026-05-14T17:28:28.701Z",
+      "durationMs": 5646,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, getRecentEmails"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "getRecentEmails"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 328,
+        "finalText": "I checked Outlook email intake for your inbox for today / this morning.\nNo emails received today for test1@mail.com (mailbox).\nData freshness: Data is current as of May 14, 12:12 PM CT (syncs run hourly). Emails received after that time won't appear here yet.\nThis answer came from structured Outlook intake via getRecentEmails."
+      },
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    }
+  ]
+}

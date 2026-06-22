@@ -1,0 +1,45 @@
+{
+  "id": "tasks-open-loops-all",
+  "intent": "task_management",
+  "prompt": "Any open loops I should know about?",
+  "selectedProjectId": null,
+  "sessionId": "940e9549-802a-4786-a32c-4b46d20ae944",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-tasks-open-loops-all",
+  "startedAt": "2026-05-12T20:18:35.438Z",
+  "finishedAt": "2026-05-12T20:18:51.293Z",
+  "durationMs": 547,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"de878042-aee5-4caf-9872-65bdcb3c2014\",\"timestamp\":\"2026-05-12T20:18:35.984Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"de878042-aee5-4caf-9872-65bdcb3c2014\",\"timestamp\":\"2026-05-12T20:18:35.984Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getMyTasks, getActionItemsAndInsights] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'task_management' not represented",
+      "expected family 'actions' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"de878042-aee5-4caf-9872-65bdcb3c2014\",\"timestamp\":\"2026-05-12T20:18:35.984Z\"}"
+  },
+  "expectedToolNames": [
+    "getMyTasks",
+    "getActionItemsAndInsights"
+  ],
+  "expectedToolFamilies": [
+    "task_management",
+    "actions"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

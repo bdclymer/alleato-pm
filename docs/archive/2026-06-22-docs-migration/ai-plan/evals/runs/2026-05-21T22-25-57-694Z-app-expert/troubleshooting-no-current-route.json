@@ -1,0 +1,76 @@
+{
+  "id": "troubleshooting-no-current-route",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 5233,
+  "question": "Can the App Expert answer without knowing my current page?",
+  "mustInclude": [
+    "current route"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Yes—sometimes.\n\nChecked:\n- Artifact status: fresh and available\n  - `app-sitemap.generated.json`\n  - `feature-registry.generated.json`\n- Feature registry / sitemap evidence:\n  - `docs/help/articles/app-navigation-and-feature-map.md`\n  - route `\"/\"` (`frontend/src/app/(main)/page.tsx`) is the global Portfolio page\n  - route `\"/[projectId]/admin\"` is project-scoped and requires a project context\n\nAnswer:\n- If your question is about a general app capability or where something lives in the app, I can often answer without knowing your current page.\n- If your question is page-specific, “current page” matters. I should use route lookup for that case.\n- If the feature is tied to a project route, I need a project context or route pattern like `\"/[projectId]/...\"` to be precise.\n\nWhat I checked and what’s still uncertain:\n- I confirmed the app has global and project-scoped routes.\n- I did not get a specific current route from you, so I cannot identify your exact page.\n- I can still answer general navigation questions from curated docs, but not page-specific behavior without a route.\n\nIf you want, send either:\n- the route you’re on, or\n- the feature/question you want answered, and I’ll determine whether current-page context is necessary.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/app-navigation-and-feature-map.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-navigation-and-feature-map.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/[projectId]/admin",
+        "sourceType": "sitemap",
+        "route": "/[projectId]/admin",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/[projectId]/...",
+        "sourceType": "sitemap",
+        "route": "/[projectId]/...",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/question",
+        "sourceType": "sitemap",
+        "route": "/question",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 5119,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

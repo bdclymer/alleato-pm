@@ -1,0 +1,5116 @@
+{
+  "id": "realworld-most-important-tasks",
+  "intent": "task_management",
+  "prompt": "What are my most important tasks right now?",
+  "selectedProjectId": null,
+  "sessionId": "231cb5f8-ac74-4d31-a7da-b265f171c74d",
+  "sessionLabel": "eval-2026-06-09T10-04-29-787Z-876fcd43-realworld-most-important-tasks",
+  "startedAt": "2026-06-09T10:04:35.046Z",
+  "finishedAt": "2026-06-09T10:05:35.264Z",
+  "durationMs": 55663,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 794,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [
+      "duration 55663ms exceeded warning budget 30000ms"
+    ],
+    "observations": [
+      "tools fired: backendDeepAgentExecutiveBriefing, executive_briefing_reader, tasks_reader, executive_follow_ups_reader, emails_reader, teams_reader, meetings_reader, documents_reader, projects_reader, financials_reader, schedule_reader, deepagents_runtime, clientProjectIntelligencePacket, getProjectBriefingSnapshot, semanticSearch, getActionItemsAndInsights",
+      "judge strategic_advisor: pass (4/4)"
+    ],
+    "toolNames": [
+      "backendDeepAgentExecutiveBriefing",
+      "executive_briefing_reader",
+      "tasks_reader",
+      "executive_follow_ups_reader",
+      "emails_reader",
+      "teams_reader",
+      "meetings_reader",
+      "documents_reader",
+      "projects_reader",
+      "financials_reader",
+      "schedule_reader",
+      "deepagents_runtime",
+      "clientProjectIntelligencePacket",
+      "getProjectBriefingSnapshot",
+      "semanticSearch",
+      "getActionItemsAndInsights"
+    ],
+    "familiesHit": [
+      "project",
+      "financial",
+      "risk",
+      "communications",
+      "semantic",
+      "actions",
+      "task_management",
+      "source_health"
+    ],
+    "finalTextLength": 3399,
+    "finalText": "Your list is dirty, but the real answer is still clear: **the most important things on your plate right now are the items where you personally are the owner or the blocker — plus the Westfield issues that keep surfacing as unresolved risk.** Most of the task rows returned are overdue email-generated items from early May, so I’d treat this as a triage list, not a clean operating plan. [Source: Action Items & Insights]\n\nTop priorities I’d focus on first:\n\n- **Uniqlo — lock scope ownership items that were supposed to be settled in the May 13 meeting**  \n  This is the clearest project-level item actually assigned to you: fire suppression, racking coordination, MEP design/order timing, drawing-file format, and updated layout path. It’s overdue and tied to execution clarity. [Source: Action Items & Insights]\n- **Project 31 — send updated calculations to Matthew**  \n  This is one of the few tasks explicitly assigned to **Brandon Clymer**. It was due 2026-05-06 and is still open. If that’s still unresolved, it’s a real blocker. [Source: Action Items & Insights]\n- **Schedule the Fountain Life call with Jenna Dutra**  \n  Not project-critical, but it is directly assigned to **Brandon** and still open. Lower business leverage than the project items above. [Source: Action Items & Insights]\n- **Westfield Collective — close out unresolved execution issues**  \n  This is the pattern that keeps showing up. The system surfaced multiple **critical** and **high-severity** unresolved items around completion list follow-through, landscaping/path sequencing, gate/bollard conflicts, warranty language with LeMaster, and owner-facing comfort/performance concerns in the event space. That tells me **Westfield is still leaking management attention** and probably needs one clean closeout push. [Source: Action Items & Insights; Westfield Teams excerpts dated 2026-03-05, 2026-03-09, 2026-03-24, 2026-04-22; email dated 2026-05-20]\n\nWhat I would deprioritize unless you know they’re still live:\n- Best Buy survey\n- quarantined Microsoft 365 message review\n- old delegated items assigned to Richard, Corey, or Brandon Griffith unless you need to chase them personally  \nThese are open in the system, but they do not look like your highest-leverage work right now. [Source: Action Items & Insights]\n\nWhat the evidence says:\n- You have **10 open tasks, all 10 overdue** in the returned task set. [Source: Action Items & Insights]\n- The strongest recurring risk signal is **Westfield Collective**, not because of one clean task row, but because of repeated unresolved conversation-based risk items and owner concern. [Source: Action Items & Insights; Westfield email 2026-05-20]\n- I also need to call out a gap: this result includes some noisy or stale tasks, and **structuredActionItems came back empty**, which means the register is mixing real follow-ups with old email-generated debris. [Source: Action Items & Insights]\n\nIf you want the most useful next move, do this in order:\n1. Confirm whether the **Uniqlo scope-ownership issues** are actually closed.\n2. Confirm whether the **updated calculations to Matthew** were sent.\n3. Do a **Westfield cleanup pass**: completion list, owner comfort issue, LeMaster warranty/retainage language, and any open sequencing items.\n\nIf you want, I can turn this into a **clean top-5 list only for live project work** and strip out the stale personal/admin noise.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 55663
+    },
+    "judge": {
+      "status": "pass",
+      "rubric": "strategic_advisor",
+      "score": 4,
+      "minScore": 4,
+      "summary": "The answer is strategically useful and not just a recap: it identifies the highest-leverage live items, distinguishes project work from stale/noisy tasks, and flags Westfield as an unresolved risk cluster. It is honest about evidence quality and gives a practical triage order, though it could be more decisive and operationally specific about owners/timing.",
+      "strengths": [
+        "Leads with a clear point of view: focus on owner/blocker items and Westfield risk, not the whole task dump.",
+        "Connects evidence to business implications by interpreting repeated Westfield issues as management-attention leakage and execution risk.",
+        "Honest about weak evidence: explicitly notes noisy/stale tasks and that structuredActionItems was empty.",
+        "Keeps project-specific claims anchored to named projects and labels some items as lower-leverage or stale.",
+        "Surfaces what the user did not ask but should think about: the register is dirty and needs triage, not blind execution."
+      ],
+      "weaknesses": [
+        "Operational next steps are only partially specific; owners and timing are implied more than assigned.",
+        "Some prioritization is still somewhat generic ('clean closeout push', 'triage list') rather than a crisp executive action plan.",
+        "Could better separate immediate personal tasks from project-critical tasks with a tighter ranking and rationale.",
+        "Does not quantify impact or urgency beyond overdue status, so the business case for the top order could be sharper."
+      ],
+      "dimensionScores": {
+        "clear_executive_point_of_view": 5,
+        "business_implications_tradeoffs_risks": 5,
+        "specific_operational_next_steps": 3,
+        "surfaces_unasked_considerations": 4,
+        "high_level_strategist_voice": 4,
+        "honest_about_missing_weak_evidence": 5,
+        "anchored_to_requested_project": 4
+      },
+      "provider": "openai",
+      "model": "gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "backendDeepAgentExecutiveBriefing",
+    "getMyTasks",
+    "getActionItemsAndInsights"
+  ],
+  "expectedToolFamilies": [
+    "task_management",
+    "actions"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: packet_first_resolve_from_text",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:04:35.097Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Checking Render Deep Agents executive briefing",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:04:35.133Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents executive briefing…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:04:38.133Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents executive briefing…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:04:41.134Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents executive briefing…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:04:44.133Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents executive briefing…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:04:47.134Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Still working with Render Deep Agents executive briefing…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:04:50.135Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Render Deep Agents returned executive context but not a direct answer; using local synthesis",
+        "status": "warning",
+        "timestamp": "2026-06-09T10:04:50.352Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (2 sources, 1 warnings)",
+        "status": "warning",
+        "durations": {
+          "project_resolution": 446,
+          "semantic_search": 13914
+        },
+        "timestamp": "2026-06-09T10:05:09.160Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "CbEwTuVHYf5IMjS0"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "toolName": "getActionItemsAndInsights"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "inputTextDelta": "Br"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "inputTextDelta": "andon"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "inputTextDelta": "max"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "inputTextDelta": "Results"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "inputTextDelta": "10"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "inputTextDelta": "}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "toolName": "getActionItemsAndInsights",
+      "input": {
+        "assigneeName": "Brandon",
+        "maxResults": 10
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_A9tGLJv1pfEuDMniPKIMBo0a",
+      "output": {
+        "sourceRef": "[Source: Action Items & Insights]",
+        "openTasks": [
+          {
+            "id": "c350e8a9-2484-41b9-aca8-585ba2ae4ae4",
+            "title": "Share 90% drawings",
+            "description": "Share the 90% drawings with Brandon so he can familiarize himself with them while on the plane later today.",
+            "status": "open",
+            "priority": null,
+            "dueDate": "2026-05-01",
+            "assignee": "Richard Ellison",
+            "assignedBy": "Brandon Clymer",
+            "projectId": null,
+            "sourceSystem": "outlook_email",
+            "overdue": true
+          },
+          {
+            "id": "9869d127-0f1e-412e-892b-df007c52331f",
+            "title": "Provide status on insurance requirements",
+            "description": "Brandon asked Corey for the status of whether the attached insurance requirements are met because he needs to get back to the client today.",
+            "status": "open",
+            "priority": "high",
+            "dueDate": "2026-05-05",
+            "assignee": "Corey Kunkleman",
+            "assignedBy": "Brandon Clymer",
+            "projectId": 31,
+            "sourceSystem": "outlook_email",
+            "overdue": true
+          },
+          {
+            "id": "5aa6673c-0beb-49d5-bc02-d71d8a94dd50",
+            "title": "Update Om Nangia signature",
+            "description": "Update \"Om Nangia\" signature to a handwritten or digital stamp signature because the state does not allow a typed name in the signature box, then send the updated document back before lunch.",
+            "status": "open",
+            "priority": null,
+            "dueDate": "2026-05-05",
+            "assignee": "Brandon Griffith",
+            "assignedBy": "Andrew Cannon",
+            "projectId": null,
+            "sourceSystem": "outlook_email",
+            "overdue": true
+          },
+          {
+            "id": "28490ced-6478-4928-aebc-79587e0d422a",
+            "title": "Provide status on insurance requirements",
+            "description": "Provide Brandon with the status of whether the attached insurance requirements are met so he can get back to the client today.",
+            "status": "open",
+            "priority": "high",
+            "dueDate": "2026-05-05",
+            "assignee": "Corey Kunkleman",
+            "assignedBy": "Brandon Clymer",
+            "projectId": 31,
+            "sourceSystem": "outlook_email",
+            "overdue": true
+          },
+          {
+            "id": "77a0d9c9-ac37-4660-b8db-3d02a0f14049",
+            "title": "Send updated signature document",
+            "description": "Update Om Nangia's signature to a handwritten or digital stamp signature because the state does not allow a typed name in the signature box, and send the updated document back by end of day today for the Ulta Greenwood project.",
+            "status": "open",
+            "priority": "high",
+            "dueDate": "2026-05-05",
+            "assignee": "Brandon Griffith",
+            "assignedBy": "Andrew Cannon",
+            "projectId": null,
+            "sourceSystem": "outlook_email",
+            "overdue": true
+          },
+          {
+            "id": "5ed26e21-3cac-466e-a510-1a1e93f5bb53",
+            "title": "Schedule a call",
+            "description": "Jenna asked Brandon to find a time today or tomorrow to connect and review his goals to determine the best Fountain Life option.",
+            "status": "open",
+            "priority": null,
+            "dueDate": "2026-05-06",
+            "assignee": "Brandon",
+            "assignedBy": "Jenna Dutra",
+            "projectId": null,
+            "sourceSystem": "outlook_email",
+            "overdue": true
+          },
+          {
+            "id": "69777923-f2e6-4824-af2e-d72d9578b529",
+            "title": "Send updated calculations",
+            "description": "Brandon was expected to send the updated calculations to Matthew by Wednesday.",
+            "status": "open",
+            "priority": null,
+            "dueDate": "2026-05-06",
+            "assignee": "Brandon Clymer",
+            "assignedBy": "Christopher Lopez",
+            "projectId": 31,
+            "sourceSystem": "outlook_email",
+            "overdue": true
+          },
+          {
+            "id": "778f385f-d24f-4eaa-a25a-2a521cfc5303",
+            "title": "Complete Best Buy survey",
+            "description": "Complete the survey about the recent computer purchase; the survey link expires in 7 days and offers entry for a chance to win a $250 Best Buy Gift Card.",
+            "status": "open",
+            "priority": "low",
+            "dueDate": "2026-05-12",
+            "assignee": "Brandon Clymer",
+            "assignedBy": null,
+            "projectId": null,
+            "sourceSystem": "outlook_email",
+            "overdue": true
+          },
+          {
+            "id": "240f8f16-43ae-4591-b927-f78a916827a5",
+            "title": "Lock Uniqlo scope ownership in May 13 meeting",
+            "description": "Use the May 13 Fast Retailing/Uniqlo meeting to lock ownership for fire suppression, racking coordination, MEP design/order timing, drawing-file format, and the updated layout path.",
+            "status": "open",
+            "priority": null,
+            "dueDate": "2026-05-13",
+            "assignee": "Brandon Clymer",
+            "assignedBy": null,
+            "projectId": 754,
+            "sourceSystem": "teams_dm_conversation",
+            "overdue": true
+          },
+          {
+            "id": "7655172e-e0e3-4abb-a712-418188078773",
+            "title": "Review quarantined message",
+            "description": "Review the quarantined Microsoft 365 message in the Security Center within 15 days of the received date.",
+            "status": "open",
+            "priority": null,
+            "dueDate": "2026-05-19",
+            "assignee": "Brandon Clymer",
+            "assignedBy": null,
+            "projectId": null,
+            "sourceSystem": "outlook_email",
+            "overdue": true
+          }
+        ],
+        "priorityItems": [
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-24 [message:1774366632181] [2026-03-24 15:37:12] Brandon Clymer: Is the landscaping happening after the path? &nbsp;We want to make sure they aren't tearing up one anothers work.&nbsp; [message:1774366604018] [2026-03-24 15:36:44] Brandon Clymer: Thats awesome, did we get any of that recorded? &nbsp;That is something we can for sure put on social media.&nbsp; [message:1774365965888] [2026-03-24 15:26:05] Andrew Cannon: The Westfield building inspector was impressed with Chad's work and professionalism throughout the entire Westfield project. So much so that he held a training day onsite last week for future Westfield inspectors. Great work Chad! [message:1774365514139] [2026-03-24 15:18:34] Andrew Cannon: Thank you Cha",
+            "type": "schedule_risk",
+            "severity": "critical",
+            "daysUntilDue": null,
+            "dueDate": null,
+            "assignee": null,
+            "priority": 100
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-09 [message:1773078729167] [2026-03-09 17:52:09] Chad Tragesser: This spreadsheet was emailed to you on Friday of last week. [message:1773077172004] [2026-03-09 17:26:12] Brandon Clymer: Chad &nbsp; Tragesser &nbsp;do you have the completion list? &nbsp;I want to get you guys off site this week.&nbsp;",
+            "type": "schedule_risk",
+            "severity": "critical",
+            "daysUntilDue": null,
+            "dueDate": null,
+            "assignee": null,
+            "priority": 100
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-05 [message:1772743540176] [2026-03-05 20:45:40] Jesse Dawson: &nbsp;figure out the added room needed to establish where the new gates go, should be able to get priced off the attached [message:1772728123510] [2026-03-05 16:28:43] Ty Inman: Right, yes bollards need to be farther away from doors. I can pull a measurement to see where they need to be installed to allow door clearance [message:1772727679491] [2026-03-05 16:21:19] Jesse Dawson: that answered my question lol [message:1772727657699] [2026-03-05 16:20:57] Jesse Dawson: on our meeting the other day a comment was made the bollards kept the doors from opening, is it just the are not able to open fully? [message:1772727287078] [2026-03-05 16:14:47] Ty Inman: Trai",
+            "type": "schedule_risk",
+            "severity": "critical",
+            "daysUntilDue": null,
+            "dueDate": null,
+            "assignee": null,
+            "priority": 100
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-02-27 [message:1772216912091] [2026-02-27 18:28:32] Brandon Clymer: Thank You for the hard work and update.&nbsp; [message:1772216879047] [2026-02-27 18:27:59] Jesse Dawson: Awesome! One down two to go! [message:1772216682261] [2026-02-27 18:24:42] Andrew Cannon: We passed health inspection [message:1772205443642] [2026-02-27 15:17:23] Chad Tragesser: Final inspection is set for 1 pm on Monday [message:1772197833148] [2026-02-27 13:10:33] Andrew Cannon: It will be done before inspection [message:1772197796046] [2026-02-27 13:09:56] Ty Inman: -Install 2 hand sinks in ice cream- Finish install on drains for ice makers- Install drain pan n north side wall-Install drain on beer wall I told him to do last but this is the compe",
+            "type": "schedule_risk",
+            "severity": "critical",
+            "daysUntilDue": null,
+            "dueDate": null,
+            "assignee": null,
+            "priority": 100
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2025-12-16 [message:1765921072002] [2025-12-16 21:37:52] Andrew Cannon: Casework Concepts will be installing casework first week on January [message:1765921045584] [2025-12-16 21:37:25] Andrew Cannon: I thought you two discussed him (Brian) paying those tickets.&nbsp; [message:1765921014755] [2025-12-16 21:36:54] Andrew Cannon: You and Brian talked about it in the trailer. That was the week you were on-site helping out.&nbsp; [message:1765920987530] [2025-12-16 21:36:27] Andrew Cannon: Exterior stairs were delivered today and being installed&nbsp; [message:1765920918890] [2025-12-16 21:35:18] Brandon Clymer: Why would we talk? &nbsp;Is he saying he didn't install the vapor barrier incorectly?&nbsp; [message:1765916115197] [202",
+            "type": "schedule_risk",
+            "severity": "critical",
+            "daysUntilDue": null,
+            "dueDate": null,
+            "assignee": null,
+            "priority": 100
+          },
+          {
+            "title": "Email: Re: Raining in the event space at Westfield",
+            "description": "Subject: Re: Raining in the event space at Westfield Date: 2026-05-20T16:46:12Z From: Angie Galtier <angie@westfield-collective.com> To: Andrew Cannon <acannon@alleatogroup.com>, robert <robert@collectivehg.com> Hi Andrew, I appreciate the explanation.&nbsp; I’m not an expert at all but am struggling to understand why there wasn’t better insulation on those air ducts if the building was thought and designed to be open at times, thus the air curtains were installed at the bars to keep the A/C on while keeping warmer air out. Is there any solution than to have to turn off the A/C when wanting to open windows?&nbsp; I understand the problem, just trying to see if we can come up with a solution. Appreciate your input! Angie Galtier General Manager Westfield Collective 750 E 181st Street Westfi",
+            "type": "risk",
+            "severity": "high",
+            "daysUntilDue": null,
+            "dueDate": null,
+            "assignee": null,
+            "priority": 80
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-04-22 [message:1776865485653] [2026-04-22 13:44:45] Andrew Cannon: Okay, I will let LeMaster know we won't sign the warranty until that wording change is made. And they will also not have retainage released until that update is made.&nbsp; [message:1776862865485] [2026-04-22 13:01:05] Brandon Clymer: Okay, but there is nothing in our contract that says Missouri, so seems pretty cut and dry to me. &nbsp;They are referencing terms and conditions in the contract that are not there. &nbsp;Now my assumption is that there agreement with Lemaster references Missouri, which there in lies the issue. &nbsp;LeMaster's issue.&nbsp; [message:1776862742322] [2026-04-22 12:59:02] Andrew Cannon: Correct LeMaster signed our contract sayin",
+            "type": "risk",
+            "severity": "high",
+            "daysUntilDue": null,
+            "dueDate": null,
+            "assignee": null,
+            "priority": 80
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-04-08 [message:1775675129351] [2026-04-08 19:05:29] Brandon Clymer: What does our contract with lemaster say? &nbsp; [message:1775669731795] [2026-04-08 17:35:31] Andrew Cannon: This is in regard to changing legal action from Missouri to Indiana [message:1775669706108] [2026-04-08 17:35:06] Andrew Cannon: Brandon and Jesse please advise.&nbsp;",
+            "type": "project_update",
+            "severity": "medium",
+            "daysUntilDue": null,
+            "dueDate": null,
+            "assignee": null,
+            "priority": 60
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-31 [message:1774965699043] [2026-03-31 14:01:39] Andrew Cannon: I will get with Ty today and get this all sorted out. [message:1774965275520] [2026-03-31 13:54:35] Brandon Clymer: I need dates of when these items are scheduled to be done, just because you aren't on site doesn't mean you can't be using your phone and tracking these items. &nbsp;What is add new cooler? &nbsp;How is that a open item for us to get done? The added circuits your talking about is that something that was requested and did we get it priced up? &nbsp; [message:1774964022615] [2026-03-31 13:33:42] Ty Inman: S & M painting exterior hand rails and just 1 spot to touch up on interior. I have been on Allisonville project haven’t been on Westfield for",
+            "type": "project_update",
+            "severity": "medium",
+            "daysUntilDue": null,
+            "dueDate": null,
+            "assignee": null,
+            "priority": 60
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-28 [message:1774656051709] [2026-03-28 00:00:51] Chad Tragesser: I have a burn pile in mind",
+            "type": "project_update",
+            "severity": "medium",
+            "daysUntilDue": null,
+            "dueDate": null,
+            "assignee": null,
+            "priority": 60
+          }
+        ],
+        "structuredActionItems": [],
+        "unresolvedInsights": [
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-24 [message:1774366632181] [2026-03-24 15:37:12] Brandon Clymer: Is the landscaping happening after the path? &nbsp;We want to make sure they aren't tearing up one anothers work.&nbsp; [message:1774366604018] [2026-03-24 15:36:44] Brandon Clymer: Thats awesome, did we get any of that recorded? &nbsp;That is something we can for sure put on social media.&nbsp; [message:1774365965888] [2026-03-24 15:26:05] Andrew Cannon: The Westfield building inspector was impressed with Chad's work and professionalism throughout the entire Westfield project. So much so that he held a training day onsite last week for future Westfield inspectors. Great work Chad! [message:1774365514139] [2026-03-24 15:18:34] Andrew Cannon: Thank you Cha",
+            "type": "schedule_risk",
+            "severity": "critical",
+            "financialImpact": null,
+            "timelineImpactDays": null,
+            "projectName": "Westfield Collective",
+            "businessImpact": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-24 [message:1774366632181] [2026-03-24 15:37:12] Brandon Clymer: Is the landscaping happening after the path? &nbsp;We want to make sure they aren't tearing up one anothers work.&nbsp; [message:1774366604018] [2026-03-24 15:36:44] Brandon Clymer: Thats awesome, did we get any of that recorded? &nbsp;That is something we can for sure put on social media.&nbsp; [message:1774365965888] [2026-03-24 15:26:05] Andrew Cannon: The Westfield building inspector was impressed with Chad's work and professionalism throughout the entire Westfield project. So much so that he held a training day onsite last week for future Westfield inspectors. Great work Chad! [message:1774365514139] [2026-03-24 15:18:34] Andrew Cannon: Thank you Cha"
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-09 [message:1773078729167] [2026-03-09 17:52:09] Chad Tragesser: This spreadsheet was emailed to you on Friday of last week. [message:1773077172004] [2026-03-09 17:26:12] Brandon Clymer: Chad &nbsp; Tragesser &nbsp;do you have the completion list? &nbsp;I want to get you guys off site this week.&nbsp;",
+            "type": "schedule_risk",
+            "severity": "critical",
+            "financialImpact": null,
+            "timelineImpactDays": null,
+            "projectName": "Westfield Collective",
+            "businessImpact": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-09 [message:1773078729167] [2026-03-09 17:52:09] Chad Tragesser: This spreadsheet was emailed to you on Friday of last week. [message:1773077172004] [2026-03-09 17:26:12] Brandon Clymer: Chad &nbsp; Tragesser &nbsp;do you have the completion list? &nbsp;I want to get you guys off site this week.&nbsp;"
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-05 [message:1772743540176] [2026-03-05 20:45:40] Jesse Dawson: &nbsp;figure out the added room needed to establish where the new gates go, should be able to get priced off the attached [message:1772728123510] [2026-03-05 16:28:43] Ty Inman: Right, yes bollards need to be farther away from doors. I can pull a measurement to see where they need to be installed to allow door clearance [message:1772727679491] [2026-03-05 16:21:19] Jesse Dawson: that answered my question lol [message:1772727657699] [2026-03-05 16:20:57] Jesse Dawson: on our meeting the other day a comment was made the bollards kept the doors from opening, is it just the are not able to open fully? [message:1772727287078] [2026-03-05 16:14:47] Ty Inman: Trai",
+            "type": "schedule_risk",
+            "severity": "critical",
+            "financialImpact": null,
+            "timelineImpactDays": null,
+            "projectName": "Westfield Collective",
+            "businessImpact": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-05 [message:1772743540176] [2026-03-05 20:45:40] Jesse Dawson: &nbsp;figure out the added room needed to establish where the new gates go, should be able to get priced off the attached [message:1772728123510] [2026-03-05 16:28:43] Ty Inman: Right, yes bollards need to be farther away from doors. I can pull a measurement to see where they need to be installed to allow door clearance [message:1772727679491] [2026-03-05 16:21:19] Jesse Dawson: that answered my question lol [message:1772727657699] [2026-03-05 16:20:57] Jesse Dawson: on our meeting the other day a comment was made the bollards kept the doors from opening, is it just the are not able to open fully? [message:1772727287078] [2026-03-05 16:14:47] Ty Inman: Trai"
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-02-27 [message:1772216912091] [2026-02-27 18:28:32] Brandon Clymer: Thank You for the hard work and update.&nbsp; [message:1772216879047] [2026-02-27 18:27:59] Jesse Dawson: Awesome! One down two to go! [message:1772216682261] [2026-02-27 18:24:42] Andrew Cannon: We passed health inspection [message:1772205443642] [2026-02-27 15:17:23] Chad Tragesser: Final inspection is set for 1 pm on Monday [message:1772197833148] [2026-02-27 13:10:33] Andrew Cannon: It will be done before inspection [message:1772197796046] [2026-02-27 13:09:56] Ty Inman: -Install 2 hand sinks in ice cream- Finish install on drains for ice makers- Install drain pan n north side wall-Install drain on beer wall I told him to do last but this is the compe",
+            "type": "schedule_risk",
+            "severity": "critical",
+            "financialImpact": null,
+            "timelineImpactDays": null,
+            "projectName": "Westfield Collective",
+            "businessImpact": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-02-27 [message:1772216912091] [2026-02-27 18:28:32] Brandon Clymer: Thank You for the hard work and update.&nbsp; [message:1772216879047] [2026-02-27 18:27:59] Jesse Dawson: Awesome! One down two to go! [message:1772216682261] [2026-02-27 18:24:42] Andrew Cannon: We passed health inspection [message:1772205443642] [2026-02-27 15:17:23] Chad Tragesser: Final inspection is set for 1 pm on Monday [message:1772197833148] [2026-02-27 13:10:33] Andrew Cannon: It will be done before inspection [message:1772197796046] [2026-02-27 13:09:56] Ty Inman: -Install 2 hand sinks in ice cream- Finish install on drains for ice makers- Install drain pan n north side wall-Install drain on beer wall I told him to do last but this is the compe"
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2025-12-16 [message:1765921072002] [2025-12-16 21:37:52] Andrew Cannon: Casework Concepts will be installing casework first week on January [message:1765921045584] [2025-12-16 21:37:25] Andrew Cannon: I thought you two discussed him (Brian) paying those tickets.&nbsp; [message:1765921014755] [2025-12-16 21:36:54] Andrew Cannon: You and Brian talked about it in the trailer. That was the week you were on-site helping out.&nbsp; [message:1765920987530] [2025-12-16 21:36:27] Andrew Cannon: Exterior stairs were delivered today and being installed&nbsp; [message:1765920918890] [2025-12-16 21:35:18] Brandon Clymer: Why would we talk? &nbsp;Is he saying he didn't install the vapor barrier incorectly?&nbsp; [message:1765916115197] [202",
+            "type": "schedule_risk",
+            "severity": "critical",
+            "financialImpact": null,
+            "timelineImpactDays": null,
+            "projectName": "Westfield Collective",
+            "businessImpact": "[Teams Direct Message Conversation: Westfield Collective] Date: 2025-12-16 [message:1765921072002] [2025-12-16 21:37:52] Andrew Cannon: Casework Concepts will be installing casework first week on January [message:1765921045584] [2025-12-16 21:37:25] Andrew Cannon: I thought you two discussed him (Brian) paying those tickets.&nbsp; [message:1765921014755] [2025-12-16 21:36:54] Andrew Cannon: You and Brian talked about it in the trailer. That was the week you were on-site helping out.&nbsp; [message:1765920987530] [2025-12-16 21:36:27] Andrew Cannon: Exterior stairs were delivered today and being installed&nbsp; [message:1765920918890] [2025-12-16 21:35:18] Brandon Clymer: Why would we talk? &nbsp;Is he saying he didn't install the vapor barrier incorectly?&nbsp; [message:1765916115197] [202"
+          },
+          {
+            "title": "Email: Re: Raining in the event space at Westfield",
+            "description": "Subject: Re: Raining in the event space at Westfield Date: 2026-05-20T16:46:12Z From: Angie Galtier <angie@westfield-collective.com> To: Andrew Cannon <acannon@alleatogroup.com>, robert <robert@collectivehg.com> Hi Andrew, I appreciate the explanation.&nbsp; I’m not an expert at all but am struggling to understand why there wasn’t better insulation on those air ducts if the building was thought and designed to be open at times, thus the air curtains were installed at the bars to keep the A/C on while keeping warmer air out. Is there any solution than to have to turn off the A/C when wanting to open windows?&nbsp; I understand the problem, just trying to see if we can come up with a solution. Appreciate your input! Angie Galtier General Manager Westfield Collective 750 E 181st Street Westfi",
+            "type": "risk",
+            "severity": "high",
+            "financialImpact": null,
+            "timelineImpactDays": null,
+            "projectName": "Westfield Collective",
+            "businessImpact": "Subject: Re: Raining in the event space at Westfield Date: 2026-05-20T16:46:12Z From: Angie Galtier <angie@westfield-collective.com> To: Andrew Cannon <acannon@alleatogroup.com>, robert <robert@collectivehg.com> Hi Andrew, I appreciate the explanation.&nbsp; I’m not an expert at all but am struggling to understand why there wasn’t better insulation on those air ducts if the building was thought and designed to be open at times, thus the air curtains were installed at the bars to keep the A/C on while keeping warmer air out. Is there any solution than to have to turn off the A/C when wanting to open windows?&nbsp; I understand the problem, just trying to see if we can come up with a solution. Appreciate your input! Angie Galtier General Manager Westfield Collective 750 E 181st Street Westfi"
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-04-22 [message:1776865485653] [2026-04-22 13:44:45] Andrew Cannon: Okay, I will let LeMaster know we won't sign the warranty until that wording change is made. And they will also not have retainage released until that update is made.&nbsp; [message:1776862865485] [2026-04-22 13:01:05] Brandon Clymer: Okay, but there is nothing in our contract that says Missouri, so seems pretty cut and dry to me. &nbsp;They are referencing terms and conditions in the contract that are not there. &nbsp;Now my assumption is that there agreement with Lemaster references Missouri, which there in lies the issue. &nbsp;LeMaster's issue.&nbsp; [message:1776862742322] [2026-04-22 12:59:02] Andrew Cannon: Correct LeMaster signed our contract sayin",
+            "type": "risk",
+            "severity": "high",
+            "financialImpact": null,
+            "timelineImpactDays": null,
+            "projectName": "Westfield Collective",
+            "businessImpact": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-04-22 [message:1776865485653] [2026-04-22 13:44:45] Andrew Cannon: Okay, I will let LeMaster know we won't sign the warranty until that wording change is made. And they will also not have retainage released until that update is made.&nbsp; [message:1776862865485] [2026-04-22 13:01:05] Brandon Clymer: Okay, but there is nothing in our contract that says Missouri, so seems pretty cut and dry to me. &nbsp;They are referencing terms and conditions in the contract that are not there. &nbsp;Now my assumption is that there agreement with Lemaster references Missouri, which there in lies the issue. &nbsp;LeMaster's issue.&nbsp; [message:1776862742322] [2026-04-22 12:59:02] Andrew Cannon: Correct LeMaster signed our contract sayin"
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-04-08 [message:1775675129351] [2026-04-08 19:05:29] Brandon Clymer: What does our contract with lemaster say? &nbsp; [message:1775669731795] [2026-04-08 17:35:31] Andrew Cannon: This is in regard to changing legal action from Missouri to Indiana [message:1775669706108] [2026-04-08 17:35:06] Andrew Cannon: Brandon and Jesse please advise.&nbsp;",
+            "type": "project_update",
+            "severity": "medium",
+            "financialImpact": null,
+            "timelineImpactDays": null,
+            "projectName": "Westfield Collective",
+            "businessImpact": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-04-08 [message:1775675129351] [2026-04-08 19:05:29] Brandon Clymer: What does our contract with lemaster say? &nbsp; [message:1775669731795] [2026-04-08 17:35:31] Andrew Cannon: This is in regard to changing legal action from Missouri to Indiana [message:1775669706108] [2026-04-08 17:35:06] Andrew Cannon: Brandon and Jesse please advise.&nbsp;"
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-31 [message:1774965699043] [2026-03-31 14:01:39] Andrew Cannon: I will get with Ty today and get this all sorted out. [message:1774965275520] [2026-03-31 13:54:35] Brandon Clymer: I need dates of when these items are scheduled to be done, just because you aren't on site doesn't mean you can't be using your phone and tracking these items. &nbsp;What is add new cooler? &nbsp;How is that a open item for us to get done? The added circuits your talking about is that something that was requested and did we get it priced up? &nbsp; [message:1774964022615] [2026-03-31 13:33:42] Ty Inman: S & M painting exterior hand rails and just 1 spot to touch up on interior. I have been on Allisonville project haven’t been on Westfield for",
+            "type": "project_update",
+            "severity": "medium",
+            "financialImpact": null,
+            "timelineImpactDays": null,
+            "projectName": "Westfield Collective",
+            "businessImpact": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-31 [message:1774965699043] [2026-03-31 14:01:39] Andrew Cannon: I will get with Ty today and get this all sorted out. [message:1774965275520] [2026-03-31 13:54:35] Brandon Clymer: I need dates of when these items are scheduled to be done, just because you aren't on site doesn't mean you can't be using your phone and tracking these items. &nbsp;What is add new cooler? &nbsp;How is that a open item for us to get done? The added circuits your talking about is that something that was requested and did we get it priced up? &nbsp; [message:1774964022615] [2026-03-31 13:33:42] Ty Inman: S & M painting exterior hand rails and just 1 spot to touch up on interior. I have been on Allisonville project haven’t been on Westfield for"
+          },
+          {
+            "title": "Teams DM Conversation: Westfield Collective",
+            "description": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-28 [message:1774656051709] [2026-03-28 00:00:51] Chad Tragesser: I have a burn pile in mind",
+            "type": "project_update",
+            "severity": "medium",
+            "financialImpact": null,
+            "timelineImpactDays": null,
+            "projectName": "Westfield Collective",
+            "businessImpact": "[Teams Direct Message Conversation: Westfield Collective] Date: 2026-03-28 [message:1774656051709] [2026-03-28 00:00:51] Chad Tragesser: I have a burn pile in mind"
+          }
+        ],
+        "meetingInsights": [
+          {
+            "sourceRef": "[Source: Meeting - \"Updating Notion Check Data base review &Fireflies review\" - null]",
+            "meeting": "Updating Notion Check Data base review &Fireflies review",
+            "date": null,
+            "project": "Alleato Internal Ops",
+            "keyPoints": "The team is enhancing recruitment efforts by utilizing various channels, including headhunters and job platforms, to improve candidate sourcing and visibility, while implementing a centralized email for resume submissions to streamline processes. They are also focusing on acquiring necessary multi-state licenses for commercial construction, particularly in California and Nevada, which involves compliance steps such as exams and background checks. Additionally, the team's check processing is being optimized through a Notion database for better tracking and communication amidst a transition to SharePoint, which is facing some integration challenges. Finally, onboarding for a new team member includes time management strategies and planned training sessions to ensure a smooth transition into t"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"DMV/BMV Trucks registration\" - null]",
+            "meeting": "DMV/BMV Trucks registration",
+            "date": null,
+            "project": "Alleato Internal Ops",
+            "keyPoints": "The meeting focused on improving expense management for office supplies by establishing a clear ordering and coding process through Notion, encouraged by Shania and Ashley's efforts. For vehicle registration, the team clarified that while titles can be applied for immediately, full registration takes six to eight weeks, with temporary permits available for urgent needs. Key documentation like the IRS W9 and proof of business existence were identified as necessary for registration, along with in-person attendance at DMV branches. Shania is tasked with confirming submission rules at the DMV to streamline future registrations. Ongoing collaboration between team members, like Maria's support for expense coding and equipment procurement, was encouraged to maintain operational productivity."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Uniqlo+Alleato Group\" - null]",
+            "meeting": "Uniqlo+Alleato Group",
+            "date": null,
+            "project": "Uniqlo Phillipsburg NJ",
+            "keyPoints": "The meeting addressed several key issues related to the project's construction progress, including the completion of the sprinkler system installation and mechanical work by Exotech, confirming upcoming inspections for fire sprinkler systems and a punch walk scheduled for early April. Workstation specifications for the command center were detailed, with 16 workstations confirmed and furniture selection pending. It was noted that project-specific NDAs are in place, ensuring information security during bidding processes. Additionally, the planning for a larger West Coast warehouse project was discussed, emphasizing the importance of landlord coordination and tenant improvements. Cost efficiencies were a focal point, particularly in relation to rack height and early engagement with engineers "
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"ArcEdge call\" - null]",
+            "meeting": "ArcEdge call",
+            "date": null,
+            "project": "ArcEdge",
+            "keyPoints": "The team addressed a promising sales pipeline with a high-value school project nearing decision, potentially generating nearly $1 million. Several emerging opportunities across states were also discussed, including projects in New York, California, and Minnesota. Cash flow concerns were highlighted due to upfront payment constraints and high expenses, necessitating adjustments in payment terms. They noted inventory issues with low crate supplies, costing $300-$400 each, while exploring reusable packaging options. The team's negotiation strategy involved considering equity in Roofer and developing alternative suppliers to reduce dependency, along with operational improvements for better financial tracking and a pilot project in D.C. to enhance coordination."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Weekly Touchbase - HVAC upgrade\" - null]",
+            "meeting": "Weekly Touchbase - HVAC upgrade",
+            "date": null,
+            "project": "Ulta Beauty Fresno",
+            "keyPoints": "**Executive Summary: Weekly Touchbase - HVAC Upgrade**\n\n**Meeting Purpose and Key Participants**  \nThe Weekly Touchbase meeting held on October 23, 2023, was convened to discuss the ongoing HVAC upgrade project, focusing on progress updates, challenges, and next steps. Key participants included John Smith, Project Manager; Sarah Johnson, Lead Engineer; Michael Lee, Procurement Officer; and Lisa Chen, Facilities Manager. The meeting aimed to ensure alignment among team members and address any immediate concerns related to the project timeline and budget.\n\n**Main Topics Discussed**  \nDuring the meeting, the team reviewed the current status of the HVAC upgrade, highlighting the completion of the initial phase, which included the removal of outdated equipment and preliminary installation of ne"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Videography/Goodwill unboxed\" - null]",
+            "meeting": "Videography/Goodwill unboxed",
+            "date": null,
+            "project": "Goodwill Noblesville",
+            "keyPoints": "The team planned a 1 to 1.5-minute video highlighting Alito’s collaboration with Goodwill, featuring interviews with Brandon Clymer and Jesse Dawson. Filming will occur in June in Indianapolis, with visual backdrops created in Alito’s conference room and new foundation office. B-roll will showcase job sites and project progress, using horizontal filming and drone footage for quality. The aim is to emphasize the impact of their partnership and generate content for social media. Schedules were coordinated to ensure timely completion of editing before a September event. Alito's extensive project involvement with Goodwill, including ongoing work in Noblesville and Brooksville, was also discussed, alongside the importance of capturing authentic moments to enhance storytelling."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Goodwill Weekly OAC Meeting\" - null]",
+            "meeting": "Goodwill Weekly OAC Meeting",
+            "date": null,
+            "project": "Goodwill Tremont",
+            "keyPoints": "The Noblesville project is progressing well, with the construction nearing drywall completion and inspections scheduled for next week. Key permitting updates include the active review of the signage permit and the received pricing for electrical room door access control. The team is addressing site-specific issues, such as door closure concerns and fire alarm permit requirements. Meanwhile, the Allisonville site is preparing for a summer finish, with civil permit submissions and electrical safe-off starting this week. For Kokomo, design reviews are scheduled to enhance coordination. Contractor engagement is improving with multiple purchase orders in the approval phase, ensuring smooth project continuity. The team emphasizes collaboration to overcome operational challenges and maintain time"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Uniqlo,  Martinsville, CEVA, & GPC Huddle\" - null]",
+            "meeting": "Uniqlo,  Martinsville, CEVA, & GPC Huddle",
+            "date": null,
+            "project": "Uniqlo Phillipsburg NJ",
+            "keyPoints": "The team is making consistent progress with the installation of pipes and struts at the GPC site, under careful coordination to avoid any errors. Initial strut pieces are being checked for alignment, with Mike Parsons emphasizing the importance of these checks as work begins to pick up momentum. Staffing updates indicate that the Adelphia crew is adequately resourced, while ongoing coordination with Accufire is necessary for guard installation. Material management was also discussed, with plans to return unused items to recover costs. Preparations for air pressure testing are well underway, with equipment organized for efficient access. New team member Rick is set to undergo training across multiple sites. Upcoming project schedules, including deliveries and site meetings, have been aligne"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"ArcEdge weekly call\" - null]",
+            "meeting": "ArcEdge weekly call",
+            "date": null,
+            "project": "ArcEdge",
+            "keyPoints": "The discussion highlighted significant challenges related to securing qualified project managers and superintendents, which is limiting the company's ability to effectively manage subcontractor-led jobs. Brandon Clymer pointed out that the reliance on subcontractors, coupled with a scarcity of internal project leads, puts pressure on workforce management and job execution. Currently, there are approximately 20 ongoing projects with over 30 staff involved, indicating a lean operational scale. The Kentucky project is set to begin dirt work in July, with specific roofing plans involving standing seam metal panels, which aims to streamline construction by eliminating the typical sub-roof installation. Lastly, a rescheduled meeting is planned to prepare for an upcoming call with stakeholders."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Sprinkler Pricing Review\" - null]",
+            "meeting": "Sprinkler Pricing Review",
+            "date": null,
+            "project": "Superior Beverae Exotec ",
+            "keyPoints": "The discussion focused on the factors causing the high costs of Varsity Brands' fire suppression system, highlighting that height inefficiencies add approximately one-third to costs, as the 34-foot system necessitates three levels of sprinklers. The inclusion of two feeders complicates installations, increasing both time and expense compared to projects with single feeder lines. Additionally, code and design constraints limit options for optimizing pipe sizes, leading to higher costs. The team's review revealed that Varsity Brands' quote is nearly 50% higher than comparable projects such as Superior Beverage and McLean due to these issues. The need for accurate design files and better understanding of sprinkler requirements was emphasized for future projects, along with commitments to impr"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Questions Accounting Indy\" - null]",
+            "meeting": "Questions Accounting Indy",
+            "date": null,
+            "project": "Alleato Finance",
+            "keyPoints": "The team focused on improving mail processing and tax document organization to eliminate backlog and prepare for audits. Shania scanned and sorted months of mail, helping to find overlooked items for Brandon's review. Misty committed to sending a detailed list of outstanding issues for efficient follow-ups, with Maria and Shania sharing outreach responsibilities. A structured weekly check processing schedule was established, designating Thursdays for regular checks and Fridays for overflow, aimed at boosting efficiency. Additionally, the team addressed workload management, planning task coordination based on Misty's contacts list to ensure fair distribution of responsibilities. The discussion also highlighted how open communication and light-hearted banter contributed to maintaining team m"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Proposal Review\" - null]",
+            "meeting": "Proposal Review",
+            "date": null,
+            "project": "Superior Beverae Exotec ",
+            "keyPoints": "The project team discussed maintaining original cost estimates while extending project duration to 14 weeks, driven by previous quotes and client confidence needs. General conditions and labor costs were recalibrated to reflect the new timeline, with adjustments made to ensure budget consistency. Key materials, like strut pricing, were updated for accuracy, correcting previous underestimations. New Excel formulas were introduced to automate cost calculations, enhancing efficiency and preventing manual errors. Furthermore, the team targeted a project quote turnaround of three to four weeks, aiming to uphold client trust, while tailoring designs to meet specific storage requirements."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Maria Calcetero - Schedule a Meeting\" - null]",
+            "meeting": "Maria Calcetero - Schedule a Meeting",
+            "date": null,
+            "project": "Alleato Internal Ops",
+            "keyPoints": "The discussion centered on the critical role of partners, particularly Revive, as primary support providers for Acumatica customers, handling 99% of service needs. Frustrations were expressed regarding unresolved issues, such as a significant double retainage billing error that persisted for over two weeks despite efforts with Revive. Direct support from Acumatica is available but less personalized, leading to a proposal for immediate escalation to Revive and consideration of partner-switching if service does not improve. Chris Henson emphasized the importance of partner relationships, while participants identified the need for clear and actionable support instructions to enhance service effectiveness."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"TJ Graves   Teams interview is booked for 3/18/2026 at 8:30 AM EDT\" - null]",
+            "meeting": "TJ Graves   Teams interview is booked for 3/18/2026 at 8:30 AM EDT",
+            "date": null,
+            "project": "Alleato Internal Ops",
+            "keyPoints": "TJ Graves has a diverse background in construction management, evolving from hands-on trades to a superintendent role in commercial and industrial projects. He has managed complex large-scale projects, including food processing and cold storage facilities, while also showcasing flexibility in travel across the East Coast. Proficient in technology such as Procore and Excel, TJ expresses a strong preference for stable, long-term roles that allow for project ownership and growth. Following his recent transition from CMC to ESI Group USA, he is eager to engage in new projects after completing his last endeavor in November 2023 and emphasizes the importance of effective communication and collaboration within project teams."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Hillsdale Holdings // Alleato Weekly\" - null]",
+            "meeting": "Hillsdale Holdings // Alleato Weekly",
+            "date": null,
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team discussed vital design aspects and demolition strategies to ensure operational efficiency and cost management. Significant points included retaining existing roof drains to avoid a costly rebuild estimated at $500,000, while ensuring controlled risk. The air recovery unit will be dismantled and reused elsewhere, minimizing new equipment costs. Gas piping's location was clarified, with controlled access to the site for verification. Decisions on HVAC unit sizes aimed to optimize current equipment despite an increase in building volume, with air changes adjusted accordingly. Moreover, plans for electrical service upgrades and compactor placements were evaluated, and compliance with sprinkler standards was confirmed to streamline design approval. The next steps include site verificat"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Vermillion Rise Existing building discussions\" - null]",
+            "meeting": "Vermillion Rise Existing building discussions",
+            "date": null,
+            "project": "Vermillion Rise Warehouse",
+            "keyPoints": "The team discussed adjustments to the HVAC layout for a newly assigned 50,000 sq ft building, which is set to improve duct routing and production area flexibility. All HVAC units will be placed on the ground level in specified corners to align with future expansions, while ductwork will be positioned outside to avoid obstruction by tall racking. Structural engineering collaboration is crucial for determining wall penetrations, ensuring compliance with precast panel constraints. Pricing updates are anticipated soon, with a separation between office and warehouse costs to enhance budget clarity. The team aims to accommodate urgent client requests for responsive pricing while continuing layout refinements to minimize costs and maintain the project schedule."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Nexcom G2P Fire Suppression discussion\" - null]",
+            "meeting": "Nexcom G2P Fire Suppression discussion",
+            "date": null,
+            "project": "NEXCOM SEDC",
+            "keyPoints": "The meeting focused on the fire suppression system assessment for the Nexcom facility, emphasizing the need for a flow capacity test and a site survey due to overdue tests. Justin Bentham will facilitate access to the pump room and gather documentation, while Brandon Clymer highlighted the importance of stamped engineering drawings. Discussions revealed that the existing system, despite discharging adequate water, may not fully comply with FM Global guidelines, although the Navy's self-insurance allows some flexibility. Coordination with the base fire marshal is necessary for approvals, and materials for the Exotech system are expected to have a lead time of 3 to 4 weeks. The timeline targets a site survey during the week of May 30th and installation starting in July."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Exol Morrisville Kick Off\" - null]",
+            "meeting": "Exol Morrisville Kick Off",
+            "date": null,
+            "project": "Exol Morrisville",
+            "keyPoints": "The team established a two-phase project structure to meet site readiness for Symbotic installation by mid-year, with phase one focusing on preparatory work such as concrete reinforcement and power setup, while phase two will include full build-out. Emphasis was placed on completing critical concrete tasks by June/July. The meeting also outlined the shift to overhead power routing due to safety concerns, while prioritizing early procurement of electrical gear. Document sharing will be managed through SharePoint and coordination efforts will utilize BIM 360 for real-time design updates. Regular biweekly meetings with Symbotic were proposed to ensure stakeholder alignment, and proactive communication with the landlord will be maintained to facilitate timely approvals."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Team Strategy Update\" - null]",
+            "meeting": "Team Strategy Update",
+            "date": null,
+            "project": "Paradise Isle Geotech",
+            "keyPoints": "The team discussed delaying a commitment on the Paradise deal until fund confirmation expected by next week, analyzing risks primarily related to fund uncertainty. They considered a $100,000 non-refundable deposit as a last resort to secure the deal but favored a $25,000 deposit for strategic positioning. In terms of brand development, they outlined a multi-company structure to achieve 45% ownership of the Never Say Die brand and 70% in related ventures. The design of the distillery was also addressed, with plans for a meeting to finalize infrastructure needs. Additionally, financing negotiations for properties, including a $2.5 million offer for Tommy's building, were discussed alongside market trends emphasizing premium brands amid consumer shifts."
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Uniqlo & GPC Huddle\" - null]",
+            "meeting": "Uniqlo & GPC Huddle",
+            "date": null,
+            "project": "Uniqlo Phillipsburg NJ",
+            "keyPoints": "The team addressed logistics and inventory management for a project, finalizing bulk pipe orders totaling 94 pipes and focusing on shipment timing. They emphasized the importance of site readiness for material deliveries, coordinating with vendors to avoid early arrivals and ensure safety. Installation challenges were discussed, including the need for additional 2-inch vertical pipes and a shift from rod to bolt hanger connections for improved integrity. Furthermore, Kebba Mass highlighted the significance of digital process documentation for SOP creation and AI integration. Fire suppression planning for server rooms was also a concern, with 420 struts ordered and spacing considerations being adjusted for effective installations."
+          }
+        ],
+        "overdueRFIs": [
+          {
+            "number": 3,
+            "subject": "Cable Tray Routing Conflict at Grid Line 7",
+            "status": "answered",
+            "dueDate": "2025-02-05",
+            "ballInCourt": null
+          },
+          {
+            "number": 4,
+            "subject": "Exterior Signage — Attachment Point Structural Review",
+            "status": "open",
+            "dueDate": "2025-03-01",
+            "ballInCourt": null
+          },
+          {
+            "number": 6,
+            "subject": "Raised Floor Cavity — Air Plenum Classification",
+            "status": "answered",
+            "dueDate": "2025-03-05",
+            "ballInCourt": null
+          },
+          {
+            "number": 5,
+            "subject": "FM-200 System — Zoning and Activation Sequence",
+            "status": "open",
+            "dueDate": "2025-03-10",
+            "ballInCourt": null
+          },
+          {
+            "number": 7,
+            "subject": "Elevator Pit Waterproofing — Crystalline vs Sheet Membrane",
+            "status": "open",
+            "dueDate": "2025-03-20",
+            "ballInCourt": null
+          },
+          {
+            "number": 2,
+            "subject": "Specified fire rating for north wall assembly",
+            "status": "open",
+            "dueDate": "2026-04-10",
+            "ballInCourt": "Brandon"
+          }
+        ],
+        "summary": {
+          "openTaskCount": 10,
+          "overdueTaskCount": 10,
+          "insightCount": 10,
+          "structuredActionItemCount": 0,
+          "overdueRFICount": 6,
+          "sourceErrorCount": 0
+        },
+        "sourceErrors": []
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Your"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dirty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " answer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clear"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " most"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " important"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " things"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " your"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " plate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " where"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " personally"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " blocker"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " plus"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " keep"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " surf"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "acing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Most"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " task"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " returned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " overdue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-generated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " early"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " May"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " so"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " treat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " as"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tri"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "age"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " operating"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " plan"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " &"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Insights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Top"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " priorities"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " focus"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " first"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Uni"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "q"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "lo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lock"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ownership"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " were"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " supposed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " settled"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " May"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "13"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cle"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "arest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-level"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " item"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " assigned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fire"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " suppression"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " r"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "acking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "EP"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " design"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/order"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " timing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " drawing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-file"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " format"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " updated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " layout"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " path"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " It"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " overdue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tied"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " execution"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clarity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " &"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Insights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "31"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " send"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " updated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " calculations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Matthew"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " few"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tasks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " explicitly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " assigned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Br"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "andon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " C"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "mer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " It"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " due"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "06"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " blocker"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " &"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Insights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Fountain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Life"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " call"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Jenna"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Dut"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ra"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-critical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " directly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " assigned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Br"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "andon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Lower"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " business"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " leverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " than"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " above"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " &"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Insights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " execution"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " This"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pattern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " keeps"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " showing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " up"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " surfaced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " multiple"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "critical"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "high"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-se"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "verity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " around"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " completion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " follow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-through"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " landscaping"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/path"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sequencing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gate"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/b"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "oll"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ard"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " conflicts"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " warranty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " language"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Le"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Master"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-facing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " comfort"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/per"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "formance"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " concerns"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " event"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " space"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " That"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tells"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " me"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " leaking"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " management"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " attention"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " probably"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " needs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " push"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " &"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Insights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ";"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Teams"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " excerpts"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "03"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "03"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "09"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "03"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "24"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "04"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "22"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ";"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "20"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " would"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " depr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ior"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "itize"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unless"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " know"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’re"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Best"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Buy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " survey"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " quarant"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ined"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Microsoft"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "365"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " message"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " review"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " old"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " delegated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " assigned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Richard"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Corey"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Brandon"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Griffith"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unless"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " chase"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " them"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " personally"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  \n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "These"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " like"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " your"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " highest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-le"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "verage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " right"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " now"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " &"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Insights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " says"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " You"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "10"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tasks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " all"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "10"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " overdue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " returned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " task"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " set"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " &"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Insights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " strongest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recurring"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " task"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " row"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " repeated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unresolved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " conversation"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-based"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " concern"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " &"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Insights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ";"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "05"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "20"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " need"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " call"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " gap"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " result"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " includes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " some"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " noisy"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tasks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "structured"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " came"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " empty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " means"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " register"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " mixing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " real"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " follow"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-ups"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " old"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-generated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " debris"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Action"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " &"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Insights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " most"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " useful"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " next"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " move"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " order"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Confirm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Uni"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "q"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "lo"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ownership"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actually"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " closed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Confirm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "updated"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " calculations"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Matthew"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " were"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cleanup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pass"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " completion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " comfort"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Le"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Master"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " warranty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "retain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "age"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " language"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " any"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " open"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sequencing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "If"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " want"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " turn"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " this"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " into"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "clean"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " top"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " list"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " only"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " live"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " strip"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " stale"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " personal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/admin"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " noise"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "finish",
+      "finishReason": "stop"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 66699,
+      "totalTokens": 67491,
+      "outputTokens": 792
+    },
+    "data_parts": [
+      {
+        "id": "strategist-status",
+        "data": {
+          "stage": "retrieval-complete",
+          "status": "warning",
+          "message": "Retrieved (2 sources, 1 warnings)",
+          "durations": {
+            "semantic_search": 13914,
+            "project_resolution": 446
+          },
+          "timestamp": "2026-06-09T10:05:09.160Z"
+        },
+        "type": "data-status"
+      }
+    ],
+    "step_count": 2,
+    "tool_trace": [
+      {
+        "tool": "backendDeepAgentExecutiveBriefing",
+        "agent": "frontend-ai-assistant",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "detail": "Backend executive packet returned context for local synthesis.",
+        "status": "success",
+        "toolName": "backendDeepAgentExecutiveBriefing",
+        "timestamp": "2026-06-09T10:04:50.352Z",
+        "durationMs": 0
+      },
+      {
+        "tool": "executive_briefing_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 79 executive_briefing row(s) from `daily_recaps`.",
+        "status": "success",
+        "toolName": "executive_briefing_reader",
+        "timestamp": "2026-06-09T10:04:50.352Z",
+        "durationMs": 1388
+      },
+      {
+        "tool": "tasks_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 100 tasks row(s) from `tasks`.",
+        "status": "success",
+        "toolName": "tasks_reader",
+        "timestamp": "2026-06-09T10:04:50.352Z",
+        "durationMs": 201
+      },
+      {
+        "tool": "executive_follow_ups_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 100 executive_follow_ups row(s) from `executive_briefing_follow_ups`.",
+        "status": "success",
+        "toolName": "executive_follow_ups_reader",
+        "timestamp": "2026-06-09T10:04:50.352Z",
+        "durationMs": 312
+      },
+      {
+        "tool": "emails_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 100 emails row(s) from `project_emails`.",
+        "status": "success",
+        "toolName": "emails_reader",
+        "timestamp": "2026-06-09T10:04:50.352Z",
+        "durationMs": 695
+      },
+      {
+        "tool": "teams_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 41 teams row(s) from `document_metadata`.",
+        "status": "success",
+        "toolName": "teams_reader",
+        "timestamp": "2026-06-09T10:04:50.352Z",
+        "durationMs": 6413
+      },
+      {
+        "tool": "meetings_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 2 meetings row(s) from `document_metadata`.",
+        "status": "success",
+        "toolName": "meetings_reader",
+        "timestamp": "2026-06-09T10:04:50.352Z",
+        "durationMs": 1300
+      },
+      {
+        "tool": "documents_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 100 documents row(s) from `project_documents`.",
+        "status": "success",
+        "toolName": "documents_reader",
+        "timestamp": "2026-06-09T10:04:50.352Z",
+        "durationMs": 852
+      },
+      {
+        "tool": "projects_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 100 projects row(s) from `projects`.",
+        "status": "success",
+        "toolName": "projects_reader",
+        "timestamp": "2026-06-09T10:04:50.352Z",
+        "durationMs": 482
+      },
+      {
+        "tool": "financials_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 100 financials row(s) from `acumatica_project_budgets`.",
+        "status": "success",
+        "toolName": "financials_reader",
+        "timestamp": "2026-06-09T10:04:50.352Z",
+        "durationMs": 1525
+      },
+      {
+        "tool": "schedule_reader",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "detail": "Read-only executive probe found 100 schedule row(s) from `schedule_tasks`.",
+        "status": "success",
+        "toolName": "schedule_reader",
+        "timestamp": "2026-06-09T10:04:50.352Z",
+        "durationMs": 342
+      },
+      {
+        "tool": "deepagents_runtime",
+        "agent": "executive-intelligence-orchestrator",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "detail": "Error code: 402 - {'error': {'message': 'A positive credit balance is required for all requests, including BYOK, so fallback providers remain available. Add credits at https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dtop-up to continue.', 'type': 'insufficient_funds'}}",
+        "status": "failed",
+        "toolName": "deepagents_runtime",
+        "timestamp": "2026-06-09T10:04:50.352Z",
+        "durationMs": 1548
+      },
+      {
+        "tool": "clientProjectIntelligencePacket",
+        "agent": "retrieval-planner-v2",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "error": null
+        },
+        "status": "failed",
+        "toolName": "clientProjectIntelligencePacket",
+        "timestamp": "2026-06-09T10:05:30.529Z",
+        "durationMs": 0
+      },
+      {
+        "tool": "getProjectBriefingSnapshot",
+        "agent": "retrieval-planner-v2",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "error": null
+        },
+        "status": "failed",
+        "toolName": "getProjectBriefingSnapshot",
+        "timestamp": "2026-06-09T10:05:30.529Z",
+        "durationMs": 0
+      },
+      {
+        "tool": "semanticSearch",
+        "agent": "retrieval-planner-v2",
+        "input": {
+          "query": "What are my most important tasks right now?",
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "resultCount": 8
+        },
+        "status": "success",
+        "toolName": "semanticSearch",
+        "timestamp": "2026-06-09T10:05:30.529Z",
+        "durationMs": 13914
+      },
+      {
+        "tool": "getActionItemsAndInsights",
+        "error": null,
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": null,
+          "count": null,
+          "error": null,
+          "source": null,
+          "summary": {
+            "insightCount": 10,
+            "openTaskCount": 10,
+            "overdueRFICount": 6,
+            "overdueTaskCount": 10,
+            "sourceErrorCount": 0,
+            "structuredActionItemCount": 0
+          },
+          "toolTrace": [],
+          "actionCount": null,
+          "orchestrator": null
+        },
+        "status": "success",
+        "toolName": "getActionItemsAndInsights",
+        "timestamp": "2026-06-09T10:05:13.644Z"
+      },
+      {
+        "tool": "getActionItemsAndInsights",
+        "input": {
+          "message": "What are my most important tasks right now?",
+          "selectedProjectId": null
+        },
+        "status": "success",
+        "toolName": "getActionItemsAndInsights",
+        "timestamp": "2026-06-09T10:05:30.528Z"
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "memory_usage": {
+      "memories": [
+        {
+          "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+          "type": "preference",
+          "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse.",
+          "projectId": null,
+          "visibility": "private"
+        },
+        {
+          "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+          "type": "preference",
+          "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project.",
+          "projectId": null,
+          "visibility": "private"
+        },
+        {
+          "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+          "type": "preference",
+          "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly.",
+          "projectId": null,
+          "visibility": "private"
+        }
+      ],
+      "teamUsed": 0,
+      "retrieved": {
+        "team": 0,
+        "relevant": 0,
+        "preferences": 3
+      },
+      "totalUsed": 3,
+      "relevantUsed": 0,
+      "preferencesUsed": 3,
+      "recentConversationsUsed": 3
+    },
+    "source_debug": {
+      "memory": {
+        "memories": [
+          {
+            "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+            "type": "preference",
+            "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+            "type": "preference",
+            "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+            "type": "preference",
+            "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly.",
+            "projectId": null,
+            "visibility": "private"
+          }
+        ],
+        "teamUsed": 0,
+        "retrieved": {
+          "team": 0,
+          "relevant": 0,
+          "preferences": 3
+        },
+        "totalUsed": 3,
+        "relevantUsed": 0,
+        "preferencesUsed": 3,
+        "recentConversationsUsed": 3
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "semanticSearch",
+              "agent": "retrieval-planner-v2",
+              "status": "success",
+              "durationMs": 13914
+            },
+            {
+              "tool": "teams_reader",
+              "agent": "executive-intelligence-orchestrator",
+              "status": "success",
+              "durationMs": 6413
+            },
+            {
+              "tool": "deepagents_runtime",
+              "agent": "executive-intelligence-orchestrator",
+              "status": "failed",
+              "durationMs": 1548
+            },
+            {
+              "tool": "financials_reader",
+              "agent": "executive-intelligence-orchestrator",
+              "status": "success",
+              "durationMs": 1525
+            },
+            {
+              "tool": "executive_briefing_reader",
+              "agent": "executive-intelligence-orchestrator",
+              "status": "success",
+              "durationMs": 1388
+            },
+            {
+              "tool": "meetings_reader",
+              "agent": "executive-intelligence-orchestrator",
+              "status": "success",
+              "durationMs": 1300
+            },
+            {
+              "tool": "documents_reader",
+              "agent": "executive-intelligence-orchestrator",
+              "status": "success",
+              "durationMs": 852
+            },
+            {
+              "tool": "emails_reader",
+              "agent": "executive-intelligence-orchestrator",
+              "status": "success",
+              "durationMs": 695
+            }
+          ],
+          "failedCount": 3,
+          "totalMeasuredMs": 28972
+        },
+        "toolNames": [
+          "backendDeepAgentExecutiveBriefing",
+          "executive_briefing_reader",
+          "tasks_reader",
+          "executive_follow_ups_reader",
+          "emails_reader",
+          "teams_reader",
+          "meetings_reader",
+          "documents_reader",
+          "projects_reader",
+          "financials_reader",
+          "schedule_reader",
+          "deepagents_runtime",
+          "clientProjectIntelligencePacket",
+          "getProjectBriefingSnapshot",
+          "semanticSearch",
+          "getActionItemsAndInsights",
+          "getActionItemsAndInsights"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 17,
+        "sourceCoverage": [
+          {
+            "notes": "could not resolve a project from the message text",
+            "status": "warning",
+            "sourceType": "project_resolution"
+          }
+        ]
+      },
+      "orchestrator": "retrieval-planner-v2",
+      "outputPolicy": {
+        "stopWhen": "stepCountIs(10)",
+        "maxOutputTokens": 8000
+      },
+      "retrievalPlan": {
+        "intent": "task_followup",
+        "reason": "packet_first_resolve_from_text",
+        "sources": [
+          "intelligencePacket",
+          "projectSnapshot",
+          "semanticVectorSearch"
+        ],
+        "responseFormat": "briefing_template"
+      }
+    },
+    "finish_reason": "stop",
+    "provider_path": "ai-gateway",
+    "retrieval_plan": {
+      "intent": "task_followup",
+      "reason": "packet_first_resolve_from_text",
+      "sources": [
+        "intelligencePacket",
+        "projectSnapshot",
+        "semanticVectorSearch"
+      ],
+      "responseFormat": "briefing_template"
+    },
+    "synthesis_model": "openai/gpt-5.4",
+    "response_quality": {
+      "score": 90,
+      "reasons": [
+        "multiple successful tool calls",
+        "multiple source citations"
+      ],
+      "confidence": "high",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "response_message_id": "CbEwTuVHYf5IMjS0",
+    "empty_model_response": false
+  }
+}

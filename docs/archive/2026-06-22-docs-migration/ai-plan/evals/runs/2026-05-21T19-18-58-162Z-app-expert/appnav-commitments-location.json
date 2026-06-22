@@ -1,0 +1,54 @@
+{
+  "id": "appnav-commitments-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4089,
+  "question": "Where are subcontract commitments managed?",
+  "response": {
+    "answer": "I can’t verify this in App Expert right now because the required generated artifacts are missing:\n\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nChecked:\n- App Expert artifact status: missing/stale\n- Feature registry search for “subcontract commitments”: unavailable due to missing artifact\n- Sitemap search for “subcontract commitments”: unavailable due to missing artifact\n\nSo I can’t reliably name the route or help article for subcontract commitments yet.\n\nWhat remains needed:\n- Regenerate App Expert artifacts with `npm run docs:generate-app-expert`\n\nIf you want, I can still help by looking directly through the repository source files for likely implementation evidence, but that would be outside the curated App Expert artifacts.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/stale",
+        "sourceType": "sitemap",
+        "route": "/stale",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3986,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

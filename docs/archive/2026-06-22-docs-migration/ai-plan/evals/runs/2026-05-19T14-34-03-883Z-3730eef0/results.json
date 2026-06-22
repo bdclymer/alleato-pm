@@ -1,0 +1,117 @@
+{
+  "generatedAt": "2026-05-19T14:34:20.314Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": null,
+  "filter": null,
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "warningCount": 2,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": false,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 0,
+    "passed": 0,
+    "failed": 0,
+    "errors": 0,
+    "averageScore": null
+  },
+  "slowestCases": [
+    {
+      "id": "project-briefing-union-meeting-coverage",
+      "intent": "project_briefing",
+      "durationMs": 15987,
+      "status": "pass",
+      "warnings": [
+        "expected family 'semantic' not represented",
+        "expected family 'communications' not represented"
+      ]
+    }
+  ],
+  "toolCoverage": {
+    "backendDeepAgentProjectStatus": 1,
+    "project_lookup": 1,
+    "packet_reader": 1,
+    "teams_reader": 1,
+    "meetings_reader": 1,
+    "emails_reader": 1,
+    "documents_reader": 1,
+    "financials_reader": 1,
+    "schedule_reader": 1,
+    "rfi_reader": 1,
+    "submittal_reader": 1,
+    "deepagents_runtime": 1
+  },
+  "intentDistribution": {
+    "project_briefing": 1
+  },
+  "results": [
+    {
+      "id": "project-briefing-union-meeting-coverage",
+      "intent": "project_briefing",
+      "prompt": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+      "selectedProjectId": 1009,
+      "sessionId": "a81bc439-f99a-442d-a27a-fb25a66394e5",
+      "sessionLabel": "eval-2026-05-19T14-34-03-883Z-3730eef0-project-briefing-union-meeting-coverage",
+      "startedAt": "2026-05-19T14:34:03.924Z",
+      "finishedAt": "2026-05-19T14:34:20.313Z",
+      "durationMs": 15987,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 7,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'semantic' not represented",
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: backendDeepAgentProjectStatus, project_lookup, packet_reader, teams_reader, meetings_reader, emails_reader, documents_reader, financials_reader, schedule_reader, rfi_reader, submittal_reader, deepagents_runtime",
+          "backend Deep Agents memory candidates: 0"
+        ],
+        "toolNames": [
+          "backendDeepAgentProjectStatus",
+          "project_lookup",
+          "packet_reader",
+          "teams_reader",
+          "meetings_reader",
+          "emails_reader",
+          "documents_reader",
+          "financials_reader",
+          "schedule_reader",
+          "rfi_reader",
+          "submittal_reader",
+          "deepagents_runtime"
+        ],
+        "familiesHit": [
+          "project",
+          "risk"
+        ],
+        "finalTextLength": 2425,
+        "finalText": "Direct answer\n\nUnion Collective is still in late-stage design and pre-permit coordination, and the two gating issues are schedule alignment and financing alignment. Meeting transcripts do appear to be present in the packet, but at least one of the meeting rows is just a read-only source row, so I would treat transcript coverage as available but not automatically complete.\n\nEvidence\n\n- The current packet says Union Collective is “moving through late-stage design and pre-permit coordination,” with “schedule and financing alignment” as the main gating issues. Source: packet current, 2026-05-19T14:05:18Z.\n- Source coverage shows meetings are present with 6 records, latest 2026-05-18T22:39:05Z. That supports that meeting material is in the packet.\n- The packet evidence includes a meeting item titled “Union Collective - Civil Design Meeting -05-15-26.pdf,” which is a meetings source row. That is consistent with meeting transcript/meeting packet material being available.\n- The packet evidence also includes a meeting item titled “Email: Union Collective: DGI Meeting,” again showing meeting-related content in the packet.\n- Financials are present in coverage, but schedule is missing and RFI/submittal coverage is missing. That means the operating read is incomplete on execution controls, which is exactly where the project says it is exposed.\n\nWhat this means\n\nThis is not a clean “on track” job. It looks like a project still trying to lock design and pre-permit decisions while the two things that can bite hardest — time and money alignment — are still unsettled. The lack of schedule/RFI/submittal coverage means the packet is not giving a full control-room view, so the risk read is directional, not complete.\n\nRecommended next steps\n\n- Confirm the latest schedule milestone path and who owns the next approval.\n- Push financing alignment to a decision point; don’t let it sit as an open-ended coordination issue.\n- Pull the latest meeting packet first, then reconcile it against finance before calling the project stable.\n\nUncertainty\n\n- Schedule, RFI, and submittal sources are missing in coverage, so the execution risk picture is thin.\n- I can confirm meeting material is present, but I cannot guarantee every transcript is complete from the snippets alone.\n\nSource coverage note: schedule: missing; rfi: missing; submittal: missing. I did not use unavailable or stale source categories as factual support.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 15987
+        }
+      },
+      "expectedToolNames": [
+        "clientProjectIntelligencePacket",
+        "backendDeepAgentProjectStatus",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic",
+        "communications"
+      ]
+    }
+  ]
+}

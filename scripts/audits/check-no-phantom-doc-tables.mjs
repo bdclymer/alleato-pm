@@ -32,8 +32,8 @@ import { join } from "node:path";
 const REPO_ROOT = join(import.meta.dirname, "..", "..");
 const TYPES_PATH = join(REPO_ROOT, "frontend/src/types/database.types.ts");
 const MD_EXT = /\.mdx?$/;
-// This guard polices Alleato DB-fact docs (e.g. docs/patterns/*). It must NOT
-// scan BMAD planning/research artifacts under _bmad-output/, which legitimately
+// This guard polices live Alleato DB-fact docs (e.g. docs/ops/patterns/*). It
+// must NOT scan archived docs or BMAD planning/research artifacts, which legitimately
 // reference external-repo source filenames (`grammar.ts`, `payload.ts`) and
 // generic code words (`fetch`, `agent`) — none of which are Alleato table
 // assertions. Scanning them produces only false positives.
@@ -42,7 +42,7 @@ const MD_EXT = /\.mdx?$/;
 // look like table names but are not — and being generated, it cannot carry a
 // human-authored phantom-table claim anyway.
 const IGNORE_PATH_RE =
-  /(^|\/)_bmad-output\/|(^|\/)docs\/architecture\/PROJECT-MAP\.md$/;
+  /(^|\/)_bmad-output\/|(^|\/)docs\/archive\/|(^|\/)docs\/architecture\/PROJECT-MAP\.md$/;
 
 const args = new Set(process.argv.slice(2));
 const baseFlagIdx = process.argv.indexOf("--base");
@@ -62,6 +62,7 @@ const KNOWN_EXTERNAL_TABLES = new Set([
   "graph_subscriptions",
   "graph_sync_state",
   "packet_refresh_jobs",
+  "pipeline_model_usage",
   "rag_document_metadata",
   "rag_pipeline_state",
   "source_processing_jobs",
@@ -119,10 +120,15 @@ const NON_TABLE_WORDS = new Set([
   "failed_retryable",
   "failed_permanent",
   "skipped_unchanged",
+  "attribution",
+  "attribution_rule",
   "confidence_notes",
   "executive_summary",
   "source_coverage",
   "project_daily_delta",
+  "find",
+  "rg",
+  "du",
 ]);
 
 function run(cmd) {

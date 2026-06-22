@@ -1,0 +1,19 @@
+{
+  "id": "assistant-capability-app-expert",
+  "status": "failed",
+  "httpStatus": 503,
+  "durationMs": 91,
+  "question": "What is the App Expert supposed to answer?",
+  "response": {
+    "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+  },
+  "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+  "shapeIssues": [
+    "missing answer",
+    "missing sources",
+    "missing toolTrace",
+    "invalid mode"
+  ],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

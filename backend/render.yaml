@@ -417,12 +417,6 @@ services:
         value: 3
       - key: USE_UNIFIED_AGENT
         value: true
-      - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED
-        value: true
-      - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME
-        value: deep_agents
-      - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL
-        value: gpt-5.4-mini
       - key: LANGSMITH_TRACING
         value: "true"
       - key: LANGSMITH_PROJECT

@@ -1,0 +1,46 @@
+{
+  "id": "portfolio-morning-standup",
+  "intent": "portfolio_briefing",
+  "prompt": "Good morning. Give me a quick rundown of where everything stands across all projects.",
+  "selectedProjectId": null,
+  "sessionId": "db3724be-06e5-431c-8cde-6a11ffea67a9",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-portfolio-morning-standup",
+  "startedAt": "2026-05-12T20:19:06.985Z",
+  "finishedAt": "2026-05-12T20:19:22.652Z",
+  "durationMs": 331,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3964d606-4cb3-4740-8bce-d90f23ec70eb\",\"timestamp\":\"2026-05-12T20:19:07.316Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3964d606-4cb3-4740-8bce-d90f23ec70eb\",\"timestamp\":\"2026-05-12T20:19:07.316Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getPortfolioOverview, getProjectsWithRisks] to fire — none did",
+      "answer length 210 < min 250"
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'risk' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3964d606-4cb3-4740-8bce-d90f23ec70eb\",\"timestamp\":\"2026-05-12T20:19:07.316Z\"}"
+  },
+  "expectedToolNames": [
+    "getPortfolioOverview",
+    "getProjectsWithRisks"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "risk"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

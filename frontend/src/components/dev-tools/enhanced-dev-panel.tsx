@@ -133,48 +133,6 @@ const CHECK_CONSTRAINT_VALUES = {
   companies_status: ["ACTIVE", "INACTIVE"],
 }
 
-const DATABASE_CATALOG_COLUMN_MAP: ColumnMappingRow[] = [
-  {
-    visibleColumnName: "Table Name",
-    actualColumnOrFormula: "table_name",
-    notes: "Physical table name in Postgres.",
-  },
-  {
-    visibleColumnName: "Schema",
-    actualColumnOrFormula: "schema_name",
-    notes: "Schema containing the table.",
-  },
-  {
-    visibleColumnName: "Category",
-    actualColumnOrFormula: "category",
-    notes: "Editable metadata field.",
-  },
-  {
-    visibleColumnName: "Row Count",
-    actualColumnOrFormula: "row_count",
-    notes: "Estimated row count from catalog metadata.",
-  },
-  {
-    visibleColumnName: "RLS Enabled",
-    actualColumnOrFormula: "rls_enabled",
-    notes: "Boolean rendered as enabled/disabled badge.",
-  },
-  {
-    visibleColumnName: "Primary Keys",
-    actualColumnOrFormula: "primary_keys",
-    notes: "String summary of PK columns.",
-  },
-  {
-    visibleColumnName: "Description",
-    actualColumnOrFormula: "table_comment",
-    notes: "Table comment/description.",
-  },
-  {
-    visibleColumnName: "Created At",
-    actualColumnOrFormula: "created_at",
-    notes: "Timestamp of catalog row creation.",
-  },
-]
 
 interface EnhancedDevPanelProps {
   variant?: "sidebar" | "footer"
@@ -259,12 +217,6 @@ export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps)
       paramsEntries[0]
 
     setDetectedPrimaryId(preferredPrimaryId ? `${preferredPrimaryId.key}: ${preferredPrimaryId.value}` : "N/A")
-
-    if (pathname === "/database") {
-      setDetectedTableName("database_tables_catalog")
-      setColumnMappings(DATABASE_CATALOG_COLUMN_MAP)
-      return
-    }
 
     const adminTableMatch = pathname?.match(/^\/tables\/([^/]+)/)
     if (adminTableMatch?.[1]) {

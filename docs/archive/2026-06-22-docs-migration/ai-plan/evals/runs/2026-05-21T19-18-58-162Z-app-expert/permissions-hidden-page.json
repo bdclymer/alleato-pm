@@ -1,0 +1,47 @@
+{
+  "id": "permissions-hidden-page",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4402,
+  "question": "Why might I not see a project page?",
+  "response": {
+    "answer": "I can’t verify a project page from App Expert artifacts right now because the generated docs are missing.\n\nWhat I checked:\n- App Expert artifact status: missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry searches for:\n  - `project page`\n  - `project`\n  Both failed with the same missing-artifact error.\n\nSo the only defensible answer is: I don’t have documented or route-discovered evidence yet for why a project page would not appear.\n\nWhat remains uncertain:\n- Whether a project page exists at all\n- Whether it is hidden by permissions, missing project ID, route scope, or a conditional UI state\n- Whether there is a specific route or help article describing this behavior\n\nIf you want, I can still investigate the codebase directly for route and permission logic, but that would be implementation evidence rather than curated App Expert documentation.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 4307,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

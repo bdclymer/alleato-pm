@@ -1,0 +1,78 @@
+{
+  "id": "portfolio-overview",
+  "intent": "portfolio_briefing",
+  "prompt": "Across all active projects, what should I worry about this week?",
+  "selectedProjectId": null,
+  "sessionId": "2d4096b7-b4f7-4020-8f7c-132c13e2bd20",
+  "sessionLabel": "eval-2026-05-12T20-54-15-362Z-portfolio-overview",
+  "startedAt": "2026-05-12T20:54:15.365Z",
+  "finishedAt": "2026-05-12T20:55:16.008Z",
+  "durationMs": 45003,
+  "httpStatus": 200,
+  "streamError": "stream read error: This operation was aborted",
+  "streamEventCount": 5,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: This operation was aborted",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getPortfolioOverview, getProjectsWithRisks] to fire — none did",
+      "answer length 0 < min 250"
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'risk' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getPortfolioOverview",
+    "getProjectsWithRisks"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "risk"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T20:54:31.349Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-12T20:54:43.994Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "2bRQaBVXMr3Sm6Bi"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_Dn2ALHX8lxCFNnU0c3akS9Hn",
+      "toolName": "consultCRO"
+    }
+  ],
+  "persistedMetadata": null
+}

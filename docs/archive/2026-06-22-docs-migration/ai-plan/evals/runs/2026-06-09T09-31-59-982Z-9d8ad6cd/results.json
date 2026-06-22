@@ -1,0 +1,509 @@
+{
+  "generatedAt": "2026-06-09T09:34:26.627Z",
+  "baseUrl": "https://alleato-ih4s3lmtz-meganharrisons-projects.vercel.app",
+  "bundle": {
+    "name": "task-action-items-regression",
+    "description": "Agentic-eval guardrail for task and action-item prompts. The assistant must recognize common owner phrasing for tasks, action items, open loops, and waiting-on-team questions without requiring exact wording.",
+    "criteria": [
+      "Every task-list variant must use a source-backed task or action-item tool.",
+      "The assistant must not ask which list, project, or action item source the user means.",
+      "Owner phrasing like open loops, my list, and waiting on my team must route as task/action-item retrieval.",
+      "Answers must be direct and useful enough for morning triage, not generic planning advice."
+    ]
+  },
+  "filter": "(tasks-list-of-action-items-canonical|tasks-what-do-i-need-to-do-today|tasks-open-loops-all|tasks-whats-on-my-list|realworld-most-important-tasks|realworld-waiting-on-team)$",
+  "totalCases": 6,
+  "passed": 6,
+  "failed": 0,
+  "warningCount": 2,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": true,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 2,
+    "passed": 2,
+    "failed": 0,
+    "errors": 0,
+    "averageScore": 4
+  },
+  "slowestCases": [
+    {
+      "id": "realworld-waiting-on-team",
+      "intent": "task_management",
+      "durationMs": 68081,
+      "status": "pass",
+      "warnings": [
+        "duration 68081ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "realworld-most-important-tasks",
+      "intent": "task_management",
+      "durationMs": 64240,
+      "status": "pass",
+      "warnings": [
+        "duration 64240ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "tasks-list-of-action-items-canonical",
+      "intent": "task_management",
+      "durationMs": 4346,
+      "status": "pass",
+      "warnings": []
+    },
+    {
+      "id": "tasks-what-do-i-need-to-do-today",
+      "intent": "task_management",
+      "durationMs": 350,
+      "status": "pass",
+      "warnings": []
+    },
+    {
+      "id": "tasks-whats-on-my-list",
+      "intent": "task_management",
+      "durationMs": 303,
+      "status": "pass",
+      "warnings": []
+    },
+    {
+      "id": "tasks-open-loops-all",
+      "intent": "task_management",
+      "durationMs": 258,
+      "status": "pass",
+      "warnings": []
+    }
+  ],
+  "toolCoverage": {
+    "getPersonalTaskRegister": 4,
+    "getMyTasks": 4,
+    "backendDeepAgentExecutiveBriefing": 2,
+    "executive_briefing_reader": 2,
+    "tasks_reader": 2,
+    "executive_follow_ups_reader": 2,
+    "emails_reader": 2,
+    "teams_reader": 2,
+    "meetings_reader": 2,
+    "documents_reader": 2,
+    "projects_reader": 2,
+    "financials_reader": 2,
+    "schedule_reader": 2,
+    "deepagents_runtime": 2,
+    "clientProjectIntelligencePacket": 2,
+    "getProjectBriefingSnapshot": 2,
+    "semanticSearch": 2,
+    "getActionItemsAndInsights": 2
+  },
+  "intentDistribution": {
+    "task_management": 6
+  },
+  "results": [
+    {
+      "id": "tasks-list-of-action-items-canonical",
+      "intent": "task_management",
+      "prompt": "What's on my list of action items?",
+      "selectedProjectId": null,
+      "sessionId": "8724359c-b919-4fa4-bff8-6af4a89b3983",
+      "sessionLabel": "eval-2026-06-09T09-31-59-982Z-9d8ad6cd-tasks-list-of-action-items-canonical",
+      "startedAt": "2026-06-09T09:31:59.993Z",
+      "finishedAt": "2026-06-09T09:32:04.665Z",
+      "durationMs": 4346,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 7,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: getPersonalTaskRegister, getMyTasks"
+        ],
+        "toolNames": [
+          "getPersonalTaskRegister",
+          "getMyTasks"
+        ],
+        "familiesHit": [
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 1760,
+        "finalText": "I checked the Tasks page source of truth: `public.tasks` filtered to Brandon Clymer's open task owner identity.\n\nFound 27 open Brandon tasks in the Tasks table.\n- **Send updated calculations** | Project: Uniqlo Phillipsburg NJ | Due: May 6, 2026 | Source: Email: RE: Exotec In-Rack Sprinkler CO-01\n- **Complete Best Buy survey** | Due: May 12, 2026 | Source: Email: Tell us about your recent computer purchase for a chance to win a $250 Best Buy® Gift Card*\n- **Lock Uniqlo scope ownership in May 13 meeting** | Project: GW Allisonville Rd IN | Due: May 13, 2026 | Source: Teams DM Conversation: 19:c4beb912-\n- **Review quarantined message** | Due: May 19, 2026 | Source: Email: Microsoft 365 security: You have messages in quarantine\n- **Review Walter's Powerflex relocation delay email** | Project: Ulta Beauty Fresno | Due: May 22, 2026 | Source: Ulta Beauty Fresno Weekly Meeting\n- **Share completed phase one pricing** | Project: Exol Morrisville | Due: May 22, 2026 | Source: Exol - Morrisville PA - Weekly Status Call - Exol/Alleato\n- **Remove AJ from Marketing email group** | Source: Teams DM Conversation: 19:c4beb912-\n- **Escalate Westfield Collective overdue invoices** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Approve QuickBooks cutover controls and accountant offer** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Send ESI demo plan** | Source: Email: RE: Eye Surgeons of Indiana - Anderson Location Space Plan\n- **List estimated freight on quote** | Project: Uniqlo Phillipsburg NJ | Source: Email: Re: Nexcom G2P Exotec Sprinklers\n- **Confirm payment status** | Source: Email: Payment\n\nThis answer is a direct task-table lookup, not an executive briefing synthesis.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 4346
+        }
+      },
+      "expectedToolNames": [
+        "getMyTasks",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management"
+      ]
+    },
+    {
+      "id": "tasks-what-do-i-need-to-do-today",
+      "intent": "task_management",
+      "prompt": "What do I need to do today?",
+      "selectedProjectId": null,
+      "sessionId": "369bd692-3c3a-4147-afb6-b83370cb67e8",
+      "sessionLabel": "eval-2026-06-09T09-31-59-982Z-9d8ad6cd-tasks-what-do-i-need-to-do-today",
+      "startedAt": "2026-06-09T09:32:04.666Z",
+      "finishedAt": "2026-06-09T09:32:05.069Z",
+      "durationMs": 350,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 7,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: getPersonalTaskRegister, getMyTasks"
+        ],
+        "toolNames": [
+          "getPersonalTaskRegister",
+          "getMyTasks"
+        ],
+        "familiesHit": [
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 1760,
+        "finalText": "I checked the Tasks page source of truth: `public.tasks` filtered to Brandon Clymer's open task owner identity.\n\nFound 27 open Brandon tasks in the Tasks table.\n- **Send updated calculations** | Project: Uniqlo Phillipsburg NJ | Due: May 6, 2026 | Source: Email: RE: Exotec In-Rack Sprinkler CO-01\n- **Complete Best Buy survey** | Due: May 12, 2026 | Source: Email: Tell us about your recent computer purchase for a chance to win a $250 Best Buy® Gift Card*\n- **Lock Uniqlo scope ownership in May 13 meeting** | Project: GW Allisonville Rd IN | Due: May 13, 2026 | Source: Teams DM Conversation: 19:c4beb912-\n- **Review quarantined message** | Due: May 19, 2026 | Source: Email: Microsoft 365 security: You have messages in quarantine\n- **Review Walter's Powerflex relocation delay email** | Project: Ulta Beauty Fresno | Due: May 22, 2026 | Source: Ulta Beauty Fresno Weekly Meeting\n- **Share completed phase one pricing** | Project: Exol Morrisville | Due: May 22, 2026 | Source: Exol - Morrisville PA - Weekly Status Call - Exol/Alleato\n- **Remove AJ from Marketing email group** | Source: Teams DM Conversation: 19:c4beb912-\n- **Escalate Westfield Collective overdue invoices** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Approve QuickBooks cutover controls and accountant offer** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Send ESI demo plan** | Source: Email: RE: Eye Surgeons of Indiana - Anderson Location Space Plan\n- **List estimated freight on quote** | Project: Uniqlo Phillipsburg NJ | Source: Email: Re: Nexcom G2P Exotec Sprinklers\n- **Confirm payment status** | Source: Email: Payment\n\nThis answer is a direct task-table lookup, not an executive briefing synthesis.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 350
+        }
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "task_management"
+      ]
+    },
+    {
+      "id": "tasks-open-loops-all",
+      "intent": "task_management",
+      "prompt": "Any open loops I should know about?",
+      "selectedProjectId": null,
+      "sessionId": "cbff3c7f-6181-413c-858c-af799d4adb75",
+      "sessionLabel": "eval-2026-06-09T09-31-59-982Z-9d8ad6cd-tasks-open-loops-all",
+      "startedAt": "2026-06-09T09:32:05.070Z",
+      "finishedAt": "2026-06-09T09:32:05.381Z",
+      "durationMs": 258,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 7,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: getPersonalTaskRegister, getMyTasks"
+        ],
+        "toolNames": [
+          "getPersonalTaskRegister",
+          "getMyTasks"
+        ],
+        "familiesHit": [
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 1760,
+        "finalText": "I checked the Tasks page source of truth: `public.tasks` filtered to Brandon Clymer's open task owner identity.\n\nFound 27 open Brandon tasks in the Tasks table.\n- **Send updated calculations** | Project: Uniqlo Phillipsburg NJ | Due: May 6, 2026 | Source: Email: RE: Exotec In-Rack Sprinkler CO-01\n- **Complete Best Buy survey** | Due: May 12, 2026 | Source: Email: Tell us about your recent computer purchase for a chance to win a $250 Best Buy® Gift Card*\n- **Lock Uniqlo scope ownership in May 13 meeting** | Project: GW Allisonville Rd IN | Due: May 13, 2026 | Source: Teams DM Conversation: 19:c4beb912-\n- **Review quarantined message** | Due: May 19, 2026 | Source: Email: Microsoft 365 security: You have messages in quarantine\n- **Review Walter's Powerflex relocation delay email** | Project: Ulta Beauty Fresno | Due: May 22, 2026 | Source: Ulta Beauty Fresno Weekly Meeting\n- **Share completed phase one pricing** | Project: Exol Morrisville | Due: May 22, 2026 | Source: Exol - Morrisville PA - Weekly Status Call - Exol/Alleato\n- **Remove AJ from Marketing email group** | Source: Teams DM Conversation: 19:c4beb912-\n- **Escalate Westfield Collective overdue invoices** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Approve QuickBooks cutover controls and accountant offer** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Send ESI demo plan** | Source: Email: RE: Eye Surgeons of Indiana - Anderson Location Space Plan\n- **List estimated freight on quote** | Project: Uniqlo Phillipsburg NJ | Source: Email: Re: Nexcom G2P Exotec Sprinklers\n- **Confirm payment status** | Source: Email: Payment\n\nThis answer is a direct task-table lookup, not an executive briefing synthesis.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 258
+        }
+      },
+      "expectedToolNames": [
+        "getMyTasks",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions"
+      ]
+    },
+    {
+      "id": "tasks-whats-on-my-list",
+      "intent": "task_management",
+      "prompt": "What's on my list?",
+      "selectedProjectId": null,
+      "sessionId": "68630b4b-0fe4-4347-a768-a8851138edb3",
+      "sessionLabel": "eval-2026-06-09T09-31-59-982Z-9d8ad6cd-tasks-whats-on-my-list",
+      "startedAt": "2026-06-09T09:32:05.381Z",
+      "finishedAt": "2026-06-09T09:32:05.737Z",
+      "durationMs": 303,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 7,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: getPersonalTaskRegister, getMyTasks"
+        ],
+        "toolNames": [
+          "getPersonalTaskRegister",
+          "getMyTasks"
+        ],
+        "familiesHit": [
+          "actions",
+          "task_management"
+        ],
+        "finalTextLength": 1760,
+        "finalText": "I checked the Tasks page source of truth: `public.tasks` filtered to Brandon Clymer's open task owner identity.\n\nFound 27 open Brandon tasks in the Tasks table.\n- **Send updated calculations** | Project: Uniqlo Phillipsburg NJ | Due: May 6, 2026 | Source: Email: RE: Exotec In-Rack Sprinkler CO-01\n- **Complete Best Buy survey** | Due: May 12, 2026 | Source: Email: Tell us about your recent computer purchase for a chance to win a $250 Best Buy® Gift Card*\n- **Lock Uniqlo scope ownership in May 13 meeting** | Project: GW Allisonville Rd IN | Due: May 13, 2026 | Source: Teams DM Conversation: 19:c4beb912-\n- **Review quarantined message** | Due: May 19, 2026 | Source: Email: Microsoft 365 security: You have messages in quarantine\n- **Review Walter's Powerflex relocation delay email** | Project: Ulta Beauty Fresno | Due: May 22, 2026 | Source: Ulta Beauty Fresno Weekly Meeting\n- **Share completed phase one pricing** | Project: Exol Morrisville | Due: May 22, 2026 | Source: Exol - Morrisville PA - Weekly Status Call - Exol/Alleato\n- **Remove AJ from Marketing email group** | Source: Teams DM Conversation: 19:c4beb912-\n- **Escalate Westfield Collective overdue invoices** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Approve QuickBooks cutover controls and accountant offer** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Send ESI demo plan** | Source: Email: RE: Eye Surgeons of Indiana - Anderson Location Space Plan\n- **List estimated freight on quote** | Project: Uniqlo Phillipsburg NJ | Source: Email: Re: Nexcom G2P Exotec Sprinklers\n- **Confirm payment status** | Source: Email: Payment\n\nThis answer is a direct task-table lookup, not an executive briefing synthesis.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 303
+        }
+      },
+      "expectedToolNames": [
+        "getMyTasks",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management"
+      ]
+    },
+    {
+      "id": "realworld-most-important-tasks",
+      "intent": "task_management",
+      "prompt": "What are my most important tasks right now?",
+      "selectedProjectId": null,
+      "sessionId": "b56556b2-8910-4863-bd06-3d3f127bc485",
+      "sessionLabel": "eval-2026-06-09T09-31-59-982Z-9d8ad6cd-realworld-most-important-tasks",
+      "startedAt": "2026-06-09T09:32:05.738Z",
+      "finishedAt": "2026-06-09T09:33:13.885Z",
+      "durationMs": 64240,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 709,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "duration 64240ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: backendDeepAgentExecutiveBriefing, executive_briefing_reader, tasks_reader, executive_follow_ups_reader, emails_reader, teams_reader, meetings_reader, documents_reader, projects_reader, financials_reader, schedule_reader, deepagents_runtime, clientProjectIntelligencePacket, getProjectBriefingSnapshot, semanticSearch, getActionItemsAndInsights",
+          "judge strategic_advisor: pass (4/4)"
+        ],
+        "toolNames": [
+          "backendDeepAgentExecutiveBriefing",
+          "executive_briefing_reader",
+          "tasks_reader",
+          "executive_follow_ups_reader",
+          "emails_reader",
+          "teams_reader",
+          "meetings_reader",
+          "documents_reader",
+          "projects_reader",
+          "financials_reader",
+          "schedule_reader",
+          "deepagents_runtime",
+          "clientProjectIntelligencePacket",
+          "getProjectBriefingSnapshot",
+          "semanticSearch",
+          "getActionItemsAndInsights"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "communications",
+          "semantic",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 3047,
+        "finalText": "Your most important items right now are the ones blocking your response back to clients or leaving scope/risk unresolved.\n\n1. **Get the insurance requirements answer back from Corey** — this is marked **high priority**, overdue, and tied to **project 31**. You asked Corey for status so you could get back to the client that day. It’s still open. [Source: Action Items & Insights]\n\n2. **Send the updated calculations to Matthew** — assigned to **Brandon Clymer**, overdue since **2026-05-06**, also tied to **project 31**. If that hasn’t gone out, it’s a direct follow-through miss. [Source: Action Items & Insights]\n\n3. **Close the Uniqlo scope ownership gaps** — the task is to lock ownership for **fire suppression, racking coordination, MEP design/order timing, drawing-file format, and updated layout path** from the **May 13 Fast Retailing/Uniqlo meeting**. That’s the most strategically important item in your personal list because unresolved ownership turns into schedule drift and finger-pointing later. [Source: Action Items & Insights]\n\n4. **Westfield Collective needs attention** — not because there’s a clean task row with your name on it, but because the system is surfacing repeated unresolved risk signals:\n   - coordination risk around **landscaping vs. path work**\n   - unresolved **completion list / getting crews off site**\n   - field issue around **bollards and door clearance**\n   - owner concern about **condensation / “raining in the event space”**\n   - unresolved **LeMaster contract/warranty language** and retainage holdback issue  \n   Those are not all verified Tasks-page assignments to you, but they are active unresolved issues with your fingerprints on them. [Source: Action Items & Insights]\n\n5. **Ignore the noise unless you want a cleanup pass**:\n   - Best Buy survey [low priority]\n   - quarantined Microsoft message review\n   - Fountain Life scheduling  \n   Those are open, but they are not the highest-leverage work. [Source: Action Items & Insights]\n\nWhat this means:\nYou don’t have a lot of clean, current, well-maintained assigned task rows. What you do have is a mix of **older overdue follow-ups** and **project risks living in comms instead of task ownership**. That’s the real problem.\n\nWhat I’d do next, in order:\n- **Today:** close the Corey insurance item or get a definitive answer.\n- **Today:** send or confirm the updated calculations to Matthew.\n- **Next:** do a focused cleanup on **Uniqlo** ownership decisions.\n- **Then:** run a **Westfield risk/action sweep** and turn those unresolved comms into named owners and due dates.\n\nData gap:\nThe task list is pulling a lot from email/Teams-derived action tracking, and some of it is stale. I also have a source gap: `project_resolution` did not return, so some project linkage may be incomplete. The evidence I used is from the live action-items system, not the older transcript snippets you provided.\n\nIf you want, I can turn this into a **tight top-5 task list with owners, due dates, and which ones should be delegated vs. personally handled**.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 64240
+        },
+        "judge": {
+          "status": "pass",
+          "rubric": "strategic_advisor",
+          "score": 4,
+          "minScore": 4,
+          "summary": "The answer is strategically useful and mostly anchored to live action items, not just a recap. It prioritizes overdue client-blocking work, distinguishes verified tasks from risk signals, and admits a data gap. The main weakness is that it mixes project-specific items with broader risk commentary without always making the owner/next-step structure crisp enough, and some recommendations are still a bit generic.",
+          "strengths": [
+            "Leads with a clear point of view: the highest-priority work is client-blocking follow-through and unresolved scope/risk, not a neutral task dump.",
+            "Connects evidence to business implications, especially around overdue follow-ups, scope ownership gaps, and how unresolved issues create schedule drift and finger-pointing.",
+            "Surfaces what the user did not explicitly ask for: risk cleanup, stale task hygiene, and turning comms into named owners and due dates.",
+            "Stays honest about evidence limits by flagging that some Westfield items are not verified task rows and that project linkage may be incomplete.",
+            "Keeps most claims anchored to project 31 and the Uniqlo/Westfield items, with some background labeling for lower-priority noise."
+          ],
+          "weaknesses": [
+            "Operational next steps are directionally good but not fully specific enough; owners and timing are only partially explicit beyond 'today' and 'next'.",
+            "Some items are framed as 'most important' based on inferred strategic risk rather than direct task ownership, which is useful but slightly less rigorous.",
+            "The answer could better separate confirmed tasks from adjacent risk signals to avoid blending evidence tiers.",
+            "It does not fully prioritize across all items with a crisp executive ranking tied to impact and urgency.",
+            "A few phrases sound like a competent task summary rather than a high-level operating plan, especially in the cleanup section."
+          ],
+          "dimensionScores": {
+            "leads_with_clear_executive_point_of_view": 4,
+            "connects_evidence_into_business_implications": 4,
+            "gives_specific_operational_next_steps_with_owners_timing": 4,
+            "surfaces_what_user_did_not_ask": 4,
+            "sounds_like_high_level_strategist": 4,
+            "stays_honest_about_missing_or_weak_evidence": 5,
+            "keeps_project_specific_claims_anchored": 4
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getMyTasks",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions"
+      ]
+    },
+    {
+      "id": "realworld-waiting-on-team",
+      "intent": "task_management",
+      "prompt": "What am I waiting on from my team?",
+      "selectedProjectId": null,
+      "sessionId": "741a32fe-4655-4c8d-af48-c1d6eb8da649",
+      "sessionLabel": "eval-2026-06-09T09-31-59-982Z-9d8ad6cd-realworld-waiting-on-team",
+      "startedAt": "2026-06-09T09:33:13.887Z",
+      "finishedAt": "2026-06-09T09:34:26.626Z",
+      "durationMs": 68081,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 958,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "duration 68081ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: backendDeepAgentExecutiveBriefing, executive_briefing_reader, tasks_reader, executive_follow_ups_reader, emails_reader, teams_reader, meetings_reader, documents_reader, projects_reader, financials_reader, schedule_reader, deepagents_runtime, clientProjectIntelligencePacket, getProjectBriefingSnapshot, semanticSearch, getActionItemsAndInsights",
+          "judge strategic_advisor: pass (4/4)"
+        ],
+        "toolNames": [
+          "backendDeepAgentExecutiveBriefing",
+          "executive_briefing_reader",
+          "tasks_reader",
+          "executive_follow_ups_reader",
+          "emails_reader",
+          "teams_reader",
+          "meetings_reader",
+          "documents_reader",
+          "projects_reader",
+          "financials_reader",
+          "schedule_reader",
+          "deepagents_runtime",
+          "clientProjectIntelligencePacket",
+          "getProjectBriefingSnapshot",
+          "semanticSearch",
+          "getActionItemsAndInsights"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "communications",
+          "semantic",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 3867,
+        "finalText": "You’re waiting on a lot of stale follow-through. The biggest issue isn’t volume — it’s that too many asks are still hanging open past their due dates. [Source: Action Items & Insights]\n\nWhat your team still owes you:\n\n- **Richard Ellison** — share the **90% drawings** so you can review them. Due **2026-05-01**, still open and overdue. [Source: Action Items & Insights]\n- **Brandon Griffith** — send the **updated Om Nangia signature document** for **Ulta Greenwood**. Due **2026-05-05**, still open and overdue. There are **two near-duplicate open items** on this, which usually means nobody closed the loop cleanly. [Source: Action Items & Insights]\n- **Corey Kunkleman** — give you **status on insurance requirements** so you can respond to the client. Due **2026-05-05**, still open and overdue. Also duplicated in the task register. [Source: Action Items & Insights]\n- **Candon Rusin** — update the **Goodwill job rebid/pricing**, including drawing changes and other subcontractor rebid info. Due **2026-05-21**, still open and overdue. [Source: Action Items & Insights]\n- **Mike Parsons** — backfill **sprinkler installation progress dates** on the drawing to support schedule-delay documentation. Due **2026-05-21**, marked **high priority**, still open. [Source: Action Items & Insights]\n- **Bob Wright** — create the **design-cost change request** under the existing Steel Services PO for **Vermillion Rise**. Open, no due date attached. [Source: Action Items & Insights]\n- **Spencer Geissel** — review the attached **2- and 3-level sprinkler options** for **Superior Beverage**. Open, no due date attached; also appears duplicated. [Source: Action Items & Insights]\n\nWhat’s most concerning:\n- You have **20 open items**, **14 overdue**. [Source: Action Items & Insights]\n- Several are **duplicates**, which tells me the real problem is not just execution — it’s task hygiene and confirmation back to you. [Source: Action Items & Insights]\n- **Westfield Collective** keeps surfacing as unresolved noise and risk: completion list, schedule impacts, security/locks, outstanding invoices, counter shutter replacement, warranty language, and owner-facing issues like the HVAC/condensation complaint from Angie. That pattern says your team may be updating inside conversations, but not actually closing issues. [Source: Action Items & Insights; Email: Re: Raining in the event space at Westfield, 2026-05-20; Email: Fw: Westfield Collective: outstanding invoices, 2026-05-20]\n\nA few direct communication signals back this up:\n- Brandon asked, **“What bid packages are you waiting on?”** and Enzo replied he was **“just waiting on a couple of answer from subs that had items missing on their proposal.”** That’s one clear example of unresolved subcontractor follow-up sitting in limbo. [Source: Teams DM 19:5ef77e5e6, 2026-03-09]\n- Brandon also asked, **“What are we waiting on?”** in prior messages, which fits the same pattern: waiting is recurring, but the retrieved evidence doesn’t always show clean closure. [Source: Teams DM 19:362f7b90-, 2025-09-26]\n- I also found a gap: **project_resolution** did not return in time, so I can’t fully tie every waiting item to a specific project with perfect confidence. That’s a real data gap. [Source: Sources Unavailable — project_resolution]\n\nWhat to do next:\n1. **Force a same-day status roundup** from Richard, Brandon Griffith, Corey, Candon, Mike, Bob, and Spencer.\n2. Ask for only three things from each: **current status, exact next step, and committed completion date**.\n3. Start with **Corey, Candon, and Mike** — those are the cleanest overdue items with real project impact.\n4. Then clean up the duplicate task entries so your list stops overstating noise.\n\nIf you want, I can turn this into a **clean “waiting on team” punch list by person** and create/update task records so it’s usable instead of messy.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 68081
+        },
+        "judge": {
+          "status": "pass",
+          "rubric": "strategic_advisor",
+          "score": 4,
+          "minScore": 4,
+          "summary": "The answer gives a strong executive read: the user is waiting on overdue follow-through, not just a list of open items. It identifies specific people, tasks, and some operational implications like duplicate tasks and task hygiene. The main weakness is that it mixes solid project-specific evidence with broader noise and a few unsupported generalizations, but it stays mostly anchored and honest about one data gap.",
+          "strengths": [
+            "Leads with a clear point of view that the core issue is stale follow-through and overdue execution, not just volume.",
+            "Uses specific names, deliverables, due dates, and status labels, which makes the answer operationally useful.",
+            "Surfaces second-order issues like duplicate tasks and task hygiene, not just the immediate asks.",
+            "Includes a candid limitation that one source did not return in time, avoiding overclaiming.",
+            "Provides concrete next steps with a clear sequence and suggested focus areas."
+          ],
+          "weaknesses": [
+            "Some claims drift into broad interpretation, such as saying the team is updating inside conversations but not closing issues, without strong direct evidence for every project.",
+            "The Westfield Collective section feels adjacent and somewhat noisy relative to the direct question of what the user is waiting on from the team.",
+            "It does not assign owners/timing for the recommended follow-up actions beyond same-day, which weakens operational specificity.",
+            "The answer could better distinguish between the most critical blockers and lower-priority open items.",
+            "A few statements about recurring patterns are more strategic than evidentiary, which slightly reduces rigor."
+          ],
+          "dimensionScores": {
+            "clear_executive_point_of_view": 5,
+            "connects_evidence_to_business_implications": 4,
+            "specific_operational_next_steps": 4,
+            "surfaces_unasked_but_important": 4,
+            "sounds_like_high_level_strategist": 4,
+            "honest_about_missing_or_weak_evidence": 5,
+            "anchors_claims_to_requested_project": 3
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getMyTasks",
+        "getActionItemsAndInsights",
+        "getPeopleAndRoles"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions"
+      ]
+    }
+  ]
+}

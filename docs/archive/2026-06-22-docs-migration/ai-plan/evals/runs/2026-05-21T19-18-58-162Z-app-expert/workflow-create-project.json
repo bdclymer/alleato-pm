@@ -1,0 +1,61 @@
+{
+  "id": "workflow-create-project",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4177,
+  "question": "How do I start a new project?",
+  "response": {
+    "answer": "I can’t answer this reliably from App Expert yet.\n\nWhat I checked:\n- App Expert artifact status\n- Feature registry for:\n  - `start new project`\n  - `new project`\n  - `project creation`\n\nWhat I found:\n- Required generated artifacts are missing:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n\nBecause those curated artifacts are unavailable, I can’t verify the documented workflow, exact route, or help article for starting a new project.\n\nWhat’s needed:\n- Regenerate App Expert docs/artifacts with:\n  - `npm run docs:generate-app-expert`\n\nIf you want, I can still help by inspecting the implementation source directly, but that would be route/implementation evidence rather than curated App Expert documentation.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/artifacts",
+        "sourceType": "sitemap",
+        "route": "/artifacts",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/implementation",
+        "sourceType": "sitemap",
+        "route": "/implementation",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 4098,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

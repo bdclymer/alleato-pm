@@ -84,7 +84,7 @@ export const GET = withApiGuardrails("/api/admin/rag-eval/results#GET", async ()
   const path = await import("path");
 
   const REPO_ROOT = path.resolve(process.cwd(), "..");
-  const RAG_DIR = path.join(REPO_ROOT, "docs/PRPs/rag");
+  const RAG_DIR = path.join(REPO_ROOT, "docs/archive/2026-06-22-docs-migration/PRPs/rag");
 
   function readJsonFile(filePath: string) {
     try {
@@ -107,7 +107,7 @@ export const GET = withApiGuardrails("/api/admin/rag-eval/results#GET", async ()
   }
 
   function loadAssistantRuns() {
-    const runsDir = path.join(REPO_ROOT, "docs/ai-plan/evals/runs");
+    const runsDir = path.join(REPO_ROOT, "docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs");
     try {
       return fs
         .readdirSync(runsDir, { withFileTypes: true })

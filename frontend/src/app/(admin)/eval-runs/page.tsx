@@ -209,7 +209,7 @@ export default function EvalRunsPage() {
         <EmptyState
           icon={<FlaskConical />}
           title="No eval runs found on this machine"
-          description="Runs are written to docs/ai-plan/evals/runs/ (gitignored, local-only). Run the suite from the CLI, then refresh: node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle tool-coverage-read-regression"
+          description="Runs are written to docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/ (gitignored, local-only). Run the suite from the CLI, then refresh: node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle tool-coverage-read-regression"
         />
       ) : (
         <div className="grid gap-8 xl:grid-cols-[minmax(320px,400px)_1fr]">

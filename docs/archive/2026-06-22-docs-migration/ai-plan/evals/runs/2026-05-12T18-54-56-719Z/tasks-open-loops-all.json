@@ -1,0 +1,45 @@
+{
+  "id": "tasks-open-loops-all",
+  "intent": "task_management",
+  "prompt": "Any open loops I should know about?",
+  "selectedProjectId": null,
+  "sessionId": "2de214cf-b027-4808-934b-ce5724661f4b",
+  "sessionLabel": "eval-2026-05-12T18-54-56-719Z-tasks-open-loops-all",
+  "startedAt": "2026-05-12T18:59:17.871Z",
+  "finishedAt": "2026-05-12T18:59:40.619Z",
+  "durationMs": 7418,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getMyTasks, getActionItemsAndInsights] to fire — none did",
+      "answer length 0 < min 80"
+    ],
+    "warnings": [
+      "expected family 'task_management' not represented",
+      "expected family 'actions' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "getMyTasks",
+    "getActionItemsAndInsights"
+  ],
+  "expectedToolFamilies": [
+    "task_management",
+    "actions"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

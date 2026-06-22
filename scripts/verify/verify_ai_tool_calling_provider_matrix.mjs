@@ -18,7 +18,7 @@ dotenv.config({ path: path.join(repoRoot, "frontend/.env.local"), quiet: true })
 
 const artifactPath = path.join(
   repoRoot,
-  "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json",
+  "docs/archive/2026-06-22-docs-migration/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json",
 );
 
 const gatewayModelId = process.env.AI_TOOL_MATRIX_GATEWAY_MODEL ?? "openai/gpt-5.4";

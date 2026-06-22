@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { requireAdmin } from "@/app/api/admin/intelligence-compiler/_shared";
+import { requireAdmin } from "@/app/api/admin/_shared";
 import { fetchWithPolicy } from "@/lib/guardrails/dependency";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { withApiGuardrails } from "@/lib/guardrails/api";

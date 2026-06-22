@@ -1,0 +1,61 @@
+{
+  "id": "workflow-rfi-create",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6962,
+  "question": "Can the app help create an RFI?",
+  "response": {
+    "answer": "Yes — the app can help create an RFI.\n\nEvidence checked:\n- Feature registry: `ai-assistant-actions` (`docs/help/articles/ai-assistant-actions.md`)\n- Help article: `docs/help/articles/ai-assistant-actions.md`\n- RFI feature docs: `docs/help/articles/rfis.md`\n- Relevant routes:\n  - `/ai-assistant`\n  - `/[projectId]/rfis`\n  - `/[projectId]/rfis/new`\n\nDocumented behavior:\n- Ask Alleato can create records directly from chat.\n- “Create RFI” is explicitly listed as an available write action.\n- It requires confirmation before execution: the assistant shows a preview card, then waits for `confirm` or Cancel.\n- The help article says the created RFI includes subject, question, ball-in-court, and due date.\n\nUncertainty:\n- I did not inspect `docs/help/articles/rfis.md`, so I’m only confirming the AI-assistant write capability and the existence of RFI routes, not the full RFI workflow beyond what the action article states.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/ai-assistant-actions.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-assistant-actions.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/rfis.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/rfis.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/rfis",
+        "sourceType": "sitemap",
+        "route": "/rfis",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/rfis/new",
+        "sourceType": "sitemap",
+        "route": "/rfis/new",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6955,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

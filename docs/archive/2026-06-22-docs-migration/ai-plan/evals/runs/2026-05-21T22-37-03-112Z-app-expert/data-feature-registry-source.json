@@ -1,0 +1,69 @@
+{
+  "id": "data-feature-registry-source",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 7258,
+  "question": "What source should the assistant cite for whether a feature is documented?",
+  "mustInclude": [
+    "feature registry"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Use the curated help article or feature-registry entry first, not the route alone.\n\nFor “whether a feature is documented,” the assistant should cite:\n- the **feature registry** entry when it exists, and\n- the linked **help article path** when the registry points to one.\n\nBest source hierarchy:\n1. **Help article** — primary source for documented user-facing behavior\n2. **Feature registry** — metadata confirming the feature is documented and linking to the help article\n3. **Route-discovered source file** — only implementation evidence, not proof of documented behavior\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are available and fresh\n- Feature registry search: found documented entries such as:\n  - `docs/help/articles/app-feature-status-and-limitations.md`\n  - `docs/help/articles/ai-assistant-overview.md`\n  - `docs/help/articles/ai-capabilities-index.md`\n- Help article read:\n  - `docs/help/articles/app-feature-status-and-limitations.md`\n\nRelevant help text says Ask Alleato should check:\n- curated help docs\n- generated feature registry\n- related actions\n- known limitations\n- source references\n\nSo if you want a citation for “documented,” the assistant should quote or link the **help article path**, and optionally mention the matching **feature registry entry**. If only a route/source file is available, label that as **implementation evidence**, not documentation.\n\nExact path to cite for this policy:\n- `docs/help/articles/app-feature-status-and-limitations.md`",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ai-assistant-overview.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-assistant-overview.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/ai-capabilities-index.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/ai-capabilities-index.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/source",
+        "sourceType": "sitemap",
+        "route": "/source",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 7139,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

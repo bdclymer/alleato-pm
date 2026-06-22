@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-05-13T23:59:45.066Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "assistantSourceHealth": 1,
+    "calendarActionIntentRouter": 1,
+    "mcpToolDiscovery": 1,
+    "streamingToolPolicy": 1,
+    "createOutlookCalendarInvite": 1
+  },
+  "intentDistribution": {
+    "calendar_action": 1
+  },
+  "results": [
+    {
+      "id": "realworld-meeting-invite-preview",
+      "intent": "calendar_action",
+      "prompt": "Send a 30 minute Teams meeting invite to Megan Harrison tomorrow at 2pm about Deep Agents production readiness.",
+      "selectedProjectId": null,
+      "sessionId": "f48b7273-8c02-4c50-a95c-637810ca4707",
+      "sessionLabel": "eval-2026-05-13T23-59-31-408Z-realworld-meeting-invite-preview",
+      "startedAt": "2026-05-13T23:59:31.410Z",
+      "finishedAt": "2026-05-13T23:59:45.065Z",
+      "durationMs": 13087,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 214,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, calendarActionIntentRouter, mcpToolDiscovery, streamingToolPolicy, createOutlookCalendarInvite"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "calendarActionIntentRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "createOutlookCalendarInvite"
+        ],
+        "familiesHit": [
+          "calendar_action",
+          "source_health"
+        ],
+        "finalTextLength": 298,
+        "finalText": "I need Megan’s email address before I can generate the invite preview.\n\nWhat I have:\n- Subject: Deep Agents production readiness\n- When: Tomorrow, May 14 at 2:00 PM\n- Duration: 30 minutes\n- Format: Teams meeting\n\nSend me Megan Harrison’s email and I’ll put up the calendar preview for confirmation."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "calendar_action"
+      ]
+    }
+  ]
+}

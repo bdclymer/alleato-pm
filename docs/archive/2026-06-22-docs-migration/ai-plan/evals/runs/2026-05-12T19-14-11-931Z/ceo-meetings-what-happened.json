@@ -1,0 +1,48 @@
+{
+  "id": "ceo-meetings-what-happened",
+  "intent": "meeting_query",
+  "prompt": "What came out of yesterday's OAC?",
+  "selectedProjectId": null,
+  "sessionId": "4b70459f-412a-40ba-8603-d107dab67d67",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-ceo-meetings-what-happened",
+  "startedAt": "2026-05-12T20:14:32.990Z",
+  "finishedAt": "2026-05-12T20:14:57.595Z",
+  "durationMs": 8997,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3ad1e0cc-c66e-4e08-962b-628320b6fb42\",\"timestamp\":\"2026-05-12T20:14:41.985Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3ad1e0cc-c66e-4e08-962b-628320b6fb42\",\"timestamp\":\"2026-05-12T20:14:41.985Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getMeetingsByDate, searchMeetingsByTopic, getActionItemsAndInsights, getMeetingIntelligence] to fire — none did",
+      "mustIncludeAny missing one of: \"OAC\", \"meeting\", \"decision\", \"action\", \"yesterday\""
+    ],
+    "warnings": [
+      "expected family 'meetings' not represented",
+      "expected family 'actions' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"3ad1e0cc-c66e-4e08-962b-628320b6fb42\",\"timestamp\":\"2026-05-12T20:14:41.985Z\"}"
+  },
+  "expectedToolNames": [
+    "getMeetingsByDate",
+    "searchMeetingsByTopic",
+    "getActionItemsAndInsights",
+    "getMeetingIntelligence"
+  ],
+  "expectedToolFamilies": [
+    "meetings",
+    "actions"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

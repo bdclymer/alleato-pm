@@ -1,0 +1,42 @@
+{
+  "id": "accounting-cash-position",
+  "intent": "financial_analysis",
+  "prompt": "What's our current cash position across accounts?",
+  "selectedProjectId": null,
+  "sessionId": "e4e2e5c4-2acc-48b1-b834-1a61c497ac51",
+  "sessionLabel": "eval-2026-05-02T10-17-07-154Z-accounting-cash-position",
+  "startedAt": "2026-05-02T10:24:12.885Z",
+  "finishedAt": "2026-05-02T10:24:28.192Z",
+  "durationMs": 100,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"c786f407-4d7d-4d42-a17c-6ce4e1677976\",\"timestamp\":\"2026-05-02T10:24:12.984Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"c786f407-4d7d-4d42-a17c-6ce4e1677976\",\"timestamp\":\"2026-05-02T10:24:12.984Z\"}",
+      "HTTP 401",
+      "expected at least one of [getCashPositionReport] to fire — none did",
+      "mustInclude missing: \"cash\""
+    ],
+    "warnings": [
+      "expected family 'accounting' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"c786f407-4d7d-4d42-a17c-6ce4e1677976\",\"timestamp\":\"2026-05-02T10:24:12.984Z\"}"
+  },
+  "expectedToolNames": [
+    "getCashPositionReport"
+  ],
+  "expectedToolFamilies": [
+    "accounting"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

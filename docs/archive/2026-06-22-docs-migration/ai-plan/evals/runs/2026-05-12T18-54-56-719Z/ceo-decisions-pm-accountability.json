@@ -1,0 +1,47 @@
+{
+  "id": "ceo-decisions-pm-accountability",
+  "intent": "people_or_capacity",
+  "prompt": "Which of my PMs is dropping the most balls right now?",
+  "selectedProjectId": null,
+  "sessionId": "4ea322dd-9ba7-400d-ab18-64ea570d5624",
+  "sessionLabel": "eval-2026-05-12T18-54-56-719Z-ceo-decisions-pm-accountability",
+  "startedAt": "2026-05-12T18:57:33.044Z",
+  "finishedAt": "2026-05-12T18:58:10.583Z",
+  "durationMs": 21796,
+  "httpStatus": 500,
+  "streamError": "HTTP 500: Internal Server Error",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 500: Internal Server Error",
+      "HTTP 500",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getActionItemsAndInsights, getPeopleAndRoles] to fire — none did",
+      "mustIncludeAny missing one of: \"overdue\", \"open\", \"follow-through\", \"accountability\", \"PM\"",
+      "answer length 21 < min 200"
+    ],
+    "warnings": [
+      "expected family 'people' not represented",
+      "expected family 'actions' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 21,
+    "finalText": "Internal Server Error"
+  },
+  "expectedToolNames": [
+    "getActionItemsAndInsights",
+    "getPeopleAndRoles"
+  ],
+  "expectedToolFamilies": [
+    "people",
+    "actions"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

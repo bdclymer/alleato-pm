@@ -68,7 +68,7 @@ export const getProfileAccessClaims = cache(
  * admin)" use getIsDeveloper().
  *
  * NOTE: requires the custom_access_token_hook to be registered in Supabase
- * Dashboard → Auth → Hooks. See docs/deployment/AUTH-JWT-HOOK-RUNBOOK.md.
+ * Dashboard → Auth → Hooks. See docs/archive/2026-06-22-docs-migration/deployment/AUTH-JWT-HOOK-RUNBOOK.md.
  * Until the hook is registered, this always returns false.
  */
 export const getIsAdmin = cache(async (): Promise<boolean> => {
@@ -96,7 +96,7 @@ export const getIsAdmin = cache(async (): Promise<boolean> => {
  * experimental features, prompt tuning, etc.).
  *
  * The value comes from the custom_access_token_hook (same hook that emits
- * is_admin) — no extra DB round-trip. See docs/deployment/AUTH-JWT-HOOK-RUNBOOK.md.
+ * is_admin) — no extra DB round-trip. See docs/archive/2026-06-22-docs-migration/deployment/AUTH-JWT-HOOK-RUNBOOK.md.
  */
 export const getIsDeveloper = cache(async (): Promise<boolean> => {
   const user = await getCurrentUser();

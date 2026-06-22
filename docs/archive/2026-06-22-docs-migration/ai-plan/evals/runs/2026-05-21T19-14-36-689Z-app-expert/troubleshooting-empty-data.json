@@ -1,0 +1,19 @@
+{
+  "id": "troubleshooting-empty-data",
+  "status": "failed",
+  "httpStatus": 503,
+  "durationMs": 85,
+  "question": "Why might a page be empty even though the route exists?",
+  "response": {
+    "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+  },
+  "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+  "shapeIssues": [
+    "missing answer",
+    "missing sources",
+    "missing toolTrace",
+    "invalid mode"
+  ],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

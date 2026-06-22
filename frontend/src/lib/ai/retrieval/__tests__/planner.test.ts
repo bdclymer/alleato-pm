@@ -182,7 +182,7 @@ describe("source-health routing must not hijack content questions", () => {
   // Regression for the assistantSourceHealth hijack: prompts using the common
   // adjective "current" (or "status"/"latest") were being routed to the
   // source-health fast-path and answered with a freshness report instead of the
-  // real answer. See docs/ai-plan/evals/TOOL-COVERAGE-RUN-RESULTS.md.
+  // real answer. See docs/archive/2026-06-22-docs-migration/ai-plan/evals/TOOL-COVERAGE-RUN-RESULTS.md.
   const mustNotRoute: Array<[string, number | undefined]> = [
     ["Quick facts on Westfield — contract value, current phase, and project address.", 43],
     ["What is Alleato's mission and what are the current strategic goals for the company?", undefined],

@@ -254,9 +254,9 @@ Based on pain points not yet addressed:
 
 ## Related Documentation
 
-- Main incident log: `docs/patterns/INCIDENT-LOG.md`
-- Database issues: `docs/patterns/database-issues.md`
-- API routing errors: `docs/patterns/api-routing-errors.md`
+- Main incident log: `docs/archive/2026-06-22-docs-migration/patterns/INCIDENT-LOG.md`
+- Database issues: `docs/archive/2026-06-22-docs-migration/patterns/database-issues.md`
+- API routing errors: `docs/archive/2026-06-22-docs-migration/patterns/api-routing-errors.md`
 - Next.js debug protocol: `.claude/rules/NEXTJS-DEBUG-PROTOCOL.md`
 - Supabase gate: `.claude/rules/SUPABASE-GATE.md`
 

@@ -1,8 +1,6 @@
 export type AutomationBlueprintKey =
   | "daily_recap"
-  | "task_extraction"
   | "source_rag_health"
-  | "packet_refresh"
   | "microsoft_executive_assistant_check"
   | "graph_sync";
 
@@ -30,17 +28,6 @@ export const AUTOMATION_BLUEPRINT_CATALOG: AutomationBlueprintDefinition[] = [
       "Review with executive brief timing before changing this schedule; the brief depends on fresh recaps.",
   },
   {
-    key: "task_extraction",
-    title: "Task extraction",
-    description: "Extract action items from meetings, email, and Teams sources.",
-    runtimeOwner: "render-cron",
-    existingRenderCronName: "alleato-task-extraction",
-    currentSchedule: "0 7 * * *",
-    supportedKeywords: ["task extraction", "extract tasks", "action items"],
-    approvalNotes:
-      "Confirm source backlog and model cost before increasing cadence.",
-  },
-  {
     key: "source_rag_health",
     title: "Source RAG health check",
     description: "Check source freshness, embedding backlog, compiler backlog, and persisted alerts.",
@@ -50,17 +37,6 @@ export const AUTOMATION_BLUEPRINT_CATALOG: AutomationBlueprintDefinition[] = [
     supportedKeywords: ["source rag health", "rag health", "source health", "pipeline health"],
     approvalNotes:
       "Health schedules can be frequent, but alert delivery and remediation webhooks must remain configured.",
-  },
-  {
-    key: "packet_refresh",
-    title: "Project intelligence packet refresh",
-    description: "Queue periodic packet refreshes so intelligence packets do not go stale.",
-    runtimeOwner: "render-cron",
-    existingRenderCronName: "alleato-packet-refresh-periodic",
-    currentSchedule: "0 2,9,15,21 * * *",
-    supportedKeywords: ["packet refresh", "project intelligence refresh", "refresh packets"],
-    approvalNotes:
-      "Do not remove the pre-brief refresh window without replacing the executive brief freshness guarantee.",
   },
   {
     key: "microsoft_executive_assistant_check",

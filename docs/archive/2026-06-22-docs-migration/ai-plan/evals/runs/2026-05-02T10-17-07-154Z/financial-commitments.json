@@ -1,0 +1,45 @@
+{
+  "id": "financial-commitments",
+  "intent": "financial_analysis",
+  "prompt": "Show me an overview of commitments on Westfield with their current status.",
+  "selectedProjectId": 43,
+  "sessionId": "8178b053-3f73-4a00-9f05-7dbcf67d1f5f",
+  "sessionLabel": "eval-2026-05-02T10-17-07-154Z-financial-commitments",
+  "startedAt": "2026-05-02T10:18:33.180Z",
+  "finishedAt": "2026-05-02T10:18:48.439Z",
+  "durationMs": 81,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"4091bb89-1de1-4f57-af8f-581aff2cf31f\",\"timestamp\":\"2026-05-02T10:18:33.259Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"4091bb89-1de1-4f57-af8f-581aff2cf31f\",\"timestamp\":\"2026-05-02T10:18:33.259Z\"}",
+      "HTTP 401",
+      "expected at least one of [getCommitmentsOverview, queryCommitments] to fire — none did",
+      "mustInclude missing: \"commitment\""
+    ],
+    "warnings": [
+      "expected family 'financial' not represented",
+      "expected family 'structured' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"4091bb89-1de1-4f57-af8f-581aff2cf31f\",\"timestamp\":\"2026-05-02T10:18:33.259Z\"}"
+  },
+  "expectedToolNames": [
+    "getCommitmentsOverview",
+    "queryCommitments"
+  ],
+  "expectedToolFamilies": [
+    "financial",
+    "structured"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

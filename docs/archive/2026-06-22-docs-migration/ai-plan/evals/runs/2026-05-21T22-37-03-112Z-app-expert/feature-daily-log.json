@@ -1,0 +1,78 @@
+{
+  "id": "feature-daily-log",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6593,
+  "question": "Where do daily logs live?",
+  "mustInclude": [
+    "daily log"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "Daily logs live in the project-scoped **Daily Log** page:\n\n- **Route:** `/[projectId]/daily-log`\n- **Help article:** `docs/help/articles/daily-log.md`\n- **Route file:** `frontend/src/app/(main)/[projectId]/daily-log/page.tsx`\n\nWhat’s documented:\n- Open a project, then open **Daily Log** from the sidebar.\n- It’s used to record labor, equipment, weather, deliveries, visitors, safety notes, and observations.\n\nWhat I also found:\n- There’s a separate route-discovered table page at `/daily-logs` from `frontend/src/app/(tables)/daily-logs/page.tsx`.\n- There’s a detail route at `/daily-logs/[dailyLogId]`.\n- These are implementation-discovered entries with no linked help article, so their exact user-facing purpose is less certain than the documented project page.\n\nIf you meant the main user workflow, use `/[projectId]/daily-log`.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/daily-log",
+        "sourceType": "sitemap",
+        "route": "/daily-log",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/daily-log.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/daily-log.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/[projectId]/daily-log/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/[projectId]/daily-log/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(tables)/daily-logs/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(tables)/daily-logs/page.tsx",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/[dailyLogId]",
+        "sourceType": "sitemap",
+        "route": "/[dailyLogId]",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6466,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

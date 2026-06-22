@@ -1,0 +1,54 @@
+{
+  "id": "workflow-direct-costs",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4443,
+  "question": "What are direct costs for in the app?",
+  "response": {
+    "answer": "I can’t verify this in App Expert right now because the required generated artifacts are missing:\n\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nBoth returned `APP_EXPERT_ARTIFACT_MISSING`, so any answer about “direct costs” in the app would be uncertain.\n\nWhat I checked:\n- App Expert artifact status: missing\n- Curated feature/help metadata: unavailable until the generated artifacts exist\n\nWhat remains uncertain:\n- Whether “Direct Costs” is a feature, label, workflow section, or route in the app\n- Its exact user-facing behavior\n- Any source-file-backed implementation details\n\nIf you want, regenerate the App Expert artifacts and I can look it up precisely:\n- `npm run docs:generate-app-expert`",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help",
+        "sourceType": "sitemap",
+        "route": "/help",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 4362,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

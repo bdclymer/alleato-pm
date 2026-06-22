@@ -1,0 +1,289 @@
+{
+  "id": "realworld-important-emails-this-morning",
+  "intent": "source_lookup",
+  "prompt": "What important emails have I received this morning?",
+  "selectedProjectId": null,
+  "sessionId": "90daab9b-f502-41c8-83c4-e1e88be0dc33",
+  "sessionLabel": "eval-2026-06-09T10-41-26-706Z-f1e1983e-realworld-important-emails-this-morning",
+  "startedAt": "2026-06-09T10:41:58.026Z",
+  "finishedAt": "2026-06-09T10:42:17.822Z",
+  "durationMs": 16254,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 11,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "judge email_operator score 2 < 4: The answer identifies a few potentially important emails, but it mixes inbox items with user actions, overstates certainty in places, and does not cleanly separate urgent items from routine noise. It also includes unsupported escalation/draft language and some thread details that are not clearly evidenced."
+    ],
+    "warnings": [],
+    "observations": [
+      "tools fired: consultMicrosoftExecutiveAssistant",
+      "judge email_operator: fail (2/4)"
+    ],
+    "toolNames": [
+      "consultMicrosoftExecutiveAssistant"
+    ],
+    "familiesHit": [
+      "communications",
+      "email_action"
+    ],
+    "finalTextLength": 1971,
+    "finalText": "Important emails received this morning in bclymer@alleatogroup.com:\n\n1. Ulta Beauty — Walter Allen\n   - Subject: RE: ULTA update needed.\n   - Received: 9:59 AM UTC\n   - Why it matters: Client-facing and time-sensitive. He asks to confirm by Thursday afternoon on the roof penetration.\n   - Recommended next step: Verify status immediately and respond with either confirmation or a firm ETA.\n   - Escalation drafted for Megan review.\n\n2. Exol — Steve Fischer\n   - Subject: RE: Exol Morrisville PA\n   - Received: 2:59 AM UTC and 2:20 AM UTC\n   - Why it matters: Project-specific technical scope notes and a follow-up asking for ASAP review. This looks operationally important.\n   - Recommended next step: Review scope details and align on inclusions, especially MDF room suppression, anti-static flooring, and UPS power requirements.\n\n3. Alleato Group ERP Integrations Daily Summary\n   - Received: 6:15 AM UTC\n   - Why it matters: Internal operational summary; says there are 2 vendors available to sync with ERP.\n   - Recommended next step: Check whether those vendor syncs need action today.\n\n4. Payment due reminder from ThriveCart\n   - Subject: [Reminder] Your payment is due in 1 day\n   - Received: 3:54 AM UTC\n   - Why it matters: Financial/admin reminder, likely non-client but potentially relevant if the subscription is needed.\n   - Recommended next step: Confirm whether the payment/subscription should remain active.\n\nLess important / informational:\n- Perplexity sign-in email\n  - Likely just a login verification code; no action needed unless you requested it.\n\nApproval / escalation:\n- Teams escalation draft prepared for Megan about the Ulta deadline-sensitive request.\n- No email or Teams message was sent.\n\nRecommended next steps for Megan:\n- Approve/deny immediate follow-up on the Ulta roof penetration deadline.\n- Decide whether the Exol comments should be routed to the project owner today.\n- Confirm whether the ThriveCart payment should be maintained.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 16254
+    },
+    "judge": {
+      "status": "fail",
+      "rubric": "email_operator",
+      "score": 2,
+      "minScore": 4,
+      "summary": "The answer identifies a few potentially important emails, but it mixes inbox items with user actions, overstates certainty in places, and does not cleanly separate urgent items from routine noise. It also includes unsupported escalation/draft language and some thread details that are not clearly evidenced.",
+      "strengths": [
+        "Flags at least one clearly time-sensitive client email (Ulta) and one operational project thread (Exol).",
+        "Avoids claiming any email was sent.",
+        "Provides some next-step guidance instead of only listing subjects."
+      ],
+      "weaknesses": [
+        "Does not clearly separate confirmed user-owned actions from items that merely exist in the inbox; it turns inbox content into recommended actions without distinguishing ownership.",
+        "Uses unsupported certainty in places, e.g. 'This looks operationally important' and 'likely non-client' without enough evidence.",
+        "Thread summaries are somewhat compressed but still include extra detail and speculative interpretation rather than a clean executive summary.",
+        "The 'Teams escalation draft prepared for Megan' is not clearly tied to a user-owned action and risks implying workflow state not evidenced by the email data.",
+        "The answer does not robustly distinguish urgent/critical from normal noise; it lists several low-priority items alongside important ones without a strong triage hierarchy."
+      ],
+      "dimensionScores": {
+        "separates_urgent_from_noise": 2,
+        "identifies_who_needs_response_why_what_if_ignored": 3,
+        "summarizes_threads_efficiently": 3,
+        "recommends_concrete_response_path": 3,
+        "drafts_short_direct_practical": 2,
+        "never_claims_sent_or_invents_details": 2,
+        "separates_user_owned_actions_from_inbox_items": 2,
+        "labels_suspicious_phishing_urgency_ignore_with_evidence": 2
+      },
+      "provider": "openai",
+      "model": "gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "consultMicrosoftExecutiveAssistant"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:41:58.110Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Delegating Microsoft operator work",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:41:58.328Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:01.328Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:04.329Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:07.329Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:10.330Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:42:13.330Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-microsoft-executive-assistant"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-microsoft-executive-assistant",
+      "delta": "Important emails received this morning in bclymer@alleatogroup.com:\n\n1. Ulta Beauty — Walter Allen\n   - Subject: RE: ULTA update needed.\n   - Received: 9:59 AM UTC\n   - Why it matters: Client-facing and time-sensitive. He asks to confirm by Thursday afternoon on the roof penetration.\n   - Recommended next step: Verify status immediately and respond with either confirmation or a firm ETA.\n   - Escalation drafted for Megan review.\n\n2. Exol — Steve Fischer\n   - Subject: RE: Exol Morrisville PA\n   - Received: 2:59 AM UTC and 2:20 AM UTC\n   - Why it matters: Project-specific technical scope notes and a follow-up asking for ASAP review. This looks operationally important.\n   - Recommended next step: Review scope details and align on inclusions, especially MDF room suppression, anti-static flooring, and UPS power requirements.\n\n3. Alleato Group ERP Integrations Daily Summary\n   - Received: 6:15 AM UTC\n   - Why it matters: Internal operational summary; says there are 2 vendors available to sync with ERP.\n   - Recommended next step: Check whether those vendor syncs need action today.\n\n4. Payment due reminder from ThriveCart\n   - Subject: [Reminder] Your payment is due in 1 day\n   - Received: 3:54 AM UTC\n   - Why it matters: Financial/admin reminder, likely non-client but potentially relevant if the subscription is needed.\n   - Recommended next step: Confirm whether the payment/subscription should remain active.\n\nLess important / informational:\n- Perplexity sign-in email\n  - Likely just a login verification code; no action needed unless you requested it.\n\nApproval / escalation:\n- Teams escalation draft prepared for Megan about the Ulta deadline-sensitive request.\n- No email or Teams message was sent.\n\nRecommended next steps for Megan:\n- Approve/deny immediate follow-up on the Ulta roof penetration deadline.\n- Decide whether the Exol comments should be routed to the project owner today.\n- Confirm whether the ThriveCart payment should be maintained."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-microsoft-executive-assistant"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Microsoft Executive Assistant answer returned",
+        "status": "success",
+        "timestamp": "2026-06-09T10:42:14.273Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "tool_trace": [
+      {
+        "tool": "consultMicrosoftExecutiveAssistant",
+        "error": null,
+        "input": {
+          "message": "What important emails have I received this morning?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": "deep_agents",
+          "count": null,
+          "error": null,
+          "source": "microsoft_graph_live",
+          "summary": "Important emails received this morning in bclymer@alleatogroup.com:\n\n1. Ulta Beauty — Walter Allen\n   - Subject: RE: ULTA update needed.\n   - Received: 9:59 AM UTC\n   - Why it matters: Client-facing and time-sensitive. He asks to confirm by Thursday afternoon on the roof penetration.\n   - Recommended next step: Verify status immediately and respond with either confirmation or a firm ETA.\n   - Escalation drafted for Megan review.\n\n2. Exol — Steve Fischer\n   - Subject: RE: Exol Morrisville PA\n   -",
+          "toolTrace": [
+            {
+              "tool": "read_live_outlook_inbox",
+              "agent": "microsoft-executive-assistant",
+              "detail": "read_live_outlook_inbox completed.",
+              "output": {
+                "ok": true,
+                "count": 6,
+                "source": "microsoft_graph_live",
+                "fetchedAt": "2026-06-09T10:42:05.354125+00:00",
+                "truncated": false,
+                "mailboxUserId": "bclymer@alleatogroup.com"
+              },
+              "source": "microsoft_graph_live",
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "draft_teams_message_for_review",
+              "agent": "microsoft-executive-assistant",
+              "detail": "draft_teams_message_for_review completed.",
+              "output": {},
+              "source": null,
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "deepagents_microsoft_executive_assistant_runtime",
+              "agent": "microsoft-executive-assistant",
+              "detail": "Microsoft Executive Assistant produced an answer.",
+              "output": null,
+              "source": null,
+              "status": "success",
+              "durationMs": 11747
+            }
+          ],
+          "actionCount": 0,
+          "orchestrator": "microsoft-executive-assistant"
+        },
+        "status": "success",
+        "toolName": "consultMicrosoftExecutiveAssistant",
+        "timestamp": "2026-06-09T10:42:13.835Z",
+        "durationMs": 15506
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "source_debug": {
+      "memory": {
+        "reason": "This answer was produced by a delegated specialist/direct Deep Agents path; inspect delegated trace and backend memory metadata for specialist-side context.",
+        "status": "not_loaded_in_frontend"
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "consultMicrosoftExecutiveAssistant",
+              "agent": "unknown-agent",
+              "status": "success",
+              "durationMs": 15506
+            }
+          ],
+          "failedCount": 0,
+          "totalMeasuredMs": 15506
+        },
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 1,
+        "sourceCoverage": []
+      },
+      "orchestrator": "microsoft-executive-assistant",
+      "outputPolicy": null,
+      "retrievalPlan": {
+        "intent": "source_lookup",
+        "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "sources": [],
+        "responseFormat": "conversational"
+      }
+    },
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+      "sources": [],
+      "responseFormat": "conversational"
+    },
+    "response_quality": {
+      "score": 62,
+      "reasons": [
+        "at least one successful tool call",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "delegated_orchestrator": "microsoft-executive-assistant"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "id": "memory-recall",
+  "intent": "general_conversation",
+  "prompt": "What have we already discussed about Westfield in past sessions?",
+  "selectedProjectId": 43,
+  "sessionId": "13346fe2-0c1a-4644-b975-75f27b2e7c2c",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-memory-recall",
+  "startedAt": "2026-05-12T19:36:07.591Z",
+  "finishedAt": "2026-05-12T19:36:22.891Z",
+  "durationMs": 1,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [recallPastConversations, searchMemories] to fire — none did",
+      "answer length 0 < min 60"
+    ],
+    "warnings": [
+      "expected family 'memory' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "recallPastConversations",
+    "searchMemories"
+  ],
+  "expectedToolFamilies": [
+    "memory"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

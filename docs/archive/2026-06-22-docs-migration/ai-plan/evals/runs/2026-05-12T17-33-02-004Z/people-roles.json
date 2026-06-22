@@ -1,0 +1,42 @@
+{
+  "id": "people-roles",
+  "intent": "people_or_capacity",
+  "prompt": "Who is on the Westfield project team and what are their roles?",
+  "selectedProjectId": 43,
+  "sessionId": "91d7f030-a973-46a1-8f11-b6fe15fa4f1f",
+  "sessionLabel": "eval-2026-05-12T17-33-02-004Z-people-roles",
+  "startedAt": "2026-05-12T17:36:42.678Z",
+  "finishedAt": "2026-05-12T17:36:58.693Z",
+  "durationMs": 369,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"e68a63b3-de26-4040-8034-88059b3d8425\",\"timestamp\":\"2026-05-12T17:36:43.047Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"e68a63b3-de26-4040-8034-88059b3d8425\",\"timestamp\":\"2026-05-12T17:36:43.047Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [getPeopleAndRoles] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'people' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"e68a63b3-de26-4040-8034-88059b3d8425\",\"timestamp\":\"2026-05-12T17:36:43.047Z\"}"
+  },
+  "expectedToolNames": [
+    "getPeopleAndRoles"
+  ],
+  "expectedToolFamilies": [
+    "people"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

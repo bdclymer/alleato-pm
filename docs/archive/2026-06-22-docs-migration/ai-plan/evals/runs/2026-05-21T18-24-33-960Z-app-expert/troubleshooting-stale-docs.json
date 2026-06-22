@@ -1,0 +1,61 @@
+{
+  "id": "troubleshooting-stale-docs",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 7614,
+  "question": "What should Ask Alleato say if documentation and the route map disagree?",
+  "response": {
+    "answer": "If documentation and the route map disagree, Ask Alleato should privilege the curated help article and say the conflict explicitly.\n\nWhat I checked:\n- Artifact status: both generated artifacts are current and available:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature metadata:\n  - `app-navigation-and-feature-map` / “Navigate Alleato PM”\n  - help article: `docs/help/articles/app-navigation-and-feature-map.md`\n  - routes: `/`, `/[projectId]/home`, `/site-map`, `/ai-assistant`\n- Help article content:\n  - It says the app sitemap and feature registry are generated from codebase + help metadata.\n  - It instructs that if a route exists but lacks curated help, Ask Alleato should say it found the route from the app inventory and that user-facing documentation still needs to be filled in.\n\nSo the behavior should be:\n\n- If docs and route map conflict, say the documentation and app inventory disagree.\n- Prefer the curated documentation for user-facing guidance.\n- Mention the route-map finding as implementation evidence, not as the primary answer.\n- State what remains uncertain if the conflict cannot be resolved.\n\nA good response pattern for Ask Alleato:\n> “I found a mismatch between the curated help article and the app route inventory. The help article says X, while the app inventory shows route `/...`. I’d treat the help article as the user-facing source of truth, and use the route as implementation evidence. This may need documentation correction.”\n\nRelevant source:\n- `docs/help/articles/app-navigation-and-feature-map.md`",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-navigation-and-feature-map.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-navigation-and-feature-map.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/home",
+        "sourceType": "sitemap",
+        "route": "/home",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 7609,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

@@ -1,0 +1,250 @@
+{
+  "id": "realworld-outlook-arrived-today",
+  "intent": "source_lookup",
+  "prompt": "What came in through Outlook today that needs my attention?",
+  "selectedProjectId": null,
+  "sessionId": "8bd5a680-4f76-4886-92c9-9a5ef96b88b0",
+  "sessionLabel": "eval-2026-06-09T10-57-53-167Z-c0e72df1-realworld-outlook-arrived-today",
+  "startedAt": "2026-06-09T10:59:16.076Z",
+  "finishedAt": "2026-06-09T10:59:26.601Z",
+  "durationMs": 7052,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 8,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "judge email_operator score 3 < 4: The answer does identify a few likely action items and separates them from informational mail, but it is too thin on evidence and business impact. It also misses the strongest requirement for this task: clearly distinguishing what Brandon personally needs to do now versus what merely exists in the inbox. The response paths are mostly generic, and the justification for urgency or ignore decisions is not well supported by the message content shown."
+    ],
+    "warnings": [],
+    "observations": [
+      "tools fired: consultMicrosoftExecutiveAssistant",
+      "judge email_operator: fail (3/4)"
+    ],
+    "toolNames": [
+      "consultMicrosoftExecutiveAssistant"
+    ],
+    "familiesHit": [
+      "communications",
+      "email_action"
+    ],
+    "finalTextLength": 1123,
+    "finalText": "Messages that arrived today for bclymer@alleatogroup.com:\n\nAction needed\n- RE: ULTA update needed. — Allen, Walter — 2026-06-09 09:59 UTC\n  Response path: Reply now\n  Why: The email contains a direct external ask with explicit timing.\n- RE: Exol Morrisville PA — Steve Fischer — 2026-06-09 02:59 UTC\n  Response path: Reply\n  Why: The sender appears to be asking for a direct response.\n- RE: Exol Morrisville PA — Steve Fischer — 2026-06-09 02:20 UTC\n  Response path: Reply\n  Why: The sender appears to be asking for a direct response.\n\nWatch / informational\n- Sign in to Perplexity — Perplexity — 2026-06-09 09:37 UTC\n  Response path: Ignore\n  Why: Authentication message; usually ignorable unless the sign-in was requested.\n- Alleato Group: ERP Integrations Daily Summary — Alleato Group — 2026-06-09 06:15 UTC\n  Response path: Ignore\n  Why: Operational summary or digest; no direct action is shown in the email itself.\n- [Reminder] Your payment is due in 1 day — Ryan Niddel — 2026-06-09 03:54 UTC\n  Response path: Watch\n  Why: Admin reminder; time-sensitive, but not clearly an immediate reply item from the email alone.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 7052
+    },
+    "judge": {
+      "status": "fail",
+      "rubric": "email_operator",
+      "score": 3,
+      "minScore": 4,
+      "summary": "The answer does identify a few likely action items and separates them from informational mail, but it is too thin on evidence and business impact. It also misses the strongest requirement for this task: clearly distinguishing what Brandon personally needs to do now versus what merely exists in the inbox. The response paths are mostly generic, and the justification for urgency or ignore decisions is not well supported by the message content shown.",
+      "strengths": [
+        "Separates some urgent/actionable mail from informational items.",
+        "Does not claim any email was sent.",
+        "Avoids dumping raw thread content and keeps the list concise."
+      ],
+      "weaknesses": [
+        "Does not clearly explain who specifically needs to respond and what happens if ignored.",
+        "Uses vague reasoning like 'appears to be asking' without enough evidence-backed judgment.",
+        "Fails to distinguish confirmed user-owned actions from items that are merely present in the inbox.",
+        "Response recommendations are generic ('Reply', 'Watch', 'Ignore') rather than concrete and operational.",
+        "No draft language is provided for any item that might need Brandon to review and send."
+      ],
+      "dimensionScores": {
+        "separates_urgent_from_noise": 3,
+        "identifies_who_needs_response_and_impact": 2,
+        "summarizes_threads_efficiently": 4,
+        "recommends_concrete_response_path": 3,
+        "drafts_short_direct_practical": 1,
+        "no_false_claims_or_invented_details": 4,
+        "separates_user_owned_actions_from_inbox_items": 2,
+        "evidence_backed_suspicious_or_ignore_judgments": 2
+      },
+      "provider": "openai",
+      "model": "gpt-5.4-mini"
+    }
+  },
+  "expectedToolNames": [
+    "consultMicrosoftExecutiveAssistant"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:59:16.222Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Delegating Microsoft operator work",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:59:16.338Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:59:19.338Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "microsoft-specialist",
+        "message": "Still delegating to Microsoft operator…",
+        "status": "loading",
+        "timestamp": "2026-06-09T10:59:22.338Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-microsoft-executive-assistant"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-microsoft-executive-assistant",
+      "delta": "Messages that arrived today for bclymer@alleatogroup.com:\n\nAction needed\n- RE: ULTA update needed. — Allen, Walter — 2026-06-09 09:59 UTC\n  Response path: Reply now\n  Why: The email contains a direct external ask with explicit timing.\n- RE: Exol Morrisville PA — Steve Fischer — 2026-06-09 02:59 UTC\n  Response path: Reply\n  Why: The sender appears to be asking for a direct response.\n- RE: Exol Morrisville PA — Steve Fischer — 2026-06-09 02:20 UTC\n  Response path: Reply\n  Why: The sender appears to be asking for a direct response.\n\nWatch / informational\n- Sign in to Perplexity — Perplexity — 2026-06-09 09:37 UTC\n  Response path: Ignore\n  Why: Authentication message; usually ignorable unless the sign-in was requested.\n- Alleato Group: ERP Integrations Daily Summary — Alleato Group — 2026-06-09 06:15 UTC\n  Response path: Ignore\n  Why: Operational summary or digest; no direct action is shown in the email itself.\n- [Reminder] Your payment is due in 1 day — Ryan Niddel — 2026-06-09 03:54 UTC\n  Response path: Watch\n  Why: Admin reminder; time-sensitive, but not clearly an immediate reply item from the email alone."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-microsoft-executive-assistant"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Microsoft Executive Assistant answer returned",
+        "status": "success",
+        "timestamp": "2026-06-09T10:59:23.121Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "tool_trace": [
+      {
+        "tool": "consultMicrosoftExecutiveAssistant",
+        "error": null,
+        "input": {
+          "message": "What came in through Outlook today that needs my attention?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": "deep_agents",
+          "count": null,
+          "error": null,
+          "source": "microsoft_graph_live",
+          "summary": "Messages that arrived today for bclymer@alleatogroup.com:\n\nAction needed\n- RE: ULTA update needed. — Allen, Walter — 2026-06-09 09:59 UTC\n  Response path: Reply now\n  Why: The email contains a direct external ask with explicit timing.\n- RE: Exol Morrisville PA — Steve Fischer — 2026-06-09 02:59 UTC\n  Response path: Reply\n  Why: The sender appears to be asking for a direct response.\n- RE: Exol Morrisville PA — Steve Fischer — 2026-06-09 02:20 UTC\n  Response path: Reply\n  Why: The sender appears t",
+          "toolTrace": [
+            {
+              "tool": "read_live_outlook_inbox",
+              "agent": "microsoft-executive-assistant",
+              "detail": "read_live_outlook_inbox completed.",
+              "output": {
+                "ok": true,
+                "count": 25,
+                "source": "microsoft_graph_live",
+                "fetchedAt": "2026-06-09T10:59:17.925636+00:00",
+                "truncated": true,
+                "mailboxUserId": "bclymer@alleatogroup.com"
+              },
+              "source": "microsoft_graph_live",
+              "status": "success",
+              "durationMs": 0
+            },
+            {
+              "tool": "deepagents_microsoft_executive_assistant_runtime",
+              "agent": "microsoft-executive-assistant",
+              "detail": "Microsoft Executive Assistant produced an answer.",
+              "output": null,
+              "source": null,
+              "status": "success",
+              "durationMs": 6386
+            }
+          ],
+          "actionCount": 0,
+          "orchestrator": "microsoft-executive-assistant"
+        },
+        "status": "success",
+        "toolName": "consultMicrosoftExecutiveAssistant",
+        "timestamp": "2026-06-09T10:59:22.823Z",
+        "durationMs": 6485
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "source_debug": {
+      "memory": {
+        "reason": "This answer was produced by a delegated specialist/direct Deep Agents path; inspect delegated trace and backend memory metadata for specialist-side context.",
+        "status": "not_loaded_in_frontend"
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "consultMicrosoftExecutiveAssistant",
+              "agent": "unknown-agent",
+              "status": "success",
+              "durationMs": 6485
+            }
+          ],
+          "failedCount": 0,
+          "totalMeasuredMs": 6485
+        },
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 1,
+        "sourceCoverage": []
+      },
+      "orchestrator": "microsoft-executive-assistant",
+      "outputPolicy": null,
+      "retrievalPlan": {
+        "intent": "source_lookup",
+        "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+        "sources": [],
+        "responseFormat": "conversational"
+      }
+    },
+    "retrieval_plan": {
+      "intent": "source_lookup",
+      "reason": "microsoft_specialist_delegation_structured_outlook_inbox_query",
+      "sources": [],
+      "responseFormat": "conversational"
+    },
+    "response_quality": {
+      "score": 62,
+      "reasons": [
+        "at least one successful tool call",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "delegated_orchestrator": "microsoft-executive-assistant"
+  }
+}

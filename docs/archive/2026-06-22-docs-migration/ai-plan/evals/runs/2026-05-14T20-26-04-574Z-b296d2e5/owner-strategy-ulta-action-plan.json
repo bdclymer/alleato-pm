@@ -1,0 +1,569 @@
+{
+  "id": "owner-strategy-ulta-action-plan",
+  "intent": "project_briefing",
+  "prompt": "I am Brandon. For 25-127 Ulta Beauty Fresno, what is most likely to cost us money this week, what is blocked, and what do I personally need to do today?",
+  "selectedProjectId": null,
+  "sessionId": "3ca2a308-97da-4012-bb90-0b5116bc3d19",
+  "sessionLabel": "eval-2026-05-14T20-26-04-574Z-b296d2e5-owner-strategy-ulta-action-plan",
+  "startedAt": "2026-05-14T20:26:04.621Z",
+  "finishedAt": "2026-05-14T20:26:40.191Z",
+  "durationMs": 35126,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 40,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [getProjectBriefingSnapshot, semanticSearch, searchMeetingsByTopic, searchEmails, searchTeamsMessages] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'project' not represented",
+      "expected family 'semantic' not represented",
+      "expected family 'communications' not represented"
+    ],
+    "observations": [
+      "tools fired: intentPlanner, promptContextReducer, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "promptContextReducer",
+      "clientProjectIntelligencePacket",
+      "mcpToolDiscovery",
+      "streamingToolPolicy",
+      "noToolRetry"
+    ],
+    "familiesHit": [],
+    "finalTextLength": 2596,
+    "finalText": "**Brandon, here’s your immediate owner briefing for 25-127 Ulta Beauty Fresno:**\n\n---\n\n### 1. Most Likely to Cost Us Money This Week\n\n- **Insurance Compliance Issues:** The inspector flagged ductwork blocking sprinklers—this is a fire code violation and is already connected to a warning about potential premium increases. If not resolved promptly, you risk not just a higher insurance cost but also a possible work stop or reinspection fees.\n- **Delayed Payment to Citadel (Vendor):** Outstanding payment issue flagged by Citadel due to an accounting sync error. Any further delays will risk late payment fees, loss of vendor goodwill, or lien risk.\n\n---\n\n### 2. What is Blocked\n\n- **AC1 Relocation:** Still waiting on approval from the solar company before relocating AC1. All other AC units are operational, but AC1 progress is a dependency for closing out HVAC scope.\n- **Completion of Roof Scope:** Final roof work (primarily around duct sock/insurance issues and post-inspector cleanup) can't finish until the AC1 and insurance issues are resolved.\n\n---\n\n### 3. What You Personally Need To Do Today\n\n**a) Drive Insurance Compliance:**  \n- Ensure the adjustment to ductwork around sprinklers is directed and verified today—assign a responsible party, get photo evidence, and confirm with the site superintendent (Candon Rusin).\n- Communicate with insurance contact to clarify risk window and confirm if any documentation needs to be provided after the fix.\n\n**b) Unblock AC1 Relocation:**  \n- Contact the solar company for a status update and escalate if approval is not imminent. This is the key operator for closing HVAC scope and the roof completion punch list.\n\n**c) Vendor Payment:**  \n- Confirm with accounting that payment to Citadel is processed; get written confirmation/email that check is sent today. If you haven't already, make personal outreach to Erica Valencia at Citadel to confirm the status and maintain vendor relationship.\n\n---\n\n**Why These Matter:**  \n- Insurance non-compliance and payment delays are immediate financial and schedule risks.\n- AC1/roof closure and unresolved payments are the two biggest blockers for near-term progress and cost containment.\n\n---\n\n**First Step:**  \n1. Call or Slack the superintendent (Candon) for live ductwork/sprinkler fix verification.\n2. Email/call solar company about AC1 approval.\n3. Check in with accounting and Citadel on payment release.\n\n---\n\n**Summary:**  \nFocus on insurance fixes and AC1 signoff today—these are the biggest risks to cost and schedule right now. Payment and documentation cleanup are your next priorities."
+  },
+  "expectedToolNames": [
+    "getProjectBriefingSnapshot",
+    "semanticSearch",
+    "searchMeetingsByTopic",
+    "searchEmails",
+    "searchTeamsMessages"
+  ],
+  "expectedToolFamilies": [
+    "project",
+    "semantic",
+    "communications"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T20:26:15.655Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-14T20:26:15.657Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Loaded project intelligence packet — synthesizing strategist response",
+        "status": "success",
+        "timestamp": "2026-05-14T20:26:18.604Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "lQn5WQxvuNYwLarG"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-failure-response"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "**Brandon, here’s your immediate owner briefing for 25-127 Ulta Beauty Fresno:**\n\n---\n\n### "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "1. Most Likely to Cost Us Money This Week\n\n- **Insurance Compliance Issues:** The "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "inspector flagged ductwork blocking sprinklers—this is a fire code violation and is "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "already connected to a warning about potential premium increases. If not resolved "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "promptly, you risk not just a higher insurance cost but also a possible work stop or "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "reinspection fees.\n- **Delayed Payment to Citadel (Vendor):** Outstanding payment issue "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "flagged by Citadel due to an accounting sync error. Any further delays will risk late "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "payment fees, loss of vendor goodwill, or lien risk.\n\n---\n\n### 2. What is Blocked\n\n- **AC1 "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "Relocation:** Still waiting on approval from the solar company before relocating AC1. All "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "other AC units are operational, but AC1 progress is a dependency for closing out HVAC "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "scope.\n- **Completion of Roof Scope:** Final roof work (primarily around duct "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "sock/insurance issues and post-inspector cleanup) can't finish until the AC1 and insurance "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "issues are resolved.\n\n---\n\n### 3. What You Personally Need To Do Today\n\n**a) Drive "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "Insurance Compliance:**  \n- Ensure the adjustment to ductwork around sprinklers is "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "directed and verified today—assign a responsible party, get photo evidence, and confirm "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "with the site superintendent (Candon Rusin).\n- Communicate with insurance contact to "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "clarify risk window and confirm if any documentation needs to be provided after the fix.\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "**b) Unblock AC1 Relocation:**  \n- Contact the solar company for a status update and "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "escalate if approval is not imminent. This is the key operator for closing HVAC scope and "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "the roof completion punch list.\n\n**c) Vendor Payment:**  \n- Confirm with accounting that "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "payment to Citadel is processed; get written confirmation/email that check is sent today. "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "If you haven't already, make personal outreach to Erica Valencia at Citadel to confirm the "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "status and maintain vendor relationship.\n\n---\n\n**Why These Matter:**  \n- Insurance "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "non-compliance and payment delays are immediate financial and schedule risks.\n- AC1/roof "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "closure and unresolved payments are the two biggest blockers for near-term progress and "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "cost containment.\n\n---\n\n**First Step:**  \n1. Call or Slack the superintendent (Candon) for "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "live ductwork/sprinkler fix verification.\n2. Email/call solar company about AC1 approval.\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "3. Check in with accounting and Citadel on payment release.\n\n---\n\n**Summary:**  \nFocus on "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "insurance fixes and AC1 signoff today—these are the biggest risks to cost and schedule "
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-failure-response",
+      "delta": "right now. Payment and documentation cleanup are your next priorities."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-failure-response"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 0,
+      "totalTokens": 0,
+      "outputTokens": 0,
+      "cacheHitRatio": 0,
+      "cachedInputTokens": 0
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "I am Brandon. For 25-127 Ulta Beauty Fresno, what is most likely to cost us money this week, what is blocked, and what do I personally need to do today?",
+          "taskSourceReview": null,
+          "selectedProjectId": null,
+          "deterministicIntent": "financial_analysis",
+          "sourceSpecificRagKind": null,
+          "messageDrivenToolNames": [],
+          "recentEmailInboxRequest": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "latest_status",
+          "planner": "model",
+          "rationale": "The user wants a concise project-intelligence briefing for a specific project: likely cost exposures this week, current blockers, and their personal actions for today. This spans status, risks, finances, and follow-ups, so the best route is a synthesized project packet rather than a single-domain answer. No clarification is required because the project is identified by name, even though no project",
+          "confidence": "medium",
+          "responseMode": "build_project_packet",
+          "requiredTools": [
+            "project_lookup",
+            "project_status",
+            "task_list",
+            "risk_register",
+            "financial_overview"
+          ],
+          "deterministicIntent": "financial_analysis",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T20:26:15.652Z"
+      },
+      {
+        "tool": "promptContextReducer",
+        "input": {
+          "intent": "latest_status",
+          "message": "I am Brandon. For 25-127 Ulta Beauty Fresno, what is most likely to cost us money this week, what is blocked, and what do I personally need to do today?"
+        },
+        "output": {
+          "promptMode": "lean_advisor",
+          "skippedGeneralMemory": true,
+          "skippedExecutivePacket": true,
+          "skippedWorkspaceArtifacts": true,
+          "retainedPacketFirstRetrieval": true
+        },
+        "timestamp": "2026-05-14T20:26:15.656Z"
+      },
+      {
+        "tool": "clientProjectIntelligencePacket",
+        "input": {
+          "query": "I am Brandon. For 25-127 Ulta Beauty Fresno, what is most likely to cost us money this week, what is blocked, and what do I personally need to do today?",
+          "intent": "latest_status",
+          "selectedProjectId": null
+        },
+        "output": {
+          "mode": "additive-context",
+          "packetId": "b34aae71-75a9-4e6d-80f4-f65adfb612f4",
+          "cardCount": 37,
+          "packetAgeDays": 0,
+          "resolvedTarget": {
+            "id": "300c480d-3a42-4beb-b4e0-7c82d126d42a",
+            "slug": "25-127-ulta-beauty-fresno",
+            "source": "target_match",
+            "projectId": 761
+          },
+          "freshnessStatus": "fresh",
+          "operatingSummaryLoaded": false
+        },
+        "timestamp": "2026-05-14T20:26:18.604Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.excalidraw.com/mcp",
+          "server": "excalidraw"
+        },
+        "output": {
+          "allowedTools": [
+            "read_me",
+            "create_view",
+            "export_to_excalidraw",
+            "save_checkpoint",
+            "read_checkpoint"
+          ],
+          "enabledTools": [
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "enabledToolCount": 5,
+          "discoveredToolCount": 5
+        },
+        "timestamp": "2026-05-14T20:26:19.653Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.supabase.com/mcp?project_ref=lgveqfnpkxvzbnnwuled",
+          "server": "supabase"
+        },
+        "output": {
+          "enabledTools": [
+            "mcp_supabase_search_docs",
+            "mcp_supabase_list_tables",
+            "mcp_supabase_list_extensions",
+            "mcp_supabase_get_logs",
+            "mcp_supabase_get_advisors",
+            "mcp_supabase_get_project_url",
+            "mcp_supabase_get_publishable_keys",
+            "mcp_supabase_list_edge_functions",
+            "mcp_supabase_get_edge_function",
+            "mcp_supabase_list_branches"
+          ],
+          "enabledToolCount": 10,
+          "discoveredToolCount": 20
+        },
+        "timestamp": "2026-05-14T20:26:20.854Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "promptMode": "lean_advisor",
+          "toolChoice": "auto",
+          "fullToolCount": 112,
+          "modelToolCount": 14,
+          "modelToolNames": [
+            "getPortfolioOverview",
+            "getProjectsWithRisks",
+            "getProjectBriefingSnapshot",
+            "getActionItemsAndInsights",
+            "getProjectDetails",
+            "findProject",
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "streamMaxSteps": 6,
+          "scopedToolCount": 14,
+          "streamMaxOutputTokens": 2400,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": false
+        },
+        "timestamp": "2026-05-14T20:26:20.854Z"
+      },
+      {
+        "tool": "noToolRetry",
+        "input": {
+          "reason": "The model/tool run completed without returning final assistant text.",
+          "retryModel": "openai/gpt-4.1",
+          "primaryModel": "openai/gpt-5.4"
+        },
+        "output": {
+          "succeeded": true,
+          "contentLength": 2596
+        },
+        "timestamp": "2026-05-14T20:26:38.466Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": null,
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": null,
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "finishReason": "other",
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getPortfolioOverview",
+            "getProjectsWithRisks",
+            "getProjectBriefingSnapshot",
+            "getActionItemsAndInsights",
+            "getProjectDetails",
+            "findProject",
+            "searchWeb",
+            "researchCompany",
+            "searchConstructionMarket",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        }
+      ],
+      "totalStepCount": 1,
+      "finalFinishReason": "other",
+      "preparedStepCount": 1,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 0
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "compiled intelligence packet with multiple evidence cards",
+        "retrieval trace included 37 source-bearing record(s) without inline citations"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-05-12T22:10:44.927Z",
+  "baseUrl": "http://localhost:3000",
+  "totalCases": 1,
+  "passed": 0,
+  "failed": 1,
+  "toolCoverage": {},
+  "intentDistribution": {
+    "project_briefing": 1
+  },
+  "results": [
+    {
+      "id": "project-briefing-westfield",
+      "intent": "project_briefing",
+      "prompt": "Westfield just came up again. Give me the real current read: what changed, what is stuck, and what should I be worried about?",
+      "selectedProjectId": 43,
+      "sessionId": "28a88764-41e2-4327-8c78-81c843271bfd",
+      "sessionLabel": "eval-2026-05-12T22-10-29-760Z-project-briefing-westfield",
+      "startedAt": "2026-05-12T22:10:29.762Z",
+      "finishedAt": "2026-05-12T22:10:44.926Z",
+      "durationMs": 15,
+      "httpStatus": 0,
+      "streamError": "fetch failed",
+      "streamEventCount": 0,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: fetch failed",
+          "assistant message was not persisted to chat_history",
+          "expected at least one of [getProjectBriefingSnapshot, semanticSearch] to fire — none did",
+          "mustInclude missing: \"Westfield\"",
+          "answer length 0 < min 200"
+        ],
+        "warnings": [
+          "expected family 'project' not represented",
+          "expected family 'semantic' not represented",
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: (none)"
+        ],
+        "toolNames": [],
+        "familiesHit": [],
+        "finalTextLength": 0,
+        "finalText": ""
+      },
+      "expectedToolNames": [
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic",
+        "communications"
+      ]
+    }
+  ]
+}

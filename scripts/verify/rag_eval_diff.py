@@ -7,13 +7,13 @@ Run after any RAG change to verify you didn't break anything.
 
 Usage:
   python3 scripts/verify/rag_eval_diff.py \\
-      docs/PRPs/rag/rag-eval-baseline-2026-03-22.json \\
+      docs/archive/2026-06-22-docs-migration/PRPs/rag/rag-eval-baseline-2026-03-22.json \\
       /tmp/rag-eval-current.json
 
   # L2 answer eval diff
   python3 scripts/verify/rag_eval_diff.py \\
       --type answer \\
-      docs/PRPs/rag/rag-answer-eval-baseline-2026-03-22.json \\
+      docs/archive/2026-06-22-docs-migration/PRPs/rag/rag-answer-eval-baseline-2026-03-22.json \\
       /tmp/rag-answer-eval-current.json
 
 Exit codes:

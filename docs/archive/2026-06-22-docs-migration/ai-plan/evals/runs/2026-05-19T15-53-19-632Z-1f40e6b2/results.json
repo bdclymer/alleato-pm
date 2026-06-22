@@ -1,0 +1,268 @@
+{
+  "generatedAt": "2026-05-19T15:55:28.445Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": null,
+  "filter": "^(project-briefing-westfield|project-briefing-vermillion|project-briefing-union-meeting-coverage)$",
+  "totalCases": 3,
+  "passed": 1,
+  "failed": 2,
+  "warningCount": 5,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": false,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 0,
+    "passed": 0,
+    "failed": 0,
+    "errors": 0,
+    "averageScore": null
+  },
+  "slowestCases": [
+    {
+      "id": "project-briefing-westfield",
+      "intent": "project_briefing",
+      "durationMs": 60002,
+      "status": "fail",
+      "warnings": [
+        "duration 60002ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "project-briefing-vermillion",
+      "intent": "project_briefing",
+      "durationMs": 37942,
+      "status": "fail",
+      "warnings": [
+        "expected family 'semantic' not represented",
+        "duration 37942ms exceeded warning budget 30000ms"
+      ]
+    },
+    {
+      "id": "project-briefing-union-meeting-coverage",
+      "intent": "project_briefing",
+      "durationMs": 14201,
+      "status": "pass",
+      "warnings": [
+        "expected family 'semantic' not represented",
+        "expected family 'communications' not represented"
+      ]
+    }
+  ],
+  "toolCoverage": {
+    "backendDeepAgentProjectStatus": 2,
+    "project_lookup": 2,
+    "packet_reader": 2,
+    "teams_reader": 2,
+    "meetings_reader": 2,
+    "emails_reader": 2,
+    "documents_reader": 2,
+    "financials_reader": 2,
+    "schedule_reader": 2,
+    "rfi_reader": 2,
+    "submittal_reader": 2,
+    "deepagents_runtime": 2,
+    "getProjectBriefingSnapshot": 1,
+    "consultCFO": 1,
+    "consultCOO": 1,
+    "consultCRO": 1,
+    "loadIntelligencePacket": 1,
+    "semanticSearch": 1
+  },
+  "intentDistribution": {
+    "project_briefing": 3
+  },
+  "results": [
+    {
+      "id": "project-briefing-westfield",
+      "intent": "project_briefing",
+      "prompt": "Westfield just came up again. Give me the real current read: what changed, what is stuck, and what should I be worried about?",
+      "selectedProjectId": 43,
+      "sessionId": "ef08a614-10ef-46c1-a846-34740429978c",
+      "sessionLabel": "eval-2026-05-19T15-53-19-632Z-1f40e6b2-project-briefing-westfield",
+      "startedAt": "2026-05-19T15:53:20.272Z",
+      "finishedAt": "2026-05-19T15:54:35.425Z",
+      "durationMs": 60002,
+      "httpStatus": 200,
+      "streamError": "stream read error: This operation was aborted",
+      "streamEventCount": 139,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: stream read error: This operation was aborted",
+          "assistant message was not persisted to chat_history"
+        ],
+        "warnings": [
+          "duration 60002ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: getProjectBriefingSnapshot, consultCFO, consultCOO, consultCRO, loadIntelligencePacket, semanticSearch"
+        ],
+        "toolNames": [
+          "getProjectBriefingSnapshot",
+          "consultCFO",
+          "consultCOO",
+          "consultCRO",
+          "loadIntelligencePacket",
+          "semanticSearch"
+        ],
+        "familiesHit": [
+          "project",
+          "communications",
+          "semantic"
+        ],
+        "finalTextLength": 551,
+        "finalText": "Westfield is not a field-execution problem anymore. It’s a closeout control problem.\n\n## The point of view\n\nWhat changed is the project has clearly moved into late closeout. What’s stuck is money, paperwork, and a handful of lingering defect/completion issues. What you should worry about is not “can the building get built?” — it’s whether sloppy closeout discipline turns into delayed cash, lost leverage, and needless legal/vendor friction.\n\n## Hard facts\n\nFrom the current project snapshot and packet:\n\n- Original and revised budget both show **$9",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 60002
+        }
+      },
+      "expectedToolNames": [
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic",
+        "communications"
+      ]
+    },
+    {
+      "id": "project-briefing-vermillion",
+      "intent": "project_briefing",
+      "prompt": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
+      "selectedProjectId": 67,
+      "sessionId": "45598fe0-edc8-45cc-be51-3b98ebdf1d3b",
+      "sessionLabel": "eval-2026-05-19T15-53-19-632Z-1f40e6b2-project-briefing-vermillion",
+      "startedAt": "2026-05-19T15:54:35.426Z",
+      "finishedAt": "2026-05-19T15:55:13.839Z",
+      "durationMs": 37942,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 7,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getProjectBriefingSnapshot] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'semantic' not represented",
+          "duration 37942ms exceeded warning budget 30000ms"
+        ],
+        "observations": [
+          "tools fired: backendDeepAgentProjectStatus, project_lookup, packet_reader, teams_reader, meetings_reader, emails_reader, documents_reader, financials_reader, schedule_reader, rfi_reader, submittal_reader, deepagents_runtime",
+          "backend Deep Agents memory candidates: 0"
+        ],
+        "toolNames": [
+          "backendDeepAgentProjectStatus",
+          "project_lookup",
+          "packet_reader",
+          "teams_reader",
+          "meetings_reader",
+          "emails_reader",
+          "documents_reader",
+          "financials_reader",
+          "schedule_reader",
+          "rfi_reader",
+          "submittal_reader",
+          "deepagents_runtime"
+        ],
+        "familiesHit": [
+          "project",
+          "risk"
+        ],
+        "finalTextLength": 2860,
+        "finalText": "Bottom line: Vermillion Rise is not in a financial crisis, but it is still operationally messy. The job is basically in design/permit coordination mode, and the real risk is execution drift: overdue RFIs, overdue schedule items, and active change events are sitting there while the team is still finishing design decisions.\n\nEvidence\n- Project health is still effectively unmeasured: 0% complete, health n/a, estimated completion n/a. Source: project briefing snapshot.\n- Budget is basically flat: revised budget $13,071,266 vs. original $13,059,266, a $12,000 increase or 0.1%. Source: project budget summary.\n- Prime contract is still small relative to the job and billing looks out of sync: revised prime contract $75,000, invoiced $0, payments received $643,185, leaving a negative balance of $568,185. Source: project budget summary.\n- Execution risk is real: 4 open RFIs with 1 overdue, 2 open submittals with none overdue, and 9 overdue schedule tasks. Source: project briefing and risk snapshot.\n- Change exposure is active, not theoretical: 10 active change events, including recent open items tied to concrete and structural steel. Source: risk snapshot and recent activity.\n- The latest meeting signal is still design coordination, not field production: sprinkler zoning, HVAC finalization, electrical integration, and steel lead time are the current pressure points. Source: Vermillion design weekly call ingested 2026-05-19.\n\nWhat this means\nThis job is still early enough that the biggest danger is not a blown budget — it’s getting behind on decisions, then paying for it later in schedule and change friction. The system says the team is still coordinating design details, but the overdue workflow items mean the project is already slipping in the places that usually turn into owner complaints: unanswered RFIs, stale tasks, and unresolved changes.\n\nRecommended next steps\n- PM: clear the overdue RFI first, especially the fire-rating item, and close the loop on who owns the answer. Due now.\n- PM + cost lead: reconcile the 10 active change events against any owner-facing change log so exposure is not hiding in process. Due this week.\n- PM + scheduler: burn down the 9 overdue schedule tasks and identify which ones are real path items versus stale admin tasks. Due now.\n- Team: finish the HVAC, sprinkler, electrical, and steel coordination decisions before they harden into rework. Due immediately.\n\nUncertainty\n- Source coverage is decent, but the financial picture still looks incomplete because I do not see a clean owner-change-order trail tied to the active change events.\n- The latest meeting content is useful, but it is still design-coordination heavy; I do not yet see a clear field-production push or a clean recovery plan.\n- The billing/receipt mismatch needs a quick check before anyone uses it as a true cash-position signal.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 37942
+        }
+      },
+      "expectedToolNames": [
+        "getProjectBriefingSnapshot"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic"
+      ]
+    },
+    {
+      "id": "project-briefing-union-meeting-coverage",
+      "intent": "project_briefing",
+      "prompt": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+      "selectedProjectId": 1009,
+      "sessionId": "115e8792-a22c-4b45-9555-1c921664757c",
+      "sessionLabel": "eval-2026-05-19T15-53-19-632Z-1f40e6b2-project-briefing-union-meeting-coverage",
+      "startedAt": "2026-05-19T15:55:13.841Z",
+      "finishedAt": "2026-05-19T15:55:28.442Z",
+      "durationMs": 14201,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 7,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'semantic' not represented",
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: backendDeepAgentProjectStatus, project_lookup, packet_reader, teams_reader, meetings_reader, emails_reader, documents_reader, financials_reader, schedule_reader, rfi_reader, submittal_reader, deepagents_runtime",
+          "backend Deep Agents memory candidates: 0"
+        ],
+        "toolNames": [
+          "backendDeepAgentProjectStatus",
+          "project_lookup",
+          "packet_reader",
+          "teams_reader",
+          "meetings_reader",
+          "emails_reader",
+          "documents_reader",
+          "financials_reader",
+          "schedule_reader",
+          "rfi_reader",
+          "submittal_reader",
+          "deepagents_runtime"
+        ],
+        "familiesHit": [
+          "project",
+          "risk"
+        ],
+        "finalTextLength": 2486,
+        "finalText": "Bottom line: Union Collective is in late-stage design and pre-permit coordination, but the job is still being held back by two things: schedule control and financing alignment. The packet does include meeting material, but I do not see clear evidence that full meeting transcripts are packaged cleanly there.\n\nEvidence\n- The current packet says the project is “moving through late-stage design and pre-permit coordination,” with “schedule and financing alignment” as the main gating issues.\n- Financial/activity evidence is still live: a May 19 email from Eli Hariton says schematic design is targeted in about 3 weeks and design development in 5–6 weeks, but both depend on architecture closing plans and, more importantly, ownership turning feedback fast.\n- The May 19 CAD files email confirms updated plans/elevations were sent for the meeting that day, which tells me design coordination is active, not closed.\n- The project has a “Design Milestone Schedule” document dated May 9, which supports that the team is tracking milestones, but your source coverage shows schedule/RFI/submittal structured records are missing.\n- On the meeting side, the packet shows meeting items are present, including a Civil Design Meeting PDF and a DGI meeting email, but the snippet language is “read-only meetings source row,” not a clean transcript excerpt.\n\nWhat this means\nThis is not a clean execution-phase handoff yet. The design team is working, but the job still depends on fast owner feedback and tighter schedule control. That’s the real risk: the work can keep moving in email, but if decisions drag, the whole pre-permit sequence slips.\n\nRecommended next steps\n- PM: force a same-week decision loop on open design comments and owner feedback.\n- PM: lock the milestone schedule against the current design package and identify anything that is still gating permit submission.\n- Finance/PM: reconcile the “financing alignment” issue now; don’t let it sit as a soft dependency.\n- If you want, I can turn this into a sharper owner-update version or a risk-only version.\n\nUncertainty\n- Structured schedule, RFI, and submittal records are missing in coverage, so I cannot confirm execution health from the control system.\n- The packet appears to include meeting material, but I cannot confirm a full transcript bundle from the evidence provided.\n\nSource coverage note: schedule: missing; rfi: missing; submittal: missing. I did not use unavailable or stale source categories as factual support.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 14201
+        }
+      },
+      "expectedToolNames": [
+        "clientProjectIntelligencePacket",
+        "backendDeepAgentProjectStatus",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic",
+        "communications"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "id": "ceo-task-create-direct",
+  "intent": "action_preview",
+  "prompt": "Add a task for me to call the Ulta owner about the AC1 approval by Friday.",
+  "selectedProjectId": null,
+  "sessionId": "541e21de-0a38-45b5-86d0-6372c52fb226",
+  "sessionLabel": "eval-2026-05-14T15-11-06-939Z-ceo-task-create-direct",
+  "startedAt": "2026-05-14T15:24:09.931Z",
+  "finishedAt": "2026-05-14T15:24:28.569Z",
+  "durationMs": 3334,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 3,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "assistant message was not persisted to chat_history",
+      "expected required tool 'createGeneratedTask' to fire",
+      "mustIncludeAny missing one of: \"AC1\", \"Ulta\", \"call\", \"owner\", \"approval\"",
+      "answer length 0 < min 80",
+      "required metadata missing: tool_trace"
+    ],
+    "warnings": [
+      "expected family 'action_write' not represented",
+      "expected family 'task_management' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "action_write",
+    "task_management"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T15:24:12.960Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Creating task preview",
+        "status": "loading",
+        "timestamp": "2026-05-14T15:24:13.098Z"
+      }
+    },
+    {
+      "type": "error",
+      "errorText": "I hit a retrieval/generation failure before I could give you a trustworthy strategist answer.\n\nWhat happened: Task-write prompt budget exceeded before calling the AI SDK. Cause: promptApproxTokens=398, modelToolCount=7. Detection gap: lightweight task writes previously reused the full strategist prompt/tool registry. Prevention: keep task_write on the lean prompt and scoped task tool policy.\nWhat I could confirm: I checked 5 sources successfully.\nWhat that means: No project was pinned, so a narrower project or topic would reduce retrieval ambiguity on the retry.\nI still need a successful retrieval pass before I can give a sourced strategic read on: \"Add a task for me to call the Ulta owner about the AC1 approval by Friday.\".\n\nThe right next move is to retry the same question with the project or decision you care about most. If this repeats, the persisted tool trace now shows exactly which source failed instead of leaving the chat blank."
+    }
+  ],
+  "persistedMetadata": null
+}

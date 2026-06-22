@@ -1,0 +1,55 @@
+{
+  "id": "troubleshooting-missing-button",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 6813,
+  "question": "Why might a button be missing on a page?",
+  "mustInclude": [
+    "permission"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "A button can be missing for a few documented reasons:\n\n- the user is not assigned to the project\n- the page is admin-only\n- the action needs a stronger permission level\n- the record is intentionally private or employee-sensitive\n- the source system has not synced the expected record yet\n\nSource checked:\n- Help article: `docs/help/articles/app-permissions-and-visibility.md`\n- Related routes: `/user-management`, `/[projectId]/user-management`, `/settings`\n\nWhat’s still uncertain here:\n- there was no current route\n- there was no project ID\n- no page-specific route lookup was possible\n\nSo the safest answer is: the button is likely hidden by permissions, admin scope, privacy rules, or missing sync state, but I can’t verify which one without the page route and project context.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/app-permissions-and-visibility.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-permissions-and-visibility.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/user-management",
+        "sourceType": "sitemap",
+        "route": "/user-management",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 6727,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "id": "data-artifact-freshness",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 4045,
+  "question": "How can the assistant know whether its app map is current?",
+  "response": {
+    "answer": "I can’t verify that the app map is current because the App Expert artifacts are missing.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search: failed for the same missing artifact\n- App sitemap search: failed for the same missing artifact\n\nWhat this means:\n- I do not have fresh generated route metadata to compare against.\n- I can’t claim the app map is current from the available evidence.\n\nCurrent uncertainty:\n- The generated app sitemap is unavailable, so freshness and completeness are unknown until `npm run docs:generate-app-expert` is run.\n\nIf you want, I can still help once those artifacts are regenerated, or I can explain how to validate the app map from route/source files directly as implementation evidence.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/source",
+        "sourceType": "sitemap",
+        "route": "/source",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3952,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

@@ -1,0 +1,86 @@
+{
+  "generatedAt": "2026-05-14T20:24:30.497Z",
+  "baseUrl": "http://localhost:3000",
+  "bundle": {
+    "name": "source-sync-teams-regression",
+    "description": "Agentic-eval guardrail for Teams/source-sync prompts. The assistant must distinguish live source-health questions from Teams content lookup and must expose stale source state instead of pretending coverage is complete.",
+    "criteria": [
+      "Source-health trust questions must fire assistantSourceHealth.",
+      "Teams content questions must fire a Teams-capable retrieval path.",
+      "Answers must not claim complete evidence coverage when source freshness is uncertain.",
+      "Answers must give a direct operational read instead of generic AI/RAG caveats."
+    ]
+  },
+  "filter": "(source-lookup-teams|source-freshness-rag-health|realworld-teams-source-freshness|realworld-teams-this-week-signal)$",
+  "totalCases": 1,
+  "passed": 0,
+  "failed": 1,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "assistantSourceHealth": 1,
+    "semanticSearch": 1,
+    "sourceLookupIntentRouter": 1,
+    "messageDrivenToolRouter": 1,
+    "mcpToolDiscovery": 1,
+    "streamingToolPolicy": 1,
+    "getProjectBriefingSnapshot": 1,
+    "noToolRetry": 1
+  },
+  "intentDistribution": {
+    "source_lookup": 1
+  },
+  "results": [
+    {
+      "id": "source-lookup-teams",
+      "intent": "source_lookup",
+      "prompt": "Look through Teams for Westfield punch-list chatter. What is the latest real signal?",
+      "selectedProjectId": 43,
+      "sessionId": "8aba8944-3eb9-4fdf-a1cf-4e4fee37280a",
+      "sessionLabel": "eval-2026-05-14T20-22-52-531Z-8b6ccd28-source-lookup-teams",
+      "startedAt": "2026-05-14T20:22:52.571Z",
+      "finishedAt": "2026-05-14T20:24:30.494Z",
+      "durationMs": 90003,
+      "httpStatus": 200,
+      "streamError": "stream read error: This operation was aborted",
+      "streamEventCount": 182,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: stream read error: This operation was aborted"
+        ],
+        "warnings": [
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, getProjectBriefingSnapshot, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "semanticSearch",
+          "sourceLookupIntentRouter",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getProjectBriefingSnapshot",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "semantic",
+          "source_health"
+        ],
+        "finalTextLength": 955,
+        "finalText": "No relevant Teams messages about the Westfield Collective punch list were returned in the current search window. There’s no up-to-date field chatter, owner escalation, or subcontractor coordination on punch-list completion or issues in the accessible Teams dataset.\n\n**What this means:**  \n- I don’t see recent field or PM conversations indicating new punch-list holds, corrections, or owner pushback for Westfield in Teams.\n- This could be a coverage gap (source sync is currently degraded in several mailboxes and Teams exports), or it could mean punch-list tracking is happening elsewhere (email, field software, or meetings).\n\n**Next step:**  \nIf you need the absolute latest on punch-list status—including outstanding items or who's blocking closeout—I recommend targeting today’s meeting records or checking email threads, since punch-list issues frequently move through those channels when Teams is quiet. Let me know if you want that checked next."
+      },
+      "expectedToolNames": [
+        "searchTeamsMessages",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "id": "source-lookup-teams",
+  "intent": "source_lookup",
+  "prompt": "Find any Teams chats discussing punch list completion on Westfield.",
+  "selectedProjectId": 43,
+  "sessionId": "db17c23c-f692-438a-bb9e-a952528c5f53",
+  "sessionLabel": "eval-2026-05-02T14-03-13-539Z-source-lookup-teams",
+  "startedAt": "2026-05-02T14:13:15.706Z",
+  "finishedAt": "2026-05-02T14:13:30.917Z",
+  "durationMs": 2,
+  "httpStatus": 0,
+  "streamError": "fetch failed",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: fetch failed",
+      "expected at least one of [searchTeamsMessages, semanticSearch] to fire — none did",
+      "answer length 0 < min 80"
+    ],
+    "warnings": [
+      "expected family 'communications' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "searchTeamsMessages",
+    "semanticSearch"
+  ],
+  "expectedToolFamilies": [
+    "communications"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

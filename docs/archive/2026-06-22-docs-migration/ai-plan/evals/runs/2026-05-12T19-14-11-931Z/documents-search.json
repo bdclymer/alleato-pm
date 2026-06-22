@@ -1,0 +1,191 @@
+{
+  "id": "documents-search",
+  "intent": "document_question",
+  "prompt": "Find the latest contract or change order document on Westfield and summarize the key terms.",
+  "selectedProjectId": 43,
+  "sessionId": "a956fa85-5015-4b22-b52b-5e0c025a4226",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-documents-search",
+  "startedAt": "2026-05-12T19:30:10.380Z",
+  "finishedAt": "2026-05-12T19:31:55.599Z",
+  "durationMs": 90002,
+  "httpStatus": 200,
+  "streamError": "stream read error: This operation was aborted",
+  "streamEventCount": 20,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: stream read error: This operation was aborted",
+      "assistant message was not persisted to chat_history",
+      "expected at least one of [searchDocuments, searchExternalDocuments, queryDocumentRows] to fire — none did",
+      "answer length 0 < min 120"
+    ],
+    "warnings": [
+      "expected family 'documents' not represented",
+      "expected family 'semantic' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 0,
+    "finalText": ""
+  },
+  "expectedToolNames": [
+    "searchDocuments",
+    "searchExternalDocuments",
+    "queryDocumentRows"
+  ],
+  "expectedToolFamilies": [
+    "documents",
+    "semantic"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:30:16.535Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Searching source records for the requested discussion context",
+        "status": "loading",
+        "timestamp": "2026-05-12T19:30:26.056Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "synthesis",
+        "message": "Loaded source records — synthesizing answer",
+        "status": "success",
+        "timestamp": "2026-05-12T19:30:34.722Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "6JTEekUQETGdvRhc"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_PlLGrXX9SoW8zj97ZQeGwKzq",
+      "toolName": "searchExternalDocuments"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_PlLGrXX9SoW8zj97ZQeGwKzq",
+      "inputTextDelta": "{\"query\":\"Westfield Collective latest contract change order contract document amendment owner contract change order\", \"matchCount\":8}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_PlLGrXX9SoW8zj97ZQeGwKzq",
+      "toolName": "searchExternalDocuments",
+      "input": {
+        "query": "Westfield Collective latest contract change order contract document amendment owner contract change order",
+        "matchCount": 8
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_sLfdI3Ox0YBebNk2U3fHbYQf",
+      "toolName": "semanticSearch"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_sLfdI3Ox0YBebNk2U3fHbYQf",
+      "inputTextDelta": "{\"query\":\"Westfield Collective contract change order document latest terms amendment signed CO PCCO warranty LOI\", \"projectId\":24, \"projectName\":\"Westfield Collective\", \"matchCount\":10, \"threshold\":0.3, \"skipRerank\":false}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_sLfdI3Ox0YBebNk2U3fHbYQf",
+      "toolName": "semanticSearch",
+      "input": {
+        "query": "Westfield Collective contract change order document latest terms amendment signed CO PCCO warranty LOI",
+        "projectId": 24,
+        "projectName": "Westfield Collective",
+        "matchCount": 10,
+        "threshold": 0.3,
+        "skipRerank": false
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_QIHEX8Tvj0SvNjnnK4RMu1Fj",
+      "toolName": "searchDocuments"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QIHEX8Tvj0SvNjnnK4RMu1Fj",
+      "inputTextDelta": "{\"query\":\"contract change order amendment Westfield Collective\", \"projectId\":24, \"projectName\":\"Westfield Collective\", \"maxResults\":10}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_QIHEX8Tvj0SvNjnnK4RMu1Fj",
+      "toolName": "searchDocuments",
+      "input": {
+        "query": "contract change order amendment Westfield Collective",
+        "projectId": 24,
+        "projectName": "Westfield Collective",
+        "maxResults": 10
+      }
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_7z3y1riOf6HoFOGL27DiaVFZ",
+      "toolName": "getChangeOrderDetails"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_7z3y1riOf6HoFOGL27DiaVFZ",
+      "inputTextDelta": "{\"projectId\":24,\"projectName\":\"Westfield Collective\",\"status\":\"\",\"contractId\":0}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_7z3y1riOf6HoFOGL27DiaVFZ",
+      "toolName": "getChangeOrderDetails",
+      "input": {
+        "projectId": 24,
+        "projectName": "Westfield Collective",
+        "status": "",
+        "contractId": 0
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_7z3y1riOf6HoFOGL27DiaVFZ",
+      "output": {
+        "error": "Project 24 not found"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_sLfdI3Ox0YBebNk2U3fHbYQf",
+      "output": {
+        "results": [],
+        "message": "No results found for \"Westfield Collective contract change order document latest terms amendment signed CO PCCO warranty LOI\". Try rephrasing or broadening your search."
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_QIHEX8Tvj0SvNjnnK4RMu1Fj",
+      "output": {
+        "results": [],
+        "message": "No documents found matching \"contract change order amendment Westfield Collective\". Try broader keywords or use semanticSearch for meaning-based results."
+      }
+    }
+  ],
+  "persistedMetadata": null
+}

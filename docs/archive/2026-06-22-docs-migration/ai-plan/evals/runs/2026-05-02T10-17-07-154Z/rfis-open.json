@@ -1,0 +1,42 @@
+{
+  "id": "rfis-open",
+  "intent": "operations_analysis",
+  "prompt": "What RFIs are still open on Westfield and who owes a response?",
+  "selectedProjectId": 43,
+  "sessionId": "3a997c2a-c698-4c82-8beb-472468e3e71a",
+  "sessionLabel": "eval-2026-05-02T10-17-07-154Z-rfis-open",
+  "startedAt": "2026-05-02T10:20:05.577Z",
+  "finishedAt": "2026-05-02T10:20:20.686Z",
+  "durationMs": 85,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"8f5f501a-a3d7-47ce-bdcb-a0f145d0399f\",\"timestamp\":\"2026-05-02T10:20:05.660Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"8f5f501a-a3d7-47ce-bdcb-a0f145d0399f\",\"timestamp\":\"2026-05-02T10:20:05.660Z\"}",
+      "HTTP 401",
+      "expected at least one of [getRFIStatus] to fire — none did",
+      "mustInclude missing: \"RFI\""
+    ],
+    "warnings": [
+      "expected family 'operations' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"8f5f501a-a3d7-47ce-bdcb-a0f145d0399f\",\"timestamp\":\"2026-05-02T10:20:05.660Z\"}"
+  },
+  "expectedToolNames": [
+    "getRFIStatus"
+  ],
+  "expectedToolFamilies": [
+    "operations"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

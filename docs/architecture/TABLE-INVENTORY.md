@@ -250,7 +250,7 @@ These are the only places in code that intentionally write to multiple tables in
 - **Purpose:** Per-user app preferences + `is_admin` flag. Source of truth for the `is_admin` JWT claim issued by the custom access token hook.
 - **Writers:** `api/users/me/onboarding/route.ts:19`, `api/permissions/users/route.ts:432`, `api/permissions/users/[personId]/{route,company-template}.ts`, `api/admin/set-admin-status/route.ts:51`, `api/dev/make-admin/route.ts:73`. **Plus:** Postgres trigger backfills auth.users → user_profiles on signup (migration `20260516000000`).
 - **Readers:** ~110 sites — but most no longer hit the table directly; the rewritten `is_admin()` reads from JWT (Phase 1.5).
-- **Status:** Resolved. 53 rows = every auth.users row. See `docs/deployment/AUTH-MIGRATION-RUNBOOK.md`.
+- **Status:** Resolved. 53 rows = every auth.users row. See `docs/archive/2026-06-22-docs-migration/deployment/AUTH-MIGRATION-RUNBOOK.md`.
 
 ### Other permission tables
 | Table | Rows | Status |

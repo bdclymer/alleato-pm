@@ -1,0 +1,87 @@
+{
+  "generatedAt": "2026-05-14T21:03:15.297Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "source-sync-teams-regression",
+    "description": "Agentic-eval guardrail for Teams/source-sync prompts. The assistant must distinguish live source-health questions from Teams content lookup and must expose stale source state instead of pretending coverage is complete.",
+    "criteria": [
+      "Source-health trust questions must fire assistantSourceHealth.",
+      "Teams content questions must fire a Teams-capable retrieval path.",
+      "Answers must not claim complete evidence coverage when source freshness is uncertain.",
+      "Answers must give a direct operational read instead of generic AI/RAG caveats."
+    ]
+  },
+  "filter": "(source-lookup-teams|source-freshness-rag-health|realworld-teams-source-freshness|realworld-teams-this-week-signal)$",
+  "totalCases": 1,
+  "passed": 0,
+  "failed": 1,
+  "toolCoverage": {
+    "intentPlanner": 1,
+    "promptContextReducer": 1,
+    "assistantSourceHealth": 1,
+    "messageDrivenToolRouter": 1,
+    "backendDeepAgentProjectStatus": 1,
+    "clientProjectIntelligencePacket": 1,
+    "mcpToolDiscovery": 1,
+    "streamingToolPolicy": 1,
+    "noToolRetry": 1
+  },
+  "intentDistribution": {
+    "source_lookup": 1
+  },
+  "results": [
+    {
+      "id": "source-lookup-teams",
+      "intent": "source_lookup",
+      "prompt": "Look through Teams for Westfield punch-list chatter. What is the latest real signal?",
+      "selectedProjectId": 43,
+      "sessionId": "9d67e314-4152-4f7a-934e-029aa707fa45",
+      "sessionLabel": "eval-2026-05-14T21-02-50-213Z-2981a577-source-lookup-teams",
+      "startedAt": "2026-05-14T21:02:50.233Z",
+      "finishedAt": "2026-05-14T21:03:15.296Z",
+      "durationMs": 24605,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 28,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [sourceSpecificRagRetrieval, searchTeamsMessages, semanticSearch] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, assistantSourceHealth, messageDrivenToolRouter, backendDeepAgentProjectStatus, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "assistantSourceHealth",
+          "messageDrivenToolRouter",
+          "backendDeepAgentProjectStatus",
+          "clientProjectIntelligencePacket",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "risk",
+          "source_health"
+        ],
+        "finalTextLength": 1242,
+        "finalText": "For the Westfield Collective project, there is no recent or actionable punch-list chatter in the Teams message coverage. The latest Teams evidence (May 5) is unrelated to punch-list issues—it references uploading videos to OneDrive, and no open or resolved field issues or punch-coordination messages are present. Other message traffic is much older or off-topic.\n\n**What Matters:**  \n- There is no real punch-list update or field risk signal from Teams; if punch or completion conversations happened, they likely weren't captured in Teams or the coverage is currently stale.\n- The most recent project activity overall is in email, about operational fixes (e.g., air curtain work, warranty, and O&M discussion) and administrative tasks—nothing punch-list specific.\n\n**First Action:**  \nIf you need a current punch-list or closeout read, request a direct update from Andrew Cannon or check other channels (site reports, Procore notes, or direct email). The Teams thread is not showing live field coordination or issue escalation related to punch-list at this time.\n\n**Coverage Note:**  \nTeams data is thin and hasn't surfaced punch-list work for the past two weeks—recommend verifying punch status by other means if needed for decision-making."
+      },
+      "expectedToolNames": [
+        "sourceSpecificRagRetrieval",
+        "searchTeamsMessages",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    }
+  ]
+}

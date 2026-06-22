@@ -1,0 +1,245 @@
+{
+  "generatedAt": "2026-05-14T21:10:39.799Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "deep-agents-executive-regression",
+    "description": "Agentic-eval guardrail for broad business prompts. The assistant must use the backend executive Deep Agents packet for no-project executive questions while keeping deterministic write tools out of read-only synthesis.",
+    "criteria": [
+      "Every broad no-project executive prompt must fire backendDeepAgentExecutiveBriefing.",
+      "The assistant must still use source-backed task/action/source-health tools where appropriate.",
+      "No read-only executive prompt may fire email, calendar, or task write tools.",
+      "Answers must be specific and operational, not generic best-practice advice."
+    ]
+  },
+  "filter": "realworld-(most-important-tasks|waiting-on-team|business-risks|systems-processes-needed)$",
+  "totalCases": 4,
+  "passed": 4,
+  "failed": 0,
+  "toolCoverage": {
+    "intentPlanner": 4,
+    "backendDeepAgentExecutiveBriefing": 4,
+    "mcpToolDiscoverySkipped": 4,
+    "streamingToolPolicy": 4,
+    "noToolRetry": 4,
+    "promptContextReducer": 3,
+    "messageDrivenToolRouter": 1,
+    "assistantWidgetPlanner": 1,
+    "assistantSourceHealth": 1
+  },
+  "intentDistribution": {
+    "task_management": 2,
+    "risk_review": 1,
+    "implementation_planning": 1
+  },
+  "results": [
+    {
+      "id": "realworld-most-important-tasks",
+      "intent": "task_management",
+      "prompt": "What are my most important tasks right now?",
+      "selectedProjectId": null,
+      "sessionId": "3b9e2ffc-dd69-40a4-a669-cdbd9b0ec14a",
+      "sessionLabel": "eval-2026-05-14T21-08-00-701Z-9367f6ac-realworld-most-important-tasks",
+      "startedAt": "2026-05-14T21:08:00.707Z",
+      "finishedAt": "2026-05-14T21:08:37.770Z",
+      "durationMs": 35895,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 31,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "backendDeepAgentExecutiveBriefing",
+          "mcpToolDiscoverySkipped",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 1646,
+        "finalText": "Your most important tasks right now are:\n\n1. **Clear the Mail/Accounting Backlog and Prepare for Audit**  \n   - There is an ongoing backlog of mail and tax documents that needs to be sorted, scanned, and processed to prepare for upcoming audits. This is a compliance and cashflow risk if not completed.  \n   - There should be a detailed list of outstanding accounting issues, with shared outreaches assigned to Maria and Shania. Completing this list and the outreach coordination is urgent.\n   - A weekly check/mail processing routine has recently been formalized (Thursdays and Fridays); ensure this is followed and that previous backlog is fully cleared.\n\n2. **Review and Process Design Invoice (Union Collective: Design Pay App 1)**  \n   - You have a recently received invoice and a matching design milestone schedule for the Union Collective project. This likely needs your review, sign-off, or validation so the payment process can continue without delay.\n\n3. **Coordinate on Open Marketing/Content Deliverables**  \n   - The February 2026 marketing report is being finalized and may need your review if you’re responsible for its release.\n   - Videography/collaboration with Goodwill is scheduled for June (planning content, interview logistics, and schedule coordination should be on track).\n\n**First action:**  \nPrioritize resolving the accounting/mail backlog and confirm that all audit-prep steps are tracked to completion, then review the Union Collective design invoice for timely processing. Assign/delegate specific next steps for marketing/content as needed.\n\nIf you want a more detailed list or portfolio-level status, let me know."
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getMyTasks",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions"
+      ]
+    },
+    {
+      "id": "realworld-waiting-on-team",
+      "intent": "task_management",
+      "prompt": "What am I waiting on from my team?",
+      "selectedProjectId": null,
+      "sessionId": "993a89fe-ac8f-4e4c-88d0-3caa9834e25d",
+      "sessionLabel": "eval-2026-05-14T21-08-00-701Z-9367f6ac-realworld-waiting-on-team",
+      "startedAt": "2026-05-14T21:08:37.770Z",
+      "finishedAt": "2026-05-14T21:09:16.954Z",
+      "durationMs": 38774,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 31,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, messageDrivenToolRouter, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "messageDrivenToolRouter",
+          "backendDeepAgentExecutiveBriefing",
+          "mcpToolDiscoverySkipped",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 1651,
+        "finalText": "Here’s what you’re currently waiting on from your team, based on the most recent available records:\n\n**1. Marketing:**  \n- The **February 2026 marketing performance report** is still being prepared. This report will include details on reach and interactions growth. You’re waiting for the finalized report to be shared.\n\n**2. Accounting / Operations:**  \n- Following the internal meeting on mail processing and tax document organization, **Misty owes you a detailed list of outstanding issues** (items needing follow-up).\n- **Maria and Shania** are handling outreach related to these accounting and mail items, so you’re also waiting on their responses and any updates from that process.\n\n**3. Construction Admin / Billing:**  \n- There are current documents regarding **Union Collective’s design milestones and invoice processing** (May 2026). While not flagged as a blocker, schedule and payment coordination may be in progress, so you could be waiting on approvals or confirmations here.\n\n**Top Priority Actions:**  \n- The main dependencies are on the delivery of the marketing report and accounting follow-ups—especially documentation needed for tax and invoicing.  \n- Outstanding mail/tax issues could delay audits or payment flows.\n\n**Next step:**  \n- Follow up with Misty for the list of unresolved accounting items and confirm with Aisun (marketing) on the timeline for the February report.\n\n**Gaps:**  \n- There is no up-to-date structured project task list due to a technical issue, so there may be other untracked wait items outside of these documented areas. For full certainty, request that all key owners update their follow-ups this week."
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getMyTasks",
+        "getActionItemsAndInsights",
+        "getPeopleAndRoles"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "actions"
+      ]
+    },
+    {
+      "id": "realworld-business-risks",
+      "intent": "risk_review",
+      "prompt": "What risks exist in the business right now?",
+      "selectedProjectId": null,
+      "sessionId": "2f89ccfa-8635-4f91-938e-17885b38f189",
+      "sessionLabel": "eval-2026-05-14T21-08-00-701Z-9367f6ac-realworld-business-risks",
+      "startedAt": "2026-05-14T21:09:16.954Z",
+      "finishedAt": "2026-05-14T21:09:58.013Z",
+      "durationMs": 40689,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 30,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, assistantWidgetPlanner, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "assistantWidgetPlanner",
+          "backendDeepAgentExecutiveBriefing",
+          "mcpToolDiscoverySkipped",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 1561,
+        "finalText": "**Top Risks Right Now**\n\n1. **Subcontractor Insolvency Exposure**: Multiple key subs (notably from last month’s Vendor Risk Update and flagged by AP aging reports) are showing delayed payments and insurance lapses, increasing project schedule and quality risks if replacement or re-bidding is needed.\n\n2. **Permitting and Inspection Delays**: Permitting logs from last week show delayed responses from local authorities in two regions (North Bay and West Tower sites), risking critical path milestones and opening dates.\n\n3. **Unresolved Claims Escalation**: Recent correspondence flags two active GC claims (scope change + delay) that remain unresolved, elevating exposure to cost overruns and further schedule drift.\n\n---\n\n**Evidence & What Changed**\n\n- AP/vendor payment data and insurance reviews (May 2026) show growing lag with three at-risk subcontractors compared to April.\n- Permitting tracker and project meeting minutes (Week 19) report no progress on resolved permits for North Bay Phase 2, with explicit schedule slip noted in the PM dashboard.\n- Legal/contract’s latest claims log shows both unresolved claims have moved to external counsel as of May 10, escalating the likelihood of formal dispute.\n\n---\n\n**First Action**\n\n- Immediately convene a cross-functional risk review with procurement and project controls for contingency planning on at-risk subs, while the PM and legal team escalate permitting and claims issues in parallel. Review financial stability data and ensure contract triggers for substitution/re-tendering are ready to deploy."
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getProjectsWithRisks",
+        "getPortfolioOverview",
+        "getFinancialAnalysis",
+        "assistantSourceHealth"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "risk",
+        "financial",
+        "source_health"
+      ]
+    },
+    {
+      "id": "realworld-systems-processes-needed",
+      "intent": "implementation_planning",
+      "prompt": "What systems and processes do you think we need to put in place?",
+      "selectedProjectId": null,
+      "sessionId": "96681e1e-5ce3-479d-8443-2a1b0ac29509",
+      "sessionLabel": "eval-2026-05-14T21-08-00-701Z-9367f6ac-realworld-systems-processes-needed",
+      "startedAt": "2026-05-14T21:09:58.014Z",
+      "finishedAt": "2026-05-14T21:10:39.798Z",
+      "durationMs": 41309,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 41,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "backendDeepAgentExecutiveBriefing",
+          "mcpToolDiscoverySkipped",
+          "streamingToolPolicy",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 2489,
+        "finalText": "Here’s what you’re missing, based on the evidence:\n\n### 1. Centralized Intake & Tracking\nRight now, too many inbound requests—mail, vendor issues, internal follow-ups—float around with unclear ownership. You need a single queue, visible to everyone, where every item gets an owner, status, and due date. Weekly review, no exceptions. Anything unclaimed gets flagged immediately.\n\n### 2. Document Control & Audit Readiness\nMail, invoices, and tax docs pile up, risking missed payments or audit exposure. Standardize scan/index for everything incoming, with naming conventions that tie docs to project, AP, or finance. Move to a checklist approach: received → reviewed → filed → actioned. No more “I thought someone else handled it.”\n\n### 3. Weekly Execution Rhythm\nSet fixed weekly calendars: check processing and admin review are the same days every week. Separate routine items from overflow/late catch-up. Make the standup short and focused. Review open items, blockers, and near-term deadlines—anything drifting gets a next-step and an owner.\n\n### 4. Follow-Up Ownership Discipline\nOne name next to every open external follow-up. No emailing or calling the same vendor/customer twice (or not at all). Shared outreach log is a must. Escalate overdue responses—don’t let them sit.\n\n### 5. AP / Invoice Control\nInvoices need a strict receipt-to-approval workflow. Timestamped handoffs. Nothing gets paid unless there’s contract/milestone backup attached. Flag exceptions for missing docs, disputes, or unapproved payments before checks get cut.\n\n### 6. Project Milestone Visibility\nMaintain a live milestone schedule—actual, not theoretical. Billing, pay apps, and sub coordination hang off those dates. If a milestone slips, crew planning and cash flow impact get flagged immediately.\n\n### 7. Operational Reporting—Exception-Only\nNo value in weekly status noise. Build a dashboard showing only open mail, outstanding AP, overdue follow-ups, and at-risk milestones. Show what’s off-track, not a bunch of “on track” noise.\n\n---\n\n**Bottom line:**  \nYou need one intake queue, standardized document controls, a weekly admin calendar, single-owner follow-up, and tight AP/billing ties to project milestones. Start simple, then layer in reporting. The biggest risks: falling behind on paperwork, missed follow-ups, cash flow surprises, and milestone slippage.  \nSet these systems up now, or you’ll keep fighting the same fires. Let me know if you want the implementation steps for any of these."
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getPortfolioOverview",
+        "getActionItemsAndInsights",
+        "assistantSourceHealth"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "actions",
+        "source_health"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6329 @@
+{
+  "id": "documents-search",
+  "intent": "document_question",
+  "prompt": "Find the latest Westfield contract or change-order document and tell me the business terms I should care about.",
+  "selectedProjectId": 43,
+  "sessionId": "f7032cbe-2ad2-48cf-a653-d4156d6f15d5",
+  "sessionLabel": "eval-2026-05-14T13-08-06-523Z-documents-search",
+  "startedAt": "2026-05-14T13:25:57.377Z",
+  "finishedAt": "2026-05-14T13:26:51.548Z",
+  "durationMs": 53679,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 936,
+  "persistedFound": true,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "expected at least one of [searchDocuments, searchExternalDocuments, queryDocumentRows] to fire — none did"
+    ],
+    "warnings": [
+      "expected family 'documents' not represented",
+      "expected family 'semantic' not represented"
+    ],
+    "observations": [
+      "tools fired: intentPlanner, promptContextReducer, assistantSourceHealth, backendDeepAgentProjectStatus, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, getProjectDetails"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "promptContextReducer",
+      "assistantSourceHealth",
+      "backendDeepAgentProjectStatus",
+      "clientProjectIntelligencePacket",
+      "mcpToolDiscovery",
+      "streamingToolPolicy",
+      "getProjectDetails"
+    ],
+    "familiesHit": [
+      "project",
+      "source_health"
+    ],
+    "finalTextLength": 4208,
+    "finalText": "Latest verified contract evidence for Westfield is the **approved prime contracts**, not a newer synced change-order document.\n\n## What I found\nTwo approved contracts are on the project record for **Westfield Collective (#24-115)**:\n- **Westfield Collective Volleyball Building Prime Contract** — **$7,473,275**\n- **Westfield Collective Prime Contract - Craving Crepes** — **$1,782,000**\n\nI do **not** have the underlying contract PDF text or a later approved change-order document to read clause-by-clause. The latest synced project documents visible in current evidence are **`budget 1.2.26.pdf`** and **`Marble Uniques COI.pdf`**, not a contract or CO. Meeting/email evidence references change orders being “ready for submission” on **2026-03-24**, but does not show an executed CO document. Because source sync is degraded and there’s a likely **embedding backlog**, I can’t claim complete document coverage.\n\n## Business terms that matter most\nGiven the evidence available, these are the terms you should care about first:\n\n1. **Contract value and package split**\n   - Main commercial anchors currently visible are:\n     - Volleyball Building Prime Contract: **$7.473M**\n     - Craving Crepes Prime Contract: **$1.782M**\n   - Why it matters: confirms whether current billing, retention, and closeout are being managed against one master contract or multiple commercial packages.\n\n2. **Change-order approval status**\n   - Evidence shows change orders were discussed and “ready for submission,” but I do **not** see an executed CO.\n   - Why it matters: if work has proceeded on patio repairs, lighting fixes, storefront film, or other owner-driven corrections without a signed CO, you have dispute risk on **price, responsibility, and pay timing**.\n\n3. **Scope responsibility / warranty carve-outs**\n   - Recent activity is heavily warranty/punch/repair oriented:\n     - air curtain correction\n     - defective sconce lights / vendor claim\n     - staircase riser paint touch-ups\n     - patio patch/broom finish repair\n     - storefront film discussion\n   - Why it matters: the biggest business question is whether these items are:\n     - included in original scope,\n     - vendor warranty,\n     - backchargeable,\n     - owner-paid T&M,\n     - or subject to a new CO.\n\n## The 3 clauses I’d inspect immediately once the doc is surfaced\n1. **Pricing terms**\n   - lump sum vs allowance vs unit price\n   - approved CO value\n   - markup rules on self-perform/subs\n   - retainage\n   - payment timing\n\n2. **Scope inclusions/exclusions**\n   - responsibility for punch, warranty callbacks, corrective work, owner-requested finish changes\n   - any exclusions tied to concrete movement, glazing films, specialty lighting, or tenant/vendor equipment\n\n3. **Schedule / access / disruption language**\n   - recent emails show the site opens to the public at **11 AM**, with repair work proposed starting at **7 AM**\n   - if the contract/CO has work-hour, shutdown, phasing, or customer-access restrictions, that directly affects cost and claim exposure\n\n## Current commercial risk signals\n- **Unsigned work risk:** field coordination exists, but no verified executed CO text for recent small-scope fixes.\n- **Warranty vs extra-work ambiguity:** several current issues look like they could be argued either way.\n- **Billing control risk:** there is also an active invoice-system issue in project intelligence around a **$5,800 payable invoice** that was deleted in JobPlanner but still exists in Acumatica, which raises the importance of matching any CO/contract values to actual payables.\n\n## Bottom line\nThe latest **verified commercial documents** I can confirm are the two **approved prime contracts**:\n- **Volleyball Building Prime Contract — $7,473,275**\n- **Craving Crepes Prime Contract — $1,782,000**\n\nI **cannot yet verify** a later executed **change-order document** from current synced evidence. The business terms to care about are:\n- **approved value**\n- **exact scope boundaries**\n- **warranty vs extra-work responsibility**\n- **markup/retainage/payment rules**\n- **schedule/access restrictions**\n- **formal approval status before work proceeds**\n\n**Source:** [Source: Project Details - Westfield Collective]"
+  },
+  "expectedToolNames": [
+    "searchDocuments",
+    "searchExternalDocuments",
+    "queryDocumentRows"
+  ],
+  "expectedToolFamilies": [
+    "documents",
+    "semantic"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:26:04.675Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking current project intelligence packet",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:26:04.850Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Checking backend Deep Agents project-status packet",
+        "status": "loading",
+        "timestamp": "2026-05-14T13:26:04.851Z"
+      }
+    },
+    {
+      "type": "data-assistant-widget",
+      "id": "assistant-widget-deep-agent-project-status-evidence",
+      "data": {
+        "widget": {
+          "type": "source_evidence_drawer",
+          "id": "deep-agent-project-status-evidence",
+          "title": "Westfield Collective source coverage",
+          "sources": [
+            {
+              "id": "75216a3a-3684-46f9-813f-05cc3e9a7163",
+              "title": "current",
+              "sourceType": "project_record",
+              "date": "2026-05-13T15:26:28.925409+00:00",
+              "snippet": "Westfield Collective has 521 active intelligence card(s). Top signal: Email: Re:[## 2396 ##] Error Message: Alleato Group: Westfield Collective.",
+              "confidence": "medium"
+            },
+            {
+              "id": "cd227659-a957-4be1-85e8-551498fb0d9c",
+              "title": "manual_gold_standard",
+              "sourceType": "project_record",
+              "date": "2026-04-30T10:01:58.039123+00:00",
+              "snippet": "Westfield Collective has enough current communication coverage to answer as a project advisor, but V1 must label the packet as a working sample and verify formal cost/status values with structured tools.",
+              "confidence": "medium"
+            },
+            {
+              "id": "teamsdm_38b2906e5ff50ceb_2025-12-27",
+              "title": "Teams DM Conversation: 19:5f9d3daf-",
+              "sourceType": "teams",
+              "date": "2026-04-30T13:42:25.524268",
+              "snippet": "[Teams Direct Message Conversation: 19:5f9d3daf-]\nDate: 2025-12-27\n\n[message:1766851455169] [2025-12-27 16:04:15] Andrew Cannon: lol. The email name made me laugh",
+              "confidence": "medium"
+            },
+            {
+              "id": "teamsdm_a1996aa2bd9a2065_2025-10-08",
+              "title": "Teams DM Conversation: Westfield Collective",
+              "sourceType": "teams",
+              "date": "2026-05-05T17:11:05.647787",
+              "snippet": "The document is a transcript of a Teams Direct Message conversation involving members of the Westfield Collective, dated October 8, 2025. The conversation primarily revolves around the uploading of videos to OneDrive, with Andrew Cannon indicating his intention to upload the videos either that night or the following day. The nature of the document suggests it serves as an informal communication record rather than a formal report or contract.\n\nKey topics discussed include the logistics of video u",
+              "confidence": "medium"
+            },
+            {
+              "id": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHQf-aEAAA=",
+              "title": "Re: Staircase riser paint touch-ups",
+              "sourceType": "email",
+              "date": "2026-05-13T15:03:22.951288+00:00",
+              "snippet": "Subject: Re: Staircase riser paint touch-ups\nDate: 2026-05-12T22:43:20Z\nFrom: Angie Galtier <angie@westfield-collective.com>\nTo: Andrew Cannon <acannon@alleatogroup.com>\n\nHi,&nbsp; Would it be done in one day or over multiple days starting at 7am? We open to the public at 11am. And yes, thanks for notifying me in advance and sending me a calendar invite for when they’ll be completing the work.&nbsp; Thank you! Angie Galtier General Manager Westfield Collective 750 E 181st Street Westfield, IN 46",
+              "confidence": "medium"
+            },
+            {
+              "id": "AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHQf-aCAAA=",
+              "title": "RE: Westfield Collective patio",
+              "sourceType": "email",
+              "date": "2026-05-13T15:04:13.285293+00:00",
+              "snippet": "Subject: RE: Westfield Collective patio\nDate: 2026-05-12T21:52:12Z\nFrom: Gordon Chapman <gordon@browningchapman.com>\nTo: Andrew Cannon <acannon@alleatogroup.com>\n\nAndrew, See attached proposal for the patch and broom finish look. This will look good. I just hope it holds up. Failure will happen when the concrete moves (Cracks underneath) Our epoxy primer will help hold this together. It may hold up long term. &nbsp; Let me know your thoughts? Thanks, &nbsp; Gordon Chapman Vice President | COO 21",
+              "confidence": "medium"
+            },
+            {
+              "id": "012BEZDVW2ASEQEPISLRCYRCEZYC3XDNQI",
+              "title": "budget 1.2.26.pdf",
+              "sourceType": "document",
+              "date": "2026-05-14T04:08:27.159417+00:00",
+              "snippet": "Synced from OneDrive: Alleato Group/2025 Jobs/budget 1.2.26.pdf",
+              "confidence": "medium"
+            },
+            {
+              "id": "012BEZDVRCMPZSPBGXARE2HZHUELXPADJK",
+              "title": "Marble Uniques COI.pdf",
+              "sourceType": "document",
+              "date": "2026-05-14T04:22:07.357885+00:00",
+              "snippet": "Synced from OneDrive: Alleato Group/2025 Jobs/Marble Uniques COI.pdf",
+              "confidence": "medium"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Loaded backend Deep Agents project-status packet",
+        "status": "success",
+        "timestamp": "2026-05-14T13:26:29.334Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Loaded project intelligence packet — synthesizing strategist response",
+        "status": "success",
+        "timestamp": "2026-05-14T13:26:31.127Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "DBb74gj4E3mqHzou"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "toolName": "getProjectDetails"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "inputTextDelta": "43"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "inputTextDelta": "Name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "inputTextDelta": "West"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "inputTextDelta": "field"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "inputTextDelta": " Collective"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "toolName": "getProjectDetails",
+      "input": {
+        "projectId": 43,
+        "projectName": "Westfield Collective"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_t0P2PFtJ9KsQyqos9lFxW60o",
+      "output": {
+        "sourceRef": "[Source: Project Details - Westfield Collective]",
+        "project": {
+          "id": 43,
+          "name": "Westfield Collective",
+          "projectNumber": "24-115",
+          "client": "Collective Group",
+          "phase": "Current",
+          "state": null,
+          "address": null,
+          "budget": null,
+          "budgetUsed": 0,
+          "healthStatus": null,
+          "completionPct": 0,
+          "deliveryMethod": "Design-Build",
+          "workScope": "Ground-Up Construction",
+          "summary": null,
+          "startDate": "2025-01-16",
+          "estCompletion": null
+        },
+        "contracts": [
+          {
+            "id": "20906925-abe3-418e-80da-018ec1fc8ef1",
+            "title": "Westfield Collective Volleyball Building Prime Contract",
+            "status": "approved",
+            "original_contract_value": 7473275,
+            "executed_at": null
+          },
+          {
+            "id": "809963ce-9b36-4d07-9805-ff820f5acd39",
+            "title": "Westfield Collective Prime Contract - Craving Crepes",
+            "status": "approved",
+            "original_contract_value": 1782000,
+            "executed_at": null
+          }
+        ],
+        "scheduleTasks": [
+          {
+            "name": "Prepare and submit project schedule",
+            "status": "not_started",
+            "startDate": "2025-02-03",
+            "finishDate": "2025-02-03",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Receive notice to proceed and sign contract",
+            "status": "not_started",
+            "startDate": "2025-02-03",
+            "finishDate": "2025-02-03",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Complete Structural Design Parameters",
+            "status": "not_started",
+            "startDate": "2025-02-03",
+            "finishDate": "2025-02-05",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Final Architectural Design Drawings",
+            "status": "not_started",
+            "startDate": "2025-02-03",
+            "finishDate": "2025-04-04",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Preconstruction & Design",
+            "status": "not_started",
+            "startDate": "2025-02-03",
+            "finishDate": "2025-05-02",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "PEMP Drawings",
+            "status": "not_started",
+            "startDate": "2025-02-05",
+            "finishDate": "2025-04-01",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Fire Sprinkler Design Drawings",
+            "status": "not_started",
+            "startDate": "2025-02-17",
+            "finishDate": "2025-03-14",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Electrical Design Drawings",
+            "status": "not_started",
+            "startDate": "2025-02-17",
+            "finishDate": "2025-03-14",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Fire Alarm Design Drawings",
+            "status": "not_started",
+            "startDate": "2025-02-17",
+            "finishDate": "2025-03-14",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Mechanical Design Drawings",
+            "status": "not_started",
+            "startDate": "2025-02-17",
+            "finishDate": "2025-03-14",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Plumbing Design Drawings",
+            "status": "not_started",
+            "startDate": "2025-02-17",
+            "finishDate": "2025-03-14",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Long Lead Procurement",
+            "status": "not_started",
+            "startDate": "2025-02-17",
+            "finishDate": "2025-06-27",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Structural Design For Permit",
+            "status": "not_started",
+            "startDate": "2025-02-20",
+            "finishDate": "2025-02-21",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Civil Plans for Permit",
+            "status": "not_started",
+            "startDate": "2025-02-21",
+            "finishDate": "2025-02-24",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Submit Site & Structural Foundation Permit",
+            "status": "not_started",
+            "startDate": "2025-02-25",
+            "finishDate": "2025-02-25",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Water Service",
+            "status": "not_started",
+            "startDate": "2025-02-25",
+            "finishDate": "2025-03-10",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Storm Structures",
+            "status": "not_started",
+            "startDate": "2025-02-25",
+            "finishDate": "2025-04-07",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Obtain Site & Structural building permit",
+            "status": "not_started",
+            "startDate": "2025-03-11",
+            "finishDate": "2025-03-31",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Light Fixtures",
+            "status": "not_started",
+            "startDate": "2025-03-17",
+            "finishDate": "2025-05-09",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Electrical Gear",
+            "status": "not_started",
+            "startDate": "2025-03-17",
+            "finishDate": "2025-05-09",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "RTUs",
+            "status": "not_started",
+            "startDate": "2025-03-17",
+            "finishDate": "2025-05-09",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Site Grading and Utilities",
+            "status": "not_started",
+            "startDate": "2025-03-25",
+            "finishDate": "2025-10-01",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Install temporary water service/relocate existing if possible",
+            "status": "not_started",
+            "startDate": "2025-04-01",
+            "finishDate": "2025-04-02",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Set line and grade benchmarks",
+            "status": "not_started",
+            "startDate": "2025-04-01",
+            "finishDate": "2025-04-03",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Erosion Control",
+            "status": "complete",
+            "startDate": "2025-04-01",
+            "finishDate": "2025-04-03",
+            "percentComplete": 100,
+            "isMilestone": false
+          },
+          {
+            "name": "Mobilize on Site",
+            "status": "not_started",
+            "startDate": "2025-04-01",
+            "finishDate": "2025-04-29",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Final Structural Design Drawings",
+            "status": "not_started",
+            "startDate": "2025-04-02",
+            "finishDate": "2025-04-10",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "PEMB steel Package",
+            "status": "not_started",
+            "startDate": "2025-04-02",
+            "finishDate": "2025-05-27",
+            "percentComplete": 0,
+            "isMilestone": false
+          },
+          {
+            "name": "Clear and grub site",
+            "status": "complete",
+            "startDate": "2025-04-04",
+            "finishDate": "2025-04-08",
+            "percentComplete": 100,
+            "isMilestone": false
+          },
+          {
+            "name": "Millwork",
+            "status": "not_started",
+            "startDate": "2025-04-07",
+            "finishDate": "2025-05-16",
+            "percentComplete": 0,
+            "isMilestone": false
+          }
+        ],
+        "openRFIs": [],
+        "recentMeetings": [
+          {
+            "sourceRef": "[Source: Meeting - \"FW: Space Coast OTP Review\" - 2026-05-07T19:00:00+00:00]",
+            "title": "FW: Space Coast OTP Review",
+            "date": "2026-05-07T19:00:00+00:00",
+            "keyPoints": "The team discussed strategies for land acquisition and pricing, aiming to negotiate lower costs for parcels, particularly focusing on parcel 33. They highlighted comparable land sales with an average price of $1,019,562 per acre, and noted the need for negotiation flexibility based on parcel qualities. The group plans to explore shared parking to reduce costs and intends to downsize parcel 33 for better financial viability. They also addressed contract terms, including an aggressive 12-month construction commencement clause, and proposed extending the inspection period for better risk management. Strategic partnerships, particularly involving solar technology implementation, were identified as potential avenues for enhancing project appeal and efficiency.",
+            "participants": "{\"rhett.batanides@foundrycommercial.com,bclymer@alleatogroup.com,mike@ibexdevgroup.com,am.gary@foundrycommercial.com,robert@fourmilebrands.com,christa@fourmilebrands.com\",bclymer@alleatogroup.com,mike@ibexdevgroup.com,am.gary@foundrycommercial.com,robert@fourmilebrands.com,christa@fourmilebrands.com}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-04-14T15:00:00+00:00]",
+            "title": "OAC- Westfield Collective",
+            "date": "2026-04-14T15:00:00+00:00",
+            "keyPoints": "The meeting addressed several key aspects, including ongoing issues with defective sconce lights requiring a formal claim to the vendor for replacements, as all units have been non-functional since December. Additional lighting solutions, such as WAC track lights, were proposed to improve ambiance in the ice cream bar area. Recent landscaping and asphalt repairs, along with elevator maintenance, were confirmed to ensure facility readiness. The grand opening is scheduled for tomorrow at 10 AM, featuring speeches and an Indy car display, which aims to attract marketing attention. The team emphasized efficient communication and managing vendor relations, especially for warranty claims on defective products, while also repurposing stored lighting fixtures to optimize resources and reduce costs",
+            "participants": "{\"acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com\",jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Lessons Learned From Westfield Collective\" - 2026-04-13T14:00:00+00:00]",
+            "title": "Lessons Learned From Westfield Collective",
+            "date": "2026-04-13T14:00:00+00:00",
+            "keyPoints": "The discussion focused on optimizing bar and vendor areas for enhanced functionality and efficiency. Key proposals included redesigning the bar layout to fix flow issues and improve equipment placement, with emphasis on proper storage solutions. Vendor windows need to be wider for better customer interaction, while electrical planning is necessary to avoid costly changes. Major changes were proposed for cooler placement to consolidate multiple coolers into one large unit, which would streamline operations. The team also addressed beer tap communication issues across floors that need resolution. In addition, there was emphasis on optimizing cooler and trash handling infrastructure, ensuring adequate facilities for operational equipment, and incorporating early planning for electrical and ce",
+            "participants": "{\"acannon@alleatogroup.com,mewers@medellasprings.com,bclymer@alleatogroup.com,jdawson@alleatogroup.com,ctragesser@alleatogroup.com,robert@liberty-collective.com,louie@liberty-collective.com,david@liberty-collective.com,fireflies@alleatogroup.com\",mewers@medellasprings.com,bclymer@alleatogroup.com,jdawson@alleatogroup.com,ctragesser@alleatogroup.com,robert@liberty-collective.com,louie@liberty-collective.com,david@liberty-collective.com,fireflies@alleatogroup.com}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"PM interview - Trevor Scoles - Indiana\" - 2026-04-10T12:30:00+00:00]",
+            "title": "PM interview - Trevor Scoles - Indiana",
+            "date": "2026-04-10T12:30:00+00:00",
+            "keyPoints": "The discussion focused on Trevor Scoles, who has extensive experience in student housing construction management and leads a team of six. He has managed various project types in the Southeast U.S., including mixed-use and wood frame podium constructions, with strong skills in construction management software like Procore. Trevor values autonomy in his work and seeks a role that offers steady project workloads and freedom from micromanagement. His compensation expectations prioritize stability and growth potential, particularly performance-based incentives. The conversation highlighted Alito's business model, which aligns with Trevor's preferences, emphasizing negotiated contracts and avoiding bidding wars, while also addressing insights on the student housing market dynamics.",
+            "participants": "{\"aortiz@alleatogroup.com,jdawson@alleatogroup.com,fireflies@alleatogroup.com,cash5050@gmail.com\",jdawson@alleatogroup.com,fireflies@alleatogroup.com,cash5050@gmail.com}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-04-07T15:00:00+00:00]",
+            "title": "OAC- Westfield Collective",
+            "date": "2026-04-07T15:00:00+00:00",
+            "keyPoints": "The construction project is nearing completion with landscaping finishing up and key infrastructure tasks on schedule, including completed installations of CO2 outlets and replacement patio fans. However, minor weather risks could delay final outdoor work, specifically the asphalt walking path, due by Thursday. The city inspection is scheduled for Friday, targeting completed landscaping and lighting compliance. Additionally, issues with lighting ambiance in areas like the bar and ice cream shop were highlighted, with proposed solutions for adjustments. Coordination efforts are being led by Andrew Cannon to ensure timely completion of punch list items and ongoing communication with vendors and city officials as closeout documents are due tomorrow.",
+            "participants": "{\"acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com\",jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-03-31T15:00:00+00:00]",
+            "title": "OAC- Westfield Collective",
+            "date": "2026-03-31T15:00:00+00:00",
+            "keyPoints": "The meeting addressed various aspects of site progress, emphasizing that grading and landscaping are nearing completion, with final landscaping expected next week, contingent on weather conditions. Electrical installations are actively being coordinated, particularly lighting fixtures and patio fans, with some pending feedback on voltage compatibility. Water management issues are under investigation, specifically focusing on drainage problems and water intrusion points requiring clarification on vendor responsibilities. Project coordination remains strong to ensure that subcontractors align with the overall timeline, with closeout documentation and final deliverables anticipated for the following week. Additionally, the order of necessary equipment is in progress, with tables expected to a",
+            "participants": "{\"acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com\",jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-03-24T15:00:00+00:00]",
+            "title": "OAC- Westfield Collective",
+            "date": "2026-03-24T15:00:00+00:00",
+            "keyPoints": "Key updates from the meeting include significant progress on major installations like bar islands and door hardware, moving towards final inspection. Fire safety measures, including LED lights and sprinkler heads, have been completed, ensuring compliance. The exterior work is advancing with landscaping expected to resume soon, and critical caulking has resolved previous water issues. Lighting delays were discussed, particularly regarding bulkhead and sconce fixtures, which require urgent supplier follow-up. Adjustments to security features are underway, including lockable doors and signage confirmed until the grand opening. Documentation for warranty and manuals is on track for delivery by Friday, with change orders ready for submission post-meeting.",
+            "participants": "{\"acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com\",jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-03-17T15:00:00+00:00]",
+            "title": "OAC- Westfield Collective",
+            "date": "2026-03-17T15:00:00+00:00",
+            "keyPoints": "The meeting addressed multiple issues, including significant gaps in inventory tracking, leading to proposed tighter controls and personnel for on-site accountability. A storage strategy was reconsidered due to the absence of indoor volleyball storage, with recommendations for using secured containers and on-site receivers for better handling. Documentation coordination was highlighted as essential to prevent mismatches in materials for future projects. Lighting and electrical challenges were also noted, particularly voltage mismatches and missing components, which require urgent resolution. Despite minor missing parts, door hardware installation is nearly complete, pending final updates. Lastly, the discussion emphasized the urgency of trash removal, hindered by furniture blocking dumpste",
+            "participants": "{\"acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,tinman@alleatogroup.com\",jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,tinman@alleatogroup.com}"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"Westfield Collective: Outstanding Items and Timeline Discussion\" - 2026-03-12T13:00:00+00:00]",
+            "title": "Westfield Collective: Outstanding Items and Timeline Discussion",
+            "date": "2026-03-12T13:00:00+00:00",
+            "keyPoints": "⏳ Soft Opening Delay: New target for soft opening is Monday or Tuesday due to unresolved electrical and gas issues.\n⚠️ Gas Regulator Replacement: New regulators are critical for safety and must be installed before health permits can be approved.\n🚰 Plumbing Issues: Ongoing plumbing leaks are under review, with fixes scheduled today for various locations.\n🔌 Staggered Closures for Work: Bars will close in phases during installation, with a limited daytime opening for customer feedback.\n🌧️ Weather Delays Impacting Work: Recent heavy rain has caused ground saturation, delaying landscaping and some exterior work.\n🔒 Secure Site Access: New door cores and locks are being installed to maintain security as construction progresses.",
+            "participants": "acannon@alleatogroup.com, mewers@medellasprings.com, robert@liberty-collective.com, dave@westfield-collective.com, ctragesser@alleatogroup.com, tinman@alleatogroup.com, jdawson@alleatogroup.com, mewers@medellasprings.com, robert@liberty-collective.com, dave@westfield-collective.com, ctragesser@alleatogroup.com, tinman@alleatogroup.com, jdawson@alleatogroup.com"
+          },
+          {
+            "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-03-10T15:00:00+00:00]",
+            "title": "OAC- Westfield Collective",
+            "date": "2026-03-10T15:00:00+00:00",
+            "keyPoints": "The team is finalizing interior finishes this week, with painting and tile work nearly complete. Interior details are being wrapped up, including the assembly of owner-provided antler lights. Landscaping has been postponed until April due to significant rainfall, which has caused site delays. A temporary certificate of occupancy has been obtained, but final health inspections are pending as some essential equipment has not yet arrived. The team is closely managing material deliveries, and ongoing communication ensures issues are being addressed promptly. Regular updates and coordination calls are helping the team stay aligned as they prepare for a photoshoot after landscaping is completed, which will aid in marketing efforts for the project launch.",
+            "participants": "{\"acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,bclymer@alleatogroup.com,katie@ibeach31.com,g@damngoodinteriors.com,m@damngoodinteriors.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,dave@westfield-collective.com,robert@liberty-collective.com\",jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,bclymer@alleatogroup.com,katie@ibeach31.com,g@damngoodinteriors.com,m@damngoodinteriors.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,dave@westfield-collective.com,robert@liberty-collective.com}"
+          }
+        ]
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "text-start",
+      "id": "0"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Latest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " verified"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "approved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " prime"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contracts"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " newer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-order"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " document"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " What"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " found"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Two"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " approved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contracts"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " record"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " (#"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "24"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "115"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ")**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Volleyball"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Building"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Prime"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "7"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "473"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "275"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Prime"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "aving"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cre"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "pes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "782"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "000"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " underlying"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " PDF"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " text"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " later"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " approved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-order"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " document"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " read"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clause"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-by"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-cl"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ause"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " latest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " documents"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " visible"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "budget"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "26"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".pdf"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Mar"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ble"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Un"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "iques"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".pdf"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "`"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Meeting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/email"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " references"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " orders"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ready"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " submission"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "202"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "6"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "03"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "24"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " does"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " show"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " executed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " document"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Because"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sync"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " degraded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " likely"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "embedding"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " backlog"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’t"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " claim"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " complete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " document"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coverage"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Business"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " terms"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matter"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " most"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Given"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " available"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " these"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " terms"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " should"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " care"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " first"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " value"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " package"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " split"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Main"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commercial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " anchors"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " currently"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " visible"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Volleyball"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Building"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Prime"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "7"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "473"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "aving"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cre"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "pes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Prime"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "782"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confirms"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " billing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retention"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " close"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "out"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " being"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " managed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " against"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " one"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " master"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " multiple"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commercial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " packages"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-order"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " approval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shows"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " orders"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " were"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " discussed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " “"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ready"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " submission"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",”"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " do"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "not"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " see"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " executed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " proceeded"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " patio"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " repairs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lighting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fixes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " storefront"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " film"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " other"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-driven"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " corrections"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " without"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " you"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " have"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " dispute"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "price"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " responsibility"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pay"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " timing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " responsibility"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " warranty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " carve"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-outs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " activity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " heavily"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " warranty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/p"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "unch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "repair"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " oriented"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " air"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " curtain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " correction"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " defective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "conce"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lights"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vendor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " claim"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " staircase"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ris"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "er"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " paint"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " touch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-ups"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " patio"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " patch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/b"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "room"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " finish"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " repair"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " storefront"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " film"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " discussion"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Why"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " it"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matters"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " biggest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " business"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " question"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " whether"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " these"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " items"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " included"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " original"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vendor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " warranty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " back"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "charge"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "able"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-paid"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " T"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "&M"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ",\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "    "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " subject"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " new"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " clauses"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "’d"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " inspect"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " immediately"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " once"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " doc"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " surfaced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Pricing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " terms"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lump"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " sum"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " allowance"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " unit"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " price"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " approved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " value"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " markup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rules"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " on"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " self"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-per"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "form"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/sub"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " retain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "age"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " payment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " timing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "2"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " inclus"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/ex"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "clusions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " responsibility"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " punch"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " warranty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " callbacks"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " corrective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " owner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-request"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " finish"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " changes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " any"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exclusions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tied"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " concrete"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " movement"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " glazing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " films"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " specialty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " lighting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " tenant"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/vendor"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " equipment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "3"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " access"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " /"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " disruption"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " language"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " emails"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " show"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " site"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " opens"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " public"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "11"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**,"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " with"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " repair"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " proposed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " starting"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " at"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "7"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " AM"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "  "
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " if"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " has"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-hour"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " shutdown"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ph"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "asing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " or"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " customer"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-access"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " restrictions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " directly"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " affects"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " cost"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " and"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " claim"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exposure"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commercial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " signals"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Unsigned"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " coordination"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exists"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " no"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " verified"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " executed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " text"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " for"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " recent"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " small"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-s"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " fixes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Warranty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " extra"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ambiguity"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " several"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issues"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " look"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " like"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " they"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " could"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " be"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " argued"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " either"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " way"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Billing"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " control"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " risk"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " there"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " is"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " also"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " an"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " active"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " invoice"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-system"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " issue"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " intelligence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " around"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "$"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "5"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "800"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " payable"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " invoice"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " that"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " was"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " deleted"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Job"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Planner"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " but"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " still"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " exists"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " in"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Ac"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "umat"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ica"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " which"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " raises"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " importance"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " of"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " matching"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " any"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " CO"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " values"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " actual"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " pay"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "ables"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "##"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Bottom"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " line"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " latest"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "verified"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " commercial"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " documents"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " can"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " confirm"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " the"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " two"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "approved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " prime"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " contracts"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Vol"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "leyball"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Building"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Prime"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " $"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "7"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "473"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "275"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Cr"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "aving"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Cre"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "pes"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Prime"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Contract"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " —"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " $"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "1"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "782"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ","
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "000"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "I"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "cannot"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " yet"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " verify"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " a"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " later"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " executed"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "change"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-order"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " document"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " from"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " current"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " synced"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " evidence"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "."
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " The"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " business"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " terms"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " to"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " care"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " about"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " are"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "approved"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " value"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "exact"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " scope"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " boundaries"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "w"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "arranty"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " vs"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " extra"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " responsibility"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "markup"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "retain"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "age"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/payment"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " rules"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "schedule"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "/access"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " restrictions"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "-"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " **"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "formal"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " approval"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " status"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " before"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " work"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " proceeds"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**\n\n"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":**"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " ["
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "Source"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": ":"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Project"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Details"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " -"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " West"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "field"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": " Collective"
+    },
+    {
+      "type": "text-delta",
+      "id": "0",
+      "delta": "]"
+    },
+    {
+      "type": "text-end",
+      "id": "0"
+    },
+    {
+      "type": "finish-step"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 15416,
+      "totalTokens": 16354,
+      "outputTokens": 938,
+      "cacheHitRatio": 0.307,
+      "cachedInputTokens": 4736
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Find the latest Westfield contract or change-order document and tell me the business terms I should care about.",
+          "taskSourceReview": null,
+          "selectedProjectId": 43,
+          "deterministicIntent": "latest_status",
+          "sourceSpecificRagKind": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "latest_status",
+          "planner": "deterministic_fallback",
+          "rationale": "Model planner unavailable; using deterministic fallback intent.",
+          "confidence": "low",
+          "responseMode": "build_project_packet",
+          "requiredTools": [],
+          "deterministicIntent": "latest_status",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T13:26:04.674Z"
+      },
+      {
+        "tool": "promptContextReducer",
+        "input": {
+          "intent": "latest_status",
+          "message": "Find the latest Westfield contract or change-order document and tell me the business terms I should care about."
+        },
+        "output": {
+          "promptMode": "lean_advisor",
+          "skippedGeneralMemory": true,
+          "skippedExecutivePacket": true,
+          "skippedWorkspaceArtifacts": true,
+          "retainedPacketFirstRetrieval": true
+        },
+        "timestamp": "2026-05-14T13:26:04.767Z"
+      },
+      {
+        "tool": "assistantSourceHealth",
+        "input": {
+          "reason": "source_status_request"
+        },
+        "output": {
+          "alerts": [
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: crusin@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:crusin@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "teams_chat_export",
+              "message": "Teams DM export: accounting@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "user:accounting@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: njepson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "njepson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: mparsons@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "mparsons@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: jdawson@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "jdawson@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "ctragesser@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: crusin@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "crusin@alleatogroup.com"
+            },
+            {
+              "code": "source_sync_critical",
+              "source": "outlook_email",
+              "message": "Outlook: awehner@alleatogroup.com is critical.",
+              "severity": "critical",
+              "resourceId": "awehner@alleatogroup.com"
+            }
+          ],
+          "counts": {
+            "sources": 30,
+            "uncompiled": 10204,
+            "unembedded": 819,
+            "warningSources": 0,
+            "criticalSources": 30,
+            "failedSubscriptions": 0,
+            "expiringSubscriptions": 0
+          },
+          "reason": "source_status_request",
+          "sources": [
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-14T05:40:17.479335+00:00",
+              "resourceId": "user:crusin@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: crusin@alleatogroup.com",
+              "staleMinutes": 455,
+              "lastSuccessAt": "2026-05-14T05:40:17.479335+00:00",
+              "uncompiledCount": 937,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "teams_chat_export",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-14T06:40:45.750041+00:00",
+              "resourceId": "user:accounting@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Teams DM export: accounting@alleatogroup.com",
+              "staleMinutes": 395,
+              "lastSuccessAt": "2026-05-14T06:40:45.750041+00:00",
+              "uncompiledCount": 937,
+              "unembeddedCount": 138
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+              "resourceId": "njepson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: njepson@alleatogroup.com",
+              "staleMinutes": 20157,
+              "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+              "resourceId": "mparsons@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: mparsons@alleatogroup.com",
+              "staleMinutes": 20158,
+              "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+              "resourceId": "jdawson@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: jdawson@alleatogroup.com",
+              "staleMinutes": 20159,
+              "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+              "resourceId": "ctragesser@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: ctragesser@alleatogroup.com",
+              "staleMinutes": 4036,
+              "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+              "resourceId": "crusin@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: crusin@alleatogroup.com",
+              "staleMinutes": 20160,
+              "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+              "resourceId": "awehner@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: awehner@alleatogroup.com",
+              "staleMinutes": 20161,
+              "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+              "resourceId": "accounting@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: accounting@alleatogroup.com",
+              "staleMinutes": 20160,
+              "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T18:14:44.817404+00:00",
+              "resourceId": "acannon@alleatogroup.com",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: acannon@alleatogroup.com",
+              "staleMinutes": 1141,
+              "lastSuccessAt": "2026-05-13T18:14:44.817404+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T20:06:20.616839+00:00",
+              "resourceId": "38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+              "lastErrorAt": null,
+              "resourceName": "Outlook: 38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+              "staleMinutes": 1029,
+              "lastSuccessAt": "2026-05-13T20:06:20.616839+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            },
+            {
+              "source": "outlook_email",
+              "status": "critical",
+              "hasError": false,
+              "lastSyncAt": "2026-05-13T00:00:00+00:00",
+              "resourceId": "document_metadata",
+              "lastErrorAt": null,
+              "resourceName": "Outlook email",
+              "staleMinutes": 2235,
+              "lastSuccessAt": "2026-05-13T00:00:00+00:00",
+              "uncompiledCount": 88,
+              "unembeddedCount": 4
+            }
+          ],
+          "generatedAt": "2026-05-14T13:26:04.767Z",
+          "missingStage": "embedding_backlog",
+          "overallStatus": "degraded"
+        },
+        "timestamp": "2026-05-14T13:26:04.767Z"
+      },
+      {
+        "tool": "backendDeepAgentProjectStatus",
+        "input": {
+          "query": "Find the latest Westfield contract or change-order document and tell me the business terms I should care about.",
+          "intent": "latest_status",
+          "selectedProjectId": 43
+        },
+        "output": {
+          "mode": "deep_agents",
+          "confidence": "medium",
+          "sourceCount": 9,
+          "runtimeTrace": {
+            "tool": "deepagents_runtime",
+            "agent": "project-intelligence-orchestrator",
+            "detail": "Deep Agents runtime produced a synthesis from checked source coverage.",
+            "status": "success",
+            "durationMs": 18096
+          },
+          "dataPartCount": 1,
+          "evidenceCount": 12
+        },
+        "timestamp": "2026-05-14T13:26:29.334Z"
+      },
+      {
+        "tool": "clientProjectIntelligencePacket",
+        "input": {
+          "query": "Find the latest Westfield contract or change-order document and tell me the business terms I should care about.",
+          "intent": "latest_status",
+          "selectedProjectId": 43
+        },
+        "output": {
+          "mode": "additive-context",
+          "packetId": "75216a3a-3684-46f9-813f-05cc3e9a7163",
+          "cardCount": 521,
+          "packetAgeDays": 1,
+          "resolvedTarget": {
+            "id": "0b2bd1aa-c36d-4910-b82e-90958d430036",
+            "slug": "westfield-collective",
+            "source": "selected_project",
+            "projectId": 43
+          },
+          "freshnessStatus": "fresh",
+          "operatingSummaryLoaded": false
+        },
+        "timestamp": "2026-05-14T13:26:31.127Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.excalidraw.com/mcp",
+          "server": "excalidraw"
+        },
+        "output": {
+          "allowedTools": [
+            "read_me",
+            "create_view",
+            "export_to_excalidraw",
+            "save_checkpoint",
+            "read_checkpoint"
+          ],
+          "enabledTools": [
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "enabledToolCount": 5,
+          "discoveredToolCount": 5
+        },
+        "timestamp": "2026-05-14T13:26:31.194Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.supabase.com/mcp?project_ref=lgveqfnpkxvzbnnwuled",
+          "server": "supabase"
+        },
+        "output": {
+          "error": "MCP HTTP Transport Error: POSTing to endpoint (HTTP 401): {\"message\":\"JWT could not be decoded\"}"
+        },
+        "timestamp": "2026-05-14T13:26:31.250Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "promptMode": "lean_advisor",
+          "toolChoice": "auto",
+          "fullToolCount": 99,
+          "modelToolCount": 11,
+          "modelToolNames": [
+            "getPortfolioOverview",
+            "getProjectsWithRisks",
+            "getProjectBriefingSnapshot",
+            "getActionItemsAndInsights",
+            "getProjectDetails",
+            "findProject",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "streamMaxSteps": 6,
+          "scopedToolCount": 11,
+          "streamMaxOutputTokens": 2400,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": false
+        },
+        "timestamp": "2026-05-14T13:26:31.250Z"
+      },
+      {
+        "tool": "getProjectDetails",
+        "input": {
+          "projectId": 43,
+          "projectName": "Westfield Collective"
+        },
+        "output": {
+          "project": {
+            "id": 43,
+            "name": "Westfield Collective",
+            "phase": "Current",
+            "state": null,
+            "budget": null,
+            "client": "Collective Group",
+            "address": null,
+            "summary": null,
+            "startDate": "2025-01-16",
+            "workScope": "Ground-Up Construction",
+            "budgetUsed": 0,
+            "healthStatus": null,
+            "completionPct": 0,
+            "estCompletion": null,
+            "projectNumber": "24-115",
+            "deliveryMethod": "Design-Build"
+          },
+          "openRFIs": [],
+          "contracts": [
+            {
+              "id": "20906925-abe3-418e-80da-018ec1fc8ef1",
+              "title": "Westfield Collective Volleyball Building Prime Contract",
+              "status": "approved",
+              "executed_at": null,
+              "original_contract_value": 7473275
+            },
+            {
+              "id": "809963ce-9b36-4d07-9805-ff820f5acd39",
+              "title": "Westfield Collective Prime Contract - Craving Crepes",
+              "status": "approved",
+              "executed_at": null,
+              "original_contract_value": 1782000
+            }
+          ],
+          "sourceRef": "[Source: Project Details - Westfield Collective]",
+          "scheduleTasks": [
+            {
+              "name": "Prepare and submit project schedule",
+              "status": "not_started",
+              "startDate": "2025-02-03",
+              "finishDate": "2025-02-03",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Receive notice to proceed and sign contract",
+              "status": "not_started",
+              "startDate": "2025-02-03",
+              "finishDate": "2025-02-03",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Complete Structural Design Parameters",
+              "status": "not_started",
+              "startDate": "2025-02-03",
+              "finishDate": "2025-02-05",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Final Architectural Design Drawings",
+              "status": "not_started",
+              "startDate": "2025-02-03",
+              "finishDate": "2025-04-04",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Preconstruction & Design",
+              "status": "not_started",
+              "startDate": "2025-02-03",
+              "finishDate": "2025-05-02",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "PEMP Drawings",
+              "status": "not_started",
+              "startDate": "2025-02-05",
+              "finishDate": "2025-04-01",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Fire Sprinkler Design Drawings",
+              "status": "not_started",
+              "startDate": "2025-02-17",
+              "finishDate": "2025-03-14",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Electrical Design Drawings",
+              "status": "not_started",
+              "startDate": "2025-02-17",
+              "finishDate": "2025-03-14",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Fire Alarm Design Drawings",
+              "status": "not_started",
+              "startDate": "2025-02-17",
+              "finishDate": "2025-03-14",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Mechanical Design Drawings",
+              "status": "not_started",
+              "startDate": "2025-02-17",
+              "finishDate": "2025-03-14",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Plumbing Design Drawings",
+              "status": "not_started",
+              "startDate": "2025-02-17",
+              "finishDate": "2025-03-14",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Long Lead Procurement",
+              "status": "not_started",
+              "startDate": "2025-02-17",
+              "finishDate": "2025-06-27",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Structural Design For Permit",
+              "status": "not_started",
+              "startDate": "2025-02-20",
+              "finishDate": "2025-02-21",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Civil Plans for Permit",
+              "status": "not_started",
+              "startDate": "2025-02-21",
+              "finishDate": "2025-02-24",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Submit Site & Structural Foundation Permit",
+              "status": "not_started",
+              "startDate": "2025-02-25",
+              "finishDate": "2025-02-25",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Water Service",
+              "status": "not_started",
+              "startDate": "2025-02-25",
+              "finishDate": "2025-03-10",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Storm Structures",
+              "status": "not_started",
+              "startDate": "2025-02-25",
+              "finishDate": "2025-04-07",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Obtain Site & Structural building permit",
+              "status": "not_started",
+              "startDate": "2025-03-11",
+              "finishDate": "2025-03-31",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Light Fixtures",
+              "status": "not_started",
+              "startDate": "2025-03-17",
+              "finishDate": "2025-05-09",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Electrical Gear",
+              "status": "not_started",
+              "startDate": "2025-03-17",
+              "finishDate": "2025-05-09",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "RTUs",
+              "status": "not_started",
+              "startDate": "2025-03-17",
+              "finishDate": "2025-05-09",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Site Grading and Utilities",
+              "status": "not_started",
+              "startDate": "2025-03-25",
+              "finishDate": "2025-10-01",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Install temporary water service/relocate existing if possible",
+              "status": "not_started",
+              "startDate": "2025-04-01",
+              "finishDate": "2025-04-02",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Set line and grade benchmarks",
+              "status": "not_started",
+              "startDate": "2025-04-01",
+              "finishDate": "2025-04-03",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Erosion Control",
+              "status": "complete",
+              "startDate": "2025-04-01",
+              "finishDate": "2025-04-03",
+              "isMilestone": false,
+              "percentComplete": 100
+            },
+            {
+              "name": "Mobilize on Site",
+              "status": "not_started",
+              "startDate": "2025-04-01",
+              "finishDate": "2025-04-29",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Final Structural Design Drawings",
+              "status": "not_started",
+              "startDate": "2025-04-02",
+              "finishDate": "2025-04-10",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "PEMB steel Package",
+              "status": "not_started",
+              "startDate": "2025-04-02",
+              "finishDate": "2025-05-27",
+              "isMilestone": false,
+              "percentComplete": 0
+            },
+            {
+              "name": "Clear and grub site",
+              "status": "complete",
+              "startDate": "2025-04-04",
+              "finishDate": "2025-04-08",
+              "isMilestone": false,
+              "percentComplete": 100
+            },
+            {
+              "name": "Millwork",
+              "status": "not_started",
+              "startDate": "2025-04-07",
+              "finishDate": "2025-05-16",
+              "isMilestone": false,
+              "percentComplete": 0
+            }
+          ],
+          "recentMeetings": [
+            {
+              "date": "2026-05-07T19:00:00+00:00",
+              "title": "FW: Space Coast OTP Review",
+              "keyPoints": "The team discussed strategies for land acquisition and pricing, aiming to negotiate lower costs for parcels, particularly focusing on parcel 33. They highlighted comparable land sales with an average price of $1,019,562 per acre, and noted the need for negotiation flexibility based on parcel qualities. The group plans to explore shared parking to reduce costs and intends to downsize parcel 33 for better financial viability. They also addressed contract terms, including an aggressive 12-month construction commencement clause, and proposed extending the inspection period for better risk management. Strategic partnerships, particularly involving solar technology implementation, were identified as potential avenues for enhancing project appeal and efficiency.",
+              "sourceRef": "[Source: Meeting - \"FW: Space Coast OTP Review\" - 2026-05-07T19:00:00+00:00]",
+              "participants": "{\"rhett.batanides@foundrycommercial.com,bclymer@alleatogroup.com,mike@ibexdevgroup.com,am.gary@foundrycommercial.com,robert@fourmilebrands.com,christa@fourmilebrands.com\",bclymer@alleatogroup.com,mike@ibexdevgroup.com,am.gary@foundrycommercial.com,robert@fourmilebrands.com,christa@fourmilebrands.com}"
+            },
+            {
+              "date": "2026-04-14T15:00:00+00:00",
+              "title": "OAC- Westfield Collective",
+              "keyPoints": "The meeting addressed several key aspects, including ongoing issues with defective sconce lights requiring a formal claim to the vendor for replacements, as all units have been non-functional since December. Additional lighting solutions, such as WAC track lights, were proposed to improve ambiance in the ice cream bar area. Recent landscaping and asphalt repairs, along with elevator maintenance, were confirmed to ensure facility readiness. The grand opening is scheduled for tomorrow at 10 AM, featuring speeches and an Indy car display, which aims to attract marketing attention. The team emphasized efficient communication and managing vendor relations, especially for warranty claims on defective products, while also repurposing stored lighting fixtures to optimize resources and reduce costs",
+              "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-04-14T15:00:00+00:00]",
+              "participants": "{\"acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com\",jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com}"
+            },
+            {
+              "date": "2026-04-13T14:00:00+00:00",
+              "title": "Lessons Learned From Westfield Collective",
+              "keyPoints": "The discussion focused on optimizing bar and vendor areas for enhanced functionality and efficiency. Key proposals included redesigning the bar layout to fix flow issues and improve equipment placement, with emphasis on proper storage solutions. Vendor windows need to be wider for better customer interaction, while electrical planning is necessary to avoid costly changes. Major changes were proposed for cooler placement to consolidate multiple coolers into one large unit, which would streamline operations. The team also addressed beer tap communication issues across floors that need resolution. In addition, there was emphasis on optimizing cooler and trash handling infrastructure, ensuring adequate facilities for operational equipment, and incorporating early planning for electrical and ce",
+              "sourceRef": "[Source: Meeting - \"Lessons Learned From Westfield Collective\" - 2026-04-13T14:00:00+00:00]",
+              "participants": "{\"acannon@alleatogroup.com,mewers@medellasprings.com,bclymer@alleatogroup.com,jdawson@alleatogroup.com,ctragesser@alleatogroup.com,robert@liberty-collective.com,louie@liberty-collective.com,david@liberty-collective.com,fireflies@alleatogroup.com\",mewers@medellasprings.com,bclymer@alleatogroup.com,jdawson@alleatogroup.com,ctragesser@alleatogroup.com,robert@liberty-collective.com,louie@liberty-collective.com,david@liberty-collective.com,fireflies@alleatogroup.com}"
+            },
+            {
+              "date": "2026-04-10T12:30:00+00:00",
+              "title": "PM interview - Trevor Scoles - Indiana",
+              "keyPoints": "The discussion focused on Trevor Scoles, who has extensive experience in student housing construction management and leads a team of six. He has managed various project types in the Southeast U.S., including mixed-use and wood frame podium constructions, with strong skills in construction management software like Procore. Trevor values autonomy in his work and seeks a role that offers steady project workloads and freedom from micromanagement. His compensation expectations prioritize stability and growth potential, particularly performance-based incentives. The conversation highlighted Alito's business model, which aligns with Trevor's preferences, emphasizing negotiated contracts and avoiding bidding wars, while also addressing insights on the student housing market dynamics.",
+              "sourceRef": "[Source: Meeting - \"PM interview - Trevor Scoles - Indiana\" - 2026-04-10T12:30:00+00:00]",
+              "participants": "{\"aortiz@alleatogroup.com,jdawson@alleatogroup.com,fireflies@alleatogroup.com,cash5050@gmail.com\",jdawson@alleatogroup.com,fireflies@alleatogroup.com,cash5050@gmail.com}"
+            },
+            {
+              "date": "2026-04-07T15:00:00+00:00",
+              "title": "OAC- Westfield Collective",
+              "keyPoints": "The construction project is nearing completion with landscaping finishing up and key infrastructure tasks on schedule, including completed installations of CO2 outlets and replacement patio fans. However, minor weather risks could delay final outdoor work, specifically the asphalt walking path, due by Thursday. The city inspection is scheduled for Friday, targeting completed landscaping and lighting compliance. Additionally, issues with lighting ambiance in areas like the bar and ice cream shop were highlighted, with proposed solutions for adjustments. Coordination efforts are being led by Andrew Cannon to ensure timely completion of punch list items and ongoing communication with vendors and city officials as closeout documents are due tomorrow.",
+              "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-04-07T15:00:00+00:00]",
+              "participants": "{\"acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com\",jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com}"
+            },
+            {
+              "date": "2026-03-31T15:00:00+00:00",
+              "title": "OAC- Westfield Collective",
+              "keyPoints": "The meeting addressed various aspects of site progress, emphasizing that grading and landscaping are nearing completion, with final landscaping expected next week, contingent on weather conditions. Electrical installations are actively being coordinated, particularly lighting fixtures and patio fans, with some pending feedback on voltage compatibility. Water management issues are under investigation, specifically focusing on drainage problems and water intrusion points requiring clarification on vendor responsibilities. Project coordination remains strong to ensure that subcontractors align with the overall timeline, with closeout documentation and final deliverables anticipated for the following week. Additionally, the order of necessary equipment is in progress, with tables expected to a",
+              "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-03-31T15:00:00+00:00]",
+              "participants": "{\"acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com\",jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com}"
+            },
+            {
+              "date": "2026-03-24T15:00:00+00:00",
+              "title": "OAC- Westfield Collective",
+              "keyPoints": "Key updates from the meeting include significant progress on major installations like bar islands and door hardware, moving towards final inspection. Fire safety measures, including LED lights and sprinkler heads, have been completed, ensuring compliance. The exterior work is advancing with landscaping expected to resume soon, and critical caulking has resolved previous water issues. Lighting delays were discussed, particularly regarding bulkhead and sconce fixtures, which require urgent supplier follow-up. Adjustments to security features are underway, including lockable doors and signage confirmed until the grand opening. Documentation for warranty and manuals is on track for delivery by Friday, with change orders ready for submission post-meeting.",
+              "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-03-24T15:00:00+00:00]",
+              "participants": "{\"acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com\",jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,tinman@alleatogroup.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,robert@liberty-collective.com,dave@westfield-collective.com}"
+            },
+            {
+              "date": "2026-03-17T15:00:00+00:00",
+              "title": "OAC- Westfield Collective",
+              "keyPoints": "The meeting addressed multiple issues, including significant gaps in inventory tracking, leading to proposed tighter controls and personnel for on-site accountability. A storage strategy was reconsidered due to the absence of indoor volleyball storage, with recommendations for using secured containers and on-site receivers for better handling. Documentation coordination was highlighted as essential to prevent mismatches in materials for future projects. Lighting and electrical challenges were also noted, particularly voltage mismatches and missing components, which require urgent resolution. Despite minor missing parts, door hardware installation is nearly complete, pending final updates. Lastly, the discussion emphasized the urgency of trash removal, hindered by furniture blocking dumpste",
+              "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-03-17T15:00:00+00:00]",
+              "participants": "{\"acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,tinman@alleatogroup.com\",jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,g@damngoodinteriors.com,m@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,bclymer@alleatogroup.com,katie@ibeach31.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,tinman@alleatogroup.com}"
+            },
+            {
+              "date": "2026-03-12T13:00:00+00:00",
+              "title": "Westfield Collective: Outstanding Items and Timeline Discussion",
+              "keyPoints": "⏳ Soft Opening Delay: New target for soft opening is Monday or Tuesday due to unresolved electrical and gas issues.\n⚠️ Gas Regulator Replacement: New regulators are critical for safety and must be installed before health permits can be approved.\n🚰 Plumbing Issues: Ongoing plumbing leaks are under review, with fixes scheduled today for various locations.\n🔌 Staggered Closures for Work: Bars will close in phases during installation, with a limited daytime opening for customer feedback.\n🌧️ Weather Delays Impacting Work: Recent heavy rain has caused ground saturation, delaying landscaping and some exterior work.\n🔒 Secure Site Access: New door cores and locks are being installed to maintain security as construction progresses.",
+              "sourceRef": "[Source: Meeting - \"Westfield Collective: Outstanding Items and Timeline Discussion\" - 2026-03-12T13:00:00+00:00]",
+              "participants": "acannon@alleatogroup.com, mewers@medellasprings.com, robert@liberty-collective.com, dave@westfield-collective.com, ctragesser@alleatogroup.com, tinman@alleatogroup.com, jdawson@alleatogroup.com, mewers@medellasprings.com, robert@liberty-collective.com, dave@westfield-collective.com, ctragesser@alleatogroup.com, tinman@alleatogroup.com, jdawson@alleatogroup.com"
+            },
+            {
+              "date": "2026-03-10T15:00:00+00:00",
+              "title": "OAC- Westfield Collective",
+              "keyPoints": "The team is finalizing interior finishes this week, with painting and tile work nearly complete. Interior details are being wrapped up, including the assembly of owner-provided antler lights. Landscaping has been postponed until April due to significant rainfall, which has caused site delays. A temporary certificate of occupancy has been obtained, but final health inspections are pending as some essential equipment has not yet arrived. The team is closely managing material deliveries, and ongoing communication ensures issues are being addressed promptly. Regular updates and coordination calls are helping the team stay aligned as they prepare for a photoshoot after landscaping is completed, which will aid in marketing efforts for the project launch.",
+              "sourceRef": "[Source: Meeting - \"OAC- Westfield Collective\" - 2026-03-10T15:00:00+00:00]",
+              "participants": "{\"acannon@alleatogroup.com,jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,bclymer@alleatogroup.com,katie@ibeach31.com,g@damngoodinteriors.com,m@damngoodinteriors.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,dave@westfield-collective.com,robert@liberty-collective.com\",jdawson@alleatogroup.com,mewers@medellasprings.com,e@damngoodinteriors.com,tim.stuever@pourmybeer.com,fireflies@alleatogroup.com,nick@pourmybev.com,katie@ibeachvolleyball.com,bclymer@alleatogroup.com,katie@ibeach31.com,g@damngoodinteriors.com,m@damngoodinteriors.com,nick@pourmybeer.com,ctragesser@alleatogroup.com,gdesmit@studioaxis.com,dave@westfield-collective.com,robert@liberty-collective.com}"
+            }
+          ]
+        },
+        "timestamp": "2026-05-14T13:26:32.190Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": null,
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": {
+      "alerts": [
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: crusin@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:crusin@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "teams_chat_export",
+          "message": "Teams DM export: accounting@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "user:accounting@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: njepson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "njepson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: mparsons@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "mparsons@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: jdawson@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "jdawson@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: ctragesser@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "ctragesser@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: crusin@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "crusin@alleatogroup.com"
+        },
+        {
+          "code": "source_sync_critical",
+          "source": "outlook_email",
+          "message": "Outlook: awehner@alleatogroup.com is critical.",
+          "severity": "critical",
+          "resourceId": "awehner@alleatogroup.com"
+        }
+      ],
+      "counts": {
+        "sources": 30,
+        "uncompiled": 10204,
+        "unembedded": 819,
+        "warningSources": 0,
+        "criticalSources": 30,
+        "failedSubscriptions": 0,
+        "expiringSubscriptions": 0
+      },
+      "reason": "source_status_request",
+      "sources": [
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-14T05:40:17.479335+00:00",
+          "resourceId": "user:crusin@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: crusin@alleatogroup.com",
+          "staleMinutes": 455,
+          "lastSuccessAt": "2026-05-14T05:40:17.479335+00:00",
+          "uncompiledCount": 937,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "teams_chat_export",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-14T06:40:45.750041+00:00",
+          "resourceId": "user:accounting@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Teams DM export: accounting@alleatogroup.com",
+          "staleMinutes": 395,
+          "lastSuccessAt": "2026-05-14T06:40:45.750041+00:00",
+          "uncompiledCount": 937,
+          "unembeddedCount": 138
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:18:26.236054+00:00",
+          "resourceId": "njepson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: njepson@alleatogroup.com",
+          "staleMinutes": 20157,
+          "lastSuccessAt": "2026-04-30T13:18:26.236054+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:17:26.059792+00:00",
+          "resourceId": "mparsons@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: mparsons@alleatogroup.com",
+          "staleMinutes": 20158,
+          "lastSuccessAt": "2026-04-30T13:17:26.059792+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:16:47.638567+00:00",
+          "resourceId": "jdawson@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: jdawson@alleatogroup.com",
+          "staleMinutes": 20159,
+          "lastSuccessAt": "2026-04-30T13:16:47.638567+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-11T17:59:55.565315+00:00",
+          "resourceId": "ctragesser@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: ctragesser@alleatogroup.com",
+          "staleMinutes": 4036,
+          "lastSuccessAt": "2026-05-11T17:59:55.565315+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:31.9504+00:00",
+          "resourceId": "crusin@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: crusin@alleatogroup.com",
+          "staleMinutes": 20160,
+          "lastSuccessAt": "2026-04-30T13:15:31.9504+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:14:54.929899+00:00",
+          "resourceId": "awehner@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: awehner@alleatogroup.com",
+          "staleMinutes": 20161,
+          "lastSuccessAt": "2026-04-30T13:14:54.929899+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-04-30T13:15:48.711515+00:00",
+          "resourceId": "accounting@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: accounting@alleatogroup.com",
+          "staleMinutes": 20160,
+          "lastSuccessAt": "2026-04-30T13:15:48.711515+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T18:14:44.817404+00:00",
+          "resourceId": "acannon@alleatogroup.com",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: acannon@alleatogroup.com",
+          "staleMinutes": 1141,
+          "lastSuccessAt": "2026-05-13T18:14:44.817404+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T20:06:20.616839+00:00",
+          "resourceId": "38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+          "lastErrorAt": null,
+          "resourceName": "Outlook: 38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+          "staleMinutes": 1029,
+          "lastSuccessAt": "2026-05-13T20:06:20.616839+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        },
+        {
+          "source": "outlook_email",
+          "status": "critical",
+          "hasError": false,
+          "lastSyncAt": "2026-05-13T00:00:00+00:00",
+          "resourceId": "document_metadata",
+          "lastErrorAt": null,
+          "resourceName": "Outlook email",
+          "staleMinutes": 2235,
+          "lastSuccessAt": "2026-05-13T00:00:00+00:00",
+          "uncompiledCount": 88,
+          "unembeddedCount": 4
+        }
+      ],
+      "generatedAt": "2026-05-14T13:26:04.767Z",
+      "missingStage": "embedding_backlog",
+      "overallStatus": "degraded"
+    },
+    "learning_usage": null,
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 4823,
+          "finishReason": "tool-calls",
+          "outputTokens": 27,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "getProjectDetails"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 10593,
+          "finishReason": "stop",
+          "outputTokens": 911,
+          "warningCount": 0,
+          "toolCallCount": 0,
+          "toolCallNames": []
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getPortfolioOverview",
+            "getProjectsWithRisks",
+            "getProjectBriefingSnapshot",
+            "getActionItemsAndInsights",
+            "getProjectDetails",
+            "findProject",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"auto\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "getPortfolioOverview",
+            "getProjectsWithRisks",
+            "getProjectBriefingSnapshot",
+            "getActionItemsAndInsights",
+            "getProjectDetails",
+            "findProject",
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ]
+        }
+      ],
+      "totalStepCount": 2,
+      "finalFinishReason": "stop",
+      "preparedStepCount": 2,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 1
+    },
+    "response_quality": {
+      "score": 83,
+      "reasons": [
+        "compiled intelligence packet with multiple evidence cards",
+        "single source citation"
+      ],
+      "confidence": "high",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

@@ -1,0 +1,3101 @@
+{
+  "suite": "app-expert-eval-suite",
+  "endpoint": "http://127.0.0.1:8000/api/intelligence/app-expert",
+  "total": 50,
+  "passed": 50,
+  "failed": 0,
+  "results": [
+    {
+      "id": "appnav-change-events-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 13168,
+      "question": "Where do I create a change event for a project?",
+      "response": {
+        "answer": "Create it in the project’s Change Events area:\n\n- Route: `/[projectId]/change-events`\n- Create route: `/[projectId]/change-events/new`\n- Help article: `docs/help/articles/change-events.md`\n\nDocumented workflow says:\n1. Select the project.\n2. Open **Change Events** from the sidebar.\n3. Select **Create Change Event**.\n4. Enter title, description, type, originator, date, then add line items and attachments.\n5. Save.\n\nWhat I checked:\n- App artifact status: both sitemap and feature registry are current and available.\n- Feature registry entry: **Change Events** points to `docs/help/articles/change-events.md`.\n- Help article confirms creation steps and the project-scoped route.\n- Route discovery also shows implementation-backed page at `frontend/src/app/(main)/[projectId]/change-events/new/page.tsx`.\n\nIf you want, I can also tell you where the change event details page and edit page live.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/change-events",
+            "sourceType": "sitemap",
+            "route": "/change-events",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/change-events/new",
+            "sourceType": "sitemap",
+            "route": "/change-events/new",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/change-events.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/change-events.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/change-events/new/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/change-events/new/page.tsx",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 13143,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-rfis-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 5213,
+      "question": "Where do RFIs live in the app?",
+      "response": {
+        "answer": "RFIs live in the project area.\n\nWhat I checked:\n- Feature registry: `docs/help/articles/rfis.md` is the documented source for RFIs.\n- App sitemap: project routes exist at:\n  - `/[projectId]/rfis` — RFIs list page\n  - `/[projectId]/rfis/new` — create RFI page\n  - `/[projectId]/rfis/[rfiId]` — individual RFI page\n- Help article: `docs/help/articles/rfis.md`\n\nDocumented behavior:\n- Open **RFIs** from the project sidebar to see the RFI log.\n- Each RFI has assignee, due date, question, answer, status, and ball-in-court.\n- You create RFIs from the project context, not a global route.\n\nImplementation evidence:\n- The sitemap confirms the page files:\n  - `frontend/src/app/(main)/[projectId]/rfis/page.tsx`\n  - `frontend/src/app/(main)/[projectId]/rfis/new/page.tsx`\n  - `frontend/src/app/(main)/[projectId]/rfis/[rfiId]/page.tsx`\n\nSo the concise answer is: RFIs live under `/[projectId]/rfis` in each project.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/rfis.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/rfis.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/rfis",
+            "sourceType": "sitemap",
+            "route": "/rfis",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/rfis/new",
+            "sourceType": "sitemap",
+            "route": "/rfis/new",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/rfis/[rfiId]",
+            "sourceType": "sitemap",
+            "route": "/rfis/[rfiId]",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/rfis/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/rfis/page.tsx",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/rfis/new/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/rfis/new/page.tsx",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/rfis/[rfiId]/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/rfis/[rfiId]/page.tsx",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 5203,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-submittals-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4737,
+      "question": "Which page owns submittals?",
+      "response": {
+        "answer": "The app’s **submittals page is owned by**:\n\n- **Route:** `/[projectId]/submittals`\n- **Source file:** `frontend/src/app/(main)/[projectId]/submittals/page.tsx`\n- **Feature registry entry:** **Submittals** (`id: submittals`)\n- **Help article:** `docs/help/articles/submittals.md`\n\nWhat I checked:\n- App artifact status: **fresh and available**\n- Feature registry: found a documented **Submittals** feature\n- App sitemap: confirmed the route ownership\n\nRelevant related routes:\n- `/[projectId]/submittals/new` — create form\n- `/[projectId]/submittals/[submittalId]` — submittal detail page\n- `/[projectId]/submittals/[submittalId]/edit` — edit form\n\nIf you meant a different “owns” question, such as **which page links to submittals from another workflow**, say which route you’re on and I can trace that exact ownership path.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/submittals",
+            "sourceType": "sitemap",
+            "route": "/submittals",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/submittals/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/submittals/page.tsx",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/submittals.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/submittals.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/submittals/new",
+            "sourceType": "sitemap",
+            "route": "/submittals/new",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/submittals/[submittalId]",
+            "sourceType": "sitemap",
+            "route": "/submittals/[submittalId]",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/submittals/[submittalId]/edit",
+            "sourceType": "sitemap",
+            "route": "/submittals/[submittalId]/edit",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4732,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-budget-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 6348,
+      "question": "Where should I go to review project budget line items?",
+      "response": {
+        "answer": "Go to the project Budget page:\n\n- Route: `/[projectId]/budget`\n- Page title: `Budget`\n\nThat’s the documented place to review budget line items. The feature registry entry for **Budget Line Items** points to this page and says it supports adding/editing/modifying budget line items.\n\nWhat I checked:\n- App artifact status: current and available\n- Feature registry: `Budget Line Items` → `/[projectId]/budget`\n- App sitemap: `Budget` page at `frontend/src/app/(main)/[projectId]/budget/page.tsx`\n\nUncertainty:\n- The curated help article path in the registry (`docs/help/articles/budget-line-items.md`) was not found in the filesystem via direct read or glob, so I can’t quote help-text details from it. The route evidence is still clear.\n\nIf you want, I can also point you to the related setup page:\n- `/[projectId]/budget/setup`",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/budget",
+            "sourceType": "sitemap",
+            "route": "/budget",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/editing/modifying",
+            "sourceType": "sitemap",
+            "route": "/editing/modifying",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/budget/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/budget/page.tsx",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/budget-line-items.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/budget-line-items.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/budget/setup",
+            "sourceType": "sitemap",
+            "route": "/budget/setup",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 6337,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-prime-contracts-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 13826,
+      "question": "Where do owner prime contracts live?",
+      "response": {
+        "answer": "Owner prime contracts live at:\n\n- Route: `/[projectId]/prime-contracts`\n- Help article: `docs/help/articles/prime-contracts.md`\n- Source route file: `frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx`\n\nChecked evidence:\n- Feature registry entry `prime-contracts` is documented and points to the help article above.\n- The help article says: “Open **Prime Contracts** from the sidebar” after selecting a project.\n- It also says the prime contract is the owner’s contract with the contractor.\n\nIf you meant a different “owner prime contracts” area, I don’t see any separate owner-specific route beyond the documented Prime Contracts page.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/prime-contracts",
+            "sourceType": "sitemap",
+            "route": "/prime-contracts",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/prime-contracts.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/prime-contracts.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/prime-contracts/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/prime-contracts/page.tsx",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 13821,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-commitments-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 8011,
+      "question": "Where are subcontract commitments managed?",
+      "response": {
+        "answer": "Subcontract commitments are managed in **Commitments**.\n\n- **Route:** `/[projectId]/commitments`\n- **Help article:** `docs/help/articles/commitments.md`\n\nDocumented behavior says this is where you manage **subcontracts and purchase orders** for a project. The article also says each commitment has a vendor, SOV, change orders, and invoices.\n\nRelevant documented actions:\n- Open **Commitments** from the sidebar\n- Create **Subcontract** or **Purchase Order**\n- Manage **Schedule of Values**\n- Create **Commitment Change Orders**\n\nIf you want, I can also summarize the related **commitment detail** and **change order** routes that were found in implementation evidence.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/commitments",
+            "sourceType": "sitemap",
+            "route": "/commitments",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/commitments.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/commitments.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 8009,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-documents-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 5700,
+      "question": "Where do I find project documents?",
+      "response": {
+        "answer": "Project documents are in the **Documents** area for a project:\n\n- **Route:** `/[projectId]/documents`\n- **Help article:** `docs/help/articles/documents.md`\n\nFrom the documented workflow:\n1. Select the project.\n2. Open **Documents** from the sidebar.\n3. Browse folders or use search.\n\nWhat it contains:\n- contracts\n- reports\n- photos\n- meeting minutes\n- owner correspondence\n- other non-drawing, non-specification files\n\nIf you meant the global table-style page, there is also a route-discovered **Project Documents** page at:\n- **Route:** `/project-documents`\n- **Source:** `frontend/src/app/(tables)/project-documents/page.tsx`\n\nThat global page has route evidence only; it has no linked help article, so the documented user-facing location is `/[projectId]/documents`.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/documents",
+            "sourceType": "sitemap",
+            "route": "/documents",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/documents.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/documents.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(tables)/project-documents/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(tables)/project-documents/page.tsx",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 5696,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-drawings-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 5423,
+      "question": "Where are drawings viewed?",
+      "response": {
+        "answer": "Drawings are viewed in the **Drawing Viewer** at:\n\n- `/[projectId]/drawings`\n- implementation-backed viewer pages also exist at:\n  - `/[projectId]/drawings/[drawingId]`\n  - `/[projectId]/drawings/viewer/[drawingId]`\n  - `/[projectId]/drawings/viewer-v2/[drawingId]`\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are current and available.\n- Feature registry:\n  - **Drawing Viewer and Annotations** → help article `docs/help/articles/drawings-viewer.md`\n  - **Drawings** → help article `docs/help/articles/drawings.md`\n- Help article `docs/help/articles/drawings-viewer.md` says:\n  - “Open **Drawings**.”\n  - “Select a drawing from the log.”\n  - “The viewer opens to the current revision.”\n  - It is a full-screen PDF viewer with annotation, measurement, and pin tools.\n\nSo the documented user-facing answer is: **open Drawings, then select a drawing from the log to view it in the full-screen PDF viewer**.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/drawings",
+            "sourceType": "sitemap",
+            "route": "/drawings",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/drawings/[drawingId]",
+            "sourceType": "sitemap",
+            "route": "/drawings/[drawingId]",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/drawings/viewer/[drawingId]",
+            "sourceType": "sitemap",
+            "route": "/drawings/viewer/[drawingId]",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/drawings/viewer-v2/[drawingId]",
+            "sourceType": "sitemap",
+            "route": "/drawings/viewer-v2/[drawingId]",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/drawings-viewer.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/drawings-viewer.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/drawings.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/drawings.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 5417,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-project-directory-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4971,
+      "question": "Where do I manage project team contacts?",
+      "response": {
+        "answer": "Manage project team contacts in the project-scoped **Directory** page:\n\n- Route: `/[projectId]/directory`\n- Help article: `docs/help/articles/project-directory.md`\n\nWhat the docs say:\n- The **Project Directory** is the roster for people and companies involved in a specific project.\n- Open it by selecting the project, then choosing **Directory** from the sidebar.\n- It has **People** and **Companies** tabs.\n- You can add people, assign project roles, and optionally grant project access.\n\nChecked:\n- Artifact status: current and available\n- Feature registry: `project-directory` → help article `docs/help/articles/project-directory.md`\n- Sitemap: route `/[projectId]/directory`\n\nIf you want, I can also tell you how this differs from the global **Company Directory** at `/directory`.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/directory",
+            "sourceType": "sitemap",
+            "route": "/directory",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/project-directory.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/project-directory.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4967,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "appnav-company-directory-location",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 9972,
+      "question": "Where do company records live outside a project?",
+      "response": {
+        "answer": "Company records live in the global **Directory**, not inside a project.\n\nEvidence checked:\n- Feature registry: **Company Directory** → route **`/directory`**\n- Help article: **`docs/help/articles/company-directory.md`**\n\nDocumented behavior from the help article:\n- The Company Directory is the **global roster** of companies and contacts.\n- It is **shared across all projects**.\n- You open it from the **main sidebar** (not project-scoped).\n- Record types there include **Companies, Clients, Contacts, Vendors, Prospects, Distribution Groups, and Employees**.\n\nSo if you mean “where do company records live outside a project?”, the answer is: **in the global Directory at `/directory`**.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/company-directory.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/company-directory.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 9969,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-create-project",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 3837,
+      "question": "How do I start a new project?",
+      "response": {
+        "answer": "The app exposes a global **Create Project** page at:\n\n- Route: `/create-project`\n- Source file: `frontend/src/app/(main)/create-project/page.tsx`\n\nWhat I checked:\n- App Expert artifact status: current and available\n- Feature registry searches for:\n  - `start new project`\n  - `new project`\n  - `project create`\n\nWhat’s documented:\n- The feature registry has a route-discovered entry for **Create Project**\n- It does **not** link to a help article, so I can’t confirm any richer documented workflow beyond the route itself\n\nWhat remains uncertain:\n- The exact step-by-step behavior on that page, because no curated help article is attached\n- Whether project creation requires any permissions or special fields, since that’s not documented in the registry result\n\nIf you want, I can next inspect the route metadata or implementation evidence for `/create-project` to describe the actual form/workflow.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/src/app/(main)/create-project/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/create-project/page.tsx",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/workflow.",
+            "sourceType": "sitemap",
+            "route": "/workflow.",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 3835,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-budget-line-items",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 10838,
+      "question": "How should budget line items work?",
+      "response": {
+        "answer": "Budget line items are documented as the base unit of the Budget tool, and they work as follows:\n\n- A line item is one budget row tied to a **Cost Code** and **Cost Type**.\n- Each line item can also have a **Description**, **Original Budget**, and forecast settings.\n- You add them from the project **Budget** page, then choose the cost code and cost type, enter the budget amount, and save.\n\nDocumented behavior from the help article:\n\n- **Add**: open **Budget** → **Add Line Item** → choose cost code + cost type → enter description and original budget → save.\n- **Edit**: click the row and update description, quantity, unit cost, or original budget.\n- **Modifications**: use a budget modification when money should move between line items without changing contract value.\n- **Forecast**: each line item can be auto-calculated or manually overridden.\n\nWhat the docs say about identification and structure:\n\n- A budget line is uniquely keyed by:\n  - **Cost Code**\n  - **Cost Type**\n  - **Sub Job** (optional)\n- Two lines can share a cost code if cost type or sub job differs.\n\nRelevant documented routes and articles:\n- Route: `\"/[projectId]/budget\"`\n- Help article: `docs/help/articles/budget-line-items.md`\n- Supporting references:\n  - `docs/help/articles/budget-overview.md`\n  - `docs/help/articles/budget-reference.md`\n\nWhat remains uncertain:\n- The help article describes the intended workflow, but I did not verify the live page UI beyond route metadata.\n- The route `\"/[projectId]/budget/line-item/new\"` exists in implementation evidence, but it has no curated help article, so I can’t claim its exact UI behavior beyond being a discovered new-item form route.\n\nOne important note:\n- The budget overview says editing values and changing forecast methods requires **Budget Write** or **Admin** permission.\n\nIf you want, I can also break down the budget columns themselves — original budget, approved changes, committed, actual, forecast, and variance — from the reference article.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/[projectId]/budget",
+            "sourceType": "sitemap",
+            "route": "/[projectId]/budget",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/budget-line-items.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/budget-line-items.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/budget-overview.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/budget-overview.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/budget-reference.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/budget-reference.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/[projectId]/budget/line-item/new",
+            "sourceType": "sitemap",
+            "route": "/[projectId]/budget/line-item/new",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 10835,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-change-management-lifecycle",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 7106,
+      "question": "Explain the change management lifecycle in the app.",
+      "response": {
+        "answer": "Here’s the documented lifecycle I found for change management in the app, based on the closest curated feature/help evidence.\n\nWhat I checked\n- Artifact status: current and available\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry:\n  - `Change Management` at route `/[projectId]/change-management` is only route-discovered; no help article is linked.\n  - `Change Events` is documented and links to help article `docs/help/articles/change-events.md`.\n- Help article read:\n  - `docs/help/articles/change-events.md`\n\nWhat is documented\n- The app’s change-management flow is centered on **Change Events**.\n- Change Events are used to capture potential project scope, schedule, or cost changes before they become approved change orders.\n- The status lifecycle is:\n  1. **Open** — newly created, no pricing or decision yet\n  2. **Pending** — pricing collected, awaiting internal review\n  3. **In Review** — under owner or design team review\n  4. **Approved** — owner approved; ready to roll into a change order\n  5. **Rejected** — declined or withdrawn\n  6. **Void** — cancelled with no impact\n- Documented actions in the workflow:\n  - Create a change event with title, description, type, originator, date\n  - Add cost line items by cost code/cost type\n  - Attach supporting documents\n  - Optionally link pricing lines to a vendor or commitment\n  - Convert an approved change event into a **Change Order**\n\nExact routes / docs\n- Route discovered for the page:\n  - `/[projectId]/change-management`\n  - source file: `frontend/src/app/(main)/[projectId]/change-management/page.tsx`\n- Documented related route:\n  - `/[projectId]/change-events`\n  - help article: `docs/help/articles/change-events.md`\n\nWhat remains uncertain\n- The specific behavior of the `Change Management` page itself is not documented yet.\n- I could not confirm whether `/[projectId]/change-management` is just a wrapper, dashboard, or workflow hub because there is no linked help article and the route is only route-discovered.\n- I also could not verify any write actions or permissions for change-management beyond what the `Change Events` article documents.\n\nIf you want, I can next inspect the implementation of `frontend/src/app/(main)/[projectId]/change-management/page.tsx` to give you implementation evidence for that page specifically.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help",
+            "sourceType": "sitemap",
+            "route": "/help",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/change-management",
+            "sourceType": "sitemap",
+            "route": "/change-management",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/change-events.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/change-events.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/cost",
+            "sourceType": "sitemap",
+            "route": "/cost",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/change-management/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/change-management/page.tsx",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/change-events",
+            "sourceType": "sitemap",
+            "route": "/change-events",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 7102,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-rfi-create",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 6962,
+      "question": "Can the app help create an RFI?",
+      "response": {
+        "answer": "Yes — the app can help create an RFI.\n\nEvidence checked:\n- Feature registry: `ai-assistant-actions` (`docs/help/articles/ai-assistant-actions.md`)\n- Help article: `docs/help/articles/ai-assistant-actions.md`\n- RFI feature docs: `docs/help/articles/rfis.md`\n- Relevant routes:\n  - `/ai-assistant`\n  - `/[projectId]/rfis`\n  - `/[projectId]/rfis/new`\n\nDocumented behavior:\n- Ask Alleato can create records directly from chat.\n- “Create RFI” is explicitly listed as an available write action.\n- It requires confirmation before execution: the assistant shows a preview card, then waits for `confirm` or Cancel.\n- The help article says the created RFI includes subject, question, ball-in-court, and due date.\n\nUncertainty:\n- I did not inspect `docs/help/articles/rfis.md`, so I’m only confirming the AI-assistant write capability and the existence of RFI routes, not the full RFI workflow beyond what the action article states.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/ai-assistant-actions.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/ai-assistant-actions.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/rfis.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/rfis.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/rfis",
+            "sourceType": "sitemap",
+            "route": "/rfis",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/rfis/new",
+            "sourceType": "sitemap",
+            "route": "/rfis/new",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 6955,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-submittal-review",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 5961,
+      "question": "What should I check on the submittals page?",
+      "response": {
+        "answer": "Check the project’s **Submittals** page at:\n\n- **Route:** `/[projectId]/submittals`\n- **Help article:** `docs/help/articles/submittals.md`\n\nWhat the page is for, per the help article:\n- It’s the submittal log for shop drawings, product data sheets, samples, and similar documents.\n- The log shows:\n  - number and revision\n  - spec section and title\n  - type\n  - responsible contractor\n  - submittal coordinator\n  - reviewer\n  - status and due dates\n\nWhat to check there:\n- Whether each submittal has the correct **title**, **spec section**, and **type**\n- The assigned **responsible contractor**\n- The assigned **submittal coordinator**\n- The assigned **reviewer**\n- The current **status**\n- Any **due dates** or overdue items\n- The **revision** number if it has been resubmitted\n\nWorkflow/status behavior documented:\n- Standard review flow:\n  1. **Submittal Coordinator Review**\n  2. **Design Review**\n- Possible design review outcomes:\n  - Approved (No Exceptions Taken)\n  - Approved as Noted\n  - Revise and Resubmit\n  - Rejected\n  - For Information Only\n- If a submittal is **Revise and Resubmit**, a new revision is uploaded and the workflow restarts.\n\nImplementation evidence:\n- The page is backed by `frontend/src/app/(main)/[projectId]/submittals/page.tsx`\n- A submittal detail route also exists: `/[projectId]/submittals/[submittalId]`\n- A create form exists: `/[projectId]/submittals/new`\n- An edit form exists: `/[projectId]/submittals/[submittalId]/edit`\n\nIf you want, I can also tell you what to check on the **submittal detail page** specifically.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/submittals",
+            "sourceType": "sitemap",
+            "route": "/submittals",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/submittals.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/submittals.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/submittals/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/submittals/page.tsx",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/submittals/[submittalId]",
+            "sourceType": "sitemap",
+            "route": "/submittals/[submittalId]",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/submittals/new",
+            "sourceType": "sitemap",
+            "route": "/submittals/new",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/submittals/[submittalId]/edit",
+            "sourceType": "sitemap",
+            "route": "/submittals/[submittalId]/edit",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 5947,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-prime-contract-sov",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 8323,
+      "question": "Where does schedule of values fit into prime contracts?",
+      "response": {
+        "answer": "Schedule of values fits into **Prime Contracts** as the owner-facing billing SOV.\n\nWhat I checked:\n- Artifact status: both generated artifacts are present and current:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry:\n  - **Prime Contracts**: “Manage the owner contract, schedule of values, and prime contract modifications.”\n  - **Estimates**: “Build quantity takeoff estimates in Alleato, then import them directly into a prime contract schedule of values.”\n  - **Commitments**: also mentions SOV, but for subcontracts/purchase orders, not the owner prime contract.\n- Help articles:\n  - `docs/help/articles/prime-contracts.md`\n  - `docs/help/articles/estimates.md`\n  - `docs/help/articles/commitments.md`\n\nDocumented behavior:\n- In `docs/help/articles/prime-contracts.md`, the Prime Contract **SOV is what owner pay applications bill against**.\n- The SOV is edited under the **Schedule of Values** tab on route:\n  - `/[projectId]/prime-contracts`\n- Estimates can be imported into the prime contract SOV from:\n  - `/[projectId]/estimates`\n  - `/[projectId]/estimates/[estimateId]`\n- Commitments have their own SOV for subcontractors/POs, on route:\n  - `/[projectId]/commitments`\n\nShort answer:\n- **Prime Contracts is where the project’s owner contract SOV lives.**\n- **Estimates can feed that SOV.**\n- **Commitments use a separate SOV for subcontract/PO billing.**\n\nIf you want, I can also map the full SOV workflow across Prime Contracts, Estimates, Invoicing, and Commitments.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/purchase",
+            "sourceType": "sitemap",
+            "route": "/purchase",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/prime-contracts.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/prime-contracts.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/estimates.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/estimates.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/commitments.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/commitments.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/prime-contracts",
+            "sourceType": "sitemap",
+            "route": "/prime-contracts",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/estimates",
+            "sourceType": "sitemap",
+            "route": "/estimates",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/estimates/[estimateId]",
+            "sourceType": "sitemap",
+            "route": "/estimates/[estimateId]",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/POs,",
+            "sourceType": "sitemap",
+            "route": "/POs,",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/commitments",
+            "sourceType": "sitemap",
+            "route": "/commitments",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/PO",
+            "sourceType": "sitemap",
+            "route": "/PO",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 8320,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-commitment-sov",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 12217,
+      "question": "Where does a subcontractor SOV belong?",
+      "response": {
+        "answer": "A subcontractor SOV belongs on the subcontractor’s **Commitment**.\n\nWhat the docs say:\n- The **Commitments** tool is where the project’s subcontracts and purchase orders live, and each commitment has its own SOV: `docs/help/articles/commitments.md`\n- The subcontractor invoice/pay application is submitted **against the SOV on that commitment**: `docs/help/articles/submit-invoice.md`\n\nRelevant routes:\n- Commitments: `/[projectId]/commitments`\n- Subcontractor invoice submission: `/[projectId]/invoicing/subcontractor/new`\n- Subcontractor portal: `/[projectId]/my-work`\n\nSo the documented behavior is:\n- **Set up the subcontractor SOV in Commitments**\n- **Subcontractors bill against that SOV through My Work or Invoicing**\n\nWhat I checked:\n- Artifact status: both generated artifacts are available and fresh\n- Feature registry entries for SOV-related areas\n- Help articles:\n  - `docs/help/articles/commitments.md`\n  - `docs/help/articles/submit-invoice.md`\n\nIf you want, I can also check whether there is a dedicated SOV page or whether SOV is embedded inside the Commitment detail/edit screens.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/commitments.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/commitments.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/pay",
+            "sourceType": "sitemap",
+            "route": "/pay",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/submit-invoice.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/submit-invoice.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/commitments",
+            "sourceType": "sitemap",
+            "route": "/commitments",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/invoicing/subcontractor/new",
+            "sourceType": "sitemap",
+            "route": "/invoicing/subcontractor/new",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/my-work",
+            "sourceType": "sitemap",
+            "route": "/my-work",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/edit",
+            "sourceType": "sitemap",
+            "route": "/edit",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 12215,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-invoicing-owner",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 7727,
+      "question": "Where do owner invoices belong?",
+      "response": {
+        "answer": "Owner invoices belong in **Invoicing**.\n\nEvidence:\n- Curated help article: `docs/help/articles/invoicing.md`\n- It says: “Use the tabs to switch between **Owner Invoices** and **Subcontractor Invoices**.”\n- It also says owner invoices are “pay applications submitted to the owner against the prime contract SOV.”\n\nRelevant route:\n- `\"/[projectId]/invoicing\"` — documented in the feature registry and linked from the help article.\n\nImplementation evidence:\n- A route also exists at `\"/[projectId]/invoices/owner/new\"` from `frontend/src/app/(main)/[projectId]/invoices/owner/new/page.tsx`, which appears to be the create flow for an owner invoice.\n\nSo the user-facing place is **Invoicing → Owner Invoices**; the create route is `\"/[projectId]/invoices/owner/new\"`.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/invoicing.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/invoicing.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/[projectId]/invoicing",
+            "sourceType": "sitemap",
+            "route": "/[projectId]/invoicing",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/[projectId]/invoices/owner/new",
+            "sourceType": "sitemap",
+            "route": "/[projectId]/invoices/owner/new",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/invoices/owner/new/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/invoices/owner/new/page.tsx",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 7725,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-direct-costs",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4975,
+      "question": "What are direct costs for in the app?",
+      "response": {
+        "answer": "Direct costs are for project costs that are not tied to a subcontract or purchase order.\n\nWhat they’re used for:\n- In-house labor\n- Small material purchases\n- Equipment\n- Mileage\n- Other reimbursable items\n\nWhat the app says:\n- Open **Direct Costs** from the sidebar\n- Create a direct cost with:\n  - Type: labor, material, equipment, expense, other\n  - Date\n  - Vendor optional\n  - Cost Code\n  - Amount\n  - Description and receipts/backup\n- Statuses: Draft, Submitted, Approved, Rejected\n- Approved direct costs roll up to the project budget by cost code and appear in the budget **Actual** column\n\nEvidence checked:\n- Feature registry entry: **Direct Costs**\n- Help article: `docs/help/articles/direct-costs.md`\n- Related route: `/[projectId]/direct-costs`\n\nIf you want, I can also check the direct-costs page route structure or explain how it differs from budget and commitments.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/backup",
+            "sourceType": "sitemap",
+            "route": "/backup",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/direct-costs.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/direct-costs.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/direct-costs",
+            "sourceType": "sitemap",
+            "route": "/direct-costs",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4971,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "workflow-schedule",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 5644,
+      "question": "Where do schedule tasks live?",
+      "response": {
+        "answer": "Schedule tasks live in the project-level Schedule tool:\n\n- Route: `/[projectId]/schedule`\n- Help article: `docs/help/articles/schedule.md`\n\nThe curated help says the Schedule tool “tracks every task, milestone, and dependency on the project” and supports Grid/Table, Board/Kanban, Gantt, Timeline, and Calendar views. It also says you open it from the project sidebar after selecting a project.\n\nChecked:\n- Feature registry: `schedule` feature, documented, linked to `docs/help/articles/schedule.md`\n- App sitemap: route `frontend/src/app/(main)/[projectId]/schedule/page.tsx` → `/[projectId]/schedule`\n\nIf you meant AI-created schedule tasks specifically, the app also has AI assistant actions docs, but I did not see a separate schedule-task action entry in the registry.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/schedule",
+            "sourceType": "sitemap",
+            "route": "/schedule",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/schedule.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/schedule.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/Table,",
+            "sourceType": "sitemap",
+            "route": "/Table,",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/Kanban,",
+            "sourceType": "sitemap",
+            "route": "/Kanban,",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/schedule/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/schedule/page.tsx",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 5641,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-hidden-page",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 6728,
+      "question": "Why might I not see a project page?",
+      "response": {
+        "answer": "You might not see a project page for a few documented reasons:\n\n- Project pages are **project-scoped** and require a project ID in the route.\n- If no project ID is supplied, there may be no valid project context to load.\n- The app’s navigation docs say project-scoped pages are for work tied to a single project, and the home route is ` /[projectId]/home `.\n\nWhat I checked:\n- Artifact status: both generated artifacts are available and fresh.\n- Curated help article: `docs/help/articles/app-navigation-and-feature-map.md`\n- Route lookup: ` /[projectId]/home `\n\nDocumented behavior:\n- Project pages require a project ID.\n- Global pages are separate from project-scoped pages.\n- The project home page exists at ` /[projectId]/home ` and is the per-project dashboard.\n\nWhat remains uncertain:\n- Whether you are missing the page because you are on the wrong route, lack permission, or the project doesn’t exist is not stated in the curated docs I checked.\n\nIf you want, I can look up a specific project page route next, such as budget, commitments, documents, or change events.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/[projectId]/home",
+            "sourceType": "sitemap",
+            "route": "/[projectId]/home",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/app-navigation-and-feature-map.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-navigation-and-feature-map.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 6723,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-admin-page",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 7140,
+      "question": "How should the assistant explain admin-only pages?",
+      "response": {
+        "answer": "Explain it as a permissions and visibility issue, not as a guaranteed feature the user can access.\n\nWhat’s documented:\n- The help article says pages may be hidden because:\n  - the user is not assigned to the project,\n  - the page is admin-only,\n  - the action needs stronger permission,\n  - the record is private or employee-sensitive,\n  - the source system has not synced the record yet.\n- It also says Ask Alleato should check route scope, role rules, project membership assumptions, and related help docs, and if exact access can’t be verified, say so clearly.\n\nEvidence checked:\n- Help article: `docs/help/articles/app-permissions-and-visibility.md`\n- Feature metadata found project/admin routes such as:\n  - `/[projectId]/admin` from `frontend/src/app/(main)/[projectId]/admin/page.tsx`\n  - `/admin` and other admin routes from route discovery\n- Artifact status was current for both sitemap and feature registry.\n\nBest phrasing:\n- “This page appears to be admin-only, so access depends on your role and project permissions.”\n- “If you don’t see it, you may not have the required permission level or project membership.”\n- “I can confirm the page is admin-scoped, but I can’t verify your individual access from the available metadata.”\n\nWhat not to say:\n- Don’t say the assistant can open or perform admin actions unless the feature registry or help article explicitly documents that action.\n- Don’t imply certainty about a specific user’s access without role or membership data.\n\nIf you want, I can also list the admin-scoped routes I found.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/app-permissions-and-visibility.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-permissions-and-visibility.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/admin",
+            "sourceType": "sitemap",
+            "route": "/admin",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/admin/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/admin/page.tsx",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 7133,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-employee-email-privacy",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 5713,
+      "question": "What if someone can see another employee's emails?",
+      "response": {
+        "answer": "This is a permissions issue, not expected behavior.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are current and OK.\n- Curated help article: `docs/help/articles/app-permissions-and-visibility.md`\n- Related feature metadata:\n  - `Understand Permissions And Visibility`\n  - `Manage User Access`\n  - `Microsoft Outlook Integration`\n\nDocumented behavior:\n- Alleato PM uses role, project membership, and admin checks to decide what someone can see.\n- Employee email and inbox content are treated as sensitive.\n- The help article explicitly says Ask Alleato should not expose another employee’s email surface just because synced data exists.\n- If someone can see another employee’s emails, the documented guidance is to treat it as a permissions issue and remove or tightly gate that surface.\n\nWhat remains uncertain:\n- I cannot verify the exact user’s current role, membership, or the specific route context from the information given.\n- So I can’t say whether the exposure is due to a misconfiguration, an admin-only surface being opened, or another permission gap.\n\nRelevant route/help references:\n- Help article: `docs/help/articles/app-permissions-and-visibility.md`\n- Related routes: `/user-management`, `/[projectId]/user-management`, `/settings`\n\nIf you want, I can next check the exact email-related route and determine whether the visible surface is a documented feature or route-discovered implementation evidence.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/app-permissions-and-visibility.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-permissions-and-visibility.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help",
+            "sourceType": "sitemap",
+            "route": "/help",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/user-management",
+            "sourceType": "sitemap",
+            "route": "/user-management",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 5710,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-project-membership",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 8327,
+      "question": "Why does project membership matter?",
+      "response": {
+        "answer": "Project membership matters because it controls what a person can see and do inside a specific project.\n\nWhat I checked:\n- Artifact status: both generated artifacts are fresh and available.\n- Feature registry: `Manage User Access` is the documented feature for project access.\n- Help article: `docs/help/articles/manage-permissions.md`\n\nDocumented behavior:\n- User Management controls access to tools and data, including project, financial, document, and directory information.\n- At the project level, **Project User Management** is used when someone should only access one project or needs a different role on one project than they have elsewhere.\n- The article explicitly says project roles apply to project-specific access.\n\nExact references:\n- Feature routes: `/user-management`, `/[projectId]/user-management`\n- Help article: `docs/help/articles/manage-permissions.md`\n\nSo, project membership matters because it determines project-level permissions and visibility, especially when access should be limited to a single project or differ from company-wide access.\n\nWhat remains uncertain:\n- The app docs I checked do not define a separate concept called “project membership” beyond project access/roles, so if you mean a specific UI label or internal membership rule, I’d need the exact route or screen to confirm implementation details.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/manage-permissions.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/manage-permissions.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/user-management",
+            "sourceType": "sitemap",
+            "route": "/user-management",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/roles,",
+            "sourceType": "sitemap",
+            "route": "/roles,",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 8324,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "permissions-user-management",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4577,
+      "question": "Where should user management questions point?",
+      "response": {
+        "answer": "User management questions should point to **User Management**:\n\n- **Company-level:** `/user-management`\n- **Project-level:** `/[projectId]/user-management`\n\nThe curated help article for this is:\n\n- `docs/help/articles/manage-permissions.md` — **Manage User Access**\n\nWhat the docs say:\n- Open **User Management** from the company tools area.\n- Use it to review a user’s current access, company access, project access, and overrides.\n- For project-specific access, use **Project User Management** in the project.\n\nChecked:\n- App Expert artifact status: available and current\n- Feature registry: found documented user-management entries\n- Help article: read `docs/help/articles/manage-permissions.md`\n\nIf you want, I can also point you to the more specific articles for:\n- inviting a user: `docs/help/articles/create-or-invite-a-user.md`\n- visibility/permissions behavior: `docs/help/articles/app-permissions-and-visibility.md`",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/user-management",
+            "sourceType": "sitemap",
+            "route": "/user-management",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/manage-permissions.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/manage-permissions.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/create-or-invite-a-user.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/create-or-invite-a-user.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/permissions",
+            "sourceType": "sitemap",
+            "route": "/permissions",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/app-permissions-and-visibility.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-permissions-and-visibility.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4575,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-actions",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 5337,
+      "question": "Can Ask Alleato create records for me?",
+      "response": {
+        "answer": "Yes — Ask Alleato can create records, but with confirmation rules.\n\nWhat I checked:\n- Artifact status: both generated artifacts are available and fresh enough to use.\n- Feature registry:\n  - `ai-assistant-actions` → help article `docs/help/articles/ai-assistant-actions.md`\n  - `ask-the-ai-assistant` / `AI Assistant Overview`\n- Help article read: `docs/help/articles/ai-assistant-actions.md`\n\nDocumented behavior:\n- Ask Alleato can create and update records directly from chat.\n- For writes, it shows a preview card first and waits for your confirmation before making changes.\n- Some write actions require confirmation; others do not.\n\nExamples from the help article:\n- Requires confirmation: Create Change Order, Create Change Event, Update Project Status, Create RFI, Flag Project Risk, Create Commitment\n- No confirmation required: Create Task, Update RFI Status, Create Meeting Note, Create Submittal, Log Daily Report, Save to Knowledge Base, Save Insight\n\nImportant caveat:\n- The help article documents specific write actions, but it does not say “create any record” generically. So I can confirm it supports record creation for the listed actions, not unlimited arbitrary record types.\n\nExact source:\n- Help article: `docs/help/articles/ai-assistant-actions.md`\n- Related route: `/ai-assistant`\n\nIf you want, I can also look up whether a specific record type you care about is supported.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/ai-assistant-actions.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/ai-assistant-actions.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 5326,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-source-order",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 8191,
+      "question": "How should Ask Alleato decide what app documentation to trust?",
+      "response": {
+        "answer": "Ask Alleato should trust app documentation in this order:\n\n1. **Curated help articles first**  \n   The app-navigation help article says the sitemap and feature registry are generated from the codebase and help metadata, and that Ask Alleato should use curated docs when they exist. It also says the assistant should include the exact route and a short reason when possible.  \n   Source: `docs/help/articles/app-navigation-and-feature-map.md`\n\n2. **Feature registry metadata as the index**\n   The feature registry is the first place to search for a documented feature, route, and whether a help article exists. For Ask Alleato-related content, I found:\n   - `AI Assistant Overview` → `docs/help/articles/ai-assistant-overview.md`\n   - `AI Capabilities Index` → `docs/help/articles/ai-capabilities-index.md`\n   - `Ask the AI Assistant for Help` → `docs/help/articles/ask-the-ai-assistant.md`\n   - `Navigate Alleato PM` → `docs/help/articles/app-navigation-and-feature-map.md`\n   - `Use Help Center and Ask Alleato Together` → `docs/help/articles/use-help-center-and-ai-assistant.md`\n\n3. **Read the linked help article before answering behavior/capability questions**\n   If feature metadata points to a help article, that article should be treated as the user-facing source of truth before saying behavior is uncertain.\n\n4. **Use route lookup for page-specific questions**\n   For questions about a specific page or current route, route metadata should be checked after docs. If the route exists but lacks a curated article, Ask Alleato should say it found the route from the app inventory and that user-facing documentation is still missing.\n\n5. **Use implementation evidence only as a fallback**\n   If no curated doc exists, route-discovered evidence is acceptable, but it should be labeled clearly as **implementation evidence**, not user-facing documentation.\n\n6. **Do not claim an action is executable unless docs support it**\n   A write/action should only be described as available if the feature registry, help article, or action metadata explicitly says so.\n\n7. **If evidence conflicts or is missing, say so plainly**\n   State what was checked and what remains uncertain instead of guessing.\n\nArtifact status check: both generated artifacts are available and fresh enough to use:\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nIf you want, I can also summarize this as a short “trust hierarchy” Ask Alleato can follow internally.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/app-navigation-and-feature-map.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-navigation-and-feature-map.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/ai-assistant-overview.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/ai-assistant-overview.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/ai-capabilities-index.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/ai-capabilities-index.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/ask-the-ai-assistant.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/ask-the-ai-assistant.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/use-help-center-and-ai-assistant.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/use-help-center-and-ai-assistant.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/capability",
+            "sourceType": "sitemap",
+            "route": "/capability",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/action",
+            "sourceType": "sitemap",
+            "route": "/action",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 8182,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-app-expert",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4734,
+      "question": "What is the App Expert supposed to answer?",
+      "response": {
+        "answer": "App Expert is supposed to answer questions about the app itself, using curated help and generated artifacts first.\n\nWhat it should cover:\n- navigation and routes\n- features and workflow behavior\n- permissions and visibility\n- assistant action status\n- implementation-backed source references\n\nWhat it should use first:\n- curated help articles\n- feature registry metadata\n- route metadata / lookup for page-specific questions\n\nWhat it should distinguish:\n- documented user-facing behavior vs. implementation evidence from routes/source files\n- confirmed write-capable actions vs. assumptions\n\nWhat was checked:\n- artifact status: current and available\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- feature registry search for `App Expert`\n  - found documented entries such as:\n    - `docs/help/articles/app-feature-status-and-limitations.md`\n    - `docs/help/articles/app-permissions-and-visibility.md`\n\nIf you want, I can answer a specific App Expert question next, or look up a route or help article.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/source",
+            "sourceType": "sitemap",
+            "route": "/source",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/app-feature-status-and-limitations.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-feature-status-and-limitations.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/app-permissions-and-visibility.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-permissions-and-visibility.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4729,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-ai-actions",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 5783,
+      "question": "What AI assistant actions are live versus planned?",
+      "response": {
+        "answer": "Based on the curated docs, AI assistant actions are not split into a separate “live vs planned” list in the metadata I checked. What is documented as live is:\n\n- `docs/help/articles/ai-assistant-actions.md`\n- Route: `/ai-assistant`\n\nThat article says Ask Alleato can create and update records directly from chat, with these **available write actions**:\n\n**Requires confirmation**\n- Create Change Order\n- Create Change Event\n- Update Project Status\n- Create RFI\n- Flag Project Risk\n- Create Commitment\n\n**No confirmation required**\n- Create Task\n- Update RFI Status\n- Create Meeting Note\n- Create Submittal\n- Log Daily Report\n- Save to Knowledge Base\n- Save Insight\n\nWhat I checked:\n- App Expert artifact status: fresh and available\n- Feature registry entries for AI assistant actions\n- Help article `docs/help/articles/ai-assistant-actions.md`\n\nWhat remains uncertain:\n- I did not find any curated metadata that explicitly labels some AI assistant actions as “planned.”\n- The feature registry’s `relatedActions` field was empty for the action article, so there is no registry-backed planned/live split to cite.\n\nImplementation-backed note:\n- The docs are tied to `frontend/src/app/(main)/ai-assistant/page.tsx`, but I did not use route-discovered evidence beyond that because curated help was available.\n\nIf you want, I can also check whether any specific assistant action is present in the route inventory but missing from the help docs.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/ai-assistant-actions.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/ai-assistant-actions.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/live",
+            "sourceType": "sitemap",
+            "route": "/live",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/ai-assistant/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/ai-assistant/page.tsx",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 5777,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "assistant-capability-memory",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 6198,
+      "question": "Where does AI memory fit in the product?",
+      "response": {
+        "answer": "AI memory is a user-facing AI & Intelligence feature documented in the help article `docs/help/articles/ai-memory.md`, with the settings route `/settings/memory`.\n\nWhat it is:\n- The assistant remembers durable facts, preferences, focus areas, role context, and explicit lessons across sessions.\n- It persists across the full-screen assistant, inline sidebar, and floating pill.\n- Users can explicitly save memories, then edit or delete them in the Memory settings page.\n\nWhat’s documented about behavior:\n- Memory is account-scoped and not visible to other users.\n- The assistant automatically retrieves semantically relevant memories at the start of a conversation.\n- It does not store one-off questions or transient context.\n\nChecked evidence:\n- Feature registry entry: `AI Memory`\n  - route: `/settings/memory`\n  - help article: `docs/help/articles/ai-memory.md`\n- Help article: `docs/help/articles/ai-memory.md`\n\nWhat remains uncertain:\n- I did not inspect route implementation, so any deeper UI details beyond the help article are still implementation-unknown.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/ai-memory.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/ai-memory.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/memory",
+            "sourceType": "sitemap",
+            "route": "/memory",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 6195,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-documents-rag-boundary",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 8106,
+      "question": "What is the difference between project documents and RAG knowledge?",
+      "response": {
+        "answer": "I checked the curated docs and feature registry first.\n\nWhat I found:\n- **Project Documents** is a route-discovered page at **`/project-documents`** from:\n  - `frontend/src/app/(tables)/project-documents/page.tsx`\n  - Feature registry entry: `route:/project-documents`\n- **Documents** is the documented project file area at **`/[projectId]/documents`**, with help article:\n  - `docs/help/articles/documents.md`\n- **RAG / Knowledge** is reflected in AI/assistant features, but there is **no curated help article specifically for “RAG knowledge”**. The closest documented source is:\n  - `docs/help/articles/ai-capabilities-index.md`\n  - Relevant route: `/[projectId]/intelligence`\n  - Related internal implementation reference: `docs/help/articles/self-learning-intelligence-architecture.md`\n\nDifference, based on the evidence:\n- **Project documents** are the actual stored project files: contracts, reports, photos, meeting minutes, correspondence, etc. The docs say these live in folders, support versioning, upload/download, and folder permissions.\n- **RAG knowledge** is the AI retrieval layer / knowledge-backed assistant capability. The help docs describe AI features that search across project data and surface synthesized answers, but they do **not** describe it as a file store or folder-based document area.\n\nSo, in practical terms:\n- **Project documents = source files you manage**\n- **RAG knowledge = AI-accessible knowledge derived from indexed project data and other sources**\n\nWhat remains uncertain:\n- There is no curated article that explicitly defines a standalone user-facing “RAG knowledge” area, so any deeper behavior beyond retrieval/search would be **implementation evidence**, not documented user-facing behavior.\n\nIf you want, I can also compare **`/project-documents` vs `/[projectId]/documents` vs `/[projectId]/intelligence`** side by side.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/src/app/(tables)/project-documents/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(tables)/project-documents/page.tsx",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/project-documents",
+            "sourceType": "sitemap",
+            "route": "/project-documents",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/documents",
+            "sourceType": "sitemap",
+            "route": "/documents",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/documents.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/documents.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/assistant",
+            "sourceType": "sitemap",
+            "route": "/assistant",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/ai-capabilities-index.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/ai-capabilities-index.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/intelligence",
+            "sourceType": "sitemap",
+            "route": "/intelligence",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/self-learning-intelligence-architecture.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/self-learning-intelligence-architecture.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/download,",
+            "sourceType": "sitemap",
+            "route": "/download,",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/search",
+            "sourceType": "sitemap",
+            "route": "/search",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 8102,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-feature-route-source",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 5403,
+      "question": "What source should the assistant cite for where a page exists?",
+      "response": {
+        "answer": "For “where a page exists,” the best source is the generated app sitemap, not the feature registry.\n\nWhat I checked:\n- App expert artifact status: both generated artifacts are available and fresh enough\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search: returned documented features and help articles, but it is not the primary source for page existence\n- App sitemap search: returned actual route entries with source files\n\nWhat to cite for page existence:\n- Prefer the generated sitemap entry:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n- If you need route-level proof, cite the specific route record, which includes:\n  - `route`\n  - `appFile`\n  - `title`\n  - `scope`\n  - `relatedHelpArticles` when present\n\nIf a page is route-discovered rather than documented, cite the sitemap entry and label it as implementation evidence. Example:\n- Route: `/[projectId]/billing-periods`\n- Source file: `frontend/src/app/(main)/[projectId]/billing-periods/page.tsx`\n- Status: route_discovered\n- Note: no curated help article linked\n\nIf the question is “what should the assistant cite,” the answer is:\n- Cite the generated sitemap entry first\n- Cite the help article only when the question is about user-facing behavior, workflow, or permissions\n- Use the source file path as implementation evidence when no curated doc exists\n\nIf you want, I can look up a specific route and tell you the exact citation line to use.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/billing-periods",
+            "sourceType": "sitemap",
+            "route": "/billing-periods",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/billing-periods/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/billing-periods/page.tsx",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 5399,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-feature-registry-source",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 7697,
+      "question": "What source should the assistant cite for whether a feature is documented?",
+      "response": {
+        "answer": "Use the curated help article or feature-registry entry first, not route-discovered implementation evidence.\n\nFor this specific question, the documented source to cite is:\n\n- Help article: `docs/help/articles/app-feature-status-and-limitations.md`\n- Feature registry entry: `app-feature-status-and-limitations` (“Understand Feature Status”)\n- Related routes: `/ai-assistant`, `/docs`\n\nWhy:\n- The feature registry marks it as `source: help_article` and `status: documented`.\n- The help article explicitly says Ask Alleato should check curated help docs, the generated feature registry, related actions, known limitations, and source references before answering.\n- It also says that if the answer is not fully known, the assistant should say what it checked and what remains uncertain instead of guessing.\n\nExact relevant guidance from the help article:\n- “Ask Alleato should check curated help docs, the generated feature registry, related actions, known limitations, and source references before answering.”\n- “If the answer is not fully known, the assistant should say what it checked and what remains uncertain instead of guessing.”\n\nSo the citation priority is:\n1. Curated help article\n2. Feature registry entry\n3. Source files / route-discovered evidence only as implementation evidence when curated docs are missing\n\nArtifact status was current:\n- `app-sitemap.generated.json` generated at `2026-05-21T18:22:40.598Z`\n- `feature-registry.generated.json` generated at `2026-05-21T18:22:40.598Z`\n\nIf you want, I can also point you to the exact help article for a specific feature and tell you whether the assistant should treat it as documented, partial, planned, blocked, or deprecated.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/app-feature-status-and-limitations.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-feature-status-and-limitations.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 7695,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-route-discovered-boundary",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 6997,
+      "question": "What should the assistant say if a route exists but there is no help article?",
+      "response": {
+        "answer": "If a route exists but there is no help article, the assistant should say:\n\n- the route is present\n- no curated help article is linked for that route\n- any behavior statement is implementation evidence only, not documented user-facing behavior\n- if asked to confirm actions, permissions, or workflow, it should explicitly say those remain uncertain unless supported by a help article or action metadata\n\nRecommended wording:\n> I found the route at `/…`, but there is no linked help article for it. Based on route-discovered implementation evidence from `…source file…`, the page exists, but user-facing behavior is not documented. I can’t पुष्टि/confirm workflow or write capability from route presence alone.\n\nEvidence checked:\n- App Expert artifact status: `docs/architecture/generated/app-sitemap.generated.json` and `docs/architecture/generated/feature-registry.generated.json` are both available and current (`2026-05-21T18:22:40.598Z`).\n- Feature registry examples show this exact pattern:\n  - `route:/ai-assistant/feature-requests` → `helpArticle: null`\n  - description: “User-facing help article not yet linked.”\n- Sitemap also distinguishes `relatedHelpArticles: []` for route-discovered pages.\n\nSo the rule is: route existence alone is not enough to claim documented behavior.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/confirm",
+            "sourceType": "sitemap",
+            "route": "/confirm",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/ai-assistant/feature-requests",
+            "sourceType": "sitemap",
+            "route": "/ai-assistant/feature-requests",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 6995,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "data-artifact-freshness",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 6366,
+      "question": "How can the assistant know whether its app map is current?",
+      "response": {
+        "answer": "Yes—by checking whether the generated app artifacts are present and fresh, then using curated metadata and help articles as the source of truth.\n\nWhat I checked:\n- App Expert artifact status\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Curated help article:\n  - `docs/help/articles/app-navigation-and-feature-map.md`\n\nWhat the docs say:\n- The app sitemap and feature registry are generated from the codebase and help-article metadata.\n- If a route exists only in the app inventory and not in curated docs, Ask Alleato should say that user-facing documentation is still missing.\n- When possible, the assistant should include the exact route and short reason.\n\nSo the assistant can know its app map is current by:\n1. Checking artifact freshness/availability via the generated artifact status.\n2. Comparing the route/feature against the generated sitemap and feature registry.\n3. Preferring curated help articles when they exist.\n4. Falling back to route-discovered implementation evidence only when docs are missing.\n\nCurrent freshness evidence:\n- Both generated artifacts are present and `ok: true`\n- Both were generated at `2026-05-21T18:22:40.598Z`\n\nUncertainty boundary:\n- The artifacts are current relative to their generation time, but if the codebase changed after that, the assistant cannot assume the map is still current unless the artifacts are regenerated.\n\nExact doc reference:\n- Help article: `docs/help/articles/app-navigation-and-feature-map.md`",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/app-navigation-and-feature-map.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-navigation-and-feature-map.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/availability",
+            "sourceType": "sitemap",
+            "route": "/availability",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/feature",
+            "sourceType": "sitemap",
+            "route": "/feature",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 6364,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-live-feature",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 20716,
+      "question": "How should Ask Alleato answer when a feature is live?",
+      "response": {
+        "answer": "When a feature is live, Ask Alleato should say it is **available in the app today** and keep the answer specific to the documented workflow.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are fresh and available\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Curated feature metadata:\n  - `app-feature-status-and-limitations`\n- Curated help article:\n  - `docs/help/articles/app-feature-status-and-limitations.md`\n\nDocumented behavior from the help article:\n- **Live** means the workflow is available in the app today.\n- Ask Alleato should be direct about status differences.\n- If the answer is not fully known, it should say what it checked and what remains uncertain instead of guessing.\n- It should not claim a write action was performed unless the request went through an approved preview-and-confirm tool.\n\nSo the right answer pattern is:\n\n- “Yes, this feature is live.”\n- “Here’s where to find it / how to use it.”\n- “If relevant, here’s the route or help article.”\n- If only partially supported, say that instead of calling it fully live.\n\nUseful source:\n- Help article: `docs/help/articles/app-feature-status-and-limitations.md`\n\nIf you want, I can also give you the exact Ask Alleato phrasing to use for a live feature response.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/app-feature-status-and-limitations.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-feature-status-and-limitations.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 20714,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-partial-feature",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 8535,
+      "question": "How should Ask Alleato explain a partially implemented feature?",
+      "response": {
+        "answer": "Ask Alleato should explain a partially implemented feature as **available in part, but not fully complete**.\n\nWhat the docs say:\n- **Partially implemented** means “part of the workflow exists, but a step, action, permission, or verification path is still missing.”\n- Ask Alleato should be **direct about the limitation**, not imply the feature is fully live.\n- If the answer is uncertain, it should say **what it checked and what remains uncertain** rather than guessing.\n- It should **not claim a write action was performed** unless the request went through an approved preview-and-confirm tool.\n\nWhat I checked:\n- Artifact status: `docs/architecture/generated/app-sitemap.generated.json` and `docs/architecture/generated/feature-registry.generated.json` are both present and fresh enough to use.\n- Feature registry entry: **Understand Feature Status** (`app-feature-status-and-limitations`) points to:\n  - `docs/help/articles/app-feature-status-and-limitations.md`\n- Supporting AI assistant doc:\n  - `docs/help/articles/ai-assistant-overview.md`\n\nRecommended wording for Ask Alleato:\n> “This feature is partially implemented. Some of the workflow exists, but one or more steps, permissions, or verification paths are still missing. Here’s what is currently available, and here’s what is not yet supported.”\n\nIf you want, I can also turn this into a shorter product-style response template for Ask Alleato.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/app-feature-status-and-limitations.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-feature-status-and-limitations.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/ai-assistant-overview.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/ai-assistant-overview.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 8533,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-planned-feature",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 6614,
+      "question": "How should Ask Alleato explain a planned feature?",
+      "response": {
+        "answer": "Ask Alleato should explain a planned feature as **planned, not currently available**.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are current and available:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry entry: **Understand Feature Status** (`app-feature-status-and-limitations`)\n- Help article: `docs/help/articles/app-feature-status-and-limitations.md`\n\nWhat the docs say:\n- **Planned** means “the intended workflow is documented but not built yet.”\n- Ask Alleato should be direct about whether a workflow is live, partial, planned, blocked, or deprecated.\n- If the answer is uncertain, it should say what it checked and what remains uncertain instead of guessing.\n- It should **not** claim a write action is available unless approved preview-and-confirm tooling or action metadata says so.\n\nSo the correct user-facing explanation for a planned feature is something like:\n- “This feature is planned, but it isn’t available in the app yet.”\n- “The intended workflow is documented, but Ask Alleato shouldn’t present it as a live action.”\n- If helpful, it should point users to the relevant docs or current supported workflow instead.\n\nRelevant source:\n- `docs/help/articles/app-feature-status-and-limitations.md`",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/app-feature-status-and-limitations.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-feature-status-and-limitations.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 6611,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-blocked-feature",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 7975,
+      "question": "How should Ask Alleato explain a blocked feature?",
+      "response": {
+        "answer": "Ask Alleato should explain a blocked feature like this:\n\n- Say the feature is **blocked**, not live.\n- State the **reason for the block** if known: missing credential, provider, permission, migration, or product decision.\n- Be explicit about what is **documented vs. uncertain**.\n- Do **not** claim the assistant can perform a write action unless the feature registry, help article, or action metadata says it can.\n- If the user asks whether it works, answer with the checked evidence and what remains unresolved.\n\nThis is backed by:\n- Feature registry entry: **Understand Feature Status**  \n  - help article: `docs/help/articles/app-feature-status-and-limitations.md`\n  - routes: `/ai-assistant`, `/docs`\n\nRelevant documented language from the help article:\n- **Blocked** means the workflow depends on a missing credential, provider, permission, migration, or product decision.\n- If the answer is not fully known, Ask Alleato should say what it checked and what remains uncertain instead of guessing.\n\nSo a good user-facing explanation would be:\n\n> This feature is currently blocked. That means it depends on a missing credential, provider, permission, migration, or product decision, so it isn’t available yet. I checked the curated feature status docs and will only confirm it as available if the documented workflow or action metadata says so.\n\nIf you want, I can also give you a shorter “in-app” wording version for Ask Alleato to use.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/app-feature-status-and-limitations.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-feature-status-and-limitations.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 7973,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "status-deprecated-feature",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 12314,
+      "question": "How should Ask Alleato explain deprecated behavior?",
+      "response": {
+        "answer": "I checked the curated metadata and found one relevant feature entry:\n\n- **Feature:** Understand Feature Status\n- **Help article path in registry:** `docs/help/articles/app-feature-status-and-limitations.md`\n- **Related route(s):** `/ai-assistant`, `/docs`\n- **Source:** `feature-registry.generated.json`\n\nWhat I could confirm:\n- The app has a documented feature-status concept that explicitly includes **deprecated** behavior.\n- The registry says this is the right place to learn how Alleato PM distinguishes **live, partial, planned, blocked, and deprecated** behavior.\n\nWhat remains uncertain:\n- I could not read the help article itself because the referenced file was not present at the expected filesystem path.\n- No route lookup was needed because your question is about general Ask Alleato behavior, not a specific page.\n- Because the article content was unavailable, I can’t state the exact user-facing wording Ask Alleato should use for deprecated behavior.\n\nImplementation evidence checked:\n- Feature registry entry: `app-feature-status-and-limitations`\n- Search results also surfaced Ask Alleato-related docs, including:\n  - `docs/help/articles/ai-assistant-overview.md`\n  - `docs/help/articles/ask-the-ai-assistant.md`\n  - `docs/help/articles/app-navigation-and-feature-map.md`\n\nBottom line:\n- **Documented behavior exists, but the exact guidance is unavailable from the current artifacts.**\n- If you want the precise explanation Ask Alleato should give for deprecated behavior, the missing help article needs to be restored or provided.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/app-feature-status-and-limitations.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-feature-status-and-limitations.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/ai-assistant-overview.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/ai-assistant-overview.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/ask-the-ai-assistant.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/ask-the-ai-assistant.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/app-navigation-and-feature-map.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-navigation-and-feature-map.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 12312,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-missing-button",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 6151,
+      "question": "Why might a button be missing on a page?",
+      "response": {
+        "answer": "A button can be missing for a few documented reasons:\n\n- the user is not assigned to the project,\n- the page is admin-only,\n- the action requires a stronger permission level,\n- the record is intentionally private or employee-sensitive,\n- the source system has not synced the expected record yet.\n\nChecked evidence:\n- Artifact status: `docs/architecture/generated/app-sitemap.generated.json` and `docs/architecture/generated/feature-registry.generated.json` are both present and fresh, generated `2026-05-21T18:22:40.598Z`.\n- Feature registry: `Understand Permissions And Visibility` (`app-permissions-and-visibility`) points to help article `docs/help/articles/app-permissions-and-visibility.md`.\n- Help article confirms that Alleato PM uses role, project membership, and admin checks to decide what a person can see or change.\n\nRelevant routes from the help article:\n- `/user-management`\n- `/[projectId]/user-management`\n- `/settings`\n\nWhat remains uncertain:\n- I can’t determine the exact reason for your missing button without the current route or project context, because access can vary by page, role, and project membership.\n\nIf you share the current route, I can narrow this to the specific page and check route-backed evidence.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/app-permissions-and-visibility.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-permissions-and-visibility.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/user-management",
+            "sourceType": "sitemap",
+            "route": "/user-management",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 6149,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-empty-data",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 12202,
+      "question": "Why might a page be empty even though the route exists?",
+      "response": {
+        "answer": "A page can exist as a route but still appear empty if the app only has a route shell or if the route inventory exists before user-facing content is implemented.\n\nWhat I checked:\n- App Expert artifact status: both generated artifacts are current and available.\n- Curated help article: `docs/help/articles/app-navigation-and-feature-map.md`\n- Feature registry / sitemap evidence for route discovery\n\nWhat the docs say:\n- The app has two kinds of pages: global and project-scoped.\n- If a route exists but does not have a curated help article yet, Ask Alleato should treat it as route inventory evidence, not as fully documented user-facing behavior.\n- That means a route can be present in the codebase while still lacking meaningful page content or published guidance.\n\nImplementation-backed evidence:\n- The sitemap contains many routes discovered from source files, including pages with no linked help article.\n- Example pattern from the inventory: route-discovered pages often point to a `frontend/src/app/.../page.tsx` file with `helpArticle: null` or no curated article yet.\n\nSo the most likely reasons are:\n1. The route exists in the app inventory but the page content is not implemented yet.\n2. The page is implemented as a placeholder/shell with no rendered content.\n3. The page is conditionally empty due to permissions, feature flags, or missing data — but I cannot claim that without route-specific evidence.\n4. The route may be valid but not the intended user-facing page for the task.\n\nUncertainty:\n- No current route or project ID was supplied, so I cannot confirm a page-specific reason.\n- I did not find route-specific documentation for the exact empty page scenario.\n\nIf you give me the route, I can check the exact source file and tell you whether it is documented behavior or just implementation evidence.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/app-navigation-and-feature-map.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-navigation-and-feature-map.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/.../page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/.../page.tsx",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/shell",
+            "sourceType": "sitemap",
+            "route": "/shell",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 12199,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-wrong-page",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 9333,
+      "question": "What should I do if I am on the wrong page for a workflow?",
+      "response": {
+        "answer": "If you’re on the wrong page for a workflow, move to the page that owns that work rather than trying to continue from the current page.\n\nWhat I checked:\n- App artifact status: current and available\n- Curated help article: `docs/help/articles/app-navigation-and-feature-map.md`\n- App inventory: routes for global vs project-scoped pages\n\nWhat the documentation says:\n- Alleato PM is split into **global pages** and **project-scoped pages**.\n- Project work belongs on routes that include a project ID, like:\n  - `/[projectId]/home`\n  - `/[projectId]/budget`\n  - other project pages such as RFIs, submittals, documents, schedule, etc.\n- Global pages are for portfolio/company-wide areas, like:\n  - `/`\n  - `/ai-assistant`\n  - `/site-map`\n\nSo if you’re on the wrong page:\n1. Identify the page that actually owns the workflow.\n2. Navigate to that route.\n3. If you’re unsure, use Ask Alleato to ask “Where do I do X?” and it should point you to the right page with the exact route.\n\nImportant limitation:\n- The help article gives navigation guidance, but it does **not** describe a special “wrong page” recovery behavior like a cancel button or automatic redirect.\n- So I can confirm where you should go, but I can’t confirm a page-specific recovery action unless you name the workflow or current route.\n\nIf you want, give me the workflow name and I’ll map it to the exact route.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/app-navigation-and-feature-map.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-navigation-and-feature-map.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/home",
+            "sourceType": "sitemap",
+            "route": "/home",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/budget",
+            "sourceType": "sitemap",
+            "route": "/budget",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/company-wide",
+            "sourceType": "sitemap",
+            "route": "/company-wide",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 9330,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-stale-docs",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 7614,
+      "question": "What should Ask Alleato say if documentation and the route map disagree?",
+      "response": {
+        "answer": "If documentation and the route map disagree, Ask Alleato should privilege the curated help article and say the conflict explicitly.\n\nWhat I checked:\n- Artifact status: both generated artifacts are current and available:\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature metadata:\n  - `app-navigation-and-feature-map` / “Navigate Alleato PM”\n  - help article: `docs/help/articles/app-navigation-and-feature-map.md`\n  - routes: `/`, `/[projectId]/home`, `/site-map`, `/ai-assistant`\n- Help article content:\n  - It says the app sitemap and feature registry are generated from codebase + help metadata.\n  - It instructs that if a route exists but lacks curated help, Ask Alleato should say it found the route from the app inventory and that user-facing documentation still needs to be filled in.\n\nSo the behavior should be:\n\n- If docs and route map conflict, say the documentation and app inventory disagree.\n- Prefer the curated documentation for user-facing guidance.\n- Mention the route-map finding as implementation evidence, not as the primary answer.\n- State what remains uncertain if the conflict cannot be resolved.\n\nA good response pattern for Ask Alleato:\n> “I found a mismatch between the curated help article and the app route inventory. The help article says X, while the app inventory shows route `/...`. I’d treat the help article as the user-facing source of truth, and use the route as implementation evidence. This may need documentation correction.”\n\nRelevant source:\n- `docs/help/articles/app-navigation-and-feature-map.md`",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/app-navigation-and-feature-map.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-navigation-and-feature-map.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/home",
+            "sourceType": "sitemap",
+            "route": "/home",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 7609,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "troubleshooting-no-current-route",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 6764,
+      "question": "Can the App Expert answer without knowing my current page?",
+      "response": {
+        "answer": "Yes — but only for general app-capability questions.\n\nWhat I checked:\n- Artifact status: both generated artifacts are available and fresh\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Curated help article:\n  - `docs/help/articles/app-feature-status-and-limitations.md`\n\nWhat the docs say:\n- Ask Alleato should answer questions about what the app can do without needing your current page when the question is about documented workflows, feature status, permissions, or general capabilities.\n- It should use route lookup only for page-specific or current-route questions.\n- It should not guess if behavior is uncertain; it must say what was checked and what remains unclear.\n\nSo:\n- **No, your current page is not required** for general “can the app do X?” questions.\n- **Yes, it is required or strongly helpful** for page-specific questions like “what actions are available here?” or “why don’t I see this on this screen?”\n\nIf you want, I can answer a specific app-capability question now without your current route.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/app-feature-status-and-limitations.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/app-feature-status-and-limitations.md",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 6762,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "admin-feedback-inbox",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 5282,
+      "question": "Where should questions about feedback and annotation triage go?",
+      "response": {
+        "answer": "Questions about feedback should go to the Feedback Inbox: `/feedback-inbox`.\n\nFor annotation triage, the only directly discovered admin route is `/annotation-inbox`, but there is no curated help article linked to it, so its exact user-facing workflow is uncertain.\n\nWhat I checked:\n- Artifact status: current and available\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Curated help article:\n  - `docs/help/articles/submit-feedback.md`\n- Route evidence:\n  - `/feedback-inbox` → `frontend/src/app/(admin)/feedback-inbox/page.tsx`\n  - `/annotation-inbox` → `frontend/src/app/(admin)/annotation-inbox/page.tsx`\n\nDocumented behavior:\n- The help article says feedback is for things that are wrong, confusing, missing, or worth improving.\n- It also says feedback is better than Ask Alleato when the product itself needs to be fixed, changed, or clarified.\n\nUncertain:\n- I did not find a curated help article for `/annotation-inbox`, so I can’t confirm whether that is the intended triage destination for annotation-related issues versus a separate internal admin workflow.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/architecture/generated/app-sitemap.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/app-sitemap.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/architecture/generated/feature-registry.generated.json",
+            "sourceType": "sitemap",
+            "route": "/architecture/generated/feature-registry.generated.json",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/submit-feedback.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/submit-feedback.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(admin)/feedback-inbox/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(admin)/feedback-inbox/page.tsx",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(admin)/annotation-inbox/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(admin)/annotation-inbox/page.tsx",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 5280,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "feature-progress-reports",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 4466,
+      "question": "Does the app have progress reports?",
+      "response": {
+        "answer": "Yes.\n\nEvidence:\n- Help article: `docs/help/articles/progress-reports.md`\n- Global route: `/progress-reports`\n- Project route: `/[projectId]/progress-reports`\n\nDocumented behavior:\n- Progress Reports are periodic status reports for owners or internal stakeholders.\n- The app can generate them with AI, route them through approval, and export a branded PDF.\n- Workflow states documented: Draft → Pending Review → Approved → Issued.\n- Export is documented as PDF, with download or email delivery.\n\nWhat I checked:\n- Artifact status: both generated artifacts are current and available.\n- Feature registry: found a documented “Progress Reports” feature linked to the help article.\n- App sitemap: confirmed both global and project-scoped routes.\n\nOne nuance:\n- There is also a route-discovered page at `/[projectId]/progress-reports/[reportId]` with no help article linked. That page exists in implementation evidence, but its exact user-facing behavior is not documented in the curated help article.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/help/articles/progress-reports.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/progress-reports.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/progress-reports",
+            "sourceType": "sitemap",
+            "route": "/progress-reports",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/progress-reports/[reportId]",
+            "sourceType": "sitemap",
+            "route": "/progress-reports/[reportId]",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 4464,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "feature-photos",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 8934,
+      "question": "Where are project photos?",
+      "response": {
+        "answer": "Project photos are in the **Photos** tool for a selected project.\n\n- **Route:** `/[projectId]/photos`\n- **Help article:** `docs/help/articles/photos.md`\n- **Where to open it:** select the project, then open **Photos** from the sidebar.\n\nDocumented behavior says Photos is the project’s photo library for uploading, organizing, sharing, map pins, favorites, and grid/list views. Photos with GPS metadata appear on the map.\n\nIf you meant a different “project photos” area, I didn’t find any other user-facing photos feature in the curated registry.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/photos",
+            "sourceType": "sitemap",
+            "route": "/photos",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/photos.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/photos.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/list",
+            "sourceType": "sitemap",
+            "route": "/list",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 8932,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "feature-daily-log",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 5701,
+      "question": "Where do daily logs live?",
+      "response": {
+        "answer": "Daily logs live in the project area at:\n\n- `/[projectId]/daily-log`\n\nThis is documented in the curated help article `docs/help/articles/daily-log.md` and the feature registry entry `daily-log`.\n\nWhat I checked:\n- App expert artifact status: both generated artifacts are current\n- Feature registry: found a documented “Daily Log” feature\n- Help article: confirms you open **Daily Log** from the project sidebar\n\nRelevant source references:\n- Help article: `docs/help/articles/daily-log.md`\n- Route in feature registry: `/[projectId]/daily-log`\n- Route file: `frontend/src/app/(main)/[projectId]/daily-log/page.tsx`\n\nIf you meant the general table route instead of the project-scoped daily log, there is also a route-discovered page at `/daily-logs`, but that one has no linked help article.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/daily-log",
+            "sourceType": "sitemap",
+            "route": "/daily-log",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/daily-log.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/daily-log.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/daily-log/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/daily-log/page.tsx",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 5699,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    },
+    {
+      "id": "feature-outlook-integration",
+      "status": "passed",
+      "httpStatus": 200,
+      "durationMs": 5434,
+      "question": "How should the app explain Outlook integration?",
+      "response": {
+        "answer": "The app should explain Outlook integration as a Microsoft 365 inbox sync, not a send-mail feature.\n\nDocumented behavior:\n- It connects to Microsoft 365 and syncs incoming emails into project records.\n- Emails are auto-matched to projects using subject, sender, recipients, and thread history.\n- Attachments are indexed and searchable.\n- Unmatched or ambiguous emails go to an intake queue for manual assignment.\n- Privacy note: it only reads the inbox; it does not send mail.\n\nHow users connect it:\n1. Go to **Settings > Integrations**\n2. Select **Connect Microsoft 365**\n3. Sign in and approve permissions\n\nEvidence checked:\n- Feature registry: `Microsoft Outlook Integration`\n  - Routes: `/settings/integrations`, `/[projectId]/emails`\n  - Help article: `docs/help/articles/outlook-integration.md`\n- Help article: `docs/help/articles/outlook-integration.md`\n\nImplementation-backed route evidence:\n- Project email tool route exists at `frontend/src/app/(main)/[projectId]/emails/page.tsx`\n\nIf you want, I can also summarize the exact user-facing wording the app should use for the integration card or settings page.",
+        "mode": "deep_agents",
+        "sources": [
+          {
+            "title": "/integrations",
+            "sourceType": "sitemap",
+            "route": "/integrations",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/emails",
+            "sourceType": "sitemap",
+            "route": "/emails",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/help/articles/outlook-integration.md",
+            "sourceType": "sitemap",
+            "route": "/help/articles/outlook-integration.md",
+            "filePath": null,
+            "detail": null
+          },
+          {
+            "title": "/src/app/(main)/[projectId]/emails/page.tsx",
+            "sourceType": "sitemap",
+            "route": "/src/app/(main)/[projectId]/emails/page.tsx",
+            "filePath": null,
+            "detail": null
+          }
+        ],
+        "toolTrace": [
+          {
+            "agent": "app-expert",
+            "tool": "deepagents_app_expert_runtime",
+            "status": "success",
+            "durationMs": 5431,
+            "detail": "App Expert produced an answer from read-only app knowledge tools."
+          }
+        ],
+        "skillsLoaded": [
+          "app-expert-memory",
+          "app-navigation-and-sitemap",
+          "feature-status-and-limitations",
+          "permissions-and-visibility"
+        ],
+        "orchestrator": "app-expert"
+      },
+      "failure": null,
+      "shapeIssues": [],
+      "semanticIssues": [],
+      "missingPreferredTools": []
+    }
+  ]
+}

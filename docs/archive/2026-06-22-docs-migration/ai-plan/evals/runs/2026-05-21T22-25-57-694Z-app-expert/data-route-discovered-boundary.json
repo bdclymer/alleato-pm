@@ -1,0 +1,58 @@
+{
+  "id": "data-route-discovered-boundary",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 7743,
+  "question": "What should the assistant say if a route exists but there is no help article?",
+  "mustInclude": [
+    "route",
+    "help article"
+  ],
+  "preferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ],
+  "response": {
+    "answer": "If a route exists but there’s no help article, the assistant should say:\n\n- the route was found\n- there is no curated help article linked for that route\n- the answer is based on implementation evidence only, not documented user guidance\n- any behavior that isn’t directly visible in source should be treated as uncertain\n\nEvidence checked:\n- Artifact status: `app-sitemap.generated.json` and `feature-registry.generated.json` are both current and OK.\n- Curated guidance: `docs/help/articles/app-feature-status-and-limitations.md`\n  - It says Ask Alleato should check curated help docs and the feature registry before answering.\n  - It also says: if the answer is not fully known, say what was checked and what remains uncertain instead of guessing.\n\nFeature registry evidence:\n- Example route-discovered entries explicitly note missing help articles, e.g.:\n  - `/accounting` → `frontend/src/app/(admin)/accounting/page.tsx`\n  - source: `route_inventory`\n  - `helpArticle: null`\n  - description: “User-facing help article not yet linked.”\n\nSo the correct response pattern is:\n\n> I found the route `/<route>`, but there isn’t a linked help article for it yet. I can confirm the route exists from implementation evidence in `<source file>`, but I can’t claim user-facing behavior beyond what the route or source file shows. If you want, I can summarize the route’s implementation evidence.\n\nIf you want, I can also give you the exact wording Ask Alleato should use as a template response.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(admin)/accounting/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(admin)/accounting/page.tsx",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 7644,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry",
+    "search_app_sitemap"
+  ]
+}

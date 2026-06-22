@@ -1,0 +1,47 @@
+{
+  "id": "troubleshooting-no-current-route",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 3315,
+  "question": "Can the App Expert answer without knowing my current page?",
+  "response": {
+    "answer": "No.\n\nI checked the required App Expert artifacts and both are missing:\n- `docs/architecture/generated/app-sitemap.generated.json`\n- `docs/architecture/generated/feature-registry.generated.json`\n\nBecause the generated metadata is unavailable, I can’t verify page-specific behavior, route scope, or help docs. I also can’t answer confidently from route evidence without a current route or project ID.\n\nWhat remains uncertain:\n- whether the App Expert answer depends on the current page\n- which route you’re on\n- whether any help article or feature metadata documents this behavior\n\nIf you want, provide the current route or project ID and I can re-check once the generated artifacts are available.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 3234,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

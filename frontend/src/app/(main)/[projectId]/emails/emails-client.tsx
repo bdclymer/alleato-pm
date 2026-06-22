@@ -55,7 +55,19 @@ import {
   projectEmailToDetailRecord,
 } from "@/features/emails/email-detail-sheet";
 import { ProjectEmailsWorkspace } from "@/features/emails/project-emails-workspace";
+import {
+  EmailViewSwitcher,
+  type EmailViewMode,
+} from "@/features/emails/email-view-switcher";
+import { EmailFilterPopover } from "@/features/emails/email-filter-popover";
 import { EmailAttachmentsClient } from "../email-attachments/email-attachments-client";
+
+const EMAIL_STATUS_OPTIONS = [
+  { value: "Draft", label: "Draft" },
+  { value: "Sent", label: "Sent" },
+  { value: "Received", label: "Received" },
+  { value: "Failed", label: "Failed" },
+];
 
 const EMPTY_FILTERS: Record<string, FilterValue> = {
   status: undefined,
@@ -103,13 +115,9 @@ export function EmailsClient({
     isOutlook && searchParams.get("tab") === "attachments"
       ? "attachments"
       : "emails";
-  const emailsHref = isGlobal
-    ? isOutlook
-      ? "/outlook-emails"
-      : "/emails"
-    : isOutlook
-      ? `/${projectId}/outlook-emails`
-      : `/${projectId}/emails`;
+  // The standalone Outlook-only routes were removed (the source filter on the
+  // main Emails page covers them), so links always target the unified surface.
+  const emailsHref = isGlobal ? "/emails" : `/${projectId}/emails`;
   const outlookTabs = isOutlook
     ? [
         {
@@ -183,6 +191,27 @@ export function EmailsClient({
     error: fetchError,
   } = activeQuery;
   const deleteEmail = useDeleteEmail(projectId ?? 0);
+
+  // Mail / Table / List view. "mail" is the reading-pane workspace; table/list
+  // defer to UnifiedTablePage. Embedded surfaces default to the compact table.
+  const viewRaw = searchParams.get("view");
+  const emailView: EmailViewMode =
+    viewRaw === "mail" || viewRaw === "table" || viewRaw === "list"
+      ? viewRaw
+      : embedded
+        ? "table"
+        : "mail";
+
+  const handleEmailViewChange = React.useCallback(
+    (next: EmailViewMode) => {
+      tableState.setSearchParams({ view: next, page: "1" });
+      if (next === "table" || next === "list") {
+        tableState.setCurrentView(next);
+      }
+      tableState.setPage(1);
+    },
+    [tableState],
+  );
 
   const [composeOpen, setComposeOpen] = React.useState(false);
   const [editingEmail, setEditingEmail] = React.useState<ProjectEmail | null>(null);
@@ -654,7 +683,7 @@ export function EmailsClient({
     );
   }
 
-  if (!noWriteActions) {
+  if (emailView === "mail") {
     return (
       <>
         <ProjectEmailsWorkspace
@@ -670,6 +699,24 @@ export function EmailsClient({
           sourceFilter={sourceFilter}
           onSourceFilterChange={handleSourceFilterChange}
           canEdit={canEditEmail}
+          canCompose={!noWriteActions}
+          canDelete={!noWriteActions}
+          viewSwitcher={
+            <EmailViewSwitcher
+              value={emailView}
+              onChange={handleEmailViewChange}
+            />
+          }
+          filterControl={
+            <EmailFilterPopover
+              activeFilters={activeFilters}
+              onFilterChange={handleFilterChange}
+              statusOptions={EMAIL_STATUS_OPTIONS}
+              showSourceFilter={isMerged}
+              sourceFilter={sourceFilter}
+              onSourceFilterChange={handleSourceFilterChange}
+            />
+          }
           onCompose={() => {
             setEditingEmail(null);
             setComposeOpen(true);
@@ -719,22 +766,41 @@ export function EmailsClient({
 
   return (
     <>
+      {/* Embedded surfaces (e.g. global Emails tabs) suppress the page header,
+          so the view switcher rides in its own bar above the table. */}
+      {embedded ? (
+        <div className="mb-3 flex items-center justify-end">
+          <EmailViewSwitcher
+            value={emailView}
+            onChange={handleEmailViewChange}
+          />
+        </div>
+      ) : null}
       <UnifiedTablePage
-        header={embedded ? { title: "" } : {
-          title,
-          description,
-          actions: noWriteActions ? undefined : (
-            <Button
-              size="sm"
-              onClick={() => {
-                setEditingEmail(null);
-                setComposeOpen(true);
-              }}
-              aria-label="Compose new email"
-            >
-              <Plus />
-              Compose
-            </Button>
+        features={{ enableViews: false }}
+        header={{
+          title: embedded ? "" : title,
+          description: embedded ? undefined : description,
+          actions: embedded ? undefined : (
+            <div className="flex items-center gap-2">
+              <EmailViewSwitcher
+                value={emailView}
+                onChange={handleEmailViewChange}
+              />
+              {noWriteActions ? null : (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setEditingEmail(null);
+                    setComposeOpen(true);
+                  }}
+                  aria-label="Compose new email"
+                >
+                  <Plus />
+                  Compose
+                </Button>
+              )}
+            </div>
           ),
         }}
         tabs={embedded && !navigationTabs ? undefined : tabs}
@@ -749,10 +815,9 @@ export function EmailsClient({
           searchValue: tableState.searchInput,
           onSearchChange: tableState.setSearchInput,
           searchPlaceholder: "Search emails...",
-          currentView: tableState.currentView,
+          currentView: emailView === "list" ? "list" : "table",
           onViewChange: (view) => {
-            tableState.setCurrentView(view);
-            tableState.setSearchParams({ view });
+            handleEmailViewChange(view === "list" ? "list" : "table");
           },
           filters: emailFilters,
           activeFilters,

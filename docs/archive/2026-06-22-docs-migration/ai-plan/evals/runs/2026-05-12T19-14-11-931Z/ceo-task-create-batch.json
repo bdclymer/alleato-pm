@@ -1,0 +1,46 @@
+{
+  "id": "ceo-task-create-batch",
+  "intent": "action_preview",
+  "prompt": "Couple things to capture: 1) chase the Vermillion COI by Friday, 2) get the updated insurance cert from Acme, 3) call Brandon at the bank about the loan modification next week.",
+  "selectedProjectId": null,
+  "sessionId": "42a5c4b0-50d5-4c63-91f2-a922e4f69091",
+  "sessionLabel": "eval-2026-05-12T19-14-11-931Z-ceo-task-create-batch",
+  "startedAt": "2026-05-12T20:17:32.188Z",
+  "finishedAt": "2026-05-12T20:17:47.934Z",
+  "durationMs": 427,
+  "httpStatus": 401,
+  "streamError": "HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"e0b51760-8a36-4937-9ec0-cdfe8b6c02ca\",\"timestamp\":\"2026-05-12T20:17:32.614Z\"}",
+  "streamEventCount": 0,
+  "persistedFound": false,
+  "score": {
+    "status": "fail",
+    "failures": [
+      "stream error: HTTP 401: {\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"e0b51760-8a36-4937-9ec0-cdfe8b6c02ca\",\"timestamp\":\"2026-05-12T20:17:32.614Z\"}",
+      "HTTP 401",
+      "assistant message was not persisted to chat_history",
+      "expected required tool 'createGeneratedTask' to fire",
+      "mustInclude missing: \"Preview\"",
+      "mustInclude missing: \"confirm\"",
+      "mustIncludeAny missing one of: \"Vermillion\", \"COI\", \"insurance\", \"Acme\", \"bank\", \"loan\"",
+      "answer length 210 < min 250"
+    ],
+    "warnings": [
+      "expected family 'action_write' not represented",
+      "expected family 'task_management' not represented"
+    ],
+    "observations": [
+      "tools fired: (none)"
+    ],
+    "toolNames": [],
+    "familiesHit": [],
+    "finalTextLength": 210,
+    "finalText": "{\"success\":false,\"error_code\":\"AUTH_EXPIRED\",\"error_message\":\"Unauthorized\",\"where_it_failed\":\"ai-assistant/chat#POST\",\"request_id\":\"e0b51760-8a36-4937-9ec0-cdfe8b6c02ca\",\"timestamp\":\"2026-05-12T20:17:32.614Z\"}"
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "action_write",
+    "task_management"
+  ],
+  "streamEvents": [],
+  "persistedMetadata": null
+}

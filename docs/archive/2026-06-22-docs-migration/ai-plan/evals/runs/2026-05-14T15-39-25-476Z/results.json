@@ -1,0 +1,1143 @@
+{
+  "generatedAt": "2026-05-14T15:54:45.104Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": null,
+  "filter": "^(financial-forecast|source-lookup-meetings|documents-search|action-items|cross-project-comparison|memory-recall|what-changed|action-task-preview-no-write|ceo-task-create-(direct|throw-on-list|assign-pm|action-item|schedule-activity)|ceo-task-modify-(close|reschedule|reassign|bump-priority|snooze)|ceo-money-margin-leak|ceo-money-unbilled-changes|ceo-meetings-promised-to-do|ceo-context-aware-decisions-needed|owner-prep-call-westfield)$",
+  "totalCases": 23,
+  "passed": 13,
+  "failed": 10,
+  "toolCoverage": {
+    "intentPlanner": 22,
+    "mcpToolDiscovery": 20,
+    "streamingToolPolicy": 20,
+    "promptContextReducer": 12,
+    "taskWriteIntentRouter": 10,
+    "taskWriteToolOnlyCompletion": 10,
+    "messageDrivenToolRouter": 7,
+    "noToolRetry": 6,
+    "createGeneratedTask": 5,
+    "clientProjectIntelligencePacket": 4,
+    "semanticSearch": 4,
+    "assistantSourceHealth": 4,
+    "sourceLookupIntentRouter": 4,
+    "updateGeneratedTask": 4,
+    "searchMeetingsByTopic": 2,
+    "assistantWidgetPlanner": 2,
+    "backendDeepAgentProjectStatus": 2,
+    "getForecastComparison": 1,
+    "streamTextError": 1,
+    "queryDocumentRows": 1,
+    "getActionItemsAndInsights": 1,
+    "getCrossProjectComparison": 1,
+    "getMyTasks": 1,
+    "createTask": 1,
+    "getAcumaticaProjectList": 1,
+    "getMarginAnalysis": 1,
+    "getFinancialAnalysis": 1,
+    "featureRequestPacketRouter": 1,
+    "getProjectBriefingSnapshot": 1
+  },
+  "intentDistribution": {
+    "financial_analysis": 3,
+    "source_lookup": 1,
+    "document_question": 1,
+    "operations_analysis": 2,
+    "portfolio_briefing": 1,
+    "general_conversation": 1,
+    "project_briefing": 2,
+    "action_preview": 11,
+    "meeting_query": 1
+  },
+  "results": [
+    {
+      "id": "financial-forecast",
+      "intent": "financial_analysis",
+      "prompt": "If Westfield keeps tracking this way, where do we land against the original budget?",
+      "selectedProjectId": 43,
+      "sessionId": "5fa2333e-b61c-4a15-9760-24be23b353ed",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-financial-forecast",
+      "startedAt": "2026-05-14T15:39:25.478Z",
+      "finishedAt": "2026-05-14T15:40:21.629Z",
+      "durationMs": 55363,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 249,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'financial' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, messageDrivenToolRouter, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, getForecastComparison, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "messageDrivenToolRouter",
+          "clientProjectIntelligencePacket",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getForecastComparison",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "forecast"
+        ],
+        "finalTextLength": 1048,
+        "finalText": "I’m pulling the hard numbers for you.\n\nYour question: If Westfield Collective continues tracking on its current trajectory, what’s the final outcome versus the original budget?\n\nHere’s the current fact base:\n- The most recent packet has no explicit current-vs-original budget comparison, but notes ongoing issues: minor remedial work on glass, air curtain install/verification, and a payment workflow snag (the $5,800 invoice issue: deleted in JobPlanner but still “live” in Acumatica).\n- No mention of unapproved major change events, claims, or new scope exposure.\n- Latest email exchanges are owner punchlist/closeout/maintenance level, not large-scale cost change.\n\nGetting the probability, not just the static snapshot, needs two things:\n1. **A fresh forecast-to-complete analysis, with trendline.**\n2. **A cost trend review to see if any late-stage spend or cost overhang is coming.**\n\nPulling those now.\n\n---\n\nCalling `getForecastComparison` for real-time projected final cost vs. original budget. If that’s thin, I’ll sweep cost trends next."
+      },
+      "expectedToolNames": [
+        "getForecastComparison",
+        "getCostTrends"
+      ],
+      "expectedToolFamilies": [
+        "financial",
+        "forecast"
+      ]
+    },
+    {
+      "id": "source-lookup-meetings",
+      "intent": "source_lookup",
+      "prompt": "Did Brandon say anything about billing in recent meetings that I need to remember?",
+      "selectedProjectId": null,
+      "sessionId": "98cd2100-a562-4586-a832-fdf14ac645ef",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-source-lookup-meetings",
+      "startedAt": "2026-05-14T15:40:21.633Z",
+      "finishedAt": "2026-05-14T15:41:45.820Z",
+      "durationMs": 83428,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 38,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, semanticSearch, assistantSourceHealth, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, searchMeetingsByTopic, streamTextError, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "semanticSearch",
+          "assistantSourceHealth",
+          "sourceLookupIntentRouter",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "searchMeetingsByTopic",
+          "streamTextError",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "meetings",
+          "semantic",
+          "source_health"
+        ],
+        "finalTextLength": 752,
+        "finalText": "No source records surfaced any recent meeting discussion where Brandon addressed billing. I checked semantic search across meetings, Teams, email, documents, and insights—nothing matching your question came up.\n\nGiven the current degraded source sync status (embedding backlog is heavy, and several key mailboxes are behind), it's possible something recent hasn't been captured yet. But based on what is embedded and available, there is no Brandon billing-related commitment, issue, or decision in recent meetings that you need to track.\n\nIf this is a blocker, flag what specific billing angle or project you're concerned about, and I’ll watch for that signal as source sync improves. Right now: nothing urgent from Brandon on billing is in the record."
+      },
+      "expectedToolNames": [
+        "searchMeetingsByTopic",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "meetings",
+        "semantic"
+      ]
+    },
+    {
+      "id": "documents-search",
+      "intent": "document_question",
+      "prompt": "Find the latest Westfield contract or change-order document and tell me the business terms I should care about.",
+      "selectedProjectId": 43,
+      "sessionId": "ea7d3753-498d-44a9-b837-d9d060da6510",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-documents-search",
+      "startedAt": "2026-05-14T15:41:45.821Z",
+      "finishedAt": "2026-05-14T15:42:37.105Z",
+      "durationMs": 50621,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 209,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "global forbidden phrase: \"retrieval\""
+        ],
+        "observations": [
+          "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, queryDocumentRows, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantSourceHealth",
+          "semanticSearch",
+          "sourceLookupIntentRouter",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "queryDocumentRows",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "structured",
+          "documents",
+          "semantic",
+          "source_health"
+        ],
+        "finalTextLength": 1053,
+        "finalText": "No relevant contract or change-order document for Westfield Collective turned up in the system search. I checked across meetings, Teams, emails, and the document index—retrieval came back empty. This could be a pipeline issue (sources waiting on embedding or not uploaded), or the document simply isn't here.\n\n**What that means:**  \nI can't quote business terms, payment language, retainage, or risk-shifting clauses without the actual contract or CO doc. That's a hard stop for actionable contract review.\n\n**What to do next:**  \n- Confirm if the latest contract or CO is uploaded and named properly in the project files.\n- If you're missing it from the doc index, flag for upload/embedding so it's searchable and can alert on upcoming milestones or buried risk terms.\n\nIf you want to drill in somewhere else—like pending change events, current signature status, or financial exposure—let me know. That data is available from the other side (change-order log, approvals, or financial packets), even if the PDF itself hasn't cleared the source pipeline."
+      },
+      "expectedToolNames": [
+        "searchDocuments",
+        "searchExternalDocuments",
+        "queryDocumentRows"
+      ],
+      "expectedToolFamilies": [
+        "documents",
+        "semantic"
+      ]
+    },
+    {
+      "id": "action-items",
+      "intent": "operations_analysis",
+      "prompt": "What open Westfield action items came out of meetings, and who owns each one?",
+      "selectedProjectId": 43,
+      "sessionId": "2116d9f7-4e0f-4c9c-b00f-82600209d02f",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-action-items",
+      "startedAt": "2026-05-14T15:42:37.106Z",
+      "finishedAt": "2026-05-14T15:43:58.019Z",
+      "durationMs": 80090,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 2329,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'meetings' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, semanticSearch, assistantSourceHealth, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, getActionItemsAndInsights, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "semanticSearch",
+          "assistantSourceHealth",
+          "sourceLookupIntentRouter",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getActionItemsAndInsights",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "semantic",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 1306,
+        "finalText": "No verifiable open Westfield Collective action items from meetings were returned in the current source search. I checked across all indexed meetings, Teams, emails, and insight records for action items assigned during or resulting from Westfield Collective project meetings, but none were surfaced in the evidence.\n\nGiven this, either:\n- Meeting transcripts with action assignments for Westfield haven't been synced/vectorized yet (the pipeline shows a backlog and degraded sync on several team member accounts), or\n- Action items were recorded outside of the indexed systems (for example, in task trackers or unindexed docs).\n\n**What to do next**\nIf you need a list of action items that are tracked elsewhere (task register, project management software), specify where they're recorded, or ask for open tasks more broadly and I can query the live tasks page instead of extracting only from meeting records.\n\nIf you want to ensure meeting-based action assignments are getting captured, it may be worth pushing for those to be logged in the tracked task system or directly flagged for follow-up in meetings.\n\nLet me know if you want the full open tasks register for Westfield Collective, or if you want me to check for recent meeting topics or follow-up signals even if a formal action item wasn’t assigned."
+      },
+      "expectedToolNames": [
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "actions",
+        "meetings"
+      ]
+    },
+    {
+      "id": "cross-project-comparison",
+      "intent": "portfolio_briefing",
+      "prompt": "Which big active jobs are burning budget fastest, and does that look normal or risky?",
+      "selectedProjectId": null,
+      "sessionId": "01b76070-b2e8-4417-ad8f-1c0fd4e2f17c",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-cross-project-comparison",
+      "startedAt": "2026-05-14T15:43:58.027Z",
+      "finishedAt": "2026-05-14T15:44:35.139Z",
+      "durationMs": 36502,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 155,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'financial' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, assistantWidgetPlanner, messageDrivenToolRouter, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, getCrossProjectComparison, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "assistantWidgetPlanner",
+          "messageDrivenToolRouter",
+          "clientProjectIntelligencePacket",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getCrossProjectComparison",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project"
+        ],
+        "finalTextLength": 672,
+        "finalText": "I'm running a cross-project budget burn analysis. Here’s the path:\n\n1. Portfolio extraction across all active jobs, focusing on actuals-to-date vs. planned and weekly/monthly burn rate.\n2. Identify projects with the fastest budget consumption as a percentage of total contract and vs. progress earned.\n3. Flag anything where the burn rate outpaces schedule advancement, forecast, or looks off compared to norms for stage of work.\n\nI’m starting with finance as required, then cross-checking latest portfolio risk data before final conclusions.\n\nStand by — results will include specific project names, burn rates, and my opinion on what’s routine, aggressive, or a red flag."
+      },
+      "expectedToolNames": [
+        "getCrossProjectComparison",
+        "getPortfolioOverview"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "financial"
+      ]
+    },
+    {
+      "id": "memory-recall",
+      "intent": "general_conversation",
+      "prompt": "What context do you already have from past Westfield conversations so I do not have to repeat myself?",
+      "selectedProjectId": 43,
+      "sessionId": "75db6f7a-2b3f-48ed-bd0a-e68cc1b63787",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-memory-recall",
+      "startedAt": "2026-05-14T15:44:35.143Z",
+      "finishedAt": "2026-05-14T15:45:06.286Z",
+      "durationMs": 30077,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 377,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [recallPastConversations, searchMemories] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'memory' not represented",
+          "global forbidden phrase: \"retrieval\""
+        ],
+        "observations": [
+          "tools fired: intentPlanner, semanticSearch, assistantSourceHealth, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "semanticSearch",
+          "assistantSourceHealth",
+          "sourceLookupIntentRouter",
+          "messageDrivenToolRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy"
+        ],
+        "familiesHit": [
+          "semantic",
+          "source_health"
+        ],
+        "finalTextLength": 1628,
+        "finalText": "Here’s what I already have on **Westfield Collective** so you don’t need to restate it:\n\n- It’s your **pinned project**: **Westfield Collective · #24-115 · Phase: Current · Client: Collective Group**\n- Unless you say otherwise, I should treat project-specific questions as referring to **Westfield Collective**\n- I have a standing preference context from you to keep updates:\n  - **specific**\n  - **risk-focused**\n  - **next-step driven**\n  - with clear linkage to **project names, due dates, and assignees** when tasks or RFIs come up\n\nWhat I **do not** have from prior Westfield conversations, based on the loaded memory and current retrieval, is any durable saved context like:\n- signed GMP amount\n- target milestones\n- key owner concerns\n- recurring trade issues\n- named commitments from Brandon or the team\n- specific Westfield budget/risk history\n\nI also need to be straight about the data quality issue: the source sync is **degraded**, and retrieval came back **empty for concrete Westfield source records** in this session. So I’m not going to pretend I have a full institutional history on Westfield if the evidence isn’t there.\n\nWhat that means:\n- I **do know** Westfield is your default active project\n- I **don’t yet have** reliable prior Westfield-specific facts loaded here beyond that\n- If you want, I can help build that memory fast by capturing a few durable facts once, so you don’t repeat them again\n\nBest next move: send me the 5-10 facts you reuse most on Westfield — contract structure, current budget/GMP, major milestones, top 3 risks, and who owns what — and I’ll turn that into durable project memory."
+      },
+      "expectedToolNames": [
+        "recallPastConversations",
+        "searchMemories"
+      ],
+      "expectedToolFamilies": [
+        "memory"
+      ]
+    },
+    {
+      "id": "what-changed",
+      "intent": "project_briefing",
+      "prompt": "Since the last Westfield update, what actually changed?",
+      "selectedProjectId": 43,
+      "sessionId": "0337a27d-08f2-4ce7-9273-55325153202f",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-what-changed",
+      "startedAt": "2026-05-14T15:45:06.287Z",
+      "finishedAt": "2026-05-14T15:45:50.094Z",
+      "durationMs": 43351,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 811,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [semanticSearch, recallPastConversations] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'semantic' not represented",
+          "expected family 'communications' not represented",
+          "expected family 'memory' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, backendDeepAgentProjectStatus, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "backendDeepAgentProjectStatus",
+          "clientProjectIntelligencePacket",
+          "mcpToolDiscovery",
+          "streamingToolPolicy"
+        ],
+        "familiesHit": [
+          "project",
+          "risk"
+        ],
+        "finalTextLength": 3704,
+        "finalText": "Since the last Westfield update, the real changes are **mostly operational punch/warranty items and one site-plan revision**, not a major scope or budget shift.\n\n## What actually changed\n\n1. **Parking layout was revised**\n   - Doug Franklin directed Viox to **remove the connection drive** and **add parking spaces in that area**.\n   - He asked for the **updated plan by Monday**.\n   - This is the clearest actual project change since the last update.\n\n2. **Stair riser paint touch-ups moved into scheduling/operations coordination**\n   - Angie asked whether the work will take **one day or multiple days starting at 7am**.\n   - She flagged that the site **opens to the public at 11am** and asked for **advance notice plus a calendar invite**.\n   - So the work itself is still pending, but the key change is that it now has a **public-hours constraint** that needs coordination.\n\n3. **Air-curtain / entry warranty troubleshooting advanced**\n   - Andrew reported that the **counter shutter rep installed brush seals** around the doors last week.\n   - He plans to do a **smoke test later this week** to confirm whether air is still penetrating.\n   - That means this issue moved from complaint/status to **active field verification**.\n\n4. **Entrance glass issue shifted toward owner self-perform/payment**\n   - Diamond Glassworks is expected to look at the window and believes **interior film** is likely the best fix.\n   - Heather replied that **their team can handle it internally** as long as they have the installer’s blessing on material.\n   - So this looks less like a GC-driven issue now and more like an **owner-handled minor fix**, unless they want Alleato to invoice it.\n\n5. **Patio patch pricing is still not decided**\n   - Andrew pushed back that he requested **two separate prices** for the patio patch areas and needs both before deciding.\n   - So there’s **movement**, but no final direction yet.\n\n6. **A payables/accounting issue surfaced**\n   - JobPlanner support flagged that an invoice push is failing because **invoice #003056 for $5,800** had already been pushed to Acumatica, then deleted/unlinked in JobPlanner but still exists in Acumatica.\n   - That is a **back-office change/risk**, not field scope change, but it does need cleanup.\n\n## What matters most\n\n- **Parking plan revision**  \n  This is the only clear physical/site-layout change. It matters because it can affect circulation, counts, and any downstream civil/site coordination.\n\n- **Public-hours constraint on remaining finish work**  \n  Stair touch-ups now need to be sequenced around an **11am opening**, which creates execution risk if the team assumes unrestricted site access.\n\n- **Warranty/punch items are being worked, but not yet closed**  \n  Air infiltration and glass remain active issues. They are progressing, but neither is fully resolved.\n\n## What I do not see\n- **No evidence of a formal major scope change order**\n- **No new RFI or submittal activity in the system**\n- **No meeting records available** to confirm broader decisions\n- New budget/COI files synced, but those alone **do not indicate a project change**\n\n## First action to take\n\n1. **Confirm the revised parking plan is delivered Monday and approved**\n2. **Lock the stair touch-up schedule around public hours**\n3. **Get a closeout answer on the air-curtain smoke test and whether the glass fix is owner-handled or Alleato-handled**\n4. **Resolve the Acumatica/JobPlanner invoice mismatch before it creates payment confusion**\n\nBottom line: **Westfield changed in small but real ways—parking layout revision, tighter operational coordination for finish work, and progress on warranty/punch items—but there is no sign of a major project reset.**"
+      },
+      "expectedToolNames": [
+        "semanticSearch",
+        "recallPastConversations"
+      ],
+      "expectedToolFamilies": [
+        "semantic",
+        "communications",
+        "memory"
+      ]
+    },
+    {
+      "id": "action-task-preview-no-write",
+      "intent": "action_preview",
+      "prompt": "Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm.",
+      "selectedProjectId": null,
+      "sessionId": "8f501d2a-34fa-4853-b648-c55f4ce5a293",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-action-task-preview-no-write",
+      "startedAt": "2026-05-14T15:45:50.095Z",
+      "finishedAt": "2026-05-14T15:46:21.480Z",
+      "durationMs": 30763,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1497,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected required tool 'createTask' to fire",
+          "mustIncludeAny missing one of: \"not created\", \"No task was created\", \"Reply confirm\", \"confirmed: false\""
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, taskWriteIntentRouter, mcpToolDiscovery, streamingToolPolicy, createGeneratedTask, taskWriteToolOnlyCompletion"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "taskWriteIntentRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "createGeneratedTask",
+          "taskWriteToolOnlyCompletion"
+        ],
+        "familiesHit": [
+          "action_write",
+          "task_management"
+        ],
+        "finalTextLength": 332,
+        "finalText": "Task preview ready.\n\nI staged this from your request: \"Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm.\".\n\nNothing was created yet. Review the preview card, then reply **confirm** to create it or tell me what to change."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "action_write"
+      ]
+    },
+    {
+      "id": "ceo-task-create-direct",
+      "intent": "action_preview",
+      "prompt": "Add a task for me to call the Ulta owner about the AC1 approval by Friday.",
+      "selectedProjectId": null,
+      "sessionId": "e80b37e1-f2b9-49bf-97d9-1eeedcba442e",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-task-create-direct",
+      "startedAt": "2026-05-14T15:46:21.482Z",
+      "finishedAt": "2026-05-14T15:46:54.420Z",
+      "durationMs": 32444,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1105,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, taskWriteIntentRouter, mcpToolDiscovery, streamingToolPolicy, createGeneratedTask, taskWriteToolOnlyCompletion"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "taskWriteIntentRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "createGeneratedTask",
+          "taskWriteToolOnlyCompletion"
+        ],
+        "familiesHit": [
+          "action_write",
+          "task_management"
+        ],
+        "finalTextLength": 245,
+        "finalText": "Task preview ready.\n\nI staged this from your request: \"Add a task for me to call the Ulta owner about the AC1 approval by Friday.\".\n\nNothing was created yet. Review the preview card, then reply **confirm** to create it or tell me what to change."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "action_write",
+        "task_management"
+      ]
+    },
+    {
+      "id": "ceo-task-create-throw-on-list",
+      "intent": "action_preview",
+      "prompt": "Throw this on my list: confirm with Acme Roofing that the submittal package is in by EOD Thursday.",
+      "selectedProjectId": null,
+      "sessionId": "7c0cac05-e01a-456d-933e-084c162efd40",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-task-create-throw-on-list",
+      "startedAt": "2026-05-14T15:46:54.421Z",
+      "finishedAt": "2026-05-14T15:46:59.609Z",
+      "durationMs": 5130,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 9,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [createGeneratedTask] to fire — none did",
+          "mustIncludeAny missing one of: \"Acme\", \"submittal\", \"Thursday\", \"EOD\""
+        ],
+        "warnings": [
+          "expected family 'action_write' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, getMyTasks"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "getMyTasks"
+        ],
+        "familiesHit": [
+          "task_management"
+        ],
+        "finalTextLength": 281,
+        "finalText": "I checked the task register for Test User.\n\nI did not find any open task rows directly assigned to you in the checked task sources.\n\n**Sources Checked**\n- tasks.assignee_person_id / assignee_email / assignee_name\n- schedule_tasks.assignee text\n- executive_briefing_follow_ups.owner"
+      },
+      "expectedToolNames": [
+        "createGeneratedTask"
+      ],
+      "expectedToolFamilies": [
+        "action_write",
+        "task_management"
+      ]
+    },
+    {
+      "id": "ceo-task-create-assign-pm",
+      "intent": "action_preview",
+      "prompt": "Get someone on confirming the AC1 solar approval date — assign it to the Ulta PM, due Wednesday.",
+      "selectedProjectId": null,
+      "sessionId": "543a87d4-07d5-47e7-b5fa-c94f41824856",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-task-create-assign-pm",
+      "startedAt": "2026-05-14T15:46:59.610Z",
+      "finishedAt": "2026-05-14T15:47:23.180Z",
+      "durationMs": 22849,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 959,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected required tool 'createGeneratedTask' to fire"
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, assistantWidgetPlanner, taskWriteIntentRouter, mcpToolDiscovery, streamingToolPolicy, updateGeneratedTask, taskWriteToolOnlyCompletion"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "assistantWidgetPlanner",
+          "taskWriteIntentRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "updateGeneratedTask",
+          "taskWriteToolOnlyCompletion"
+        ],
+        "familiesHit": [
+          "action_write",
+          "task_management"
+        ],
+        "finalTextLength": 267,
+        "finalText": "Task preview ready.\n\nI staged this from your request: \"Get someone on confirming the AC1 solar approval date — assign it to the Ulta PM, due Wednesday.\".\n\nNothing was created yet. Review the preview card, then reply **confirm** to create it or tell me what to change."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "action_write",
+        "task_management"
+      ]
+    },
+    {
+      "id": "ceo-task-create-action-item",
+      "intent": "action_preview",
+      "prompt": "Action item: I need Jesse to send the updated GMP exhibit to the owner by COB Friday.",
+      "selectedProjectId": null,
+      "sessionId": "83490f77-043c-4fa7-ba38-da7cebf6d7b6",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-task-create-action-item",
+      "startedAt": "2026-05-14T15:47:23.181Z",
+      "finishedAt": "2026-05-14T15:47:48.827Z",
+      "durationMs": 24799,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1206,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, taskWriteIntentRouter, mcpToolDiscovery, streamingToolPolicy, createGeneratedTask, taskWriteToolOnlyCompletion"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "taskWriteIntentRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "createGeneratedTask",
+          "taskWriteToolOnlyCompletion"
+        ],
+        "familiesHit": [
+          "action_write",
+          "task_management"
+        ],
+        "finalTextLength": 256,
+        "finalText": "Task preview ready.\n\nI staged this from your request: \"Action item: I need Jesse to send the updated GMP exhibit to the owner by COB Friday.\".\n\nNothing was created yet. Review the preview card, then reply **confirm** to create it or tell me what to change."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "action_write",
+        "task_management"
+      ]
+    },
+    {
+      "id": "ceo-task-create-schedule-activity",
+      "intent": "action_preview",
+      "prompt": "Add a Gantt task on Westfield for site mobilization starting June 3rd, 5 days, assigned to the field super.",
+      "selectedProjectId": 43,
+      "sessionId": "2ff20450-66dc-4295-aa0a-0a884e9ee8aa",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-task-create-schedule-activity",
+      "startedAt": "2026-05-14T15:47:48.829Z",
+      "finishedAt": "2026-05-14T15:48:13.389Z",
+      "durationMs": 23883,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1006,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, taskWriteIntentRouter, mcpToolDiscovery, streamingToolPolicy, createTask, taskWriteToolOnlyCompletion"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "taskWriteIntentRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "createTask",
+          "taskWriteToolOnlyCompletion"
+        ],
+        "familiesHit": [
+          "action_write",
+          "task_management"
+        ],
+        "finalTextLength": 278,
+        "finalText": "Task preview ready.\n\nI staged this from your request: \"Add a Gantt task on Westfield for site mobilization starting June 3rd, 5 days, assigned to the field super.\".\n\nNothing was created yet. Review the preview card, then reply **confirm** to create it or tell me what to change."
+      },
+      "expectedToolNames": [],
+      "expectedToolFamilies": [
+        "action_write"
+      ]
+    },
+    {
+      "id": "ceo-task-modify-close",
+      "intent": "action_preview",
+      "prompt": "Close out the Vermillion permit follow-up — that one's resolved.",
+      "selectedProjectId": 67,
+      "sessionId": "5b6122fa-2eb4-467c-82ec-4e87984e5982",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-task-modify-close",
+      "startedAt": "2026-05-14T15:48:13.390Z",
+      "finishedAt": "2026-05-14T15:48:38.560Z",
+      "durationMs": 24611,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1025,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, taskWriteIntentRouter, mcpToolDiscovery, streamingToolPolicy, updateGeneratedTask, taskWriteToolOnlyCompletion"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "taskWriteIntentRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "updateGeneratedTask",
+          "taskWriteToolOnlyCompletion"
+        ],
+        "familiesHit": [
+          "action_write",
+          "task_management"
+        ],
+        "finalTextLength": 235,
+        "finalText": "Task preview ready.\n\nI staged this from your request: \"Close out the Vermillion permit follow-up — that one's resolved.\".\n\nNothing was created yet. Review the preview card, then reply **confirm** to create it or tell me what to change."
+      },
+      "expectedToolNames": [
+        "getMyTasks",
+        "updateGeneratedTask",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "action_write"
+      ]
+    },
+    {
+      "id": "ceo-task-modify-reschedule",
+      "intent": "action_preview",
+      "prompt": "Push that AC1 task to next Tuesday instead — owner asked for more time.",
+      "selectedProjectId": null,
+      "sessionId": "9a175d0b-0fc2-4b42-8987-0bdde9285b6f",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-task-modify-reschedule",
+      "startedAt": "2026-05-14T15:48:38.561Z",
+      "finishedAt": "2026-05-14T15:49:06.941Z",
+      "durationMs": 27635,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1112,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getMyTasks, updateGeneratedTask, getActionItemsAndInsights] to fire — none did"
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, taskWriteIntentRouter, mcpToolDiscovery, streamingToolPolicy, createGeneratedTask, taskWriteToolOnlyCompletion"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "taskWriteIntentRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "createGeneratedTask",
+          "taskWriteToolOnlyCompletion"
+        ],
+        "familiesHit": [
+          "action_write",
+          "task_management"
+        ],
+        "finalTextLength": 242,
+        "finalText": "Task preview ready.\n\nI staged this from your request: \"Push that AC1 task to next Tuesday instead — owner asked for more time.\".\n\nNothing was created yet. Review the preview card, then reply **confirm** to create it or tell me what to change."
+      },
+      "expectedToolNames": [
+        "getMyTasks",
+        "updateGeneratedTask",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "action_write"
+      ]
+    },
+    {
+      "id": "ceo-task-modify-reassign",
+      "intent": "action_preview",
+      "prompt": "Hand that submittal follow-up off to Megan instead.",
+      "selectedProjectId": null,
+      "sessionId": "e481e03a-78bb-4dc3-90bb-4fb865308600",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-task-modify-reassign",
+      "startedAt": "2026-05-14T15:49:06.943Z",
+      "finishedAt": "2026-05-14T15:49:35.469Z",
+      "durationMs": 27588,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1127,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getMyTasks, updateGeneratedTask, getActionItemsAndInsights] to fire — none did"
+        ],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, taskWriteIntentRouter, mcpToolDiscovery, streamingToolPolicy, createGeneratedTask, taskWriteToolOnlyCompletion"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "taskWriteIntentRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "createGeneratedTask",
+          "taskWriteToolOnlyCompletion"
+        ],
+        "familiesHit": [
+          "action_write",
+          "task_management"
+        ],
+        "finalTextLength": 222,
+        "finalText": "Task preview ready.\n\nI staged this from your request: \"Hand that submittal follow-up off to Megan instead.\".\n\nNothing was created yet. Review the preview card, then reply **confirm** to create it or tell me what to change."
+      },
+      "expectedToolNames": [
+        "getMyTasks",
+        "updateGeneratedTask",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "action_write"
+      ]
+    },
+    {
+      "id": "ceo-task-modify-bump-priority",
+      "intent": "action_preview",
+      "prompt": "Make the Ulta inspector task high priority — it's blocking the rest of the slab pour.",
+      "selectedProjectId": null,
+      "sessionId": "fb30a60c-53ea-42ce-bd4c-0c5cdcb657f1",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-task-modify-bump-priority",
+      "startedAt": "2026-05-14T15:49:35.470Z",
+      "finishedAt": "2026-05-14T15:50:01.690Z",
+      "durationMs": 25798,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 996,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, taskWriteIntentRouter, mcpToolDiscovery, streamingToolPolicy, updateGeneratedTask, taskWriteToolOnlyCompletion"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "taskWriteIntentRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "updateGeneratedTask",
+          "taskWriteToolOnlyCompletion"
+        ],
+        "familiesHit": [
+          "action_write",
+          "task_management"
+        ],
+        "finalTextLength": 256,
+        "finalText": "Task preview ready.\n\nI staged this from your request: \"Make the Ulta inspector task high priority — it's blocking the rest of the slab pour.\".\n\nNothing was created yet. Review the preview card, then reply **confirm** to create it or tell me what to change."
+      },
+      "expectedToolNames": [
+        "getMyTasks",
+        "updateGeneratedTask",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "action_write"
+      ]
+    },
+    {
+      "id": "ceo-money-margin-leak",
+      "intent": "financial_analysis",
+      "prompt": "Which jobs are quietly eating margin?",
+      "selectedProjectId": null,
+      "sessionId": "dd82c049-e09b-40c8-a688-ed5b2ac687a7",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-money-margin-leak",
+      "startedAt": "2026-05-14T15:50:01.691Z",
+      "finishedAt": "2026-05-14T15:50:27.775Z",
+      "durationMs": 25624,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 862,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'project' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, mcpToolDiscovery, streamingToolPolicy, getAcumaticaProjectList, getMarginAnalysis"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getAcumaticaProjectList",
+          "getMarginAnalysis"
+        ],
+        "familiesHit": [
+          "financial",
+          "accounting"
+        ],
+        "finalTextLength": 3145,
+        "finalText": "The quiet margin erosion is showing up in a small group of active jobs that are either already negative or running so thin they have no room for one more miss.\n\nWhat stands out from the live ERP portfolio:\n\n- **25-108 Goodwill Tremont** — **-$164.5K** net position  \n- **25-110 Memphis Cold Storage Phase 2** — **-$99.1K**\n- **26-101 Paradise Isle Geotech** — **-$42.1K**\n- **24-115 Westfield Collective** — **-$40.4K**\n- **24-101 Crate Escapes** — **-$32.2K**\n\nThen there’s the second tier — not underwater yet, but effectively margin-starved:\n\n- **25-105 Applied Engineering** — **$50.7K** net on **$542.5K** income, about **9.3%**\n- **25-101 Core Mark Atlanta** — **$20.0K** net on **$275.7K** income, about **7.3%**\n- **25-111 Goodwill Foundations** — **$16.9K** net on **$305.3K** income, about **5.5%**\n- **25-104 Royal Theatre Apartments** — **$2.6K** net on **$79.6K** income, basically break-even\n- **24-105 Forza Dayton** — **$43.75** net, which is just flat\n\nMy point of view: **Goodwill Tremont, Memphis Cold Storage Phase 2, Westfield Collective, and Crate Escapes are the real concern.** Those aren’t just soft-margin jobs — they’re already consuming it. And **Royal Theatre, Goodwill Foundations, Core Mark Atlanta, and Applied Engineering** are the kind of jobs that quietly flip negative if one billing, backcharge, or closeout cost lands wrong.\n\nWhat the numbers mean:\n- **Westfield Collective** is the biggest operational warning because it’s a large-volume job with **$8.32M income vs $8.36M expense**. A small percentage miss on a job that size matters.\n- **Goodwill Tremont** is the ugliest current mismatch relative to revenue: **$80.3K income vs $244.8K expense**. That could be timing, but until proven otherwise it’s a margin leak.\n- **Memphis Cold Storage Phase 2** also looks upside down on timing or buyout discipline: **$111.6K income vs $210.7K expense**.\n- **Crate Escapes** is close enough to break-even that it may get ignored, which is exactly how these jobs keep eating margin.\n\nWhat I could not confirm yet:\n- I tried pulling project-level margin analysis to separate **true deterioration** from **billing timing / revenue recognition timing**, but those project lookups didn’t resolve from the ERP project descriptions I used. So this answer is solid on **current ERP net position**, but not yet on **original margin vs current projected margin trend**.\n\nWhat to do next:\n1. **Pull an immediate margin drilldown** on these four first: **Westfield Collective, Goodwill Tremont, Memphis Cold Storage Phase 2, Crate Escapes.**\n2. For each one, verify three things:\n   - Is the issue **underbilling/revenue timing** or **real cost overrun**?\n   - Are there **unapproved owner change orders** sitting outside revenue?\n   - Are there **late commitments/direct costs** hitting without corresponding budget movement?\n3. Put **Royal Theatre, Goodwill Foundations, Core Mark Atlanta, and Applied Engineering** on a watchlist. They’re not dead yet, but they don’t have cushion.\n\nIf you want, I’ll turn this into a ranked “margin watchlist” with **likely cause, current exposure, and who needs to answer for each job**."
+      },
+      "expectedToolNames": [
+        "getPortfolioOverview",
+        "getMarginAnalysis",
+        "getCrossProjectComparison"
+      ],
+      "expectedToolFamilies": [
+        "financial",
+        "project"
+      ]
+    },
+    {
+      "id": "ceo-money-unbilled-changes",
+      "intent": "financial_analysis",
+      "prompt": "What work have we done that has not turned into billable change-order money yet?",
+      "selectedProjectId": null,
+      "sessionId": "3175f484-8fc0-4dbb-bad9-741161a99117",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-money-unbilled-changes",
+      "startedAt": "2026-05-14T15:50:27.776Z",
+      "finishedAt": "2026-05-14T15:50:45.781Z",
+      "durationMs": 17581,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 267,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getChangeOrderDetails, queryChangeOrders] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'structured' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, mcpToolDiscovery, streamingToolPolicy, getFinancialAnalysis"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getFinancialAnalysis"
+        ],
+        "familiesHit": [
+          "financial"
+        ],
+        "finalTextLength": 1065,
+        "finalText": "I can’t answer that reliably from what I pulled.\n\nThe data source I hit came back with **project 0 / no scoped project data**, so there’s no real change-order exposure in that result. To answer your question correctly, I need to scope it one of two ways:\n\n- **One project**: “Vermillion Rise” / “Eye Surgeons” / etc.\n- **Portfolio-wide**: all active projects\n\nWhat you’re asking for, specifically, is the gap between:\n- **work performed or costs incurred**\nand\n- **approved owner change-order dollars / billable CO money**\n\nThat usually shows up in a few buckets:\n- **Open change events** not yet turned into priced COs\n- **Pending prime change orders** not yet approved by the owner\n- **Executed field work tied to unsigned CO backup**\n- **Cost hits already in the job** with no matching owner-side recovery yet\n\nIf you want, I can do this **portfolio-wide** and give you:\n1. the biggest unbilled exposure by project,  \n2. what portion is **pending approval** vs **not formally submitted**, and  \n3. where we’ve likely already done the work without paper in place."
+      },
+      "expectedToolNames": [
+        "getChangeOrderDetails",
+        "queryChangeOrders"
+      ],
+      "expectedToolFamilies": [
+        "financial",
+        "structured"
+      ]
+    },
+    {
+      "id": "ceo-meetings-promised-to-do",
+      "intent": "meeting_query",
+      "prompt": "What did I commit to in meetings this past week?",
+      "selectedProjectId": null,
+      "sessionId": "562b1a1e-0fe2-4d88-a30d-f06b3ff32e72",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-meetings-promised-to-do",
+      "startedAt": "2026-05-14T15:50:45.781Z",
+      "finishedAt": "2026-05-14T15:53:01.485Z",
+      "durationMs": 120006,
+      "httpStatus": 200,
+      "streamError": "stream read error: This operation was aborted",
+      "streamEventCount": 231,
+      "persistedFound": false,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "stream error: stream read error: This operation was aborted",
+          "assistant message was not persisted to chat_history",
+          "mustIncludeAny missing one of: \"promise\", \"committed\", \"action\", \"owe\", \"meeting\"",
+          "answer length 0 < min 180"
+        ],
+        "warnings": [
+          "expected family 'actions' not represented"
+        ],
+        "observations": [
+          "tools fired: searchMeetingsByTopic"
+        ],
+        "toolNames": [
+          "searchMeetingsByTopic"
+        ],
+        "familiesHit": [
+          "meetings"
+        ],
+        "finalTextLength": 0,
+        "finalText": ""
+      },
+      "expectedToolNames": [
+        "getMeetingsByDate",
+        "getActionItemsAndInsights",
+        "getMeetingIntelligence",
+        "searchMeetingsByTopic"
+      ],
+      "expectedToolFamilies": [
+        "meetings",
+        "actions"
+      ]
+    },
+    {
+      "id": "ceo-context-aware-decisions-needed",
+      "intent": "operations_analysis",
+      "prompt": "What decisions am I holding up?",
+      "selectedProjectId": null,
+      "sessionId": "6c27002b-a9e3-4f94-bc52-5f1eb1cdfed0",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-context-aware-decisions-needed",
+      "startedAt": "2026-05-14T15:53:01.487Z",
+      "finishedAt": "2026-05-14T15:53:12.369Z",
+      "durationMs": 10232,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 11,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "expected at least one of [getActionItemsAndInsights, getRFIStatus] to fire — none did"
+        ],
+        "warnings": [
+          "expected family 'actions' not represented",
+          "expected family 'operations' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, featureRequestPacketRouter"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "featureRequestPacketRouter"
+        ],
+        "familiesHit": [],
+        "finalTextLength": 388,
+        "finalText": "Captured the request packet: What decisions am I holding up?.\n\nPacket: /ai-assistant/feature-requests/3d4864d9-f192-4b1b-9fa4-db3a496efe73\n\nI stopped at packet capture so this turn does not time out while also generating plans, Linear drafts, or handoffs.\n\nNext step: open the packet, then run the implementation-plan/Linear/handoff actions from the packet widget when the scope is ready."
+      },
+      "expectedToolNames": [
+        "getActionItemsAndInsights",
+        "getRFIStatus"
+      ],
+      "expectedToolFamilies": [
+        "actions",
+        "operations"
+      ]
+    },
+    {
+      "id": "ceo-task-modify-snooze",
+      "intent": "action_preview",
+      "prompt": "Snooze the COI chase task — Vermillion already sent it over.",
+      "selectedProjectId": 67,
+      "sessionId": "31eb08a5-2e68-438a-8b3b-9e72c04e99b2",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-ceo-task-modify-snooze",
+      "startedAt": "2026-05-14T15:53:12.369Z",
+      "finishedAt": "2026-05-14T15:53:36.262Z",
+      "durationMs": 23308,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1008,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: intentPlanner, promptContextReducer, taskWriteIntentRouter, mcpToolDiscovery, streamingToolPolicy, updateGeneratedTask, taskWriteToolOnlyCompletion"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "promptContextReducer",
+          "taskWriteIntentRouter",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "updateGeneratedTask",
+          "taskWriteToolOnlyCompletion"
+        ],
+        "familiesHit": [
+          "action_write",
+          "task_management"
+        ],
+        "finalTextLength": 231,
+        "finalText": "Task preview ready.\n\nI staged this from your request: \"Snooze the COI chase task — Vermillion already sent it over.\".\n\nNothing was created yet. Review the preview card, then reply **confirm** to create it or tell me what to change."
+      },
+      "expectedToolNames": [
+        "getMyTasks",
+        "updateGeneratedTask",
+        "deleteGeneratedTask",
+        "getActionItemsAndInsights"
+      ],
+      "expectedToolFamilies": [
+        "task_management",
+        "action_write"
+      ]
+    },
+    {
+      "id": "owner-prep-call-westfield",
+      "intent": "project_briefing",
+      "prompt": "If the Westfield owner calls me today, what should I say and what should I avoid overpromising?",
+      "selectedProjectId": 43,
+      "sessionId": "94efbcbe-353d-48d6-9e62-455698069e9c",
+      "sessionLabel": "eval-2026-05-14T15-39-25-476Z-owner-prep-call-westfield",
+      "startedAt": "2026-05-14T15:53:36.263Z",
+      "finishedAt": "2026-05-14T15:54:45.101Z",
+      "durationMs": 67743,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 143,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [
+          "expected family 'semantic' not represented",
+          "expected family 'communications' not represented"
+        ],
+        "observations": [
+          "tools fired: intentPlanner, messageDrivenToolRouter, backendDeepAgentProjectStatus, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, getProjectBriefingSnapshot, noToolRetry"
+        ],
+        "toolNames": [
+          "intentPlanner",
+          "messageDrivenToolRouter",
+          "backendDeepAgentProjectStatus",
+          "clientProjectIntelligencePacket",
+          "mcpToolDiscovery",
+          "streamingToolPolicy",
+          "getProjectBriefingSnapshot",
+          "noToolRetry"
+        ],
+        "familiesHit": [
+          "project",
+          "risk"
+        ],
+        "finalTextLength": 2295,
+        "finalText": "For the Westfield Collective owner call today, here’s the stance:\n\n**What to say:**\n- The project is being actively managed; communications are moving through standard channels.\n- Field coordination is current, and you’re tracking owner-facing issues, specifically staging/notification for upcoming work.\n- For any timing or schedule question, say you’ll verify the latest before confirming commitments.\n- For scope, change, or pricing questions, confirm that you’ll review with the project team and follow up before locking any direction.\n\n**Be specific about current items:**\n- Parking layout changes are in progress; Doug Franklin requested Viox to adjust plans with more spaces and remove the connection drive, targeting new plans by Monday.\n- Owner is attentive to disruption and schedule—acknowledge their concerns on operational impact and call out you’re tracking those details.\n- Warranty/O&M manual follow-up is underway, with punchlist air curtain and glass fixes being handled between Alleato and the Collective teams (manual film install to be handled directly by the owner unless they request Alleato to invoice).\n\n**What to avoid overpromising:**\n- Don’t give firm completion dates unless you have a recent schedule update in hand.\n- Don’t guarantee zero disruption, uninterrupted operations, or single-day fixes for ongoing punchlist and repair items.\n- Don’t lock in pricing, scope changes, or change order approval before you validate with the project team.\n- Don’t state all issues are resolved—new owner concerns could surface as details evolve.\n\n**If pressed for details you don’t have:**  \nSay you’ll check with the team and follow up promptly—don’t speculate.\n\n**Next step:**  \nHave the latest plan dates, punchlist owner/contractor actions, and any unresolved owner questions ready to reference. If you don’t have a current schedule or formal meeting minutes, flag that before you answer specifics.\n\nIf the owner wants timing, say “We’re coordinating next steps now and I’ll confirm timing before committing anything.”  \nIf they want a fix on punchlist or warranty, say “The team is working those actively; I’ll verify status and get back to you within the day.”\n\nBottom line: calm, responsive, specific only when verified. Don’t bluff on timing, money, or issue closure."
+      },
+      "expectedToolNames": [
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "semantic",
+        "communications"
+      ]
+    }
+  ]
+}

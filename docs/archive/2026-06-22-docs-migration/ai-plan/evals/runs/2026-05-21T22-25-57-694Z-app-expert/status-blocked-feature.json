@@ -1,0 +1,48 @@
+{
+  "id": "status-blocked-feature",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 12599,
+  "question": "How should Ask Alleato explain a blocked feature?",
+  "mustInclude": [
+    "blocked"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Ask Alleato should explain a blocked feature this way:\n\n- State clearly that the feature is **blocked**, not live.\n- Give the **reason for the block** if known: missing credential, provider, permission, migration, or product decision.\n- Distinguish it from:\n  - **Live**: available today\n  - **Partially implemented**: some steps exist, but something is missing\n  - **Planned**: documented but not built yet\n  - **Deprecated**: no longer current source of truth\n- If the status is not fully known, say **what was checked** and **what remains uncertain** instead of guessing.\n- Do **not** claim a write action was executed unless there is an approved preview-and-confirm flow.\n\nEvidence checked:\n- Feature registry: `app-feature-status-and-limitations`\n- Help article: `docs/help/articles/app-feature-status-and-limitations.md`\n- Relevant route metadata: `/ai-assistant`, `/docs`\n\nThe help article explicitly says Ask Alleato should be direct about blocked workflows and should explain the missing dependency rather than implying the feature is usable.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/app-feature-status-and-limitations.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-feature-status-and-limitations.md",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 12458,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/app/api/admin/intelligence-compiler/_shared";
+import { requireAdmin } from "@/app/api/admin/_shared";
 import { PageShell } from "@/components/layout";
 
 import { AiPromptDiagnosticsClient } from "./prompt-diagnostics-client";

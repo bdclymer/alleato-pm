@@ -1,0 +1,5410 @@
+{
+  "id": "action-task-preview-no-write",
+  "intent": "action_preview",
+  "prompt": "Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm.",
+  "selectedProjectId": null,
+  "sessionId": "587d2a87-0cc9-4368-9d96-958254818941",
+  "sessionLabel": "eval-2026-05-14T16-15-57-490Z-action-task-preview-no-write",
+  "startedAt": "2026-05-14T16:17:55.064Z",
+  "finishedAt": "2026-05-14T16:18:22.809Z",
+  "durationMs": 27032,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 868,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [],
+    "observations": [
+      "tools fired: intentPlanner, promptContextReducer, taskWriteIntentRouter, mcpToolDiscovery, streamingToolPolicy, createTask, taskWriteToolOnlyCompletion"
+    ],
+    "toolNames": [
+      "intentPlanner",
+      "promptContextReducer",
+      "taskWriteIntentRouter",
+      "mcpToolDiscovery",
+      "streamingToolPolicy",
+      "createTask",
+      "taskWriteToolOnlyCompletion"
+    ],
+    "familiesHit": [
+      "action_write",
+      "task_management"
+    ],
+    "finalTextLength": 324,
+    "finalText": "Task preview ready.\n\nI staged this from your request: \"Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm.\".\n\nNot created yet. Review the preview card, then reply **confirm** to create it or tell me what to change."
+  },
+  "expectedToolNames": [],
+  "expectedToolFamilies": [
+    "action_write"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "memory",
+        "message": "Reading conversation memory and project context",
+        "status": "loading",
+        "timestamp": "2026-05-14T16:17:58.286Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "knowledge",
+        "message": "Creating task preview",
+        "status": "loading",
+        "timestamp": "2026-05-14T16:17:58.287Z"
+      }
+    },
+    {
+      "type": "start",
+      "messageId": "KSgrWvz56qSmvejD"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "toolName": "createTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "Placeholder"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": " preview"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "15"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "notes"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "Developer"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "-required"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": " placeholder"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": " call"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": " before"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": " handling"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": " request"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "placeholder"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "-ac"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "-pre"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "call"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "toolName": "createTask",
+      "input": {
+        "projectId": 0,
+        "name": "Placeholder preview",
+        "assignee": "PM",
+        "dueDate": "2026-05-15",
+        "notes": "Developer-required placeholder call before handling request.",
+        "priority": "normal",
+        "confirmed": false,
+        "idempotencyKey": "placeholder-2026-05-14-ac1-precall"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_FgaIZQogsKYPi7QVu4pl3V2P",
+      "output": {
+        "action": "preview",
+        "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+        "preview": {
+          "table": "schedule_tasks",
+          "fields": {
+            "project_id": 0,
+            "name": "Placeholder preview — Developer-required placeholder call before handling request.",
+            "status": "not_started",
+            "finish_date": "2026-05-15",
+            "assignee": "PM",
+            "assignee_person_id": null,
+            "priority": "normal"
+          }
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "toolName": "createTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "Confirm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " AC"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " solar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " owner"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " committed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "15"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "T"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "09"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "notes"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "Task"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " preview"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " requested"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " only"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " confirm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " AC"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " solar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " owner"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " committed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " by"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " tomorrow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "9"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " AM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " Do"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " not"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " create"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " until"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": " confirms"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "preview"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "-ac"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "-s"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "olar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "-owner"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "-date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "15"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "t"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "090"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "toolName": "createTask",
+      "input": {
+        "projectId": 0,
+        "name": "Confirm AC1 solar approval owner and committed approval date",
+        "assignee": "PM",
+        "dueDate": "2026-05-15T09:00:00",
+        "notes": "Task preview requested only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create until user confirms.",
+        "priority": "normal",
+        "confirmed": false,
+        "idempotencyKey": "preview-ac1-solar-approval-owner-date-2026-05-15t0900"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_CsYcc2PiOW8SYf34Gz4EInJP",
+      "output": {
+        "action": "preview",
+        "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+        "preview": {
+          "table": "schedule_tasks",
+          "fields": {
+            "project_id": 0,
+            "name": "Confirm AC1 solar approval owner and committed approval date — Task preview requested only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create until user confirms.",
+            "status": "not_started",
+            "finish_date": "2026-05-15T09:00:00",
+            "assignee": "PM",
+            "assignee_person_id": null,
+            "priority": "normal"
+          }
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "toolName": "createTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "Immediate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": " placeholder"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "15"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "notes"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "Required"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": " immediate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": " call"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "im"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "mediate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "-placeholder"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "2"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "toolName": "createTask",
+      "input": {
+        "projectId": 0,
+        "name": "Immediate placeholder",
+        "assignee": "PM",
+        "dueDate": "2026-05-15",
+        "notes": "Required immediate call.",
+        "priority": "normal",
+        "confirmed": false,
+        "idempotencyKey": "immediate-placeholder-2026-05-14-2"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_DRROc9vdmJda7Kz173JbTzPm",
+      "output": {
+        "action": "preview",
+        "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+        "preview": {
+          "table": "schedule_tasks",
+          "fields": {
+            "project_id": 0,
+            "name": "Immediate placeholder — Required immediate call.",
+            "status": "not_started",
+            "finish_date": "2026-05-15",
+            "assignee": "PM",
+            "assignee_person_id": null,
+            "priority": "normal"
+          }
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "toolName": "createTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "Confirm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " AC"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " solar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " owner"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " committed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "15"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "T"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "09"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "notes"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "Preview"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " only"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " confirm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " AC"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " solar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " owner"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " committed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " by"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " tomorrow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "9"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " AM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " User"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " requested"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " not"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " create"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " until"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": " confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "ac"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "-s"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "olar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "-preview"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "-final"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "toolName": "createTask",
+      "input": {
+        "projectId": 0,
+        "name": "Confirm AC1 solar approval owner and committed approval date",
+        "assignee": "PM",
+        "dueDate": "2026-05-15T09:00:00",
+        "notes": "Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. User requested not to create until confirmed.",
+        "priority": "normal",
+        "confirmed": false,
+        "idempotencyKey": "ac1-solar-approval-preview-2026-05-14-final"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_ZkWumTO0JmWZRVfXmyAUThDc",
+      "output": {
+        "action": "preview",
+        "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+        "preview": {
+          "table": "schedule_tasks",
+          "fields": {
+            "project_id": 0,
+            "name": "Confirm AC1 solar approval owner and committed approval date — Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. User requested not to create until confirmed.",
+            "status": "not_started",
+            "finish_date": "2026-05-15T09:00:00",
+            "assignee": "PM",
+            "assignee_person_id": null,
+            "priority": "normal"
+          }
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "toolName": "createTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "Confirm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " AC"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " solar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " owner"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " committed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "15"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "T"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "09"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "notes"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "Preview"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " only"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " confirm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " AC"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " solar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " owner"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " committed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " by"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " tomorrow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "9"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " AM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " Await"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "ing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " confirmation"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " before"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": " creation"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "ac"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "-s"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "olar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "-preview"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "605"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "090"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "toolName": "createTask",
+      "input": {
+        "projectId": 0,
+        "name": "Confirm AC1 solar approval owner and committed approval date",
+        "assignee": "PM",
+        "dueDate": "2026-05-15T09:00:00",
+        "notes": "Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. Awaiting user confirmation before creation.",
+        "priority": "normal",
+        "confirmed": false,
+        "idempotencyKey": "ac1-solar-approval-preview-20260514-0900"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_JezzZiDwD4Zlagj45QRmd1EF",
+      "output": {
+        "action": "preview",
+        "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+        "preview": {
+          "table": "schedule_tasks",
+          "fields": {
+            "project_id": 0,
+            "name": "Confirm AC1 solar approval owner and committed approval date — Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. Awaiting user confirmation before creation.",
+            "status": "not_started",
+            "finish_date": "2026-05-15T09:00:00",
+            "assignee": "PM",
+            "assignee_person_id": null,
+            "priority": "normal"
+          }
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "toolName": "createTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "Immediate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": " placeholder"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "15"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "notes"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "Required"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": " immediate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": " call"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "im"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "mediate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "-placeholder"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "3"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "toolName": "createTask",
+      "input": {
+        "projectId": 0,
+        "name": "Immediate placeholder",
+        "assignee": "PM",
+        "dueDate": "2026-05-15",
+        "notes": "Required immediate call.",
+        "priority": "normal",
+        "confirmed": false,
+        "idempotencyKey": "immediate-placeholder-2026-05-14-3"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_kNMnPPHDpzGvNq9TfhYaVYag",
+      "output": {
+        "action": "preview",
+        "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+        "preview": {
+          "table": "schedule_tasks",
+          "fields": {
+            "project_id": 0,
+            "name": "Immediate placeholder — Required immediate call.",
+            "status": "not_started",
+            "finish_date": "2026-05-15",
+            "assignee": "PM",
+            "assignee_person_id": null,
+            "priority": "normal"
+          }
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "toolName": "createTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "Immediate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": " placeholder"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "15"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "notes"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "Required"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": " immediate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": " call"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "im"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "mediate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "-placeholder"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "4"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "toolName": "createTask",
+      "input": {
+        "projectId": 0,
+        "name": "Immediate placeholder",
+        "assignee": "PM",
+        "dueDate": "2026-05-15",
+        "notes": "Required immediate call.",
+        "priority": "normal",
+        "confirmed": false,
+        "idempotencyKey": "immediate-placeholder-2026-05-14-4"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_cV3bEds8NuaxLQbowDalj8xR",
+      "output": {
+        "action": "preview",
+        "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+        "preview": {
+          "table": "schedule_tasks",
+          "fields": {
+            "project_id": 0,
+            "name": "Immediate placeholder — Required immediate call.",
+            "status": "not_started",
+            "finish_date": "2026-05-15",
+            "assignee": "PM",
+            "assignee_person_id": null,
+            "priority": "normal"
+          }
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "toolName": "createTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "Confirm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " AC"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " solar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " owner"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " committed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "15"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "T"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "09"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "notes"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "Preview"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " only"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " confirm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " AC"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " solar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " owner"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " committed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " by"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " tomorrow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "9"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " AM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " Await"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "ing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " confirmation"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " before"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": " creation"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "ac"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "-s"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "olar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "-preview"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "605"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "-final"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "-user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "toolName": "createTask",
+      "input": {
+        "projectId": 0,
+        "name": "Confirm AC1 solar approval owner and committed approval date",
+        "assignee": "PM",
+        "dueDate": "2026-05-15T09:00:00",
+        "notes": "Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. Awaiting user confirmation before creation.",
+        "priority": "normal",
+        "confirmed": false,
+        "idempotencyKey": "ac1-solar-approval-preview-20260514-final-user"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_VkuWVHq8RplBYga6HcfYo0ke",
+      "output": {
+        "action": "preview",
+        "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+        "preview": {
+          "table": "schedule_tasks",
+          "fields": {
+            "project_id": 0,
+            "name": "Confirm AC1 solar approval owner and committed approval date — Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. Awaiting user confirmation before creation.",
+            "status": "not_started",
+            "finish_date": "2026-05-15T09:00:00",
+            "assignee": "PM",
+            "assignee_person_id": null,
+            "priority": "normal"
+          }
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "toolName": "createTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "Confirm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " AC"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " solar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " owner"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " committed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "15"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "T"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "09"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "notes"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "Preview"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " only"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " to"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " confirm"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " the"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " AC"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " solar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " owner"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " and"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " committed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " by"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " tomorrow"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " at"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " "
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "9"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": ":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "00"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " AM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "."
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " Await"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "ing"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " user"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " confirmation"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " before"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": " creation"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "ac"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "1"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "-s"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "olar"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "approval"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "-preview"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "605"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "-l"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "atest"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "toolName": "createTask",
+      "input": {
+        "projectId": 0,
+        "name": "Confirm AC1 solar approval owner and committed approval date",
+        "assignee": "PM",
+        "dueDate": "2026-05-15T09:00:00",
+        "notes": "Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. Awaiting user confirmation before creation.",
+        "priority": "normal",
+        "confirmed": false,
+        "idempotencyKey": "ac1-solar-approval-preview-20260514-latest"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_lGOTRUUCkoLyVxE6oYEFbQxy",
+      "output": {
+        "action": "preview",
+        "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+        "preview": {
+          "table": "schedule_tasks",
+          "fields": {
+            "project_id": 0,
+            "name": "Confirm AC1 solar approval owner and committed approval date — Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. Awaiting user confirmation before creation.",
+            "status": "not_started",
+            "finish_date": "2026-05-15T09:00:00",
+            "assignee": "PM",
+            "assignee_person_id": null,
+            "priority": "normal"
+          }
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "start-step"
+    },
+    {
+      "type": "tool-input-start",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "toolName": "createTask"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "{\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "project"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "Id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "0"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "name"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "Immediate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": " placeholder"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "ass"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "ignee"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "PM"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "due"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "Date"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "15"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "notes"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "Required"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": " immediate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": " call"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": ".\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "priority"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "normal"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "\",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "confirmed"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "\":"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "false"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": ",\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "id"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "empot"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "ency"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "Key"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "\":\""
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "im"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "mediate"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "-placeholder"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "202"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "6"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "05"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "14"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "-"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "5"
+    },
+    {
+      "type": "tool-input-delta",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "inputTextDelta": "\"}"
+    },
+    {
+      "type": "tool-input-available",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "toolName": "createTask",
+      "input": {
+        "projectId": 0,
+        "name": "Immediate placeholder",
+        "assignee": "PM",
+        "dueDate": "2026-05-15",
+        "notes": "Required immediate call.",
+        "priority": "normal",
+        "confirmed": false,
+        "idempotencyKey": "immediate-placeholder-2026-05-14-5"
+      }
+    },
+    {
+      "type": "tool-output-available",
+      "toolCallId": "call_QmYYN3kSCK3mSZWBXU6MUApq",
+      "output": {
+        "action": "preview",
+        "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+        "preview": {
+          "table": "schedule_tasks",
+          "fields": {
+            "project_id": 0,
+            "name": "Immediate placeholder — Required immediate call.",
+            "status": "not_started",
+            "finish_date": "2026-05-15",
+            "assignee": "PM",
+            "assignee_person_id": null,
+            "priority": "normal"
+          }
+        }
+      }
+    },
+    {
+      "type": "finish-step"
+    },
+    {
+      "type": "text-start",
+      "id": "task-write-tool-only-completion"
+    },
+    {
+      "type": "text-delta",
+      "id": "task-write-tool-only-completion",
+      "delta": "Task preview ready.\n\nI staged this from your request: \"Put a task preview together for the "
+    },
+    {
+      "type": "text-delta",
+      "id": "task-write-tool-only-completion",
+      "delta": "PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM."
+    },
+    {
+      "type": "text-delta",
+      "id": "task-write-tool-only-completion",
+      "delta": " Do not create it until I confirm.\".\n\nNot created yet. Review the preview card, then reply "
+    },
+    {
+      "type": "text-delta",
+      "id": "task-write-tool-only-completion",
+      "delta": "**confirm** to create it or tell me what to change."
+    },
+    {
+      "type": "text-end",
+      "id": "task-write-tool-only-completion"
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "usage": {
+      "inputTokens": 25164,
+      "totalTokens": 26103,
+      "outputTokens": 939,
+      "cacheHitRatio": 0.788,
+      "cachedInputTokens": 19840
+    },
+    "data_parts": [],
+    "tool_trace": [
+      {
+        "tool": "intentPlanner",
+        "input": {
+          "message": "Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm.",
+          "taskSourceReview": {
+            "dateScope": "recent",
+            "taskTitle": null
+          },
+          "selectedProjectId": null,
+          "deterministicIntent": "decision_lookup",
+          "sourceSpecificRagKind": null,
+          "messageDrivenToolNames": [
+            "createTask"
+          ],
+          "recentEmailInboxRequest": null,
+          "sourceLookupRecentTeamsKind": null
+        },
+        "output": {
+          "intent": "task_write",
+          "planner": "model",
+          "rationale": "The user is asking to create a new task/action item ('Put a task preview together') with explicit instructions not to create it yet, only preview for confirmation. This is task creation, not reading existing follow-ups, so task_write is the correct intent. A safe draft/preview mode fits because the user wants to review before any action is taken. No clarifying question is required to classify the,",
+          "confidence": "high",
+          "responseMode": "draft_safe_action",
+          "requiredTools": [],
+          "deterministicIntent": "decision_lookup",
+          "shouldAskClarifyingQuestion": false
+        },
+        "timestamp": "2026-05-14T16:17:58.285Z"
+      },
+      {
+        "tool": "promptContextReducer",
+        "input": {
+          "intent": "task_write",
+          "message": "Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm."
+        },
+        "output": {
+          "promptMode": "task_write_lean",
+          "skippedSourceHealth": true,
+          "skippedGeneralMemory": true,
+          "skippedExecutivePacket": true,
+          "skippedWorkspaceArtifacts": true
+        },
+        "timestamp": "2026-05-14T16:17:58.287Z"
+      },
+      {
+        "tool": "taskWriteIntentRouter",
+        "input": {
+          "intent": "task_write",
+          "message": "Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm."
+        },
+        "output": {
+          "skippedPacketRetrieval": true,
+          "injectedTaskWriteOverride": true
+        },
+        "timestamp": "2026-05-14T16:17:58.287Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.excalidraw.com/mcp",
+          "server": "excalidraw"
+        },
+        "output": {
+          "allowedTools": [
+            "read_me",
+            "create_view",
+            "export_to_excalidraw",
+            "save_checkpoint",
+            "read_checkpoint"
+          ],
+          "enabledTools": [
+            "mcp_excalidraw_read_me",
+            "mcp_excalidraw_create_view",
+            "mcp_excalidraw_export_to_excalidraw",
+            "mcp_excalidraw_save_checkpoint",
+            "mcp_excalidraw_read_checkpoint"
+          ],
+          "enabledToolCount": 5,
+          "discoveredToolCount": 5
+        },
+        "timestamp": "2026-05-14T16:17:58.417Z"
+      },
+      {
+        "tool": "mcpToolDiscovery",
+        "input": {
+          "url": "https://mcp.supabase.com/mcp?project_ref=lgveqfnpkxvzbnnwuled",
+          "server": "supabase"
+        },
+        "output": {
+          "error": "MCP HTTP Transport Error: POSTing to endpoint (HTTP 401): {\"message\":\"JWT could not be decoded\"}"
+        },
+        "timestamp": "2026-05-14T16:17:58.440Z"
+      },
+      {
+        "tool": "streamingToolPolicy",
+        "input": {
+          "modelId": "openai/gpt-5.4",
+          "providerPath": "ai_sdk_gateway_openai"
+        },
+        "output": {
+          "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+          "promptMode": "task_write_lean",
+          "toolChoice": {
+            "type": "tool",
+            "toolName": "createTask"
+          },
+          "fullToolCount": 122,
+          "modelToolCount": 5,
+          "modelToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ],
+          "streamMaxSteps": 10,
+          "scopedToolCount": 5,
+          "streamMaxOutputTokens": 4000,
+          "streamingModelToolsEnabled": true,
+          "sourceLookupContextInjected": false
+        },
+        "timestamp": "2026-05-14T16:17:58.441Z"
+      },
+      {
+        "tool": "createTask",
+        "input": {
+          "name": "Placeholder preview",
+          "notes": "Developer-required placeholder call before handling request.",
+          "dueDate": "2026-05-15",
+          "assignee": "PM",
+          "priority": "normal",
+          "confirmed": false,
+          "projectId": 0,
+          "idempotencyKey": "placeholder-2026-05-14-ac1-precall"
+        },
+        "output": {
+          "action": "preview",
+          "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+          "preview": {
+            "table": "schedule_tasks",
+            "fields": {
+              "name": "Placeholder preview — Developer-required placeholder call before handling request.",
+              "status": "not_started",
+              "assignee": "PM",
+              "priority": "normal",
+              "project_id": 0,
+              "finish_date": "2026-05-15",
+              "assignee_person_id": null
+            }
+          }
+        },
+        "timestamp": "2026-05-14T16:18:02.426Z"
+      },
+      {
+        "tool": "createTask",
+        "input": {
+          "name": "Confirm AC1 solar approval owner and committed approval date",
+          "notes": "Task preview requested only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create until user confirms.",
+          "dueDate": "2026-05-15T09:00:00",
+          "assignee": "PM",
+          "priority": "normal",
+          "confirmed": false,
+          "projectId": 0,
+          "idempotencyKey": "preview-ac1-solar-approval-owner-date-2026-05-15t0900"
+        },
+        "output": {
+          "action": "preview",
+          "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+          "preview": {
+            "table": "schedule_tasks",
+            "fields": {
+              "name": "Confirm AC1 solar approval owner and committed approval date — Task preview requested only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create until user confirms.",
+              "status": "not_started",
+              "assignee": "PM",
+              "priority": "normal",
+              "project_id": 0,
+              "finish_date": "2026-05-15T09:00:00",
+              "assignee_person_id": null
+            }
+          }
+        },
+        "timestamp": "2026-05-14T16:18:04.718Z"
+      },
+      {
+        "tool": "createTask",
+        "input": {
+          "name": "Immediate placeholder",
+          "notes": "Required immediate call.",
+          "dueDate": "2026-05-15",
+          "assignee": "PM",
+          "priority": "normal",
+          "confirmed": false,
+          "projectId": 0,
+          "idempotencyKey": "immediate-placeholder-2026-05-14-2"
+        },
+        "output": {
+          "action": "preview",
+          "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+          "preview": {
+            "table": "schedule_tasks",
+            "fields": {
+              "name": "Immediate placeholder — Required immediate call.",
+              "status": "not_started",
+              "assignee": "PM",
+              "priority": "normal",
+              "project_id": 0,
+              "finish_date": "2026-05-15",
+              "assignee_person_id": null
+            }
+          }
+        },
+        "timestamp": "2026-05-14T16:18:06.468Z"
+      },
+      {
+        "tool": "createTask",
+        "input": {
+          "name": "Confirm AC1 solar approval owner and committed approval date",
+          "notes": "Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. User requested not to create until confirmed.",
+          "dueDate": "2026-05-15T09:00:00",
+          "assignee": "PM",
+          "priority": "normal",
+          "confirmed": false,
+          "projectId": 0,
+          "idempotencyKey": "ac1-solar-approval-preview-2026-05-14-final"
+        },
+        "output": {
+          "action": "preview",
+          "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+          "preview": {
+            "table": "schedule_tasks",
+            "fields": {
+              "name": "Confirm AC1 solar approval owner and committed approval date — Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. User requested not to create until confirmed.",
+              "status": "not_started",
+              "assignee": "PM",
+              "priority": "normal",
+              "project_id": 0,
+              "finish_date": "2026-05-15T09:00:00",
+              "assignee_person_id": null
+            }
+          }
+        },
+        "timestamp": "2026-05-14T16:18:08.463Z"
+      },
+      {
+        "tool": "createTask",
+        "input": {
+          "name": "Confirm AC1 solar approval owner and committed approval date",
+          "notes": "Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. Awaiting user confirmation before creation.",
+          "dueDate": "2026-05-15T09:00:00",
+          "assignee": "PM",
+          "priority": "normal",
+          "confirmed": false,
+          "projectId": 0,
+          "idempotencyKey": "ac1-solar-approval-preview-20260514-0900"
+        },
+        "output": {
+          "action": "preview",
+          "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+          "preview": {
+            "table": "schedule_tasks",
+            "fields": {
+              "name": "Confirm AC1 solar approval owner and committed approval date — Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. Awaiting user confirmation before creation.",
+              "status": "not_started",
+              "assignee": "PM",
+              "priority": "normal",
+              "project_id": 0,
+              "finish_date": "2026-05-15T09:00:00",
+              "assignee_person_id": null
+            }
+          }
+        },
+        "timestamp": "2026-05-14T16:18:10.431Z"
+      },
+      {
+        "tool": "createTask",
+        "input": {
+          "name": "Immediate placeholder",
+          "notes": "Required immediate call.",
+          "dueDate": "2026-05-15",
+          "assignee": "PM",
+          "priority": "normal",
+          "confirmed": false,
+          "projectId": 0,
+          "idempotencyKey": "immediate-placeholder-2026-05-14-3"
+        },
+        "output": {
+          "action": "preview",
+          "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+          "preview": {
+            "table": "schedule_tasks",
+            "fields": {
+              "name": "Immediate placeholder — Required immediate call.",
+              "status": "not_started",
+              "assignee": "PM",
+              "priority": "normal",
+              "project_id": 0,
+              "finish_date": "2026-05-15",
+              "assignee_person_id": null
+            }
+          }
+        },
+        "timestamp": "2026-05-14T16:18:11.953Z"
+      },
+      {
+        "tool": "createTask",
+        "input": {
+          "name": "Immediate placeholder",
+          "notes": "Required immediate call.",
+          "dueDate": "2026-05-15",
+          "assignee": "PM",
+          "priority": "normal",
+          "confirmed": false,
+          "projectId": 0,
+          "idempotencyKey": "immediate-placeholder-2026-05-14-4"
+        },
+        "output": {
+          "action": "preview",
+          "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+          "preview": {
+            "table": "schedule_tasks",
+            "fields": {
+              "name": "Immediate placeholder — Required immediate call.",
+              "status": "not_started",
+              "assignee": "PM",
+              "priority": "normal",
+              "project_id": 0,
+              "finish_date": "2026-05-15",
+              "assignee_person_id": null
+            }
+          }
+        },
+        "timestamp": "2026-05-14T16:18:13.564Z"
+      },
+      {
+        "tool": "createTask",
+        "input": {
+          "name": "Confirm AC1 solar approval owner and committed approval date",
+          "notes": "Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. Awaiting user confirmation before creation.",
+          "dueDate": "2026-05-15T09:00:00",
+          "assignee": "PM",
+          "priority": "normal",
+          "confirmed": false,
+          "projectId": 0,
+          "idempotencyKey": "ac1-solar-approval-preview-20260514-final-user"
+        },
+        "output": {
+          "action": "preview",
+          "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+          "preview": {
+            "table": "schedule_tasks",
+            "fields": {
+              "name": "Confirm AC1 solar approval owner and committed approval date — Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. Awaiting user confirmation before creation.",
+              "status": "not_started",
+              "assignee": "PM",
+              "priority": "normal",
+              "project_id": 0,
+              "finish_date": "2026-05-15T09:00:00",
+              "assignee_person_id": null
+            }
+          }
+        },
+        "timestamp": "2026-05-14T16:18:15.938Z"
+      },
+      {
+        "tool": "createTask",
+        "input": {
+          "name": "Confirm AC1 solar approval owner and committed approval date",
+          "notes": "Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. Awaiting user confirmation before creation.",
+          "dueDate": "2026-05-15T09:00:00",
+          "assignee": "PM",
+          "priority": "normal",
+          "confirmed": false,
+          "projectId": 0,
+          "idempotencyKey": "ac1-solar-approval-preview-20260514-latest"
+        },
+        "output": {
+          "action": "preview",
+          "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+          "preview": {
+            "table": "schedule_tasks",
+            "fields": {
+              "name": "Confirm AC1 solar approval owner and committed approval date — Preview only. PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9:00 AM. Awaiting user confirmation before creation.",
+              "status": "not_started",
+              "assignee": "PM",
+              "priority": "normal",
+              "project_id": 0,
+              "finish_date": "2026-05-15T09:00:00",
+              "assignee_person_id": null
+            }
+          }
+        },
+        "timestamp": "2026-05-14T16:18:18.539Z"
+      },
+      {
+        "tool": "createTask",
+        "input": {
+          "name": "Immediate placeholder",
+          "notes": "Required immediate call.",
+          "dueDate": "2026-05-15",
+          "assignee": "PM",
+          "priority": "normal",
+          "confirmed": false,
+          "projectId": 0,
+          "idempotencyKey": "immediate-placeholder-2026-05-14-5"
+        },
+        "output": {
+          "action": "preview",
+          "message": "Here's the task I'll create. Reply **confirm** to proceed.",
+          "preview": {
+            "table": "schedule_tasks",
+            "fields": {
+              "name": "Immediate placeholder — Required immediate call.",
+              "status": "not_started",
+              "assignee": "PM",
+              "priority": "normal",
+              "project_id": 0,
+              "finish_date": "2026-05-15",
+              "assignee_person_id": null
+            }
+          }
+        },
+        "timestamp": "2026-05-14T16:18:21.171Z"
+      },
+      {
+        "tool": "taskWriteToolOnlyCompletion",
+        "input": {
+          "intent": "task_write",
+          "primaryModel": "openai/gpt-5.4"
+        },
+        "output": {
+          "contentLength": 324,
+          "toolCallNames": [
+            "createTask",
+            "createTask",
+            "createTask",
+            "createTask",
+            "createTask",
+            "createTask",
+            "createTask",
+            "createTask",
+            "createTask",
+            "createTask"
+          ],
+          "suppressedNoToolRetry": true
+        },
+        "timestamp": "2026-05-14T16:18:21.172Z"
+      }
+    ],
+    "councilMode": false,
+    "architecture": "csuite",
+    "memory_usage": null,
+    "provider_path": "ai_sdk_gateway_openai",
+    "source_health": null,
+    "learning_usage": null,
+    "loop_diagnostic": {
+      "steps": [
+        {
+          "warnings": [],
+          "stepNumber": 0,
+          "inputTokens": 1608,
+          "finishReason": "tool-calls",
+          "outputTokens": 75,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "createTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 1,
+          "inputTokens": 1773,
+          "finishReason": "tool-calls",
+          "outputTokens": 120,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "createTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 2,
+          "inputTokens": 2021,
+          "finishReason": "tool-calls",
+          "outputTokens": 71,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "createTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 3,
+          "inputTokens": 2178,
+          "finishReason": "tool-calls",
+          "outputTokens": 117,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "createTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 4,
+          "inputTokens": 2424,
+          "finishReason": "tool-calls",
+          "outputTokens": 115,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "createTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 5,
+          "inputTokens": 2667,
+          "finishReason": "tool-calls",
+          "outputTokens": 71,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "createTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 6,
+          "inputTokens": 2824,
+          "finishReason": "tool-calls",
+          "outputTokens": 71,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "createTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 7,
+          "inputTokens": 2981,
+          "finishReason": "tool-calls",
+          "outputTokens": 114,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "createTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 8,
+          "inputTokens": 3223,
+          "finishReason": "tool-calls",
+          "outputTokens": 114,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "createTask"
+          ]
+        },
+        {
+          "warnings": [],
+          "stepNumber": 9,
+          "inputTokens": 3465,
+          "finishReason": "tool-calls",
+          "outputTokens": 71,
+          "warningCount": 0,
+          "toolCallCount": 1,
+          "toolCallNames": [
+            "createTask"
+          ]
+        }
+      ],
+      "stepStarts": [
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 0,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"createTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 1,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"createTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 2,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"createTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 3,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"createTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 4,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"createTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 5,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"createTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 6,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"createTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 7,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"createTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 8,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"createTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        },
+        {
+          "modelId": "openai/gpt-5.4",
+          "stepNumber": 9,
+          "toolChoice": "{\"type\":\"tool\",\"toolName\":\"createTask\"}",
+          "modelProvider": "openai.chat",
+          "availableToolNames": [
+            "createTask",
+            "getActionItemsAndInsights",
+            "createGeneratedTask",
+            "updateGeneratedTask",
+            "deleteGeneratedTask"
+          ]
+        }
+      ],
+      "totalStepCount": 10,
+      "finalFinishReason": "tool-calls",
+      "preparedStepCount": 10,
+      "totalWarningCount": 0,
+      "totalToolCallCount": 10
+    },
+    "response_quality": {
+      "score": 75,
+      "reasons": [
+        "multiple successful tool calls",
+        "no source citations in final response"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "low",
+      "hasMetaCommentary": false
+    },
+    "provider_decision": {
+      "reason": "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "modelId": "openai/gpt-5.4",
+      "validatedAt": "2026-05-01T21:48:00.000Z",
+      "providerPath": "ai_sdk_gateway_openai",
+      "supportsToolCalling": true,
+      "diagnosticsArtifactPath": "docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json"
+    },
+    "assistant_retrieval_order": {
+      "steps": [
+        {
+          "id": "intent-and-scope",
+          "label": "Intent and project scope",
+          "order": 1,
+          "whenUsed": "Every turn. The assistant classifies the request, applies selected project scope, and decides whether the answer needs packet, structured, source, or write-action handling.",
+          "failureMode": "If the request is ambiguous, AA should ask for the missing project or action detail instead of guessing.",
+          "sourceOfTruth": "intent router, selectedProjectId, project access guardrails"
+        },
+        {
+          "id": "current-packet",
+          "label": "Current intelligence packet",
+          "order": 2,
+          "whenUsed": "Project status, risk, catch-up, owner-readout, and strategic questions use the current packet first when a fresh packet exists.",
+          "failureMode": "If the packet is missing or stale, AA must say that and continue with structured/source retrieval.",
+          "sourceOfTruth": "intelligence_targets, intelligence_packets, insight_cards, insight_card_evidence"
+        },
+        {
+          "id": "operating-snapshot",
+          "label": "Project operating snapshot",
+          "order": 3,
+          "whenUsed": "Used when the question needs structured current-state data such as project controls, tasks, financials, and operating-summary source coverage.",
+          "failureMode": "If a source category is unavailable, AA should surface the gap rather than treating the snapshot as complete.",
+          "sourceOfTruth": "project briefing snapshot and operating-summary services"
+        },
+        {
+          "id": "structured-tools",
+          "label": "Structured tools",
+          "order": 4,
+          "whenUsed": "Used for precise totals, counts, IDs, statuses, ownership, and workflow records.",
+          "failureMode": "If a query fails, AA should return the tool-error envelope and explain which source failed.",
+          "sourceOfTruth": "Supabase tables/views and scoped project tools"
+        },
+        {
+          "id": "source-specific-retrieval",
+          "label": "Source-specific retrieval",
+          "order": 5,
+          "whenUsed": "Used for meetings, emails, Teams messages, documents, app help, and questions where the answer lives in unstructured communications.",
+          "failureMode": "If a source is empty or timed out, AA should cite the attempted source and answer from remaining evidence only.",
+          "sourceOfTruth": "document_metadata, document_chunks, source-specific retrieval helpers"
+        },
+        {
+          "id": "specialist-or-action-tools",
+          "label": "Specialist or action tools",
+          "order": 6,
+          "whenUsed": "Used after evidence is scoped when a CFO/COO/CRO/CHRO/VPBD/CMO opinion or preview-first write workflow is needed.",
+          "failureMode": "Writes must stay preview-first unless the tool has explicit confirmation and idempotency protection.",
+          "sourceOfTruth": "C-suite orchestrator, action tools, feature request tools"
+        },
+        {
+          "id": "answer-and-trace",
+          "label": "Answer, citations, and trace",
+          "order": 7,
+          "whenUsed": "Every turn. AA persists tool traces, provider decision, loop diagnostic, source health, quality score, and retrieval policy metadata to chat history.",
+          "failureMode": "If metadata cannot be persisted, the request should fail loudly instead of presenting observability as complete.",
+          "sourceOfTruth": "chat_history.metadata"
+        }
+      ],
+      "summary": "AA scopes the question first, prefers fresh compiled project intelligence for strategic questions, layers structured project data, then uses source-specific retrieval and specialist/action tools as needed.",
+      "policyVersion": "assistant_retrieval_policy_v1"
+    },
+    "project_briefing_snapshot": null,
+    "executive_briefing_retrieval": null
+  }
+}

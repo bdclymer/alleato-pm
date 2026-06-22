@@ -1,0 +1,19 @@
+{
+  "id": "data-feature-registry-source",
+  "status": "failed",
+  "httpStatus": 503,
+  "durationMs": 87,
+  "question": "What source should the assistant cite for whether a feature is documented?",
+  "response": {
+    "detail": "Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+  },
+  "failure": "{\"detail\":\"Deep Agents App Expert is disabled. Set DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist.\"}",
+  "shapeIssues": [
+    "missing answer",
+    "missing sources",
+    "missing toolTrace",
+    "invalid mode"
+  ],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}

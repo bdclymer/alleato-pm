@@ -1,0 +1,124 @@
+{
+  "generatedAt": "2026-05-19T06:16:22.075Z",
+  "baseUrl": "http://localhost:3001",
+  "bundle": null,
+  "filter": null,
+  "totalCases": 1,
+  "passed": 0,
+  "failed": 1,
+  "warningCount": 2,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": false,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 1,
+    "passed": 0,
+    "failed": 0,
+    "errors": 0,
+    "averageScore": null
+  },
+  "slowestCases": [
+    {
+      "id": "realworld-business-risks",
+      "intent": "risk_review",
+      "durationMs": 82471,
+      "status": "fail",
+      "warnings": [
+        "duration 82471ms exceeded warning budget 30000ms",
+        "judge strategic_advisor skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+      ]
+    }
+  ],
+  "toolCoverage": {
+    "backendDeepAgentExecutiveBriefing": 1,
+    "getProjectsWithRisks": 1,
+    "getDomainIntelligence": 1,
+    "semanticSearch": 1
+  },
+  "intentDistribution": {
+    "risk_review": 1
+  },
+  "results": [
+    {
+      "id": "realworld-business-risks",
+      "intent": "risk_review",
+      "prompt": "What risks exist in the business right now?",
+      "selectedProjectId": null,
+      "sessionId": "f897deef-4e32-41a8-861d-c8d4eb447fbd",
+      "sessionLabel": "eval-2026-05-19T06-14-59-071Z-14cd9844-realworld-business-risks",
+      "startedAt": "2026-05-19T06:14:59.105Z",
+      "finishedAt": "2026-05-19T06:16:22.074Z",
+      "durationMs": 82471,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 1347,
+      "persistedFound": true,
+      "score": {
+        "status": "fail",
+        "failures": [
+          "duration 82471ms exceeded max budget 75000ms"
+        ],
+        "warnings": [
+          "duration 82471ms exceeded warning budget 30000ms",
+          "judge strategic_advisor skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+        ],
+        "observations": [
+          "tools fired: backendDeepAgentExecutiveBriefing, getProjectsWithRisks, getDomainIntelligence, semanticSearch",
+          "judge strategic_advisor: skipped"
+        ],
+        "toolNames": [
+          "backendDeepAgentExecutiveBriefing",
+          "getProjectsWithRisks",
+          "getDomainIntelligence",
+          "semanticSearch"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "communications",
+          "semantic",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 6005,
+        "finalText": "The business risk right now is not one bad project. It’s **process fragility across finance, operations, BD, and onboarding at the same time**.\n\nHere’s the straight read.\n\n### What matters most\n\nAlleato is carrying too much manual work and too much dependency on a few people. That shows up in four places at once:\n\n- **financial controls are brittle**\n- **operations are compensating for weak handoffs**\n- **business development is winning opportunities but converting them messily**\n- **new people still need too much hand-holding to become productive**\n\nThat combination is dangerous because the company can still look busy and productive while hidden error risk, margin leakage, and management load keep building.\n\n### The biggest business risks right now\n\n1. **Financial reporting and control risk**\n   Accounting is still heavily manual — especially credit card coding, payroll/time tracking, and system handoffs between Notion, Venture/Prism, Acumatica, and TimeCo. The accounting domain packet says weekly transaction processing still requires downloads, duplicate checks, job/date verification, and individual posting into Acumatica. It also flags a bigger issue: management discussed billing discrepancies, inaccurate revenue recognition, and a **$1.7M revenue increase not reflected in the financial statements** in the May 14 “Rob & Brandon - Next steps” meeting.  \n   **Why it matters:** leadership could be making decisions off distorted WIP, margin, and backlog. That’s not a reporting nuisance — that’s a control problem.  \n   [Source: Domain Intelligence — Accounting Function; Meeting “Rob & Brandon - Next steps,” 2026-05-14]\n\n2. **Scaling risk from person-dependent workflows**\n   Lauren’s onboarding, transaction coding, and accounting support all point to core workflows still sitting in people’s heads — especially Jose, Misty, Maria, and Brandon. The People & Talent packet is explicit: onboarding and execution depend on a few individuals instead of a repeatable system.  \n   **Why it matters:** every new hire increases manager load unless the workflow is documented and stabilized. If one key person is out, the system slows down.  \n   [Source: Domain Intelligence — People & Talent; “Lauren Rohlfs- Accountant onboarding,” 2026-05-18; “Onboarding Welcome!,” 2026-05-18]\n\n3. **Margin leakage risk in preconstruction / BD**\n   The BD packet says the core issue is not lack of opportunities — it’s **conversion**. Pursuits like Exol Wilmer, Union Collective, Hillsdale, and Ace Champaign are active, but multiple deals are still waiting on clarifications, revised drawings, or late bid data. Scope gaps, late pricing, and incomplete design are colliding with owner expectations.  \n   **Why it matters:** if you sell the job before scope is stable, BD stops being a sales function and becomes a margin-protection exercise.  \n   [Source: Domain Intelligence — Business Development; “Exol Wilmer - Review on GC's,” 2026-05-18; “Weekly OAC Meeting// Ace Hardware Champaign-Building Addition,” 2026-05-14]\n\n4. **Operational drag from weak project handoffs**\n   Operations is absorbing a lot of friction: missing schedules, unclear scope boundaries, repeated follow-ups for bids and documentation, and late closeout packages. The operations packet calls this out directly: the team is compensating for missing standardization with heroics.  \n   **Why it matters:** delay compounds. Weak scope and documentation at the front end turn into closeout, billing, and execution problems later.  \n   [Source: Domain Intelligence — Operations; “Exol Wilmer - Review on GC's,” 2026-05-18; “Uniqlo & GPC Huddle,” 2026-05-18]\n\n5. **Portfolio concentration of project risk**\n   The project risk radar checked 40 current projects and flagged **21 as having critical items**. The biggest concentrations are:\n   - **Westfield Collective** — risk score **518**, 74 critical insights/items\n   - **Union Collective** — risk score **232**, 25 critical insights, 44 critical items\n   - **Uniqlo Phillipsburg NJ** — risk score **203**\n   - **Vermillion Rise Warehouse** — risk score **98** and 7 tracked issues\n   - **Exol Wilmer** — risk score **49**  \n   **Why it matters:** this is no longer “a couple problem jobs.” There’s enough distributed project risk to create management bandwidth issues.  \n   [Source: Project Risk Radar — Current projects, 2026-05-19]\n\n### If I had to rank the risks\n\n1. **Financial visibility/control risk**\n2. **Manual, person-dependent operating model**\n3. **BD scope/pricing slippage hurting margin before award**\n4. **Project execution friction across too many active jobs**\n5. **Access / systems instability slowing everyone down**\n\n### What I’d do next\n\nNot a long list. Just the moves that actually reduce risk:\n\n- **Put one owner on the finance systems roadmap now** — TimeCo, Venture/Prism, Notion, Acumatica. Someone has to own the operating model, not just individual fixes.\n- **Force a weekly top-risk project review** for Westfield Collective, Union Collective, Vermillion Rise, Uniqlo Phillipsburg, and Exol Wilmer.\n- **Require a standard pursuit checklist** before numbers go out: drawing version, inclusions/exclusions, missing bids, unresolved scope, final owner assumptions.\n- **Publish one onboarding/access checklist** and make completion mandatory before day one.\n- **Identify the top 5 person-dependent workflows** and document them immediately — especially accounting transaction posting, payroll/time export, bid tracking, closeout, and project startup.\n\n### Bottom line\n\nThe risk is **operational complexity outrunning the company’s systems**. That’s the real issue underneath the noise.\n\nThe good news: this is fixable. The bad news: if it’s not addressed now, it turns into bad financial visibility, slower onboarding, preventable project misses, and margin erosion all at once.\n\nIf you want, I can turn this into a tighter **CEO risk memo** with:\n- top 5 enterprise risks\n- affected projects/functions\n- likely owner for each\n- 30-day mitigation plan",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 82471
+        },
+        "judge": {
+          "status": "skipped",
+          "rubric": "strategic_advisor",
+          "score": null,
+          "minScore": 4,
+          "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+          "strengths": [],
+          "weaknesses": [],
+          "dimensionScores": {},
+          "provider": null,
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
+        "getProjectsWithRisks",
+        "getPortfolioOverview",
+        "getFinancialAnalysis",
+        "assistantSourceHealth"
+      ],
+      "expectedToolFamilies": [
+        "project",
+        "risk",
+        "financial",
+        "source_health"
+      ]
+    }
+  ]
+}

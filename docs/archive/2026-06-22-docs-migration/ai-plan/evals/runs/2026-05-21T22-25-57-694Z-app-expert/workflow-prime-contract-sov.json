@@ -1,0 +1,63 @@
+{
+  "id": "workflow-prime-contract-sov",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 8935,
+  "question": "Where does schedule of values fit into prime contracts?",
+  "mustInclude": [
+    "prime",
+    "SOV"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Schedule of values is part of **Prime Contracts**.\n\nWhat the app docs say:\n- The **Prime Contracts** feature manages the owner contract, the **schedule of values**, and prime contract modifications.\n- The prime contract SOV is the billing basis for owner pay applications.\n- You edit it from the prime contract’s **Schedule of Values** tab.\n\nRelevant documented route:\n- `/[projectId]/prime-contracts`\n\nHelp article:\n- `docs/help/articles/prime-contracts.md`\n\nKey behavior from the help article:\n- Open a project, then **Prime Contracts** from the sidebar.\n- In a prime contract, go to **Schedule of Values** to add/edit/delete SOV lines.\n- You can import an estimate workbook into the SOV from:\n  - a new prime contract form, or\n  - an existing prime contract’s SOV tab.\n\nRelated evidence:\n- Feature registry: **Prime Contracts** (`id: prime-contracts`)\n- Related feature: **Estimates** says estimates can be imported directly into a prime contract SOV.\n\nUncertainty check:\n- I found no separate curated article for a different SOV workflow under prime contracts, so the documented answer is that SOV lives within **Prime Contracts**.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/prime-contracts",
+        "sourceType": "sitemap",
+        "route": "/prime-contracts",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/prime-contracts.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/prime-contracts.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/edit/delete",
+        "sourceType": "sitemap",
+        "route": "/edit/delete",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 8677,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

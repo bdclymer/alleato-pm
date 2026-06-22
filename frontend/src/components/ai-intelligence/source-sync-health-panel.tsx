@@ -1915,25 +1915,15 @@ export function SourceSyncHealthPanel() {
   };
 
   const runAction = async (
-    key: "graph-sync" | "graph-embed" | "compiler",
+    key: "graph-sync" | "graph-embed",
     label: string,
   ) => {
     setActionRunning(key);
     setError(null);
     try {
-      const endpoint =
-        key === "compiler"
-          ? "/api/admin/intelligence-compiler/run"
-          : `/api/admin/source-sync/${key}`;
+      const endpoint = `/api/admin/source-sync/${key}`;
       const body =
-        key === "compiler"
-          ? {
-              sourceLimit: 10,
-              packetLimit: 10,
-              background: true,
-              maxProcessingTimeMs: 120000,
-            }
-          : key === "graph-embed"
+        key === "graph-embed"
             ? { limit: 100 }
             : key === "graph-sync"
               ? {
@@ -2102,22 +2092,6 @@ export function SourceSyncHealthPanel() {
                   <Play className="h-4 w-4" />
                 )}
                 Embed pending
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => void runAction("compiler", "Compiler run")}
-                disabled={
-                  Boolean(actionRunning) || loading || refreshing || recomputing
-                }
-              >
-                {actionRunning === "compiler" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Play className="h-4 w-4" />
-                )}
-                Compiler run
               </Button>
             </div>
           </section>

@@ -1,0 +1,70 @@
+{
+  "id": "workflow-create-project",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 10176,
+  "question": "How do I start a new project?",
+  "mustInclude": [
+    "create",
+    "project"
+  ],
+  "preferredTools": [
+    "search_feature_registry"
+  ],
+  "response": {
+    "answer": "Start in the project list, then open the project home page for the project you want to work in.\n\nWhat I checked:\n- Artifact status: both generated artifacts are current and available.\n- Curated help:\n  - `docs/help/articles/navigate-projects.md`\n  - `docs/help/articles/app-navigation-and-feature-map.md`\n- App metadata:\n  - `/projects` is the main project list.\n  - `/[projectId]/home` is the project home page.\n  - `/create-project` exists in the app inventory as a global page.\n\nDocumented behavior:\n- The help article says to use **Select Project** in the header, search by project name or job number, and pick the project.\n- It also says **View all projects** goes to `/projects`.\n- Project-specific work happens after selecting the project context.\n- The app navigation article says global pages are separate from project-scoped pages.\n\nImplementation evidence:\n- The route `/create-project` exists in the generated sitemap:\n  - source file: `frontend/src/app/(main)/create-project/page.tsx`\n  - route: `/create-project`\n\nUncertainty:\n- There is no curated help article yet for `/create-project`, so I can confirm the route exists, but not the exact user-facing workflow on that page from docs alone.\n\nIf you meant “create a new project record” rather than “open an existing project,” the available evidence points to `/create-project`, but the documented help still needs to be filled in.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/help/articles/navigate-projects.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/navigate-projects.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/help/articles/app-navigation-and-feature-map.md",
+        "sourceType": "sitemap",
+        "route": "/help/articles/app-navigation-and-feature-map.md",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/home",
+        "sourceType": "sitemap",
+        "route": "/home",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/src/app/(main)/create-project/page.tsx",
+        "sourceType": "sitemap",
+        "route": "/src/app/(main)/create-project/page.tsx",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 10071,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": [
+    "search_feature_registry"
+  ]
+}

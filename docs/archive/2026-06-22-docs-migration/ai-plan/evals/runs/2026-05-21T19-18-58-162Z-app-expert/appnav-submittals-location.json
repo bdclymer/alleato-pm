@@ -1,0 +1,54 @@
+{
+  "id": "appnav-submittals-location",
+  "status": "passed",
+  "httpStatus": 200,
+  "durationMs": 12004,
+  "question": "Which page owns submittals?",
+  "response": {
+    "answer": "I can’t determine which page owns submittals from the App Expert artifacts because the required generated files are missing.\n\nChecked:\n- App Expert artifact status: both generated artifacts are missing\n  - `docs/architecture/generated/app-sitemap.generated.json`\n  - `docs/architecture/generated/feature-registry.generated.json`\n- Feature registry search for `submittals`: failed due to missing artifact\n- App sitemap search for `submittals`: failed due to missing artifact\n\nWhat remains uncertain:\n- The owning route/page for submittals\n- Any curated help article tied to submittals\n- Whether the page is documented in the generated sitemap or feature registry\n\nIf you want, I can still help by inspecting source files directly for route ownership, but that would be implementation evidence rather than curated App Expert metadata.",
+    "mode": "deep_agents",
+    "sources": [
+      {
+        "title": "/architecture/generated/app-sitemap.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/app-sitemap.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/architecture/generated/feature-registry.generated.json",
+        "sourceType": "sitemap",
+        "route": "/architecture/generated/feature-registry.generated.json",
+        "filePath": null,
+        "detail": null
+      },
+      {
+        "title": "/page",
+        "sourceType": "sitemap",
+        "route": "/page",
+        "filePath": null,
+        "detail": null
+      }
+    ],
+    "toolTrace": [
+      {
+        "agent": "app-expert",
+        "tool": "deepagents_app_expert_runtime",
+        "status": "success",
+        "durationMs": 11889,
+        "detail": "App Expert produced an answer from read-only app knowledge tools."
+      }
+    ],
+    "skillsLoaded": [
+      "app-expert-memory",
+      "app-navigation-and-sitemap",
+      "feature-status-and-limitations",
+      "permissions-and-visibility"
+    ],
+    "orchestrator": "app-expert"
+  },
+  "failure": null,
+  "shapeIssues": [],
+  "semanticIssues": [],
+  "missingPreferredTools": []
+}
