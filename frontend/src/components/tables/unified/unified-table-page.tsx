@@ -499,7 +499,7 @@ export interface UnifiedTablePageProps<T> {
     sticky?: boolean;
     /** localStorage key suffix for persisting width/collapsed state */
     storageKey?: string;
-    /** Called when the mobile details overlay closes. */
+    /** Called when the details panel closes. */
     onClose?: () => void;
   };
   layout?: {
@@ -3044,7 +3044,7 @@ export function UnifiedTablePage<T>({
               {isSidePanelOpen && (
                 <aside
                   className={cn(
-                    "hidden lg:flex lg:flex-col bg-card relative min-h-[calc(100dvh-6rem)] lg:rounded-t-md lg:border-t lg:border-border/70",
+                    "hidden lg:flex lg:flex-col bg-background relative min-h-[calc(100dvh-6rem)] lg:border-l lg:border-border/70",
                     panelSticky
                       ? "lg:sticky lg:top-12 lg:max-h-[calc(100dvh-3rem)]"
                       : "lg:relative lg:max-h-none",
@@ -3062,6 +3062,19 @@ export function UnifiedTablePage<T>({
                     </div>
                   )}
                   <div className="flex-1 flex flex-col min-h-0 pl-4 pr-4">
+                    {sidePanel.onClose ? (
+                      <div className="flex h-10 shrink-0 items-center justify-end border-b border-border/60">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          onClick={sidePanel.onClose}
+                          aria-label="Close details"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : null}
                     {sidePanel.content}
                   </div>
                 </aside>
