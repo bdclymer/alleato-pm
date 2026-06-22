@@ -47,6 +47,94 @@ logger = logging.getLogger(__name__)
 COMPANY_DOMAINS = [d.strip() for d in os.environ.get("COMPANY_EMAIL_DOMAINS", "alleatogroup.com").split(",")]
 MIN_BODY_CHARS = 50  # Skip very short emails (auto-replies, etc.)
 
+_NON_PROJECT_PROJECT_CONTEXT_RE = re.compile(
+    r"\b("
+    r"rfi|submittal|change order|change event|pay app|permit|drawing|schedule|"
+    r"job number|cost code|subcontract|sov|owner|architect|site|scope|pricing|"
+    r"proposal|contract setup|application|lien release|zoning|invoice entry"
+    r")\b",
+    re.IGNORECASE,
+)
+_FINANCE_ADMIN_SENDER_PATTERNS = (
+    "capitalone@",
+    "forumcu.com",
+    "verizonwireless.com",
+    "marylandresidentagent.com",
+)
+_SYSTEM_ADMIN_SENDER_PATTERNS = (
+    "quarantine@messaging.microsoft.com",
+    "mailer-daemon@",
+    "postmaster@",
+)
+_PERSONAL_CONTEXT_PATTERNS = (
+    "adventure thailand",
+    "photos are ready",
+    "childcare",
+)
+_BUSINESS_ADMIN_PATTERNS = (
+    "shared the folder",
+    "employee handbook",
+    "unable to assign max trial",
+    "check to print",
+    "accounting",
+    "administration",
+)
+_FINANCE_ADMIN_PATTERNS = (
+    "card statement",
+    "credit card",
+    "spend limit",
+    "verizon bill",
+    "payment failure",
+    "online transfer",
+    "recurring charge",
+    "policy #",
+    "e-payroll",
+    "payroll report",
+)
+
+
+def _normalize_match_text(*parts: object) -> str:
+    return " ".join(str(part or "").lower() for part in parts)
+
+
+def _non_project_category_for_outlook_row(row: dict, body_text: str = "") -> Optional[dict[str, object]]:
+    subject = str(row.get("subject") or "")
+    sender = str(row.get("from_email") or "").lower()
+    combined = _normalize_match_text(subject, body_text, sender, row.get("from_name"))
+    has_project_context = bool(_NON_PROJECT_PROJECT_CONTEXT_RE.search(combined))
+
+    if any(pattern in sender for pattern in _SYSTEM_ADMIN_SENDER_PATTERNS):
+        return {
+            "category": "system_admin",
+            "confidence": 0.95,
+            "reason": "System-generated mailbox/security notification with no project assignment.",
+        }
+
+    if any(pattern in combined for pattern in _PERSONAL_CONTEXT_PATTERNS) and not has_project_context:
+        return {
+            "category": "personal_admin",
+            "confidence": 0.88,
+            "reason": "Personal or non-business administrative message with no project context.",
+        }
+
+    if any(pattern in sender for pattern in _FINANCE_ADMIN_SENDER_PATTERNS) or (
+        any(pattern in combined for pattern in _FINANCE_ADMIN_PATTERNS) and not has_project_context
+    ):
+        return {
+            "category": "finance_admin",
+            "confidence": 0.9,
+            "reason": "Finance/accounting administrative message with no project assignment.",
+        }
+
+    if any(pattern in combined for pattern in _BUSINESS_ADMIN_PATTERNS) and not has_project_context:
+        return {
+            "category": "business_admin",
+            "confidence": 0.86,
+            "reason": "Business administrative message with no project context.",
+        }
+
+    return None
+
 # ── Noise / spam filter constants ─────────────────────────────────────────────
 # Sender address substrings that indicate automated/marketing mail.
 _NOISE_SENDER_PATTERNS: tuple[str, ...] = (
@@ -547,7 +635,10 @@ def _upsert_outlook_intake_email(
     if not msg_id:
         return None
 
-    match_status = "matched" if project_id else "unassigned"
+    project_assignment_status = str(
+        ((source_metadata or {}).get("project_assignment") or {}).get("status") or ""
+    )
+    match_status = "matched" if project_id else "not_project" if project_assignment_status == "not_project" else "unassigned"
     now_iso = datetime.now(timezone.utc).isoformat()
     payload = {
         "project_id": project_id,
@@ -873,6 +964,7 @@ def backfill_outlook_intake_project_assignments(
         "scanned": 0,
         "assigned": 0,
         "normalized_existing": 0,
+        "not_project": 0,
         "review_needed": 0,
         "failed": 0,
         "errors": [],
@@ -936,12 +1028,23 @@ def backfill_outlook_intake_project_assignments(
                 participants=_participants_for_intake_row(row),
                 existing_project_id=None,
             )
+            non_project_category = None
+            if not (project_id and confidence >= threshold):
+                non_project_category = _non_project_category_for_outlook_row(row, body_text)
             assignment_metadata = {
-                "status": "assigned" if project_id and confidence >= threshold else "review_needed",
+                "status": (
+                    "assigned"
+                    if project_id and confidence >= threshold
+                    else "not_project"
+                    if non_project_category
+                    else "review_needed"
+                ),
                 "method": method,
                 "confidence": confidence,
                 "backfilled_at": now_iso,
             }
+            if non_project_category:
+                assignment_metadata.update(non_project_category)
             source_metadata["project_assignment"] = assignment_metadata
 
             update_payload = {
@@ -981,8 +1084,19 @@ def backfill_outlook_intake_project_assignments(
                         logger.warning("[Outlook] RAG metadata project backfill failed for %s: %s", document_metadata_id, exc)
                 stats["assigned"] = int(stats["assigned"]) + 1
             else:
-                update_payload.update({"match_status": "unassigned", "status": "Received"})
-                stats["review_needed"] = int(stats["review_needed"]) + 1
+                if non_project_category:
+                    update_payload.update(
+                        {
+                            "match_status": "not_project",
+                            "status": "Received",
+                            "assignment_method": f"non_project:{non_project_category['category']}",
+                            "assignment_confidence": non_project_category["confidence"],
+                        }
+                    )
+                    stats["not_project"] = int(stats["not_project"]) + 1
+                else:
+                    update_payload.update({"match_status": "unassigned", "status": "Received"})
+                    stats["review_needed"] = int(stats["review_needed"]) + 1
 
             write_client.from_("outlook_email_intake").update(update_payload).eq("id", row_id).execute()
         except Exception as exc:  # noqa: BLE001 - continue bounded repair and report failures
@@ -2001,12 +2115,34 @@ def sync_outlook_emails(
                     participants=participants,
                     existing_project_id=None,
                 )
+                non_project_category = None
+                if not project_id:
+                    non_project_category = _non_project_category_for_outlook_row(
+                        {
+                            "subject": subject,
+                            "from_email": sender_addr,
+                            "from_name": sender_name,
+                        },
+                        body_text,
+                    )
                 source_metadata["project_assignment"] = {
-                    "status": "assigned" if project_id else "review_needed",
-                    "method": assignment_method,
-                    "confidence": assignment_confidence,
+                    "status": "assigned" if project_id else "not_project" if non_project_category else "review_needed",
+                    "method": (
+                        assignment_method
+                        if not non_project_category
+                        else f"non_project:{non_project_category['category']}"
+                    ),
+                    "confidence": (
+                        assignment_confidence
+                        if not non_project_category
+                        else non_project_category["confidence"]
+                    ),
                     "assigned_at": datetime.now(timezone.utc).isoformat(),
                 }
+                if non_project_category:
+                    source_metadata["project_assignment"].update(non_project_category)
+                    assignment_method = f"non_project:{non_project_category['category']}"
+                    assignment_confidence = float(non_project_category["confidence"])
             else:
                 source_metadata["project_assignment"] = {
                     "status": "not_indexed",

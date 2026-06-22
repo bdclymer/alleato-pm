@@ -152,6 +152,48 @@ class _AttachmentListFailureGraph(_DeltaGraph):
         raise TimeoutError("attachment list timed out")
 
 
+class _NonProjectFinanceGraph(_DeltaGraph):
+    def get_delta(self, base_path, _delta_token):
+        if "Inbox" not in base_path:
+            return [], "sent-token"
+        return [
+            {
+                "id": "message-finance-1",
+                "subject": "Your Venture X Business card statement is ready",
+                "from": {
+                    "emailAddress": {
+                        "name": "Capital One Business",
+                        "address": "capitalone@notification.capitalone.com",
+                    }
+                },
+                "toRecipients": [
+                    {
+                        "emailAddress": {
+                            "name": "Brandon Clymer",
+                            "address": "bclymer@alleatogroup.com",
+                        }
+                    }
+                ],
+                "ccRecipients": [],
+                "receivedDateTime": "2026-06-21T16:31:16Z",
+                "bodyPreview": "Your business card statement is ready to view online.",
+                "body": {
+                    "content": (
+                        "Your business card statement is ready to view online. "
+                        "Please sign in to review account activity and payment options."
+                    )
+                },
+                "categories": [],
+                "importance": "normal",
+                "hasAttachments": False,
+                "webLink": "https://outlook.office.com/mail/message-finance-1",
+                "internetMessageId": "<message-finance-1@example.com>",
+                "conversationId": "conversation-finance-1",
+                "internetMessageHeaders": [],
+            }
+        ], "inbox-token"
+
+
 def test_sync_outlook_emails_assigns_project_before_rag_intake(monkeypatch):
     supabase = _Supabase()
     _route_outlook_intake_clients(monkeypatch, supabase)
@@ -184,6 +226,29 @@ def test_sync_outlook_emails_assigns_project_before_rag_intake(monkeypatch):
     assert row["document_metadata_id"] is not None
     assert row["source_metadata"]["project_assignment"]["status"] == "assigned"
     assert row["source_metadata"]["project_assignment"]["confidence"] == 0.98
+
+
+def test_sync_outlook_emails_marks_clear_non_project_mail(monkeypatch):
+    supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
+    monkeypatch.setattr(outlook, "get_graph_client", lambda: _NonProjectFinanceGraph())
+    monkeypatch.setattr(outlook, "_run_source_intelligence_compiler", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(outlook, "infer_project_id", lambda *_args, **_kwargs: (None, "unassigned", 0.0))
+
+    synced, _token = outlook.sync_outlook_emails(
+        supabase,
+        "bclymer@alleatogroup.com",
+        project_keywords=[],
+    )
+
+    assert synced == 1
+    row = supabase.store["outlook_email_intake"][0]
+    assert row["project_id"] is None
+    assert row["match_status"] == "not_project"
+    assert row["assignment_method"] == "non_project:finance_admin"
+    assignment = row["source_metadata"]["project_assignment"]
+    assert assignment["status"] == "not_project"
+    assert assignment["category"] == "finance_admin"
 
 
 def test_sync_outlook_emails_records_attachment_list_failure_on_intake(monkeypatch):
@@ -468,6 +533,74 @@ def test_backfill_outlook_intake_project_assignments_normalizes_existing_project
     }
     assert supabase.store["rag_document_metadata"][0]["project_id"] == 67
     assert supabase.store["rag_document_metadata"][0]["source_metadata"]["project_assignment"]["status"] == "assigned"
+
+
+def test_backfill_outlook_intake_project_assignments_categorizes_clear_non_project(monkeypatch):
+    supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
+    monkeypatch.setattr(outlook, "get_rag_write_client", lambda: supabase)
+    monkeypatch.setattr(outlook, "infer_project_id", lambda *_args, **_kwargs: (None, "unassigned", 0.0))
+    supabase.store["outlook_email_intake"] = [
+        {
+            "id": 7,
+            "subject": "Your Venture X Business card statement is ready",
+            "body_text": "Your business card statement is ready to view online.",
+            "from_name": "Capital One Business",
+            "from_email": "capitalone@notification.capitalone.com",
+            "to_list": ["bclymer@alleatogroup.com"],
+            "cc_list": [],
+            "bcc_list": [],
+            "project_id": None,
+            "document_metadata_id": "outlook_message-finance",
+            "assignment_method": "unassigned",
+            "assignment_confidence": 0.0,
+            "source_metadata": {},
+            "received_at": "2026-06-21T16:31:16Z",
+            "graph_message_id": "message-finance",
+            "mailbox_user_id": "bclymer@alleatogroup.com",
+        },
+        {
+            "id": 8,
+            "subject": "Uni Qlo - need portal opened for invoice entry",
+            "body_text": "Please open the portal for invoice entry on this active project.",
+            "from_name": "Vendor",
+            "from_email": "vendor@example.com",
+            "to_list": ["bclymer@alleatogroup.com"],
+            "cc_list": [],
+            "bcc_list": [],
+            "project_id": None,
+            "document_metadata_id": "outlook_message-project-review",
+            "assignment_method": "unassigned",
+            "assignment_confidence": 0.0,
+            "source_metadata": {},
+            "received_at": "2026-06-21T15:31:16Z",
+            "graph_message_id": "message-project-review",
+            "mailbox_user_id": "bclymer@alleatogroup.com",
+        },
+    ]
+    supabase.store["rag_document_metadata"] = [
+        {"id": "outlook_message-finance", "project_id": None},
+        {"id": "outlook_message-project-review", "project_id": None},
+    ]
+
+    result = outlook.backfill_outlook_intake_project_assignments(
+        supabase,
+        mailbox_user_id="bclymer@alleatogroup.com",
+        limit=10,
+        since="2026-06-07T00:00:00Z",
+    )
+
+    assert result["scanned"] == 2
+    assert result["not_project"] == 1
+    assert result["review_needed"] == 1
+    finance = supabase.store["outlook_email_intake"][0]
+    assert finance["match_status"] == "not_project"
+    assert finance["assignment_method"] == "non_project:finance_admin"
+    assert finance["source_metadata"]["project_assignment"]["status"] == "not_project"
+    assert finance["source_metadata"]["project_assignment"]["category"] == "finance_admin"
+    project_review = supabase.store["outlook_email_intake"][1]
+    assert project_review["match_status"] == "unassigned"
+    assert project_review["source_metadata"]["project_assignment"]["status"] == "review_needed"
 
 
 def test_refresh_outlook_intake_vectorization_statuses_projects_chunk_state(monkeypatch):
