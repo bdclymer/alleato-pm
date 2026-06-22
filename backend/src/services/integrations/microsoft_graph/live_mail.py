@@ -54,6 +54,7 @@ def list_live_outlook_inbox(
     mailbox_user_id: str,
     since_iso: Optional[str] = None,
     limit: int = 50,
+    unread_only: bool = False,
 ) -> Dict[str, Any]:
     """Read the live Outlook inbox via Microsoft Graph.
 
@@ -93,8 +94,13 @@ def list_live_outlook_inbox(
         "$orderby": "receivedDateTime desc",
         "$top": str(safe_limit),
     }
+    filters = []
     if since_iso:
-        query_params["$filter"] = f"receivedDateTime ge {since_iso}"
+        filters.append(f"receivedDateTime ge {since_iso}")
+    if unread_only:
+        filters.append("isRead eq false")
+    if filters:
+        query_params["$filter"] = " and ".join(filters)
 
     path = (
         f"/users/{quote(mailbox)}/mailFolders/Inbox/messages?"
@@ -115,6 +121,7 @@ def list_live_outlook_inbox(
         "source": "microsoft_graph_live",
         "mailbox_user_id": mailbox,
         "since_iso": since_iso,
+        "unread_only": unread_only,
         "fetched_at": datetime.now(timezone.utc).isoformat(),
         "count": len(messages),
         "messages": messages,

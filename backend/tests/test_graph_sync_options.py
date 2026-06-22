@@ -26,6 +26,8 @@ def test_run_graph_sync_can_skip_heavy_embedding_and_compiler(monkeypatch):
     result = sync.run_graph_sync(
         _FakeSupabase(),
         run_embedding=False,
+        run_ocr=False,
+        run_attachment_promotion=False,
     )
 
     assert result["status"] == "complete"
@@ -60,8 +62,9 @@ class _FakeStateSupabase:
 
 
 class _StateResult:
-    def __init__(self, data):
+    def __init__(self, data, count=None):
         self.data = data
+        self.count = count
 
 
 class _MutableStateQuery:
@@ -77,6 +80,13 @@ class _MutableStateQuery:
 
     def eq(self, key, value):
         self.rows = [row for row in self.rows if row.get(key) == value]
+        return self
+
+    def is_(self, key, value):
+        if value == "null":
+            self.rows = [row for row in self.rows if row.get(key) is None]
+        else:
+            self.rows = [row for row in self.rows if row.get(key) == value]
         return self
 
     def update(self, payload):
@@ -103,7 +113,8 @@ class _MutableStateQuery:
             row = dict(self.payload)
             table.append(row)
             return _StateResult([row])
-        return _StateResult([dict(row) for row in self.rows])
+        rows = [dict(row) for row in self.rows]
+        return _StateResult(rows, count=len(rows))
 
 
 class _MutableStateSupabase:
@@ -135,6 +146,22 @@ def test_limit_sync_users_selects_stalest_slice(monkeypatch):
     assert selected == ["never@example.com", "older@example.com"]
 
 
+def test_outlook_persisted_count_uses_raw_intake_rows(monkeypatch):
+    rag_supabase = _MutableStateSupabase(
+        {
+            "outlook_email_intake": [
+                {"id": 1, "mailbox_user_id": "bclymer@alleatogroup.com", "deleted_at": None},
+                {"id": 2, "mailbox_user_id": "bclymer@alleatogroup.com", "deleted_at": "2026-06-20T00:00:00Z"},
+                {"id": 3, "mailbox_user_id": "other@example.com", "deleted_at": None},
+            ],
+            "document_metadata": [],
+        }
+    )
+    monkeypatch.setattr(sync, "get_rag_read_client", lambda: rag_supabase)
+
+    assert sync._count_outlook_docs_for_mailbox(_FakeSupabase(), "bclymer@alleatogroup.com") == 1
+
+
 def test_outlook_mailbox_delta_does_not_load_project_keywords_by_default(monkeypatch):
     calls = {}
 
@@ -153,6 +180,7 @@ def test_outlook_mailbox_delta_does_not_load_project_keywords_by_default(monkeyp
     monkeypatch.setattr(sync, "sync_outlook_emails", fake_sync_outlook_emails)
     monkeypatch.setattr(sync, "_save_sync_state", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(sync, "_record_sync_run_safe", lambda *_args, **_kwargs: None)
+    monkeypatch.delenv("OUTLOOK_SYNC_SINCE", raising=False)
 
     result = sync.sync_outlook_mailbox_delta(
         _FakeSupabase(),
@@ -168,6 +196,64 @@ def test_outlook_mailbox_delta_does_not_load_project_keywords_by_default(monkeyp
         "token": "",
         "since_date": None,
     }
+
+
+def test_outlook_mailbox_delta_passes_since_date_even_with_existing_token(monkeypatch):
+    calls = {}
+
+    def fake_sync_outlook_emails(_supabase, user_email, project_keywords, token, since_date):
+        calls["user_email"] = user_email
+        calls["project_keywords"] = project_keywords
+        calls["token"] = token
+        calls["since_date"] = since_date
+        return 0, token
+
+    monkeypatch.setenv("OUTLOOK_SYNC_SINCE", "2026-06-20")
+    monkeypatch.setattr(sync, "_get_delta_token", lambda *_args, **_kwargs: "inbox:stale|sent:stale")
+    monkeypatch.setattr(sync, "sync_outlook_emails", fake_sync_outlook_emails)
+    monkeypatch.setattr(sync, "_save_sync_state", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(sync, "_record_sync_run_safe", lambda *_args, **_kwargs: None)
+
+    result = sync.sync_outlook_mailbox_delta(
+        _FakeSupabase(),
+        "bclymer@alleatogroup.com",
+        reason="unit_test",
+        verify_persisted_count=False,
+    )
+
+    assert result["status"] == "succeeded"
+    assert calls == {
+        "user_email": "bclymer@alleatogroup.com",
+        "project_keywords": [],
+        "token": "inbox:stale|sent:stale",
+        "since_date": "2026-06-20",
+    }
+
+
+def test_outlook_mailbox_delta_allows_updates_without_net_new_intake_rows(monkeypatch):
+    counts = [839, 839]
+
+    monkeypatch.setattr(sync, "_count_outlook_docs_for_mailbox", lambda *_args, **_kwargs: counts.pop(0))
+    monkeypatch.setattr(sync, "_get_delta_token", lambda *_args, **_kwargs: "inbox:next|sent:next")
+    monkeypatch.setattr(
+        sync,
+        "sync_outlook_emails",
+        lambda *_args, **_kwargs: (17, "inbox:next|sent:next"),
+    )
+    monkeypatch.setattr(sync, "_save_sync_state", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(sync, "_record_sync_run_safe", lambda *_args, **_kwargs: None)
+
+    result = sync.sync_outlook_mailbox_delta(
+        _FakeSupabase(),
+        "bclymer@alleatogroup.com",
+        reason="unit_test",
+        verify_persisted_count=True,
+    )
+
+    assert result["status"] == "succeeded"
+    assert result["items_synced"] == 17
+    assert result["persisted_delta"] == 0
+    assert result["error"] is None
 
 
 def test_drain_pending_outlook_mailboxes_processes_queued_rows(monkeypatch):

@@ -1087,7 +1087,7 @@ async def graph_outlook_mailbox_subscribe_endpoint(
         source="outlook_email",
         resource_id=user_email,
         resource_name=f"Outlook: {user_email}",
-        resource=f"users/{user_email}/messages",
+        resource=f"users/{user_email}/mailFolders('inbox')/messages",
         change_type="created,updated",
         max_expiration_hours=48,
     )

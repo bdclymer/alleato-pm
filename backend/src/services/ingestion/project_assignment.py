@@ -212,7 +212,7 @@ class ProjectAssigner:
             # Exact phrase matches
             if project_number and self._contains_token(title_lower, project_number):
                 score = max(score, 0.98)
-            if project_name and project_name in title_lower:
+            if project_name and self._contains_token(title_lower, project_name):
                 score = max(score, 0.95)
             if project_name and self._fuzzy_phrase_match(project_name, title_lower):
                 score = max(score, 0.88)
@@ -323,7 +323,7 @@ class ProjectAssigner:
                 score += 4
 
             project_name = self._normalize_text(project.get("name"))
-            if project_name and project_name in content_lower:
+            if project_name and self._contains_token(content_lower, project_name):
                 score += 3
 
             # Alias mentions (short aliases matter, e.g. WFC)

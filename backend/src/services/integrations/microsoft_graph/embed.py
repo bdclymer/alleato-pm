@@ -152,6 +152,15 @@ def _upsert_rag_content_payload(
     ).execute()
 
 
+def _update_app_document_status(supabase_client, metadata_id: str, status: str, *, enabled: bool = True) -> None:
+    if not enabled:
+        return
+    try:
+        supabase_client.from_("document_metadata").update({"status": status}).eq("id", metadata_id).execute()
+    except Exception as exc:
+        logger.warning("[GraphEmbed] Could not update PM APP status for %s: %s", metadata_id, exc)
+
+
 def _decode_storage_bytes(payload: Any) -> str:
     if payload is None:
         return ""
@@ -571,7 +580,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
             )
             return 0
         logger.warning("[GraphEmbed] Document %s has no content — skipping", metadata_id)
-        supabase_client.from_("document_metadata").update({"status": "embedded"}).eq("id", metadata_id).execute()
+        _update_app_document_status(supabase_client, metadata_id, "embedded", enabled=has_app_document)
         rag_client.from_("rag_document_metadata").update(
             {"embedding_status": "embedded"}
         ).eq("id", metadata_id).execute()
@@ -594,9 +603,12 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
             min_chars,
         )
         rag_client.from_("document_chunks").delete().eq("document_id", metadata_id).execute()
-        supabase_client.from_("document_metadata").update(
-            {"status": "skipped_low_content"}
-        ).eq("id", metadata_id).execute()
+        _update_app_document_status(
+            supabase_client,
+            metadata_id,
+            "skipped_low_content",
+            enabled=has_app_document,
+        )
         get_rag_write_client().from_("rag_document_metadata").update(
             {"embedding_status": "skipped"}
         ).eq("id", metadata_id).execute()
@@ -613,7 +625,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
     full_text = f"[{title}]\n\n{content}"
     chunks = _split_text(full_text)
     if not chunks:
-        supabase_client.from_("document_metadata").update({"status": "embedded"}).eq("id", metadata_id).execute()
+        _update_app_document_status(supabase_client, metadata_id, "embedded", enabled=has_app_document)
         get_rag_write_client().from_("rag_document_metadata").update(
             {"embedding_status": "embedded"}
         ).eq("id", metadata_id).execute()
@@ -680,12 +692,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         return 0
 
     # Mark embedded in PM APP
-    try:
-        supabase_client.from_("document_metadata").update({
-            "status": "embedded",
-        }).eq("id", metadata_id).execute()
-    except Exception as e:
-        logger.warning("[GraphEmbed] Could not update PM APP status for %s: %s", metadata_id, e)
+    _update_app_document_status(supabase_client, metadata_id, "embedded", enabled=has_app_document)
 
     # Mark embedded in RAG DB so the supplement scan doesn't re-process this doc
     try:
@@ -785,6 +792,7 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
     logger.info("[GraphEmbed] Processing %d pending microsoft_graph documents", len(docs))
     total_chunks = 0
     errors = 0
+    skipped = 0
     by_category: Dict[str, int] = {}
 
     for doc in docs:
@@ -793,6 +801,15 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
         try:
             n = embed_graph_document(supabase_client, doc_id)
             if n <= 0:
+                terminal_status = _rag_embedding_status(doc_id)
+                if terminal_status in {"embedded", "skipped", "intentionally_excluded"}:
+                    logger.info(
+                        "[GraphEmbed] %s produced zero chunks and is terminal status=%s; counting as skipped",
+                        doc_id,
+                        terminal_status,
+                    )
+                    skipped += 1
+                    continue
                 logger.error("[GraphEmbed] %s produced zero chunks; treating as failed embedding", doc_id)
                 errors += 1
                 continue
@@ -806,11 +823,12 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
         time.sleep(0.1)
 
     logger.info(
-        "[GraphEmbed] Done — %d docs embedded (%d total chunks, %d errors). By category: %s",
-        len(docs) - errors, total_chunks, errors, by_category,
+        "[GraphEmbed] Done — %d docs embedded (%d skipped, %d total chunks, %d errors). By category: %s",
+        len(docs) - errors - skipped, skipped, total_chunks, errors, by_category,
     )
     result = {
-        "embedded": len(docs) - errors,
+        "embedded": len(docs) - errors - skipped,
+        "skipped": skipped,
         "total_chunks": total_chunks,
         "errors": errors,
         "by_category": by_category,
@@ -827,6 +845,24 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
         metadata={"limit": limit, **result},
     )
     return result
+
+
+def _rag_embedding_status(document_id: str) -> str:
+    try:
+        rows = (
+            get_rag_read_client()
+            .from_("rag_document_metadata")
+            .select("embedding_status")
+            .eq("id", document_id)
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        return str((rows[0] if rows else {}).get("embedding_status") or "").strip().lower()
+    except Exception as exc:  # noqa: BLE001 - caller only needs best-effort classification
+        logger.warning("[GraphEmbed] Could not read RAG embedding_status for %s: %s", document_id, exc)
+        return ""
 
 
 def _count_pending_status_rows(supabase_client) -> int:

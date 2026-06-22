@@ -358,6 +358,8 @@ services:
         sync: false
       - key: GRAPH_SUBSCRIBE_OUTLOOK
         value: "true"
+      - key: GRAPH_SUBSCRIBE_OUTLOOK_SCOPE
+        value: "inbox"
       - key: GRAPH_WEBHOOK_NOTIFICATION_URL
         sync: false
       - key: GRAPH_WEBHOOK_CLIENT_STATE

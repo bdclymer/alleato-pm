@@ -68,6 +68,7 @@ def test_live_outlook_inbox_reads_graph_and_marks_live_source(monkeypatch):
     assert "/users/brandon%40example.com/mailFolders/Inbox/messages?" in graph.urls[0]["url"]
     assert "%24top=100" in graph.urls[0]["url"]
     assert "receivedDateTime+ge+2026-05-19T00%3A00%3A00.000Z" in graph.urls[0]["url"]
+    assert result["unread_only"] is False
 
     message = result["messages"][0]
     assert message["id"] == "message-1"
@@ -82,3 +83,19 @@ def test_live_outlook_inbox_reads_graph_and_marks_live_source(monkeypatch):
     assert message["has_attachments"] is True
     assert message["importance"] == "high"
     assert message["is_read"] is False
+
+
+def test_live_outlook_inbox_can_filter_to_unread_messages(monkeypatch):
+    graph = _Graph()
+    monkeypatch.setattr(live_mail, "get_graph_client", lambda: graph)
+
+    result = live_mail.list_live_outlook_inbox(
+        mailbox_user_id="Brandon@Example.com",
+        since_iso="2026-05-19T00:00:00.000Z",
+        limit=5,
+        unread_only=True,
+    )
+
+    assert result["unread_only"] is True
+    assert "isRead+eq+false" in graph.urls[0]["url"]
+    assert "receivedDateTime+ge+2026-05-19T00%3A00%3A00.000Z+and+isRead+eq+false" in graph.urls[0]["url"]

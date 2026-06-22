@@ -44,6 +44,7 @@ def read_live_outlook_inbox(
     mailbox_user_id: str,
     since_iso: Optional[str] = None,
     limit: int = 25,
+    unread_only: bool = False,
 ) -> str:
     """Read recent live Outlook inbox messages through Microsoft Graph."""
     try:
@@ -53,6 +54,7 @@ def read_live_outlook_inbox(
             mailbox_user_id=mailbox_user_id,
             since_iso=since_iso,
             limit=_bounded_int(limit, minimum=1, maximum=100),
+            unread_only=unread_only,
         )
         return _json({"ok": True, **result})
     except Exception as exc:

@@ -114,8 +114,8 @@ def test_configured_subscription_targets_from_mailboxes(monkeypatch):
     targets = subscriptions.configured_subscription_targets()
 
     assert [target.resource for target in targets] == [
-        "users/a@example.com/messages",
-        "users/b@example.com/messages",
+        "users/a@example.com/mailFolders('inbox')/messages",
+        "users/b@example.com/mailFolders('inbox')/messages",
     ]
 
 
@@ -129,7 +129,7 @@ def test_configured_subscription_targets_include_opt_in_teams_and_drive_targets(
     targets = subscriptions.configured_subscription_targets()
     resources = {target.resource: target for target in targets}
 
-    assert "users/a@example.com/messages" in resources
+    assert "users/a@example.com/mailFolders('inbox')/messages" in resources
     assert "teams/getAllMessages" in resources
     assert "chats/getAllMessages" in resources
     assert "users/a@example.com/drive/root" in resources
@@ -137,6 +137,19 @@ def test_configured_subscription_targets_include_opt_in_teams_and_drive_targets(
     assert "drives/drive-2/root" in resources
     assert resources["teams/getAllMessages"].max_expiration_hours == 1
     assert resources["chats/getAllMessages"].max_expiration_hours == 1
+
+
+def test_configured_subscription_targets_can_opt_into_whole_mailbox(monkeypatch):
+    monkeypatch.setenv("MICROSOFT_SYNC_USERS", "a@example.com")
+    monkeypatch.setenv("GRAPH_SUBSCRIBE_OUTLOOK_SCOPE", "all")
+    monkeypatch.delenv("GRAPH_SUBSCRIBE_TEAMS_TENANT", raising=False)
+    monkeypatch.delenv("GRAPH_SUBSCRIBE_TEAMS_CHAT_TENANT", raising=False)
+    monkeypatch.delenv("GRAPH_SUBSCRIBE_ONEDRIVE", raising=False)
+    monkeypatch.delenv("GRAPH_SUBSCRIBE_SHAREPOINT_DRIVE_IDS", raising=False)
+
+    targets = subscriptions.configured_subscription_targets()
+
+    assert [target.resource for target in targets] == ["users/a@example.com/messages"]
 
 
 def test_ensure_subscriptions_caps_target_expiration(monkeypatch):
@@ -196,6 +209,42 @@ def test_ensure_subscriptions_creates_missing_subscription(monkeypatch):
     assert stored["graph_subscription_id"] == "sub-created"
     assert stored["status"] == "active"
     assert stored["resource"] == "users/a@example.com/messages"
+
+
+def test_ensure_subscriptions_recreates_subscription_when_resource_drifts(monkeypatch):
+    monkeypatch.setenv("GRAPH_WEBHOOK_NOTIFICATION_URL", "https://example.com/api/graph/webhooks/notifications")
+    monkeypatch.setenv("GRAPH_WEBHOOK_CLIENT_STATE", "state-1")
+    supabase = _FakeSupabase()
+    supabase.tables["graph_subscriptions"] = [
+        {
+            "source": "outlook_email",
+            "resource_id": "a@example.com",
+            "graph_subscription_id": "sub-old",
+            "resource": "users/a@example.com/messages",
+            "expiration_at": (datetime.now(timezone.utc) + timedelta(hours=40)).isoformat(),
+            "status": "active",
+        }
+    ]
+    graph = _FakeGraph()
+    target = subscriptions.GraphSubscriptionTarget(
+        source="outlook_email",
+        resource_id="a@example.com",
+        resource_name="Outlook: a@example.com",
+        resource="users/a@example.com/mailFolders('inbox')/messages",
+        change_type="created,updated",
+    )
+
+    original_read, original_write = _route_graph_subscriptions_to_fake_rag(supabase)
+    try:
+        result = subscriptions.ensure_subscriptions(supabase, targets=[target], graph=graph)
+    finally:
+        _restore_graph_subscriptions_clients(original_read, original_write)
+
+    assert result["created"] == 1
+    assert graph.deletes == ["/subscriptions/sub-old"]
+    assert graph.posts[0][1]["resource"] == "users/a@example.com/mailFolders('inbox')/messages"
+    assert supabase.tables["graph_subscriptions"][0]["graph_subscription_id"] == "sub-created"
+    assert supabase.tables["graph_subscriptions"][0]["resource"] == "users/a@example.com/mailFolders('inbox')/messages"
 
 
 def test_ensure_subscriptions_renews_expiring_subscription(monkeypatch):

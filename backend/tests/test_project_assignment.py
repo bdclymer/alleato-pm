@@ -56,6 +56,25 @@ def test_assign_project_prefers_alias_in_title():
     assert confidence >= 0.9
 
 
+def test_assign_project_does_not_match_project_name_inside_larger_word():
+    assigner = _build_assigner(
+        [
+            {"id": 1029, "name": "Test", "client": "", "aliases": []},
+            {"id": 761, "name": "Ulta Beauty Fresno", "client": "Ulta", "aliases": []},
+        ]
+    )
+
+    project_id, method, confidence = assigner.assign_project(
+        meeting_title="Your latest Verizon bill is ready to view.",
+        participants=["billing@verizon.com"],
+        content="Your latest bill is ready online.",
+    )
+
+    assert project_id is None
+    assert method == "unassigned"
+    assert confidence == 0.0
+
+
 def test_assign_project_corrects_existing_project_when_title_has_strong_conflict():
     assigner = _build_assigner(
         [

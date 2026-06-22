@@ -24,6 +24,7 @@ from ...supabase_helpers import (
     SupabaseRagStore,
     get_outlook_intake_read_client,
     get_outlook_intake_write_client,
+    get_rag_write_client,
     storage_upload_with_retry,
 )
 from .client import get_graph_client
@@ -39,6 +40,7 @@ from .user_filter_rules import (
 )
 from .onedrive import SUPPORTED_EXTENSIONS, _extract_text
 from .project_documents import upsert_project_document_by_source as _upsert_project_document_by_source
+from .project_inference import infer_project_id
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +118,10 @@ _NOISE_BODY_PATTERNS: tuple[str, ...] = (
 )
 EMAIL_BODY_MAX_CHARS = 8000
 MAX_ATTACHMENT_BYTES = int(os.environ.get("OUTLOOK_ATTACHMENT_MAX_BYTES", str(50 * 1024 * 1024)))
+OUTLOOK_INTAKE_ATTACHMENT_CONTENT_MAX_BYTES = int(os.environ.get(
+    "OUTLOOK_INTAKE_ATTACHMENT_CONTENT_MAX_BYTES",
+    str(8 * 1024 * 1024),
+))
 MAX_ATTACHMENTS_PER_EMAIL = int(os.environ.get("OUTLOOK_MAX_ATTACHMENTS_PER_EMAIL", "25"))
 MAX_LINKS_PER_EMAIL = int(os.environ.get("OUTLOOK_MAX_LINKS_PER_EMAIL", "10"))
 DOCUMENT_BUCKET = os.environ.get("SUPABASE_DOCUMENTS_BUCKET", "documents")
@@ -176,6 +182,16 @@ DOCUMENT_LINK_HOST_KEYWORDS = {
 
 def _run_source_intelligence_compiler(supabase_client, doc_id: str) -> None:
     try:
+        existing = (
+            supabase_client.from_("document_metadata")
+            .select("id")
+            .eq("id", doc_id)
+            .limit(1)
+            .execute()
+        )
+        if not (existing.data or []):
+            logger.info("[Outlook] Skipping intelligence compiler for %s; document_metadata row is not visible.", doc_id)
+            return
         result = process_source_document_to_packet(supabase_client, doc_id)
         logger.info(
             "[Outlook] Intelligence compiler completed for %s: status=%s packet=%s",
@@ -537,6 +553,9 @@ def _upsert_outlook_intake_email(
         "project_id": project_id,
         "project_email_id": project_email_id,
         "document_metadata_id": document_metadata_id,
+        "vectorization_status": "pending" if document_metadata_id else "no_document",
+        "vectorization_chunk_count": 0,
+        "vectorization_error": None,
         "subject": (msg.get("subject") or "(no subject)")[:500],
         "body": body_text[:8000],
         "body_text": body_text[:8000],
@@ -790,6 +809,418 @@ def _reconcile_outlook_project_assignment(
     return canonical_project_id
 
 
+def _participants_for_intake_row(row: dict) -> list[str]:
+    participants: list[str] = []
+    from_email = row.get("from_email")
+    from_name = row.get("from_name")
+    if from_email:
+        participants.append(f"{from_name or ''} <{from_email}>".strip())
+
+    for key in ("to_list", "cc_list", "bcc_list"):
+        value = row.get(key)
+        if isinstance(value, list):
+            participants.extend(str(item) for item in value if item)
+    return participants
+
+
+def _apply_since_filter(query, since: Optional[str]):
+    if since:
+        return query.gte("received_at", since)
+    return query
+
+
+def backfill_outlook_intake_project_assignments(
+    supabase_client,
+    *,
+    mailbox_user_id: Optional[str] = None,
+    limit: int = 100,
+    min_confidence: Optional[float] = None,
+    since: Optional[str] = None,
+) -> dict[str, object]:
+    """Normalize older Outlook intake rows that predate synchronous assignment.
+
+    New syncs assign before RAG intake. This bounded backfill lets us repair
+    historical `project_assignment.status=deferred` rows without a destructive
+    full-table rewrite.
+    """
+
+    resolved_limit = max(1, min(int(limit or 100), 500))
+    threshold = (
+        float(min_confidence)
+        if min_confidence is not None
+        else float(os.environ.get("OUTLOOK_PROJECT_BACKFILL_MIN_CONFIDENCE", "0.70"))
+    )
+
+    query = (
+        _outlook_intake_read_client()
+        .from_("outlook_email_intake")
+        .select(
+            "id,subject,body,body_text,from_name,from_email,to_list,cc_list,bcc_list,"
+            "project_id,document_metadata_id,source_metadata,received_at,graph_message_id,"
+            "assignment_method,assignment_confidence"
+        )
+        .order("received_at", desc=True)
+        .limit(resolved_limit)
+    )
+    if mailbox_user_id:
+        query = query.eq("mailbox_user_id", mailbox_user_id)
+    query = _apply_since_filter(query, since)
+
+    rows = query.execute().data or []
+    write_client = _outlook_intake_write_client()
+    rag_write = get_rag_write_client()
+    stats: dict[str, object] = {
+        "scanned": 0,
+        "assigned": 0,
+        "normalized_existing": 0,
+        "review_needed": 0,
+        "failed": 0,
+        "errors": [],
+    }
+
+    for row in rows:
+        stats["scanned"] = int(stats["scanned"]) + 1
+        row_id = row.get("id")
+        source_metadata = dict(row.get("source_metadata") or {})
+        try:
+            now_iso = datetime.now(timezone.utc).isoformat()
+            existing_project_id = row.get("project_id")
+            if existing_project_id is not None:
+                project_id = int(existing_project_id)
+                method = row.get("assignment_method") or "existing_project"
+                confidence = (
+                    float(row.get("assignment_confidence"))
+                    if row.get("assignment_confidence") is not None
+                    else 1.0
+                )
+                assignment_metadata = {
+                    "status": "assigned",
+                    "method": method,
+                    "confidence": confidence,
+                    "backfilled_at": now_iso,
+                }
+                source_metadata["project_assignment"] = assignment_metadata
+                update_payload = {
+                    "project_id": project_id,
+                    "match_status": "matched",
+                    "status": "Matched",
+                    "assignment_method": method,
+                    "assignment_confidence": confidence,
+                    "source_metadata": source_metadata,
+                    "updated_at": now_iso,
+                }
+                document_metadata_id = row.get("document_metadata_id")
+                if document_metadata_id:
+                    try:
+                        rag_write.from_("rag_document_metadata").update(
+                            {
+                                "project_id": project_id,
+                                "source_metadata": {
+                                    **source_metadata,
+                                    "project_assignment": assignment_metadata,
+                                },
+                            }
+                        ).eq("id", document_metadata_id).execute()
+                    except Exception as exc:  # noqa: BLE001 - do not fail intake normalization on RAG metadata drift
+                        logger.warning("[Outlook] RAG metadata existing-project normalization failed for %s: %s", document_metadata_id, exc)
+                write_client.from_("outlook_email_intake").update(update_payload).eq("id", row_id).execute()
+                stats["assigned"] = int(stats["assigned"]) + 1
+                stats["normalized_existing"] = int(stats["normalized_existing"]) + 1
+                continue
+
+            body_text = str(row.get("body_text") or row.get("body") or "")
+            project_id, method, confidence = infer_project_id(
+                supabase_client,
+                title=str(row.get("subject") or ""),
+                content=body_text,
+                participants=_participants_for_intake_row(row),
+                existing_project_id=None,
+            )
+            assignment_metadata = {
+                "status": "assigned" if project_id and confidence >= threshold else "review_needed",
+                "method": method,
+                "confidence": confidence,
+                "backfilled_at": now_iso,
+            }
+            source_metadata["project_assignment"] = assignment_metadata
+
+            update_payload = {
+                "assignment_method": method,
+                "assignment_confidence": confidence,
+                "source_metadata": source_metadata,
+                "updated_at": now_iso,
+            }
+            if project_id and confidence >= threshold:
+                project_id = int(project_id)
+                update_payload.update(
+                    {
+                        "project_id": project_id,
+                        "match_status": "matched",
+                        "status": "Matched",
+                    }
+                )
+                document_metadata_id = row.get("document_metadata_id")
+                if document_metadata_id:
+                    try:
+                        supabase_client.from_("document_metadata").update(
+                            {"project_id": project_id}
+                        ).eq("id", document_metadata_id).execute()
+                    except Exception as exc:  # noqa: BLE001 - split DB may not have app row
+                        logger.warning("[Outlook] App document_metadata project backfill failed for %s: %s", document_metadata_id, exc)
+                    try:
+                        rag_write.from_("rag_document_metadata").update(
+                            {
+                                "project_id": project_id,
+                                "source_metadata": {
+                                    **source_metadata,
+                                    "project_assignment": assignment_metadata,
+                                },
+                            }
+                        ).eq("id", document_metadata_id).execute()
+                    except Exception as exc:  # noqa: BLE001 - do not fail intake normalization on RAG metadata drift
+                        logger.warning("[Outlook] RAG metadata project backfill failed for %s: %s", document_metadata_id, exc)
+                stats["assigned"] = int(stats["assigned"]) + 1
+            else:
+                update_payload.update({"match_status": "unassigned", "status": "Received"})
+                stats["review_needed"] = int(stats["review_needed"]) + 1
+
+            write_client.from_("outlook_email_intake").update(update_payload).eq("id", row_id).execute()
+        except Exception as exc:  # noqa: BLE001 - continue bounded repair and report failures
+            stats["failed"] = int(stats["failed"]) + 1
+            errors = stats["errors"]
+            assert isinstance(errors, list)
+            errors.append({"id": row_id, "error": str(exc)[:500]})
+
+    return stats
+
+
+def _vectorization_status_from_metadata(
+    *,
+    document_metadata_id: Optional[str],
+    embedding_status: Optional[str],
+    embedded_chunk_count: int,
+) -> tuple[str, Optional[str]]:
+    if not document_metadata_id:
+        return "no_document", "No RAG document_metadata_id is linked to this intake row."
+    if embedded_chunk_count > 0:
+        return "embedded", None
+
+    normalized = str(embedding_status or "").strip().lower()
+    if normalized in {"skipped", "intentionally_excluded"}:
+        return "skipped", None
+    if normalized in {"failed", "failed_permanent", "error"}:
+        return "failed", f"RAG metadata embedding_status={normalized}"
+    if normalized in {"review_needed", "project_assignment_review"}:
+        return "review_needed", None
+    return "pending", None
+
+
+def refresh_outlook_intake_vectorization_statuses(
+    *,
+    mailbox_user_id: Optional[str] = None,
+    limit: int = 100,
+    since: Optional[str] = None,
+) -> dict[str, object]:
+    """Project RAG chunk/vectorization state onto Outlook intake rows."""
+
+    resolved_limit = max(1, min(int(limit or 100), 500))
+    read_client = _outlook_intake_read_client()
+    write_client = _outlook_intake_write_client()
+    rag_read = get_outlook_intake_read_client()
+
+    query = (
+        read_client.from_("outlook_email_intake")
+        .select("id,document_metadata_id,source_metadata,received_at")
+        .order("received_at", desc=True)
+        .limit(resolved_limit)
+    )
+    if mailbox_user_id:
+        query = query.eq("mailbox_user_id", mailbox_user_id)
+    query = _apply_since_filter(query, since)
+
+    rows = query.execute().data or []
+    stats: dict[str, object] = {
+        "scanned": 0,
+        "updated": 0,
+        "failed": 0,
+        "statuses": {},
+        "errors": [],
+    }
+
+    for row in rows:
+        stats["scanned"] = int(stats["scanned"]) + 1
+        row_id = row.get("id")
+        doc_id = row.get("document_metadata_id")
+        try:
+            embedding_status: Optional[str] = None
+            embedded_chunk_count = 0
+            if doc_id:
+                meta_rows = (
+                    rag_read.from_("rag_document_metadata")
+                    .select("embedding_status")
+                    .eq("id", doc_id)
+                    .limit(1)
+                    .execute()
+                    .data
+                    or []
+                )
+                if meta_rows:
+                    embedding_status = meta_rows[0].get("embedding_status")
+                chunk_rows = (
+                    rag_read.from_("document_chunks")
+                    .select("chunk_id,embedding")
+                    .eq("document_id", doc_id)
+                    .limit(1000)
+                    .execute()
+                    .data
+                    or []
+                )
+                embedded_chunk_count = sum(1 for chunk in chunk_rows if chunk.get("embedding") is not None)
+
+            status, error = _vectorization_status_from_metadata(
+                document_metadata_id=str(doc_id) if doc_id else None,
+                embedding_status=embedding_status,
+                embedded_chunk_count=embedded_chunk_count,
+            )
+            source_metadata = dict(row.get("source_metadata") or {})
+            source_metadata["vectorization"] = {
+                "status": status,
+                "chunk_count": embedded_chunk_count,
+                "embedding_status": embedding_status,
+                "checked_at": datetime.now(timezone.utc).isoformat(),
+            }
+            if error:
+                source_metadata["vectorization"]["error"] = error
+
+            write_client.from_("outlook_email_intake").update(
+                {
+                    "vectorization_status": status,
+                    "vectorization_checked_at": datetime.now(timezone.utc).isoformat(),
+                    "vectorization_chunk_count": embedded_chunk_count,
+                    "vectorization_error": error,
+                    "source_metadata": source_metadata,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }
+            ).eq("id", row_id).execute()
+            stats["updated"] = int(stats["updated"]) + 1
+            statuses = stats["statuses"]
+            assert isinstance(statuses, dict)
+            statuses[status] = int(statuses.get(status, 0)) + 1
+        except Exception as exc:  # noqa: BLE001 - report row failures and continue
+            stats["failed"] = int(stats["failed"]) + 1
+            errors = stats["errors"]
+            assert isinstance(errors, list)
+            errors.append({"id": row_id, "error": str(exc)[:500]})
+
+    return stats
+
+
+def backfill_outlook_intake_rag_documents(
+    supabase_client,
+    *,
+    mailbox_user_id: Optional[str] = None,
+    limit: int = 100,
+    since: Optional[str] = None,
+) -> dict[str, object]:
+    """Create missing RAG document rows for imported Outlook intake emails."""
+
+    resolved_limit = max(1, min(int(limit or 100), 500))
+    query = (
+        _outlook_intake_read_client()
+        .from_("outlook_email_intake")
+        .select(
+            "id,graph_message_id,mailbox_user_id,subject,body,body_text,from_name,from_email,"
+            "to_list,cc_list,project_id,assignment_method,received_at,web_link,document_metadata_id,source_metadata"
+        )
+        .is_("document_metadata_id", "null")
+        .order("received_at", desc=True)
+        .limit(resolved_limit)
+    )
+    if mailbox_user_id:
+        query = query.eq("mailbox_user_id", mailbox_user_id)
+    query = _apply_since_filter(query, since)
+
+    rows = query.execute().data or []
+    write_client = _outlook_intake_write_client()
+    store = SupabaseRagStore(supabase_client)
+    stats: dict[str, object] = {
+        "scanned": 0,
+        "created": 0,
+        "skipped": 0,
+        "failed": 0,
+        "errors": [],
+    }
+
+    for row in rows:
+        stats["scanned"] = int(stats["scanned"]) + 1
+        row_id = row.get("id")
+        body_text = str(row.get("body_text") or row.get("body") or "")
+        if len(body_text) < MIN_BODY_CHARS:
+            stats["skipped"] = int(stats["skipped"]) + 1
+            continue
+
+        try:
+            msg_id = str(row.get("graph_message_id") or f"intake_{row_id}")
+            doc_id = f"outlook_{msg_id}"
+            user_email = str(row.get("mailbox_user_id") or mailbox_user_id or "unknown")
+            subject = str(row.get("subject") or "(no subject)")
+            source_metadata = dict(row.get("source_metadata") or {})
+            source_metadata["rag_document_backfill"] = {
+                "status": "created",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "intake_email_id": row_id,
+            }
+            participants = _participants_for_intake_row(row)
+            tags = ["email", "outlook", "intake_backfill"]
+            project_id = row.get("project_id")
+            assignment_method = row.get("assignment_method") or "unassigned"
+            if project_id:
+                tags.append(f"project_auto:{assignment_method}")
+
+            store.upsert_document_metadata(
+                {
+                    "id": doc_id,
+                    "title": f"Email: {subject}",
+                    "source": "microsoft_graph",
+                    "category": "email",
+                    "type": "email",
+                    "content": body_text,
+                    "date": str(row.get("received_at") or "")[:10] or None,
+                    "participants": ", ".join(participants[:50]),
+                    "status": "raw_ingested",
+                    "tags": ",".join(tags),
+                    "project_id": int(project_id) if project_id else None,
+                    "url": row.get("web_link"),
+                    "source_system": "outlook_email",
+                    "source_item_id": msg_id,
+                    "source_path": f"outlook/{user_email}/{msg_id}.txt",
+                    "source_web_url": row.get("web_link"),
+                    "storage_bucket": DOCUMENT_BUCKET,
+                    "file_path": f"outlook/{user_email}/{msg_id}.txt",
+                    "source_metadata": source_metadata,
+                }
+            )
+            write_client.from_("outlook_email_intake").update(
+                {
+                    "document_metadata_id": doc_id,
+                    "vectorization_status": "pending",
+                    "vectorization_checked_at": datetime.now(timezone.utc).isoformat(),
+                    "vectorization_chunk_count": 0,
+                    "vectorization_error": None,
+                    "source_metadata": source_metadata,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }
+            ).eq("id", row_id).execute()
+            stats["created"] = int(stats["created"]) + 1
+        except Exception as exc:  # noqa: BLE001 - keep bounded backfill inspectable
+            stats["failed"] = int(stats["failed"]) + 1
+            errors = stats["errors"]
+            assert isinstance(errors, list)
+            errors.append({"id": row_id, "error": str(exc)[:500]})
+
+    return stats
+
+
 def _upsert_project_outlook_attachment(
     *,
     supabase_client,
@@ -892,28 +1323,35 @@ def _upsert_outlook_intake_attachment(
     if _is_decorative_inline_attachment(attachment_name, content_type, is_inline):
         return False
 
-    raw_bytes = _attachment_bytes_for_intake(graph, user_id, msg_id, attachment)
-    if not raw_bytes:
-        return False
+    capture_content = size <= OUTLOOK_INTAKE_ATTACHMENT_CONTENT_MAX_BYTES
+    raw_bytes: Optional[bytes] = None
+    checksum: Optional[str] = None
+    if capture_content:
+        raw_bytes = _attachment_bytes_for_intake(graph, user_id, msg_id, attachment)
+        if not raw_bytes:
+            return False
+        checksum = hashlib.sha256(raw_bytes).hexdigest()
 
-    checksum = hashlib.sha256(raw_bytes).hexdigest()
     payload = {
         "intake_email_id": intake_email_id,
         "email_attachment_id": email_attachment_id,
         "file_name": attachment_name,
         "file_url": f"graph://messages/{msg_id}/attachments/{attachment_id}",
-        "file_size": len(raw_bytes),
+        "file_size": len(raw_bytes) if raw_bytes is not None else size,
         "content_type": content_type,
         "graph_attachment_id": attachment_id,
         "checksum_sha256": checksum,
-        "content": "\\x" + raw_bytes.hex(),
         "is_inline": is_inline,
         "source_metadata": {
             "outlook_attachment_type": attachment_type,
             "outlook_message_id": msg_id,
+            "content_capture_status": "captured" if capture_content else "skipped_large_attachment",
+            "content_capture_limit_bytes": OUTLOOK_INTAKE_ATTACHMENT_CONTENT_MAX_BYTES,
         },
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
+    if raw_bytes is not None:
+        payload["content"] = "\\x" + raw_bytes.hex()
 
     intake_read = _outlook_intake_read_client()
     intake_write = _outlook_intake_write_client()
@@ -1533,7 +1971,7 @@ def sync_outlook_emails(
             )
             continue
 
-        should_index_for_rag = _is_relevant_email(msg, project_keywords) and len(body_text) >= MIN_BODY_CHARS
+        should_index_for_rag = len(body_text) >= MIN_BODY_CHARS
 
         try:
             existing_doc = None
@@ -1555,11 +1993,25 @@ def sync_outlook_emails(
                 project_id = existing_doc.get("project_id")
                 assignment_method = "existing_document"
                 assignment_confidence = 1.0
+            elif should_index_for_rag:
+                project_id, assignment_method, assignment_confidence = infer_project_id(
+                    supabase_client,
+                    title=subject,
+                    content=body_text,
+                    participants=participants,
+                    existing_project_id=None,
+                )
+                source_metadata["project_assignment"] = {
+                    "status": "assigned" if project_id else "review_needed",
+                    "method": assignment_method,
+                    "confidence": assignment_confidence,
+                    "assigned_at": datetime.now(timezone.utc).isoformat(),
+                }
             else:
                 source_metadata["project_assignment"] = {
-                    "status": "deferred",
-                    "reason": "Outlook raw ingestion does not run synchronous project inference.",
-                    "deferred_at": datetime.now(timezone.utc).isoformat(),
+                    "status": "not_indexed",
+                    "reason": "Email body was too short for RAG indexing/project inference.",
+                    "checked_at": datetime.now(timezone.utc).isoformat(),
                 }
 
             tags = ["email", "outlook"]
@@ -1576,6 +2028,7 @@ def sync_outlook_emails(
             had_attachment_errors = bool(effective_source_metadata.get("attachment_errors")) if existing_doc else False
             intake_email_id: Optional[int] = None
             project_email_id: Optional[int] = None
+            rag_document_upserted = False
 
             if SYNC_LEGACY_PROJECT_EMAILS:
                 try:
@@ -1751,6 +2204,7 @@ def sync_outlook_emails(
                         "source_metadata": effective_source_metadata,
                         "parsing_status": "raw_ingested",
                     })
+                    rag_document_upserted = True
                 else:
                     SupabaseRagStore(supabase_client).upsert_document_metadata({
                         "id": doc_id,
@@ -1773,10 +2227,17 @@ def sync_outlook_emails(
                         "file_path": storage_path,
                         "source_metadata": source_metadata,
                     })
+                    rag_document_upserted = True
 
                 if intake_email_id:
                     _outlook_intake_write_client().from_("outlook_email_intake").update(
-                        {"document_metadata_id": doc_id, "updated_at": datetime.now(timezone.utc).isoformat()}
+                        {
+                            "document_metadata_id": doc_id,
+                            "vectorization_status": "pending",
+                            "vectorization_chunk_count": 0,
+                            "vectorization_error": None,
+                            "updated_at": datetime.now(timezone.utc).isoformat(),
+                        }
                     ).eq("id", intake_email_id).execute()
 
                 reconciled_project_id = _reconcile_outlook_project_assignment(
@@ -1798,7 +2259,20 @@ def sync_outlook_emails(
                     )
                     project_id = reconciled_project_id
 
-            if should_index_for_rag and (attachment_count or link_count or attachment_errors or intake_email_id or intake_attachment_count or intake_errors or had_attachment_errors):
+            if intake_email_id and (attachment_errors or intake_errors):
+                _outlook_intake_write_client().from_("outlook_email_intake").update(
+                    {
+                        "source_metadata": {
+                            **source_metadata,
+                            "attachment_errors": attachment_errors,
+                            "intake_errors": intake_errors,
+                            "intake_attachment_count_synced": intake_attachment_count,
+                        },
+                        "updated_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                ).eq("id", intake_email_id).execute()
+
+            if should_index_for_rag and rag_document_upserted and (attachment_count or link_count or attachment_errors or intake_email_id or intake_attachment_count or intake_errors or had_attachment_errors):
                 update_payload = {
                     "source_metadata": {
                         **effective_source_metadata,
@@ -1819,7 +2293,7 @@ def sync_outlook_emails(
                     update_payload["tags"] = ",".join(tags + error_tags)
                 supabase_client.from_("document_metadata").update(update_payload).eq("id", doc_id).execute()
 
-            if should_index_for_rag:
+            if should_index_for_rag and rag_document_upserted:
                 _run_source_intelligence_compiler(supabase_client, doc_id)
 
             if intake_email_id or project_email_id or (should_index_for_rag and not existing_doc):

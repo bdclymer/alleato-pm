@@ -1,6 +1,11 @@
 from services.integrations.microsoft_graph import outlook
 
 
+def _route_outlook_intake_clients(monkeypatch, supabase):
+    monkeypatch.setattr(outlook, "get_outlook_intake_read_client", lambda: supabase)
+    monkeypatch.setattr(outlook, "get_outlook_intake_write_client", lambda: supabase)
+
+
 class _Result:
     def __init__(self, data=None):
         self.data = data or []
@@ -20,11 +25,18 @@ class _Table:
         self.filters[key] = value
         return self
 
+    def gte(self, key, value):
+        self.filters[(key, "gte")] = value
+        return self
+
     def is_(self, key, value):
-        self.filters[key] = value
+        self.filters[key] = None if value == "null" else value
         return self
 
     def limit(self, *_args, **_kwargs):
+        return self
+
+    def order(self, *_args, **_kwargs):
         return self
 
     def update(self, payload):
@@ -45,13 +57,19 @@ class _Table:
             matches = [
                 row
                 for row in rows
-                if all(row.get(key) == value for key, value in self.filters.items())
+                if all(
+                    row.get(key[0]) >= value if isinstance(key, tuple) and key[1] == "gte" else row.get(key) == value
+                    for key, value in self.filters.items()
+                )
             ]
             return _Result(matches)
 
         if self.filters:
             for row in rows:
-                if all(row.get(key) == value for key, value in self.filters.items()):
+                if all(
+                    row.get(key[0]) >= value if isinstance(key, tuple) and key[1] == "gte" else row.get(key) == value
+                    for key, value in self.filters.items()
+                ):
                     row.update(self.payload)
                     return _Result([row])
 
@@ -67,10 +85,18 @@ class _Supabase:
     def from_(self, name):
         return _Table(self.store, name)
 
+    def table(self, name):
+        return self.from_(name)
+
 
 class _Graph:
     def get(self, *_args, **_kwargs):
         raise AssertionError("attachment already has contentBytes")
+
+
+class _NoFetchGraph:
+    def get(self, *_args, **_kwargs):
+        raise AssertionError("large attachment content should not be fetched")
 
 
 class _DeltaGraph:
@@ -115,16 +141,31 @@ class _DeltaGraph:
         ], "inbox-token"
 
 
-class _NoProjectLookupSupabase(_Supabase):
-    def from_(self, name):
-        if name in {"projects", "project_emails"}:
-            raise AssertionError(f"Outlook raw ingestion must not synchronously query {name}")
-        return super().from_(name)
+class _AttachmentListFailureGraph(_DeltaGraph):
+    def get_delta(self, base_path, _delta_token):
+        rows, token = super().get_delta(base_path, _delta_token)
+        for row in rows:
+            row["hasAttachments"] = True
+        return rows, token
+
+    def get_all_pages(self, *_args, **_kwargs):
+        raise TimeoutError("attachment list timed out")
 
 
-def test_sync_outlook_emails_defers_project_assignment_before_raw_intake(monkeypatch):
-    supabase = _NoProjectLookupSupabase()
+def test_sync_outlook_emails_assigns_project_before_rag_intake(monkeypatch):
+    supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
     monkeypatch.setattr(outlook, "get_graph_client", lambda: _DeltaGraph())
+    monkeypatch.setattr(
+        outlook,
+        "_run_source_intelligence_compiler",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        outlook,
+        "infer_project_id",
+        lambda *_args, **_kwargs: (876, "title_match", 0.98),
+    )
 
     synced, token = outlook.sync_outlook_emails(
         supabase,
@@ -137,14 +178,37 @@ def test_sync_outlook_emails_defers_project_assignment_before_raw_intake(monkeyp
     row = supabase.store["outlook_email_intake"][0]
     assert row["graph_message_id"] == "message-raw-1"
     assert row["mailbox_user_id"] == "bclymer@alleatogroup.com"
-    assert row["project_id"] is None
-    assert row["match_status"] == "unassigned"
-    assert row["assignment_method"] == "assignment_deferred"
-    assert row["source_metadata"]["project_assignment"]["status"] == "deferred"
+    assert row["project_id"] == 876
+    assert row["match_status"] == "matched"
+    assert row["assignment_method"] == "title_match"
+    assert row["document_metadata_id"] is not None
+    assert row["source_metadata"]["project_assignment"]["status"] == "assigned"
+    assert row["source_metadata"]["project_assignment"]["confidence"] == 0.98
 
 
-def test_outlook_intake_attachment_stores_bytea_hex_content():
+def test_sync_outlook_emails_records_attachment_list_failure_on_intake(monkeypatch):
     supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
+    monkeypatch.setattr(outlook, "get_graph_client", lambda: _AttachmentListFailureGraph())
+    monkeypatch.setattr(outlook, "_run_source_intelligence_compiler", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(outlook, "infer_project_id", lambda *_args, **_kwargs: (None, "unassigned", 0.0))
+
+    synced, _token = outlook.sync_outlook_emails(
+        supabase,
+        "bclymer@alleatogroup.com",
+        project_keywords=[],
+    )
+
+    assert synced == 1
+    row = supabase.store["outlook_email_intake"][0]
+    assert row["has_attachments"] is True
+    assert row["source_metadata"]["attachment_errors"] == ["list_failed: attachment list timed out"]
+    assert row["source_metadata"]["intake_attachment_count_synced"] == 0
+
+
+def test_outlook_intake_attachment_stores_bytea_hex_content(monkeypatch):
+    supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
     attachment = {
         "@odata.type": "#microsoft.graph.fileAttachment",
         "id": "attachment-1",
@@ -175,8 +239,42 @@ def test_outlook_intake_attachment_stores_bytea_hex_content():
     assert row["file_url"] == "graph://messages/message-1/attachments/attachment-1"
 
 
-def test_outlook_intake_email_updates_existing_graph_message():
+def test_outlook_intake_attachment_stores_large_binary_as_metadata_only(monkeypatch):
     supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
+    monkeypatch.setattr(outlook, "OUTLOOK_INTAKE_ATTACHMENT_CONTENT_MAX_BYTES", 10)
+    attachment = {
+        "@odata.type": "#microsoft.graph.fileAttachment",
+        "id": "attachment-1",
+        "name": "SUP8319 6-19-26.dwg",
+        "contentType": "application/acad",
+        "size": 4096,
+        "isInline": False,
+    }
+
+    wrote = outlook._upsert_outlook_intake_attachment(
+        supabase_client=supabase,
+        graph=_NoFetchGraph(),
+        user_id="pm@example.com",
+        msg_id="message-1",
+        intake_email_id=42,
+        email_attachment_id=None,
+        attachment=attachment,
+    )
+
+    assert wrote is True
+    row = supabase.store["outlook_email_intake_attachments"][0]
+    assert row["file_name"] == "SUP8319 6-19-26.dwg"
+    assert row["file_size"] == 4096
+    assert row["checksum_sha256"] is None
+    assert "content" not in row
+    assert row["source_metadata"]["content_capture_status"] == "skipped_large_attachment"
+    assert row["source_metadata"]["content_capture_limit_bytes"] == 10
+
+
+def test_outlook_intake_email_updates_existing_graph_message(monkeypatch):
+    supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
     supabase.store["outlook_email_intake"] = [
         {"id": 7, "graph_message_id": "message-1", "project_id": 1, "subject": "Old"}
     ]
@@ -215,8 +313,9 @@ def test_outlook_intake_email_updates_existing_graph_message():
     assert row["match_status"] == "matched"
 
 
-def test_reconcile_outlook_project_assignment_uses_document_metadata_project():
+def test_reconcile_outlook_project_assignment_uses_document_metadata_project(monkeypatch):
     supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
     supabase.store["document_metadata"] = [
         {"id": "outlook_message-1", "project_id": 178}
     ]
@@ -253,8 +352,228 @@ def test_reconcile_outlook_project_assignment_uses_document_metadata_project():
     assert intake["assignment_confidence"] == 1.0
 
 
-def test_record_outlook_skip_audit_writes_classifier_snapshot():
+def test_backfill_outlook_intake_project_assignments_updates_intake_and_rag(monkeypatch):
     supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
+    monkeypatch.setattr(outlook, "get_rag_write_client", lambda: supabase)
+    monkeypatch.setattr(
+        outlook,
+        "infer_project_id",
+        lambda *_args, **_kwargs: (178, "content_match", 0.82),
+    )
+    supabase.store["outlook_email_intake"] = [
+        {
+            "id": 7,
+            "subject": "Superior Beverage coordination",
+            "body_text": "SYS-24-0008319 Superior Beverage project coordination.",
+            "from_name": "Vendor",
+            "from_email": "vendor@example.com",
+            "to_list": ["bclymer@alleatogroup.com"],
+            "cc_list": [],
+            "bcc_list": [],
+            "project_id": None,
+            "document_metadata_id": "outlook_message-1",
+            "source_metadata": {"project_assignment": {"status": "deferred"}},
+            "received_at": "2026-06-19T20:00:00Z",
+            "graph_message_id": "message-1",
+            "mailbox_user_id": "bclymer@alleatogroup.com",
+        },
+        {
+            "id": 8,
+            "subject": "Older Superior Beverage coordination",
+            "body_text": "SYS-24-0008319 older project coordination.",
+            "from_name": "Vendor",
+            "from_email": "vendor@example.com",
+            "to_list": ["bclymer@alleatogroup.com"],
+            "cc_list": [],
+            "bcc_list": [],
+            "project_id": None,
+            "document_metadata_id": "outlook_message-old",
+            "source_metadata": {"project_assignment": {"status": "deferred"}},
+            "received_at": "2026-05-01T20:00:00Z",
+            "graph_message_id": "message-old",
+            "mailbox_user_id": "bclymer@alleatogroup.com",
+        }
+    ]
+    supabase.store["document_metadata"] = [{"id": "outlook_message-1", "project_id": None}]
+    supabase.store["rag_document_metadata"] = [{"id": "outlook_message-1", "project_id": None}]
+
+    result = outlook.backfill_outlook_intake_project_assignments(
+        supabase,
+        mailbox_user_id="bclymer@alleatogroup.com",
+        limit=10,
+        since="2026-06-07T00:00:00Z",
+    )
+
+    assert result["scanned"] == 1
+    assert result["assigned"] == 1
+    intake = supabase.store["outlook_email_intake"][0]
+    assert intake["project_id"] == 178
+    assert intake["match_status"] == "matched"
+    assert intake["assignment_method"] == "content_match"
+    assert intake["source_metadata"]["project_assignment"]["status"] == "assigned"
+    assert supabase.store["document_metadata"][0]["project_id"] == 178
+    assert supabase.store["rag_document_metadata"][0]["project_id"] == 178
+    assert supabase.store["outlook_email_intake"][1]["project_id"] is None
+
+
+def test_backfill_outlook_intake_project_assignments_normalizes_existing_project(monkeypatch):
+    supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
+    monkeypatch.setattr(outlook, "get_rag_write_client", lambda: supabase)
+
+    def fail_infer(*_args, **_kwargs):
+        raise AssertionError("existing project rows should not rerun inference")
+
+    monkeypatch.setattr(outlook, "infer_project_id", fail_infer)
+    supabase.store["outlook_email_intake"] = [
+        {
+            "id": 7,
+            "subject": "Vermillion Rise permit set",
+            "body_text": "Existing assigned email.",
+            "from_name": "Vendor",
+            "from_email": "vendor@example.com",
+            "to_list": ["bclymer@alleatogroup.com"],
+            "cc_list": [],
+            "bcc_list": [],
+            "project_id": 67,
+            "document_metadata_id": "outlook_message-1",
+            "assignment_method": "existing_document",
+            "assignment_confidence": 1.0,
+            "source_metadata": {},
+            "received_at": "2026-06-19T20:00:00Z",
+            "graph_message_id": "message-1",
+            "mailbox_user_id": "bclymer@alleatogroup.com",
+        }
+    ]
+    supabase.store["rag_document_metadata"] = [{"id": "outlook_message-1", "project_id": None}]
+
+    result = outlook.backfill_outlook_intake_project_assignments(
+        supabase,
+        mailbox_user_id="bclymer@alleatogroup.com",
+        limit=10,
+        since="2026-06-07T00:00:00Z",
+    )
+
+    assert result["scanned"] == 1
+    assert result["assigned"] == 1
+    assert result["normalized_existing"] == 1
+    intake = supabase.store["outlook_email_intake"][0]
+    assert intake["match_status"] == "matched"
+    assert intake["source_metadata"]["project_assignment"] == {
+        "status": "assigned",
+        "method": "existing_document",
+        "confidence": 1.0,
+        "backfilled_at": intake["source_metadata"]["project_assignment"]["backfilled_at"],
+    }
+    assert supabase.store["rag_document_metadata"][0]["project_id"] == 67
+    assert supabase.store["rag_document_metadata"][0]["source_metadata"]["project_assignment"]["status"] == "assigned"
+
+
+def test_refresh_outlook_intake_vectorization_statuses_projects_chunk_state(monkeypatch):
+    supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
+    supabase.store["outlook_email_intake"] = [
+        {
+            "id": 7,
+            "document_metadata_id": "outlook_message-1",
+            "source_metadata": {},
+            "received_at": "2026-06-19T20:00:00Z",
+            "mailbox_user_id": "bclymer@alleatogroup.com",
+        },
+        {
+            "id": 8,
+            "document_metadata_id": None,
+            "source_metadata": {},
+            "received_at": "2026-05-01T19:00:00Z",
+            "mailbox_user_id": "bclymer@alleatogroup.com",
+        },
+    ]
+    supabase.store["rag_document_metadata"] = [
+        {"id": "outlook_message-1", "embedding_status": "embedded"}
+    ]
+    supabase.store["document_chunks"] = [
+        {"chunk_id": "chunk-1", "document_id": "outlook_message-1", "embedding": [0.1, 0.2]}
+    ]
+
+    result = outlook.refresh_outlook_intake_vectorization_statuses(
+        mailbox_user_id="bclymer@alleatogroup.com",
+        limit=10,
+        since="2026-06-07T00:00:00Z",
+    )
+
+    assert result["scanned"] == 1
+    assert result["updated"] == 1
+    assert result["statuses"] == {"embedded": 1}
+    embedded_row = supabase.store["outlook_email_intake"][0]
+    assert embedded_row["vectorization_status"] == "embedded"
+    assert embedded_row["vectorization_chunk_count"] == 1
+    assert embedded_row["source_metadata"]["vectorization"]["status"] == "embedded"
+    no_document_row = supabase.store["outlook_email_intake"][1]
+    assert "vectorization_status" not in no_document_row
+
+
+def test_backfill_outlook_intake_rag_documents_links_missing_document(monkeypatch):
+    supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
+    supabase.store["outlook_email_intake"] = [
+        {
+            "id": 7,
+            "graph_message_id": "message-1",
+            "mailbox_user_id": "bclymer@alleatogroup.com",
+            "subject": "Project document backfill",
+            "body_text": "This project email has enough body text to be indexed into the RAG system.",
+            "from_name": "Vendor",
+            "from_email": "vendor@example.com",
+            "to_list": ["bclymer@alleatogroup.com"],
+            "cc_list": [],
+            "project_id": 178,
+            "assignment_method": "content_match",
+            "received_at": "2026-06-19T20:00:00Z",
+            "web_link": "https://outlook.office.com/mail/message-1",
+            "document_metadata_id": None,
+            "source_metadata": {},
+        },
+        {
+            "id": 8,
+            "graph_message_id": "message-old",
+            "mailbox_user_id": "bclymer@alleatogroup.com",
+            "subject": "Old project document backfill",
+            "body_text": "This old project email has enough body text but is outside the requested window.",
+            "from_name": "Vendor",
+            "from_email": "vendor@example.com",
+            "to_list": ["bclymer@alleatogroup.com"],
+            "cc_list": [],
+            "project_id": 178,
+            "assignment_method": "content_match",
+            "received_at": "2026-05-01T20:00:00Z",
+            "web_link": "https://outlook.office.com/mail/message-old",
+            "document_metadata_id": None,
+            "source_metadata": {},
+        }
+    ]
+
+    result = outlook.backfill_outlook_intake_rag_documents(
+        supabase,
+        mailbox_user_id="bclymer@alleatogroup.com",
+        limit=10,
+        since="2026-06-07T00:00:00Z",
+    )
+
+    assert result["scanned"] == 1
+    assert result["created"] == 1
+    intake = supabase.store["outlook_email_intake"][0]
+    assert intake["document_metadata_id"] == "outlook_message-1"
+    assert intake["vectorization_status"] == "pending"
+    assert intake["source_metadata"]["rag_document_backfill"]["status"] == "created"
+    assert supabase.store["document_metadata"][0]["id"] == "outlook_message-1"
+    assert supabase.store["document_metadata"][0]["project_id"] == 178
+    assert supabase.store["outlook_email_intake"][1]["document_metadata_id"] is None
+
+
+def test_record_outlook_skip_audit_writes_classifier_snapshot(monkeypatch):
+    supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
     msg = {
         "id": "message-1",
         "subject": "Accepted: OAC Meeting",
@@ -291,3 +610,15 @@ def test_record_outlook_skip_audit_writes_classifier_snapshot():
     assert row["classification_confidence"] == 0.98
     assert row["classification_signals"] == ["rsvp_subject", "calendar_header"]
     assert row["body_preview"] == "Accepted OAC Meeting When: Tuesday Where: Teams"
+
+
+def test_source_compiler_skips_when_document_metadata_is_not_visible(monkeypatch):
+    supabase = _Supabase()
+
+    monkeypatch.setattr(
+        outlook,
+        "process_source_document_to_packet",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("compiler should not run")),
+    )
+
+    outlook._run_source_intelligence_compiler(supabase, "outlook_missing")

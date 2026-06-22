@@ -20,6 +20,14 @@ The Microsoft operator surface is now owned by the backend Microsoft Executive A
 
 The Strategist tool surface should expose `consultMicrosoftExecutiveAssistant` for Microsoft operator work. Direct Outlook/Teams read/write tools must not be treated as the Strategist's own responsibilities.
 
+### 1.1 Outlook Assistant Control Plane
+
+Outlook monitoring uses Microsoft Graph change notifications as the real-time wakeup path, with delta sync as the durable drain. The webhook handler must acknowledge Graph quickly, validate `clientState`, record the notification, and mark the mailbox `webhook_pending`; it must not do full ingestion, vectorization, or AI drafting inline. The scheduled webhook drain then runs the same folder-specific Outlook delta sync path used by the polling cron, which writes non-noise email into `outlook_email_intake`, project/relevance-passed email into `document_metadata`, and vector chunks into `document_chunks`.
+
+Production Outlook subscriptions default to `users/{mailbox}/mailFolders('inbox')/messages` through `GRAPH_SUBSCRIBE_OUTLOOK_SCOPE=inbox`. Whole-mailbox subscriptions are allowed only by explicitly setting `GRAPH_SUBSCRIBE_OUTLOOK_SCOPE=all`; otherwise junk/spam folder changes can wake the assistant even though the ingestion layer later drops noise.
+
+The daily email recap is separate from the Executive Daily Brief. It reads `outlook_email_intake`, `outlook_email_intake_attachments`, and `outlook_email_assistant_reviews`, then sends Brandon a Teams DM with important messages, captured/project-saved attachments, and draft/review activity.
+
 ---
 
 ## 2. Data Flow
@@ -272,6 +280,9 @@ Microsoft 365
 | `alleato-source-sync-health` | every 30 min | Source sync health monitoring |
 | `alleato-teams-dm-sync` | `:40` every hour | Teams DM conversations only |
 | `alleato-graph-sync` | `:20` every 2h | Outlook + OneDrive + embed + OCR + promotions |
+| `alleato-graph-subscription-reconcile` | every 6h | Renew/recreate Microsoft Graph webhook subscriptions |
+| `alleato-microsoft-executive-assistant-check` | every 15 min | Unread Outlook triage, draft recommendations, Teams urgent alerts |
+| `alleato-email-digest` | 12:00 UTC daily | Email recap Teams DM with important mail, attachments, and drafts |
 | `alleato-acumatica-financial-sync` | `0 */2 * * *` | Acumatica ERP data sync |
 | `alleato-daily-recap` | 9:30 UTC daily | AI project recap from transcripts |
 | `alleato-task-extraction` | 7:00 UTC daily | Extract action items |

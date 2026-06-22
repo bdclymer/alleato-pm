@@ -65,7 +65,7 @@ def run_scheduled_microsoft_executive_assistant_check(
         sessionId="microsoft-executive-assistant:scheduled-check",
         prompt=(
             "Run the 15-minute Microsoft executive assistant check:\n"
-            "1. Call read_live_outlook_inbox to fetch recent unread messages.\n"
+            "1. Call read_live_outlook_inbox with unread_only=true to fetch recent unread messages.\n"
             "2. For EACH email, classify it with one of: urgent, reply_needed, delegate, fyi, watch, delete.\n"
             "3. Call write_email_triage for each classified email (pass graph_message_id, triage_action, "
             "and a one-sentence triage_reason). This persists your decision and tags the email in Outlook.\n"

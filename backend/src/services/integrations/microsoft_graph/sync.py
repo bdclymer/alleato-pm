@@ -74,14 +74,12 @@ def _record_sync_run_safe(
 
 
 def _count_outlook_docs_for_mailbox(supabase: Client, user_email: str) -> int:
-    """Count persisted Outlook email docs for a mailbox via durable source paths."""
-    prefix = f"outlook/{user_email}/"
+    """Count persisted raw Outlook intake rows for a mailbox."""
     result = (
-        supabase.from_("document_metadata")
+        get_rag_read_client().from_("outlook_email_intake")
         .select("id", count="exact")
-        .eq("source", "microsoft_graph")
-        .eq("source_system", "outlook_email")
-        .like("source_path", f"{prefix}%")
+        .eq("mailbox_user_id", user_email)
+        .is_("deleted_at", "null")
         .execute()
     )
     return int(result.count or 0)
@@ -337,24 +335,23 @@ def sync_outlook_mailbox_delta(
     project_keywords = _get_active_project_keywords(supabase) if load_project_keywords else []
     token = _get_delta_token(supabase, "outlook_email", user_email)
     since_date = os.environ.get("OUTLOOK_SYNC_SINCE") or None
-    effective_since = since_date if not token else None
 
     count, new_token = sync_outlook_emails(
         supabase,
         user_email,
         project_keywords,
         token,
-        effective_since,
+        since_date,
     )
     after_count = _count_outlook_docs_for_mailbox(supabase, user_email) if verify_persisted_count else 0
     persisted_delta = max(0, after_count - before_count) if verify_persisted_count else None
     sync_status = "success"
     sync_error: Optional[str] = None
-    if verify_persisted_count and persisted_delta != count:
+    if verify_persisted_count and count > 0 and after_count == 0:
         sync_status = "mismatch"
         sync_error = (
-            f"Persisted Outlook doc delta mismatch for {user_email}: "
-            f"sync_outlook_emails returned {count}, but durable document_metadata rows increased by {persisted_delta}."
+            f"Persisted Outlook intake missing for {user_email}: "
+            f"sync_outlook_emails processed {count}, but no durable outlook_email_intake rows are visible."
         )
         logger.error("[GraphSync] %s", sync_error)
 

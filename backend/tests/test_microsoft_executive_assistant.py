@@ -598,6 +598,7 @@ def test_scheduled_trigger_runs_specialist_when_enabled(monkeypatch):
     assert result["status"] == "completed"
     assert captured["request"].trigger == "scheduled_check"
     assert captured["request"].mailbox_user_id == "megan@alleatogroup.com"
+    assert "unread_only=true" in captured["request"].prompt
 
 
 def test_outlook_event_trigger_runs_after_webhook_when_enabled(monkeypatch):

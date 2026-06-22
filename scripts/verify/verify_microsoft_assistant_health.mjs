@@ -23,6 +23,40 @@ const EXPECTED_CRON_ROOT = "backend";
 const DEFAULT_MAILBOX = "bclymer@alleatogroup.com";
 const DEFAULT_MAX_CACHE_AGE_MINUTES = 90;
 const DEFAULT_MAX_CRON_AGE_MINUTES = 45;
+const NOISE_SENDER_PATTERNS = [
+  "noreply",
+  "no-reply",
+  "donotreply",
+  "do-not-reply",
+  "notifications@",
+  "notification@",
+  "alerts@",
+  "alert@",
+  "newsletter@",
+  "news@",
+  "updates@",
+  "update@",
+  "marketing@",
+  "promo@",
+  "promotions@",
+  "offers@",
+  "mailer@",
+  "bounce@",
+  "campaigns@",
+  "reply@",
+];
+const NOISE_SUBJECT_PATTERNS = [
+  "unsubscribe",
+  "newsletter",
+  "out of office",
+  "automatic reply",
+  "auto reply",
+  "autoreply",
+  "delivery status notification",
+  "delivery failure",
+  "undelivered mail",
+  "mailer-daemon",
+];
 
 function parseArgs(argv) {
   const options = {
@@ -213,17 +247,21 @@ async function verifyGraphInbox(options, mailbox) {
     const token = await getGraphToken();
     const url =
       `${GRAPH_BASE}/users/${encodeURIComponent(mailbox)}/mailFolders/Inbox/messages` +
-      "?$top=1&$orderby=receivedDateTime desc&$select=id,receivedDateTime";
+      "?$top=10&$orderby=receivedDateTime desc&$select=id,subject,from,receivedDateTime,internetMessageHeaders";
     const { body } = await fetchJson(url, {
       headers: { authorization: `Bearer ${token}` },
     });
-    const latest = Array.isArray(body?.value) ? body.value[0] : null;
+    const rows = Array.isArray(body?.value) ? body.value : [];
+    const latest = rows.find((message) => !isNoiseGraphMessage(message)) ?? rows[0] ?? null;
     if (!latest?.id) {
       return result("graph_inbox", false, "Live Graph inbox read returned no messages.", { mailbox });
     }
-    return result("graph_inbox", true, "Live Graph inbox read succeeded.", {
+    return result("graph_inbox", true, "Live Graph inbox read succeeded for latest actionable message.", {
       mailbox,
+      latestMessageId: latest.id,
       latestReceivedAt: latest.receivedDateTime ?? null,
+      latestSubject: latest.subject ?? null,
+      skippedNoiseCount: rows.findIndex((message) => message.id === latest.id),
     });
   } catch (error) {
     return result("graph_inbox", false, `Live Graph inbox check failed: ${error.message}`, {
@@ -232,6 +270,18 @@ async function verifyGraphInbox(options, mailbox) {
       graphOrRenderMessage: error.body?.error?.message ?? null,
     });
   }
+}
+
+function isNoiseGraphMessage(message) {
+  const headers = Array.isArray(message?.internetMessageHeaders) ? message.internetMessageHeaders : [];
+  const hasListUnsubscribe = headers.some((header) => String(header?.name || "").toLowerCase() === "list-unsubscribe");
+  if (hasListUnsubscribe) return true;
+
+  const sender = String(message?.from?.emailAddress?.address || "").toLowerCase();
+  if (NOISE_SENDER_PATTERNS.some((pattern) => sender.includes(pattern))) return true;
+
+  const subject = String(message?.subject || "").toLowerCase();
+  return NOISE_SUBJECT_PATTERNS.some((pattern) => subject.includes(pattern));
 }
 
 function resolveSupabaseConfig() {
@@ -403,6 +453,22 @@ function downgradeLegacyLedgerMismatch(checks) {
   }
 }
 
+function markCacheCurrentWhenItMatchesGraph(checks) {
+  const graph = checks.find((check) => check.stage === "graph_inbox");
+  const cache = checks.find((check) => check.stage === "cached_intake");
+  if (!graph?.ok || !cache || cache.ok) return;
+
+  const graphTimestamp = Date.parse(graph.latestReceivedAt || "");
+  const cacheTimestamp = Date.parse(cache.latestReceivedAt || "");
+  if (!Number.isNaN(graphTimestamp) && graphTimestamp === cacheTimestamp) {
+    cache.ok = true;
+    cache.warning = false;
+    cache.message =
+      "Cached Outlook intake matches the latest live Graph inbox message; no newer mail is waiting to ingest.";
+    cache.matchedGraphLatest = true;
+  }
+}
+
 function printHuman(report) {
   const status = report.ok ? "PASS" : "FAIL";
   console.log(`Microsoft executive assistant health: ${status}`);
@@ -434,6 +500,7 @@ async function main() {
     verifyCachedIntake(options, mailbox),
     verifySyncLedger(options, mailbox),
   ]);
+  markCacheCurrentWhenItMatchesGraph(checks);
   downgradeLegacyLedgerMismatch(checks);
 
   const summary = summarize(checks);

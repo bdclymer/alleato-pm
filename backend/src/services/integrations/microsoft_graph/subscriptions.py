@@ -86,6 +86,18 @@ def _sync_mailboxes() -> List[str]:
     return [e.strip() for e in os.getenv("MICROSOFT_SYNC_USERS", "").split(",") if e.strip()]
 
 
+def _outlook_subscription_resource(email: str) -> str:
+    scope = os.getenv("GRAPH_SUBSCRIBE_OUTLOOK_SCOPE", "inbox").strip().lower()
+    if scope in {"all", "all_messages", "mailbox"}:
+        return f"users/{email}/messages"
+    if scope not in {"inbox", "inbox_only"}:
+        logger.warning(
+            "[GraphSubscriptions] Unknown GRAPH_SUBSCRIBE_OUTLOOK_SCOPE=%s; defaulting to inbox.",
+            scope,
+        )
+    return f"users/{email}/mailFolders('inbox')/messages"
+
+
 def configured_subscription_targets() -> List[GraphSubscriptionTarget]:
     targets: List[GraphSubscriptionTarget] = []
     if os.getenv("GRAPH_SUBSCRIBE_OUTLOOK", "true").lower() not in ("0", "false", "no"):
@@ -95,7 +107,7 @@ def configured_subscription_targets() -> List[GraphSubscriptionTarget]:
                     source="outlook_email",
                     resource_id=email,
                     resource_name=f"Outlook: {email}",
-                    resource=f"users/{email}/messages",
+                    resource=_outlook_subscription_resource(email),
                     change_type="created,updated",
                     max_expiration_hours=48,
                 )
@@ -252,8 +264,10 @@ def ensure_subscriptions(
         existing = _existing_subscription(supabase, target)
         existing_expiration = _parse_datetime((existing or {}).get("expiration_at"))
         existing_graph_id = (existing or {}).get("graph_subscription_id")
+        existing_resource = str((existing or {}).get("resource") or "")
         if (
             existing_graph_id
+            and existing_resource == target.resource
             and existing_expiration
             and existing_expiration > renew_cutoff
             and (existing or {}).get("status") == "active"
@@ -269,7 +283,12 @@ def ensure_subscriptions(
                 lifecycle_notification_url=lifecycle_notification_url,
                 expiration_hours=expiration_hours,
             )
-            if existing_graph_id:
+            if existing_graph_id and existing_resource and existing_resource != target.resource:
+                graph_client.delete(f"/subscriptions/{existing_graph_id}")
+                response = graph_client.post("/subscriptions", payload)
+                graph_subscription_id = response.get("id")
+                stats["created"] += 1
+            elif existing_graph_id:
                 response = graph_client.patch(f"/subscriptions/{existing_graph_id}", {
                     "expirationDateTime": payload["expirationDateTime"],
                 })
