@@ -34,6 +34,7 @@ from .email_classification import (
     classify_graph_email_for_intake,
 )
 from .user_filter_rules import (
+    load_filter_rule_by_id,
     load_active_filter_rules,
     match_user_filter_rule,
     record_rule_match,
@@ -1108,6 +1109,135 @@ def backfill_outlook_intake_project_assignments(
     return stats
 
 
+def apply_outlook_filter_rule_to_intake(
+    supabase_client,
+    *,
+    rule_id: str,
+    mailbox_user_id: Optional[str] = None,
+    limit: int = 500,
+    since: Optional[str] = None,
+) -> dict[str, object]:
+    """Apply one learned `not_project` rule to stored Outlook intake rows.
+
+    This is intentionally bounded and non-destructive: it only updates rows
+    without a project assignment, so a learned admin rule cannot unassign a
+    project that was already matched.
+    """
+
+    resolved_limit = max(1, min(int(limit or 500), 5000))
+    rule = load_filter_rule_by_id(supabase_client, rule_id)
+    stats: dict[str, object] = {
+        "rule_id": rule_id,
+        "status": "applied" if rule else "missing_rule",
+        "scanned": 0,
+        "matched": 0,
+        "updated": 0,
+        "skipped_existing_project": 0,
+        "failed": 0,
+        "errors": [],
+    }
+    if rule is None:
+        return stats
+    if rule.action != "not_project":
+        stats["status"] = "unsupported_rule_action"
+        stats["rule_action"] = rule.action
+        return stats
+
+    query = (
+        _outlook_intake_read_client()
+        .from_("outlook_email_intake")
+        .select(
+            "id,subject,body,body_text,from_name,from_email,project_id,document_metadata_id,"
+            "source_metadata,received_at,graph_message_id,mailbox_user_id"
+        )
+        .order("received_at", desc=True)
+        .limit(resolved_limit)
+    )
+    if mailbox_user_id:
+        query = query.eq("mailbox_user_id", mailbox_user_id)
+    query = _apply_since_filter(query, since)
+
+    rows = query.execute().data or []
+    write_client = _outlook_intake_write_client()
+    rag_write = get_rag_write_client()
+
+    for row in rows:
+        stats["scanned"] = int(stats["scanned"]) + 1
+        row_id = row.get("id")
+        try:
+            if row.get("project_id") is not None:
+                stats["skipped_existing_project"] = int(stats["skipped_existing_project"]) + 1
+                continue
+
+            msg = {
+                "id": row.get("graph_message_id"),
+                "subject": row.get("subject") or "",
+                "bodyPreview": row.get("body_text") or row.get("body") or "",
+                "from": {
+                    "emailAddress": {
+                        "name": row.get("from_name") or "",
+                        "address": row.get("from_email") or "",
+                    }
+                },
+            }
+            if match_user_filter_rule(msg, [rule]) is None:
+                continue
+
+            stats["matched"] = int(stats["matched"]) + 1
+            now_iso = datetime.now(timezone.utc).isoformat()
+            source_metadata = dict(row.get("source_metadata") or {})
+            source_metadata["user_filter_rule"] = {
+                "rule_id": rule.id,
+                "label": rule.label,
+                "action": rule.action,
+                "applied_by": "apply_outlook_filter_rule_to_intake",
+                "applied_at": now_iso,
+            }
+            assignment_metadata = {
+                "status": "not_project",
+                "method": "non_project:user_filter_rule",
+                "confidence": 1.0,
+                "category": "learned_rule",
+                "reason": "User-trained filter rule marked this imported email as non-project.",
+                "rule_id": rule.id,
+                "assigned_at": now_iso,
+            }
+            source_metadata["project_assignment"] = assignment_metadata
+            update_payload = {
+                "match_status": "not_project",
+                "status": "Received",
+                "assignment_method": "non_project:user_filter_rule",
+                "assignment_confidence": 1.0,
+                "source_metadata": source_metadata,
+                "updated_at": now_iso,
+            }
+            write_client.from_("outlook_email_intake").update(update_payload).eq("id", row_id).execute()
+
+            document_metadata_id = row.get("document_metadata_id")
+            if document_metadata_id:
+                try:
+                    rag_write.from_("rag_document_metadata").update(
+                        {
+                            "source_metadata": {
+                                **source_metadata,
+                                "project_assignment": assignment_metadata,
+                            }
+                        }
+                    ).eq("id", document_metadata_id).execute()
+                except Exception as exc:  # noqa: BLE001 - replay result still captures intake update
+                    logger.warning("[Outlook] RAG metadata learned-rule update failed for %s: %s", document_metadata_id, exc)
+
+            record_rule_match(supabase_client, rule.id)
+            stats["updated"] = int(stats["updated"]) + 1
+        except Exception as exc:  # noqa: BLE001 - continue bounded replay and report failures
+            stats["failed"] = int(stats["failed"]) + 1
+            errors = stats["errors"]
+            assert isinstance(errors, list)
+            errors.append({"id": row_id, "error": str(exc)[:500]})
+
+    return stats
+
+
 def _vectorization_status_from_metadata(
     *,
     document_metadata_id: Optional[str],
@@ -2004,16 +2134,16 @@ def sync_outlook_emails(
             if user_rule_match.action == "review":
                 record_rule_match(supabase_client, user_rule_match.id)
                 user_rule_review_label = user_rule_match.label or user_rule_match.id
-            if user_rule_match.action == "allow":
+            if user_rule_match.action in {"allow", "not_project"}:
                 record_rule_match(supabase_client, user_rule_match.id)
 
-        if user_rule_match is not None and user_rule_match.action == "allow":
+        if user_rule_match is not None and user_rule_match.action in {"allow", "not_project"}:
             intake_classification = EmailIntakeClassification(
                 action=EmailIntakeAction.IMPORT,
-                category="user_filter_rule_allow",
+                category=f"user_filter_rule_{user_rule_match.action}",
                 confidence=1.0,
-                reason="User filter rule explicitly allowed this email.",
-                signals=("user_filter_rule_allow",),
+                reason=f"User filter rule explicitly applied action={user_rule_match.action}.",
+                signals=(f"user_filter_rule_{user_rule_match.action}",),
             )
         else:
             intake_classification = classify_graph_email_for_intake(msg, body_text)
@@ -2107,6 +2237,18 @@ def sync_outlook_emails(
                 project_id = existing_doc.get("project_id")
                 assignment_method = "existing_document"
                 assignment_confidence = 1.0
+            elif should_index_for_rag and user_rule_match is not None and user_rule_match.action == "not_project":
+                assignment_method = "non_project:user_filter_rule"
+                assignment_confidence = 1.0
+                source_metadata["project_assignment"] = {
+                    "status": "not_project",
+                    "method": assignment_method,
+                    "confidence": assignment_confidence,
+                    "category": "learned_rule",
+                    "reason": "User-trained filter rule marked this imported email as non-project.",
+                    "rule_id": user_rule_match.id,
+                    "assigned_at": datetime.now(timezone.utc).isoformat(),
+                }
             elif should_index_for_rag:
                 project_id, assignment_method, assignment_confidence = infer_project_id(
                     supabase_client,

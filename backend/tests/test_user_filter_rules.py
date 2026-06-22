@@ -76,6 +76,14 @@ def test_allow_rule_beats_skip_rule_even_when_both_match():
     assert match is not None and match.id == "allow"
 
 
+def test_allow_rule_beats_not_project_rule_even_when_both_match():
+    not_project_rule = _rule(id="not-project", action="not_project", sender_domain="stripe.com")
+    allow_rule = _rule(id="allow", action="allow", sender_pattern="ceo@stripe.com")
+    msg = _msg(sender="ceo@stripe.com", subject="project invoice")
+    match = match_user_filter_rule(msg, [not_project_rule, allow_rule])
+    assert match is not None and match.id == "allow"
+
+
 def test_disabled_rules_are_not_passed_in():
     # `load_active_filter_rules` already filters on enabled=true, but exercise
     # the contract that the matcher itself does not double-check.

@@ -13,7 +13,7 @@ const createRuleSchema = z
     senderDomain: z.string().trim().min(1).max(255).optional().nullable(),
     subjectPattern: z.string().trim().min(1).max(500).optional().nullable(),
     bodyPattern: z.string().trim().min(1).max(2000).optional().nullable(),
-    action: z.enum(["skip", "review", "allow"]).default("skip"),
+    action: z.enum(["skip", "review", "allow", "not_project"]).default("skip"),
     label: z.string().trim().min(1).max(120).optional().nullable(),
     description: z.string().trim().max(2000).optional().nullable(),
     sourceMessageId: z.string().trim().max(255).optional().nullable(),

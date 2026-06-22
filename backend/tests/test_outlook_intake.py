@@ -194,6 +194,48 @@ class _NonProjectFinanceGraph(_DeltaGraph):
         ], "inbox-token"
 
 
+class _LearnedNotProjectRuleGraph(_DeltaGraph):
+    def get_delta(self, base_path, _delta_token):
+        if "Inbox" not in base_path:
+            return [], "sent-token"
+        return [
+            {
+                "id": "message-learned-rule-1",
+                "subject": "Portal account setup",
+                "from": {
+                    "emailAddress": {
+                        "name": "Admin Vendor",
+                        "address": "billing@adminvendor.com",
+                    }
+                },
+                "toRecipients": [
+                    {
+                        "emailAddress": {
+                            "name": "Brandon Clymer",
+                            "address": "bclymer@alleatogroup.com",
+                        }
+                    }
+                ],
+                "ccRecipients": [],
+                "receivedDateTime": "2026-06-21T17:31:16Z",
+                "bodyPreview": "Please finish the account setup steps in our portal.",
+                "body": {
+                    "content": (
+                        "Please finish the account setup steps in our portal. "
+                        "This administrative email is not tied to a construction project."
+                    )
+                },
+                "categories": [],
+                "importance": "normal",
+                "hasAttachments": False,
+                "webLink": "https://outlook.office.com/mail/message-learned-rule-1",
+                "internetMessageId": "<message-learned-rule-1@example.com>",
+                "conversationId": "conversation-learned-rule-1",
+                "internetMessageHeaders": [],
+            }
+        ], "inbox-token"
+
+
 def test_sync_outlook_emails_assigns_project_before_rag_intake(monkeypatch):
     supabase = _Supabase()
     _route_outlook_intake_clients(monkeypatch, supabase)
@@ -249,6 +291,52 @@ def test_sync_outlook_emails_marks_clear_non_project_mail(monkeypatch):
     assignment = row["source_metadata"]["project_assignment"]
     assert assignment["status"] == "not_project"
     assert assignment["category"] == "finance_admin"
+
+
+def test_sync_outlook_emails_applies_learned_not_project_rule(monkeypatch):
+    supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
+    supabase.store["email_filter_rules"] = [
+        {
+            "id": "rule-not-project",
+            "enabled": True,
+            "action": "not_project",
+            "sender_pattern": None,
+            "sender_domain": "adminvendor.com",
+            "subject_pattern": "%portal%",
+            "body_pattern": None,
+            "label": "Admin vendor non-project",
+        }
+    ]
+    monkeypatch.setattr(outlook, "get_graph_client", lambda: _LearnedNotProjectRuleGraph())
+    monkeypatch.setattr(outlook, "_run_source_intelligence_compiler", lambda *_args, **_kwargs: None)
+
+    def fail_infer(*_args, **_kwargs):
+        raise AssertionError("learned not_project rules should bypass project inference")
+
+    monkeypatch.setattr(outlook, "infer_project_id", fail_infer)
+
+    synced, _token = outlook.sync_outlook_emails(
+        supabase,
+        "bclymer@alleatogroup.com",
+        project_keywords=[],
+    )
+
+    assert synced == 1
+    row = supabase.store["outlook_email_intake"][0]
+    assert row["project_id"] is None
+    assert row["document_metadata_id"] == "outlook_message-learned-rule-1"
+    assert row["match_status"] == "not_project"
+    assert row["assignment_method"] == "non_project:user_filter_rule"
+    assert row["assignment_confidence"] == 1.0
+    assert row["source_metadata"]["intake_classification"]["category"] == "user_filter_rule_not_project"
+    user_rule = row["source_metadata"]["user_filter_rule"]
+    assert user_rule["rule_id"] == "rule-not-project"
+    assert user_rule["action"] == "not_project"
+    assignment = row["source_metadata"]["project_assignment"]
+    assert assignment["status"] == "not_project"
+    assert assignment["category"] == "learned_rule"
+    assert assignment["rule_id"] == "rule-not-project"
 
 
 def test_sync_outlook_emails_records_attachment_list_failure_on_intake(monkeypatch):
@@ -601,6 +689,82 @@ def test_backfill_outlook_intake_project_assignments_categorizes_clear_non_proje
     project_review = supabase.store["outlook_email_intake"][1]
     assert project_review["match_status"] == "unassigned"
     assert project_review["source_metadata"]["project_assignment"]["status"] == "review_needed"
+
+
+def test_apply_outlook_filter_rule_to_intake_marks_matching_review_rows(monkeypatch):
+    supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
+    monkeypatch.setattr(outlook, "get_rag_write_client", lambda: supabase)
+    supabase.store["email_filter_rules"] = [
+        {
+            "id": "rule-not-project",
+            "enabled": True,
+            "action": "not_project",
+            "sender_pattern": None,
+            "sender_domain": "adminvendor.com",
+            "subject_pattern": "%portal%",
+            "body_pattern": None,
+            "label": "Admin vendor non-project",
+        }
+    ]
+    supabase.store["outlook_email_intake"] = [
+        {
+            "id": 7,
+            "subject": "Portal account setup",
+            "body_text": "Please finish the account setup steps in our portal.",
+            "from_name": "Admin Vendor",
+            "from_email": "billing@adminvendor.com",
+            "project_id": None,
+            "document_metadata_id": "outlook_message-learned-rule",
+            "source_metadata": {"project_assignment": {"status": "review_needed"}},
+            "received_at": "2026-06-21T17:31:16Z",
+            "graph_message_id": "message-learned-rule",
+            "mailbox_user_id": "bclymer@alleatogroup.com",
+        },
+        {
+            "id": 8,
+            "subject": "Portal account setup",
+            "body_text": "Already assigned project email.",
+            "from_name": "Admin Vendor",
+            "from_email": "billing@adminvendor.com",
+            "project_id": 178,
+            "document_metadata_id": "outlook_message-assigned",
+            "source_metadata": {"project_assignment": {"status": "assigned"}},
+            "received_at": "2026-06-21T16:31:16Z",
+            "graph_message_id": "message-assigned",
+            "mailbox_user_id": "bclymer@alleatogroup.com",
+        },
+    ]
+    supabase.store["rag_document_metadata"] = [
+        {"id": "outlook_message-learned-rule", "project_id": None, "source_metadata": {}},
+        {"id": "outlook_message-assigned", "project_id": 178, "source_metadata": {}},
+    ]
+
+    result = outlook.apply_outlook_filter_rule_to_intake(
+        supabase,
+        rule_id="rule-not-project",
+        mailbox_user_id="bclymer@alleatogroup.com",
+        limit=10,
+        since="2026-06-07T00:00:00Z",
+    )
+
+    assert result["status"] == "applied"
+    assert result["scanned"] == 2
+    assert result["matched"] == 1
+    assert result["updated"] == 1
+    assert result["skipped_existing_project"] == 1
+    row = supabase.store["outlook_email_intake"][0]
+    assert row["match_status"] == "not_project"
+    assert row["assignment_method"] == "non_project:user_filter_rule"
+    assert row["assignment_confidence"] == 1.0
+    assert row["source_metadata"]["user_filter_rule"]["rule_id"] == "rule-not-project"
+    assignment = row["source_metadata"]["project_assignment"]
+    assert assignment["status"] == "not_project"
+    assert assignment["category"] == "learned_rule"
+    assert assignment["rule_id"] == "rule-not-project"
+    rag = supabase.store["rag_document_metadata"][0]
+    assert rag["source_metadata"]["project_assignment"]["status"] == "not_project"
+    assert supabase.store["outlook_email_intake"][1].get("match_status") != "not_project"
 
 
 def test_refresh_outlook_intake_vectorization_statuses_projects_chunk_state(monkeypatch):

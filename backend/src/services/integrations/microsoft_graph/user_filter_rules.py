@@ -22,7 +22,7 @@ class UserFilterRule:
     """In-memory representation of a row in `public.email_filter_rules`."""
 
     id: str
-    action: str  # 'skip' | 'review' | 'allow'
+    action: str  # 'skip' | 'review' | 'allow' | 'not_project'
     sender_pattern: Optional[str]
     sender_domain: Optional[str]
     subject_pattern: Optional[str]
@@ -73,6 +73,44 @@ def load_active_filter_rules(supabase_client) -> list[UserFilterRule]:
     return rules
 
 
+def load_filter_rule_by_id(supabase_client, rule_id: str) -> Optional[UserFilterRule]:
+    """Load one enabled rule by id for bounded replay jobs."""
+    try:
+        resp = (
+            supabase_client.from_("email_filter_rules")
+            .select(
+                "id, action, sender_pattern, sender_domain, "
+                "subject_pattern, body_pattern, label"
+            )
+            .eq("id", rule_id)
+            .eq("enabled", True)
+            .limit(1)
+            .execute()
+        )
+    except Exception as exc:
+        logger.warning("[FilterRules] Could not load email_filter_rules id=%s: %s", rule_id, exc)
+        return None
+
+    rows = resp.data or []
+    if not rows:
+        return None
+
+    row = rows[0]
+    try:
+        return UserFilterRule(
+            id=row["id"],
+            action=row.get("action") or "skip",
+            sender_pattern=_normalize(row.get("sender_pattern")),
+            sender_domain=_normalize(row.get("sender_domain")),
+            subject_pattern=_normalize(row.get("subject_pattern")),
+            body_pattern=_normalize(row.get("body_pattern")),
+            label=row.get("label"),
+        )
+    except KeyError as exc:
+        logger.warning("[FilterRules] Malformed rule row %r: %s", row, exc)
+        return None
+
+
 def match_user_filter_rule(
     msg: dict,
     rules: Iterable[UserFilterRule],
@@ -80,7 +118,7 @@ def match_user_filter_rule(
     """Return the first matching rule for a Graph message, or None.
 
     `allow` rules are evaluated first so an explicit allowlist always wins
-    over a `skip` rule that would also match.
+    over a `skip`, `review`, or `not_project` rule that would also match.
     """
     sender_addr = (
         (msg.get("from", {}) or {}).get("emailAddress", {}).get("address", "") or ""

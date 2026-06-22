@@ -8,7 +8,7 @@ const updateSchema = z.object({
   enabled: z.boolean().optional(),
   label: z.string().trim().min(1).max(120).optional().nullable(),
   description: z.string().trim().max(2000).optional().nullable(),
-  action: z.enum(["skip", "review", "allow"]).optional(),
+  action: z.enum(["skip", "review", "allow", "not_project"]).optional(),
 });
 
 async function assertAdmin(where: string) {

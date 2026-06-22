@@ -279,6 +279,13 @@ class OutlookIntakeReclassificationRequest(BaseModel):
     apply: bool = False
 
 
+class OutlookFilterRuleReplayRequest(BaseModel):
+    rule_id: str
+    mailbox: Optional[str] = None
+    since: Optional[str] = None
+    limit: int = 500
+
+
 class MicrosoftProjectConvertResponse(BaseModel):
     tasks: List[Dict[str, Any]]
     source_format: str
@@ -1045,6 +1052,43 @@ async def graph_outlook_intake_reclassify_endpoint(
             page_size=payload.page_size,
             apply=payload.apply,
             applied_by="/api/graph/outlook/reclassify-intake",
+        )
+
+    import asyncio
+    return await asyncio.get_event_loop().run_in_executor(None, _run)
+
+
+@app.post(
+    "/api/graph/outlook/apply-filter-rule",
+    tags=["Ingestion"],
+    summary="Apply one learned Outlook filter rule to stored intake rows",
+)
+async def graph_outlook_apply_filter_rule_endpoint(
+    payload: OutlookFilterRuleReplayRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Replay one enabled `not_project` rule against bounded Outlook intake rows."""
+    _require_graph_ingestion_enabled()
+    rule_id = payload.rule_id.strip()
+    if not rule_id:
+        raise HTTPException(status_code=422, detail="rule_id is required")
+    if payload.limit < 1 or payload.limit > 5000:
+        raise HTTPException(status_code=422, detail="limit must be between 1 and 5000")
+
+    from src.services.integrations.microsoft_graph.outlook import (
+        apply_outlook_filter_rule_to_intake,
+    )
+    from src.services.supabase_helpers import get_supabase_client
+
+    client = get_supabase_client()
+
+    def _run():
+        return apply_outlook_filter_rule_to_intake(
+            client,
+            rule_id=rule_id,
+            mailbox_user_id=payload.mailbox.strip().lower() if payload.mailbox else None,
+            since=payload.since,
+            limit=payload.limit,
         )
 
     import asyncio
