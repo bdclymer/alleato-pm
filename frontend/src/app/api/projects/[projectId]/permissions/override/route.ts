@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { setPermissionOverride, removePermissionOverride, type PermissionModule, type PermissionLevel } from "@/lib/permissions";
+import { ALL_MODULES } from "@/lib/permissions-shared";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -35,10 +36,7 @@ export const POST = withApiGuardrails(
     }
 
     // Validate module and level
-    const validModules: PermissionModule[] = [
-      "directory", "budget", "contracts", "documents",
-      "schedule", "submittals", "rfis", "change_orders"
-    ];
+    const validModules: PermissionModule[] = ALL_MODULES;
     const validLevels: PermissionLevel[] = ["none", "read", "write", "admin"];
 
     if (!validModules.includes(module)) {
@@ -102,10 +100,7 @@ export const DELETE = withApiGuardrails(
     }
 
     // Validate module
-    const validModules: PermissionModule[] = [
-      "directory", "budget", "contracts", "documents",
-      "schedule", "submittals", "rfis", "change_orders"
-    ];
+    const validModules: PermissionModule[] = ALL_MODULES;
 
     if (!validModules.includes(moduleName as PermissionModule)) {
       return NextResponse.json(

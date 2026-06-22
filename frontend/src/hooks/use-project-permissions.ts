@@ -19,11 +19,15 @@ const ADMIN_PERMISSIONS: Record<string, string[]> = {
   directory: ["read", "write", "admin"],
   budget: ["read", "write", "admin"],
   contracts: ["read", "write", "admin"],
+  commitments: ["read", "write", "admin"],
+  estimates: ["read", "write", "admin"],
   documents: ["read", "write", "admin"],
   schedule: ["read", "write", "admin"],
   submittals: ["read", "write", "admin"],
   rfis: ["read", "write", "admin"],
   change_orders: ["read", "write", "admin"],
+  change_events: ["read", "write", "admin"],
+  emails: ["read", "write", "admin"],
 };
 
 function mapProjectPermissions(
@@ -46,11 +50,15 @@ function mapProjectPermissions(
         "directory",
         "budget",
         "contracts",
+        "commitments",
+        "estimates",
         "documents",
         "schedule",
         "submittals",
         "rfis",
         "change_orders",
+        "change_events",
+        "emails",
       ] as PermissionModule[]).map((module) => [
         module,
         getPermissionLevel(userPermissions, module) === "none"

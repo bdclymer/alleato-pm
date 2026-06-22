@@ -13,11 +13,15 @@ export type PermissionModule =
   | "directory"
   | "budget"
   | "contracts"
+  | "commitments"
+  | "estimates"
   | "documents"
   | "schedule"
   | "submittals"
   | "rfis"
-  | "change_orders";
+  | "change_orders"
+  | "change_events"
+  | "emails";
 
 /**
  * Granular capability flags layered on top of the base None/Read/Write/Admin
@@ -44,11 +48,15 @@ export const ALL_MODULES: PermissionModule[] = [
   "directory",
   "budget",
   "contracts",
+  "commitments",
+  "estimates",
   "documents",
   "schedule",
   "submittals",
   "rfis",
   "change_orders",
+  "change_events",
+  "emails",
 ];
 
 export const ALL_GRANULAR_FLAGS: GranularFlag[] = [

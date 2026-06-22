@@ -1149,11 +1149,15 @@ const MODULE_LABELS: Record<PermissionModule, string> = {
   directory: "Directory",
   budget: "Budget",
   contracts: "Contracts",
+  commitments: "Commitments",
+  estimates: "Estimates",
   documents: "Documents",
   schedule: "Schedule",
   submittals: "Submittals",
   rfis: "RFIs",
   change_orders: "Change Orders",
+  change_events: "Change Events",
+  emails: "Emails",
 };
 
 const LEVEL_LABELS: Record<PermissionLevel, string> = {

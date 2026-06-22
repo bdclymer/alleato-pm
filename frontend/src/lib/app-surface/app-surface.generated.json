@@ -367,11 +367,6 @@
       "description": "No schedule of values has been assigned to your company on this project."
     },
     {
-      "url": "/[projectId]/outlook-emails",
-      "title": "Outlook Emails",
-      "description": "Display emails imported from Outlook linked to the project"
-    },
-    {
       "url": "/[projectId]/pcos",
       "title": null,
       "description": "List potential change orders by status with version, value, and schedule impact"
@@ -923,8 +918,8 @@
     },
     {
       "url": "/database",
-      "title": "Database Tables Catalog",
-      "description": "Catalog of tables in the public schema"
+      "title": null,
+      "description": null
     },
     {
       "url": "/database-inventory",
@@ -1172,11 +1167,6 @@
       "description": "Table of AI-generated insights from meetings and documents with type, severity, and status filters"
     },
     {
-      "url": "/intelligence-compiler",
-      "title": "AI Intelligence Compiler",
-      "description": "Operational health for source intelligence jobs, packet refreshes, promoted evidence, and project packets."
-    },
-    {
       "url": "/intelligence-packets",
       "title": null,
       "description": "Admin dashboard of AI-generated intelligence briefing packets with freshness and review queue tracking"
@@ -1255,11 +1245,6 @@
       "url": "/outlook-draft-feedback",
       "title": "Outlook Draft Feedback",
       "description": "Review Brandon draft feedback captured from assistant Outlook draft widgets."
-    },
-    {
-      "url": "/outlook-emails",
-      "title": "Outlook Emails",
-      "description": "Global view of emails synced from Outlook"
     },
     {
       "url": "/outlook-intake",
@@ -1410,11 +1395,6 @@
       "url": "/source-sync",
       "title": "Source Sync",
       "description": "Operational health for Microsoft Graph, Fireflies, vectorization, task extraction, compiler work, and intelligence packet readiness."
-    },
-    {
-      "url": "/spreadsheet-demo",
-      "title": "Collaborative Spreadsheet",
-      "description": "Liveblocks-backed shared grid for estimating, cost planning, and formula-driven team coordination."
     },
     {
       "url": "/stats",

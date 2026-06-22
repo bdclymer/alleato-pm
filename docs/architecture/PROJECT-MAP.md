@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (312)
+## UI Routes (308)
 
-_312/312 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_307/308 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -90,7 +90,6 @@ _312/312 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/meetings/[meetingId]/prep` | Generate an AI-powered meeting prep that analyzes your project data, last meeting insights, and current status — or start writing from scratch. | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/prep/page.tsx |
 | `/[projectId]/meetings/schedule` | Schedule a future meeting and generate AI-powered meeting prep. | frontend/src/app/(main)/[projectId]/meetings/schedule/page.tsx |
 | `/[projectId]/my-work` | No schedule of values has been assigned to your company on this project. | frontend/src/app/(main)/[projectId]/my-work/page.tsx |
-| `/[projectId]/outlook-emails` | Display emails imported from Outlook linked to the project | frontend/src/app/(main)/[projectId]/outlook-emails/page.tsx |
 | `/[projectId]/pcos` | List potential change orders by status with version, value, and schedule impact | frontend/src/app/(main)/[projectId]/pcos/page.tsx |
 | `/[projectId]/pcos/[pcoId]` | Attachments related to this potential change order will appear here. | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/page.tsx |
 | `/[projectId]/pcos/[pcoId]/edit` | Edit potential change order with change events, line items, and markup | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/edit/page.tsx |
@@ -201,7 +200,7 @@ _312/312 have a description (from the page's `PageShell` or the curated `fronten
 | `/daily-logs` | Table of daily construction logs with weather, manpower, and work completed entries | frontend/src/app/(tables)/daily-logs/page.tsx |
 | `/daily-logs/[dailyLogId]` | Detailed view of a specific daily log entry | frontend/src/app/(tables)/daily-logs/[dailyLogId]/page.tsx |
 | `/daily-reports` | AI-generated daily recap summaries of meetings and project decisions | frontend/src/app/(tables)/daily-reports/page.tsx |
-| `/database` | Catalog of tables in the public schema | frontend/src/app/(admin)/database/page.tsx |
+| `/database` | — | frontend/src/app/(admin)/database/page.tsx |
 | `/database-inventory` | Schema inventory of database tables with row counts, size, and gotchas | frontend/src/app/(admin)/database-inventory/page.tsx |
 | `/deep-research` | Browse prior Deep Agents LLM wiki research projects, saved source files, durable answers, and change logs. | frontend/src/app/(admin)/deep-research/page.tsx |
 | `/design` | Living inventory of every token and component. Import from @/components/ds. | frontend/src/app/(admin)/design/page.tsx |
@@ -251,7 +250,6 @@ _312/312 have a description (from the page's `PageShell` or the curated `fronten
 | `/fm-global/submissions` | Admin list of FM Global ASRS sprinkler design form submissions with contact and system specs | frontend/src/app/(main)/fm-global/submissions/page.tsx |
 | `/fm-global/submissions/[submissionId]` | Admin detail view of an FM Global form submission with matched tables and lead scoring | frontend/src/app/(main)/fm-global/submissions/[submissionId]/page.tsx |
 | `/insights` | Table of AI-generated insights from meetings and documents with type, severity, and status filters | frontend/src/app/(tables)/insights/page.tsx |
-| `/intelligence-compiler` | Operational health for source intelligence jobs, packet refreshes, promoted evidence, and project packets. | frontend/src/app/(admin)/intelligence-compiler/page.tsx |
 | `/intelligence-packets` | Admin dashboard of AI-generated intelligence briefing packets with freshness and review queue tracking | frontend/src/app/(admin)/intelligence-packets/page.tsx |
 | `/invoice/add` | Create a new invoice | frontend/src/app/(dashboard)/invoice/add/page.tsx |
 | `/invoice/edit` | Edit an existing invoice | frontend/src/app/(dashboard)/invoice/edit/page.tsx |
@@ -268,7 +266,6 @@ _312/312 have a description (from the page's `PageShell` or the curated `fronten
 | `/notifications` | You'll be notified about comments, mentions, and project activity. | frontend/src/app/(main)/notifications/page.tsx |
 | `/operations-readiness` | Four operating answers: source data, generated tasks, project intelligence packets, and the daily brief. | frontend/src/app/(admin)/operations-readiness/page.tsx |
 | `/outlook-draft-feedback` | Review Brandon draft feedback captured from assistant Outlook draft widgets. | frontend/src/app/(admin)/outlook-draft-feedback/page.tsx |
-| `/outlook-emails` | Global view of emails synced from Outlook | frontend/src/app/(tables)/outlook-emails/page.tsx |
 | `/outlook-intake` | Outlook email intake queue for processing new incoming messages | frontend/src/app/(tables)/outlook-intake/page.tsx |
 | `/permissions` | Redirect to /user-management for managing user roles and permissions | frontend/src/app/(admin)/permissions/page.tsx |
 | `/permissions/users/[personId]` | Redirect to /user-management for individual user permission management | frontend/src/app/(admin)/permissions/users/[personId]/page.tsx |
@@ -299,7 +296,6 @@ _312/312 have a description (from the page's `PageShell` or the curated `fronten
 | `/settings/security` | Require a second verification step when members sign in. Applies to all workspace members. | frontend/src/app/(main)/settings/security/page.tsx |
 | `/site-map` | Admin inventory of all application pages with access levels and permission module mapping | frontend/src/app/(admin)/site-map/page.tsx |
 | `/source-sync` | Operational health for Microsoft Graph, Fireflies, vectorization, task extraction, compiler work, and intelligence packet readiness. | frontend/src/app/(admin)/source-sync/page.tsx |
-| `/spreadsheet-demo` | Liveblocks-backed shared grid for estimating, cost planning, and formula-driven team coordination. | frontend/src/app/(admin)/spreadsheet-demo/page.tsx |
 | `/stats` | Daily activity summary including meetings, tasks, emails, documents, and project activity breakdown | frontend/src/app/(main)/stats/page.tsx |
 | `/support-articles` | Browse Procore support articles with chunking stats and embedding coverage for the knowledge base | frontend/src/app/(admin)/(procore)/support-articles/page.tsx |
 | `/support-articles/[articleId]` | This article has not been crawled yet. | frontend/src/app/(admin)/(procore)/support-articles/[articleId]/page.tsx |
@@ -330,7 +326,7 @@ _312/312 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management` | Manage app users, project access, and permission templates with granular capability controls | frontend/src/app/(admin)/user-management/page.tsx |
 | `/user-management/users/[personId]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[personId]/page.tsx |
 
-## API Endpoints (667)
+## API Endpoints (661)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -380,8 +376,6 @@ _312/312 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/admin/feedback/github-comments` | GET | frontend/src/app/api/admin/feedback/github-comments/route.ts |
 | `/api/admin/feedback/recording` | POST, DELETE | frontend/src/app/api/admin/feedback/recording/route.ts |
 | `/api/admin/feedback/tools` | GET, POST | frontend/src/app/api/admin/feedback/tools/route.ts |
-| `/api/admin/intelligence-compiler/run` | POST | frontend/src/app/api/admin/intelligence-compiler/run/route.ts |
-| `/api/admin/intelligence-compiler/status` | GET | frontend/src/app/api/admin/intelligence-compiler/status/route.ts |
 | `/api/admin/intelligence-packets` | GET | frontend/src/app/api/admin/intelligence-packets/route.ts |
 | `/api/admin/operations-readiness/status` | GET | frontend/src/app/api/admin/operations-readiness/status/route.ts |
 | `/api/admin/owner-briefing/send-test` | POST | frontend/src/app/api/admin/owner-briefing/send-test/route.ts |
@@ -568,11 +562,6 @@ _312/312 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/knowledge/signed-url` | GET | frontend/src/app/api/knowledge/signed-url/route.ts |
 | `/api/knowledge/sync-sharepoint` | POST | frontend/src/app/api/knowledge/sync-sharepoint/route.ts |
 | `/api/knowledge/upload` | POST | frontend/src/app/api/knowledge/upload/route.ts |
-| `/api/liveblocks-auth` | POST | frontend/src/app/api/liveblocks-auth/route.ts |
-| `/api/liveblocks/rooms` | GET | frontend/src/app/api/liveblocks/rooms/route.ts |
-| `/api/liveblocks/users` | GET | frontend/src/app/api/liveblocks/users/route.ts |
-| `/api/liveblocks/users/search` | GET | frontend/src/app/api/liveblocks/users/search/route.ts |
-| `/api/liveblocks/webhook` | POST | frontend/src/app/api/liveblocks/webhook/route.ts |
 | `/api/manpower` | GET | frontend/src/app/api/manpower/route.ts |
 | `/api/manpower/assignments/[assignmentId]` | PATCH | frontend/src/app/api/manpower/assignments/[assignmentId]/route.ts |
 | `/api/manpower/import` | POST | frontend/src/app/api/manpower/import/route.ts |
@@ -787,6 +776,7 @@ _312/312 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/email-attachments/[attachmentId]/download` | GET | frontend/src/app/api/projects/[projectId]/email-attachments/[attachmentId]/download/route.ts |
 | `/api/projects/[projectId]/emails` | GET, POST | frontend/src/app/api/projects/[projectId]/emails/route.ts |
 | `/api/projects/[projectId]/emails/[emailId]` | GET, PUT, DELETE | frontend/src/app/api/projects/[projectId]/emails/[emailId]/route.ts |
+| `/api/projects/[projectId]/emails/[emailId]/summarize` | POST | frontend/src/app/api/projects/[projectId]/emails/[emailId]/summarize/route.ts |
 | `/api/projects/[projectId]/emails/[emailId]/tasks` | POST | frontend/src/app/api/projects/[projectId]/emails/[emailId]/tasks/route.ts |
 | `/api/projects/[projectId]/employees` | GET | frontend/src/app/api/projects/[projectId]/employees/route.ts |
 | `/api/projects/[projectId]/estimates` | GET, POST | frontend/src/app/api/projects/[projectId]/estimates/route.ts |

@@ -52,22 +52,30 @@ export const PAGE_ACCESS_MODULES: PermissionModule[] = [
   "directory",
   "budget",
   "contracts",
+  "commitments",
+  "estimates",
   "documents",
   "schedule",
   "submittals",
   "rfis",
   "change_orders",
+  "change_events",
+  "emails",
 ];
 
 export const PAGE_ACCESS_MODULE_LABELS: Record<PermissionModule, string> = {
   directory: "Directory",
   budget: "Budget",
   contracts: "Contracts",
+  commitments: "Commitments",
+  estimates: "Estimates",
   documents: "Documents",
   schedule: "Schedule",
   submittals: "Submittals",
   rfis: "RFIs",
   change_orders: "Change Orders",
+  change_events: "Change Events",
+  emails: "Emails",
 };
 
 export function accessLevelRequiresModule(accessLevel: PageAccessLevel): boolean {
