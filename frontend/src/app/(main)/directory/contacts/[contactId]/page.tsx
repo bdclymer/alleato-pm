@@ -92,8 +92,8 @@ function InlineTextField({ label, value, onSave, type = "text", placeholder, hre
     setSaving(true);
     try {
       await onSave(next);
-    } catch {
-      toast.error("Failed to save");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save");
       setDraft(value ?? "");
     } finally {
       setSaving(false);
@@ -176,8 +176,8 @@ function InlineTextareaField({ label, value, onSave, placeholder }: InlineTextar
     setSaving(true);
     try {
       await onSave(next);
-    } catch {
-      toast.error("Failed to save");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save");
       setDraft(value ?? "");
     } finally {
       setSaving(false);
@@ -253,8 +253,8 @@ function InlineSelectField({ label, value, onSave, options, placeholder }: Inlin
     setSaving(true);
     try {
       await onSave(val || null);
-    } catch {
-      toast.error("Failed to save");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setSaving(false);
     }
@@ -340,8 +340,8 @@ function InlineCompanyField({ label, company, onSave }: InlineCompanyProps) {
     setSaving(true);
     try {
       await onSave(next);
-    } catch {
-      toast.error("Failed to save");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setSaving(false);
     }
