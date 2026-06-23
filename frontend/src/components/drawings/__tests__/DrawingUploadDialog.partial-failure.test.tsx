@@ -273,6 +273,9 @@ describe("DrawingUploadDialog partial batch failure guardrails", () => {
       revision_number: "2",
       discipline: "Architectural",
       rotation_degrees: 90,
+      ocr_confidence_label: "high",
+      ocr_confidence_score: 1,
+      ocr_confidence_source: "manual",
     });
   });
 
@@ -302,6 +305,9 @@ describe("DrawingUploadDialog partial batch failure guardrails", () => {
         revision_number: "3",
         discipline: "Structural",
         rotation_degrees: 180,
+        ocr_confidence_label: "high",
+        ocr_confidence_score: 1,
+        ocr_confidence_source: "manual",
       });
     });
   });
@@ -329,6 +335,9 @@ describe("DrawingUploadDialog partial batch failure guardrails", () => {
         expect.objectContaining({
           "S201 Framing Plan.pdf": expect.objectContaining({
             drawing_number: "S201",
+            ocr_confidence_label: "high",
+            ocr_confidence_score: 0.85,
+            ocr_confidence_source: "filename",
           }),
           "M301 Mechanical Plan.pdf": expect.objectContaining({
             drawing_number: "M301",

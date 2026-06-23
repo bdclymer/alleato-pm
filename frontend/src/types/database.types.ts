@@ -12795,6 +12795,9 @@ export type Database = {
           id: string
           is_current_revision: boolean
           is_published: boolean
+          ocr_confidence_label: string
+          ocr_confidence_score: number | null
+          ocr_confidence_source: string
           published_at: string | null
           published_by: string | null
           received_date: string
@@ -12817,6 +12820,9 @@ export type Database = {
           id?: string
           is_current_revision?: boolean
           is_published?: boolean
+          ocr_confidence_label?: string
+          ocr_confidence_score?: number | null
+          ocr_confidence_source?: string
           published_at?: string | null
           published_by?: string | null
           received_date?: string
@@ -12839,6 +12845,9 @@ export type Database = {
           id?: string
           is_current_revision?: boolean
           is_published?: boolean
+          ocr_confidence_label?: string
+          ocr_confidence_score?: number | null
+          ocr_confidence_source?: string
           published_at?: string | null
           published_by?: string | null
           received_date?: string

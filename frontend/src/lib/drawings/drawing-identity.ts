@@ -17,7 +17,8 @@ export interface DrawingUploadDetectedMetadata {
   revisionNumber: string;
   discipline: string;
   confidence: "high" | "medium" | "low";
-  source: "filename";
+  confidenceScore: number;
+  source: "filename" | "manual";
 }
 
 const DISCIPLINE_PREFIXES: Record<string, string> = {
@@ -130,6 +131,8 @@ export function getDrawingUploadDetectedMetadata(
   const discipline = detectDiscipline(drawingNumber);
   const confidence =
     split && discipline ? "high" : split || discipline ? "medium" : "low";
+  const confidenceScore =
+    confidence === "high" ? 0.85 : confidence === "medium" ? 0.6 : 0.3;
 
   return {
     drawingNumber,
@@ -137,6 +140,7 @@ export function getDrawingUploadDetectedMetadata(
     revisionNumber,
     discipline,
     confidence,
+    confidenceScore,
     source: "filename",
   };
 }

@@ -63,6 +63,9 @@ export interface RevisionCreateInput {
   file_type: string;
   description?: string;
   rotation_degrees?: number;
+  ocr_confidence_label?: "high" | "medium" | "low" | "unknown";
+  ocr_confidence_score?: number | null;
+  ocr_confidence_source?: "ocr" | "filename" | "manual" | "not_run";
 }
 
 export interface SketchCreateInput {

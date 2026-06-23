@@ -85,6 +85,9 @@ describe("useDrawingUpload", () => {
             revision_number: "3",
             discipline: "Structural",
             rotation_degrees: 180,
+            ocr_confidence_label: "high",
+            ocr_confidence_score: 0.85,
+            ocr_confidence_source: "filename",
           },
         },
       );
@@ -96,6 +99,9 @@ describe("useDrawingUpload", () => {
       revision_number: "3",
       discipline: "Structural",
       rotation_degrees: 180,
+      ocr_confidence_label: "high",
+      ocr_confidence_score: 0.85,
+      ocr_confidence_source: "filename",
     });
   });
 });

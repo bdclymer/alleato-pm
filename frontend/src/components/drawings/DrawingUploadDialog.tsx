@@ -113,6 +113,9 @@ function buildPerFileUploadMetadata(
         revision_number: fileInfo.metadata.revisionNumber,
         discipline: fileInfo.metadata.discipline,
         rotation_degrees: fileInfo.rotationDegrees,
+        ocr_confidence_label: fileInfo.metadata.confidence,
+        ocr_confidence_score: fileInfo.metadata.confidenceScore,
+        ocr_confidence_source: fileInfo.metadata.source,
       },
     ]),
   );
@@ -199,6 +202,8 @@ export function DrawingUploadDialog({
                 ...fileInfo.metadata,
                 [field]: value,
                 confidence: "high",
+                confidenceScore: 1,
+                source: "manual",
               },
             }
           : fileInfo,
@@ -323,6 +328,9 @@ export function DrawingUploadDialog({
               description: uploadData.description,
               area_id: uploadData.area_id,
               rotation_degrees: selectedFile.rotationDegrees,
+              ocr_confidence_label: fileMetadata.confidence,
+              ocr_confidence_score: fileMetadata.confidenceScore,
+              ocr_confidence_source: fileMetadata.source,
               upload_path: signedUpload.path,
               file_name: file.name,
               file_size: file.size,
@@ -509,7 +517,7 @@ export function DrawingUploadDialog({
                             }
                             className="text-xs"
                           >
-                            {file.metadata.confidence} confidence
+                            {file.metadata.source} {file.metadata.confidence}
                           </Badge>
                         </div>
                         {fileError ? (

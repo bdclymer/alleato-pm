@@ -20,6 +20,9 @@ interface UploadedDrawingResult {
 
 type DrawingUploadRequestMetadata = UploadDrawingFormData & {
   rotation_degrees?: number;
+  ocr_confidence_label?: "high" | "medium" | "low" | "unknown";
+  ocr_confidence_score?: number | null;
+  ocr_confidence_source?: "ocr" | "filename" | "manual" | "not_run";
 };
 
 export type DrawingPerFileUploadMetadata = Partial<
@@ -33,6 +36,9 @@ export type DrawingPerFileUploadMetadata = Partial<
   >
 > & {
   rotation_degrees?: number;
+  ocr_confidence_label?: "high" | "medium" | "low" | "unknown";
+  ocr_confidence_score?: number | null;
+  ocr_confidence_source?: "ocr" | "filename" | "manual" | "not_run";
 };
 
 export class DrawingUploadBatchError extends Error {
@@ -148,6 +154,12 @@ export function useDrawingUpload(projectId: string) {
           description: metadata.description,
           area_id: metadata.area_id,
           rotation_degrees: metadata.rotation_degrees ?? 0,
+          ocr_confidence_label:
+            metadata.ocr_confidence_label ?? detectedMetadata.confidence,
+          ocr_confidence_score:
+            metadata.ocr_confidence_score ?? detectedMetadata.confidenceScore,
+          ocr_confidence_source:
+            metadata.ocr_confidence_source ?? detectedMetadata.source,
           upload_path: signedUpload.path,
           file_name: file.name,
           file_size: file.size,
@@ -247,6 +259,12 @@ export function useDrawingUpload(projectId: string) {
             description: metadata.description,
             area_id: metadata.area_id,
             rotation_degrees: fileMetadata.rotation_degrees ?? 0,
+            ocr_confidence_label:
+              fileMetadata.ocr_confidence_label ?? detectedMetadata.confidence,
+            ocr_confidence_score:
+              fileMetadata.ocr_confidence_score ?? detectedMetadata.confidenceScore,
+            ocr_confidence_source:
+              fileMetadata.ocr_confidence_source ?? detectedMetadata.source,
           };
 
           const revision = await uploadDrawing(file, drawingMetadata);

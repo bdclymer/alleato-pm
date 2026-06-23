@@ -122,9 +122,17 @@ describe("/api/projects/[projectId]/drawings", () => {
     createServiceClientMock.mockReturnValue(serviceClient as never);
     DrawingServiceMock.mockImplementation(() => service as never);
 
-    const response = await POST(buildRequest({ rotation_degrees: 90 }), {
-      params: Promise.resolve({ projectId: "42" }),
-    });
+    const response = await POST(
+      buildRequest({
+        rotation_degrees: 90,
+        ocr_confidence_label: "high",
+        ocr_confidence_score: 0.85,
+        ocr_confidence_source: "filename",
+      }),
+      {
+        params: Promise.resolve({ projectId: "42" }),
+      },
+    );
 
     expect(response.status).toBe(201);
     expect(service.create).toHaveBeenCalledWith(
@@ -145,6 +153,9 @@ describe("/api/projects/[projectId]/drawings", () => {
         update_current_revision: true,
         file_url: "https://storage.example/drawings/A101.pdf",
         rotation_degrees: 90,
+        ocr_confidence_label: "high",
+        ocr_confidence_score: 0.85,
+        ocr_confidence_source: "filename",
       }),
       "user-1",
     );
@@ -171,9 +182,18 @@ describe("/api/projects/[projectId]/drawings", () => {
     createServiceClientMock.mockReturnValue(serviceClient as never);
     DrawingServiceMock.mockImplementation(() => service as never);
 
-    const response = await POST(buildRequest({ revision_number: "2", rotation_degrees: 180 }), {
-      params: Promise.resolve({ projectId: "42" }),
-    });
+    const response = await POST(
+      buildRequest({
+        revision_number: "2",
+        rotation_degrees: 180,
+        ocr_confidence_label: "medium",
+        ocr_confidence_score: 0.6,
+        ocr_confidence_source: "ocr",
+      }),
+      {
+        params: Promise.resolve({ projectId: "42" }),
+      },
+    );
     const body = await response.json();
 
     expect(response.status).toBe(201);
@@ -188,6 +208,9 @@ describe("/api/projects/[projectId]/drawings", () => {
         update_current_revision: false,
         file_url: "https://storage.example/drawings/A101.pdf",
         rotation_degrees: 180,
+        ocr_confidence_label: "medium",
+        ocr_confidence_score: 0.6,
+        ocr_confidence_source: "ocr",
       }),
       "user-1",
     );
@@ -201,21 +224,32 @@ describe("/api/projects/[projectId]/drawings", () => {
     );
   });
 
-  it("normalizes unsupported rotation values to zero before creating revisions", async () => {
+  it("normalizes unsupported rotation and confidence values before creating revisions", async () => {
     const serviceClient = buildServiceClient(null);
     const service = buildService();
     createServiceClientMock.mockReturnValue(serviceClient as never);
     DrawingServiceMock.mockImplementation(() => service as never);
 
-    const response = await POST(buildRequest({ rotation_degrees: 45 }), {
-      params: Promise.resolve({ projectId: "42" }),
-    });
+    const response = await POST(
+      buildRequest({
+        rotation_degrees: 45,
+        ocr_confidence_label: "certain",
+        ocr_confidence_score: 3,
+        ocr_confidence_source: "guess",
+      }),
+      {
+        params: Promise.resolve({ projectId: "42" }),
+      },
+    );
 
     expect(response.status).toBe(201);
     expect(service.createRevision).toHaveBeenCalledWith(
       "drawing-new",
       expect.objectContaining({
         rotation_degrees: 0,
+        ocr_confidence_label: "unknown",
+        ocr_confidence_score: null,
+        ocr_confidence_source: "not_run",
       }),
       "user-1",
     );

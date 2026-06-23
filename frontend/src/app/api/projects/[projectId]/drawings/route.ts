@@ -23,7 +23,13 @@ interface FinalizeDrawingUploadRequest {
   file_size: number;
   file_type: string;
   rotation_degrees?: number;
+  ocr_confidence_label?: string;
+  ocr_confidence_score?: number | null;
+  ocr_confidence_source?: string;
 }
+
+type OcrConfidenceLabel = "high" | "medium" | "low" | "unknown";
+type OcrConfidenceSource = "ocr" | "filename" | "manual" | "not_run";
 
 function normalizeRotationDegrees(value: FormDataEntryValue | number | undefined): number {
   const rawValue = typeof value === "string" ? Number.parseInt(value, 10) : value;
@@ -32,6 +38,28 @@ function normalizeRotationDegrees(value: FormDataEntryValue | number | undefined
   }
   const normalized = ((Number(rawValue) % 360) + 360) % 360;
   return [0, 90, 180, 270].includes(normalized) ? normalized : 0;
+}
+
+function normalizeOcrConfidenceLabel(value: FormDataEntryValue | string | undefined): OcrConfidenceLabel {
+  return value === "high" || value === "medium" || value === "low" || value === "unknown"
+    ? value
+    : "unknown";
+}
+
+function normalizeOcrConfidenceSource(value: FormDataEntryValue | string | undefined): OcrConfidenceSource {
+  return value === "ocr" || value === "filename" || value === "manual" || value === "not_run"
+    ? value
+    : "not_run";
+}
+
+function normalizeOcrConfidenceScore(
+  value: FormDataEntryValue | number | null | undefined,
+): number | null {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  const score = typeof value === "string" ? Number.parseFloat(value) : value;
+  return Number.isFinite(score) && score >= 0 && score <= 1 ? score : null;
 }
 
 /**
@@ -126,6 +154,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     let fileSize = 0;
     let fileType = "";
     let rotationDegrees = 0;
+    let ocrConfidenceLabel: OcrConfidenceLabel = "unknown";
+    let ocrConfidenceScore: number | null = null;
+    let ocrConfidenceSource: OcrConfidenceSource = "not_run";
     let uploadPath: string | undefined;
     let fileUrl = "";
     let uploadFile: File | undefined;
@@ -145,6 +176,15 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       description = (formData.get("description") as string) || undefined;
       drawingSetId = (formData.get("drawing_set_id") as string) || undefined;
       rotationDegrees = normalizeRotationDegrees(formData.get("rotation_degrees") ?? undefined);
+      ocrConfidenceLabel = normalizeOcrConfidenceLabel(
+        formData.get("ocr_confidence_label") ?? undefined,
+      );
+      ocrConfidenceScore = normalizeOcrConfidenceScore(
+        formData.get("ocr_confidence_score") ?? undefined,
+      );
+      ocrConfidenceSource = normalizeOcrConfidenceSource(
+        formData.get("ocr_confidence_source") ?? undefined,
+      );
 
       if (!drawingNumber || !title || !revisionNumber || !receivedDate || !file) {
         return NextResponse.json(
@@ -177,6 +217,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       fileSize = body.file_size;
       fileType = body.file_type;
       rotationDegrees = normalizeRotationDegrees(body.rotation_degrees);
+      ocrConfidenceLabel = normalizeOcrConfidenceLabel(body.ocr_confidence_label);
+      ocrConfidenceScore = normalizeOcrConfidenceScore(body.ocr_confidence_score);
+      ocrConfidenceSource = normalizeOcrConfidenceSource(body.ocr_confidence_source);
 
       if (
         !drawingNumber ||
@@ -246,6 +289,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           file_type: fileType,
           description,
           rotation_degrees: rotationDegrees,
+          ocr_confidence_label: ocrConfidenceLabel,
+          ocr_confidence_score: ocrConfidenceScore,
+          ocr_confidence_source: ocrConfidenceSource,
         },
         user.id,
       );
@@ -329,6 +375,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         file_type: fileType,
         description,
         rotation_degrees: rotationDegrees,
+        ocr_confidence_label: ocrConfidenceLabel,
+        ocr_confidence_score: ocrConfidenceScore,
+        ocr_confidence_source: ocrConfidenceSource,
       },
       user.id,
     );
