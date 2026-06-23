@@ -247,6 +247,11 @@
       "description": "Try a different search term."
     },
     {
+      "url": "/[projectId]/drawings/viewer-v3/[drawingId]",
+      "title": "Drawing Viewer",
+      "description": "Try a different search term."
+    },
+    {
       "url": "/[projectId]/drawings/viewer/[drawingId]",
       "title": "Drawing Viewer",
       "description": "Try a different search term."
@@ -1648,7 +1653,7 @@
     },
     {
       "name": "generateExecutiveDailyBrief",
-      "description": "Generate the executive daily brief — a curated intelligence digest for Brandon covering the top risks, financial exposures, schedule impacts, and recommended actions across all active projects. The brief synthesizes emails, Teams messages, meetings, and documents from the past 3 days to surface what needs Brandon's immediate attention."
+      "description": "Generate the executive daily brief — a curated intelligence digest for Brandon covering the top risks, financial exposures, schedule impacts, and recommended actions across all active projects. The brief synthesizes emails, Teams messages, meetings, and documents from the past 3 days to surface what needs Brandon's immediate attention. IMPORTANT: After this tool completes, output ONLY the single sentence 'Your brief is ready.' — do not summarize, paraphrase, or restate the tool output. The UI renders the brief as a structured card."
     },
     {
       "name": "getCommitmentsOverview",

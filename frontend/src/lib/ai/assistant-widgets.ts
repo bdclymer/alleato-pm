@@ -549,6 +549,36 @@ export type CommitmentDraftWidgetPayload = {
   confirmPrompt: string;
 };
 
+export type ExecutiveDailyBriefWidgetPayload = {
+  type: "executive_daily_brief";
+  id: string;
+  briefId: string;
+  generatedAt: string;
+  summary: {
+    needsBrandon: number;
+    waitingOnOthers: number;
+    importantUpdates: number;
+    topProjects: number;
+  };
+  financialPulse: {
+    totalOutstandingAR: number;
+    totalOverdueAR: number;
+    pendingCORevenue: number;
+    topOverdueProjects: Array<{ project: string; overdue: number }>;
+  } | null;
+  topItems: Array<{
+    lane: string;
+    project: string;
+    title: string;
+    nextMove: string;
+  }>;
+  sourceHealth: {
+    email?: { count: number; latest: string; status: string } | null;
+    teams?: { count: number; latest: string; status: string } | null;
+    meetings?: { count: number; latest: string; status: string } | null;
+  };
+};
+
 export type AssistantWidgetPayload =
   | DraftEmailWidgetPayload
   | OutlookEmailDraftWidgetPayload
@@ -571,6 +601,7 @@ export type AssistantWidgetPayload =
   | CreateEventWidgetPayload
   | ProjectActionPreviewWidgetPayload
   | DecisionPacketWidgetPayload
+  | ExecutiveDailyBriefWidgetPayload
   | import("@/lib/feature-requests/types").FeatureRequestPacketWidgetPayload;
 
 export type AssistantWidgetDataPart = {

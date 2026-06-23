@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (295)
+## UI Routes (296)
 
-_294/295 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_295/296 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -66,6 +66,7 @@ _294/295 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/drawings/revisions-report` | Complete drawing log including all revisions, unpublished, and obsolete drawings. | frontend/src/app/(main)/[projectId]/drawings/revisions-report/page.tsx |
 | `/[projectId]/drawings/sets` | Create a set to group drawings issued together. | frontend/src/app/(main)/[projectId]/drawings/sets/page.tsx |
 | `/[projectId]/drawings/viewer-v2/[drawingId]` | Try a different search term. | frontend/src/app/(main)/[projectId]/drawings/viewer-v2/[drawingId]/page.tsx |
+| `/[projectId]/drawings/viewer-v3/[drawingId]` | Try a different search term. | frontend/src/app/(main)/[projectId]/drawings/viewer-v3/[drawingId]/page.tsx |
 | `/[projectId]/drawings/viewer/[drawingId]` | Try a different search term. | frontend/src/app/(main)/[projectId]/drawings/viewer/[drawingId]/page.tsx |
 | `/[projectId]/emails` | View project-related emails integrated from Outlook or other email systems | frontend/src/app/(main)/[projectId]/emails/page.tsx |
 | `/[projectId]/estimates` | List project estimates with dates and status for tracking bidding activities | frontend/src/app/(main)/[projectId]/estimates/page.tsx |
@@ -1053,7 +1054,7 @@ These are the tools the AI assistant can call. Each lives in `frontend/src/lib/a
 
 | Tool | Description |
 |------|-------------|
-| `generateExecutiveDailyBrief` | Generate the executive daily brief — a curated intelligence digest for Brandon covering the top risks, financial exposures, schedule impacts, and recommended actions across all active projects. The brief synthesizes emails, Teams messages, meetings, and documents from the past 3 days to surface what needs Brandon's immediate attention. |
+| `generateExecutiveDailyBrief` | Generate the executive daily brief — a curated intelligence digest for Brandon covering the top risks, financial exposures, schedule impacts, and recommended actions across all active projects. The brief synthesizes emails, Teams messages, meetings, and documents from the past 3 days to surface what needs Brandon's immediate attention. IMPORTANT: After this tool completes, output ONLY the single sentence 'Your brief is ready.' — do not summarize, paraphrase, or restate the tool output. The UI renders the brief as a structured card. |
 
 ### `financial.ts` (6)
 

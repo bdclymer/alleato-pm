@@ -72,6 +72,7 @@ import type {
   CreativeDraftWidgetPayload,
   DecisionPacketWidgetPayload,
   DraftEmailWidgetPayload,
+  ExecutiveDailyBriefWidgetPayload,
   FinancialPulseWidgetPayload,
   MeetingIntelligenceWidgetPayload,
   MeetingInsightsWidgetPayload,
@@ -3169,6 +3170,235 @@ function ProjectPickerWidget({
   );
 }
 
+const LANE_LABEL: Record<string, string> = {
+  needsBrandon: "Needs Brandon",
+  cashMargin: "Cash / Margin",
+  customerOwner: "Customer / Owner",
+  waitingOnOthers: "Waiting on Others",
+  importantUpdates: "Important Update",
+  schedule: "Schedule",
+  risk: "Risk",
+};
+
+function formatCurrency(n: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
+function ExecutiveDailyBriefWidget({
+  widget,
+  onSubmit,
+}: {
+  widget: ExecutiveDailyBriefWidgetPayload;
+  onSubmit: (message: string) => void;
+}) {
+  const { summary, financialPulse, topItems, sourceHealth } = widget;
+
+  const lanes = [
+    { key: "needsBrandon", label: "Needs Brandon", count: summary.needsBrandon, urgent: true },
+    { key: "waitingOnOthers", label: "Waiting on Others", count: summary.waitingOnOthers, urgent: false },
+    { key: "importantUpdates", label: "Important Updates", count: summary.importantUpdates, urgent: false },
+  ];
+
+  return (
+    <WidgetShell
+      eyebrow="Executive daily brief"
+      title={`Morning Brief — ${widget.generatedAt}`}
+      icon={<ActivityIcon className="h-4 w-4" />}
+      actions={
+        <Link
+          href="/daily-briefs"
+          className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+        >
+          History <ExternalLinkIcon className="h-3 w-3" />
+        </Link>
+      }
+    >
+      {/* Lane summary pills */}
+      <div className="flex flex-wrap gap-2">
+        {lanes.map((lane) => (
+          <div
+            key={lane.key}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium",
+              lane.urgent && lane.count > 0
+                ? "bg-destructive/10 text-destructive"
+                : "bg-background/80 text-muted-foreground",
+            )}
+          >
+            <span className="text-sm font-semibold">{lane.count}</span>
+            {lane.label}
+          </div>
+        ))}
+      </div>
+
+      {/* Top action items */}
+      {topItems.length > 0 ? (
+        <div className="space-y-2">
+          {topItems.map((item, i) => (
+            <div key={i} className="rounded-xl bg-background/60 px-3 py-2.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {LANE_LABEL[item.lane] ?? item.lane}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">{item.project}</span>
+                  </div>
+                  <p className="mt-1 text-sm font-medium text-foreground">{item.title}</p>
+                  {item.nextMove ? (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">Next: </span>
+                      {item.nextMove}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl bg-background/60 px-3 py-4 text-center text-sm text-muted-foreground">
+          No items surfaced for today.
+        </div>
+      )}
+
+      {/* Financial pulse */}
+      {financialPulse ? (
+        <div>
+          <div className="mb-1.5 text-xs font-medium text-muted-foreground">Financial pulse</div>
+          <div className="space-y-1">
+            {[
+              ["Outstanding AR", formatCurrency(financialPulse.totalOutstandingAR)],
+              ["Overdue AR", formatCurrency(financialPulse.totalOverdueAR)],
+              ["Pending CO revenue", formatCurrency(financialPulse.pendingCORevenue)],
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between gap-4 rounded-lg bg-background/60 px-3 py-2 text-sm">
+                <span className="text-muted-foreground">{label}</span>
+                <span className="font-semibold text-foreground">{value}</span>
+              </div>
+            ))}
+            {financialPulse.topOverdueProjects.length > 0 ? (
+              <div className="mt-2 space-y-1">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Top overdue</div>
+                {financialPulse.topOverdueProjects.map((p) => (
+                  <div key={p.project} className="flex items-center justify-between gap-4 rounded-lg bg-background/60 px-3 py-1.5 text-xs">
+                    <span className="truncate text-muted-foreground">{p.project}</span>
+                    <span className="shrink-0 font-medium text-destructive">{formatCurrency(p.overdue)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Source health */}
+      {(sourceHealth.email ?? sourceHealth.teams ?? sourceHealth.meetings) ? (
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground/70">
+          {[
+            sourceHealth.email && `${sourceHealth.email.count} emails`,
+            sourceHealth.teams && `${sourceHealth.teams.count} Teams`,
+            sourceHealth.meetings && `${sourceHealth.meetings.count} meetings`,
+          ]
+            .filter(Boolean)
+            .map((label) => (
+              <span key={label as string}>{label as string}</span>
+            ))}
+          <span>· last 3 days</span>
+        </div>
+      ) : null}
+
+      {/* Actions */}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          onClick={() => onSubmit("Show me the full breakdown of items waiting on others from the brief.")}
+        >
+          <ListChecksIcon className="h-4 w-4" />
+          Drill in
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onSubmit("Draft a Teams message to the PM team with the key actions from the brief.")}
+        >
+          <SendIcon className="h-4 w-4" />
+          Send to team
+        </Button>
+      </div>
+    </WidgetShell>
+  );
+}
+
+function normalizeDailyBriefToolOutput(output: unknown): ExecutiveDailyBriefWidgetPayload | null {
+  const record = asRecord(output);
+  if (record.success !== true) return null;
+
+  const briefId = typeof record.briefId === "string" ? record.briefId : "daily-brief";
+  const generatedAt = typeof record.generatedAt === "string" ? record.generatedAt : "";
+  const summaryRaw = asRecord(record.summary);
+  const summary = {
+    needsBrandon: typeof summaryRaw.needsBrandon === "number" ? summaryRaw.needsBrandon : 0,
+    waitingOnOthers: typeof summaryRaw.waitingOnOthers === "number" ? summaryRaw.waitingOnOthers : 0,
+    importantUpdates: typeof summaryRaw.importantUpdates === "number" ? summaryRaw.importantUpdates : 0,
+    topProjects: typeof summaryRaw.topProjects === "number" ? summaryRaw.topProjects : 0,
+  };
+
+  const fpRaw = asRecord(record.financialPulse);
+  const financialPulse =
+    record.financialPulse && typeof fpRaw.totalOutstandingAR === "number"
+      ? {
+          totalOutstandingAR: fpRaw.totalOutstandingAR as number,
+          totalOverdueAR: typeof fpRaw.totalOverdueAR === "number" ? fpRaw.totalOverdueAR : 0,
+          pendingCORevenue: typeof fpRaw.pendingCORevenue === "number" ? fpRaw.pendingCORevenue : 0,
+          topOverdueProjects: Array.isArray(fpRaw.topOverdueProjects)
+            ? (fpRaw.topOverdueProjects as Array<{ project: string; overdue: number }>).filter(
+                (p) => typeof p.project === "string" && typeof p.overdue === "number",
+              )
+            : [],
+        }
+      : null;
+
+  const topItems = Array.isArray(record.topItems)
+    ? (record.topItems as Array<Record<string, unknown>>).map((item) => ({
+        lane: typeof item.lane === "string" ? item.lane : "update",
+        project: typeof item.project === "string" ? item.project : "",
+        title: typeof item.title === "string" ? item.title : "",
+        nextMove: typeof item.nextMove === "string" ? item.nextMove : "",
+      }))
+    : [];
+
+  const shRaw = asRecord(record.sourceHealth);
+  function toHealthEntry(raw: unknown) {
+    const r = asRecord(raw);
+    if (typeof r.count !== "number") return null;
+    return {
+      count: r.count,
+      latest: typeof r.latest === "string" ? r.latest : "",
+      status: typeof r.status === "string" ? r.status : "loaded",
+    };
+  }
+
+  return {
+    type: "executive_daily_brief",
+    id: briefId,
+    briefId,
+    generatedAt,
+    summary,
+    financialPulse,
+    topItems,
+    sourceHealth: {
+      email: toHealthEntry(shRaw.email),
+      teams: toHealthEntry(shRaw.teams),
+      meetings: toHealthEntry(shRaw.meetings),
+    },
+  };
+}
+
 type AssistantWidgetRendererComponent = (props: AssistantWidgetRendererProps) => ReactNode;
 
 const assistantWidgetComponentRegistry: Record<AssistantWidgetPayload["type"], AssistantWidgetRendererComponent> = {
@@ -3290,6 +3520,10 @@ const assistantWidgetComponentRegistry: Record<AssistantWidgetPayload["type"], A
     props.widget.type === "feature_request_packet" ? (
       <FeatureRequestPacketWidget widget={props.widget} onSubmit={props.onSubmit} />
     ) : null,
+  executive_daily_brief: (props) =>
+    props.widget.type === "executive_daily_brief" ? (
+      <ExecutiveDailyBriefWidget widget={props.widget} onSubmit={props.onSubmit} />
+    ) : null,
 };
 
 export const ASSISTANT_WIDGET_RENDERER_TYPES = Object.keys(
@@ -3309,6 +3543,7 @@ const assistantToolComponentRegistry: Record<string, (output: unknown) => Assist
   getRecentEmails: normalizeGetRecentEmailsToolOutput,
   createCommitment: normalizeCommitmentDraftToolOutput,
   createContact: normalizeCreateContactToolOutput,
+  generateExecutiveDailyBrief: normalizeDailyBriefToolOutput,
 };
 
 export function hasAssistantDynamicToolComponent(part: AssistantToolPartForRegistry): boolean {

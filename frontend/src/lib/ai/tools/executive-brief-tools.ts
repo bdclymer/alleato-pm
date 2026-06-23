@@ -32,7 +32,7 @@ export function createExecutiveBriefTools(
   return {
     generateExecutiveDailyBrief: tool({
       description:
-        "Generate the executive daily brief — a curated intelligence digest for Brandon covering the top risks, financial exposures, schedule impacts, and recommended actions across all active projects. The brief synthesizes emails, Teams messages, meetings, and documents from the past 3 days to surface what needs Brandon's immediate attention.",
+        "Generate the executive daily brief — a curated intelligence digest for Brandon covering the top risks, financial exposures, schedule impacts, and recommended actions across all active projects. The brief synthesizes emails, Teams messages, meetings, and documents from the past 3 days to surface what needs Brandon's immediate attention. IMPORTANT: After this tool completes, output ONLY the single sentence 'Your brief is ready.' — do not summarize, paraphrase, or restate the tool output. The UI renders the brief as a structured card.",
       inputSchema: z.object({
         windowDays: z
           .number()
@@ -134,7 +134,6 @@ export function createExecutiveBriefTools(
                   (s) => s.label === "Meeting",
                 ),
               },
-              notes: packet.retrievalNotes ?? [],
             };
           } catch (error) {
             await failDailyBriefRun(
