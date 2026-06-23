@@ -12799,6 +12799,7 @@ export type Database = {
           published_by: string | null
           received_date: string
           revision_number: string
+          rotation_degrees: number
           status: string
           uploaded_by: string
         }
@@ -12820,6 +12821,7 @@ export type Database = {
           published_by?: string | null
           received_date?: string
           revision_number?: string
+          rotation_degrees?: number
           status?: string
           uploaded_by: string
         }
@@ -12841,6 +12843,7 @@ export type Database = {
           published_by?: string | null
           received_date?: string
           revision_number?: string
+          rotation_degrees?: number
           status?: string
           uploaded_by?: string
         }

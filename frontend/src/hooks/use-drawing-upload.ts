@@ -18,6 +18,10 @@ interface UploadedDrawingResult {
   revisionId?: string;
 }
 
+type DrawingUploadRequestMetadata = UploadDrawingFormData & {
+  rotation_degrees?: number;
+};
+
 export type DrawingPerFileUploadMetadata = Partial<
   Pick<
     UploadDrawingFormData,
@@ -77,7 +81,7 @@ export function useDrawingUpload(projectId: string) {
       metadata,
     }: {
       file: File;
-      metadata: UploadDrawingFormData;
+      metadata: DrawingUploadRequestMetadata;
     }) => {
       const validationError = validateFile(file);
       if (validationError) {
@@ -143,6 +147,7 @@ export function useDrawingUpload(projectId: string) {
           drawing_set_id: metadata.drawing_set_id,
           description: metadata.description,
           area_id: metadata.area_id,
+          rotation_degrees: metadata.rotation_degrees ?? 0,
           upload_path: signedUpload.path,
           file_name: file.name,
           file_size: file.size,
@@ -198,7 +203,10 @@ export function useDrawingUpload(projectId: string) {
   });
 
   const uploadDrawing = useCallback(
-    async (file: File, metadata: UploadDrawingFormData): Promise<UploadedDrawingResult> => {
+    async (
+      file: File,
+      metadata: DrawingUploadRequestMetadata,
+    ): Promise<UploadedDrawingResult> => {
       return uploadMutation.mutateAsync({ file, metadata });
     },
     [uploadMutation],
@@ -217,7 +225,7 @@ export function useDrawingUpload(projectId: string) {
         try {
           const detectedMetadata = getDrawingUploadDetectedMetadata(file.name);
           const fileMetadata = perFileMetadata[file.name] ?? {};
-          const drawingMetadata: UploadDrawingFormData = {
+          const drawingMetadata: DrawingUploadRequestMetadata = {
             drawing_number:
               fileMetadata.drawing_number ||
               metadata.drawing_number ||
@@ -238,6 +246,7 @@ export function useDrawingUpload(projectId: string) {
             drawing_set_id: metadata.drawing_set_id ?? "",
             description: metadata.description,
             area_id: metadata.area_id,
+            rotation_degrees: fileMetadata.rotation_degrees ?? 0,
           };
 
           const revision = await uploadDrawing(file, drawingMetadata);

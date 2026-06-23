@@ -27,12 +27,22 @@ function buildExistingDrawingQuery(existing: unknown) {
   return {
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
+    update: jest.fn().mockReturnThis(),
     maybeSingle: jest.fn().mockResolvedValue({ data: existing, error: null }),
   };
 }
 
 function buildServiceClient(existing: unknown) {
   const existingDrawingQuery = buildExistingDrawingQuery(existing);
+  const documentMetadataInsert = {
+    insert: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
+    single: jest.fn().mockResolvedValue({ data: { id: "doc-meta-1" }, error: null }),
+  };
+  const drawingUpdate = {
+    update: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockResolvedValue({ error: null }),
+  };
   const storageBucket = {
     getPublicUrl: jest.fn((path: string) => ({
       data: { publicUrl: `https://storage.example/${path}` },
@@ -43,12 +53,14 @@ function buildServiceClient(existing: unknown) {
   return {
     from: jest.fn((table: string) => {
       if (table === "drawings") return existingDrawingQuery;
+      if (table === "document_metadata") return documentMetadataInsert;
+      if (table === "drawing_revisions") return drawingUpdate;
       throw new Error(`Unexpected table ${table}`);
     }),
     storage: {
       from: jest.fn(() => storageBucket),
     },
-    __queries: { existingDrawingQuery },
+    __queries: { existingDrawingQuery, documentMetadataInsert, drawingUpdate },
     __storageBucket: storageBucket,
   };
 }
@@ -110,7 +122,7 @@ describe("/api/projects/[projectId]/drawings", () => {
     createServiceClientMock.mockReturnValue(serviceClient as never);
     DrawingServiceMock.mockImplementation(() => service as never);
 
-    const response = await POST(buildRequest({}), {
+    const response = await POST(buildRequest({ rotation_degrees: 90 }), {
       params: Promise.resolve({ projectId: "42" }),
     });
 
@@ -132,6 +144,7 @@ describe("/api/projects/[projectId]/drawings", () => {
         update_review_revision: true,
         update_current_revision: true,
         file_url: "https://storage.example/drawings/A101.pdf",
+        rotation_degrees: 90,
       }),
       "user-1",
     );
@@ -158,7 +171,7 @@ describe("/api/projects/[projectId]/drawings", () => {
     createServiceClientMock.mockReturnValue(serviceClient as never);
     DrawingServiceMock.mockImplementation(() => service as never);
 
-    const response = await POST(buildRequest({ revision_number: "2" }), {
+    const response = await POST(buildRequest({ revision_number: "2", rotation_degrees: 180 }), {
       params: Promise.resolve({ projectId: "42" }),
     });
     const body = await response.json();
@@ -174,6 +187,7 @@ describe("/api/projects/[projectId]/drawings", () => {
         update_review_revision: true,
         update_current_revision: false,
         file_url: "https://storage.example/drawings/A101.pdf",
+        rotation_degrees: 180,
       }),
       "user-1",
     );
@@ -184,6 +198,26 @@ describe("/api/projects/[projectId]/drawings", () => {
         revision_created: true,
         logical_drawing_created: false,
       }),
+    );
+  });
+
+  it("normalizes unsupported rotation values to zero before creating revisions", async () => {
+    const serviceClient = buildServiceClient(null);
+    const service = buildService();
+    createServiceClientMock.mockReturnValue(serviceClient as never);
+    DrawingServiceMock.mockImplementation(() => service as never);
+
+    const response = await POST(buildRequest({ rotation_degrees: 45 }), {
+      params: Promise.resolve({ projectId: "42" }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(service.createRevision).toHaveBeenCalledWith(
+      "drawing-new",
+      expect.objectContaining({
+        rotation_degrees: 0,
+      }),
+      "user-1",
     );
   });
 });

@@ -22,6 +22,16 @@ interface FinalizeDrawingUploadRequest {
   file_name: string;
   file_size: number;
   file_type: string;
+  rotation_degrees?: number;
+}
+
+function normalizeRotationDegrees(value: FormDataEntryValue | number | undefined): number {
+  const rawValue = typeof value === "string" ? Number.parseInt(value, 10) : value;
+  if (!Number.isFinite(rawValue)) {
+    return 0;
+  }
+  const normalized = ((Number(rawValue) % 360) + 360) % 360;
+  return [0, 90, 180, 270].includes(normalized) ? normalized : 0;
 }
 
 /**
@@ -115,6 +125,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     let fileName = "";
     let fileSize = 0;
     let fileType = "";
+    let rotationDegrees = 0;
     let uploadPath: string | undefined;
     let fileUrl = "";
     let uploadFile: File | undefined;
@@ -133,6 +144,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       drawingDate = (formData.get("drawing_date") as string) || undefined;
       description = (formData.get("description") as string) || undefined;
       drawingSetId = (formData.get("drawing_set_id") as string) || undefined;
+      rotationDegrees = normalizeRotationDegrees(formData.get("rotation_degrees") ?? undefined);
 
       if (!drawingNumber || !title || !revisionNumber || !receivedDate || !file) {
         return NextResponse.json(
@@ -164,6 +176,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       fileName = body.file_name;
       fileSize = body.file_size;
       fileType = body.file_type;
+      rotationDegrees = normalizeRotationDegrees(body.rotation_degrees);
 
       if (
         !drawingNumber ||
@@ -232,6 +245,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           file_size: fileSize,
           file_type: fileType,
           description,
+          rotation_degrees: rotationDegrees,
         },
         user.id,
       );
@@ -314,6 +328,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         file_size: fileSize,
         file_type: fileType,
         description,
+        rotation_degrees: rotationDegrees,
       },
       user.id,
     );

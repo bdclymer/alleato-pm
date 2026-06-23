@@ -62,6 +62,7 @@ export interface RevisionCreateInput {
   file_size: number;
   file_type: string;
   description?: string;
+  rotation_degrees?: number;
 }
 
 export interface SketchCreateInput {

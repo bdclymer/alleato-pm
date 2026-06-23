@@ -71,6 +71,7 @@ export class DrawingRevisionService {
           file_size: input.file_size,
           file_type: input.file_type,
           description: input.description || null,
+          rotation_degrees: input.rotation_degrees ?? 0,
           uploaded_by: userId,
           is_current_revision: shouldMakeCurrent,
           is_published: shouldPublishRevision,
