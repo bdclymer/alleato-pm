@@ -982,7 +982,7 @@ _294/295 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/velt/token` | POST | frontend/src/app/api/velt/token/route.ts |
 | `/api/webhooks/resend` | POST | frontend/src/app/api/webhooks/resend/route.ts |
 
-## AI Tools (107)
+## AI Tools (108)
 
 These are the tools the AI assistant can call. Each lives in `frontend/src/lib/ai/tools/`.
 
@@ -1036,13 +1036,14 @@ These are the tools the AI assistant can call. Each lives in `frontend/src/lib/a
 | `findAppPage` | Find which page, screen, or AI tool in this application does something, by purpose. Use for 'where do I…', 'what page shows…', 'does the app have a…', 'which screen lets me…'. Searches the generated inventory of EVERY route and tool (not just curated help articles), matching on what each page does — so it finds pages even when the user doesn't know the name. Returns route URLs you can link the user to. Prefer searchAppHelp for step-by-step instructions; use this to locate a page or capability. |
 | `searchAppHelp` | Search the controlled Alleato OS help center for instructions on how to use this application. Use this first for questions like 'how do I', 'where do I', 'show me how to', app setup, user management, profile settings, permissions, and feature walkthroughs. Only published AI-visible help articles are returned. |
 
-### `document-intelligence.ts` (6)
+### `document-intelligence.ts` (7)
 
 | Tool | Description |
 |------|-------------|
 | `detectMissingSubmittals` | Cross-reference the submittal register against what the project scope and spec documents suggest is needed. Returns submittals that appear to be missing or incomplete. Use when asked 'what submittals are we missing?' or 'is our submittal log complete?' |
 | `getSpecRequirements` | Search project specification documents for requirements related to a trade, product, or spec section. Returns structured requirements (material, manufacturer, performance, documentation, code reference). Use when asked what the spec requires for a given system or product, or before reviewing a submittal. |
 | `getSubmittalLog` | Fetch the submittal register for a project — what submittals are required, submitted, approved, rejected, or missing. Use when asked about submittal status, pipeline, or progress. Also use as the first step before detectMissingSubmittals. |
+| `identifySubmittalPackages` | Identify what submittal packages are required for a given spec section or drawing. Cross-references spec sections against existing submittals and linked drawings to surface what's covered, what's missing, and what drawing packages still need submittals. Use when asked 'what submittals do we need for section X', 'what's missing from the submittal log for this drawing', or 'identify required submittal packages'. |
 | `logFeedback` | Record a human correction or validation of an AI document review finding. Use when the user says 'that finding was wrong', 'that's correct', or wants to annotate an AI review result. This feeds the learning loop. |
 | `reviewDocument` | Request a structured pre-review of a submittal document against project spec requirements. Returns a requirements matrix comparing what the spec requires against what the submittal provides. Use when asked to 'review this submittal', 'check this against the spec', or 'pre-review this document'. |
 | `reviewSubmittalAgainstDrawings` | Compare a submittal's documents against the project drawings to identify conflicts, missing information, or compliance issues. Fetches the submittal details and linked drawings, retrieves vectorized content from both, and returns a structured comparison. Use when asked to review a submittal, check if a submittal matches the drawings, or identify what drawing packages are needed for a spec section. |

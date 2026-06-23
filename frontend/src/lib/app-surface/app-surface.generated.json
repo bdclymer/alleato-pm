@@ -1635,6 +1635,10 @@
       "description": "Compare a submittal's documents against the project drawings to identify conflicts, missing information, or compliance issues. Fetches the submittal details and linked drawings, retrieves vectorized content from both, and returns a structured comparison. Use when asked to review a submittal, check if a submittal matches the drawings, or identify what drawing packages are needed for a spec section."
     },
     {
+      "name": "identifySubmittalPackages",
+      "description": "Identify what submittal packages are required for a given spec section or drawing. Cross-references spec sections against existing submittals and linked drawings to surface what's covered, what's missing, and what drawing packages still need submittals. Use when asked 'what submittals do we need for section X', 'what's missing from the submittal log for this drawing', or 'identify required submittal packages'."
+    },
+    {
       "name": "logFeedback",
       "description": "Record a human correction or validation of an AI document review finding. Use when the user says 'that finding was wrong', 'that's correct', or wants to annotate an AI review result. This feeds the learning loop."
     },

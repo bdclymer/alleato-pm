@@ -1,16 +1,13 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { createRagServiceClient, createServiceClient } from "@/lib/supabase/service";
 import {
-  createRagServiceClient,
-  createServiceClient,
-} from "@/lib/supabase/service";
-import {
+  EMBEDDING,
+  generateEmbedding,
+  getOpenAI,
+  resolveProject,
   type ToolTracePayload,
   withTrace as _withTrace,
-  getOpenAI,
-  generateEmbedding,
-  EMBEDDING,
-  resolveProject,
 } from "./tool-utils";
 import { createToolGuardrails } from "./guardrails";
 
@@ -275,7 +272,7 @@ export function createDocumentIntelligenceTools(
             if (!byDoc.has(docId)) {
               byDoc.set(docId, { title, chunks: [] });
             }
-            byDoc.get(docId)!.chunks.push((r.chunk_text ?? r.text) as string);
+            byDoc.get(docId)?.chunks.push((r.chunk_text ?? r.text) as string);
           }
 
           const sources = Array.from(byDoc.entries()).map(([docId, doc]) => ({
@@ -658,7 +655,382 @@ export function createDocumentIntelligenceTools(
     }),
 
     // -----------------------------------------------------------------------
-    // 5. logFeedback
+    // 5. identifySubmittalPackages
+    // -----------------------------------------------------------------------
+    identifySubmittalPackages: tool({
+      description:
+        "Identify what submittal packages are required for a given spec section or drawing. " +
+        "Cross-references spec sections against existing submittals and linked drawings to " +
+        "surface what's covered, what's missing, and what drawing packages still need submittals. " +
+        "Use when asked 'what submittals do we need for section X', 'what's missing from the " +
+        "submittal log for this drawing', or 'identify required submittal packages'.",
+      inputSchema: z.object({
+        projectId: z.number().optional().describe("Project ID if known"),
+        projectName: z.string().optional().describe("Project name to resolve projectId"),
+        specSectionNumber: z
+          .string()
+          .optional()
+          .describe("Spec section number to look up, e.g. '03300', '05120', '09900'"),
+        drawingId: z
+          .string()
+          .optional()
+          .describe("Drawing UUID — find submittals needed for this specific drawing"),
+        drawingNumber: z
+          .string()
+          .optional()
+          .describe("Drawing number, e.g. 'S-101' — resolved to drawingId automatically"),
+        discipline: z
+          .string()
+          .optional()
+          .describe(
+            "Filter by discipline, e.g. 'Structural', 'Mechanical', 'Electrical'. " +
+            "Used when no spec section or drawing is provided.",
+          ),
+      }),
+      execute: withTrace(
+        "identifySubmittalPackages",
+        options,
+        async ({
+          projectId,
+          projectName,
+          specSectionNumber,
+          drawingId,
+          drawingNumber,
+          discipline,
+        }) => {
+          const resolvedProjectId = await resolveProject(
+            supabase,
+            projectId,
+            projectName,
+            options.pinnedProjectId,
+          );
+
+          // ── Resolve drawing by number if needed ─────────────────────────────
+          let resolvedDrawingId = drawingId;
+          if (!resolvedDrawingId && drawingNumber) {
+            const dwgResp = await supabase
+              .from("drawings")
+              .select("id, title, drawing_number, discipline, drawing_type")
+              .eq("project_id", resolvedProjectId)
+              .ilike("drawing_number", `%${drawingNumber}%`)
+              .is("deleted_at", null)
+              .limit(1)
+              .single();
+            resolvedDrawingId = dwgResp.data?.id ?? undefined;
+          }
+
+          // ── Path A: spec section lookup ──────────────────────────────────────
+          if (specSectionNumber) {
+            const specResp = await supabase
+              .from("specifications")
+              .select(
+                "id, section_number, section_title, division, requirements, " +
+                "specification_type, status",
+              )
+              .eq("project_id", resolvedProjectId)
+              .ilike("section_number", `%${specSectionNumber}%`)
+              .limit(5);
+            const specs = specResp.data ?? [];
+
+            if (specs.length === 0) {
+              return {
+                error: `No spec section matching "${specSectionNumber}" found on this project.`,
+                hint: "Check the Specifications page to confirm the section exists and is uploaded.",
+              };
+            }
+
+            // For each matching spec, get: submittals + linked drawings
+            const results = await Promise.all(
+              specs.map(async (spec) => {
+                const [submittalsResp, linkedDrawingsResp] = await Promise.all([
+                  supabase
+                    .from("submittals")
+                    .select(
+                      "id, submittal_number, title, status, priority, " +
+                      "submittal_type, submittal_package_id, submission_date, " +
+                      "required_approval_date",
+                    )
+                    .eq("project_id", resolvedProjectId)
+                    .eq("specification_id", spec.id)
+                    .is("deleted_at", null)
+                    .order("submittal_number"),
+                  supabase
+                    .from("spec_drawing_links")
+                    .select(
+                      "drawing_id, link_method, confidence, " +
+                      "drawings!inner(id, drawing_number, title, discipline, " +
+                      "drawing_type, document_metadata_id)",
+                    )
+                    .eq("specification_id", spec.id),
+                ]);
+
+                const submittals = submittalsResp.data ?? [];
+                const linkedDrawings = (linkedDrawingsResp.data ?? []).map(
+                  (r) => (r as unknown as { drawing_id: string; drawings: AnyRow }).drawings,
+                );
+
+                const statusGroups = {
+                  approved: submittals.filter((s) => s.status === "approved"),
+                  under_review: submittals.filter((s) =>
+                    ["submitted", "under_review"].includes(s.status ?? ""),
+                  ),
+                  draft_or_open: submittals.filter((s) =>
+                    ["draft", "open", null].includes(s.status ?? null),
+                  ),
+                  rejected: submittals.filter((s) =>
+                    ["rejected", "requires_revision"].includes(s.status ?? ""),
+                  ),
+                };
+
+                return {
+                  spec: {
+                    id: spec.id,
+                    sectionNumber: spec.section_number,
+                    title: spec.section_title,
+                    division: spec.division,
+                    status: spec.status,
+                    requirementCount: Array.isArray(spec.requirements)
+                      ? (spec.requirements as unknown[]).length
+                      : null,
+                  },
+                  submittals: {
+                    total: submittals.length,
+                    byStatus: {
+                      approved: statusGroups.approved.length,
+                      underReview: statusGroups.under_review.length,
+                      draftOrOpen: statusGroups.draft_or_open.length,
+                      rejected: statusGroups.rejected.length,
+                    },
+                    items: submittals.map((s) => ({
+                      number: s.submittal_number,
+                      title: s.title,
+                      status: s.status,
+                      priority: s.priority,
+                      type: s.submittal_type,
+                      dueDate: s.required_approval_date,
+                    })),
+                  },
+                  linkedDrawings: linkedDrawings.map((d) => ({
+                    drawingNumber: d.drawing_number as string,
+                    title: d.title as string,
+                    discipline: d.discipline as string | null,
+                    hasVectorizedContent: Boolean(d.document_metadata_id),
+                  })),
+                  gaps: {
+                    noSubmittals: submittals.length === 0,
+                    noLinkedDrawings: linkedDrawings.length === 0,
+                    openOrRejected:
+                      statusGroups.draft_or_open.length +
+                      statusGroups.rejected.length,
+                  },
+                };
+              }),
+            );
+
+            const totalGaps = results.reduce(
+              (acc, r) =>
+                acc +
+                (r.gaps.noSubmittals ? 1 : 0) +
+                r.gaps.openOrRejected,
+              0,
+            );
+
+            return {
+              query: { type: "spec_section", value: specSectionNumber },
+              projectId: resolvedProjectId,
+              results,
+              summary: {
+                specsFound: results.length,
+                totalSubmittals: results.reduce((a, r) => a + r.submittals.total, 0),
+                totalLinkedDrawings: results.reduce(
+                  (a, r) => a + r.linkedDrawings.length,
+                  0,
+                ),
+                gaps: totalGaps,
+              },
+              nextStep:
+                results.some((r) => r.gaps.noLinkedDrawings)
+                  ? "Some spec sections have no linked drawings. Use the Drawings page to " +
+                    "link drawings to spec sections, or ask me to suggest links based on " +
+                    "discipline and drawing titles."
+                  : results.some((r) => r.gaps.noSubmittals)
+                  ? "Some spec sections have linked drawings but no submittals. " +
+                    "These are likely missing submittal packages — I can help create them."
+                  : "All spec sections have submittals. Review open/rejected items above " +
+                    "for action items.",
+            };
+          }
+
+          // ── Path B: drawing lookup ───────────────────────────────────────────
+          if (resolvedDrawingId) {
+            const [drawingResp, specLinksResp] = await Promise.all([
+              supabase
+                .from("drawings")
+                .select(
+                  "id, drawing_number, title, discipline, drawing_type, " +
+                  "document_metadata_id, is_published",
+                )
+                .eq("id", resolvedDrawingId)
+                .single(),
+              supabase
+                .from("spec_drawing_links")
+                .select(
+                  "specification_id, link_method, confidence, " +
+                  "specifications!inner(id, section_number, section_title, division)",
+                )
+                .eq("drawing_id", resolvedDrawingId),
+            ]);
+
+            const drawing = drawingResp.data;
+            if (!drawing) {
+              return { error: `Drawing ${resolvedDrawingId} not found.` };
+            }
+
+            const specLinks = (specLinksResp.data ?? []).map(
+              (r) =>
+                (r as unknown as { specification_id: string; specifications: AnyRow })
+                  .specifications,
+            );
+
+            // For each linked spec, get submittal coverage
+            const specCoverage = await Promise.all(
+              specLinks.map(async (spec) => {
+                const subResp = await supabase
+                  .from("submittals")
+                  .select("id, submittal_number, title, status, submittal_type")
+                  .eq("project_id", resolvedProjectId)
+                  .eq("specification_id", spec.id as string)
+                  .is("deleted_at", null);
+                return {
+                  sectionNumber: spec.section_number as string,
+                  title: spec.section_title as string,
+                  division: spec.division as string | null,
+                  submittals: (subResp.data ?? []).map((s) => ({
+                    number: s.submittal_number,
+                    title: s.title,
+                    status: s.status,
+                    type: s.submittal_type,
+                  })),
+                  hasSubmittals: (subResp.data ?? []).length > 0,
+                };
+              }),
+            );
+
+            const missingSpecLinks = specLinks.length === 0;
+            const sectionsWithoutSubmittals = specCoverage.filter(
+              (s) => !s.hasSubmittals,
+            );
+
+            return {
+              query: { type: "drawing", value: drawingNumber ?? resolvedDrawingId },
+              drawing: {
+                id: drawing.id,
+                number: drawing.drawing_number,
+                title: drawing.title,
+                discipline: drawing.discipline,
+                type: drawing.drawing_type,
+                isPublished: drawing.is_published,
+                hasVectorizedContent: Boolean(drawing.document_metadata_id),
+              },
+              linkedSpecSections: specCoverage,
+              gaps: {
+                noSpecLinks: missingSpecLinks,
+                sectionsWithoutSubmittals: sectionsWithoutSubmittals.map(
+                  (s) => s.sectionNumber,
+                ),
+              },
+              nextStep: missingSpecLinks
+                ? "This drawing has no linked spec sections. Link it to the relevant " +
+                  "spec sections so the AI can cross-reference submittals. " +
+                  "Alternatively, ask me to suggest spec sections based on the drawing " +
+                  "discipline and title."
+                : sectionsWithoutSubmittals.length > 0
+                ? `Spec section(s) ${sectionsWithoutSubmittals.map((s) => s.sectionNumber).join(", ")} ` +
+                  "are linked to this drawing but have no submittals. These submittal " +
+                  "packages are likely missing and should be created."
+                : "All linked spec sections have submittal coverage. Review statuses above.",
+            };
+          }
+
+          // ── Path C: discipline-wide scan ────────────────────────────────────
+          const drawingsQuery = supabase
+            .from("drawings")
+            .select(
+              "id, drawing_number, title, discipline, drawing_type, document_metadata_id",
+            )
+            .eq("project_id", resolvedProjectId)
+            .is("deleted_at", null)
+            .is("is_obsolete", false)
+            .order("drawing_number")
+            .limit(50);
+
+          if (discipline) {
+            drawingsQuery.ilike("discipline", `%${discipline}%`);
+          }
+
+          const allDrawingsResp = await drawingsQuery;
+          const allDrawings = allDrawingsResp.data ?? [];
+
+          // Check which drawings have spec links
+          const drawingIds = allDrawings.map((d) => d.id);
+          const linkedIdsResp =
+            drawingIds.length > 0
+              ? await supabase
+                  .from("spec_drawing_links")
+                  .select("drawing_id")
+                  .in("drawing_id", drawingIds)
+              : { data: [] };
+
+          const linkedDrawingIds = new Set(
+            (linkedIdsResp.data ?? []).map((r) => r.drawing_id),
+          );
+
+          const withLinks = allDrawings.filter((d) => linkedDrawingIds.has(d.id));
+          const withoutLinks = allDrawings.filter(
+            (d) => !linkedDrawingIds.has(d.id),
+          );
+          const withoutVectorContent = allDrawings.filter(
+            (d) => !d.document_metadata_id,
+          );
+
+          return {
+            query: {
+              type: "discipline_scan",
+              value: discipline ?? "all",
+            },
+            projectId: resolvedProjectId,
+            summary: {
+              totalDrawings: allDrawings.length,
+              withSpecLinks: withLinks.length,
+              withoutSpecLinks: withoutLinks.length,
+              withoutVectorContent: withoutVectorContent.length,
+            },
+            drawingsWithoutSpecLinks: withoutLinks.slice(0, 20).map((d) => ({
+              drawingNumber: d.drawing_number,
+              title: d.title,
+              discipline: d.discipline,
+            })),
+            drawingsWithoutVectorContent: withoutVectorContent.slice(0, 10).map(
+              (d) => ({
+                drawingNumber: d.drawing_number,
+                title: d.title,
+                discipline: d.discipline,
+              }),
+            ),
+            nextStep:
+              withoutLinks.length > 0
+                ? `${withoutLinks.length} drawing(s) have no spec section links. ` +
+                  "Provide a spec section number or drawing number for a detailed " +
+                  "submittal gap analysis."
+                : "All drawings are linked to spec sections. Provide a spec section " +
+                  "number for a detailed submittal coverage report.",
+          };
+        },
+      ),
+    }),
+
+    // -----------------------------------------------------------------------
+    // 6. logFeedback
     // -----------------------------------------------------------------------
     logFeedback: tool({
       description:
