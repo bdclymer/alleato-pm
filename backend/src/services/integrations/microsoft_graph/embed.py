@@ -21,7 +21,13 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from ...ai_transport import get_openai_client, retry_ai_call
+from ...ai_transport import (
+    alternate_provider_path,
+    get_ai_provider_path,
+    get_openai_client,
+    is_auth_or_credit_error,
+    retry_ai_call,
+)
 from ...pipeline.model_usage import (
     ModelUsageContext,
     assert_background_model_budget_available,
@@ -51,6 +57,12 @@ MIN_EMBEDDABLE_CHARS_BY_TYPE = {
 }
 EMBEDDING_MODEL = "text-embedding-3-large"
 EMBEDDING_DIMENSIONS = 3072
+# After this many consecutive failed embed attempts a document is parked at the
+# terminal app status 'embed_failed' so it stops being re-pulled (and re-billed)
+# every run. With provider failover in place this cap is only reached when BOTH
+# providers are down or a specific document is genuinely unembeddable — either
+# way it must surface loudly as a parked failure, never loop silently.
+EMBED_MAX_ATTEMPTS = 6
 INTENTIONAL_EMBEDDING_EXCLUSION_STATUS = "intentionally_excluded"
 GRAPH_REHYDRATED_STORAGE_PREFIX = "graph-rehydrated"
 GRAPH_EMBED_INLINE_SOURCE_INTELLIGENCE = os.environ.get(
@@ -458,15 +470,39 @@ def _batch_embed(texts: List[str]) -> List[List[float]]:
         operation=usage_context.operation,
         model=EMBEDDING_MODEL,
     )
-    response = retry_ai_call(
-        lambda: get_openai_client().embeddings.create(
-            model=EMBEDDING_MODEL,
-            input=truncated,
-            dimensions=EMBEDDING_DIMENSIONS,
-        ),
-        provider_name="OpenAI",
-        operation="graph embedding batch",
-    )
+
+    def _create(force_path: Optional[str] = None):
+        return retry_ai_call(
+            lambda: get_openai_client(force_path=force_path).embeddings.create(
+                model=EMBEDDING_MODEL,
+                input=truncated,
+                dimensions=EMBEDDING_DIMENSIONS,
+            ),
+            provider_name="OpenAI" if force_path == "openai" else "AI provider",
+            operation="graph embedding batch",
+        )
+
+    primary_path = get_ai_provider_path()
+    try:
+        response = _create()
+    except Exception as exc:
+        # Provider-level auth/credit wall (e.g. AI Gateway spend cap hit mid-run,
+        # returning a selective 401). Retrying the same provider fails identically,
+        # so fail over to the other provider if it is configured. This is what
+        # keeps the pipeline alive through a gateway cap-out without a deploy or
+        # env change — the historical root cause of silent embedding outages.
+        alt_path = alternate_provider_path(primary_path)
+        if alt_path is not None and is_auth_or_credit_error(exc):
+            logger.warning(
+                "[GraphEmbed] Primary provider '%s' hit an auth/credit wall (%s); "
+                "failing over to '%s' for this batch.",
+                primary_path,
+                exc,
+                alt_path,
+            )
+            response = _create(force_path=alt_path)
+        else:
+            raise
     embeddings = [item.embedding for item in response.data]
     record_model_usage(
         usage_context,
@@ -481,6 +517,78 @@ def _batch_embed(texts: List[str]) -> List[List[float]]:
         raise RuntimeError(f"one or more embeddings did not have {EMBEDDING_DIMENSIONS} dimensions")
     logger.info("[GraphEmbed] Embedded %d chunks via OpenAI with %s (dim=%d)", len(texts), EMBEDDING_MODEL, EMBEDDING_DIMENSIONS)
     return embeddings
+
+
+def _record_embed_failure(
+    supabase_client,
+    metadata_id: str,
+    exc: Exception,
+    *,
+    has_app_document: bool,
+    source_context: Any,
+) -> None:
+    """Persist a real embedding failure with a bounded retry counter.
+
+    This is the antidote to the poison-pill loop: instead of leaving the doc at
+    NULL embedding_status (re-pulled forever), we record the error, increment an
+    attempt counter, and after EMBED_MAX_ATTEMPTS park the doc at the terminal
+    app status 'embed_failed' so it stops being re-pulled/re-billed and shows up
+    loudly as a parked failure in health + the /rag dashboard.
+    """
+    error_text = str(exc)[:1000]
+    rag_write = get_rag_write_client()
+
+    attempts = 1
+    try:
+        rows = (
+            get_rag_read_client()
+            .from_("rag_document_metadata")
+            .select("embedding_attempts")
+            .eq("id", metadata_id)
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        attempts = int((rows[0] if rows else {}).get("embedding_attempts") or 0) + 1
+    except Exception as read_exc:  # noqa: BLE001 - best-effort counter
+        logger.warning("[GraphEmbed] Could not read embedding_attempts for %s: %s", metadata_id, read_exc)
+
+    try:
+        rag_write.from_("rag_document_metadata").update(
+            {
+                "embedding_status": "error",
+                "embedding_error": error_text,
+                "embedding_attempts": attempts,
+                "embedding_last_attempt_at": datetime.now(timezone.utc).isoformat(),
+            }
+        ).eq("id", metadata_id).execute()
+    except Exception as write_exc:  # noqa: BLE001
+        logger.warning("[GraphEmbed] Could not persist embed failure for %s: %s", metadata_id, write_exc)
+
+    parked = attempts >= EMBED_MAX_ATTEMPTS
+    if parked:
+        # Terminal app status removes the doc from the candidate query so it
+        # stops re-failing/re-billing every run. It remains chunk-less, so health
+        # still counts it as unembedded backlog and alerts on it.
+        _update_app_document_status(supabase_client, metadata_id, "embed_failed", enabled=has_app_document)
+        logger.error(
+            "[GraphEmbed] %s parked as embed_failed after %d attempts: %s",
+            metadata_id,
+            attempts,
+            error_text,
+        )
+
+    try:
+        record_source_processing_status(
+            source_context,
+            status="failed_permanent" if parked else "failed_retryable",
+            error_code=exc.__class__.__name__,
+            error_message=error_text,
+            metadata={"embedding_attempts": attempts, "parked": parked},
+        )
+    except Exception as rec_exc:  # noqa: BLE001
+        logger.warning("[GraphEmbed] Could not record source processing status for %s: %s", metadata_id, rec_exc)
 
 
 def embed_graph_document(supabase_client, metadata_id: str) -> int:
@@ -666,7 +774,25 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
 
     # Embed all chunks. Do not write unembedded chunks or mark the document
     # complete if the provider path is broken.
-    embeddings = _batch_embed(chunks)
+    #
+    # POISON-PILL GUARD: previously this call sat outside any try/except, so a
+    # provider auth/credit failure propagated up leaving rag_document_metadata
+    # at NULL forever — the candidate query then re-pulled the same docs every
+    # run (infinite re-fail + re-bill, invisible). Now a failure persists the
+    # real error + a bounded attempt counter, and after EMBED_MAX_ATTEMPTS the
+    # doc is parked at terminal app status 'embed_failed' so it surfaces loudly
+    # in health instead of looping silently.
+    try:
+        embeddings = _batch_embed(chunks)
+    except Exception as embed_exc:
+        _record_embed_failure(
+            supabase_client,
+            metadata_id,
+            embed_exc,
+            has_app_document=has_app_document,
+            source_context=source_context,
+        )
+        raise
 
     # Build chunk rows
     base_metadata: Dict[str, Any] = {
@@ -721,10 +847,11 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
     # Mark embedded in PM APP
     _update_app_document_status(supabase_client, metadata_id, "embedded", enabled=has_app_document)
 
-    # Mark embedded in RAG DB so the supplement scan doesn't re-process this doc
+    # Mark embedded in RAG DB so the supplement scan doesn't re-process this doc.
+    # Reset the bounded-retry counter and clear any stored error on success.
     try:
         get_rag_write_client().from_("rag_document_metadata").update(
-            {"embedding_status": "embedded"}
+            {"embedding_status": "embedded", "embedding_attempts": 0, "embedding_error": None}
         ).eq("id", metadata_id).execute()
     except Exception as e:
         logger.warning("[GraphEmbed] Could not update RAG embedding_status for %s: %s", metadata_id, e)
