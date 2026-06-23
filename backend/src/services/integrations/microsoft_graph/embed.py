@@ -1281,11 +1281,21 @@ def _fetch_graph_embedding_candidates_via_supabase(
     if rag_database_writes_enabled():
         try:
             cutoff = (datetime.now(timezone.utc) - timedelta(days=365)).isoformat()
+            # Re-pull NULL (never attempted) AND error rows still under the retry
+            # cap. Without the error branch, the poison-pill fix would orphan any
+            # doc it parks at embedding_status='error' (PM APP status is usually
+            # 'embedded'/'complete' post-split, so this RAG scan is the only path
+            # that finds them) — they would silently never retry. Bounded by
+            # embedding_attempts so genuinely-broken docs still park at the cap.
+            retry_filter = (
+                "embedding_status.is.null,"
+                f"and(embedding_status.eq.error,embedding_attempts.lt.{EMBED_MAX_ATTEMPTS})"
+            )
             rag_resp = (
                 get_rag_read_client()
                 .from_("rag_document_metadata")
                 .select("id, type, source_system, created_at")
-                .is_("embedding_status", "null")
+                .or_(retry_filter)
                 .in_("type", ["email", "document", "email_attachment", "teams_dm_conversation", "teams_dm"])
                 .gte("created_at", cutoff)
                 .order("created_at", desc=True)
