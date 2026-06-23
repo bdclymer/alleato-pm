@@ -89,14 +89,14 @@ def _get_batch_size() -> int:
 def _fetch_no_text_records(supabase: Client, limit: int) -> list[dict]:
     """Fetch document_metadata rows with status='no_text'.
 
-    The no_text status is set exclusively by the OneDrive ingestion pipeline
-    when pypdf extracts < 50 chars — no further type filtering needed.
-    We exclude records with no source_web_url since we can't download them.
+    Covers both OneDrive-synced files (source_system != 'drawing_upload') and
+    directly-uploaded drawing PDFs (source_system = 'drawing_upload' with a
+    public Supabase Storage URL in source_web_url).
     """
     with _ocr_fetch_timeout():
         result = (
             supabase.from_("document_metadata")
-            .select("id, title, source_web_url, source_path, type")
+            .select("id, title, source_web_url, source_path, source_system, type")
             .eq("status", "no_text")
             .not_.is_("source_web_url", "null")
             .limit(limit)
@@ -105,26 +105,32 @@ def _fetch_no_text_records(supabase: Client, limit: int) -> list[dict]:
     return result.data or []
 
 
+def _is_supabase_storage_url(url: str) -> bool:
+    """Return True if the URL points to a public Supabase Storage object."""
+    return "supabase.co/storage/v1/object/public/" in url
+
+
 def _resolve_download_url(record: dict) -> Optional[str]:
     """
     Get a download URL for a document_metadata record.
 
-    For OneDrive/SharePoint files the source_web_url is the browser URL,
-    not a download URL. We need to query the Graph API to get a fresh
-    @microsoft.graph.downloadUrl. We derive the drive item ID from
-    source_path or source_web_url.
+    For directly-uploaded files stored in Supabase Storage the source_web_url
+    is already a public download URL — return it directly.
 
-    For now we use the source_web_url as a Graph item lookup via the
-    /v1.0/shares endpoint which accepts encoded sharing URLs.
+    For OneDrive/SharePoint files the source_web_url is a browser URL; resolve
+    via the Graph /shares endpoint to get a fresh download URL.
     """
     web_url = record.get("source_web_url") or ""
     if not web_url:
         return None
 
+    # Supabase Storage public URLs are directly downloadable.
+    if _is_supabase_storage_url(web_url):
+        return web_url
+
     try:
         import base64
         graph = get_graph_client()
-        # Encode the sharing URL as a Graph sharing token.
         token = base64.urlsafe_b64encode(web_url.encode()).rstrip(b"=").decode()
         share_token = f"u!{token}"
         data = graph.get(f"/shares/{share_token}/driveItem")
@@ -204,7 +210,13 @@ def run_ocr_pass(
             continue
 
         try:
-            pdf_bytes = graph.download_bytes(download_url)
+            if _is_supabase_storage_url(download_url):
+                import requests as _requests
+                resp = _requests.get(download_url, timeout=30)
+                resp.raise_for_status()
+                pdf_bytes = resp.content
+            else:
+                pdf_bytes = graph.download_bytes(download_url)
         except Exception as exc:
             logger.warning("[OCRWorker] Failed to download %s: %s", title, exc)
             _mark_ocr_failed(supabase, doc_id, f"download failed: {exc}")

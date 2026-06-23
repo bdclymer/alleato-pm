@@ -194,6 +194,44 @@ export const POST = withApiGuardrails<{ projectId: string; drawingId: string }>(
       return apiErrorResponse(revisionResult.error);
     }
 
+    // Create a document_metadata record so the OCR → embed pipeline can process this drawing PDF.
+    // Best-effort: don't fail the request if this insert errors.
+    const revision = revisionResult.data;
+    if (revision && fileUrl) {
+      const docMetaId = crypto.randomUUID();
+      const { data: docMeta } = await serviceClient
+        .from("document_metadata")
+        .insert({
+          id: docMetaId,
+          title: fileName,
+          url: fileUrl,
+          source_web_url: fileUrl,
+          type: "drawing",
+          source_system: "drawing_upload",
+          document_type: "drawing",
+          status: "no_text",
+          project_id: Number.parseInt(projectId, 10),
+          file_name: fileName,
+          source_path: uploadPath ?? null,
+          storage_bucket: "project-files",
+          phase: "Current",
+          source_metadata: {},
+        })
+        .select("id")
+        .single();
+
+      if (docMeta) {
+        await serviceClient
+          .from("drawing_revisions")
+          .update({ document_metadata_id: docMeta.id })
+          .eq("id", revision.id);
+        await serviceClient
+          .from("drawings")
+          .update({ document_metadata_id: docMeta.id })
+          .eq("id", drawingId);
+      }
+    }
+
     const projectIdNum = Number(projectId);
     // Record change history (best-effort — don't fail the request if this errors)
     void Promise.resolve(supabase.from("drawing_change_history").insert({
