@@ -1,41 +1,49 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import {
-  createRagServiceClient,
-  isRagDatabaseReadsEnabled,
-} from "@/lib/supabase/service";
+import { createServiceClient } from "@/lib/supabase/service";
 import { z } from "zod";
 
 const ROUTE_BASE =
   "projects/[projectId]/submittals/[submittalId]/linked-drawings";
 
 /**
- * Checks the RAG AI Database to see which drawing IDs have vectorized content
- * (i.e. at least one document_chunk with metadata.source_id matching the drawing id
- * and metadata.document_type === "drawing").
+ * Checks which drawing IDs have extractable text content ready for AI review.
  *
- * Returns an empty Set when RAG reads are disabled or the query fails — callers
- * should treat every drawing as non-vectorized in that case.
+ * Checks PM APP document_metadata (via drawing_revisions) for rows with
+ * status IN ('raw_ingested', 'ocr_partial') — text is available immediately
+ * after OCR runs on upload, before the 30-min embedding cron fires.
  */
 async function checkVectorizedContent(
   drawingIds: string[],
 ): Promise<Set<string>> {
-  if (!isRagDatabaseReadsEnabled()) return new Set();
   try {
-    const rag = createRagServiceClient();
-    const { data } = await rag
-      .from("document_chunks")
-      .select("metadata")
-      .in("metadata->>source_id", drawingIds)
-      .eq("metadata->>document_type", "drawing")
-      .limit(drawingIds.length * 2);
+    const service = createServiceClient();
+    const { data } = await service
+      .from("drawing_revisions")
+      .select("drawing_id, document_metadata_id")
+      .in("drawing_id", drawingIds)
+      .not("document_metadata_id", "is", null);
+
+    const metaIds = (data ?? [])
+      .map((r) => r.document_metadata_id as string)
+      .filter(Boolean);
+
+    if (metaIds.length === 0) return new Set();
+
+    const { data: dmRows } = await service
+      .from("document_metadata")
+      .select("id")
+      .in("id", metaIds)
+      .in("status", ["raw_ingested", "ocr_partial"]);
+
+    const readyMetaIds = new Set((dmRows ?? []).map((r) => r.id as string));
+
     const ids = new Set<string>();
-    (data ?? []).forEach((row) => {
-      const sourceId = (
-        row.metadata as Record<string, string> | null
-      )?.source_id;
-      if (sourceId) ids.add(sourceId);
+    (data ?? []).forEach((r) => {
+      if (readyMetaIds.has(r.document_metadata_id as string)) {
+        ids.add(r.drawing_id as string);
+      }
     });
     return ids;
   } catch {
@@ -78,8 +86,7 @@ export const GET = withApiGuardrails<{
         drawings!submittal_linked_drawings_drawing_id_fkey (
           drawing_number,
           title,
-          discipline,
-          revision
+          discipline
         )
       `,
       )
@@ -104,7 +111,6 @@ export const GET = withApiGuardrails<{
         drawing_number: string;
         title: string;
         discipline: string | null;
-        revision: string | null;
       } | null;
       return {
         id: r.id,
@@ -113,7 +119,6 @@ export const GET = withApiGuardrails<{
         drawing_number: d?.drawing_number ?? "",
         title: d?.title ?? "",
         discipline: d?.discipline ?? null,
-        revision: d?.revision ?? null,
         has_vectorized_content: vectorized.has(r.drawing_id),
       };
     });
@@ -183,8 +188,7 @@ export const POST = withApiGuardrails<{
         drawings!submittal_linked_drawings_drawing_id_fkey (
           drawing_number,
           title,
-          discipline,
-          revision
+          discipline
         )
       `,
       )
@@ -206,7 +210,6 @@ export const POST = withApiGuardrails<{
       drawing_number: string;
       title: string;
       discipline: string | null;
-      revision: string | null;
     } | null;
 
     return Response.json(
@@ -218,7 +221,6 @@ export const POST = withApiGuardrails<{
           drawing_number: d?.drawing_number ?? "",
           title: d?.title ?? "",
           discipline: d?.discipline ?? null,
-          revision: d?.revision ?? null,
           // RAG check skipped on POST to avoid latency — caller can re-fetch
           has_vectorized_content: false,
         },

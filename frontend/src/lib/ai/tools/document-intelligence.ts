@@ -528,6 +528,7 @@ export function createDocumentIntelligenceTools(
             const metaId = drawing.document_metadata_id as string | null;
             if (!metaId) continue;
 
+            // Primary: RAG DB chunks (post-embedding)
             const chunksResp = await ragSupabase
               .from("document_chunks")
               .select("text, chunk_index")
@@ -538,6 +539,26 @@ export function createDocumentIntelligenceTools(
             const excerpts = (chunksResp.data ?? []).map((c) =>
               (c.text as string).substring(0, 600),
             );
+
+            // Fallback: OCR text from PM APP document_metadata.content
+            // (drawings are OCR'd immediately on upload; embedding happens on the next 30-min cron)
+            if (excerpts.length === 0) {
+              const dmResp = await supabase
+                .from("document_metadata")
+                .select("content, status")
+                .eq("id", metaId)
+                .in("status", ["raw_ingested", "ocr_partial"])
+                .maybeSingle();
+              const rawText = (dmResp.data?.content as string | null) ?? "";
+              if (rawText.trim()) {
+                const CHUNK = 600;
+                const cap = Math.min(rawText.length, CHUNK * 8);
+                for (let i = 0; i < cap; i += CHUNK) {
+                  excerpts.push(rawText.substring(i, i + CHUNK));
+                }
+              }
+            }
+
             if (excerpts.length > 0) {
               drawingContents.push({
                 drawingNumber: drawing.drawing_number as string,
