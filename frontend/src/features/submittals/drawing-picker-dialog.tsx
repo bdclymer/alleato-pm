@@ -68,6 +68,13 @@ export function DrawingPickerDialog({ projectId, submittalId, open, onOpenChange
     }
   }, [open, fetchDrawings]);
 
+  // Clean up debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
+
   function handleSearchChange(value: string) {
     setSearch(value);
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
