@@ -74,6 +74,11 @@ const KNOWN_EXTERNAL_TABLES = new Set([
   "source_syntheses",
   "project_daily_deltas",
   "supabase_migrations",
+  // AI Database (RAG DB) tables — not in app database.types.ts
+  "company_knowledge",
+  "source_sync_health_snapshots",
+  // App-DB tables referenced in docs but missing from types (may be views or AI-DB)
+  "ai_insights",
 ]);
 const EXTERNAL_PREFIXES = ["information_schema", "pg_", "auth_", "storage_"];
 
@@ -133,6 +138,31 @@ const NON_TABLE_WORDS = new Set([
   "find",
   "rg",
   "du",
+  // Python module/class/function names referenced in AI-RAG-ARCHITECTURE.md
+  "teams_compiler",
+  "email_compiler",
+  "retry_ai_call",
+  // PostgreSQL index types and schema names
+  "ivfflat",
+  "private",
+  // Source-type string values (not table names)
+  "email",
+  "onedrive_document",
+  "microsoft_graph_live",
+  // RPC function names (not tables)
+  "search_all_knowledge",
+  "search_knowledge_base",
+  // Status/metadata value strings
+  "warning",
+  "unfetchable_pending",
+  "error",
+  "metadata",
+  "chunks",
+  "next_action",
+  // Vercel AI SDK option names
+  "experimental_telemetry",
+  // Column names (JSON fields), not table names
+  "risks",
 ]);
 
 function run(cmd) {
