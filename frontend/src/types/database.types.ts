@@ -12510,6 +12510,13 @@ export type Database = {
             foreignKeyName: "drawing_change_history_drawing_id_fkey"
             columns: ["drawing_id"]
             isOneToOne: false
+            referencedRelation: "drawing_log_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_change_history_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawings"
             referencedColumns: ["id"]
           },
@@ -12594,6 +12601,13 @@ export type Database = {
             foreignKeyName: "drawing_downloads_drawing_revision_id_fkey"
             columns: ["drawing_revision_id"]
             isOneToOne: false
+            referencedRelation: "drawing_log_review"
+            referencedColumns: ["revision_id"]
+          },
+          {
+            foreignKeyName: "drawing_downloads_drawing_revision_id_fkey"
+            columns: ["drawing_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_revisions"
             referencedColumns: ["id"]
           },
@@ -12657,6 +12671,13 @@ export type Database = {
             columns: ["drawing_id"]
             isOneToOne: false
             referencedRelation: "drawing_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_markup_pins_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log_review"
             referencedColumns: ["id"]
           },
           {
@@ -12747,6 +12768,13 @@ export type Database = {
             foreignKeyName: "drawing_related_items_drawing_id_fkey"
             columns: ["drawing_id"]
             isOneToOne: false
+            referencedRelation: "drawing_log_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_related_items_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawings"
             referencedColumns: ["id"]
           },
@@ -12766,6 +12794,9 @@ export type Database = {
           file_url: string
           id: string
           is_current_revision: boolean
+          is_published: boolean
+          published_at: string | null
+          published_by: string | null
           received_date: string
           revision_number: string
           status: string
@@ -12784,6 +12815,9 @@ export type Database = {
           file_url: string
           id?: string
           is_current_revision?: boolean
+          is_published?: boolean
+          published_at?: string | null
+          published_by?: string | null
           received_date?: string
           revision_number?: string
           status?: string
@@ -12802,6 +12836,9 @@ export type Database = {
           file_url?: string
           id?: string
           is_current_revision?: boolean
+          is_published?: boolean
+          published_at?: string | null
+          published_by?: string | null
           received_date?: string
           revision_number?: string
           status?: string
@@ -12869,6 +12906,13 @@ export type Database = {
             columns: ["drawing_id"]
             isOneToOne: false
             referencedRelation: "drawing_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_revisions_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log_review"
             referencedColumns: ["id"]
           },
           {
@@ -13012,6 +13056,13 @@ export type Database = {
             foreignKeyName: "drawing_sketches_drawing_revision_id_fkey"
             columns: ["drawing_revision_id"]
             isOneToOne: false
+            referencedRelation: "drawing_log_review"
+            referencedColumns: ["revision_id"]
+          },
+          {
+            foreignKeyName: "drawing_sketches_drawing_revision_id_fkey"
+            columns: ["drawing_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_revisions"
             referencedColumns: ["id"]
           },
@@ -13033,6 +13084,7 @@ export type Database = {
           is_obsolete: boolean
           is_published: boolean
           project_id: number
+          review_revision_id: string | null
           title: string
           updated_at: string
         }
@@ -13051,6 +13103,7 @@ export type Database = {
           is_obsolete?: boolean
           is_published?: boolean
           project_id: number
+          review_revision_id?: string | null
           title: string
           updated_at?: string
         }
@@ -13069,6 +13122,7 @@ export type Database = {
           is_obsolete?: boolean
           is_published?: boolean
           project_id?: number
+          review_revision_id?: string | null
           title?: string
           updated_at?: string
         }
@@ -13189,6 +13243,34 @@ export type Database = {
             foreignKeyName: "fk_drawings_current_revision"
             columns: ["current_revision_id"]
             isOneToOne: false
+            referencedRelation: "drawing_log_review"
+            referencedColumns: ["revision_id"]
+          },
+          {
+            foreignKeyName: "fk_drawings_current_revision"
+            columns: ["current_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_revisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_drawings_review_revision"
+            columns: ["review_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log"
+            referencedColumns: ["revision_id"]
+          },
+          {
+            foreignKeyName: "fk_drawings_review_revision"
+            columns: ["review_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log_review"
+            referencedColumns: ["revision_id"]
+          },
+          {
+            foreignKeyName: "fk_drawings_review_revision"
+            columns: ["review_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_revisions"
             referencedColumns: ["id"]
           },
@@ -13231,6 +13313,13 @@ export type Database = {
             columns: ["drawing_id"]
             isOneToOne: false
             referencedRelation: "drawing_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_rfis_links_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log_review"
             referencedColumns: ["id"]
           },
           {
@@ -28587,6 +28676,68 @@ export type Database = {
           },
         ]
       }
+      spec_drawing_links: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          created_by: string | null
+          drawing_id: string
+          id: string
+          link_method: string
+          notes: string | null
+          specification_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          drawing_id: string
+          id?: string
+          link_method?: string
+          notes?: string | null
+          specification_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          drawing_id?: string
+          id?: string
+          link_method?: string
+          notes?: string | null
+          specification_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spec_drawing_links_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spec_drawing_links_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spec_drawing_links_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spec_drawing_links_specification_id_fkey"
+            columns: ["specification_id"]
+            isOneToOne: false
+            referencedRelation: "specifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       specification_area_sections: {
         Row: {
           area_id: number
@@ -35044,10 +35195,14 @@ export type Database = {
           is_obsolete: boolean | null
           is_published: boolean | null
           project_id: number | null
+          published_at: string | null
+          published_by: string | null
           received_date: string | null
+          review_revision_id: string | null
           revision_created_at: string | null
           revision_description: string | null
           revision_id: string | null
+          revision_is_published: boolean | null
           revision_number: string | null
           set_name: string | null
           status: string | null
@@ -35103,6 +35258,135 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_drawings_review_revision"
+            columns: ["review_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log"
+            referencedColumns: ["revision_id"]
+          },
+          {
+            foreignKeyName: "fk_drawings_review_revision"
+            columns: ["review_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log_review"
+            referencedColumns: ["revision_id"]
+          },
+          {
+            foreignKeyName: "fk_drawings_review_revision"
+            columns: ["review_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_revisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawing_log_review: {
+        Row: {
+          area_id: string | null
+          area_name: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          discipline: string | null
+          drawing_created_at: string | null
+          drawing_date: string | null
+          drawing_number: string | null
+          drawing_type: string | null
+          drawing_updated_at: string | null
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
+          id: string | null
+          is_obsolete: boolean | null
+          is_published: boolean | null
+          project_id: number | null
+          published_at: string | null
+          published_by: string | null
+          received_date: string | null
+          review_revision_id: string | null
+          revision_created_at: string | null
+          revision_description: string | null
+          revision_id: string | null
+          revision_is_published: boolean | null
+          revision_number: string | null
+          set_name: string | null
+          status: string | null
+          title: string | null
+          uploaded_by: string | null
+          uploaded_by_email: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawings_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_drawings_review_revision"
+            columns: ["review_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log"
+            referencedColumns: ["revision_id"]
+          },
+          {
+            foreignKeyName: "fk_drawings_review_revision"
+            columns: ["review_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log_review"
+            referencedColumns: ["revision_id"]
+          },
+          {
+            foreignKeyName: "fk_drawings_review_revision"
+            columns: ["review_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_revisions"
             referencedColumns: ["id"]
           },
         ]

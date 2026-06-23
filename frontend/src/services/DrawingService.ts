@@ -90,10 +90,11 @@ export class DrawingService {
 
     const projectIdNum = Number.parseInt(projectId, 10);
     const offset = (page - 1) * page_size;
+    const logView = include_unpublished ? "drawing_log_review" : "drawing_log";
 
     try {
       let query = this.supabase
-        .from("drawing_log")
+        .from(logView)
         .select("*", { count: "exact" })
         .eq("project_id", projectIdNum);
 
@@ -442,12 +443,104 @@ export class DrawingService {
 
   // ─── Publish / Obsolete ─────────────────────────────────────────────────────
 
-  async publish(projectId: string, drawingId: string): Promise<Result<Drawing, DrawingError>> {
-    return this._setFlag(projectId, drawingId, "is_published", true);
+  async publish(
+    projectId: string,
+    drawingId: string,
+    userId?: string,
+    revisionId?: string,
+  ): Promise<Result<Drawing, DrawingError>> {
+    const projectIdNum = Number.parseInt(projectId, 10);
+
+    try {
+      const { data: drawing, error: drawingError } = await this.supabase
+        .from("drawings")
+        .select("id, current_revision_id, review_revision_id")
+        .eq("id", drawingId)
+        .eq("project_id", projectIdNum)
+        .single();
+
+      if (drawingError) {
+        if (drawingError.code === "PGRST116") {
+          return {
+            data: null,
+            error: { type: "NOT_FOUND", message: `Drawing with ID ${drawingId} not found` },
+          };
+        }
+        return { data: null, error: { type: "UNKNOWN", message: drawingError.message } };
+      }
+
+      const targetRevisionId =
+        revisionId ?? drawing.review_revision_id ?? drawing.current_revision_id;
+      if (!targetRevisionId) {
+        return {
+          data: null,
+          error: {
+            type: "NOT_FOUND",
+            message: `Drawing with ID ${drawingId} does not have a revision to publish`,
+          },
+        };
+      }
+
+      const publishResult = await this.revisions.publish(drawingId, targetRevisionId, userId);
+      if (publishResult.error) {
+        return { data: null, error: publishResult.error };
+      }
+
+      return this.getById(projectId, drawingId);
+    } catch (err) {
+      return {
+        data: null,
+        error: {
+          type: "UNKNOWN",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
+        },
+      };
+    }
   }
 
   async unpublish(projectId: string, drawingId: string): Promise<Result<Drawing, DrawingError>> {
-    return this._setFlag(projectId, drawingId, "is_published", false);
+    const projectIdNum = Number.parseInt(projectId, 10);
+
+    try {
+      const { data: drawing, error: drawingError } = await this.supabase
+        .from("drawings")
+        .select("id, current_revision_id")
+        .eq("id", drawingId)
+        .eq("project_id", projectIdNum)
+        .single();
+
+      if (drawingError) {
+        if (drawingError.code === "PGRST116") {
+          return {
+            data: null,
+            error: { type: "NOT_FOUND", message: `Drawing with ID ${drawingId} not found` },
+          };
+        }
+        return { data: null, error: { type: "UNKNOWN", message: drawingError.message } };
+      }
+
+      if (!drawing.current_revision_id) {
+        return this._setFlag(projectId, drawingId, "is_published", false);
+      }
+
+      const unpublishResult = await this.revisions.unpublishCurrent(
+        drawingId,
+        drawing.current_revision_id,
+      );
+      if (unpublishResult.error) {
+        return { data: null, error: unpublishResult.error };
+      }
+
+      return this.getById(projectId, drawingId);
+    } catch (err) {
+      return {
+        data: null,
+        error: {
+          type: "UNKNOWN",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
+        },
+      };
+    }
   }
 
   async markObsolete(projectId: string, drawingId: string): Promise<Result<Drawing, DrawingError>> {

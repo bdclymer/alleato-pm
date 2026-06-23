@@ -129,6 +129,8 @@ describe("/api/projects/[projectId]/drawings", () => {
         revision_number: "1",
         status: "under_review",
         is_current_revision: true,
+        update_review_revision: true,
+        update_current_revision: true,
         file_url: "https://storage.example/drawings/A101.pdf",
       }),
       "user-1",
@@ -140,6 +142,7 @@ describe("/api/projects/[projectId]/drawings", () => {
       id: "drawing-existing",
       drawing_number: "A101",
       title: "First Floor Plan",
+      is_published: true,
     };
     const serviceClient = buildServiceClient(existingDrawing);
     const service = buildService({
@@ -168,11 +171,13 @@ describe("/api/projects/[projectId]/drawings", () => {
         revision_number: "2",
         status: "under_review",
         is_current_revision: true,
+        update_review_revision: true,
+        update_current_revision: false,
         file_url: "https://storage.example/drawings/A101.pdf",
       }),
       "user-1",
     );
-    expect(service.unpublish).toHaveBeenCalledWith("42", "drawing-existing");
+    expect(service.unpublish).not.toHaveBeenCalled();
     expect(body).toEqual(
       expect.objectContaining({
         id: "drawing-existing",

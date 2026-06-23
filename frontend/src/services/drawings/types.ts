@@ -54,6 +54,9 @@ export interface RevisionCreateInput {
   received_date: string;
   status?: string;
   is_current_revision?: boolean;
+  is_published?: boolean;
+  update_current_revision?: boolean;
+  update_review_revision?: boolean;
   file_url: string;
   file_name: string;
   file_size: number;

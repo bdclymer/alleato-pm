@@ -26,7 +26,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; drawingId: string }>
 
   const projectIdNum = Number(projectId);
   const service = new DrawingService(createServiceClient());
-  const result = await service.publish(projectId, drawingId);
+  const result = await service.publish(projectId, drawingId, user.id);
 
   if (result.error) {
     return apiErrorResponse(result.error);

@@ -194,7 +194,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     // logical sheet, not a separate drawing.
     const { data: existing } = await serviceClient
       .from("drawings")
-      .select("id, drawing_number, title")
+      .select("id, drawing_number, title, is_published")
       .eq("project_id", Number.parseInt(projectId, 10))
       .eq("drawing_number", drawingNumber)
       .maybeSingle();
@@ -225,6 +225,8 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           received_date: receivedDate,
           status: "under_review",
           is_current_revision: true,
+          update_review_revision: true,
+          update_current_revision: existing.is_published === false,
           file_url: fileUrl,
           file_name: fileName,
           file_size: fileSize,
@@ -237,11 +239,6 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       if (revisionResult.error) {
         await cleanupUploadedFile(uploadPath);
         return apiErrorResponse(revisionResult.error);
-      }
-
-      const unpublishResult = await service.unpublish(projectId, existing.id);
-      if (unpublishResult.error) {
-        return apiErrorResponse(unpublishResult.error);
       }
 
       const finalResult = await service.getById(projectId, existing.id);
@@ -310,6 +307,8 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         received_date: receivedDate,
         status: "under_review",
         is_current_revision: true,
+        update_review_revision: true,
+        update_current_revision: true,
         file_url: fileUrl,
         file_name: fileName,
         file_size: fileSize,

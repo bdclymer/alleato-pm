@@ -51,6 +51,11 @@ export class DrawingRevisionService {
   ): Promise<Result<DrawingRevision, DrawingError>> {
     try {
       const shouldMakeCurrent = input.is_current_revision ?? true;
+      const shouldPublishRevision = input.is_published ?? false;
+      const shouldUpdateReviewRevision = input.update_review_revision ?? shouldMakeCurrent;
+      const shouldUpdateCurrentRevision =
+        input.update_current_revision ?? shouldPublishRevision;
+      const now = new Date().toISOString();
 
       const { data, error } = await this.supabase
         .from("drawing_revisions")
@@ -68,6 +73,9 @@ export class DrawingRevisionService {
           description: input.description || null,
           uploaded_by: userId,
           is_current_revision: shouldMakeCurrent,
+          is_published: shouldPublishRevision,
+          published_at: shouldPublishRevision ? now : null,
+          published_by: shouldPublishRevision ? userId : null,
         })
         .select()
         .single();
@@ -86,13 +94,27 @@ export class DrawingRevisionService {
         if (unsetError) {
           return { data: null, error: { type: "UNKNOWN", message: unsetError.message } };
         }
+      }
+
+      if (shouldUpdateReviewRevision || shouldUpdateCurrentRevision) {
+        const drawingUpdate: {
+          review_revision_id?: string;
+          current_revision_id?: string;
+          updated_at: string;
+        } = {
+          updated_at: now,
+        };
+
+        if (shouldUpdateReviewRevision) {
+          drawingUpdate.review_revision_id = data.id;
+        }
+        if (shouldUpdateCurrentRevision) {
+          drawingUpdate.current_revision_id = data.id;
+        }
 
         const { error: drawingUpdateError } = await this.supabase
           .from("drawings")
-          .update({
-            current_revision_id: data.id,
-            updated_at: new Date().toISOString(),
-          })
+          .update(drawingUpdate)
           .eq("id", drawingId);
 
         if (drawingUpdateError) {
@@ -101,6 +123,122 @@ export class DrawingRevisionService {
       }
 
       return { data, error: null };
+    } catch (err) {
+      return {
+        data: null,
+        error: {
+          type: "UNKNOWN",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
+        },
+      };
+    }
+  }
+
+  async publish(
+    drawingId: string,
+    revisionId: string,
+    userId?: string,
+  ): Promise<Result<DrawingRevision, DrawingError>> {
+    const now = new Date().toISOString();
+
+    try {
+        const { data: revision, error: revisionUpdateError } = await this.supabase
+          .from("drawing_revisions")
+          .update({
+            is_published: true,
+            published_at: now,
+            published_by: userId ?? null,
+            status: "approved",
+          })
+          .eq("id", revisionId)
+          .eq("drawing_id", drawingId)
+          .select()
+          .single();
+
+        if (revisionUpdateError) {
+          return { data: null, error: { type: "UNKNOWN", message: revisionUpdateError.message } };
+        }
+
+      const { error: drawingUpdateError } = await this.supabase
+        .from("drawings")
+        .update({
+          is_published: true,
+          current_revision_id: revisionId,
+          review_revision_id: revisionId,
+          updated_at: now,
+        })
+        .eq("id", drawingId);
+
+      if (drawingUpdateError) {
+        return { data: null, error: { type: "UNKNOWN", message: drawingUpdateError.message } };
+      }
+
+      return {
+        data: revision,
+        error: null,
+      };
+    } catch (err) {
+      return {
+        data: null,
+        error: {
+          type: "UNKNOWN",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
+        },
+      };
+    }
+  }
+
+  async unpublishCurrent(
+    drawingId: string,
+    revisionId: string,
+  ): Promise<Result<DrawingRevision | null, DrawingError>> {
+    const now = new Date().toISOString();
+
+    try {
+      const { error: revisionError } = await this.supabase
+        .from("drawing_revisions")
+        .update({
+          is_published: false,
+          published_at: null,
+          published_by: null,
+          status: "under_review",
+        })
+        .eq("id", revisionId)
+        .eq("drawing_id", drawingId);
+
+      if (revisionError) {
+        return { data: null, error: { type: "UNKNOWN", message: revisionError.message } };
+      }
+
+      const { data: fallbackRevision, error: fallbackError } = await this.supabase
+        .from("drawing_revisions")
+        .select("*")
+        .eq("drawing_id", drawingId)
+        .eq("is_published", true)
+        .neq("id", revisionId)
+        .order("published_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (fallbackError) {
+        return { data: null, error: { type: "UNKNOWN", message: fallbackError.message } };
+      }
+
+      const { error: drawingError } = await this.supabase
+        .from("drawings")
+        .update({
+          is_published: Boolean(fallbackRevision),
+          current_revision_id: fallbackRevision?.id ?? revisionId,
+          updated_at: now,
+        })
+        .eq("id", drawingId);
+
+      if (drawingError) {
+        return { data: null, error: { type: "UNKNOWN", message: drawingError.message } };
+      }
+
+      return { data: fallbackRevision ?? null, error: null };
     } catch (err) {
       return {
         data: null,
