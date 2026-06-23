@@ -659,22 +659,14 @@ export function SubmittalDetailClient({
         onBack={() => router.push(`/${projectId}/submittals`)}
         actions={
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Edit submittal"
-              onClick={() => setIsEditing(true)}
-            >
-              <SquarePen className="h-4 w-4" />
-            </Button>
             {submittal.status !== "Closed" && !submittal.deleted_at && (
               <Button
-                variant="default"
-                size="sm"
+                variant="ghost"
+                size="icon"
+                aria-label="Email submittal"
                 onClick={() => setDistributeOpen(true)}
               >
-                <Mail className="mr-1.5 h-3.5 w-3.5" />
-                Email
+                <Mail className="h-4 w-4" />
               </Button>
             )}
             <DropdownMenu>
@@ -684,6 +676,10 @@ export function SubmittalDetailClient({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                  <SquarePen className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleDuplicate}
                   disabled={duplicateMutation.isPending}
@@ -722,7 +718,6 @@ export function SubmittalDetailClient({
               variant="inline"
               tabs={[
                 { label: "Details", href: "details", isActive: activeTab === "details" },
-                { label: "Linked Drawings", href: "linked-drawings", isActive: activeTab === "linked-drawings" },
                 { label: "AI Review", href: "ai-review", isActive: activeTab === "ai-review" },
               ]}
               onTabClick={(href) => setActiveTab(href)}
@@ -852,6 +847,15 @@ export function SubmittalDetailClient({
                   entityType="submittal"
                   entityId={String(submittal.id)}
                   projectId={projectId}
+                />
+              </section>
+
+              <section className="space-y-3">
+                <SectionHeader title="Linked Drawings" />
+                <SubmittalLinkedDrawingsPanel
+                  projectId={projectId}
+                  submittalId={submittal.id}
+                  onAddClick={() => setPickerOpen(true)}
                 />
               </section>
 
@@ -1159,14 +1163,6 @@ export function SubmittalDetailClient({
               </div>
             </section>
           </ContentSectionStack>
-            )}
-
-            {activeTab === "linked-drawings" && (
-              <SubmittalLinkedDrawingsPanel
-                projectId={projectId}
-                submittalId={submittal.id}
-                onAddClick={() => setPickerOpen(true)}
-              />
             )}
 
             {activeTab === "ai-review" && (
