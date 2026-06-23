@@ -46,8 +46,8 @@ export const drawingColumns: ColumnConfig[] = [
   { id: "revisionNumber", label: "Rev.", defaultVisible: true },
   { id: "discipline", label: "Discipline", defaultVisible: true },
   { id: "drawingType", label: "Type", defaultVisible: true },
-  { id: "status", label: "Status", defaultVisible: true },
-  { id: "publishState", label: "State", defaultVisible: true },
+  { id: "status", label: "Review Status", defaultVisible: false },
+  { id: "publishState", label: "Status", defaultVisible: true },
   { id: "drawingDate", label: "Drawing Date", defaultVisible: true },
   { id: "receivedDate", label: "Received", defaultVisible: true },
   { id: "setName", label: "Set", defaultVisible: false },
@@ -90,7 +90,22 @@ export const drawingFilters: FilterConfig[] = [
 
 // ─── Table columns ──────────────────────────────────────────────────────────
 
-export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
+export interface DrawingInlineEditHandlers {
+  /** Disciplines to offer in the inline dropdown (standard list merged with values seen in data). */
+  disciplines: string[];
+  /** Persists a single-field change for one drawing. Throws on failure so the cell can revert. */
+  onUpdate: (
+    drawingId: string,
+    data: { discipline?: string; drawing_type?: string },
+  ) => Promise<void>;
+}
+
+export function buildDrawingTableColumns(
+  inlineEdit?: DrawingInlineEditHandlers,
+): TableColumn<DrawingLogTableRow>[] {
+  const disciplineOptions = (
+    inlineEdit?.disciplines ?? DRAWING_DISCIPLINES
+  ).map((v) => ({ value: v, label: v }));
   return [
     {
       ...drawingColumns[0],
@@ -129,6 +144,14 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
         <span className="text-sm">{item.discipline || "-"}</span>
       ),
       sortValue: (item) => item.discipline ?? "",
+      editable: Boolean(inlineEdit),
+      editType: "select",
+      editValue: (item) => item.discipline ?? "",
+      editOptions: disciplineOptions,
+      editEmptyLabel: "Select discipline",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(item.id, { discipline: value });
+      },
     },
     {
       ...drawingColumns[4],
@@ -138,6 +161,14 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
         </span>
       ),
       sortValue: (item) => item.drawingType ?? "",
+      editable: Boolean(inlineEdit),
+      editType: "select",
+      editValue: (item) => item.drawingType ?? "",
+      editOptions: DRAWING_TYPES.map((v) => ({ value: v, label: v })),
+      editEmptyLabel: "Select type",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(item.id, { drawing_type: value });
+      },
     },
     {
       ...drawingColumns[5],
@@ -149,7 +180,7 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
         ),
       sortValue: (item) => item.status ?? "",
     },
-    // State column: shows Unpublished / Obsolete badges
+    // Status column: shows Draft / Published / Obsolete.
     {
       ...drawingColumns[6],
       render: (item) => {
@@ -157,12 +188,16 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
           return <Badge variant="secondary">Obsolete</Badge>;
         }
         if (!item.isPublished) {
-          return <Badge variant="outline">Unpublished</Badge>;
+          return <Badge variant="destructive">Draft</Badge>;
         }
-        return <span className="text-muted-foreground text-xs">-</span>;
+        return <Badge variant="outline">Published</Badge>;
       },
       sortValue: (item) =>
-        item.isObsolete ? "obsolete" : !item.isPublished ? "unpublished" : "",
+        item.isObsolete
+          ? "obsolete"
+          : !item.isPublished
+            ? "draft"
+            : "published",
     },
     {
       ...drawingColumns[7],
@@ -466,17 +501,27 @@ function DrawingGridCard({
     item.fileType?.startsWith("image/") ||
     /\.(png|jpe?g|tiff?)$/i.test(item.fileUrl ?? "");
 
-  const dimmed = item.isObsolete || !item.isPublished;
+  const isDraft = !item.isPublished && !item.isObsolete;
+  const dimmed = item.isObsolete;
   const identity = getDrawingDisplayIdentity(item);
-  const primaryLabel =
-    identity.number || identity.title || item.fileName || "Untitled";
+  const primaryLabel = (
+    identity.number ||
+    identity.title ||
+    item.fileName ||
+    "Untitled"
+  ).replace(/[[\]]/g, "");
   const pdfPreviewUrl = `/api/projects/${item.projectId}/drawings/${item.id}/pdf-proxy`;
+  const stateClassName = selected
+    ? " border-primary ring-1 ring-primary"
+    : isDraft
+      ? " border-destructive ring-1 ring-destructive/30"
+      : " border-border";
 
   return (
     <Button
       type="button"
       variant="ghost"
-      className={`group/card relative flex flex-col items-stretch justify-start h-auto w-full overflow-hidden rounded-lg border bg-background p-0 text-left transition-all hover:bg-muted/40${dimmed ? " opacity-60" : ""}${selected ? " border-primary ring-1 ring-primary" : " border-border"}`}
+      className={`group/card relative flex flex-col items-stretch justify-start h-auto w-full overflow-hidden rounded-lg border bg-background p-0 text-left transition-all hover:bg-muted/40${dimmed ? " opacity-60" : ""}${stateClassName}`}
       onClick={() => onClick(item)}
     >
       {/* Selection checkbox */}
@@ -522,19 +567,16 @@ function DrawingGridCard({
         ) : (
           <DrawingPreviewFallback />
         )}
-        {/* State overlay badges */}
-        {(item.isObsolete || !item.isPublished) && (
+        {/* State overlay badge */}
+        {(item.isObsolete || isDraft) && (
           <div className="absolute top-1.5 right-1.5">
             {item.isObsolete ? (
               <Badge variant="secondary" className="text-[10px] px-1 py-0">
                 Obsolete
               </Badge>
             ) : (
-              <Badge
-                variant="outline"
-                className="text-[10px] px-1 py-0 bg-card"
-              >
-                Unpublished
+              <Badge variant="destructive" className="text-[10px] px-1 py-0">
+                Draft
               </Badge>
             )}
           </div>
@@ -542,15 +584,10 @@ function DrawingGridCard({
       </div>
 
       {/* Compact footer */}
-      <div className="px-1.5 py-1.5 border-t border-border">
+      <div className="px-1.5 py-1.5">
         <p className="text-[11px] font-medium text-foreground truncate leading-tight">
           {primaryLabel}
         </p>
-        {identity.subtitle ? (
-          <p className="text-[10px] text-muted-foreground truncate mt-0.5 leading-tight">
-            {identity.subtitle}
-          </p>
-        ) : null}
       </div>
     </Button>
   );
@@ -627,7 +664,8 @@ export function renderDrawingList(
   onDelete?: (item: DrawingLogTableRow) => void,
   onQrCode?: () => void,
 ): ReactElement {
-  const dimmed = item.isObsolete || !item.isPublished;
+  const isDraft = !item.isPublished && !item.isObsolete;
+  const dimmed = item.isObsolete;
   const identity = getDrawingDisplayIdentity(item);
   const label =
     identity.number && identity.title
@@ -697,10 +735,10 @@ export function renderDrawingList(
             </Button>
           )}
           {item.isObsolete && <Badge variant="secondary">Obsolete</Badge>}
-          {!item.isPublished && !item.isObsolete && (
-            <Badge variant="outline">Unpublished</Badge>
+          {isDraft && <Badge variant="destructive">Draft</Badge>}
+          {item.isPublished && !item.isObsolete && (
+            <Badge variant="outline">Published</Badge>
           )}
-          {item.status && <StatusBadge status={formatStatus(item.status)} />}
         </div>
       </Button>
     </div>

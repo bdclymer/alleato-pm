@@ -13,7 +13,10 @@ import type {
 } from "@/services/DrawingService";
 
 // Mapped response type with camelCase drawings
-interface MappedDrawingListResponse extends Omit<DrawingListResponse, 'drawings'> {
+interface MappedDrawingListResponse extends Omit<
+  DrawingListResponse,
+  "drawings"
+> {
   drawings: DrawingLogTableRow[];
 }
 
@@ -43,8 +46,7 @@ export function useDrawings(projectId: string, filters?: DrawingFilters) {
         params.set("page_size", filters.page_size.toString());
       if (filters?.include_unpublished)
         params.set("include_unpublished", "true");
-      if (filters?.include_obsolete)
-        params.set("include_obsolete", "true");
+      if (filters?.include_obsolete) params.set("include_obsolete", "true");
 
       const data = await apiFetch<DrawingListResponse>(
         `/api/projects/${projectId}/drawings?${params}`,
@@ -82,13 +84,10 @@ export function useCreateDrawing(projectId: string) {
 
   return useMutation({
     mutationFn: async (formData: FormData) =>
-      apiFetch<DrawingWithRevision>(
-        `/api/projects/${projectId}/drawings`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      ),
+      apiFetch<DrawingWithRevision>(`/api/projects/${projectId}/drawings`, {
+        method: "POST",
+        body: formData,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["drawings", projectId],
@@ -181,12 +180,9 @@ export function useDeleteDrawing(projectId: string) {
 
   return useMutation({
     mutationFn: async (drawingId: string) =>
-      apiFetch(
-        `/api/projects/${projectId}/drawings/${drawingId}`,
-        {
-          method: "DELETE",
-        },
-      ),
+      apiFetch(`/api/projects/${projectId}/drawings/${drawingId}`, {
+        method: "DELETE",
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["drawings", projectId],
@@ -210,52 +206,29 @@ export function useDeleteDrawing(projectId: string) {
 export function usePublishDrawing(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ drawingId, publish }: { drawingId: string; publish: boolean }) =>
-      apiFetch(
-        `/api/projects/${projectId}/drawings/${drawingId}/publish`,
-        { method: publish ? "PATCH" : "DELETE" },
-      ),
+    mutationFn: async ({
+      drawingId,
+      publish,
+    }: {
+      drawingId: string;
+      publish: boolean;
+    }) =>
+      apiFetch(`/api/projects/${projectId}/drawings/${drawingId}/publish`, {
+        method: publish ? "PATCH" : "DELETE",
+      }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["drawing", projectId, variables.drawingId] });
-      toast.success(variables.publish ? "Drawing published" : "Drawing unpublished");
-    },
-    onError: (error: Error) => {
-      toast.error("Could not update drawing publish status", { description: error.message });
-    },
-  });
-}
-
-/**
- * React Query mutation for publishing selected drawings in one API operation.
- */
-export function useBulkPublishDrawings(projectId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (drawingIds: string[]) =>
-      apiFetch<{ succeeded: number; failed: number }>(
-        `/api/projects/${projectId}/drawings/bulk-status`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ drawingIds, action: "publish" }),
-        },
-      ),
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
-      if (result.failed > 0) {
-        toast.warning(
-          `${result.succeeded} drawing${result.succeeded === 1 ? "" : "s"} published, ${result.failed} failed`,
-        );
-        return;
-      }
-
+      queryClient.invalidateQueries({
+        queryKey: ["drawing", projectId, variables.drawingId],
+      });
       toast.success(
-        `Published ${result.succeeded} drawing${result.succeeded === 1 ? "" : "s"}`,
+        variables.publish ? "Drawing published" : "Drawing unpublished",
       );
     },
     onError: (error: Error) => {
-      toast.error("Could not publish selected drawings", { description: error.message });
+      toast.error("Could not update drawing publish status", {
+        description: error.message,
+      });
     },
   });
 }
@@ -266,14 +239,21 @@ export function useBulkPublishDrawings(projectId: string) {
 export function useObsoleteDrawing(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ drawingId, obsolete }: { drawingId: string; obsolete: boolean }) =>
-      apiFetch(
-        `/api/projects/${projectId}/drawings/${drawingId}/obsolete`,
-        { method: obsolete ? "PATCH" : "DELETE" },
-      ),
+    mutationFn: async ({
+      drawingId,
+      obsolete,
+    }: {
+      drawingId: string;
+      obsolete: boolean;
+    }) =>
+      apiFetch(`/api/projects/${projectId}/drawings/${drawingId}/obsolete`, {
+        method: obsolete ? "PATCH" : "DELETE",
+      }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["drawing", projectId, variables.drawingId] });
+      queryClient.invalidateQueries({
+        queryKey: ["drawing", projectId, variables.drawingId],
+      });
       toast.success("Drawing updated");
     },
     onError: (error: Error) => {
@@ -351,13 +331,14 @@ export function useRestoreDrawing(projectId: string) {
 
   return useMutation({
     mutationFn: async (drawingId: string) =>
-      apiFetch(
-        `/api/projects/${projectId}/drawings/${drawingId}/restore`,
-        { method: "PATCH" },
-      ),
+      apiFetch(`/api/projects/${projectId}/drawings/${drawingId}/restore`, {
+        method: "PATCH",
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["drawings-recycle-bin", projectId] });
+      queryClient.invalidateQueries({
+        queryKey: ["drawings-recycle-bin", projectId],
+      });
       toast.success("Drawing restored successfully");
     },
     onError: (error: Error) => {
@@ -374,12 +355,13 @@ export function usePermanentDeleteDrawing(projectId: string) {
 
   return useMutation({
     mutationFn: async (drawingId: string) =>
-      apiFetch(
-        `/api/projects/${projectId}/drawings/${drawingId}/restore`,
-        { method: "DELETE" },
-      ),
+      apiFetch(`/api/projects/${projectId}/drawings/${drawingId}/restore`, {
+        method: "DELETE",
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["drawings-recycle-bin", projectId] });
+      queryClient.invalidateQueries({
+        queryKey: ["drawings-recycle-bin", projectId],
+      });
       toast.success("Drawing permanently deleted");
     },
     onError: (error: Error) => {

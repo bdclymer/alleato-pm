@@ -9,7 +9,6 @@ import {
   useSearchParams,
 } from "next/navigation";
 import {
-  Check,
   ChevronDown,
   Download,
   Mail,
@@ -21,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   UnifiedTablePage,
@@ -29,10 +29,7 @@ import {
   type FilterValue,
 } from "@/components/tables/unified";
 import { InfoAlert } from "@/components/ds/InfoAlert";
-import { StatusBadge } from "@/components/ds";
-import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -77,7 +74,6 @@ import { DrawingUploadDialog } from "@/components/drawings/DrawingUploadDialog";
 import { DrawingQRCode } from "@/components/drawings/DrawingQRCode";
 import {
   useDrawings,
-  useBulkPublishDrawings,
   useDeleteDrawing,
   usePublishDrawing,
   useObsoleteDrawing,
@@ -87,8 +83,6 @@ import {
 } from "@/hooks/use-drawings";
 import { useDrawingSets } from "@/hooks/use-drawing-sets";
 import { apiFetch, apiFetchBlob } from "@/lib/api-client";
-import { formatDate } from "@/lib/format";
-import { getDrawingReviewQueueRows } from "@/lib/drawings/review-queue";
 import type { DrawingLogTableRow } from "@/types/drawings.types";
 import { DRAWING_DISCIPLINES, DRAWING_TYPES } from "@/types/drawings.types";
 import {
@@ -196,14 +190,13 @@ export default function ProjectDrawingsPage() {
     drawingType: SELECT_NO_CHANGE,
   });
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const [selectedReviewIds, setSelectedReviewIds] = useState<string[]>([]);
   const dragCounter = useRef(0);
 
   const projectId = params.projectId ?? "";
+  const queryClient = useQueryClient();
 
   const deleteDrawing = useDeleteDrawing(projectId);
   const publishDrawing = usePublishDrawing(projectId);
-  const bulkPublishDrawings = useBulkPublishDrawings(projectId);
   const obsoleteDrawing = useObsoleteDrawing(projectId);
   const updateDrawing = useUpdateDrawing(projectId);
   const drawingSubscription = useDrawingSubscription(projectId);
@@ -315,42 +308,13 @@ export default function ProjectDrawingsPage() {
       typeof activeFilters.areaId === "string"
         ? activeFilters.areaId
         : undefined,
+    include_unpublished: true,
   });
-
-  const { data: reviewDrawingsData, isLoading: isReviewQueueLoading } =
-    useDrawings(projectId, {
-      page: 1,
-      page_size: 500,
-      search: tableState.debouncedSearch || undefined,
-      discipline:
-        typeof activeFilters.discipline === "string"
-          ? activeFilters.discipline
-          : undefined,
-      set_id:
-        typeof activeFilters.setId === "string"
-          ? activeFilters.setId
-          : undefined,
-      area_id:
-        typeof activeFilters.areaId === "string"
-          ? activeFilters.areaId
-          : undefined,
-      include_unpublished: true,
-    });
 
   const drawings: DrawingLogTableRow[] = React.useMemo(
     () => drawingsData?.drawings ?? [],
     [drawingsData],
   );
-
-  const reviewQueueItems = React.useMemo(
-    () => getDrawingReviewQueueRows(reviewDrawingsData?.drawings ?? []),
-    [reviewDrawingsData],
-  );
-
-  React.useEffect(() => {
-    const queueIds = new Set(reviewQueueItems.map((item) => item.id));
-    setSelectedReviewIds((current) => current.filter((id) => queueIds.has(id)));
-  }, [reviewQueueItems]);
 
   // Computed disciplines (standard + from data)
   const allDisciplines = React.useMemo(() => {
@@ -403,7 +367,33 @@ export default function ProjectDrawingsPage() {
     });
   }, [activeFilters, drawings, tableState.debouncedSearch]);
 
-  const tableColumns = React.useMemo(() => buildDrawingTableColumns(), []);
+  // Inline cell edits (Discipline / Type in table view). Persists directly and
+  // refreshes the cache. No toast here — UnifiedTablePage shows its own per-cell
+  // "<field> updated" confirmation on commit, so the hook's toast is skipped.
+  const handleInlineUpdate = useCallback(
+    async (
+      drawingId: string,
+      data: { discipline?: string; drawing_type?: string },
+    ) => {
+      await apiFetch(`/api/projects/${projectId}/drawings/${drawingId}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["drawings", projectId],
+      });
+    },
+    [projectId, queryClient],
+  );
+
+  const tableColumns = React.useMemo(
+    () =>
+      buildDrawingTableColumns({
+        disciplines: allDisciplines,
+        onUpdate: handleInlineUpdate,
+      }),
+    [allDisciplines, handleInlineUpdate],
+  );
   const activeSetId = urlSetId;
   const activeSet = activeSetId
     ? drawingSets.find((set) => set.id === activeSetId)
@@ -457,48 +447,6 @@ export default function ProjectDrawingsPage() {
         ? [...tableState.selectedIds, id]
         : tableState.selectedIds.filter((s) => s !== id),
     );
-  };
-
-  const handleSelectAllReviewRows = (checked: boolean) => {
-    setSelectedReviewIds(
-      checked ? reviewQueueItems.map((item) => item.id) : [],
-    );
-  };
-
-  const handleSelectReviewRow = (id: string, checked: boolean) => {
-    setSelectedReviewIds((current) =>
-      checked
-        ? [...current, id]
-        : current.filter((selectedId) => selectedId !== id),
-    );
-  };
-
-  const handlePublishReviewDrawing = async (item: DrawingLogTableRow) => {
-    try {
-      await publishDrawing.mutateAsync({ drawingId: item.id, publish: true });
-      setSelectedReviewIds((current) =>
-        current.filter((selectedId) => selectedId !== item.id),
-      );
-    } catch (error) {
-      console.error("Failed to publish drawing from review queue", {
-        drawingId: item.id,
-        error,
-      });
-    }
-  };
-
-  const handleBulkPublishReviewDrawings = async () => {
-    if (selectedReviewIds.length === 0) return;
-
-    try {
-      await bulkPublishDrawings.mutateAsync(selectedReviewIds);
-      setSelectedReviewIds([]);
-    } catch (error) {
-      console.error("Failed to publish selected drawings from review queue", {
-        drawingIds: selectedReviewIds,
-        error,
-      });
-    }
   };
 
   const handleBulkDownload = async () => {
@@ -775,12 +723,6 @@ export default function ProjectDrawingsPage() {
     Boolean(activeFilters.setId);
 
   const selectedCount = tableState.selectedIds.length;
-  const selectedReviewCount = selectedReviewIds.length;
-  const allReviewRowsSelected =
-    reviewQueueItems.length > 0 &&
-    reviewQueueItems.every((item) => selectedReviewIds.includes(item.id));
-  const someReviewRowsSelected =
-    selectedReviewCount > 0 && !allReviewRowsSelected;
   const canDecreaseGallerySize =
     galleryImageSize !== GALLERY_IMAGE_SIZE_OPTIONS[0].value;
   const canIncreaseGallerySize =
@@ -984,144 +926,6 @@ export default function ProjectDrawingsPage() {
             </p>
           </InfoAlert>
         </div>
-      )}
-
-      {(isReviewQueueLoading || reviewQueueItems.length > 0) && (
-        <section className="mb-6 space-y-3" aria-label="Drawings review queue">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <SectionRuleHeading label="Review queue" className="mb-1" />
-              <p className="text-sm text-muted-foreground">
-                Unpublished revisions waiting to become the current drawing.
-              </p>
-            </div>
-            {selectedReviewCount > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  {selectedReviewCount} selected
-                </span>
-                <Button
-                  size="sm"
-                  onClick={handleBulkPublishReviewDrawings}
-                  disabled={bulkPublishDrawings.isPending}
-                >
-                  <Check className="h-3.5 w-3.5" />
-                  Confirm selected
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 w-7 p-0"
-                  onClick={() => setSelectedReviewIds([])}
-                  aria-label="Clear review queue selection"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <div className="overflow-x-auto rounded-md border border-border">
-            <table className="w-full min-w-max text-sm">
-              <thead className="bg-muted/50 text-xs text-muted-foreground">
-                <tr className="border-b border-border">
-                  <th className="w-10 px-3 py-2 text-left">
-                    <Checkbox
-                      checked={
-                        allReviewRowsSelected
-                          ? true
-                          : someReviewRowsSelected
-                            ? "indeterminate"
-                            : false
-                      }
-                      onCheckedChange={(checked) =>
-                        handleSelectAllReviewRows(checked === true)
-                      }
-                      aria-label="Select all drawings in review queue"
-                    />
-                  </th>
-                  <th className="px-3 py-2 text-left font-medium">#</th>
-                  <th className="px-3 py-2 text-left font-medium">Title</th>
-                  <th className="px-3 py-2 text-left font-medium">Rev.</th>
-                  <th className="px-3 py-2 text-left font-medium">
-                    Discipline
-                  </th>
-                  <th className="px-3 py-2 text-left font-medium">Set</th>
-                  <th className="px-3 py-2 text-left font-medium">Area</th>
-                  <th className="px-3 py-2 text-left font-medium">
-                    Drawing date
-                  </th>
-                  <th className="px-3 py-2 text-left font-medium">Received</th>
-                  <th className="px-3 py-2 text-left font-medium">Status</th>
-                  <th className="px-3 py-2 text-right font-medium">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {isReviewQueueLoading ? (
-                  <tr>
-                    <td
-                      colSpan={11}
-                      className="px-3 py-8 text-center text-sm text-muted-foreground"
-                    >
-                      Loading review queue...
-                    </td>
-                  </tr>
-                ) : (
-                  reviewQueueItems.map((item) => (
-                    <tr key={item.id} className="bg-background">
-                      <td className="px-3 py-2">
-                        <Checkbox
-                          checked={selectedReviewIds.includes(item.id)}
-                          onCheckedChange={(checked) =>
-                            handleSelectReviewRow(item.id, checked === true)
-                          }
-                          aria-label={`Select drawing ${item.drawingNumber}`}
-                        />
-                      </td>
-                      <td className="px-3 py-2 font-medium">
-                        {item.drawingNumber || "-"}
-                      </td>
-                      <td className="max-w-80 px-3 py-2">
-                        <span className="block truncate" title={item.title}>
-                          {item.title || "Untitled"}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2">
-                        {item.revisionNumber || "-"}
-                      </td>
-                      <td className="px-3 py-2">{item.discipline || "-"}</td>
-                      <td className="px-3 py-2">{item.setName || "-"}</td>
-                      <td className="px-3 py-2">{item.areaName || "-"}</td>
-                      <td className="px-3 py-2">
-                        {formatDate(item.drawingDate)}
-                      </td>
-                      <td className="px-3 py-2">
-                        {formatDate(item.receivedDate)}
-                      </td>
-                      <td className="px-3 py-2">
-                        {item.status ? (
-                          <StatusBadge status={item.status} />
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handlePublishReviewDrawing(item)}
-                          disabled={publishDrawing.isPending}
-                        >
-                          Confirm
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
       )}
 
       <UnifiedTablePage
