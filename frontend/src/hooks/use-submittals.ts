@@ -126,7 +126,7 @@ export interface AIReviewResult {
   linkedDrawings: Array<{
     drawingNumber: string;
     title: string;
-    discipline: string;
+    discipline: string | null;
     hasVectorizedContent: boolean;
   }>;
   comparisonContext: {
@@ -209,6 +209,8 @@ export const submittalKeys = {
     ["submittals", projectId, "list", tab] as const,
   detail: (projectId: number, submittalId: string) =>
     ["submittals", projectId, "detail", submittalId] as const,
+  linkedDrawings: (projectId: number, submittalId: string) =>
+    [...submittalKeys.detail(projectId, submittalId), "linked-drawings"] as const,
 };
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -622,7 +624,7 @@ export function useDistributeSubmittal(projectId: number, submittalId: string) {
 
 export function useSubmittalLinkedDrawings(projectId: number, submittalId: string) {
   return useQuery({
-    queryKey: ["submittal-linked-drawings", projectId, submittalId],
+    queryKey: submittalKeys.linkedDrawings(projectId, submittalId),
     queryFn: async (): Promise<LinkedDrawing[]> => {
       const res = await apiFetch<{ linkedDrawings: LinkedDrawing[] }>(
         `/api/projects/${projectId}/submittals/${submittalId}/linked-drawings`
@@ -634,7 +636,7 @@ export function useSubmittalLinkedDrawings(projectId: number, submittalId: strin
 }
 
 export function useAddLinkedDrawing(projectId: number, submittalId: string) {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ drawingId }: { drawingId: string }) => {
       return apiFetch<{ linkedDrawing: LinkedDrawing } | { alreadyLinked: true }>(
@@ -647,15 +649,15 @@ export function useAddLinkedDrawing(projectId: number, submittalId: string) {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["submittal-linked-drawings", projectId, submittalId],
+      qc.invalidateQueries({
+        queryKey: submittalKeys.linkedDrawings(projectId, submittalId),
       });
     },
   });
 }
 
 export function useRemoveLinkedDrawing(projectId: number, submittalId: string) {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ drawingId }: { drawingId: string }) => {
       return apiFetch<{ success: true }>(
@@ -664,8 +666,8 @@ export function useRemoveLinkedDrawing(projectId: number, submittalId: string) {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["submittal-linked-drawings", projectId, submittalId],
+      qc.invalidateQueries({
+        queryKey: submittalKeys.linkedDrawings(projectId, submittalId),
       });
     },
   });
