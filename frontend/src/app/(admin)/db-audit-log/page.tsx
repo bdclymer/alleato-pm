@@ -18,9 +18,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { auditLogKeys } from "@/hooks/use-db-audit-log-query";
 
 const OP_STYLES: Record<string, string> = {
-  INSERT: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-  UPDATE: "bg-blue-50 text-blue-700 border border-blue-200",
-  DELETE: "bg-rose-50 text-rose-700 border border-rose-200",
+  INSERT: "bg-success/10 text-success border border-success/20",
+  UPDATE: "bg-primary/10 text-primary border border-primary/20",
+  DELETE: "bg-destructive/10 text-destructive border border-destructive/20",
 };
 
 function JsonBlock({ label, data }: { label: string; data: Record<string, unknown> | null }) {
@@ -62,8 +62,8 @@ export default function DbAuditLogPage() {
 
   const activeFilters = useMemo<Record<string, FilterValue>>(
     () => ({
-      operation: searchParams.get("operation") ?? undefined,
-      table_name: searchParams.get("table_name") ?? undefined,
+      operation: searchParams?.get("operation") ?? undefined,
+      table_name: searchParams?.get("table_name") ?? undefined,
     }),
     [searchParams],
   );
@@ -96,8 +96,6 @@ export default function DbAuditLogPage() {
 
   const columns = useMemo(() => buildAuditLogTableColumns(), []);
 
-  const resolvedError = error instanceof Error ? error.message : error ? String(error) : undefined;
-
   return (
     <>
       <UnifiedTablePage
@@ -124,7 +122,7 @@ export default function DbAuditLogPage() {
           onClearFilters: () =>
             handleFilterChange({ operation: undefined, table_name: undefined }),
         }}
-        data={{ items, isLoading, isFetching, error: resolvedError }}
+        data={{ items, isLoading, isFetching, error: error ?? undefined }}
         table={{
           columns,
           getRowId: (item) => item.id,
@@ -134,14 +132,14 @@ export default function DbAuditLogPage() {
         pagination={{
           page: tableState.page,
           perPage: tableState.perPage,
-          total,
+          totalPages: Math.max(1, Math.ceil(total / tableState.perPage)),
           onPageChange: (p) => {
             tableState.setPage(p);
             tableState.setSearchParams({ page: String(p) });
           },
           onPerPageChange: (pp) => {
-            tableState.setPerPage(pp);
-            tableState.setSearchParams({ perPage: String(pp), page: "1" });
+            tableState.setPerPage(Number(pp));
+            tableState.setSearchParams({ perPage: pp, page: "1" });
           },
         }}
         emptyState={{
@@ -224,13 +222,13 @@ export default function DbAuditLogPage() {
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <p className="text-muted-foreground">Before</p>
-                                <pre className="mt-0.5 break-all whitespace-pre-wrap text-rose-700">
+                                <pre className="mt-0.5 break-all whitespace-pre-wrap text-destructive">
                                   {JSON.stringify(before, null, 2)}
                                 </pre>
                               </div>
                               <div>
                                 <p className="text-muted-foreground">After</p>
-                                <pre className="mt-0.5 break-all whitespace-pre-wrap text-emerald-700">
+                                <pre className="mt-0.5 break-all whitespace-pre-wrap text-success">
                                   {JSON.stringify(after, null, 2)}
                                 </pre>
                               </div>

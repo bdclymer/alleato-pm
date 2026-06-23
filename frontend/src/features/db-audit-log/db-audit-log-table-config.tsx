@@ -108,9 +108,9 @@ function formatAbsolute(iso: string): string {
 }
 
 const OP_STYLES: Record<string, string> = {
-  INSERT: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-  UPDATE: "bg-blue-50 text-blue-700 border border-blue-200",
-  DELETE: "bg-rose-50 text-rose-700 border border-rose-200",
+  INSERT: "bg-success/10 text-success border border-success/20",
+  UPDATE: "bg-primary/10 text-primary border border-primary/20",
+  DELETE: "bg-destructive/10 text-destructive border border-destructive/20",
 };
 
 export function buildAuditLogTableColumns(
