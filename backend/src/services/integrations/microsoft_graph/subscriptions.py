@@ -289,11 +289,21 @@ def ensure_subscriptions(
                 graph_subscription_id = response.get("id")
                 stats["created"] += 1
             elif existing_graph_id:
-                response = graph_client.patch(f"/subscriptions/{existing_graph_id}", {
-                    "expirationDateTime": payload["expirationDateTime"],
-                })
-                graph_subscription_id = existing_graph_id
-                stats["renewed"] += 1
+                try:
+                    response = graph_client.patch(f"/subscriptions/{existing_graph_id}", {
+                        "expirationDateTime": payload["expirationDateTime"],
+                    })
+                    graph_subscription_id = existing_graph_id
+                    stats["renewed"] += 1
+                except Exception as patch_exc:
+                    # Subscription no longer exists on Graph (expired/removed) — create fresh
+                    logger.warning(
+                        "[GraphSubscriptions] PATCH failed for %s (%s), creating fresh subscription",
+                        existing_graph_id, patch_exc,
+                    )
+                    response = graph_client.post("/subscriptions", payload)
+                    graph_subscription_id = response.get("id")
+                    stats["created"] += 1
             else:
                 response = graph_client.post("/subscriptions", payload)
                 graph_subscription_id = response.get("id")
