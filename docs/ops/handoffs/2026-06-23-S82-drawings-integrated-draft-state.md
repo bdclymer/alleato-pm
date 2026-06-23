@@ -6,7 +6,7 @@
 2) Task ID: drawings-integrated-draft-state
 3) Linear issue: AAI-614
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-614/add-drawings-review-queue-for-unpublished-revisions
-5) Current status: Complete - Pending Push
+5) Current status: Complete - Pushed
 6) Files changed (absolute paths):
    - /Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-23-drawings-integrated-draft-state.md
    - /Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-23-S82-drawings-integrated-draft-state.md
@@ -49,11 +49,11 @@
 
 ## Current Status
 
-Implemented and verified locally. Pending `codex:finish` publish.
+Implemented, verified locally, and pushed to `origin/main`.
 
 ## Exact Next Step
 
-Run `npm run codex:finish -- --message "Integrate drawings draft state" --files ...` with the task-owned files only.
+No action required for this slice. Continue the remaining Drawings parity work as separate scoped tasks.
 
 ## Known Pitfalls
 
