@@ -10463,6 +10463,42 @@ export type Database = {
         }
         Relationships: []
       }
+      db_audit_log: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          changed_columns: string[] | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          operation: string
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          changed_columns?: string[] | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          operation: string
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          changed_columns?: string[] | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          operation?: string
+          record_id?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
       db_incident_activity_samples: {
         Row: {
           age: string | null
@@ -30626,6 +30662,27 @@ export type Database = {
           submittal_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "submittal_linked_drawings_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_linked_drawings_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_linked_drawings_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "submittal_linked_drawings_submittal_id_fkey"
             columns: ["submittal_id"]
