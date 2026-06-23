@@ -108,6 +108,9 @@ const config = [
       // `editable` decision (wire inline editing, or `editable: false` to opt out). Stops
       // tables shipping a dropdown that forces a redirect-to-edit-page.
       "design-system/require-editable-status-column": "warn",
+      // Gate 22b: title/name/subject columns must link to the detail page, never be
+      // inline-editable (an editable cell hijacks the click that opens the record).
+      "design-system/no-editable-title-column": "error",
       // Gate 23: blocks raw <Input type="date"> in form files — use <RHFDateField> instead.
       // Ratchet: warn globally (existing debt), error on changed files via lint-staged.
       "design-system/no-raw-date-input": "warn",

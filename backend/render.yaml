@@ -154,8 +154,9 @@ services:
       - key: TEAMS_DM_EXPORT_MAX_PAGES
         value: "2"
 
-  # Runs Outlook/OneDrive/SharePoint sync every 2 hours, staggered away from
-  # Teams-only crons. Embedding is capped at 25 documents per run.
+  # Runs Outlook/SharePoint fetch-only sync every 2 hours, staggered away from
+  # Teams-only crons. Embedding runs in a separate cron so source ingestion does
+  # not stop when vectorization/provider work is degraded.
   - type: cron
     name: alleato-graph-sync
     runtime: docker
@@ -171,7 +172,9 @@ services:
       result = run_graph_sync(
         get_supabase_client(),
         run_teams=False,
-        run_embedding=True,
+        run_embedding=False,
+        run_ocr=False,
+        run_attachment_promotion=False,
         run_teams_compiler=False,
         embed_limit=25,
         teams_compiler_batch_size=25,
@@ -230,10 +233,53 @@ services:
       - key: GRAPH_SYNC_TEAMS_DM
         value: "false"
       - key: GRAPH_SYNC_ONEDRIVE
+        value: "false"
+      - key: GRAPH_SYNC_SHAREPOINT
         value: "true"
       - key: GRAPH_EMBEDDING_LIMIT
         value: "25"
       - key: TEAMS_COMPILER_BATCH_SIZE
+        value: "25"
+
+  - type: cron
+    name: alleato-graph-embedding
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    schedule: "*/5 * * * *"
+    dockerCommand: >-
+      timeout 10m python3 -c "
+      import json, sys;
+      sys.path.insert(0, '/app');
+      from src.services.scheduler import _run_graph_embedding;
+      result = _run_graph_embedding(limit=25);
+      print(json.dumps(result, indent=2));
+      sys.exit(1 if result.get('errors') else 0)
+      "
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
+      - key: AI_GATEWAY_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GRAPH_EMBEDDING_LIMIT
         value: "25"
 
   - type: cron

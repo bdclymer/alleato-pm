@@ -393,14 +393,7 @@ export function buildCommitmentTableColumns(
       ),
       csvValue: (item) => [item.number, item.title].filter(Boolean).join(" "),
       sortValue: (item) => item.title ?? "",
-      ...(onInlineEdit
-        ? {
-            editable: true,
-            editInputType: "text",
-            editValue: (item) => item.title ?? "",
-            onEdit: (item, value) => onInlineEdit(item.id, "title", value),
-          }
-        : {}),
+      // Title is the link to the detail page — never inline-editable.
     },
     type: {
       render: (item) => (

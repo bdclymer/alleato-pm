@@ -177,13 +177,7 @@ export function buildSubmittalTableColumns(
         </span>
       ),
       sortValue: (item) => item.title,
-      editable: Boolean(inlineEdit),
-      editType: "text",
-      editValue: (item) => item.title ?? "",
-      editEmptyLabel: "Add title",
-      onEdit: async (item, value) => {
-        await inlineEdit!.onUpdate(item.id, { title: value });
-      },
+      // Title is the link to the detail page — never inline-editable.
     },
     {
       ...submittalColumns[4],

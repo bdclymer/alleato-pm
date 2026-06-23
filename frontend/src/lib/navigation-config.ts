@@ -108,44 +108,6 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     description: "AI-powered project guidance",
   },
   {
-    name: "Skill Library",
-    path: "ai/skills",
-    requiresProject: false,
-    icon: Brain,
-    description: "Approved assistant skills",
-  },
-  {
-    name: "Teach Alleato",
-    path: "ai/teach",
-    requiresProject: false,
-    icon: BrainCircuit,
-    description: "Submit field knowledge for review",
-  },
-  {
-    name: "AI Learning Promotions",
-    path: "ai/learning-promotions",
-    requiresProject: false,
-    icon: Sparkles,
-    description: "Review candidate AI learnings",
-    developerOnly: true,
-  },
-  {
-    name: "AI Skills Admin",
-    path: "ai/admin/skills",
-    requiresProject: false,
-    icon: Shield,
-    description: "Review Skill Library records",
-    developerOnly: true,
-  },
-  {
-    name: "AI Vision",
-    path: "ai-vision",
-    requiresProject: false,
-    icon: Compass,
-    description: "The AI build vision, agent team, and tool roadmap",
-    ownerOnly: true,
-  },
-  {
     name: "Projects",
     path: "",
     requiresProject: false,
@@ -322,6 +284,135 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
   },
 ];
 
+/**
+ * Development section — visible only to the workspace owner (OWNER_EMAIL).
+ * Includes all non-assistant AI tools + internal admin surfaces.
+ */
+export const developmentTools: HeaderNavigationTool[] = [
+  // AI tools (non-assistant)
+  {
+    name: "AI Vision",
+    path: "ai-vision",
+    requiresProject: false,
+    icon: Compass,
+    description: "The AI build vision, agent team, and tool roadmap",
+    ownerOnly: true,
+  },
+  {
+    name: "Skill Library",
+    path: "ai/skills",
+    requiresProject: false,
+    icon: Brain,
+    description: "Approved assistant skills",
+    ownerOnly: true,
+  },
+  {
+    name: "Teach Alleato",
+    path: "ai/teach",
+    requiresProject: false,
+    icon: BrainCircuit,
+    description: "Submit field knowledge for review",
+    ownerOnly: true,
+  },
+  {
+    name: "AI Learning Promotions",
+    path: "ai/learning-promotions",
+    requiresProject: false,
+    icon: Sparkles,
+    description: "Review candidate AI learnings",
+    ownerOnly: true,
+  },
+  {
+    name: "AI Skills Admin",
+    path: "ai/admin/skills",
+    requiresProject: false,
+    icon: Shield,
+    description: "Review Skill Library records",
+    ownerOnly: true,
+  },
+  // Internal admin surfaces
+  {
+    name: "Admin Dashboard",
+    path: "admin",
+    requiresProject: false,
+    icon: Shield,
+    description: "Internal admin command center",
+    ownerOnly: true,
+  },
+  {
+    name: "Project Intelligence",
+    path: "intelligence",
+    requiresProject: true,
+    icon: Brain,
+    description: "Current project intelligence packet",
+    ownerOnly: true,
+  },
+  {
+    name: "Project Attribution",
+    path: "project-attribution",
+    requiresProject: false,
+    icon: Brain,
+    description: "Communication project mapping",
+    ownerOnly: true,
+  },
+  {
+    name: "Operations Readiness",
+    path: "operations-readiness",
+    requiresProject: false,
+    icon: CheckCircle,
+    description: "Source sync, tasks, packets, and daily brief readiness",
+    ownerOnly: true,
+  },
+  {
+    name: "AI Work Runs",
+    path: "ai-work-runs",
+    requiresProject: false,
+    icon: Clock,
+    description: "Executive Daily Brief run ledger and evidence rows",
+    ownerOnly: true,
+  },
+  {
+    name: "Task Training",
+    path: "task-training",
+    requiresProject: false,
+    icon: Brain,
+    description: "Task extraction and learning review",
+    ownerOnly: true,
+  },
+  {
+    name: "Knowledge Sources",
+    path: "knowledge/manage",
+    requiresProject: false,
+    icon: BookOpen,
+    description: "AI knowledge source management",
+    ownerOnly: true,
+  },
+  {
+    name: "Assistant Eval Runs",
+    path: "eval-runs",
+    requiresProject: false,
+    icon: FlaskConical,
+    description: "AI-assistant eval results: pass/fail, tools fired, answers",
+    ownerOnly: true,
+  },
+  {
+    name: "Deep Research Archive",
+    path: "deep-research",
+    requiresProject: false,
+    icon: BookOpen,
+    description: "Past Deep Agents wiki research projects",
+    ownerOnly: true,
+  },
+  {
+    name: "Annotation Inbox",
+    path: "annotation-inbox",
+    requiresProject: false,
+    icon: MessageCircle,
+    description: "Agentation annotation triage",
+    ownerOnly: true,
+  },
+];
+
 export interface CompanyWideToolSection {
   label: string;
   toolNames: string[];
@@ -334,13 +425,7 @@ export const companyWideToolSections: CompanyWideToolSection[] = [
   },
   {
     label: "AI",
-    toolNames: [
-      "AI",
-      "AI Vision",
-      "Skill Library",
-      "Teach Alleato",
-      "AI Learning Promotions",
-    ],
+    toolNames: ["AI"],
   },
   {
     label: "Work",
@@ -528,6 +613,8 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     tools: [
       { name: "Home", path: "home", icon: Home, requiresProject: true },
       { name: "Project Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" as PermissionModule },
+      { name: "Project Tasks", path: "tasks", icon: CheckCircle, requiresProject: true },
+      { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" as PermissionModule },
       { name: "Project Admin", path: "admin", icon: Shield, requiresProject: true, adminOnly: true },
     ],
   },
@@ -542,8 +629,26 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     label: "Operations",
     icon: ClipboardList,
     tools: [
-      { name: "Tasks", path: "tasks", icon: CheckCircle, requiresProject: true },
-      ...projectManagementTools,
+      { name: "Schedule", path: "schedule", icon: Calendar, requiresProject: true, module: "schedule" as PermissionModule },
+      { name: "Meetings", path: "meetings", icon: Users, requiresProject: true },
+      { name: "Daily Log", path: "daily-log", icon: Clock, requiresProject: true },
+      { name: "Punch List", path: "punch-list", icon: CheckCircle, requiresProject: true },
+      { name: "RFIs", path: "rfis", icon: MessageCircle, requiresProject: true, module: "rfis" as PermissionModule },
+      { name: "Submittals", path: "submittals", icon: Package, requiresProject: true, module: "submittals" as PermissionModule },
+      { name: "Transmittals", path: "transmittals", icon: Mail, requiresProject: true, module: "documents" as PermissionModule },
+      { name: "Emails", path: "emails", icon: Mail, requiresProject: true, module: "documents" as PermissionModule },
+    ],
+  },
+  {
+    id: "documents",
+    label: "Documents",
+    icon: FolderOpen,
+    tools: [
+      { name: "Photos", path: "photos", icon: Camera, requiresProject: true, module: "documents" as PermissionModule },
+      { name: "Drawings", path: "drawings", icon: FileImage, requiresProject: true, module: "documents" as PermissionModule },
+      { name: "Specifications", path: "specifications", icon: BookOpen, requiresProject: true, module: "documents" as PermissionModule },
+      { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" as PermissionModule },
+      { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: true, module: "documents" as PermissionModule, developerOnly: true },
     ],
   },
 ];

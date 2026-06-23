@@ -154,18 +154,20 @@ function runsFor(row: DailySyncRow, source: SourceKey): number {
 }
 
 function firstColumnLabel(source: SourceKey): string {
-  return source === "meetings" ? "Added" : "Synced";
+  return source === "meetings" || source === "outlook" ? "Added" : "Synced";
 }
 
 function secondColumnLabel(source: SourceKey): string {
-  return source === "meetings" ? "Complete" : "Failed";
+  return source === "meetings" || source === "outlook" ? "Complete" : "Failed";
 }
 
 function firstValueFor(row: DailySyncRow, source: SourceKey): number {
+  if (source === "outlook") return row.outlook_added;
   return source === "meetings" ? row.meetings_added : syncedFor(row, source);
 }
 
 function secondValueFor(row: DailySyncRow, source: SourceKey): number {
+  if (source === "outlook") return row.outlook_complete;
   return source === "meetings" ? row.meetings_complete : failedFor(row, source);
 }
 
@@ -177,6 +179,9 @@ function rowTotalFailed(row: DailySyncRow): number {
   return SOURCES.reduce((sum, source) => {
     if (source.key === "meetings") {
       return sum + Math.max(row.meetings_added - row.meetings_complete, 0);
+    }
+    if (source.key === "outlook") {
+      return sum + Math.max(row.outlook_added - row.outlook_complete, 0);
     }
     return sum + failedFor(row, source.key);
   }, 0);
@@ -866,9 +871,12 @@ function DailySyncHistory({ days, loading }: { days: DailySyncRow[]; loading: bo
                   const secondValue = secondValueFor(day, source.key);
                   const runs = runsFor(day, source.key);
                   const isMeetings = source.key === "meetings";
-                  const hasRun = isMeetings || runs > 0;
+                  const isOutlook = source.key === "outlook";
+                  const hasRun = isMeetings || isOutlook || runs > 0;
                   const meetingsComplete =
                     isMeetings && day.meetings_added > 0 && day.meetings_complete === day.meetings_added;
+                  const outlookComplete =
+                    isOutlook && day.outlook_added > 0 && day.outlook_complete === day.outlook_added;
                   return (
                     <React.Fragment key={source.key}>
                       <InlineTableCell
@@ -888,6 +896,8 @@ function DailySyncHistory({ days, loading }: { days: DailySyncRow[]; loading: bo
                         title={
                           isMeetings
                             ? `${day.meetings_vectorized}/${day.meetings_added} vectorized, ${day.meetings_project_assigned}/${day.meetings_added} project assigned, ${day.meetings_tasks_extracted}/${day.meetings_added} tasks extracted, ${day.meetings_project_intelligence_updated}/${day.meetings_added} Project Intelligence updated`
+                            : isOutlook
+                              ? `${day.outlook_vectorized}/${day.outlook_added} vectorized, ${day.outlook_project_assigned}/${day.outlook_added} project assigned, ${day.outlook_tasks_extracted}/${day.outlook_added} tasks extracted, ${day.outlook_project_intelligence_updated}/${day.outlook_added} Project Intelligence updated`
                             : undefined
                         }
                         className={
@@ -895,6 +905,10 @@ function DailySyncHistory({ days, loading }: { days: DailySyncRow[]; loading: bo
                             ? meetingsComplete || day.meetings_added === 0
                               ? "text-emerald-700"
                               : "text-destructive"
+                            : isOutlook
+                              ? outlookComplete || day.outlook_added === 0
+                                ? "text-emerald-700"
+                                : "text-destructive"
                             : !hasRun
                               ? "text-muted-foreground/60"
                               : secondValue > 0

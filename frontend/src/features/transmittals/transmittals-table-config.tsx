@@ -124,13 +124,7 @@ export function buildTransmittalTableColumns(
         </span>
       ),
       sortValue: (item) => item.subject,
-      editable,
-      editType: "text",
-      editValue: (item) => item.subject ?? "",
-      editEmptyLabel: "Add subject",
-      onEdit: async (item, value) => {
-        await inlineEdit!.onUpdate(String(item.id), { subject: value });
-      },
+      // Subject is the row's primary label / link to detail — never inline-editable.
     },
     {
       ...transmittalColumns[2],

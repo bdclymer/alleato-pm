@@ -28,11 +28,13 @@ const noExternalFetchInApiRoutes = require('./rules/no-external-fetch-in-api-rou
 const noRawErrorMessageToast = require('./rules/no-raw-error-message-toast');
 const noRawSearchInput = require('./rules/no-raw-search-input');
 const requireEditableStatusColumn = require('./rules/require-editable-status-column');
+const noEditableTitleColumn = require('./rules/no-editable-title-column');
 const noRawDateInput = require('./rules/no-raw-date-input');
 
 module.exports = {
   rules: {
     'require-editable-status-column': requireEditableStatusColumn,
+    'no-editable-title-column': noEditableTitleColumn,
     'no-raw-date-input': noRawDateInput,
     'require-info-alert': requireInfoAlert,
     'no-hardcoded-colors': noHardcodedColors,

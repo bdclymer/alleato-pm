@@ -26,6 +26,12 @@ export type DailySyncRow = {
   sharepoint_failed: number;
   outlook_synced: number;
   outlook_failed: number;
+  outlook_added: number;
+  outlook_vectorized: number;
+  outlook_project_assigned: number;
+  outlook_tasks_extracted: number;
+  outlook_project_intelligence_updated: number;
+  outlook_complete: number;
   meetings_synced: number;
   meetings_failed: number;
   meetings_added: number;
@@ -208,6 +214,12 @@ function emptyDay(date: string): DailySyncRow {
     sharepoint_failed: 0,
     outlook_synced: 0,
     outlook_failed: 0,
+    outlook_added: 0,
+    outlook_vectorized: 0,
+    outlook_project_assigned: 0,
+    outlook_tasks_extracted: 0,
+    outlook_project_intelligence_updated: 0,
+    outlook_complete: 0,
     meetings_synced: 0,
     meetings_failed: 0,
     meetings_added: 0,
@@ -483,6 +495,150 @@ export const GET = withApiGuardrails(WHERE, async ({ request }) => {
     day.meetings_tasks_extracted += tasksExtracted ? 1 : 0;
     day.meetings_project_intelligence_updated += projectIntelligenceUpdated ? 1 : 0;
     day.meetings_complete += complete ? 1 : 0;
+  }
+
+  const { data: outlookDocuments, error: outlookDocumentsError } = await ragSupabase
+    .from("rag_document_metadata")
+    .select("id,created_at,project_id")
+    .eq("source", "microsoft_graph")
+    .eq("type", "email")
+    .gte("created_at", since.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(10000);
+
+  if (outlookDocumentsError) {
+    return NextResponse.json(
+      { error: outlookDocumentsError.message, code: outlookDocumentsError.code },
+      { status: 500 },
+    );
+  }
+
+  const outlookRows = ((outlookDocuments ?? []) as MeetingDocumentRow[]).filter(
+    (row) => row.id && row.created_at,
+  );
+  const outlookIds = outlookRows.map((row) => row.id);
+  const outlookChunkRows: Array<{ document_id: string; updated_at: string | null }> = [];
+  const outlookTaskRows: Array<{ metadata_id: string; created_at: string | null }> = [];
+  const outlookEvidenceRows: Array<{ source_document_id: string | null; created_at: string | null }> = [];
+  const outlookJobRows: LifecycleJobRow[] = [];
+
+  for (const batch of batches(outlookIds, 25)) {
+    const [chunkResult, taskResult, evidenceResult, processingJobResult, intelligenceJobResult] =
+      await Promise.all([
+        ragSupabase
+          .from("document_chunks")
+          .select("document_id,updated_at")
+          .in("document_id", batch)
+          .not("embedding", "is", null)
+          .limit(10000),
+        appSupabase
+          .from("tasks")
+          .select("metadata_id,created_at")
+          .in("metadata_id", batch)
+          .gte("created_at", since.toISOString())
+          .limit(10000),
+        appSupabase
+          .from("insight_card_evidence")
+          .select("source_document_id,created_at")
+          .in("source_document_id", batch)
+          .gte("created_at", since.toISOString())
+          .limit(10000),
+        ragSupabase
+          .from("source_processing_jobs")
+          .select("source_document_id,updated_at,metadata")
+          .in("source_document_id", batch)
+          .order("updated_at", { ascending: false })
+          .limit(10000)
+          .returns<LifecycleJobRow[]>(),
+        ragSupabase
+          .from("source_intelligence_jobs")
+          .select("source_document_id,updated_at,output_summary")
+          .in("source_document_id", batch)
+          .order("updated_at", { ascending: false })
+          .limit(10000)
+          .returns<
+            {
+              source_document_id: string | null;
+              updated_at: string | null;
+              output_summary: Record<string, unknown> | null;
+            }[]
+          >(),
+      ]);
+
+    if (chunkResult.error) {
+      return NextResponse.json(
+        { error: chunkResult.error.message, code: chunkResult.error.code },
+        { status: 500 },
+      );
+    }
+    if (taskResult.error) {
+      return NextResponse.json(
+        { error: taskResult.error.message, code: taskResult.error.code },
+        { status: 500 },
+      );
+    }
+    if (evidenceResult.error) {
+      return NextResponse.json(
+        { error: evidenceResult.error.message, code: evidenceResult.error.code },
+        { status: 500 },
+      );
+    }
+    if (processingJobResult.error) {
+      return NextResponse.json(
+        { error: processingJobResult.error.message, code: processingJobResult.error.code },
+        { status: 500 },
+      );
+    }
+    if (intelligenceJobResult.error) {
+      return NextResponse.json(
+        { error: intelligenceJobResult.error.message, code: intelligenceJobResult.error.code },
+        { status: 500 },
+      );
+    }
+
+    outlookChunkRows.push(...(chunkResult.data ?? []));
+    outlookTaskRows.push(...(taskResult.data ?? []));
+    outlookEvidenceRows.push(...(evidenceResult.data ?? []));
+    outlookJobRows.push(...(processingJobResult.data ?? []));
+    outlookJobRows.push(
+      ...(intelligenceJobResult.data ?? []).map((row) => ({
+        source_document_id: row.source_document_id,
+        updated_at: row.updated_at,
+        metadata: row.output_summary,
+      })),
+    );
+  }
+
+  const outlookEmbeddedIds = new Set(outlookChunkRows.map((row) => row.document_id));
+  const outlookTaskIds = new Set(outlookTaskRows.map((row) => row.metadata_id));
+  const outlookEvidenceIds = new Set(
+    outlookEvidenceRows
+      .map((row) => row.source_document_id)
+      .filter((id): id is string => Boolean(id)),
+  );
+  const outlookJobMetadataByDocumentId = latestJobMetadataByDocumentId(outlookJobRows);
+
+  for (const outlook of outlookRows) {
+    if (!outlook.created_at) continue;
+    const date = outlook.created_at.slice(0, 10);
+    let day = byDay.get(date);
+    if (!day) {
+      day = emptyDay(date);
+      byDay.set(date, day);
+    }
+
+    const vectorized = outlookEmbeddedIds.has(outlook.id);
+    const projectAssigned = outlook.project_id !== null;
+    const tasksExtracted = hasTaskExtractionOutcome(outlook.id, outlookTaskIds, outlookJobMetadataByDocumentId);
+    const projectIntelligenceUpdated = outlookEvidenceIds.has(outlook.id);
+    const complete = vectorized && projectAssigned && tasksExtracted && projectIntelligenceUpdated;
+
+    day.outlook_added += 1;
+    day.outlook_vectorized += vectorized ? 1 : 0;
+    day.outlook_project_assigned += projectAssigned ? 1 : 0;
+    day.outlook_tasks_extracted += tasksExtracted ? 1 : 0;
+    day.outlook_project_intelligence_updated += projectIntelligenceUpdated ? 1 : 0;
+    day.outlook_complete += complete ? 1 : 0;
   }
 
   // Fill in empty days so a multi-day stall is visible as a row of zeros

@@ -130,7 +130,7 @@ export default function ProgressReportsPage() {
     pathname,
     router,
     defaults: {
-      view: "card",
+      view: "table",
       allowedViews: ["card", "table"],
       page: 1,
       perPage: 50,

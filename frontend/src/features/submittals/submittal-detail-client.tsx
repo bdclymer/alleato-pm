@@ -4,23 +4,15 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  AlertTriangle,
-  CheckCircle2,
-  ChevronRight,
-  Circle,
-  Clock,
   Copy,
   ExternalLink,
   Mail,
-  MessageSquare,
   MoreHorizontal,
-  Send,
   SquarePen,
   Trash2,
-  XCircle,
 } from "lucide-react";
 
-import { PageShell } from "@/components/layout";
+import { PageShell, SectionRuleHeading } from "@/components/layout";
 import { EntityAttachments, StatusBadge } from "@/components/ds";
 import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItemsPanel";
 import { Button } from "@/components/ui/button";
@@ -138,228 +130,7 @@ function BallInCourtChip({
   );
 }
 
-// ─── Date Cell ────────────────────────────────────────────────────────────────
-
-function DateCell({
-  label,
-  date,
-  daysUntil,
-}: {
-  label: string;
-  date: string;
-  daysUntil?: number | null;
-}) {
-  const isOverdue =
-    daysUntil !== undefined && daysUntil !== null && daysUntil < 0;
-  const isSoon =
-    daysUntil !== undefined &&
-    daysUntil !== null &&
-    daysUntil >= 0 &&
-    daysUntil <= 5;
-
-  return (
-    <div className="flex min-w-20 flex-col gap-0.5">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-      <span
-        className={cn(
-          "text-sm font-medium",
-          isOverdue ? "text-destructive" : "text-foreground",
-        )}
-      >
-        {formatDate(date)}
-      </span>
-      {isOverdue && daysUntil !== null && (
-        <span className="flex items-center gap-0.5 text-[10px] font-medium text-destructive">
-          <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
-          {Math.abs(daysUntil)} day{Math.abs(daysUntil) !== 1 ? "s" : ""} overdue
-        </span>
-      )}
-      {isSoon && !isOverdue && daysUntil !== null && (
-        <span className="text-[10px] text-muted-foreground">
-          {daysUntil} day{daysUntil !== 1 ? "s" : ""} left
-        </span>
-      )}
-    </div>
-  );
-}
-
-// ─── Date Timeline Row ────────────────────────────────────────────────────────
-
-function DateTimelineRow({ submittal }: { submittal: SubmittalDetail }) {
-  const dueIn = getDaysUntil(submittal.final_due_date);
-
-  const hasDates =
-    submittal.sent_date ||
-    submittal.final_due_date ||
-    submittal.required_on_site_date;
-
-  if (!hasDates && submittal.lead_time == null) return null;
-
-  return (
-    <div className="flex flex-wrap items-start gap-x-3 gap-y-2 pt-1">
-      {submittal.sent_date && (
-        <DateCell label="Submitted" date={submittal.sent_date} />
-      )}
-      {submittal.sent_date && submittal.final_due_date && (
-        <ChevronRight className="mt-3 h-3 w-3 shrink-0 text-muted-foreground/30" />
-      )}
-      {submittal.final_due_date && (
-        <DateCell
-          label="Final Due"
-          date={submittal.final_due_date}
-          daysUntil={dueIn}
-        />
-      )}
-      {submittal.final_due_date && submittal.required_on_site_date && (
-        <ChevronRight className="mt-3 h-3 w-3 shrink-0 text-muted-foreground/30" />
-      )}
-      {submittal.required_on_site_date && (
-        <DateCell
-          label="On-Site"
-          date={submittal.required_on_site_date}
-          daysUntil={getDaysUntil(submittal.required_on_site_date)}
-        />
-      )}
-      {submittal.lead_time != null && (
-        <span className="ml-1 flex flex-col gap-0.5 rounded-md bg-muted px-2.5 py-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Lead Time
-          </span>
-          <span className="text-sm font-medium text-foreground">
-            {submittal.lead_time}d
-          </span>
-        </span>
-      )}
-    </div>
-  );
-}
-
-// ─── Workflow Stepper ─────────────────────────────────────────────────────────
-
 type WorkflowStep = SubmittalDetail["submittal_workflow_steps"][number];
-
-function WorkflowStepper({
-  steps,
-  users,
-  currentUserId,
-  respondingEntry,
-  onRespond,
-}: {
-  steps: WorkflowStep[];
-  users: AuthUser[];
-  currentUserId: string | null;
-  respondingEntry: { stepId: string; respId: string } | null;
-  onRespond: (entry: { stepId: string; respId: string } | null) => void;
-}) {
-  const sorted = [...steps].sort((a, b) => a.step_order - b.step_order);
-
-  if (sorted.length === 0) return null;
-
-  return (
-    <div className="overflow-x-auto py-1">
-      <div className="flex items-start gap-0 min-w-max">
-        {sorted.map((step, i) => {
-          const state = getStepState(step);
-          const responses = step.submittal_responses ?? [];
-          const pendingForMe = responses.find(
-            (r) =>
-              r.response_status === "Pending" &&
-              r.responder_id === currentUserId,
-          );
-          const isResponding =
-            respondingEntry?.stepId === step.id;
-
-          return (
-            <React.Fragment key={step.id}>
-              {i > 0 && (
-                <div
-                  className="mt-4 h-px w-10 shrink-0 self-start bg-border"
-                  aria-hidden
-                />
-              )}
-              <div className="flex w-36 flex-col items-center gap-1.5 px-1 text-center">
-                <div
-                  className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full ring-1",
-                    state === "done" &&
-                      "bg-primary/10 text-primary ring-primary/25",
-                    state === "in-progress" &&
-                      "bg-primary/10 text-primary ring-primary/25",
-                    state === "rejected" &&
-                      "bg-destructive/10 text-destructive ring-destructive/20",
-                    state === "not-started" &&
-                      "bg-muted text-muted-foreground ring-border",
-                  )}
-                >
-                  {state === "done" && <CheckCircle2 className="h-4 w-4" />}
-                  {state === "in-progress" && <Clock className="h-4 w-4" />}
-                  {state === "rejected" && <XCircle className="h-4 w-4" />}
-                  {state === "not-started" && (
-                    <Circle className="h-4 w-4 opacity-40" />
-                  )}
-                </div>
-
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Step {step.step_order}
-                  </span>
-                  <span className="text-xs font-medium text-foreground">
-                    {step.step_type}
-                  </span>
-
-                  {responses.length > 0 ? (
-                    <div className="mt-1 flex flex-col items-center gap-1.5 w-full">
-                      {responses.map((resp) => (
-                        <div
-                          key={resp.id}
-                          className="flex flex-col items-center gap-0.5"
-                        >
-                          <span className="text-xs text-muted-foreground leading-tight max-w-full truncate">
-                            {resolveUserName(users, resp.responder_id)}
-                          </span>
-                          <StatusBadge status={resp.response_status} />
-                          {resp.responded_at && (
-                            <span className="text-[10px] text-muted-foreground/60">
-                              {formatDate(resp.responded_at)}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="mt-1 text-[10px] text-muted-foreground/50">
-                      Unassigned
-                    </span>
-                  )}
-
-                  {pendingForMe && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2 h-7 text-xs"
-                      onClick={() =>
-                        isResponding
-                          ? onRespond(null)
-                          : onRespond({
-                              stepId: step.id,
-                              respId: pendingForMe.id,
-                            })
-                      }
-                    >
-                      {isResponding ? "Cancel" : "Respond"}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </React.Fragment>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 // ─── Respond form ─────────────────────────────────────────────────────────────
 
@@ -664,15 +435,16 @@ function WorkflowBuilder({
 // ─── MetaField ────────────────────────────────────────────────────────────────
 
 function MetaField({ label, value }: { label: string; value?: React.ReactNode }) {
-  if (value === null || value === undefined || value === "") return (
-    <div>
-      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
-    </div>
-  );
   return (
-    <div>
-      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-1 text-sm text-foreground">{value}</p>
+    <div className="min-w-0">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <div className="mt-1 min-h-5 truncate text-sm text-foreground">
+        {value === null || value === undefined || value === "" ? (
+          <span className="text-muted-foreground/60">Not set</span>
+        ) : (
+          value
+        )}
+      </div>
     </div>
   );
 }
@@ -701,6 +473,38 @@ function SidebarRow({
   );
 }
 
+function SectionHeader({
+  title,
+  action,
+}: {
+  title: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <SectionRuleHeading label={title} actions={action} className="mb-0 pb-0" />
+  );
+}
+
+function EmptySection({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="py-4 text-sm text-muted-foreground">{children}</p>
+  );
+}
+
+function getSubmittalTypeName(submittal: SubmittalDetail): string | null {
+  if (typeof submittal.submittal_type === "object") {
+    return submittal.submittal_type?.name ?? null;
+  }
+  return submittal.submittal_type ?? null;
+}
+
+function getPackageName(submittal: SubmittalDetail): string | null {
+  if (typeof submittal.submittal_package === "object") {
+    return submittal.submittal_package?.name ?? null;
+  }
+  return submittal.submittal_package ?? null;
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface SubmittalDetailClientProps {
@@ -719,10 +523,6 @@ export function SubmittalDetailClient({
   const { confirm, ConfirmDialog } = useConfirm();
   const deleteMutation = useDeleteSubmittal(projectId);
   const duplicateMutation = useDuplicateSubmittal(projectId);
-  const [respondingEntry, setRespondingEntry] = React.useState<{
-    stepId: string;
-    respId: string;
-  } | null>(null);
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [distributeOpen, setDistributeOpen] = React.useState(false);
   const [isEditing, setIsEditing] = React.useState(false);
@@ -822,9 +622,18 @@ export function SubmittalDetailClient({
         variant="detailXWide"
         eyebrow={eyebrow}
         title={submittal.title}
+        statusBadge={<StatusBadge status={submittal.status} />}
         onBack={() => router.push(`/${projectId}/submittals`)}
         actions={
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Edit submittal"
+              onClick={() => setIsEditing(true)}
+            >
+              <SquarePen className="h-4 w-4" />
+            </Button>
             {submittal.status !== "Closed" && !submittal.deleted_at && (
               <Button
                 variant="default"
@@ -842,10 +651,6 @@ export function SubmittalDetailClient({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                  <SquarePen className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleDuplicate}
                   disabled={duplicateMutation.isPending}
@@ -879,92 +684,66 @@ export function SubmittalDetailClient({
             }}
           />
         ) : (
-          <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-[1fr_280px]">
-            {/* ── LEFT MAIN COLUMN ── */}
+          <div className="grid grid-cols-1 gap-x-14 gap-y-10 xl:grid-cols-[minmax(0,715px)_368px]">
             <div className="min-w-0 space-y-10">
+              <section className="space-y-6">
+                <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-4">
+                  <MetaField label="Spec Section" value={submittal.specification_section} />
+                  <MetaField label="Number" value={submittal.submittal_number} />
+                  <MetaField
+                    label="Revision Number"
+                    value={submittal.revision != null ? `Rev ${submittal.revision}` : null}
+                  />
+                  <MetaField label="Package" value={getPackageName(submittal)} />
+                </div>
 
-              {/* Status */}
-              <div className="flex flex-wrap items-center gap-3">
-                <StatusBadge status={submittal.status} />
-                {submittal.ball_in_court && (
-                  <BallInCourtChip userId={submittal.ball_in_court} users={allUsers} />
-                )}
-              </div>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-4">
+                  <MetaField label="Type" value={getSubmittalTypeName(submittal)} />
+                  <MetaField label="Division" value={submittal.division} />
+                  <MetaField
+                    label="Linked Drawings"
+                    value={linkedDrawings.length > 0 ? (
+                      <Link
+                        href={`/${projectId}/drawings`}
+                        className="text-primary underline-offset-2 hover:underline"
+                      >
+                        {linkedDrawings.length} drawing{linkedDrawings.length !== 1 ? "s" : ""}
+                      </Link>
+                    ) : null}
+                  />
+                  <MetaField label="Private Flag" value={submittal.is_private ? "Yes" : "No"} />
+                </div>
+              </section>
 
-              {/* Metadata grid row 1 */}
-              <div className="grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
-                <MetaField label="Spec Section" value={submittal.specification_section} />
-                <MetaField label="Number" value={submittal.submittal_number} />
-                <MetaField
-                  label="Revision"
-                  value={submittal.revision != null ? `Rev ${submittal.revision}` : null}
-                />
-                <MetaField
-                  label="Package"
-                  value={(submittal.submittal_package as { name?: string } | null)?.name ?? (typeof submittal.submittal_package === "string" ? submittal.submittal_package : null)}
-                />
-              </div>
-
-              {/* Metadata grid row 2 */}
-              <div className="grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
-                <MetaField
-                  label="Type"
-                  value={typeof submittal.submittal_type === "object" ? (submittal.submittal_type as { name?: string } | null)?.name : submittal.submittal_type}
-                />
-                <MetaField label="Division" value={submittal.division} />
-                <MetaField
-                  label="Linked Drawings"
-                  value={linkedDrawings.length > 0 ? (
-                    <Link href={`/${projectId}/drawings`} className="text-primary hover:underline underline-offset-2">
-                      {linkedDrawings.length} drawing{linkedDrawings.length !== 1 ? "s" : ""}
-                    </Link>
-                  ) : null}
-                />
-                <MetaField label="Visibility" value={submittal.is_private ? "Private" : "Public"} />
-              </div>
-
-              {/* Description */}
-              {submittal.description && (
-                <div>
-                  <p className="mb-2 text-xs text-muted-foreground">Description</p>
+              <section className="space-y-3">
+                <SectionHeader title="Description" />
+                {submittal.description ? (
                   <div className="rounded-md bg-muted/40 px-4 py-3">
-                    <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
                       {submittal.description}
                     </p>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <EmptySection>No description has been added.</EmptySection>
+                )}
+              </section>
 
-              {/* Attachments */}
-              <div>
+              <section className="space-y-3">
+                <SectionHeader title="Attachments" />
                 <EntityAttachments
                   entityType="submittal"
                   entityId={String(submittal.id)}
                   projectId={projectId}
                 />
-              </div>
+              </section>
 
-              {/* Workflow */}
-              <div>
-                <div className="mb-4 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-foreground">Workflow</span>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="h-auto p-0 text-sm text-primary"
-                    onClick={() => {
-                      const el = document.getElementById("workflow-builder");
-                      el?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                  >
-                    Add Step
-                  </Button>
-                </div>
+              <section className="space-y-4">
+                <SectionHeader title="Workflow" />
 
                 {workflowSteps.length > 0 && (
-                  <div className="mb-6">
-                    {/* Table header */}
-                    <div className="grid grid-cols-[2rem_1fr_6rem_10rem_6rem] gap-x-4 border-b border-border pb-2 text-xs font-medium text-muted-foreground">
+                  <div className="overflow-x-auto rounded-md border border-border">
+                    <div style={{ minWidth: "715px" }}>
+                    <div className="grid grid-cols-[40px_208px_172px_192px_132px] bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
                       <span>#</span>
                       <span>Step</span>
                       <span>Role</span>
@@ -983,12 +762,14 @@ export function SubmittalDetailClient({
                         <div key={step.id}>
                           <div
                             className={cn(
-                              "grid grid-cols-[2rem_1fr_6rem_10rem_6rem] gap-x-4 border-b border-border py-3 text-sm",
-                              isActive && "relative before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-0.5 before:bg-primary"
+                              "relative grid grid-cols-[40px_208px_172px_192px_132px] border-t border-border px-3 py-3 text-sm",
+                              isActive && "before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary"
                             )}
                           >
                             <span className="text-muted-foreground">{idx + 1}</span>
-                            <span className="font-medium text-foreground">{step.step_type}</span>
+                            <span className="font-medium text-foreground">
+                              {step.step_type} Review
+                            </span>
                             <span className="text-muted-foreground">{step.step_type}</span>
                             <span className="flex items-center gap-2">
                               {responderInitials && (
@@ -1009,7 +790,6 @@ export function SubmittalDetailClient({
                                 submittalId={submittal.id}
                                 stepId={step.id}
                                 onDone={(didSubmit) => {
-                                  setRespondingEntry(null);
                                   if (didSubmit) router.refresh();
                                 }}
                               />
@@ -1018,7 +798,12 @@ export function SubmittalDetailClient({
                         </div>
                       );
                     })}
+                    </div>
                   </div>
+                )}
+
+                {workflowSteps.length === 0 && (
+                  <EmptySection>No workflow steps have been assigned.</EmptySection>
                 )}
 
                 <div id="workflow-builder">
@@ -1029,19 +814,20 @@ export function SubmittalDetailClient({
                     currentSteps={workflowSteps}
                   />
                 </div>
-              </div>
+              </section>
 
-              {/* Activity feed */}
-              {commEvents.length > 0 && (
-                <div>
-                  <div className="mb-4 flex items-center justify-between">
-                    <span className="text-sm font-semibold text-foreground">Activity</span>
-                    {submittal.submittal_number && (
-                      <span className="text-xs text-muted-foreground">
-                        Submittal #{submittal.submittal_number}
-                      </span>
-                    )}
-                  </div>
+              <section className="space-y-4">
+                <SectionHeader
+                  title="Activity"
+                  action={
+                    submittal.submittal_number ? (
+                    <span className="text-xs text-muted-foreground">
+                      Submittal #{submittal.submittal_number}
+                    </span>
+                    ) : null
+                  }
+                />
+                {commEvents.length > 0 ? (
                   <ol className="space-y-0">
                     {commEvents.map((event, i) => {
                       const isLast = i === commEvents.length - 1;
@@ -1147,24 +933,31 @@ export function SubmittalDetailClient({
                       return null;
                     })}
                   </ol>
-                </div>
-              )}
+                ) : (
+                  <EmptySection>No workflow responses, distributions, or linked RFIs have been recorded.</EmptySection>
+                )}
+              </section>
 
-              {/* Related Items */}
-              <div>
-                <p className="mb-3 text-sm font-semibold text-foreground">Related Items</p>
+              <section className="space-y-3">
+                <SectionHeader title="Related Items" />
                 <RelatedItemsPanel
                   entityType="submittal"
                   entityId={submittal.id}
                   projectId={projectId}
                 />
-              </div>
+              </section>
             </div>
 
-            {/* ── RIGHT SIDEBAR ── */}
-            <div className="space-y-8 lg:pt-0">
+            <aside className="space-y-8 xl:pt-0">
+              {submittal.ball_in_court && (
+                <div>
+                  <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Ball In Court
+                  </p>
+                  <BallInCourtChip userId={submittal.ball_in_court} users={allUsers} />
+                </div>
+              )}
 
-              {/* Dates & Timeline */}
               {(submittal.sent_date || submittal.final_due_date || submittal.required_on_site_date || submittal.lead_time != null) && (
                 <div>
                   <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -1191,8 +984,7 @@ export function SubmittalDetailClient({
                 </div>
               )}
 
-              {/* Parties & Responsibility */}
-              {(submittal.responsible_contractor || submittal.received_from || submittal.received_from_id || submittal.submittal_manager_id || submittal.ball_in_court) && (
+              {(submittal.responsible_contractor || submittal.received_from || submittal.received_from_id || submittal.submittal_manager_id) && (
                 <div>
                   <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Parties &amp; Responsibility
@@ -1215,17 +1007,10 @@ export function SubmittalDetailClient({
                         bold
                       />
                     )}
-                    {submittal.ball_in_court && (
-                      <SidebarRow
-                        label="Ball in Court"
-                        value={resolveUserName(allUsers, submittal.ball_in_court)}
-                        bold
-                      />
-                    )}
                   </div>
                 </div>
               )}
-            </div>
+            </aside>
           </div>
         )}
       </PageShell>

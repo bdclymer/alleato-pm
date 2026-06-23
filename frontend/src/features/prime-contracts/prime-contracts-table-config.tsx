@@ -154,13 +154,7 @@ export function buildPrimeContractTableColumns(
       ),
       csvValue: (item) => item.title ?? "",
       sortValue: (item) => item.title ?? "",
-      editable,
-      editType: "text",
-      editValue: (item) => item.title ?? "",
-      editEmptyLabel: "Add title",
-      onEdit: async (item, value) => {
-        await inlineEdit!.onUpdate(item.id, { title: value });
-      },
+      // Title is the link to the detail page — never inline-editable.
     },
     {
       ...primeContractColumns[COL.erp_status],

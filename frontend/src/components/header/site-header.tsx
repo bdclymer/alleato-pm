@@ -730,7 +730,7 @@ function ToolsDropdown({
         sideOffset={6}
         className="border border-border bg-popover p-0 shadow-sm"
         style={{
-          width: "min(860px, calc(100vw - 1.5rem))",
+          width: "min(1040px, calc(100vw - 1.5rem))",
           maxWidth: "calc(100vw - 1.5rem)",
         }}
       >
@@ -803,7 +803,7 @@ function ToolsDropdown({
             <div className="overflow-x-auto">
               <div
                 className="flex divide-x divide-border/40"
-                style={{ minWidth: 760 }}
+                style={{ minWidth: 860 }}
               >
                 {groups.map((group) => (
                   <ToolsGroup

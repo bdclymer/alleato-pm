@@ -367,6 +367,21 @@ Use subagents for these tasks immediately when continuing work:
   `frontend/tests/agent-browser-runs/rag-meeting-added-complete-fixed.png`.
 - Regression-fix evidence artifact:
   `frontend/tests/agent-browser-runs/rag-sync-history-added-complete-no-icon-noise.png`.
+- Outlook recovery evidence, 2026-06-23:
+  - Fetch-only Outlook phase succeeded locally for `awehner@alleatogroup.com`:
+    `14` synced, embedding/OCR/attachment promotion skipped.
+  - Fetch-only Outlook phase succeeded locally for `bclymer@alleatogroup.com`:
+    `41` synced, embedding/OCR/attachment promotion skipped.
+  - `/rag` now reads Outlook daily inventory from AI DB `rag_document_metadata`,
+    not stale app DB `document_metadata`, and shows 2026-06-23 Outlook as
+    `56` added / `0` complete.
+  - Bounded local embedding drain succeeded: first `5` docs with `0` errors,
+    then `25` additional email docs with `0` errors.
+  - Current 2026-06-23 Outlook stage counts: `56` added, `30` vectorized,
+    `17` project assigned, `0` task rows, `0` Project Intelligence evidence,
+    `0` complete.
+  - Evidence artifact:
+    `frontend/tests/agent-browser-runs/rag-outlook-ai-db-added-complete.png`.
 - Targeted lint passed:
   `cd frontend && npx eslint src/app/'(admin)'/rag/page.tsx src/app/api/admin/rag-snapshots/route.ts --cache --cache-strategy content`.
 - Full frontend typecheck was attempted and hit the repo's bounded 60-second

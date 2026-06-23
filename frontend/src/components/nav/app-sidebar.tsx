@@ -13,6 +13,8 @@ import {
   ChevronRight,
   ChevronsLeft,
   DollarSign,
+  FlaskConical,
+  FolderOpen,
   List,
   MessageSquare,
   Phone,
@@ -185,6 +187,8 @@ function CollapsedGroupIcon({
     project: Folder,
     financial: DollarSign,
     operations: List,
+    documents: FolderOpen,
+    development: FlaskConical,
     admin: SlidersHorizontal,
   }
   const Icon = minimalIconByGroup[group.id] ?? List

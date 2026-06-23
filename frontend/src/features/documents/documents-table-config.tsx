@@ -281,9 +281,7 @@ export function buildDocumentTableColumns(opts?: {
       },
       sortValue: (item) => item.title ?? "Untitled",
       sortable: true,
-      editable: Boolean(onEditField),
-      editValue: (item) => item.title ?? "",
-      onEdit: handleEdit("title"),
+      // Title is the link to the detail page — never inline-editable.
     },
     // Project (dropdown select editor)
     {

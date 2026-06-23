@@ -191,21 +191,21 @@ function ConversationRow({
         }
       }}
       className={cn(
-        "group flex items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors",
+        "group flex min-w-0 cursor-pointer items-center gap-1.5 rounded-md px-2 py-2 text-left transition-colors",
         isActive
           ? "bg-sidebar-accent text-sidebar-accent-foreground"
           : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
       )}
     >
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 overflow-hidden">
         <p className="truncate text-[13px] leading-5">
           {conversation.title || "New conversation"}
         </p>
+        <p className="truncate text-[11px] leading-4 text-sidebar-foreground/45 mt-0.5">
+          {formatRelativeTime(conversation.last_message_at || conversation.created_at)}
+        </p>
       </div>
-      <span className="shrink-0 text-[11px] text-sidebar-foreground/45">
-        {formatRelativeTime(conversation.last_message_at || conversation.created_at)}
-      </span>
-      <div className="opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100">
         <ConversationActions
           conversation={conversation}
           onRename={onRename}
@@ -282,7 +282,7 @@ export function ConversationSidebar({
             </SheetHeader>
 
             <ScrollArea className="flex-1">
-              <div className="px-3 py-3">
+              <div className="px-2 py-2">
                 {isLoading ? (
                   <div className="space-y-2 px-2">
                     {Array.from({ length: 8 }).map((_, index) => (
