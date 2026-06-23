@@ -952,32 +952,53 @@ function DailySyncHistory({ days, loading }: { days: DailySyncRow[]; loading: bo
   );
 }
 
+// How many individual alert lines the banner shows before collapsing the rest
+// into a single summary line. Keeps a hard outage loud without burying it under
+// a wall of chronic stale-source warnings.
+const BANNER_MAX_LINES = 5;
+
 /**
- * Loud, top-of-page banner for active pipeline alerts (the same rows the Teams
- * notifier writes). A source going dark must be impossible to miss here, not
- * just in a DM. Critical alerts render red; warnings amber. Renders nothing when
- * everything is healthy.
+ * Loud-but-focused banner for active pipeline alerts (the same rows the Teams
+ * notifier writes). Leads with hard "stopped vectorizing" failures
+ * (pipeline_outcome) — the real-time, actionable signal — then the most severe
+ * remaining alerts, capped at BANNER_MAX_LINES with a "+N more" summary so a true
+ * outage is never buried. Renders nothing when everything is healthy. Chronic
+ * per-source staleness lives in the RAG lifecycle tab, not here.
  */
 function PipelineAlertsBanner({ alerts }: { alerts: ActiveAlert[] }) {
   if (alerts.length === 0) return null;
 
+  const hardDown = alerts.filter((a) => a.category === "pipeline_outcome");
+  const rest = alerts.filter((a) => a.category !== "pipeline_outcome");
+  // API already sorts by severity then recency; hard outages first.
+  const ordered = [...hardDown, ...rest];
+  const shown = ordered.slice(0, BANNER_MAX_LINES);
+  const hidden = ordered.length - shown.length;
+
   const criticalCount = alerts.filter((a) => a.severity === "critical").length;
   const headline =
-    criticalCount > 0
-      ? `${criticalCount} pipeline ${criticalCount === 1 ? "source is" : "sources are"} failing`
-      : `${alerts.length} active ${alerts.length === 1 ? "warning" : "warnings"}`;
+    hardDown.length > 0
+      ? `Pipeline failing — ${hardDown.length} source${hardDown.length === 1 ? "" : "s"} stopped vectorizing`
+      : `${criticalCount || alerts.length} active pipeline alert${
+          (criticalCount || alerts.length) === 1 ? "" : "s"
+        }`;
 
   return (
-    <InfoAlert variant={criticalCount > 0 ? "error" : "warning"} role="alert">
+    <InfoAlert variant={hardDown.length > 0 || criticalCount > 0 ? "error" : "warning"} role="alert">
       <div className="font-medium">{headline}</div>
       <ul className="mt-1.5 space-y-1 text-xs">
-        {alerts.map((alert) => (
+        {shown.map((alert) => (
           <li key={alert.alertKey}>
             <span className="font-medium">{alert.title}</span>
             {alert.message ? ` — ${alert.message}` : null}
           </li>
         ))}
       </ul>
+      {hidden > 0 ? (
+        <div className="mt-1.5 text-xs opacity-70">
+          +{hidden} more active alert{hidden === 1 ? "" : "s"} — see the RAG lifecycle tab for per-source detail.
+        </div>
+      ) : null}
     </InfoAlert>
   );
 }
