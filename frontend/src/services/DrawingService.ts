@@ -345,6 +345,18 @@ export class DrawingService {
     const projectIdNum = Number.parseInt(projectId, 10);
 
     try {
+      // Collect document_metadata IDs linked to this drawing's revisions before soft-deleting,
+      // so we can remove them from the OCR/embed queue after the drawing is gone.
+      const { data: revisions } = await this.supabase
+        .from("drawing_revisions")
+        .select("document_metadata_id")
+        .eq("drawing_id", drawingId)
+        .not("document_metadata_id", "is", null);
+
+      const docMetaIds = (revisions ?? [])
+        .map((r) => r.document_metadata_id as string)
+        .filter(Boolean);
+
       const { error } = await this.supabase
         .from("drawings")
         .update({
@@ -356,6 +368,16 @@ export class DrawingService {
 
       if (error) {
         return { data: null, error: { type: "UNKNOWN", message: error.message } };
+      }
+
+      // Best-effort: remove document_metadata records that haven't been embedded yet.
+      // Only delete no_text entries — already-embedded records are valuable for RAG search.
+      if (docMetaIds.length > 0) {
+        await this.supabase
+          .from("document_metadata")
+          .delete()
+          .in("id", docMetaIds)
+          .eq("status", "no_text");
       }
 
       return { data: undefined as unknown as void, error: null };
