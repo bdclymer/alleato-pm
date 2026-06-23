@@ -29,6 +29,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import {
   Popover,
   PopoverContent,
@@ -621,24 +622,11 @@ export default function NewCommitmentPcoPage() {
                   )}
                 />
 
-                <FormField
+                <RHFDateField
                   control={form.control}
                   name="due_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Due Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ?? ""}
-                          onChange={(event) =>
-                            field.onChange(event.target.value || null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Due Date"
+                  nullable
                 />
 
                 <FormField

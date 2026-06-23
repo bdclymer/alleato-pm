@@ -9,10 +9,10 @@ import {
   useSearchParams,
 } from "next/navigation";
 import {
-  ChevronDown,
   Download,
   Mail,
   Minus,
+  MoreHorizontal,
   Pencil,
   Plus,
   Trash2,
@@ -61,6 +61,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -861,12 +863,17 @@ export default function ProjectDrawingsPage() {
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="sm" variant="outline">
-              Reports
-              <ChevronDown className="h-3.5 w-3.5" />
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 w-8 p-0"
+              aria-label="More drawing actions"
+            >
+              <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Reports</DropdownMenuLabel>
             <DropdownMenuItem
               onClick={() =>
                 router.push(`/${projectId}/drawings/revisions-report`)
@@ -894,27 +901,24 @@ export default function ProjectDrawingsPage() {
             >
               Measurements
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() =>
+                toast.info("Compare Set is not connected yet.", {
+                  description:
+                    "The control is now always visible; the compare workflow still needs its route and data contract.",
+                })
+              }
+            >
+              Compare Set
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push(`/${projectId}/drawings/areas`)}
+            >
+              Create Locations
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() =>
-            toast.info("Compare Set is not connected yet.", {
-              description:
-                "The control is now always visible; the compare workflow still needs its route and data contract.",
-            })
-          }
-        >
-          Compare Set
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => router.push(`/${projectId}/drawings/areas`)}
-        >
-          Create Locations
-        </Button>
         <label className="flex h-8 items-center gap-2 text-sm text-foreground">
           <Switch
             checked={drawingSubscription.data?.subscribed ?? false}

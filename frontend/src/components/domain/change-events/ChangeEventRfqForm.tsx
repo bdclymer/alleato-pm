@@ -31,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FormSection } from "@/components/forms/FormSection";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import type { ChangeEvent } from "@/types/change-events";
 
 // ---------------------------------------------------------------------------
@@ -192,19 +193,11 @@ export function ChangeEventRfqForm({
             />
 
             {/* Due Date */}
-            <FormField
+            <RHFDateField
               control={form.control}
               name="dueDate"
-              rules={{ required: "Due date is required" }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Due Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Due Date"
+              nullable
             />
 
             {/* Distribution */}

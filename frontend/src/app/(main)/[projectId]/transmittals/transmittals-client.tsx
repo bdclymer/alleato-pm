@@ -12,9 +12,13 @@ import {
 } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
+import { useQueryClient } from "@tanstack/react-query";
+
+import { apiFetch } from "@/lib/api-client";
 import {
   useTransmittals,
   useDeleteTransmittal,
+  transmittalKeys,
   type TransmittalSummary,
 } from "@/hooks/use-transmittals";
 import {
@@ -65,6 +69,20 @@ export default function TransmittalsClient(): ReactElement {
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const deleteTransmittal = useDeleteTransmittal(projectId);
+  const queryClient = useQueryClient();
+
+  const handleInlineUpdate = React.useCallback(
+    async (transmittalId: string, data: Record<string, unknown>) => {
+      await apiFetch(`/api/projects/${projectId}/transmittals/${transmittalId}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: transmittalKeys.all(projectId),
+      });
+    },
+    [projectId, queryClient],
+  );
 
   const initialFilters: TransmittalFilterState = {
     status: searchParams.get("status") ?? undefined,
@@ -124,7 +142,10 @@ export default function TransmittalsClient(): ReactElement {
     });
   }, [activeFilters, tableRows, tableState.debouncedSearch]);
 
-  const tableColumns = React.useMemo(() => buildTransmittalTableColumns(), []);
+  const tableColumns = React.useMemo(
+    () => buildTransmittalTableColumns({ onUpdate: handleInlineUpdate }),
+    [handleInlineUpdate],
+  );
 
   const tabs = [
     {

@@ -104,6 +104,13 @@ const config = [
       "design-system/no-raw-error-message-toast": "warn",
       // Gate 21: blocks raw <Input placeholder="Search..."> — use <ExpandingSearch> from @/components/ds
       "design-system/no-raw-search-input": "warn",
+      // Gate 22: status/dropdown columns in *-table-config files must declare an explicit
+      // `editable` decision (wire inline editing, or `editable: false` to opt out). Stops
+      // tables shipping a dropdown that forces a redirect-to-edit-page.
+      "design-system/require-editable-status-column": "warn",
+      // Gate 23: blocks raw <Input type="date"> in form files — use <RHFDateField> instead.
+      // Ratchet: warn globally (existing debt), error on changed files via lint-staged.
+      "design-system/no-raw-date-input": "warn",
     },
   }, // Admin pages: relax heading rule — these are internal tools used only by the Alleato team.
   // Layout consistency is nice-to-have here; focus enforcement on customer-facing pages.

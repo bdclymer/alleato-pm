@@ -209,6 +209,8 @@ export function buildDrawingTableColumns(
           <span className="text-muted-foreground">-</span>
         ),
       sortValue: (item) => item.status ?? "",
+      // Read-only: review status is driven by the revision publish lifecycle.
+      editable: false,
     },
     // Status column: shows Draft / Published / Obsolete.
     {

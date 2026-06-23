@@ -82,7 +82,32 @@ export const transmittalFilters: FilterConfig[] = [
 
 // ─── Table columns ────────────────────────────────────────────────────────────
 
-export function buildTransmittalTableColumns(): TableColumn<TransmittalTableRow>[] {
+export interface TransmittalInlineEditHandlers {
+  /** Persists a single-field change for one transmittal. Throws on failure so the cell can revert. */
+  onUpdate: (
+    transmittalId: string,
+    data: Record<string, unknown>,
+  ) => Promise<void>;
+}
+
+const STATUS_OPTIONS = ["Draft", "Open", "Closed", "Void"].map((v) => ({
+  value: v,
+  label: v,
+}));
+
+const DELIVERY_METHOD_OPTIONS = [
+  "Email",
+  "Hand Delivery",
+  "Mail",
+  "Courier",
+  "Fax",
+  "Other",
+].map((v) => ({ value: v, label: v }));
+
+export function buildTransmittalTableColumns(
+  inlineEdit?: TransmittalInlineEditHandlers,
+): TableColumn<TransmittalTableRow>[] {
+  const editable = Boolean(inlineEdit);
   return [
     {
       ...transmittalColumns[0],
@@ -99,6 +124,13 @@ export function buildTransmittalTableColumns(): TableColumn<TransmittalTableRow>
         </span>
       ),
       sortValue: (item) => item.subject,
+      editable,
+      editType: "text",
+      editValue: (item) => item.subject ?? "",
+      editEmptyLabel: "Add subject",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(String(item.id), { subject: value });
+      },
     },
     {
       ...transmittalColumns[2],
@@ -108,33 +140,77 @@ export function buildTransmittalTableColumns(): TableColumn<TransmittalTableRow>
         </Badge>
       ),
       sortValue: (item) => item.status,
+      editable,
+      editType: "select",
+      editValue: (item) => item.status ?? "",
+      editOptions: STATUS_OPTIONS,
+      editEmptyLabel: "Select status",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(String(item.id), { status: value });
+      },
     },
     {
       ...transmittalColumns[3],
       render: (item) => <span>{item.to_company || "-"}</span>,
       sortValue: (item) => item.to_company ?? "",
+      editable,
+      editType: "text",
+      editValue: (item) => item.to_company ?? "",
+      editEmptyLabel: "Add company",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(String(item.id), { to_company: value });
+      },
     },
     {
       ...transmittalColumns[4],
       render: (item) => <span>{item.from_company || "-"}</span>,
       sortValue: (item) => item.from_company ?? "",
+      editable,
+      editType: "text",
+      editValue: (item) => item.from_company ?? "",
+      editEmptyLabel: "Add company",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(String(item.id), { from_company: value });
+      },
     },
     {
       ...transmittalColumns[5],
       render: (item) => <span>{item.delivery_method || "-"}</span>,
       sortValue: (item) => item.delivery_method ?? "",
+      editable,
+      editType: "select",
+      editValue: (item) => item.delivery_method ?? "",
+      editOptions: DELIVERY_METHOD_OPTIONS,
+      editEmptyLabel: "Select method",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(String(item.id), { delivery_method: value });
+      },
     },
     {
       ...transmittalColumns[6],
       render: (item) => <span>{formatDate(item.sent_date)}</span>,
       sortValue: (item) =>
         item.sent_date ? new Date(item.sent_date).getTime() : 0,
+      editable,
+      editType: "date",
+      editValue: (item) => (item.sent_date ? item.sent_date.slice(0, 10) : ""),
+      editEmptyLabel: "Set date",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(String(item.id), { sent_date: value });
+      },
     },
     {
       ...transmittalColumns[7],
       render: (item) => <span>{formatDate(item.due_date)}</span>,
       sortValue: (item) =>
         item.due_date ? new Date(item.due_date).getTime() : 0,
+      editable,
+      editType: "date",
+      editValue: (item) => (item.due_date ? item.due_date.slice(0, 10) : ""),
+      editEmptyLabel: "Set date",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(String(item.id), { due_date: value });
+      },
     },
   ];
 }

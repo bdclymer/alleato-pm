@@ -106,7 +106,25 @@ const COL = Object.fromEntries(
   primeContractColumns.map((col, i) => [col.id, i])
 ) as Record<string, number>;
 
-export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
+export interface PrimeContractInlineEditHandlers {
+  /** Persists a single-field change for one prime contract. Throws on failure so the cell can revert. */
+  onUpdate: (
+    contractId: string,
+    data: Record<string, unknown>,
+  ) => Promise<void>;
+}
+
+function toDateInputValue(value: string | null | undefined): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+}
+
+export function buildPrimeContractTableColumns(
+  inlineEdit?: PrimeContractInlineEditHandlers,
+): TableColumn<PrimeContract>[] {
+  const editable = Boolean(inlineEdit);
   return [
     {
       ...primeContractColumns[COL.contract_number],
@@ -136,6 +154,13 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
       ),
       csvValue: (item) => item.title ?? "",
       sortValue: (item) => item.title ?? "",
+      editable,
+      editType: "text",
+      editValue: (item) => item.title ?? "",
+      editEmptyLabel: "Add title",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(item.id, { title: value });
+      },
     },
     {
       ...primeContractColumns[COL.erp_status],
@@ -148,6 +173,8 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
         return ERP_STATUS_LABELS[val] ?? val;
       },
       sortValue: (item) => (item as { erp_status?: string }).erp_status ?? "",
+      // Read-only: erp_status reflects ERP sync state, not a user choice.
+      editable: false,
     },
     {
       ...primeContractColumns[COL.status],
@@ -159,12 +186,21 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
         ),
       csvValue: (item) => (item.status ? STATUS_LABELS[item.status] : ""),
       sortValue: (item) => item.status ?? "",
+      // Read-only inline: status is approve-gated (setting "approved" requires a
+      // non-zero contract value; the route 400s otherwise). Kept in the full edit flow.
+      editable: false,
     },
     {
       ...primeContractColumns[COL.executed],
       render: (item) => <span>{item.executed ? "Yes" : "No"}</span>,
       csvValue: (item) => (item.executed ? "Yes" : "No"),
       sortValue: (item) => (item.executed ? 1 : 0),
+      editable,
+      editType: "boolean",
+      editValue: (item) => (item.executed ? "true" : "false"),
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(item.id, { executed: value === "true" });
+      },
     },
     {
       ...primeContractColumns[COL.original_contract_value],
@@ -237,6 +273,12 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
         ),
       csvValue: (item) => (item.is_private ? "Yes" : "No"),
       sortValue: (item) => (item.is_private ? 1 : 0),
+      editable,
+      editType: "boolean",
+      editValue: (item) => (item.is_private ? "true" : "false"),
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(item.id, { is_private: value === "true" });
+      },
     },
     {
       ...primeContractColumns[COL.attachment_count],
@@ -259,12 +301,26 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
       render: (item) => <span>{formatDate(item.start_date)}</span>,
       csvValue: (item) => item.start_date ?? "",
       sortValue: (item) => sortValueForDate(item.start_date),
+      editable,
+      editType: "date",
+      editValue: (item) => toDateInputValue(item.start_date),
+      editEmptyLabel: "Set start date",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(item.id, { start_date: value || null });
+      },
     },
     {
       ...primeContractColumns[COL.end_date],
       render: (item) => <span>{formatDate(item.end_date)}</span>,
       csvValue: (item) => item.end_date ?? "",
       sortValue: (item) => sortValueForDate(item.end_date),
+      editable,
+      editType: "date",
+      editValue: (item) => toDateInputValue(item.end_date),
+      editEmptyLabel: "Set end date",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(item.id, { end_date: value || null });
+      },
     },
   ];
 }

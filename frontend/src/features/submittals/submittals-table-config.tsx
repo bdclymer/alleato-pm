@@ -117,7 +117,21 @@ export const submittalFilters: FilterConfig[] = [
 
 // ─── Table columns ────────────────────────────────────────────────────────────
 
-export function buildSubmittalTableColumns(): TableColumn<SubmittalTableRow>[] {
+export interface SubmittalInlineEditHandlers {
+  /** Persists a single-field change for one submittal. Throws on failure so the cell can revert. */
+  onUpdate: (
+    submittalId: string,
+    data: Record<string, unknown>,
+  ) => Promise<void>;
+}
+
+const SUBMITTAL_STATUS_OPTIONS = ["Draft", "Open", "Distributed", "Closed"].map(
+  (v) => ({ value: v, label: v }),
+);
+
+export function buildSubmittalTableColumns(
+  inlineEdit?: SubmittalInlineEditHandlers,
+): TableColumn<SubmittalTableRow>[] {
   return [
     {
       ...submittalColumns[0],
@@ -127,6 +141,13 @@ export function buildSubmittalTableColumns(): TableColumn<SubmittalTableRow>[] {
         </span>
       ),
       sortValue: (item) => item.specification_section ?? "",
+      editable: Boolean(inlineEdit),
+      editType: "text",
+      editValue: (item) => item.specification_section ?? "",
+      editEmptyLabel: "Add spec section",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(item.id, { specification_section: value });
+      },
     },
     {
       ...submittalColumns[1],
@@ -139,6 +160,14 @@ export function buildSubmittalTableColumns(): TableColumn<SubmittalTableRow>[] {
       ...submittalColumns[2],
       render: (item) => <span>{item.revision ?? 0}</span>,
       sortValue: (item) => item.revision ?? 0,
+      editable: Boolean(inlineEdit),
+      editType: "number",
+      editValue: (item) => String(item.revision ?? 0),
+      onEdit: async (item, value) => {
+        const parsed = Number.parseInt(value, 10);
+        if (Number.isNaN(parsed)) return;
+        await inlineEdit!.onUpdate(item.id, { revision: parsed });
+      },
     },
     {
       ...submittalColumns[3],
@@ -148,6 +177,13 @@ export function buildSubmittalTableColumns(): TableColumn<SubmittalTableRow>[] {
         </span>
       ),
       sortValue: (item) => item.title,
+      editable: Boolean(inlineEdit),
+      editType: "text",
+      editValue: (item) => item.title ?? "",
+      editEmptyLabel: "Add title",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(item.id, { title: value });
+      },
     },
     {
       ...submittalColumns[4],
@@ -164,6 +200,14 @@ export function buildSubmittalTableColumns(): TableColumn<SubmittalTableRow>[] {
         </Badge>
       ),
       sortValue: (item) => item.status,
+      editable: Boolean(inlineEdit),
+      editType: "select",
+      editValue: (item) => item.status ?? "",
+      editOptions: SUBMITTAL_STATUS_OPTIONS,
+      editEmptyLabel: "Select status",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(item.id, { status: value });
+      },
     },
     {
       ...submittalColumns[6],
@@ -204,6 +248,9 @@ export function buildSubmittalTableColumns(): TableColumn<SubmittalTableRow>[] {
           <span className="text-muted-foreground">-</span>
         ),
       sortValue: (item) => item.latest_response ?? "",
+      // Read-only: latest_response is derived from the submittal workflow steps,
+      // not a free user choice. Explicit opt-out per require-editable-status-column.
+      editable: false,
     },
     {
       ...submittalColumns[11],
@@ -229,6 +276,14 @@ export function buildSubmittalTableColumns(): TableColumn<SubmittalTableRow>[] {
       },
       sortValue: (item) =>
         item.final_due_date ? new Date(item.final_due_date).getTime() : 0,
+      editable: Boolean(inlineEdit),
+      editType: "date",
+      editValue: (item) =>
+        item.final_due_date ? item.final_due_date.slice(0, 10) : "",
+      editEmptyLabel: "Set due date",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(item.id, { final_due_date: value });
+      },
     },
     {
       ...submittalColumns[12],

@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 import { useProjectCompanies } from "@/hooks/use-project-companies";
@@ -756,32 +757,18 @@ export function SubmittalFormPage({
           <SectionRuleHeading label="Distribution & Scheduling" />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField
+            <RHFDateField
               control={form.control}
               name="final_due_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Final Due Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} value={field.value ?? ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Final Due Date"
+              nullable
             />
 
-            <FormField
+            <RHFDateField
               control={form.control}
               name="required_on_site_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Required On-Site Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} value={field.value ?? ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Required On-Site Date"
+              nullable
             />
 
             <FormField

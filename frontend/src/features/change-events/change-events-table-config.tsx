@@ -22,6 +22,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { ChangeEvent } from "@/hooks/use-change-events";
+import {
+  CHANGE_EVENT_SCOPE_VALUES,
+  CHANGE_EVENT_TYPE_VALUES,
+  CHANGE_EVENT_REASON_VALUES,
+  CHANGE_EVENT_ORIGIN_VALUES,
+} from "@/app/api/projects/[projectId]/change-events/validation";
 
 const STATUS_FILTER_OPTIONS = [
   { value: "open", label: "Open" },
@@ -224,9 +230,37 @@ function formatMoney(value: number | string | null | undefined): string {
   }).format(numeric);
 }
 
+// Inline-edit option lists, derived from the canonical validation enums so the
+// values sent on PATCH are exactly the Title Case strings the zod schema accepts.
+const SCOPE_EDIT_OPTIONS = CHANGE_EVENT_SCOPE_VALUES.map((value) => ({
+  value,
+  label: value,
+}));
+const TYPE_EDIT_OPTIONS = CHANGE_EVENT_TYPE_VALUES.map((value) => ({
+  value,
+  label: value,
+}));
+const REASON_EDIT_OPTIONS = CHANGE_EVENT_REASON_VALUES.map((value) => ({
+  value,
+  label: value,
+}));
+const ORIGIN_EDIT_OPTIONS = CHANGE_EVENT_ORIGIN_VALUES.map((value) => ({
+  value,
+  label: value,
+}));
+
+export interface ChangeEventInlineEditHandlers {
+  /** Persists a single-field change for one change event. Throws on failure so the cell can revert. */
+  onUpdate: (
+    changeEventId: string,
+    data: Record<string, unknown>,
+  ) => Promise<void>;
+}
+
 export function buildChangeEventTableColumns(
   expandedIds?: Set<string>,
   onToggleExpand?: (id: string) => void,
+  inlineEdit?: ChangeEventInlineEditHandlers,
 ): TableColumn<ChangeEvent>[] {
   const byId = (columnId: string): ColumnConfig => {
     const column = changeEventColumns.find((candidate) => candidate.id === columnId);
@@ -339,26 +373,61 @@ export function buildChangeEventTableColumns(
       ...byId("status"),
       render: (item) => <StatusBadge status={statusLabel(item.status)} />,
       sortValue: (item) => item.status ?? "",
+      // Read-only inline: status transitions are owned by the approvals +
+      // convert-to-change-order routes, not free user choice.
+      editable: false,
     },
     {
       ...byId("scope"),
       render: (item) => <span>{scopeLabel(item.scope)}</span>,
       sortValue: (item) => scopeLabel(item.scope),
+      editable: Boolean(inlineEdit),
+      editType: "select",
+      editValue: (item) => item.scope ?? "",
+      editOptions: SCOPE_EDIT_OPTIONS,
+      editEmptyLabel: "Select scope",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(String(item.id), { scope: value });
+      },
     },
     {
       ...byId("type"),
       render: (item) => <span>{typeLabel(item.type)}</span>,
       sortValue: (item) => typeLabel(item.type),
+      editable: Boolean(inlineEdit),
+      editType: "select",
+      editValue: (item) => item.type ?? "",
+      editOptions: TYPE_EDIT_OPTIONS,
+      editEmptyLabel: "Select type",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(String(item.id), { type: value });
+      },
     },
     {
       ...byId("reason"),
       render: (item) => <span className="line-clamp-1">{item.reason || "--"}</span>,
       sortValue: (item) => item.reason ?? "",
+      editable: Boolean(inlineEdit),
+      editType: "select",
+      editValue: (item) => item.reason ?? "",
+      editOptions: REASON_EDIT_OPTIONS,
+      editEmptyLabel: "Select change reason",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(String(item.id), { reason: value });
+      },
     },
     {
       ...byId("origin"),
       render: (item) => <span>{item.origin || "--"}</span>,
       sortValue: (item) => item.origin ?? "",
+      editable: Boolean(inlineEdit),
+      editType: "select",
+      editValue: (item) => item.origin ?? "",
+      editOptions: ORIGIN_EDIT_OPTIONS,
+      editEmptyLabel: "Select origin",
+      onEdit: async (item, value) => {
+        await inlineEdit!.onUpdate(String(item.id), { origin: value });
+      },
     },
     {
       ...byId("created_at"),

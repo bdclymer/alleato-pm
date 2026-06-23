@@ -24,6 +24,7 @@ Read the output. If the component you are about to write is in that list — **u
 | Save/cancel action bar | `<EditModeActions>` from `@/components/ds/EditModeActions` |
 | KPI / metric number display | `<KpiBlock>` / `<KpiRow>` from `@/components/ds/kpi` |
 | Search input in a page or detail view | `<ExpandingSearch>` from `@/components/ds` — **ESLint-enforced, no exceptions** |
+| Date field in an RHF form | `<RHFDateField>` from `@/components/forms/fields` — **ESLint-enforced (Gate 23)**. Never `<Input type="date">`. |
 | Button in a `SectionRuleHeading` actions slot | `<SectionAction>` from `@/components/layout` — enforces outline/sm styling |
 
 Usage for every component: `frontend/src/components/ds/GOLDEN-EXAMPLES.tsx`

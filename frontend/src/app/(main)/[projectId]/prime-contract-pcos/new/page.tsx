@@ -30,6 +30,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import {
   Popover,
   PopoverContent,
@@ -1226,24 +1227,11 @@ export default function NewPrimeContractPcoPage() {
                   )}
                 />
 
-                <FormField
+                <RHFDateField
                   control={form.control}
                   name="signed_co_received_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Signed Change Order Received Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value || null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Signed Change Order Received Date"
+                  nullable
                 />
 
                 <div className="flex items-start gap-6 pt-7">
@@ -1487,24 +1475,11 @@ export default function NewPrimeContractPcoPage() {
                     )}
                   />
 
-                  <FormField
+                  <RHFDateField
                     control={form.control}
                     name="review_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Review Date</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="date"
-                            value={field.value ?? ""}
-                            onChange={(e) =>
-                              field.onChange(e.target.value || null)
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    label="Review Date"
+                    nullable
                   />
                 </div>
               </section>
@@ -1516,44 +1491,18 @@ export default function NewPrimeContractPcoPage() {
                 className="[&_span]:text-primary"
               />
               <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
-                <FormField
+                <RHFDateField
                   control={form.control}
                   name="due_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Due Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value || null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Due Date"
+                  nullable
                 />
 
-                <FormField
+                <RHFDateField
                   control={form.control}
                   name="revised_substantial_completion_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Revised Substantial Completion Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value || null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Revised Substantial Completion Date"
+                  nullable
                 />
 
                 <FormField
@@ -1612,44 +1561,18 @@ export default function NewPrimeContractPcoPage() {
                   )}
                 />
 
-                <FormField
+                <RHFDateField
                   control={form.control}
                   name="invoiced_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Invoice Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value || null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Invoice Date"
+                  nullable
                 />
 
-                <FormField
+                <RHFDateField
                   control={form.control}
                   name="paid_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Paid Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value || null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Paid Date"
+                  nullable
                 />
               </div>
             </section>

@@ -659,9 +659,29 @@ export default function ProjectChangeEventsPage(): ReactElement {
     tableState.debouncedSearch,
   ]);
 
+  // Inline cell edits (Scope / Type / Change Reason / Origin in table view).
+  // Persists directly via PATCH and refreshes the list. No toast here —
+  // UnifiedTablePage shows its own per-cell "<field> updated" confirmation on commit.
+  const handleInlineUpdate = React.useCallback(
+    async (changeEventId: string, data: Record<string, unknown>) => {
+      await apiFetch(
+        `/api/projects/${projectId}/change-events/${changeEventId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(data),
+        },
+      );
+      await refetchChangeEvents();
+    },
+    [projectId, refetchChangeEvents],
+  );
+
   const tableColumns = React.useMemo(
-    () => buildChangeEventTableColumns(expandedIds, handleToggleExpand),
-    [expandedIds, handleToggleExpand],
+    () =>
+      buildChangeEventTableColumns(expandedIds, handleToggleExpand, {
+        onUpdate: handleInlineUpdate,
+      }),
+    [expandedIds, handleToggleExpand, handleInlineUpdate],
   );
 
   // serverTotal is the authoritative count for the active tab from the server.

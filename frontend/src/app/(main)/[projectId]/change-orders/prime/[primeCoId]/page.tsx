@@ -85,6 +85,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import {
   Command,
   CommandEmpty,
@@ -1280,43 +1281,17 @@ export default function PrimeContractCODetailPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
+                <RHFDateField
                   control={form.control}
                   name="due_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Due Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value || null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Due Date"
+                  nullable
                 />
-                <FormField
+                <RHFDateField
                   control={form.control}
                   name="signed_co_received_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Signed CO Received Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value || null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Signed CO Received Date"
+                  nullable
                 />
                 <FormField
                   control={form.control}
@@ -1394,24 +1369,11 @@ export default function PrimeContractCODetailPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
+                <RHFDateField
                   control={form.control}
                   name="review_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Review Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value || null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Review Date"
+                  nullable
                 />
                 <FormField
                   control={form.control}
@@ -1489,24 +1451,11 @@ export default function PrimeContractCODetailPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
+                <RHFDateField
                   control={form.control}
                   name="revised_substantial_completion_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Revised Substantial Completion Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value || null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Revised Substantial Completion Date"
+                  nullable
                 />
                 <FormField
                   control={form.control}

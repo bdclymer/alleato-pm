@@ -476,13 +476,20 @@ export function DrawingViewer({
     renderAnnotations(canvas, annotations, pageAnnotations, visibleInProgress);
   }, [annotations, pageAnnotations, visibleInProgress, pageSize]);
 
+  // Only focus+select when the text input is first opened (pos/page identity),
+  // not on every keystroke (textInput value changes each keypress and would
+  // re-select all text, causing every character typed to delete what came before).
+  const textInputKey = textInput
+    ? `${textInput.page}:${textInput.pos.x}:${textInput.pos.y}`
+    : null;
   useEffect(() => {
     if (!textInput) return;
     const input = textInputRef.current;
     if (!input) return;
     input.focus();
     input.select();
-  }, [textInput]);
+     
+  }, [textInputKey]);
 
   // ── PDF load callbacks ──
   const onDocumentLoadSuccess = useCallback(

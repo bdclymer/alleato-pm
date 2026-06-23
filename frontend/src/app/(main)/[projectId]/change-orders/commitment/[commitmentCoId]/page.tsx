@@ -54,6 +54,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import {
   Select,
   SelectContent,
@@ -814,31 +815,17 @@ export default function CommitmentCODetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <FormField
+                  <RHFDateField
                     control={form.control}
                     name="due_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Due Date</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} value={field.value ?? ""} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    label="Due Date"
+                    nullable
                   />
-                  <FormField
+                  <RHFDateField
                     control={form.control}
                     name="invoiced_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Invoiced Date</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} value={field.value ?? ""} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    label="Invoiced Date"
+                    nullable
                   />
                 </div>
 

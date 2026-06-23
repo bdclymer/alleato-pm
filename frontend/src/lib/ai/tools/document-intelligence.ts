@@ -442,12 +442,17 @@ export function createDocumentIntelligenceTools(
         options,
         async ({ submittalId, submittalNumber, projectId, projectName, focusArea }) => {
           // ── 1. Resolve project ──────────────────────────────────────────────
-          const resolvedProjectId = await resolveProject(
-            supabase,
-            projectId,
-            projectName,
-            options.pinnedProjectId,
-          );
+          let resolvedProjectId: number | undefined;
+          if (projectId || projectName) {
+            const resolved = await resolveProject(
+              supabase,
+              guardrails,
+              projectId,
+              projectName,
+            );
+            if ("error" in resolved) return resolved;
+            resolvedProjectId = resolved.id;
+          }
 
           // ── 2. Resolve submittal ────────────────────────────────────────────
           let resolvedSubmittalId = submittalId;
@@ -455,6 +460,12 @@ export function createDocumentIntelligenceTools(
             if (!submittalNumber) {
               return {
                 error: "Provide either submittalId or submittalNumber to identify the submittal.",
+              };
+            }
+            if (resolvedProjectId === undefined) {
+              return {
+                error:
+                  "Provide projectId or projectName to look up a submittal by number.",
               };
             }
             const lookupResp = await supabase
@@ -476,9 +487,7 @@ export function createDocumentIntelligenceTools(
           const submittalResp = await supabase
             .from("submittals")
             .select(
-              "id, title, submittal_number, status, description, " +
-              "submittal_type_id, specification_id, submission_date, " +
-              "required_approval_date, priority",
+              "id, title, submittal_number, status, description, submittal_type_id, specification_id, submission_date, required_approval_date, priority",
             )
             .eq("id", resolvedSubmittalId)
             .single();
@@ -551,14 +560,19 @@ export function createDocumentIntelligenceTools(
           const additionalChunks: Array<{ title: string; excerpt: string }> = [];
           if (searchQuery.trim()) {
             try {
-              const queryEmbedding = await generateEmbedding(searchQuery, EMBEDDING.LARGE);
+              const openai = getOpenAI();
+              const queryEmbedding = await generateEmbedding(
+                openai,
+                searchQuery,
+                EMBEDDING.LARGE,
+              );
               const vectorResp = await ragSupabase.rpc("search_document_chunks", {
                 query_embedding: queryEmbedding,
                 match_count: 8,
                 filter_project_id: resolvedProjectId,
               });
               for (const chunk of vectorResp.data ?? []) {
-                const metadata = (chunk.metadata ?? {}) as AnyRow;
+                const metadata = (chunk.doc_metadata ?? {}) as unknown as AnyRow;
                 if (
                   (metadata.document_type as string | null) === "drawing" ||
                   (metadata.type as string | null) === "document"
@@ -568,7 +582,7 @@ export function createDocumentIntelligenceTools(
                       (metadata.title as string | null) ??
                       (chunk.doc_title as string | null) ??
                       "Drawing",
-                    excerpt: (chunk.text as string).substring(0, 500),
+                    excerpt: ((chunk.chunk_text as string) ?? "").substring(0, 500),
                   });
                 }
               }
@@ -698,12 +712,14 @@ export function createDocumentIntelligenceTools(
           drawingNumber,
           discipline,
         }) => {
-          const resolvedProjectId = await resolveProject(
+          const resolved = await resolveProject(
             supabase,
+            guardrails,
             projectId,
             projectName,
-            options.pinnedProjectId,
           );
+          if ("error" in resolved) return resolved;
+          const resolvedProjectId = resolved.id;
 
           // ── Resolve drawing by number if needed ─────────────────────────────
           let resolvedDrawingId = drawingId;
@@ -724,8 +740,7 @@ export function createDocumentIntelligenceTools(
             const specResp = await supabase
               .from("specifications")
               .select(
-                "id, section_number, section_title, division, requirements, " +
-                "specification_type, status",
+                "id, section_number, section_title, division, requirements, specification_type, status",
               )
               .eq("project_id", resolvedProjectId)
               .ilike("section_number", `%${specSectionNumber}%`)
@@ -746,9 +761,7 @@ export function createDocumentIntelligenceTools(
                   supabase
                     .from("submittals")
                     .select(
-                      "id, submittal_number, title, status, priority, " +
-                      "submittal_type, submittal_package_id, submission_date, " +
-                      "required_approval_date",
+                      "id, submittal_number, title, status, priority, submittal_type, submittal_package_id, submission_date, required_approval_date",
                     )
                     .eq("project_id", resolvedProjectId)
                     .eq("specification_id", spec.id)
@@ -867,8 +880,7 @@ export function createDocumentIntelligenceTools(
               supabase
                 .from("drawings")
                 .select(
-                  "id, drawing_number, title, discipline, drawing_type, " +
-                  "document_metadata_id, is_published",
+                  "id, drawing_number, title, discipline, drawing_type, document_metadata_id, is_published",
                 )
                 .eq("id", resolvedDrawingId)
                 .single(),

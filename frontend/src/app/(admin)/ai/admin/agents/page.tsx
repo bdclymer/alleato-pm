@@ -107,6 +107,18 @@ function AiAgentsPageInner() {
 
   const { data: agents, isLoading, isFetching, error, refetch } = useAiAgents(activeFilters);
 
+  // Silent inline-cell persistence: PATCH then refetch, no toast.
+  const handleInlineUpdate = React.useCallback(
+    async (id: string, data: Record<string, unknown>) => {
+      await apiFetch("/api/admin/ai-agents", {
+        method: "PATCH",
+        body: JSON.stringify({ id, ...data }),
+      });
+      await refetch();
+    },
+    [refetch],
+  );
+
   const filteredAgents = React.useMemo(() => {
     if (!tableState.debouncedSearch) return agents;
     const q = tableState.debouncedSearch.toLowerCase();
@@ -127,7 +139,10 @@ function AiAgentsPageInner() {
     }
   }, [agents, selectedAgent]);
 
-  const columns = React.useMemo(() => buildAiAgentColumns(), []);
+  const columns = React.useMemo(
+    () => buildAiAgentColumns({ onUpdate: handleInlineUpdate }),
+    [handleInlineUpdate],
+  );
 
   function handleFilterChange(filters: Record<string, FilterValue>) {
     tableState.setSearchParams({

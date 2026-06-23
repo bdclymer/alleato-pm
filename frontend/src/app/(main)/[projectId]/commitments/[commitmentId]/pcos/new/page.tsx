@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import {
   Select,
   SelectContent,
@@ -521,45 +522,19 @@ export default function NewCommitmentPcoPage() {
               />
               <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
                 {/* Due Date */}
-                <FormField
+                <RHFDateField
                   control={form.control}
                   name="due_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Due Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value || null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Due Date"
+                  nullable
                 />
 
                 {/* Signed CO Received Date */}
-                <FormField
+                <RHFDateField
                   control={form.control}
                   name="signed_co_received_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Signed Change Order Received Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value || null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Signed Change Order Received Date"
+                  nullable
                 />
 
                 {/* Schedule Impact */}

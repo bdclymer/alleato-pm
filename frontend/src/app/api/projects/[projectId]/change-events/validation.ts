@@ -26,7 +26,11 @@ function createNormalizedEnum<const T extends readonly [string, ...string[]]>(
   }, z.enum(values));
 }
 
-export const ChangeEventType = createNormalizedEnum([
+// Canonical Title Case values are the single source of truth for both the zod
+// enums (PATCH/POST validation) and any UI that needs to offer these as options
+// (e.g. inline-edit selects on the change-events table). Keep these arrays as the
+// authoritative list — derive option lists from them, never re-type them.
+export const CHANGE_EVENT_TYPE_VALUES = [
   "Owner Change",
   "Design Change",
   "Allowance",
@@ -38,19 +42,34 @@ export const ChangeEventType = createNormalizedEnum([
   "Value Engineering",
   "Owner Requested",
   "Constructability Issue",
-]);
-export const ChangeEventScope = createNormalizedEnum(
-  [
+] as const;
+export const CHANGE_EVENT_SCOPE_VALUES = [
   "TBD",
   "In Scope",
   "Out of Scope",
   "Allowance",
-  ],
-  {
-    in_scope: "In Scope",
-    out_of_scope: "Out of Scope",
-  },
-);
+] as const;
+export const CHANGE_EVENT_REASON_VALUES = [
+  "Allowance",
+  "Back Charge",
+  "Client Request",
+  "Design Development",
+  "Existing Condition",
+] as const;
+export const CHANGE_EVENT_ORIGIN_VALUES = [
+  "Internal",
+  "RFI",
+  "Field",
+  "Emails",
+  "Meetings",
+  "RFI's",
+] as const;
+
+export const ChangeEventType = createNormalizedEnum(CHANGE_EVENT_TYPE_VALUES);
+export const ChangeEventScope = createNormalizedEnum(CHANGE_EVENT_SCOPE_VALUES, {
+  in_scope: "In Scope",
+  out_of_scope: "Out of Scope",
+});
 // Procore-aligned status set — must match DB CHECK constraint on change_events.status.
 // Valid DB values: 'Open', 'Pending Approval', 'Approved', 'Rejected', 'Closed', 'Converted'
 export const ChangeEventStatus = createNormalizedEnum(
@@ -77,20 +96,14 @@ export const ChangeEventStatus = createNormalizedEnum(
 );
 // Procore-aligned change reason set.
 export const ChangeEventReason = createNormalizedEnum(
-  [
-    "Allowance",
-    "Back Charge",
-    "Client Request",
-    "Design Development",
-    "Existing Condition",
-  ],
+  CHANGE_EVENT_REASON_VALUES,
   {
     backcharge: "Back Charge",
     back_charge: "Back Charge",
   },
 );
 export const ChangeEventOrigin = createNormalizedEnum(
-  ["Internal", "RFI", "Field", "Emails", "Meetings", "RFI's"],
+  CHANGE_EVENT_ORIGIN_VALUES,
   {
     rfis: "RFI's",
   },

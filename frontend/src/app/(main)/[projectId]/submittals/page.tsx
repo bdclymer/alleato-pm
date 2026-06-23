@@ -1649,7 +1649,24 @@ export default function SubmittalsPage(): ReactElement {
     });
   }, [activeFilters, tableRows, tableState.debouncedSearch]);
 
-  const tableColumns = React.useMemo(() => buildSubmittalTableColumns(), []);
+  // Inline cell edits (Status / Title / Rev. / Spec Section / Due Date in table
+  // view). Persists directly via single-field PUT and refreshes the cache. No
+  // toast here — UnifiedTablePage shows its own per-cell confirmation on commit.
+  const handleInlineUpdate = React.useCallback(
+    async (submittalId: string, data: Record<string, unknown>) => {
+      await apiFetch(`/api/projects/${projectId}/submittals/${submittalId}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
+      await qc.invalidateQueries({ queryKey: ["submittals", projectId] });
+    },
+    [projectId, qc],
+  );
+
+  const tableColumns = React.useMemo(
+    () => buildSubmittalTableColumns({ onUpdate: handleInlineUpdate }),
+    [handleInlineUpdate],
+  );
 
   // -------------------------------------------------------------------------
   // Grouped data derivations

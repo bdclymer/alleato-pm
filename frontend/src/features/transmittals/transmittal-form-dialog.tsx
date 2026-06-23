@@ -21,6 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -349,39 +350,17 @@ export function TransmittalFormDialog({
               />
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <FormField
+                <RHFDateField
                   control={form.control}
                   name="sent_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sent Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          {...field}
-                          value={field.value ?? ""}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Sent Date"
+                  nullable
                 />
-                <FormField
+                <RHFDateField
                   control={form.control}
                   name="due_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Due Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          {...field}
-                          value={field.value ?? ""}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Due Date"
+                  nullable
                 />
               </div>
             </section>

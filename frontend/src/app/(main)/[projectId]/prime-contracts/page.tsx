@@ -277,7 +277,29 @@ export default function ProjectContractsPage(): ReactElement {
     return fields.some((field) => field.toLowerCase().includes(searchTerm));
   });
 
-  const tableColumns = buildPrimeContractTableColumns();
+  // Inline cell edits (Title / Executed / Start Date / End Date / Private in
+  // table view). Persists directly and refreshes the cache. No toast here —
+  // UnifiedTablePage shows its own per-cell confirmation on commit.
+  const handleInlineUpdate = React.useCallback(
+    async (contractId: string, data: Record<string, unknown>) => {
+      await apiFetch<void>(
+        `/api/projects/${projectId}/contracts/${contractId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(data),
+        },
+      );
+      await queryClient.invalidateQueries({
+        queryKey: primeContractKeys.all(projectIdNumber),
+      });
+    },
+    [projectId, projectIdNumber, queryClient],
+  );
+
+  const tableColumns = React.useMemo(
+    () => buildPrimeContractTableColumns({ onUpdate: handleInlineUpdate }),
+    [handleInlineUpdate],
+  );
   const sortedContracts = React.useMemo(() => {
     if (!tableState.sortBy) return filteredContracts;
     const sortColumn = tableColumns.find((column) => column.id === tableState.sortBy);

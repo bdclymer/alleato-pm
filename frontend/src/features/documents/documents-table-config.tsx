@@ -385,6 +385,11 @@ export function buildDocumentTableColumns(opts?: {
       ),
       sortValue: (item) => item.document_type ?? "",
       sortable: true,
+      editable: Boolean(onEditField),
+      editType: "select",
+      editValue: (item) => item.document_type ?? "",
+      editOptions: [...DOCUMENT_TYPE_OPTIONS],
+      onEdit: handleEdit("document_type"),
     },
     // Type
     {
@@ -397,7 +402,9 @@ export function buildDocumentTableColumns(opts?: {
       sortValue: (item) => item.type,
       sortable: true,
       editable: Boolean(onEditField),
+      editType: "select",
       editValue: (item) => item.type ?? "",
+      editOptions: TYPE_FILTER_OPTIONS,
       onEdit: handleEdit("type"),
     },
     // Category
@@ -411,7 +418,9 @@ export function buildDocumentTableColumns(opts?: {
       sortValue: (item) => item.category,
       sortable: true,
       editable: Boolean(onEditField),
+      editType: "select",
       editValue: (item) => item.category ?? "",
+      editOptions: CATEGORY_FILTER_OPTIONS,
       onEdit: handleEdit("category"),
     },
     // Source
@@ -442,6 +451,8 @@ export function buildDocumentTableColumns(opts?: {
       ),
       sortValue: (item) => item.pipeline_stage,
       sortable: true,
+      // Read-only: pipeline_stage is the RAG ingestion state machine, not user-settable.
+      editable: false,
     },
     // Created
     {

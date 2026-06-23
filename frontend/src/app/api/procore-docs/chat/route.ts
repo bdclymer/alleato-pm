@@ -12,7 +12,7 @@
 import {
   createUIMessageStream,
   createUIMessageStreamResponse,
-  generateText,
+  streamText,
   type ModelMessage,
   type UIMessage,
 } from "ai";
@@ -76,23 +76,7 @@ function extractTextFromMessage(message: UIMessage): string {
     .trim();
 }
 
-async function expandQuery(query: string): Promise<string[]> {
-  try {
-    const { text } = await generateText({
-      model: getLanguageModel(PROCORE_DOCS_MODEL),
-      system: `You are a query expansion assistant for Procore construction software documentation.
-Generate 2-3 alternative phrasings of the user's question.
-Respond with ONLY valid JSON: { "queries": ["phrasing1", "phrasing2"] }`,
-      prompt: query,
-    });
-    const parsed = JSON.parse(text) as { queries?: string[] };
-    return [query, ...(parsed.queries ?? [])].slice(0, 4);
-  } catch {
-    return [query];
-  }
-}
-
-async function searchWithExpansion(
+async function searchDocuments(
   supabase: ReturnType<typeof getServiceSupabase>,
   queries: string[],
   topK: number,
@@ -207,9 +191,6 @@ export const POST = withApiGuardrails(
 
   const supabase = getServiceSupabase();
 
-  // RAG pipeline: query expansion → vector search → context injection
-  const expandedQueries = await expandQuery(query);
-
   const modelMessages = messages.flatMap((message): ModelMessage[] => {
     const content = extractTextFromMessage(message);
     if (!content) return [];
@@ -219,7 +200,17 @@ export const POST = withApiGuardrails(
     return [];
   });
 
-  const searchResults = await searchWithExpansion(supabase, expandedQueries, 5);
+  // RAG: embed the user's question and run an indexed (HNSW) vector search.
+  // An LLM query-expansion step used to run here but was removed: it added
+  // ~6-7s of blocking latency AND degraded relevance (e.g. "publish drawings"
+  // expanded to "publish artwork"/"illustrations", which don't exist in the
+  // construction-docs corpus). Searching the literal question retrieves better.
+  const tSearch = Date.now();
+  const searchResults = await searchDocuments(supabase, [query], 10);
+  console.log("[procore-docs/chat] retrieval timing", {
+    searchMs: Date.now() - tSearch,
+    resultCount: searchResults.length,
+  });
 
   // Build system prompt with retrieved context
   let systemWithContext = SYSTEM_PROMPT;
@@ -247,23 +238,25 @@ export const POST = withApiGuardrails(
   }
 
   const stream = createUIMessageStream({
-    execute: async ({ writer }) => {
-      const { text } = await generateText({
+    execute: ({ writer }) => {
+      // Stream tokens as they are produced. Buffering the whole answer with
+      // generateText made the first byte arrive ~30-40s late, which the browser
+      // surfaced as "Load failed" and pinned the dev server under memory pressure.
+      const result = streamText({
         model: getLanguageModel(PROCORE_DOCS_MODEL),
         system: systemWithContext,
         messages: modelMessages.length > 0
           ? modelMessages
           : [{ role: "user", content: query }],
+        maxOutputTokens: 1500,
+        onError: ({ error }) => {
+          console.error("[procore-docs/chat] streamText error", {
+            message: error instanceof Error ? error.message : String(error),
+          });
+        },
       });
 
-      if (!text.trim()) {
-        throw new Error("Procore docs chat model returned an empty response.");
-      }
-
-      const textId = `procore-docs-${Date.now()}`;
-      writer.write({ type: "text-start", id: textId });
-      writer.write({ type: "text-delta", id: textId, delta: text });
-      writer.write({ type: "text-end", id: textId });
+      writer.merge(result.toUIMessageStream());
     },
     onError: () =>
       "An error occurred while processing your request. Please try again.",

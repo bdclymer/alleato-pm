@@ -77,9 +77,22 @@ export const IMPACT_COLORS: Record<NonNullable<AiAgent["estimated_impact"]>, str
   critical: "text-red-600 dark:text-red-400 font-medium",
 };
 
+// ─── Inline editing ────────────────────────────────────────────────────────────
+
+export interface AiAgentInlineEditHandlers {
+  /** Persists a single-field change for one agent. Throws on failure so the cell can revert. */
+  onUpdate: (id: string, data: Record<string, unknown>) => Promise<void>;
+}
+
+const STATUS_EDIT_OPTIONS = (
+  Object.entries(STATUS_LABELS) as [AiAgent["status"], string][]
+).map(([value, label]) => ({ value, label }));
+
 // ─── Columns ─────────────────────────────────────────────────────────────────
 
-export function buildAiAgentColumns(): TableColumn<AiAgent>[] {
+export function buildAiAgentColumns(
+  inlineEdit?: AiAgentInlineEditHandlers,
+): TableColumn<AiAgent>[] {
   return [
     {
       id: "name",
@@ -109,6 +122,14 @@ export function buildAiAgentColumns(): TableColumn<AiAgent>[] {
           {STATUS_LABELS[a.status]}
         </span>
       ),
+      editable: Boolean(inlineEdit),
+      editType: "select",
+      editValue: (a) => a.status,
+      editOptions: STATUS_EDIT_OPTIONS,
+      editEmptyLabel: "Select status",
+      onEdit: async (a, value) => {
+        await inlineEdit!.onUpdate(a.id, { status: value });
+      },
     },
     {
       id: "domain",
@@ -167,6 +188,16 @@ export function buildAiAgentColumns(): TableColumn<AiAgent>[] {
           {a.priority_score != null ? a.priority_score : "—"}
         </span>
       ),
+      editable: Boolean(inlineEdit),
+      editType: "number",
+      editValue: (a) => (a.priority_score != null ? String(a.priority_score) : ""),
+      editEmptyLabel: "Set priority",
+      onEdit: async (a, value) => {
+        const parsed = Math.round(Number(value));
+        if (!Number.isFinite(parsed)) return;
+        const clamped = Math.min(100, Math.max(1, parsed));
+        await inlineEdit!.onUpdate(a.id, { priority_score: clamped });
+      },
     },
     {
       id: "approval",
@@ -180,6 +211,12 @@ export function buildAiAgentColumns(): TableColumn<AiAgent>[] {
           {a.approval_required == null ? "—" : a.approval_required ? "Required" : "Auto"}
         </span>
       ),
+      editable: Boolean(inlineEdit),
+      editType: "boolean",
+      editValue: (a) => (a.approval_required ? "true" : "false"),
+      onEdit: async (a, value) => {
+        await inlineEdit!.onUpdate(a.id, { approval_required: value === "true" });
+      },
     },
     {
       id: "gaps",

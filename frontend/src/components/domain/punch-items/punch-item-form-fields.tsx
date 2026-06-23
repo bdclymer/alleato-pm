@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
 import {
@@ -417,18 +418,11 @@ export function PunchItemFormFields({
           )}
         />
 
-        <FormField
+        <RHFDateField
           control={form.control}
           name="due_date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Due Date</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Due Date"
+          nullable
         />
       </div>
 

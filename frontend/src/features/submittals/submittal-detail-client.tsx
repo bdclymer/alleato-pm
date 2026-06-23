@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Circle,
   Clock,
@@ -20,7 +21,12 @@ import {
   XCircle,
 } from "lucide-react";
 
-import { PageShell, PageTabs } from "@/components/layout";
+import { PageShell } from "@/components/layout";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { EntityAttachments, StatusBadge, EmptyState } from "@/components/ds";
 import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItemsPanel";
 import { Button } from "@/components/ui/button";
@@ -695,6 +701,33 @@ function WorkflowBuilder({
   );
 }
 
+// ─── Accordion Section ────────────────────────────────────────────────────────
+
+function AccordionSection({
+  label,
+  children,
+  defaultOpen = true,
+}: {
+  label: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = React.useState(defaultOpen);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger className="flex w-full items-center justify-between group">
+        {/* eslint-disable-next-line design-system/no-raw-heading */}
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">
+          {label}
+        </h2>
+        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="mt-4">{children}</CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface SubmittalDetailClientProps {
@@ -720,7 +753,6 @@ export function SubmittalDetailClient({
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [distributeOpen, setDistributeOpen] = React.useState(false);
   const [isEditing, setIsEditing] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState("documents");
 
   const { users, allUsers } = useAuthUsers(String(projectId));
 
@@ -914,78 +946,7 @@ export function SubmittalDetailClient({
     </div>
   );
 
-  // ── Details tab ───────────────────────────────────────────────────────────
-
-  const detailsTab = (
-    <div className="space-y-8">
-      {submittal.description && (
-        <div>
-          <SectionLabel>Description</SectionLabel>
-          <p className="text-sm text-foreground whitespace-pre-wrap">
-            {submittal.description}
-          </p>
-        </div>
-      )}
-
-      <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="space-y-4">
-          <SectionLabel>Information</SectionLabel>
-          <div className="space-y-3.5">
-            <FieldRow
-              label="Type"
-              value={
-                typeof submittal.submittal_type === "object"
-                  ? (submittal.submittal_type as { name?: string } | null)?.name
-                  : submittal.submittal_type
-              }
-            />
-            <FieldRow
-              label="Package"
-              value={
-                (submittal.submittal_package as { name?: string } | null)?.name
-              }
-            />
-            <FieldRow
-              label="Responsible Contractor"
-              value={submittal.responsible_contractor?.name}
-            />
-            <FieldRow
-              label="Received From"
-              value={
-                submittal.received_from ??
-                (submittal.received_from_id
-                  ? resolveUserName(allUsers, submittal.received_from_id)
-                  : null)
-              }
-            />
-            <FieldRow
-              label="Submittal Manager"
-              value={
-                submittal.submittal_manager_id
-                  ? resolveUserName(allUsers, submittal.submittal_manager_id)
-                  : null
-              }
-            />
-            <FieldRow
-              label="Visibility"
-              value={submittal.is_private ? "Private" : "Public"}
-            />
-          </div>
-        </div>
-
-        <div>
-          <SectionLabel>Related Items</SectionLabel>
-          <RelatedItemsPanel
-            entityType="submittal"
-            entityId={submittal.id}
-            projectId={projectId}
-          />
-        </div>
-      </div>
-    </div>
-  );
-
-  // ── Communications tab ────────────────────────────────────────────────────
+  // ── Communications section ────────────────────────────────────────────────
 
   // Build a unified chronological feed from all communication events
   type CommEvent =
@@ -1240,11 +1201,12 @@ export function SubmittalDetailClient({
         onOpenChange={setDistributeOpen}
       />
       <PageShell
-        variant="detail"
+        variant="detailWide"
         className="pt-6 sm:pt-10"
         title={`${submittal.submittal_number} — ${submittal.title}`}
         titleContent={titleContent}
         onBack={() => router.push(`/${projectId}/submittals`)}
+        contentClassName="pb-12"
       >
         {isEditing ? (
           <SubmittalFormPage
@@ -1258,57 +1220,105 @@ export function SubmittalDetailClient({
             }}
           />
         ) : (
-          <div className="space-y-4">
-            <PageTabs
-              variant="inline"
-              tabs={[
-                {
-                  label: "Documents",
-                  href: "documents",
-                  isActive: activeTab === "documents",
-                },
-                {
-                  label:
-                    workflowSteps.length > 0
-                      ? `Workflow (${workflowSteps.length})`
-                      : "Workflow",
-                  href: "workflow",
-                  isActive: activeTab === "workflow",
-                },
-                {
-                  label:
-                    commEvents.length > 0
-                      ? `Communications (${commEvents.length})`
-                      : "Communications",
-                  href: "communications",
-                  isActive: activeTab === "communications",
-                },
-                {
-                  label: "Details",
-                  href: "details",
-                  isActive: activeTab === "details",
-                },
-                {
-                  label:
-                    history.length > 0 ? `History (${history.length})` : "History",
-                  href: "history",
-                  isActive: activeTab === "history",
-                },
-              ]}
-              onTabClick={setActiveTab}
-            />
+          <div className="grid gap-16 lg:grid-cols-[minmax(0,1fr)_280px]">
+            {/* Main column */}
+            <div className="space-y-6">
+              {submittal.description && (
+                <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                  {submittal.description}
+                </p>
+              )}
 
-            {activeTab === "documents" && <div className="pt-2">{documentsTab}</div>}
+              <AccordionSection
+                label={workflowSteps.length > 0 ? `Workflow (${workflowSteps.length})` : "Workflow"}
+              >
+                {workflowTab}
+              </AccordionSection>
 
-            {activeTab === "workflow" && <div className="pt-2">{workflowTab}</div>}
+              <section className="border-t border-border pt-6">
+                <AccordionSection label="Documents">
+                  {documentsTab}
+                </AccordionSection>
+              </section>
 
-            {activeTab === "communications" && (
-              <div className="pt-4">{communicationsTab}</div>
-            )}
+              {commEvents.length > 0 && (
+                <section className="border-t border-border pt-6">
+                  <AccordionSection label={`Communications (${commEvents.length})`}>
+                    {communicationsTab}
+                  </AccordionSection>
+                </section>
+              )}
 
-            {activeTab === "details" && <div className="pt-2">{detailsTab}</div>}
+              <section className="border-t border-border pt-6">
+                <AccordionSection
+                  label={history.length > 0 ? `History (${history.length})` : "History"}
+                  defaultOpen={false}
+                >
+                  {historyTab}
+                </AccordionSection>
+              </section>
+            </div>
 
-            {activeTab === "history" && <div className="pt-2">{historyTab}</div>}
+            {/* Sidebar */}
+            <aside className="space-y-8">
+              <div className="space-y-3">
+                <div className="text-xs font-semibold uppercase tracking-widest text-primary">
+                  Details
+                </div>
+                <div className="space-y-3.5">
+                  <FieldRow
+                    label="Type"
+                    value={
+                      typeof submittal.submittal_type === "object"
+                        ? (submittal.submittal_type as { name?: string } | null)?.name
+                        : submittal.submittal_type
+                    }
+                  />
+                  <FieldRow
+                    label="Package"
+                    value={
+                      (submittal.submittal_package as { name?: string } | null)?.name
+                    }
+                  />
+                  <FieldRow
+                    label="Responsible Contractor"
+                    value={submittal.responsible_contractor?.name}
+                  />
+                  <FieldRow
+                    label="Received From"
+                    value={
+                      submittal.received_from ??
+                      (submittal.received_from_id
+                        ? resolveUserName(allUsers, submittal.received_from_id)
+                        : null)
+                    }
+                  />
+                  <FieldRow
+                    label="Submittal Manager"
+                    value={
+                      submittal.submittal_manager_id
+                        ? resolveUserName(allUsers, submittal.submittal_manager_id)
+                        : null
+                    }
+                  />
+                  <FieldRow
+                    label="Visibility"
+                    value={submittal.is_private ? "Private" : "Public"}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3 border-t border-border pt-6">
+                <div className="text-xs font-semibold uppercase tracking-widest text-primary">
+                  Related
+                </div>
+                <RelatedItemsPanel
+                  entityType="submittal"
+                  entityId={submittal.id}
+                  projectId={projectId}
+                />
+              </div>
+            </aside>
           </div>
         )}
       </PageShell>

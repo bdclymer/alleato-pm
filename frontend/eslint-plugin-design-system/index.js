@@ -27,9 +27,13 @@ const noRawTablePrimitives = require('./rules/no-raw-table-primitives');
 const noExternalFetchInApiRoutes = require('./rules/no-external-fetch-in-api-routes');
 const noRawErrorMessageToast = require('./rules/no-raw-error-message-toast');
 const noRawSearchInput = require('./rules/no-raw-search-input');
+const requireEditableStatusColumn = require('./rules/require-editable-status-column');
+const noRawDateInput = require('./rules/no-raw-date-input');
 
 module.exports = {
   rules: {
+    'require-editable-status-column': requireEditableStatusColumn,
+    'no-raw-date-input': noRawDateInput,
     'require-info-alert': requireInfoAlert,
     'no-hardcoded-colors': noHardcodedColors,
     'no-arbitrary-spacing': noArbitrarySpacing,
