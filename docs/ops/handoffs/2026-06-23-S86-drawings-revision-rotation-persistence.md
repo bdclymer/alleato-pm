@@ -6,7 +6,7 @@
 2) Task ID: drawings-revision-rotation-persistence
 3) Linear issue: AAI-614
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-614/add-drawings-review-queue-for-unpublished-revisions
-5) Current status: Complete - Pending Push
+5) Current status: Complete - Pushed
 6) Files changed (absolute paths):
    - /Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-23-drawings-revision-rotation-persistence.md
    - /Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-23-S86-drawings-revision-rotation-persistence.md
@@ -51,17 +51,18 @@
 
 ## Current Status
 
-Implemented, migration applied, and verified locally/remotely. Pending `codex:finish` push to `origin/main`.
+Implemented, migration applied, verified locally/remotely, and pushed to `origin/main`.
 
 ## Exact Next Step
 
-Run `npm run linear:codex:check -- docs/ops/handoffs/2026-06-23-S86-drawings-revision-rotation-persistence.md`, post the Linear completion comment, then run `codex:finish` with only S86-owned files.
+No action required for this slice. Continue remaining Drawings parity as separate scoped tasks.
 
 ## Known Pitfalls
 
 - Supabase type generation via CLI failed before edits because the configured access token is not accepted by the Supabase CLI. The migration was applied through `DATABASE_URL`, verified against the remote ledger, and the local generated type was patched to match the applied schema.
 - This slice stores rotation metadata only. It does not rotate the stored PDF/image bytes or initialize the viewer from this column yet.
 - Do not include unrelated dirty files from active AI/table/viewer slices when finishing.
+- An initial finish commit `6b8ac8be0` accidentally included unrelated AI/gallery changes. Repair commit `68b4a06db` restored those files before the actual S86 commit `f44063f6`.
 
 ## Resume Commands
 
