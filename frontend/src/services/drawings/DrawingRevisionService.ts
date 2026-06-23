@@ -41,8 +41,8 @@ export class DrawingRevisionService {
 
   /**
    * Create a new revision for a drawing.
-   * Database trigger handles unsetting other current revisions
-   * and updating drawings.current_revision_id.
+   * Keep the current-revision pointer explicit in application code because
+   * older migrations do not install the trigger this service once assumed.
    */
   async create(
     drawingId: string,
@@ -50,6 +50,8 @@ export class DrawingRevisionService {
     userId: string,
   ): Promise<Result<DrawingRevision, DrawingError>> {
     try {
+      const shouldMakeCurrent = input.is_current_revision ?? true;
+
       const { data, error } = await this.supabase
         .from("drawing_revisions")
         .insert({
@@ -65,13 +67,37 @@ export class DrawingRevisionService {
           file_type: input.file_type,
           description: input.description || null,
           uploaded_by: userId,
-          is_current_revision: true,
+          is_current_revision: shouldMakeCurrent,
         })
         .select()
         .single();
 
       if (error) {
         return { data: null, error: { type: "UNKNOWN", message: error.message } };
+      }
+
+      if (shouldMakeCurrent) {
+        const { error: unsetError } = await this.supabase
+          .from("drawing_revisions")
+          .update({ is_current_revision: false })
+          .eq("drawing_id", drawingId)
+          .neq("id", data.id);
+
+        if (unsetError) {
+          return { data: null, error: { type: "UNKNOWN", message: unsetError.message } };
+        }
+
+        const { error: drawingUpdateError } = await this.supabase
+          .from("drawings")
+          .update({
+            current_revision_id: data.id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", drawingId);
+
+        if (drawingUpdateError) {
+          return { data: null, error: { type: "UNKNOWN", message: drawingUpdateError.message } };
+        }
       }
 
       return { data, error: null };

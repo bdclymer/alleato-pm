@@ -253,6 +253,8 @@ export class DrawingService {
           discipline: input.discipline || null,
           drawing_type: input.drawing_type || null,
           area_id: input.area_id || null,
+          is_published: input.is_published ?? true,
+          is_obsolete: input.is_obsolete ?? false,
           created_by: userId,
         })
         .select()

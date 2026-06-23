@@ -35,6 +35,8 @@ export interface DrawingCreateInput {
   discipline?: string;
   drawing_type?: string;
   area_id?: string;
+  is_published?: boolean;
+  is_obsolete?: boolean;
 }
 
 export interface DrawingUpdateInput {
@@ -51,6 +53,7 @@ export interface RevisionCreateInput {
   drawing_date?: string;
   received_date: string;
   status?: string;
+  is_current_revision?: boolean;
   file_url: string;
   file_name: string;
   file_size: number;

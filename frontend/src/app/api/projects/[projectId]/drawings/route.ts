@@ -190,7 +190,8 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       fileUrl = publicUrlData.publicUrl;
     }
 
-    // Duplicate detection: check if drawing_number already exists in this project
+    // Duplicate detection: a repeated drawing number is a new revision of the
+    // logical sheet, not a separate drawing.
     const { data: existing } = await serviceClient
       .from("drawings")
       .select("id, drawing_number, title")
@@ -199,12 +200,62 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       .maybeSingle();
 
     if (existing) {
-      if (!isMultipart) {
-        await cleanupUploadedFile(uploadPath);
+      if (isMultipart) {
+        if (!uploadFile) {
+          return NextResponse.json(
+            { error: "Missing upload file for multipart request" },
+            { status: 400 },
+          );
+        }
+
+        const uploadResult = await service.uploadFile(projectId, existing.id, uploadFile);
+        if (uploadResult.error) {
+          return apiErrorResponse(uploadResult.error);
+        }
+        fileUrl = uploadResult.data.url;
+        uploadPath = uploadResult.data.path;
       }
+
+      const revisionResult = await service.createRevision(
+        existing.id,
+        {
+          revision_number: revisionNumber,
+          drawing_set_id: drawingSetId,
+          drawing_date: drawingDate,
+          received_date: receivedDate,
+          status: "under_review",
+          is_current_revision: true,
+          file_url: fileUrl,
+          file_name: fileName,
+          file_size: fileSize,
+          file_type: fileType,
+          description,
+        },
+        user.id,
+      );
+
+      if (revisionResult.error) {
+        await cleanupUploadedFile(uploadPath);
+        return apiErrorResponse(revisionResult.error);
+      }
+
+      const unpublishResult = await service.unpublish(projectId, existing.id);
+      if (unpublishResult.error) {
+        return apiErrorResponse(unpublishResult.error);
+      }
+
+      const finalResult = await service.getById(projectId, existing.id);
+      if (finalResult.error) {
+        return apiErrorResponse(finalResult.error);
+      }
+
       return NextResponse.json(
-        { error: "DUPLICATE_DRAWING_NUMBER", existing_drawing: existing },
-        { status: 409 },
+        {
+          ...finalResult.data,
+          revision_created: true,
+          logical_drawing_created: false,
+        },
+        { status: 201 },
       );
     }
 
@@ -217,6 +268,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         discipline,
         drawing_type: drawingType,
         area_id: areaId,
+        is_published: false,
       },
       user.id,
     );
@@ -256,7 +308,8 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         drawing_set_id: drawingSetId,
         drawing_date: drawingDate,
         received_date: receivedDate,
-        status: "approved",
+        status: "under_review",
+        is_current_revision: true,
         file_url: fileUrl,
         file_name: fileName,
         file_size: fileSize,

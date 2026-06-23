@@ -48,7 +48,7 @@ import {
   DRAWING_MAX_UPLOAD_LABEL,
   getDrawingUploadFileError,
 } from "@/lib/drawings/upload-constraints";
-import { ApiError, apiFetch } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
 import { getDrawingUploadFallbackIdentity } from "@/lib/drawings/drawing-identity";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import {
@@ -71,12 +71,6 @@ interface FileInfo {
   size: number;
   type: string;
   file: File;
-}
-
-interface DuplicateDrawing {
-  id: string;
-  drawing_number: string;
-  title: string;
 }
 
 export function DrawingUploadDialog({
@@ -102,8 +96,6 @@ export function DrawingUploadDialog({
   }, [initialFiles, open]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [newSetName, setNewSetName] = useState("");
-  const [duplicateDrawing, setDuplicateDrawing] = useState<DuplicateDrawing | null>(null);
-  const [isUploadingRevision, setIsUploadingRevision] = useState(false);
   const [isSubmittingUpload, setIsSubmittingUpload] = useState(false);
   const [uploadPhase, setUploadPhase] = useState<"idle" | "preparing" | "creating-set" | "uploading" | "finalizing">("idle");
   const uploadInFlightRef = React.useRef(false);
@@ -117,7 +109,7 @@ export function DrawingUploadDialog({
     errors,
     clearUploadState,
   } = useDrawingUpload(projectId);
-  const isBusy = isSubmittingUpload || isUploading || isUploadingRevision;
+  const isBusy = isSubmittingUpload || isUploading;
 
   const form = useForm<UploadDrawingFormData>({
     resolver: zodResolver(uploadDrawingFormSchema),
@@ -199,7 +191,6 @@ export function DrawingUploadDialog({
     setIsSubmittingUpload(true);
     setUploadPhase("preparing");
     clearUploadState();
-    setDuplicateDrawing(null);
 
     try {
       setUploadPhase(data.drawing_set_id === "__new__" ? "creating-set" : "preparing");
@@ -265,12 +256,6 @@ export function DrawingUploadDialog({
           });
           queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
         } catch (error) {
-          if (error instanceof ApiError && error.status === 409) {
-            const duplicate = (error.body as { existing_drawing?: DuplicateDrawing }).existing_drawing;
-            setDuplicateDrawing(duplicate ?? null);
-            return;
-          }
-
           toast.error("Upload failed", {
             description: error instanceof Error ? error.message : "An unexpected error occurred",
           });
@@ -318,77 +303,11 @@ export function DrawingUploadDialog({
     }
   };
 
-  const handleUploadAsRevision = async () => {
-    if (!duplicateDrawing || selectedFiles.length === 0) return;
-
-    const data = form.getValues();
-    setIsUploadingRevision(true);
-
-    try {
-      const setId = await resolveSetId(data.drawing_set_id);
-      if (setId === null) {
-        setIsUploadingRevision(false);
-        return;
-      }
-
-      const file = selectedFiles[0].file;
-      const signedUpload = await apiFetch<{ path: string; token: string }>(
-        `/api/projects/${projectId}/drawings/${duplicateDrawing.id}/revisions/upload-url`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            file_name: file.name,
-            file_size: file.size,
-            file_type: file.type,
-          }),
-        },
-      );
-
-      const supabase = createSupabaseClient();
-      const { error: directUploadError } = await supabase.storage
-        .from("project-files")
-        .uploadToSignedUrl(signedUpload.path, signedUpload.token, file, {
-          contentType: file.type,
-          upsert: false,
-        });
-      if (directUploadError) {
-        throw new Error(`Failed to upload file to storage: ${directUploadError.message}`);
-      }
-
-      await apiFetch(`/api/projects/${projectId}/drawings/${duplicateDrawing.id}/revisions`, {
-        method: "POST",
-        body: JSON.stringify({
-          revision_number: data.revision_number || "A",
-          received_date: data.received_date || new Date().toISOString(),
-          drawing_date: data.drawing_date,
-          drawing_set_id: setId,
-          description: data.description,
-          upload_path: signedUpload.path,
-          file_name: file.name,
-          file_size: file.size,
-          file_type: file.type,
-        }),
-      });
-      queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["drawing", projectId, duplicateDrawing.id] });
-
-      toast.success("New revision uploaded successfully");
-      handleClose(true);
-    } catch (error) {
-      toast.error("Failed to upload revision", {
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
-      });
-    } finally {
-      setIsUploadingRevision(false);
-    }
-  };
-
   const handleClose = (force = false) => {
     if (isBusy && !force) return;
     form.reset();
     setSelectedFiles([]);
     setShowAdvanced(false);
-    setDuplicateDrawing(null);
     setUploadPhase("idle");
     clearUploadState();
     onOpenChange(false);
@@ -765,44 +684,6 @@ export function DrawingUploadDialog({
               </div>
             )}
 
-            {/* Duplicate drawing warning */}
-            {duplicateDrawing && (
-              <div className="rounded-md bg-muted p-3 text-sm space-y-2">
-                <p className="font-medium text-foreground">Drawing already exists</p>
-                <p className="text-muted-foreground">
-                  Drawing{" "}
-                  <span className="font-mono">{duplicateDrawing.drawing_number}</span>{" "}
-                  — {duplicateDrawing.title}
-                </p>
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={isBusy}
-                    onClick={handleUploadAsRevision}
-                  >
-                    {isUploadingRevision ? (
-                      <>
-                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      "Upload as New Revision"
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    disabled={isBusy}
-                    onClick={() => setDuplicateDrawing(null)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )}
-
             {/* Errors */}
             {errors.length > 0 && (
               <ErrorState
@@ -836,7 +717,7 @@ export function DrawingUploadDialog({
                   {isBusy ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {isUploadingRevision ? "Uploading revision..." : "Processing..."}
+                      Processing...
                     </>
                   ) : (
                     submitLabel
