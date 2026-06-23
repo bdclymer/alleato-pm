@@ -11,6 +11,24 @@ export interface DrawingDisplayIdentity {
   subtitle: string;
 }
 
+export interface DrawingUploadDetectedMetadata {
+  drawingNumber: string;
+  title: string;
+  revisionNumber: string;
+  discipline: string;
+  confidence: "high" | "medium" | "low";
+  source: "filename";
+}
+
+const DISCIPLINE_PREFIXES: Record<string, string> = {
+  A: "Architectural",
+  C: "Civil",
+  E: "Electrical",
+  M: "Mechanical",
+  P: "Plumbing",
+  S: "Structural",
+};
+
 function cleanValue(value: string | null | undefined): string {
   return (value ?? "").trim();
 }
@@ -41,6 +59,7 @@ function splitFilenameFallback(value: string): { number: string; title: string }
 
   const leadingCodePatterns = [
     /^([A-Z]{1,4}\s*-\s*\d{1,5}[A-Z]?)\s+(.+)$/i,
+    /^([A-Z]{1,4}\d{1,5}[A-Z]?)\s+(.+)$/i,
     /^(\d{2,4}\s*-\s*\d{1,5}[A-Z]?)\s*(?:-\s*|\s+)(.+)$/i,
     /^(\d{2,4}\.\d{1,5}[A-Z]?)\s+(.+)$/i,
   ];
@@ -76,6 +95,49 @@ export function getDrawingUploadFallbackIdentity(fileName: string): {
   return {
     drawingNumber: split?.number || stem,
     title: split?.title || stem,
+  };
+}
+
+function detectRevisionNumber(value: string): string {
+  const revisionMatch =
+    value.match(/(?:^|[\s_-])rev(?:ision)?[\s_-]*([A-Z0-9.]+)(?:[\s_-]|$)/i) ??
+    value.match(/(?:^|[\s_-])r([0-9]+)(?:[\s_-]|$)/i);
+  return revisionMatch?.[1]?.toUpperCase() ?? "A";
+}
+
+function stripRevisionToken(value: string): string {
+  return normalizeDisplayText(
+    value
+      .replace(/(?:^|[\s_-])rev(?:ision)?[\s_-]*[A-Z0-9.]+(?:[\s_-]|$)/i, " ")
+      .replace(/(?:^|[\s_-])r[0-9]+(?:[\s_-]|$)/i, " "),
+  );
+}
+
+function detectDiscipline(drawingNumber: string): string {
+  const prefix = drawingNumber.match(/^\s*([A-Z]+)/i)?.[1]?.toUpperCase() ?? "";
+  return DISCIPLINE_PREFIXES[prefix[0] ?? ""] ?? "";
+}
+
+export function getDrawingUploadDetectedMetadata(
+  fileName: string,
+): DrawingUploadDetectedMetadata {
+  const stem = normalizeDisplayText(cleanFileStem(fileName));
+  const fallback = getDrawingUploadFallbackIdentity(fileName);
+  const split = splitFilenameFallback(stem);
+  const drawingNumber = fallback.drawingNumber;
+  const title = stripRevisionToken(fallback.title);
+  const revisionNumber = detectRevisionNumber(stem);
+  const discipline = detectDiscipline(drawingNumber);
+  const confidence =
+    split && discipline ? "high" : split || discipline ? "medium" : "low";
+
+  return {
+    drawingNumber,
+    title,
+    revisionNumber,
+    discipline,
+    confidence,
+    source: "filename",
   };
 }
 

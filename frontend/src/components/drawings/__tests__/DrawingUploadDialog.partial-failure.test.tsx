@@ -19,6 +19,7 @@ const uploadToSignedUrlMock = jest.fn();
 let uploadFailures: UploadFailure[] = [];
 let uploadResults: UploadResult[] = [];
 let lastUploadMetadata: Record<string, unknown> | null = null;
+let lastPerFileMetadata: Record<string, Record<string, unknown>> | null = null;
 let drawingSets: Array<{ id: string; name: string }> = [{ id: "set-existing", name: "Issued Set" }];
 
 jest.mock("@tanstack/react-query", () => {
@@ -51,9 +52,14 @@ jest.mock("@/hooks/use-drawing-upload", () => {
     useDrawingUpload: () => {
       const [errors, setErrors] = React.useState<UploadFailure[]>([]);
 
-      const uploadMultipleDrawings = async (files: FileList, metadata: Record<string, unknown>) => {
+      const uploadMultipleDrawings = async (
+        files: FileList,
+        metadata: Record<string, unknown>,
+        perFileMetadata: Record<string, Record<string, unknown>>,
+      ) => {
         lastUploadMetadata = metadata;
-        uploadMock(Array.from(files).map((file) => file.name), metadata);
+        lastPerFileMetadata = perFileMetadata;
+        uploadMock(Array.from(files).map((file) => file.name), metadata, perFileMetadata);
         if (uploadFailures.length > 0) {
           setErrors(uploadFailures);
           throw new DrawingUploadBatchError(uploadResults, uploadFailures);
@@ -189,6 +195,7 @@ beforeEach(() => {
   uploadFailures = [];
   uploadResults = [];
   lastUploadMetadata = null;
+  lastPerFileMetadata = null;
   drawingSets = [{ id: "set-existing", name: "Issued Set" }];
 });
 
@@ -210,7 +217,88 @@ describe("DrawingUploadDialog partial batch failure guardrails", () => {
     expect(screen.getByText("Some drawings did not upload")).toBeInTheDocument();
     expect(screen.getByText("A102.pdf: Duplicate drawing number")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry failed drawing" })).toBeInTheDocument();
-    expect(uploadMock).toHaveBeenCalledWith(["A101.pdf", "A102.pdf"], expect.any(Object));
+    expect(uploadMock).toHaveBeenCalledWith(
+      ["A101.pdf", "A102.pdf"],
+      expect.any(Object),
+      expect.any(Object),
+    );
+  });
+
+  it("lets users review and correct detected metadata before batch upload", async () => {
+    uploadResults = [{ fileName: "A101 First Floor Plan.pdf", drawingId: "drawing-1" }];
+    uploadToSignedUrlMock.mockResolvedValue({ error: null });
+    apiFetchMock.mockImplementation((url: string, options?: { method?: string }) => {
+      if (url.endsWith("/drawings/upload-url")) {
+        return Promise.resolve({ path: "drawings/A101.pdf", token: "upload-token" });
+      }
+      if (url.endsWith("/drawings") && options?.method === "POST") {
+        return Promise.resolve({ id: "drawing-1", current_revision: { id: "revision-1" } });
+      }
+      return Promise.reject(new Error(`Unexpected apiFetch call: ${url}`));
+    });
+
+    renderDialog([makeFile("A101 First Floor Plan.pdf")]);
+
+    fireEvent.change(screen.getByLabelText("Drawing Set"), { target: { value: "set-existing" } });
+    fireEvent.change(screen.getByLabelText("A101 First Floor Plan.pdf title"), {
+      target: { value: "First Floor Plan - Revised" },
+    });
+    fireEvent.change(screen.getByLabelText("A101 First Floor Plan.pdf revision"), {
+      target: { value: "2" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Process" }));
+
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledWith(
+        "/api/projects/983/drawings",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"title":"First Floor Plan - Revised"'),
+        }),
+      );
+    });
+    const createCall = apiFetchMock.mock.calls.find(
+      ([url, options]) =>
+        String(url).endsWith("/drawings") &&
+        (options as { method?: string } | undefined)?.method === "POST",
+    );
+    const createBody = JSON.parse(
+      String((createCall?.[1] as { body?: string } | undefined)?.body),
+    ) as Record<string, unknown>;
+
+    expect(createBody).toMatchObject({
+      drawing_number: "A101",
+      title: "First Floor Plan - Revised",
+      revision_number: "2",
+      discipline: "Architectural",
+    });
+  });
+
+  it("passes reviewed metadata for each file in a batch upload", async () => {
+    uploadResults = [
+      { fileName: "A101 First Floor Plan.pdf", drawingId: "drawing-1" },
+      { fileName: "S201 Framing Plan.pdf", drawingId: "drawing-2" },
+    ];
+
+    renderDialog([
+      makeFile("A101 First Floor Plan.pdf"),
+      makeFile("S201 Framing Plan.pdf"),
+    ]);
+
+    fireEvent.change(screen.getByLabelText("Drawing Set"), { target: { value: "set-existing" } });
+    fireEvent.change(screen.getByLabelText("S201 Framing Plan.pdf revision"), {
+      target: { value: "3" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Process" }));
+
+    await waitFor(() => {
+      expect(lastPerFileMetadata?.["S201 Framing Plan.pdf"]).toMatchObject({
+        drawing_number: "S201",
+        title: "Framing Plan",
+        revision_number: "3",
+        discipline: "Structural",
+      });
+    });
   });
 
   it("resolves a new drawing set to the returned set id before retrying failed files", async () => {

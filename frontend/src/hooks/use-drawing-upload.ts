@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
-import { getDrawingUploadFallbackIdentity } from "@/lib/drawings/drawing-identity";
+import { getDrawingUploadDetectedMetadata } from "@/lib/drawings/drawing-identity";
 import type { UploadDrawingFormData } from "@/lib/schemas/drawing-schemas";
 import { getDrawingUploadFileError } from "@/lib/drawings/upload-constraints";
 import type {
@@ -17,6 +17,17 @@ interface UploadedDrawingResult {
   drawingId: string;
   revisionId?: string;
 }
+
+export type DrawingPerFileUploadMetadata = Partial<
+  Pick<
+    UploadDrawingFormData,
+    | "drawing_number"
+    | "title"
+    | "revision_number"
+    | "discipline"
+    | "drawing_type"
+  >
+>;
 
 export class DrawingUploadBatchError extends Error {
   constructor(
@@ -81,7 +92,7 @@ export function useDrawingUpload(projectId: string) {
         },
       ]);
 
-      const fallbackIdentity = getDrawingUploadFallbackIdentity(file.name);
+      const detectedMetadata = getDrawingUploadDetectedMetadata(file.name);
 
       const signedUpload = await apiFetch<{ path: string; token: string }>(
         `/api/projects/${projectId}/drawings/upload-url`,
@@ -118,11 +129,13 @@ export function useDrawingUpload(projectId: string) {
       }>(`/api/projects/${projectId}/drawings`, {
         method: "POST",
         body: JSON.stringify({
-          drawing_number: metadata.drawing_number || fallbackIdentity.drawingNumber,
-          title: metadata.title || fallbackIdentity.title,
-          discipline: metadata.discipline,
+          drawing_number:
+            metadata.drawing_number || detectedMetadata.drawingNumber,
+          title: metadata.title || detectedMetadata.title,
+          discipline: metadata.discipline || detectedMetadata.discipline,
           drawing_type: metadata.drawing_type,
-          revision_number: metadata.revision_number || "A",
+          revision_number:
+            metadata.revision_number || detectedMetadata.revisionNumber,
           drawing_date: metadata.drawing_date,
           received_date: metadata.received_date || new Date().toISOString(),
           drawing_set_id: metadata.drawing_set_id,
@@ -193,19 +206,31 @@ export function useDrawingUpload(projectId: string) {
     async (
       files: FileList,
       metadata: Partial<UploadDrawingFormData>,
+      perFileMetadata: Record<string, DrawingPerFileUploadMetadata> = {},
     ): Promise<UploadedDrawingResult[]> => {
       const results: UploadedDrawingResult[] = [];
       const failures: DrawingUploadError[] = [];
 
       for (const file of Array.from(files)) {
         try {
-          const fallbackIdentity = getDrawingUploadFallbackIdentity(file.name);
+          const detectedMetadata = getDrawingUploadDetectedMetadata(file.name);
+          const fileMetadata = perFileMetadata[file.name] ?? {};
           const drawingMetadata: UploadDrawingFormData = {
-            drawing_number: metadata.drawing_number || fallbackIdentity.drawingNumber,
-            title: metadata.title || fallbackIdentity.title,
-            discipline: metadata.discipline,
-            drawing_type: metadata.drawing_type,
-            revision_number: metadata.revision_number || "A",
+            drawing_number:
+              fileMetadata.drawing_number ||
+              metadata.drawing_number ||
+              detectedMetadata.drawingNumber,
+            title:
+              fileMetadata.title || metadata.title || detectedMetadata.title,
+            discipline:
+              fileMetadata.discipline ||
+              metadata.discipline ||
+              detectedMetadata.discipline,
+            drawing_type: fileMetadata.drawing_type || metadata.drawing_type,
+            revision_number:
+              fileMetadata.revision_number ||
+              metadata.revision_number ||
+              detectedMetadata.revisionNumber,
             drawing_date: metadata.drawing_date,
             received_date: metadata.received_date || new Date().toISOString(),
             drawing_set_id: metadata.drawing_set_id ?? "",

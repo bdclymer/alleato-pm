@@ -38,7 +38,11 @@ import { ErrorState } from "@/components/ds";
 import { FileUploadField } from "@/components/forms/FileUploadField";
 import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 
-import { DrawingUploadBatchError, useDrawingUpload } from "@/hooks/use-drawing-upload";
+import {
+  DrawingUploadBatchError,
+  type DrawingPerFileUploadMetadata,
+  useDrawingUpload,
+} from "@/hooks/use-drawing-upload";
 import { useDrawingSets } from "@/hooks/use-drawing-sets";
 import {
   uploadDrawingFormSchema,
@@ -49,7 +53,10 @@ import {
   getDrawingUploadFileError,
 } from "@/lib/drawings/upload-constraints";
 import { apiFetch } from "@/lib/api-client";
-import { getDrawingUploadFallbackIdentity } from "@/lib/drawings/drawing-identity";
+import {
+  getDrawingUploadDetectedMetadata,
+  type DrawingUploadDetectedMetadata,
+} from "@/lib/drawings/drawing-identity";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import {
   DRAWING_DISCIPLINES,
@@ -71,6 +78,33 @@ interface FileInfo {
   size: number;
   type: string;
   file: File;
+  metadata: DrawingUploadDetectedMetadata;
+}
+
+function createFileInfo(file: File): FileInfo {
+  return {
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    file,
+    metadata: getDrawingUploadDetectedMetadata(file.name),
+  };
+}
+
+function buildPerFileUploadMetadata(
+  files: FileInfo[],
+): Record<string, DrawingPerFileUploadMetadata> {
+  return Object.fromEntries(
+    files.map((fileInfo) => [
+      fileInfo.name,
+      {
+        drawing_number: fileInfo.metadata.drawingNumber,
+        title: fileInfo.metadata.title,
+        revision_number: fileInfo.metadata.revisionNumber,
+        discipline: fileInfo.metadata.discipline,
+      },
+    ]),
+  );
 }
 
 export function DrawingUploadDialog({
@@ -85,13 +119,7 @@ export function DrawingUploadDialog({
   // When initialFiles are provided (from drag-and-drop), populate selectedFiles
   React.useEffect(() => {
     if (initialFiles && initialFiles.length > 0 && open) {
-      const mapped = initialFiles.map((file) => ({
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        file,
-      }));
-      setSelectedFiles(mapped);
+      setSelectedFiles(initialFiles.map(createFileInfo));
     }
   }, [initialFiles, open]);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -122,17 +150,36 @@ export function DrawingUploadDialog({
   });
 
   const handleFilesSelected = (files: File[]) => {
-    const newFiles = files.map((file) => ({
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      file,
-    }));
+    const newFiles = files.map(createFileInfo);
     setSelectedFiles((prev) => [...prev, ...newFiles]);
   };
 
   const removeFile = (index: number) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateFileMetadata = (
+    index: number,
+    field: keyof Pick<
+      DrawingUploadDetectedMetadata,
+      "drawingNumber" | "title" | "revisionNumber" | "discipline"
+    >,
+    value: string,
+  ) => {
+    setSelectedFiles((current) =>
+      current.map((fileInfo, fileIndex) =>
+        fileIndex === index
+          ? {
+              ...fileInfo,
+              metadata: {
+                ...fileInfo.metadata,
+                [field]: value,
+                confidence: "high",
+              },
+            }
+          : fileInfo,
+      ),
+    );
   };
 
   const resolveSetId = async (rawSetId: string): Promise<string | null> => {
@@ -208,8 +255,9 @@ export function DrawingUploadDialog({
       setUploadPhase("uploading");
 
       if (selectedFiles.length === 1) {
-        const file = selectedFiles[0].file;
-        const fallbackIdentity = getDrawingUploadFallbackIdentity(file.name);
+        const selectedFile = selectedFiles[0];
+        const file = selectedFile.file;
+        const fileMetadata = selectedFile.metadata;
 
         try {
           const signedUpload = await apiFetch<{ path: string; token: string }>(
@@ -238,11 +286,13 @@ export function DrawingUploadDialog({
           await apiFetch(`/api/projects/${projectId}/drawings`, {
             method: "POST",
             body: JSON.stringify({
-              drawing_number: uploadData.drawing_number || fallbackIdentity.drawingNumber,
-              title: uploadData.title || fallbackIdentity.title,
-              discipline: uploadData.discipline,
+              drawing_number:
+                uploadData.drawing_number || fileMetadata.drawingNumber,
+              title: uploadData.title || fileMetadata.title,
+              discipline: uploadData.discipline || fileMetadata.discipline,
               drawing_type: uploadData.drawing_type,
-              revision_number: uploadData.revision_number || "A",
+              revision_number:
+                uploadData.revision_number || fileMetadata.revisionNumber,
               drawing_date: uploadData.drawing_date,
               received_date: uploadData.received_date || new Date().toISOString(),
               drawing_set_id: uploadData.drawing_set_id,
@@ -265,7 +315,11 @@ export function DrawingUploadDialog({
         const fileList = new DataTransfer();
         selectedFiles.forEach((fileInfo) => fileList.items.add(fileInfo.file));
         try {
-          await uploadMultipleDrawings(fileList.files, uploadData);
+          await uploadMultipleDrawings(
+            fileList.files,
+            uploadData,
+            buildPerFileUploadMetadata(selectedFiles),
+          );
         } catch (error) {
           if (error instanceof DrawingUploadBatchError) {
             const uploadedCount = error.results.length;
@@ -422,10 +476,112 @@ export function DrawingUploadDialog({
                           <Badge variant="secondary" className="text-xs">
                             {file.type.split("/")[1]?.toUpperCase()}
                           </Badge>
+                          <Badge
+                            variant={
+                              file.metadata.confidence === "low"
+                                ? "outline"
+                                : "secondary"
+                            }
+                            className="text-xs"
+                          >
+                            {file.metadata.confidence} confidence
+                          </Badge>
                         </div>
                         {fileError ? (
                           <p className="mt-1 text-xs text-destructive">{fileError}</p>
                         ) : null}
+                        <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+                          <div className="space-y-1">
+                            <label
+                              htmlFor={`drawing-number-${index}`}
+                              className="text-[11px] font-medium text-muted-foreground"
+                            >
+                              #
+                            </label>
+                            <Input
+                              id={`drawing-number-${index}`}
+                              aria-label={`${file.name} drawing number`}
+                              value={file.metadata.drawingNumber}
+                              onChange={(event) =>
+                                updateFileMetadata(
+                                  index,
+                                  "drawingNumber",
+                                  event.target.value,
+                                )
+                              }
+                              disabled={isBusy}
+                              className="h-8 text-xs"
+                            />
+                          </div>
+                          <div className="space-y-1 md:col-span-2">
+                            <label
+                              htmlFor={`drawing-title-${index}`}
+                              className="text-[11px] font-medium text-muted-foreground"
+                            >
+                              Title
+                            </label>
+                            <Input
+                              id={`drawing-title-${index}`}
+                              aria-label={`${file.name} title`}
+                              value={file.metadata.title}
+                              onChange={(event) =>
+                                updateFileMetadata(
+                                  index,
+                                  "title",
+                                  event.target.value,
+                                )
+                              }
+                              disabled={isBusy}
+                              className="h-8 text-xs"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 md:col-span-1">
+                            <div className="space-y-1">
+                              <label
+                                htmlFor={`drawing-revision-${index}`}
+                                className="text-[11px] font-medium text-muted-foreground"
+                              >
+                                Rev
+                              </label>
+                              <Input
+                                id={`drawing-revision-${index}`}
+                                aria-label={`${file.name} revision`}
+                                value={file.metadata.revisionNumber}
+                                onChange={(event) =>
+                                  updateFileMetadata(
+                                    index,
+                                    "revisionNumber",
+                                    event.target.value,
+                                  )
+                                }
+                                disabled={isBusy}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label
+                                htmlFor={`drawing-discipline-${index}`}
+                                className="text-[11px] font-medium text-muted-foreground"
+                              >
+                                Disc.
+                              </label>
+                              <Input
+                                id={`drawing-discipline-${index}`}
+                                aria-label={`${file.name} discipline`}
+                                value={file.metadata.discipline}
+                                onChange={(event) =>
+                                  updateFileMetadata(
+                                    index,
+                                    "discipline",
+                                    event.target.value,
+                                  )
+                                }
+                                disabled={isBusy}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     {!isBusy && (
