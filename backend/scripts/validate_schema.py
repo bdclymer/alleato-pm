@@ -159,7 +159,6 @@ def scan_codebase(root_dir: str) -> list:
     scan_dirs = [
         'src/services',
         'src/api',
-        'src/workers'
     ]
 
     # Files to skip (migrations, utilities that may reference future schema)

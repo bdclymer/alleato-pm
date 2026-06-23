@@ -50,6 +50,10 @@ EMBEDDING_MODEL = "text-embedding-3-large"
 EMBEDDING_DIMENSIONS = 3072
 INTENTIONAL_EMBEDDING_EXCLUSION_STATUS = "intentionally_excluded"
 GRAPH_REHYDRATED_STORAGE_PREFIX = "graph-rehydrated"
+GRAPH_EMBED_INLINE_SOURCE_INTELLIGENCE = os.environ.get(
+    "GRAPH_EMBED_INLINE_SOURCE_INTELLIGENCE",
+    "false",
+).lower() in {"1", "true", "yes"}
 
 
 def _is_interview_title(title: Optional[str]) -> bool:
@@ -90,7 +94,26 @@ def _mark_intentionally_excluded(supabase_client, rag_client, doc: Dict[str, Any
 def _run_source_intelligence_compiler(supabase_client, metadata_id: str) -> None:
     """Queue/evaluate newly searchable Graph sources for packet-first intelligence."""
     try:
-        from ...intelligence.compiler import process_source_document_to_packet
+        from ...intelligence.compiler import enqueue_source_intelligence_job, process_source_document_to_packet
+
+        if not GRAPH_EMBED_INLINE_SOURCE_INTELLIGENCE:
+            job = enqueue_source_intelligence_job(
+                supabase_client,
+                metadata_id,
+                job_type="attribution",
+                priority=0,
+                input_snapshot={
+                    "path": "microsoft_graph.embed_graph_document",
+                    "reason": "queued_to_keep_embedding_path_bounded",
+                },
+            )
+            logger.info(
+                "[GraphEmbed] Queued intelligence compiler for %s: job=%s status=%s",
+                metadata_id,
+                job.get("id"),
+                job.get("status"),
+            )
+            return
 
         result = process_source_document_to_packet(
             supabase_client,
@@ -489,8 +512,8 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         )
         doc = resp.data
     except Exception as e:
-        logger.warning(
-            "[GraphEmbed] Failed to fetch document_metadata %s; falling back to RAG metadata: %s",
+        logger.info(
+            "[GraphEmbed] App document_metadata missing for %s; falling back to RAG metadata: %s",
             metadata_id,
             e,
         )
@@ -789,6 +812,23 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
             result["unfetchable_pending"] = unfetchable_pending
         return result
 
+    enabled_docs = [doc for doc in docs if _graph_embedding_candidate_enabled(doc)]
+    skipped_disabled = len(docs) - len(enabled_docs)
+    if skipped_disabled:
+        logger.info(
+            "[GraphEmbed] Skipping %d disabled legacy Graph candidates (OneDrive sync disabled)",
+            skipped_disabled,
+        )
+    docs = enabled_docs
+    if not docs:
+        _record_graph_embed_run(
+            supabase_client,
+            started_at=started_at,
+            status="succeeded",
+            metadata={"limit": limit, "pending": 0, "skipped_disabled": skipped_disabled},
+        )
+        return {"embedded": 0, "errors": 0, "skipped_disabled": skipped_disabled}
+
     logger.info("[GraphEmbed] Processing %d pending microsoft_graph documents", len(docs))
     total_chunks = 0
     errors = 0
@@ -829,6 +869,7 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
     result = {
         "embedded": len(docs) - errors - skipped,
         "skipped": skipped,
+        "skipped_disabled": skipped_disabled,
         "total_chunks": total_chunks,
         "errors": errors,
         "by_category": by_category,
@@ -845,6 +886,14 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
         metadata={"limit": limit, **result},
     )
     return result
+
+
+def _graph_embedding_candidate_enabled(doc: Dict[str, Any]) -> bool:
+    source_system = str(doc.get("source_system") or "").strip().lower()
+    document_id = str(doc.get("id") or "").strip().lower()
+    if source_system == "onedrive" or document_id.startswith("onedrive_"):
+        return os.getenv("GRAPH_SYNC_ONEDRIVE", "false").lower() == "true"
+    return True
 
 
 def _rag_embedding_status(document_id: str) -> str:
@@ -1054,7 +1103,7 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
             rag_resp = (
                 get_rag_read_client()
                 .from_("rag_document_metadata")
-                .select("id, type, created_at")
+                .select("id, type, source_system, created_at")
                 .is_("embedding_status", "null")
                 .in_("type", ["email", "email_attachment", "teams_dm_conversation", "teams_dm"])
                 .gte("created_at", cutoff)
@@ -1069,10 +1118,12 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
                     {
                         "id": d["id"],
                         "category": d["type"],
+                        "source_system": d.get("source_system"),
                         "status": "repair",
                         "created_at": d["created_at"],
                     }
                     for d in rag_docs
+                    if _graph_embedding_candidate_enabled(d)
                     if d["id"] not in existing_ids
                 ]
                 docs = (rag_candidates + docs)[:limit]
@@ -1102,7 +1153,7 @@ def _fetch_graph_embedding_candidates_via_supabase(
             rag_resp = (
                 get_rag_read_client()
                 .from_("rag_document_metadata")
-                .select("id, type, created_at")
+                .select("id, type, source_system, created_at")
                 .is_("embedding_status", "null")
                 .in_("type", ["email", "document", "email_attachment", "teams_dm_conversation", "teams_dm"])
                 .gte("created_at", cutoff)
@@ -1117,11 +1168,13 @@ def _fetch_graph_embedding_candidates_via_supabase(
                     {
                         "id": d["id"],
                         "category": d["type"],
+                        "source_system": d.get("source_system"),
                         "status": "repair",
                         "created_at": d["created_at"],
                         "date": d["created_at"][:10],
                     }
                     for d in rag_docs
+                    if _graph_embedding_candidate_enabled(d)
                 ]
         except Exception as exc:
             logger.warning("[GraphEmbed] RAG direct scan failed, continuing to repair scan: %s", exc)
@@ -1133,7 +1186,7 @@ def _fetch_graph_embedding_candidates_via_supabase(
         # status. embed_graph_document hydrates content from the RAG DB.
         pending_resp = (
             supabase_client.from_("document_metadata")
-            .select("id, category, status, created_at, date")
+            .select("id, category, status, source_system, created_at, date")
             .eq("source", "microsoft_graph")
             .in_("status", ["raw_ingested", "segmented", "compiled", "error"])
             .gte("created_at", cutoff_iso)
@@ -1152,7 +1205,7 @@ def _fetch_graph_embedding_candidates_via_supabase(
         while len(by_id) < limit and scanned < repair_scan_limit:
             repair_resp = (
                 supabase_client.from_("document_metadata")
-                .select("id, category, status, created_at, date")
+            .select("id, category, status, source_system, created_at, date")
                 .eq("source", "microsoft_graph")
                 .in_("status", ["embedded", "complete"])
                 .in_("category", ["email", "teams_message", "document"])

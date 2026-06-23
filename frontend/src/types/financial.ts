@@ -8,6 +8,7 @@ export interface Company {
   city?: string | null;
   state?: string | null;
   website?: string | null;
+  license_number?: string | null;
   title?: string | null;
   notes?: string | null;
   currency_code?: string | null;

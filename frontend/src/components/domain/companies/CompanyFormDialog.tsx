@@ -44,6 +44,7 @@ interface Company {
   city: string | null;
   state: string | null;
   website: string | null;
+  license_number: string | null;
   currency_code: string | null;
   currency_symbol: string | null;
   notes: string | null;
@@ -155,6 +156,7 @@ export function CompanyFormDialog({
       city: company?.city || "",
       state: company?.state || "",
       website: company?.website || "",
+      license_number: company?.license_number || "",
       currency_code: company?.currency_code || "USD",
       currency_symbol: company?.currency_symbol || "$",
       notes: company?.notes || "",
@@ -170,6 +172,7 @@ export function CompanyFormDialog({
         city: company?.city || "",
         state: company?.state || "",
         website: company?.website || "",
+        license_number: company?.license_number || "",
         currency_code: company?.currency_code || "USD",
         currency_symbol: company?.currency_symbol || "$",
         notes: company?.notes || "",
@@ -191,6 +194,7 @@ export function CompanyFormDialog({
       const cleanData = {
         ...data,
         website: data.website || null,
+        license_number: data.license_number || null,
         title: data.title || null,
         address: data.address || null,
         city: data.city || null,
@@ -201,6 +205,7 @@ export function CompanyFormDialog({
       const updateData = {
         name: cleanData.name,
         website: cleanData.website ?? undefined,
+        license_number: cleanData.license_number ?? undefined,
         title: cleanData.title ?? undefined,
         address: cleanData.address ?? undefined,
         city: cleanData.city ?? undefined,
@@ -365,6 +370,20 @@ export function CompanyFormDialog({
                       type="url"
                       {...field}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="license_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>License Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., CGC #1537130" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

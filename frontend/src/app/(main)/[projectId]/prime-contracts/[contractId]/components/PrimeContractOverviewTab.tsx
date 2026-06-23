@@ -4,7 +4,6 @@ import {
   FileText,
   GripVertical,
   MoreVertical,
-  Percent,
   Plus,
   Rows3,
   Trash2,
@@ -32,6 +31,7 @@ import {
   ContentSectionStack,
   DetailPanel,
   LabelValueRow,
+  SectionAction,
   SectionRuleHeading,
   SummaryValueRow,
 } from "@/components/layout";
@@ -66,6 +66,10 @@ import {
 } from "@/components/ds/inline-table";
 import { formatPercent } from "@/lib/format";
 import { resolveContractLineBudgetCode } from "@/components/domain/contracts/prime-contract-detail/budget-code-resolution";
+import {
+  buildSovSummaryValues,
+  SovSummaryFooterRows,
+} from "@/components/domain/contracts/prime-contract-detail/sov-summary-footer";
 import type {
   BudgetCode,
   Contract,
@@ -179,7 +183,6 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     onCancelSovEdit,
     onSaveSovEdit,
     onAddSovLine,
-    onAddSovGroup,
     onUpdateSovLine,
     onUpdateSovLineBudgetCode,
     onRemoveSovLine,
@@ -260,6 +263,26 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     displayedSovTotal > 0
       ? Math.min(1, Math.max(0, invoicesTotal / displayedSovTotal))
       : 0;
+  const sovSummary = buildSovSummaryValues({
+    subtotal: displayedSovTotal,
+    originalContract: originalContractAmount,
+    approvedChanges: approvedChangeOrdersTotal,
+    billedToDate: invoicesTotal,
+  });
+  const addSovAction = (
+    <>
+      {onImportEstimateToSov ? (
+        <SectionAction onClick={onImportEstimateToSov}>
+          <Upload className="h-4 w-4" />
+          Import workbook
+        </SectionAction>
+      ) : null}
+      <SectionAction onClick={() => { onStartSovEdit(); onAddSovLine(); }}>
+        <Plus className="h-4 w-4" />
+        Add Line Item
+      </SectionAction>
+    </>
+  );
 
   const [collapsedDivisions, setCollapsedDivisions] = useState<Set<string>>(new Set());
 
@@ -287,22 +310,23 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
       | { type: "item"; item: (typeof displayedSovItems)[number]; divCode: string }
     > = [];
     let lastDiv = "";
-    let runningTotal = 0;
-    let hasInsertedPreMarkupSubtotal = false;
-    let hasIncludedInsurance = false;
-    let hasInsertedFeeBasisSubtotal = false;
 
-    // Auto-calculated markup lines (insurance, fee, etc.) always render at the
-    // bottom of the schedule of values — after every regular line item —
-    // regardless of their stored line_number. Stable-sort keeps non-markup and
-    // markup items in their existing relative order.
+    // SOV line items render sorted by budget/cost code (ascending). Unmapped
+    // lines fall to the bottom. Stable-sort preserves existing relative order
+    // for ties. High-numbered codes (e.g. 55-xxxx insurance/fee) naturally land
+    // at the bottom of the schedule of values.
     const orderedItems = displayedSovItems
       .map((item, index) => ({ item, index }))
       .sort((a, b) => {
-        const aMarkup = a.item?.markup_type ? 1 : 0;
-        const bMarkup = b.item?.markup_type ? 1 : 0;
-        if (aMarkup !== bMarkup) return aMarkup - bMarkup;
-        return a.index - b.index;
+        if (!a.item) return 1;
+        if (!b.item) return -1;
+        const ca = resolveContractLineBudgetCode(a.item, budgetCodes).displayCode;
+        const cb = resolveContractLineBudgetCode(b.item, budgetCodes).displayCode;
+        const aUnmapped = ca === "Unmapped";
+        const bUnmapped = cb === "Unmapped";
+        if (aUnmapped !== bUnmapped) return aUnmapped ? 1 : -1;
+        const cmp = ca.localeCompare(cb, undefined, { numeric: true });
+        return cmp !== 0 ? cmp : a.index - b.index;
       })
       .map((entry) => entry.item);
 
@@ -312,36 +336,11 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
       if (!item) continue;
       if (item.is_group_header) continue;
       const divCode = getDivCode(item);
-      const markupType = (item.markup_type || "").toLowerCase();
       if (divCode !== lastDiv) {
         rows.push({ type: "division", code: divCode });
         lastDiv = divCode;
       }
-      if (markupType && !hasInsertedPreMarkupSubtotal) {
-        rows.push({
-          type: "subtotal",
-          key: "subtotal-before-markup",
-          label: markupType === "insurance" ? "Subtotal before insurance" : "Subtotal before markup",
-          amount: runningTotal,
-          divCode,
-        });
-        hasInsertedPreMarkupSubtotal = true;
-      }
-      if (markupType === "fee" && hasIncludedInsurance && !hasInsertedFeeBasisSubtotal) {
-        rows.push({
-          type: "subtotal",
-          key: "subtotal-before-fee",
-          label: "Subtotal before fee",
-          amount: runningTotal,
-          divCode,
-        });
-        hasInsertedFeeBasisSubtotal = true;
-      }
       rows.push({ type: "item", item, divCode });
-      runningTotal += getLineTotal(item);
-      if (markupType === "insurance") {
-        hasIncludedInsurance = true;
-      }
     }
     return rows;
    
@@ -511,6 +510,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                         <InlineEditField
                           label="Inclusions"
                           type="textarea"
+                          className="font-normal"
                           value={contract.inclusions ?? ""}
                           display={inclusionsList.length === 0 ? undefined : inclusionsList.join("\n")}
                           onSave={(value) => onSaveContractField("inclusions", value || null)}
@@ -523,6 +523,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                         <InlineEditField
                           label="Exclusions"
                           type="textarea"
+                          className="font-normal"
                           value={contract.exclusions ?? ""}
                           display={exclusionsList.length === 0 ? undefined : exclusionsList.join("\n")}
                           onSave={(value) => onSaveContractField("exclusions", value || null)}
@@ -561,18 +562,24 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
 
       {/* ─── Schedule of Values ─── */}
       <section>
-        <SectionRuleHeading label="Schedule of Values"  />
-
-        {isSovEditing && (
-          <div className="mt-4 flex items-center justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={onCancelSovEdit}>
-              Cancel
-            </Button>
-            <Button size="sm" onClick={onSaveSovEdit} disabled={isSavingSovChanges}>
-              {isSavingSovChanges ? "Saving..." : "Save"}
-            </Button>
-          </div>
-        )}
+        <SectionRuleHeading
+          label="Schedule of Values"
+          actions={
+            isSovEditing ? (
+              <>
+                {addSovAction}
+                <Button variant="ghost" size="sm" onClick={onCancelSovEdit}>
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={onSaveSovEdit} disabled={isSavingSovChanges}>
+                  {isSavingSovChanges ? "Saving..." : "Save"}
+                </Button>
+              </>
+            ) : (
+              addSovAction
+            )
+          }
+        />
 
         <div className="space-y-4">
           {isSovEditing && (
@@ -605,33 +612,32 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 items={sortableIds}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="overflow-x-auto overflow-hidden rounded-md border border-border/70 bg-muted/20">
-                  <InlineTable variant="edit">
-                    <InlineTableHeader className="border-y-0 [&_tr]:border-b-0">
+                <InlineTable variant="edit">
+                    <InlineTableHeader>
                       <InlineTableHeaderRow>
-                        <InlineTableHeaderCell className="w-10 px-1 py-1.5" />
-                        <InlineTableHeaderCell className="min-w-72 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        <InlineTableHeaderCell className="w-10" />
+                        <InlineTableHeaderCell className="min-w-72">
                           Budget Code
                         </InlineTableHeaderCell>
-                        <InlineTableHeaderCell className="min-w-64 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        <InlineTableHeaderCell className="min-w-64">
                           Description
                         </InlineTableHeaderCell>
-                        <InlineTableHeaderCell align="right" className="w-20 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        <InlineTableHeaderCell align="right" className="w-20">
                           Qty
                         </InlineTableHeaderCell>
-                        <InlineTableHeaderCell className="w-16 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        <InlineTableHeaderCell className="w-16">
                           UOM
                         </InlineTableHeaderCell>
-                        <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        <InlineTableHeaderCell align="right" className="w-40">
                           Amount
                         </InlineTableHeaderCell>
-                        <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        <InlineTableHeaderCell align="right" className="w-40">
                           Bill to Date
                         </InlineTableHeaderCell>
-                        <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        <InlineTableHeaderCell align="right" className="w-40">
                           Amount Remaining
                         </InlineTableHeaderCell>
-                        <InlineTableHeaderCell className="w-24 px-1 py-1.5" />
+                        <InlineTableHeaderCell className="w-24" />
                       </InlineTableHeaderRow>
                     </InlineTableHeader>
                     <InlineTableBody>
@@ -688,50 +694,6 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                 </>
                               )}
                             </SortableSovRow>
-                          );
-                        }
-
-                        // Markup rows are read-only — never show budget code selector or edit controls
-                        if (item.markup_type) {
-                          const markupTotal = (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
-                          const markupBilled = markupTotal * billedToDateRatio;
-                          const markupBudgetCode = resolveContractLineBudgetCode(item, budgetCodes);
-                          return (
-                            <InlineTableRow
-                              key={item.id}
-                              className="border-b border-border/60 bg-muted/30"
-                            >
-                              <InlineTableCell className="w-10 px-1 py-1">
-                                <Percent className="h-3.5 w-3.5 text-muted-foreground/60" />
-                              </InlineTableCell>
-                              <InlineTableCell className="min-w-72 px-1 py-1">
-                                <div className="flex items-baseline gap-2 text-xs leading-tight">
-                                  <span className="font-medium">
-                                    {markupBudgetCode.displayDescription
-                                      ? `${markupBudgetCode.displayCode} - ${markupBudgetCode.displayDescription}`
-                                      : markupBudgetCode.displayCode}
-                                  </span>
-                                  <span className="text-muted-foreground">
-                                    {markupBudgetCode.displayCostType || "Needs budget-code link"}
-                                  </span>
-                                </div>
-                              </InlineTableCell>
-                              <InlineTableCell className="min-w-64 px-1 py-1">
-                                <span className="text-xs text-foreground">{item.description}</span>
-                              </InlineTableCell>
-                              <InlineTableCell align="right" className="w-20 px-1 py-1" />
-                              <InlineTableCell className="w-16 px-1 py-1" />
-                              <InlineTableCell align="right" className="w-40 px-1 py-1 tabular-nums text-xs">
-                                {formatCurrency(markupTotal)}
-                              </InlineTableCell>
-                              <InlineTableCell align="right" className="w-40 px-1 py-1 tabular-nums text-xs">
-                                {formatCurrency(markupBilled)}
-                              </InlineTableCell>
-                              <InlineTableCell align="right" className="w-40 px-1 py-1 tabular-nums text-xs">
-                                {formatCurrency(markupTotal - markupBilled)}
-                              </InlineTableCell>
-                              <InlineTableCell className="w-24 px-1 py-1" />
-                            </InlineTableRow>
                           );
                         }
 
@@ -927,32 +889,37 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                         );
                       })}
                     </InlineTableBody>
+                    <tbody aria-label="Schedule of Values summary">
+                      <SovSummaryFooterRows
+                        summary={sovSummary}
+                        formatCurrency={formatCurrency}
+                        labelColSpan={7}
+                      />
+                    </tbody>
                   </InlineTable>
-                </div>
               </SortableContext>
             </DndContext>
           ) : (
-            <div className="overflow-x-auto overflow-hidden rounded-md border border-border/70 bg-muted/20">
               <InlineTable variant="edit">
-                <InlineTableHeader className="border-y-0 [&_tr]:border-b-0">
+                <InlineTableHeader>
                   <InlineTableHeaderRow>
-                    <InlineTableHeaderCell className="w-10 px-1 py-1.5" />
-                    <InlineTableHeaderCell className="min-w-72 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                    <InlineTableHeaderCell className="w-10" />
+                    <InlineTableHeaderCell className="min-w-72">
                       Budget Code
                     </InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="min-w-64 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                    <InlineTableHeaderCell className="min-w-64">
                       Description
                     </InlineTableHeaderCell>
-                    <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                    <InlineTableHeaderCell align="right" className="w-40">
                       Amount
                     </InlineTableHeaderCell>
-                    <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                    <InlineTableHeaderCell align="right" className="w-40">
                       Bill to Date
                     </InlineTableHeaderCell>
-                    <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                    <InlineTableHeaderCell align="right" className="w-40">
                       Amount Remaining
                     </InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="w-24 px-1 py-1.5" />
+                    <InlineTableHeaderCell className="w-24" />
                   </InlineTableHeaderRow>
                 </InlineTableHeader>
                 <InlineTableBody>
@@ -1038,37 +1005,6 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                     const { item, divCode } = row;
                     if (collapsedDivisions.has(divCode)) return null;
 
-                    // Markup rows are read-only — render with the budget code like a regular line
-                    if (item.markup_type) {
-                      const markupTotal = getLineTotal(item);
-                      const markupBilled = markupTotal * billedToDateRatio;
-                      const markupBudgetCode = resolveContractLineBudgetCode(item, budgetCodes);
-                      return (
-                        <tr key={item.id} className="border-b border-border/60 bg-muted/30">
-                          <td className="w-10 px-1 py-1">
-                            <Percent className="h-3.5 w-3.5 text-muted-foreground/60" />
-                          </td>
-                          <td className="min-w-72 px-1 py-1 align-top">
-                            <div className="flex items-baseline gap-2 text-xs leading-tight">
-                              <span className="font-medium">
-                                {markupBudgetCode.displayDescription
-                                  ? `${markupBudgetCode.displayCode} - ${markupBudgetCode.displayDescription}`
-                                  : markupBudgetCode.displayCode}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {markupBudgetCode.displayCostType || "Needs budget-code link"}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="min-w-64 px-1 py-1 text-xs text-foreground">{item.description}</td>
-                          <td className="w-40 px-1 py-1 text-right text-xs tabular-nums">{formatCurrency(markupTotal)}</td>
-                          <td className="w-40 px-1 py-1 text-right text-xs tabular-nums">{formatCurrency(markupBilled)}</td>
-                          <td className="w-40 px-1 py-1 text-right text-xs font-semibold tabular-nums">{formatCurrency(markupTotal - markupBilled)}</td>
-                          <td className="w-24 px-1 py-1" />
-                        </tr>
-                      );
-                    }
-
                     const budgetCodeResolution = resolveContractLineBudgetCode(item, budgetCodes);
                     const lineTotal = getLineTotal(item);
                     const lineBilledToDate = lineTotal * billedToDateRatio;
@@ -1144,37 +1080,15 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                     );
                   })}
                 </InlineTableBody>
+                <tbody aria-label="Schedule of Values summary">
+                  <SovSummaryFooterRows
+                    summary={sovSummary}
+                    formatCurrency={formatCurrency}
+                    labelColSpan={5}
+                  />
+                </tbody>
               </InlineTable>
-            </div>
           )}
-
-          <div className="flex justify-start pt-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="link" size="sm" className="gap-1 px-0 text-sm font-medium text-primary">
-                  <Plus className="h-3.5 w-3.5" />
-                  Add
-                  <ChevronDown className="h-3.5 w-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => { onStartSovEdit(); onAddSovLine(); }}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Line Item
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => { onStartSovEdit(); onAddSovGroup(); }}>
-                  <Rows3 className="mr-2 h-4 w-4" />
-                  Group
-                </DropdownMenuItem>
-                {onImportEstimateToSov ? (
-                  <DropdownMenuItem onClick={onImportEstimateToSov}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Estimate Workbook
-                  </DropdownMenuItem>
-                ) : null}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
 
           {!lineItemsLoading && displayedSovItems.length > 0 ? (
             <div className="flex justify-end pt-2">

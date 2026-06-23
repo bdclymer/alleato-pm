@@ -111,6 +111,14 @@ def _rag_write() -> Any:
     return get_rag_write_client()
 
 
+def _env_int(name: str, default: int, *, minimum: int = 1) -> int:
+    try:
+        value = int(os.getenv(name, str(default)))
+    except ValueError:
+        return default
+    return max(minimum, value)
+
+
 def _clean_text(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip()
 
@@ -724,6 +732,109 @@ def enqueue_source_intelligence_job(
     compiler_version: str = COMPILER_VERSION,
 ) -> Dict[str, Any]:
     """Enqueue a source compiler job, reusing an active identical job when possible."""
+    rag_database_url = os.getenv("RAG_DATABASE_URL")
+    if rag_database_url:
+        import psycopg2
+        from psycopg2.extras import Json, RealDictCursor
+        import signal
+        import threading
+
+        connect_timeout = _env_int("SOURCE_INTELLIGENCE_QUEUE_CONNECT_TIMEOUT_SECONDS", 5)
+        statement_timeout_ms = _env_int("SOURCE_INTELLIGENCE_QUEUE_STATEMENT_TIMEOUT_MS", 5000, minimum=1000)
+        operation_timeout = _env_int("SOURCE_INTELLIGENCE_QUEUE_TIMEOUT_SECONDS", 8)
+        alarm_enabled = (
+            threading.current_thread() is threading.main_thread()
+            and hasattr(signal, "SIGALRM")
+            and hasattr(signal, "alarm")
+        )
+        previous_handler = None
+
+        def _raise_queue_timeout(_signum: int, _frame: Any) -> None:
+            raise TimeoutError(
+                f"source intelligence queue operation exceeded {operation_timeout}s"
+            )
+
+        if alarm_enabled:
+            previous_handler = signal.getsignal(signal.SIGALRM)
+            signal.signal(signal.SIGALRM, _raise_queue_timeout)
+            signal.alarm(operation_timeout)
+        try:
+            with psycopg2.connect(
+                rag_database_url,
+                connect_timeout=connect_timeout,
+                sslmode="require",
+            ) as conn:
+                with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                    cursor.execute("set local statement_timeout = %s", (statement_timeout_ms,))
+                    cursor.execute(
+                        """
+                        select *
+                        from public.source_intelligence_jobs
+                        where source_document_id = %s
+                          and job_type = %s
+                          and compiler_version = %s
+                          and status = any(%s)
+                          and (
+                            (%s::text is null and source_hash is null)
+                            or source_hash = %s::text
+                          )
+                        order by queued_at desc nulls last
+                        limit 1
+                        """,
+                        (
+                            source_document_id,
+                            job_type,
+                            compiler_version,
+                            list(ACTIVE_JOB_STATUSES),
+                            source_hash,
+                            source_hash,
+                        ),
+                    )
+                    existing = cursor.fetchone()
+                    if existing:
+                        return dict(existing)
+
+                    payload = {
+                        "source_document_id": source_document_id,
+                        "source_hash": source_hash,
+                        "job_type": job_type,
+                        "status": "queued",
+                        "priority": priority,
+                        "target_id": target_id,
+                        "project_id": project_id,
+                        "compiler_version": compiler_version,
+                        "input_snapshot": input_snapshot or {},
+                    }
+                    cursor.execute(
+                        """
+                        insert into public.source_intelligence_jobs (
+                          source_document_id,
+                          source_hash,
+                          job_type,
+                          status,
+                          priority,
+                          target_id,
+                          project_id,
+                          compiler_version,
+                          input_snapshot
+                        )
+                        values (%(source_document_id)s, %(source_hash)s, %(job_type)s,
+                          %(status)s, %(priority)s, %(target_id)s, %(project_id)s,
+                          %(compiler_version)s, %(input_snapshot)s)
+                        returning *
+                        """,
+                        {
+                            **payload,
+                            "input_snapshot": Json(payload["input_snapshot"]),
+                        },
+                    )
+                    inserted = cursor.fetchone()
+                    return dict(inserted) if inserted else payload
+        finally:
+            if alarm_enabled:
+                signal.alarm(0)
+                signal.signal(signal.SIGALRM, previous_handler)
+
     job_client = _rag_write()
     query = (
         job_client.table("source_intelligence_jobs")

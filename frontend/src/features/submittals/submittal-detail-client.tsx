@@ -952,9 +952,10 @@ export function SubmittalDetailClient({
             <FieldRow
               label="Received From"
               value={
-                submittal.received_from_id
+                submittal.received_from ??
+                (submittal.received_from_id
                   ? resolveUserName(allUsers, submittal.received_from_id)
-                  : null
+                  : null)
               }
             />
             <FieldRow

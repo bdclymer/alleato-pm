@@ -178,8 +178,8 @@ export const changeEventQuerySchema = z.object({
   search: z.string().optional(),
   sort: z
     .enum(["createdAt", "updatedAt", "number", "title"])
-    .default("createdAt"),
-  order: z.enum(["asc", "desc"]).default("desc"),
+    .default("number"),
+  order: z.enum(["asc", "desc"]).default("asc"),
   includeDeleted: z.coerce.boolean().default(false),
   tab: z.enum(["line_items", "no_line_items", "rfqs", "recycle_bin", "all"]).optional(),
 }); // Attachment Schema

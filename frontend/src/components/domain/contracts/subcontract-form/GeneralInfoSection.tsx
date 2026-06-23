@@ -209,6 +209,21 @@ export function GeneralInfoSection({
             </p>
           )}
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="companyLicenseNumber">License Number</Label>
+          <Input
+            id="companyLicenseNumber"
+            placeholder="e.g., CGC #1537130"
+            {...register("companyLicenseNumber")}
+            disabled={isSubmitting || !contractCompanyId}
+          />
+          {errors.companyLicenseNumber && (
+            <p className="text-sm text-destructive">
+              {errors.companyLicenseNumber.message}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">

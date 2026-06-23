@@ -66,7 +66,7 @@ function classifySource(row) {
     id.startsWith("sharepoint_") ||
     id.startsWith("onedrive_")
   ) {
-    return "onedrive_document";
+    return "sharepoint_document";
   }
   if (type === "email_attachment") return "outlook_email";
   return null;
@@ -77,7 +77,7 @@ function sourceSystemForFamily(family) {
     fireflies: "fireflies",
     teams: "microsoft_graph_teams",
     outlook_email: "microsoft_graph_outlook",
-    onedrive_document: "microsoft_graph_onedrive",
+    sharepoint_document: "microsoft_graph_sharepoint",
   }[family] ?? "unknown";
 }
 
@@ -89,9 +89,45 @@ function statusFor(row, state) {
   if (terminalEmbeddingFailureFor(row)) return "failed_permanent";
   if (!row.project_id) return "project_assignment_review";
   if (state.hasProjectIntelligenceEvidence) return "project_intelligence_updated";
-  if (state.hasTask) return "actions_routed";
+  if (state.hasTask || taskExtractionOutcomeFor(row, state)) return "actions_routed";
   if (state.embeddedChunks > 0) return "indexed_for_rag";
   return "project_assigned";
+}
+
+function taskExtractionOutcomeFor(row, state) {
+  if (state.existingTaskExtractionStatus) {
+    return {
+      task_extraction_status: state.existingTaskExtractionStatus,
+      task_count: state.existingTaskCount ?? 0,
+      task_extraction_source: state.existingTaskExtractionSource ?? "source_processing_jobs.metadata",
+      task_extraction_reason: state.existingTaskExtractionReason ?? "Preserved from prior lifecycle extraction outcome.",
+    };
+  }
+
+  if (state.hasTask) {
+    return {
+      task_extraction_status: "tasks_created",
+      task_count: state.taskCount,
+      task_extraction_source: "tasks.metadata_id",
+    };
+  }
+
+  const title = String(row.title ?? "");
+  const isSharePointApCheck =
+    row.source_family === "sharepoint_document" &&
+    row.project_id &&
+    row.category === "document" &&
+    /check\s*(?:#\s*)?\d+/i.test(title) &&
+    /\$\s*[0-9,]+(?:\.\d{1,2})?/i.test(title);
+
+  if (!isSharePointApCheck) return null;
+
+  return {
+    task_extraction_status: "no_actionable_tasks",
+    task_count: 0,
+    task_extraction_source: "sharepoint_ap_check_deterministic",
+    task_extraction_reason: "AP check document records a payment artifact and contains no actionable follow-up task.",
+  };
 }
 
 function terminalEmbeddingFailureFor(row) {
@@ -116,6 +152,7 @@ function compactMetadata(row, state) {
     ...row,
     text_sample: state.textSample,
   });
+  const taskExtraction = taskExtractionOutcomeFor(row, state);
 
   return {
     source: row.source,
@@ -127,6 +164,7 @@ function compactMetadata(row, state) {
     embedded_chunks: state.embeddedChunks,
     has_project_intelligence_evidence: state.hasProjectIntelligenceEvidence,
     has_task: state.hasTask,
+    ...(taskExtraction ?? {}),
   };
 }
 
@@ -176,9 +214,48 @@ try {
     [lookbackDays, sourceLimit],
   );
 
-  const sources = sourceResult.rows
+  const appSources = sourceResult.rows
     .map((row) => ({ ...row, source_family: classifySource(row) }))
     .filter((row) => row.source_family);
+  const appSourceIds = new Set(appSources.map((row) => String(row.id)));
+
+  const ragEmailResult = await ragClient.query(
+    `
+      select id, title, source, type, source_system, source_item_id, source_web_url,
+        created_at, updated_at, project_id, parsing_status
+      from public.rag_document_metadata
+      where source = 'microsoft_graph'
+        and (type in ('email', 'email_attachment') or id like 'outlook_%')
+        and coalesce(updated_at, created_at) >= now() - ($1::text || ' days')::interval
+      order by coalesce(updated_at, created_at) desc
+      limit $2
+    `,
+    [lookbackDays, sourceLimit],
+  );
+
+  const ragOnlyEmailSources = ragEmailResult.rows
+    .filter((row) => !appSourceIds.has(String(row.id)))
+    .map((row) => ({
+      id: row.id,
+      title: row.title,
+      url: row.source_web_url,
+      source: row.source,
+      category: row.type === "email_attachment" ? "email_attachment" : "email",
+      type: row.type,
+      status: row.parsing_status || "raw_ingested",
+      project_id: row.project_id,
+      source_item_id: row.source_item_id,
+      fireflies_id: null,
+      content_hash: null,
+      source_etag: null,
+      source_web_url: row.source_web_url,
+      source_last_modified_at: row.updated_at,
+      created_at: row.created_at,
+      date: row.created_at,
+      source_family: "outlook_email",
+    }));
+
+  const sources = [...appSources, ...ragOnlyEmailSources];
   const sourceIds = sources.map((row) => String(row.id));
 
   const chunkRows = sourceIds.length
@@ -222,14 +299,49 @@ try {
     : [];
   const evidenceByDocumentId = new Map(evidenceRows.map((row) => [String(row.source_document_id), Number(row.evidence ?? 0)]));
 
+  const existingJobRows = sourceIds.length
+    ? (await ragClient.query(
+        `
+          select distinct on (source_document_id)
+            source_document_id,
+            metadata
+          from public.source_processing_jobs
+          where source_document_id = any($1::text[])
+          order by source_document_id, updated_at desc
+        `,
+        [sourceIds],
+      )).rows
+    : [];
+  const existingTaskExtractionByDocumentId = new Map(
+    existingJobRows
+      .map((row) => {
+        const metadata = row.metadata && typeof row.metadata === "object" ? row.metadata : {};
+        return [
+          String(row.source_document_id),
+          {
+            status: metadata.task_extraction_status,
+            count: metadata.task_count,
+            source: metadata.task_extraction_source,
+            reason: metadata.task_extraction_reason,
+          },
+        ];
+      })
+      .filter(([, outcome]) => outcome.status),
+  );
+
   const rows = sources.map((row) => {
     const chunkState = chunkByDocumentId.get(String(row.id)) ?? { chunks: 0, embedded_chunks: 0 };
     const state = {
       chunks: Number(chunkState.chunks ?? 0),
       embeddedChunks: Number(chunkState.embedded_chunks ?? 0),
       textSample: String(chunkState.text_sample ?? ""),
+      taskCount: Number(tasksByDocumentId.get(String(row.id)) ?? 0),
       hasTask: Number(tasksByDocumentId.get(String(row.id)) ?? 0) > 0,
       hasProjectIntelligenceEvidence: Number(evidenceByDocumentId.get(String(row.id)) ?? 0) > 0,
+      existingTaskExtractionStatus: existingTaskExtractionByDocumentId.get(String(row.id))?.status,
+      existingTaskCount: existingTaskExtractionByDocumentId.get(String(row.id))?.count,
+      existingTaskExtractionSource: existingTaskExtractionByDocumentId.get(String(row.id))?.source,
+      existingTaskExtractionReason: existingTaskExtractionByDocumentId.get(String(row.id))?.reason,
     };
     const status = statusFor(row, state);
     const terminalEmbeddingFailure = terminalEmbeddingFailureFor(row);

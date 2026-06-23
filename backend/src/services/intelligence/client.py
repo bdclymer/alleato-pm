@@ -44,6 +44,18 @@ def _supports_custom_temperature(model: str) -> bool:
     return not (m.startswith("gpt-5") or m.startswith("o1") or m.startswith("o3") or m.startswith("o4"))
 
 
+def _is_response_format_rejected(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return (
+        "response_format" in message
+        and (
+            "invalid input" in message
+            or "invalid_request_error" in message
+            or "unsupported" in message
+        )
+    )
+
+
 def _client() -> OpenAI:
     from ..ai_transport import get_openai_client
     return get_openai_client()
@@ -101,7 +113,18 @@ def extract_with_retry(
             # gpt-5/o-series reject it with a 400 that would silently fail extraction.
             if _supports_custom_temperature(model):
                 kwargs["temperature"] = COMPILER_TEMPERATURE
-            response = _client().chat.completions.create(**kwargs)
+            try:
+                response = _client().chat.completions.create(**kwargs)
+            except Exception as exc:
+                if not _is_response_format_rejected(exc):
+                    raise
+                logger.warning(
+                    "[TeamsCompiler] %s rejected response_format=json_object; retrying once with prompt-only JSON contract.",
+                    model,
+                )
+                fallback_kwargs = dict(kwargs)
+                fallback_kwargs.pop("response_format", None)
+                response = _client().chat.completions.create(**fallback_kwargs)
             record_model_usage(context, model=model, response=response, status="succeeded")
             raw = response.choices[0].message.content or ""
             raw = raw.strip()

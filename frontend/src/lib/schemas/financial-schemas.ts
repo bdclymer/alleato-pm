@@ -7,6 +7,7 @@ export const companySchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   website: z.string().url().optional().or(z.literal("")),
+  license_number: z.string().trim().max(50, "License number must be 50 characters or less").optional(),
   currency_code: z.string().optional(),
   currency_symbol: z.string().optional(),
   notes: z.string().optional(),

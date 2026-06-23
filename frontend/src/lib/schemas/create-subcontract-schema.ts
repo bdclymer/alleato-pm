@@ -90,6 +90,7 @@ export const CreateSubcontractSchema = z.object({
     .max(255, "Title must be 255 characters or less"),
   status: z.enum(CommitmentStatusValues),
   contractCompanyId: z.string().min(1, "Please select a vendor"),
+  companyLicenseNumber: z.string().trim().max(50, "License number must be 50 characters or less").optional(),
 
   // Auto-generated but editable
   contractNumber: z

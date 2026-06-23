@@ -41,8 +41,12 @@ const MD_EXT = /\.mdx?$/;
 // It references AI-tool source filenames (`financial.ts`, `marketing.ts`) that
 // look like table names but are not — and being generated, it cannot carry a
 // human-authored phantom-table claim anyway.
+// docs/migrate/ holds migrated overview/reference docs (same category as
+// docs/archive/) and docs/ops/tasks/ + docs/ops/evidence/ are process/run logs,
+// not authoritative DB-fact docs — they legitimately quote shell commands,
+// usernames, FK constraint names, and lifecycle values that trip false positives.
 const IGNORE_PATH_RE =
-  /(^|\/)_bmad-output\/|(^|\/)docs\/archive\/|(^|\/)docs\/architecture\/PROJECT-MAP\.md$/;
+  /(^|\/)_bmad-output\/|(^|\/)docs\/archive\/|(^|\/)docs\/migrate\/|(^|\/)docs\/ops\/(tasks|evidence)\/|(^|\/)docs\/architecture\/PROJECT-MAP\.md$/;
 
 const args = new Set(process.argv.slice(2));
 const baseFlagIdx = process.argv.indexOf("--base");

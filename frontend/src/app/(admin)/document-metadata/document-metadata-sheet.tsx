@@ -15,6 +15,10 @@ import {
 } from "lucide-react";
 
 import { StatusBadge, InfoAlert } from "@/components/ds";
+import {
+  getFirstTeamsMessageTimestamp,
+  TeamsConversation,
+} from "@/components/document-metadata/teams-conversation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -57,6 +61,9 @@ interface DocumentMetadataItem {
   file_path: string | null;
   source_web_url: string | null;
   keywords: string[] | null;
+  contentSource?: string | null;
+  contentCheckedSources?: string[];
+  contentUnavailableReason?: string | null;
 }
 
 interface DocumentMetadataSheetProps {
@@ -70,21 +77,12 @@ interface DocumentMetadataSheetProps {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function formatDate(value: string | null) {
+function formatSheetTimestamp(value: string | null) {
   if (!value) return null;
-  return new Date(value).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-function formatDateTime(value: string | null) {
-  if (!value) return null;
-  return new Date(value).toLocaleString("en-US", {
-    year: "numeric",
+  return new Date(value.replace(" ", "T")).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
+    year: "numeric",
     hour: "numeric",
     minute: "2-digit",
   });
@@ -96,62 +94,6 @@ function formatDuration(minutes: number | null) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
-}
-
-interface TeamsMessage {
-  id: string;
-  timestamp: string;
-  sender: string;
-  text: string;
-}
-
-function parseTeamsContent(content: string): TeamsMessage[] | null {
-  const pattern = /\[message:(\d+)\]\s*\[([^\]]+)\]\s*([^:]+):\s*([\s\S]*?)(?=\s*\[message:|\s*$)/g;
-  const messages: TeamsMessage[] = [];
-  let match;
-  while ((match = pattern.exec(content)) !== null) {
-    const text = match[4].trim();
-    if (!text) continue;
-    messages.push({
-      id: match[1],
-      timestamp: match[2].trim(),
-      sender: match[3].trim(),
-      text,
-    });
-  }
-  return messages.length > 0 ? messages : null;
-}
-
-function TeamsConversation({ content }: { content: string }) {
-  const messages = parseTeamsContent(content);
-  if (!messages) {
-    return <p className="text-sm text-muted-foreground whitespace-pre-wrap">{content}</p>;
-  }
-  return (
-    <div className="space-y-4">
-      {messages.map((msg) => {
-        const time = (() => {
-          try {
-            return new Date(msg.timestamp).toLocaleTimeString("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-            });
-          } catch {
-            return msg.timestamp;
-          }
-        })();
-        return (
-          <div key={msg.id} className="space-y-0.5">
-            <div className="flex items-baseline gap-2">
-              <span className="text-sm font-semibold text-foreground">{msg.sender}</span>
-              <span className="text-xs text-muted-foreground">{time}</span>
-            </div>
-            <p className="text-sm text-foreground leading-relaxed">{msg.text}</p>
-          </div>
-        );
-      })}
-    </div>
-  );
 }
 
 function isBinaryContent(content: string): boolean {
@@ -176,6 +118,15 @@ function typeLabel(type: string | null) {
   return map[type] ?? type;
 }
 
+/** Label for the full-text content section, matched to the record type. */
+function contentLabel(type: string | null) {
+  if (!type) return "Preview";
+  if (type.startsWith("teams")) return "Conversation";
+  if (type === "meeting") return "Transcript";
+  if (type === "email") return "Message";
+  return "Preview";
+}
+
 // ── Section component ─────────────────────────────────────────────────────────
 
 function Section({
@@ -193,6 +144,32 @@ function Section({
       <div className="text-sm text-foreground">{children}</div>
     </div>
   );
+}
+
+function DetailItem({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <div className="min-w-0 space-y-0.5">
+        <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </div>
+        <div className="break-words text-sm text-foreground">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function formatMetadataValue(value: string) {
+  return value.replace(/_/g, " ");
 }
 
 // ── Sheet component ───────────────────────────────────────────────────────────
@@ -228,6 +205,10 @@ export function DocumentMetadataSheet({
   const participantList = item.participants
     ? item.participants.split(/[,;|\n]+/).map((p) => p.trim()).filter(Boolean)
     : [];
+  const primaryTimestamp =
+    item.type?.startsWith("teams")
+      ? getFirstTeamsMessageTimestamp(item.content) ?? item.date
+      : item.date;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
@@ -246,11 +227,6 @@ export function DocumentMetadataSheet({
                   {typeLabel(item.type)}
                 </Badge>
                 {item.status && <StatusBadge status={item.status} />}
-                {item.source_system && (
-                  <span className="text-xs text-muted-foreground">
-                    {item.source_system}
-                  </span>
-                )}
               </div>
               <SheetTitle className="text-base font-semibold leading-snug">
                 {item.title ?? "Untitled"}
@@ -294,10 +270,10 @@ export function DocumentMetadataSheet({
 
           {/* Meta strip */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
-            {item.date && (
+            {primaryTimestamp && (
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                {formatDate(item.date)}
+                {formatSheetTimestamp(primaryTimestamp)}
               </span>
             )}
             {item.duration_minutes != null && (
@@ -330,7 +306,7 @@ export function DocumentMetadataSheet({
 
         {/* Body */}
         <ScrollArea className="flex-1">
-          <div className="px-5 py-4 space-y-5">
+          <div className="space-y-6 px-5 py-5">
 
             {/* Document / file preview */}
             {(item.source_web_url ?? item.url ?? item.fireflies_link) && (
@@ -397,7 +373,6 @@ export function DocumentMetadataSheet({
                     );
                   })()}
                 </Section>
-                <Separator />
               </>
             )}
 
@@ -409,14 +384,13 @@ export function DocumentMetadataSheet({
                     {item.summary}
                   </Markdown>
                 </Section>
-                <Separator />
               </>
             )}
 
             {/* Content — full text, skip binary/unreadable data */}
             {item.content && !isBinaryContent(item.content) && (
               <>
-                <Section label="Conversation">
+                <Section label={contentLabel(item.type)}>
                   {item.type?.startsWith("teams") ? (
                     <TeamsConversation content={item.content} />
                   ) : (
@@ -425,7 +399,21 @@ export function DocumentMetadataSheet({
                     </Markdown>
                   )}
                 </Section>
-                <Separator />
+              </>
+            )}
+
+            {!item.content && item.contentUnavailableReason && (
+              <>
+                <Section label={contentLabel(item.type)}>
+                  <InfoAlert variant="info">
+                    <span>{item.contentUnavailableReason}</span>
+                    {item.contentCheckedSources && item.contentCheckedSources.length > 0 && (
+                      <span className="block text-xs text-muted-foreground">
+                        Sources checked: {item.contentCheckedSources.join(", ")}
+                      </span>
+                    )}
+                  </InfoAlert>
+                </Section>
               </>
             )}
 
@@ -442,7 +430,6 @@ export function DocumentMetadataSheet({
                     ))}
                   </div>
                 </Section>
-                <Separator />
               </>
             )}
 
@@ -462,7 +449,6 @@ export function DocumentMetadataSheet({
                     ))}
                   </div>
                 </Section>
-                <Separator />
               </>
             )}
 
@@ -481,53 +467,42 @@ export function DocumentMetadataSheet({
                     )}
                   </div>
                 </Section>
-                <Separator />
               </>
             )}
 
             {/* Details grid */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border/60 pt-5">
               {host && (
-                <Section label="Host">
+                <DetailItem icon={Users} label="Host">
                   <span className="text-sm">{host}</span>
-                </Section>
+                </DetailItem>
               )}
               {item.meeting_type && (
-                <Section label="Meeting Type">
-                  <span className="text-sm">{item.meeting_type}</span>
-                </Section>
+                <DetailItem icon={Clock} label="Meeting Type">
+                  <span className="text-sm">{formatMetadataValue(item.meeting_type)}</span>
+                </DetailItem>
               )}
               {item.category && (
-                <Section label="Category">
-                  <span className="text-sm">{item.category}</span>
-                </Section>
+                <DetailItem icon={MessageSquare} label="Category">
+                  <span className="text-sm">{formatMetadataValue(item.category)}</span>
+                </DetailItem>
               )}
               {item.division && (
-                <Section label="Division">
+                <DetailItem icon={FolderOpen} label="Division">
                   <span className="text-sm">{item.division}</span>
-                </Section>
+                </DetailItem>
               )}
               {item.phase && (
-                <Section label="Phase">
-                  <span className="text-sm">{item.phase}</span>
-                </Section>
+                <DetailItem icon={FolderOpen} label="Phase">
+                  <span className="text-sm">{formatMetadataValue(item.phase)}</span>
+                </DetailItem>
               )}
               {item.source && (
-                <Section label="Source">
-                  <span className="text-sm">{item.source}</span>
-                </Section>
+                <DetailItem icon={ExternalLink} label="Source">
+                  <span className="text-sm">{formatMetadataValue(item.source)}</span>
+                </DetailItem>
               )}
             </div>
-
-            {/* Footer meta */}
-            {item.created_at && (
-              <>
-                <Separator />
-                <p className="text-xs text-muted-foreground">
-                  Added {formatDateTime(item.created_at)}
-                </p>
-              </>
-            )}
           </div>
         </ScrollArea>
       </SheetContent>

@@ -65,6 +65,7 @@ export interface CompanyCreateDTO {
   state?: string;
   zip?: string;
   website?: string;
+  license_number?: string;
   business_phone?: string;
   email_address?: string;
   erp_vendor_id?: string;
@@ -83,6 +84,7 @@ export interface CompanyUpdateDTO {
   state?: string;
   zip?: string;
   website?: string;
+  license_number?: string;
   business_phone?: string;
   email_address?: string;
   primary_contact_id?: string;
@@ -300,6 +302,7 @@ export class CompanyService {
         city: data.city,
         state: data.state,
         contact_phone: data.business_phone,
+        license_number: data.license_number,
         website: data.website,
       })
       .select()
@@ -353,6 +356,8 @@ export class CompanyService {
     if (data.state !== undefined) globalFields.state = data.state;
     if (data.zip !== undefined) globalFields.zip = data.zip;
     if (data.website !== undefined) globalFields.website = data.website;
+    if (data.license_number !== undefined)
+      globalFields.license_number = data.license_number;
     if (data.business_phone !== undefined)
       globalFields.contact_phone = data.business_phone;
 

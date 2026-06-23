@@ -293,51 +293,17 @@ export function usePrimeContractFormState({
     );
   }, [budgetCodes]);
 
-  // Compute markup-driven SOV items from the current base SOV totals
-  const computedMarkupSovItems = React.useMemo((): SOVLineItem[] => {
-    if (markups.length === 0) return [];
-    const baseItems = (formData.sovItems || []).filter((item) => !item.isGroup);
-    const baseTotal = baseItems.reduce((sum, item) => {
-      if (formData.accountingMethod === "unit_quantity") {
-        return sum + (item.quantity ?? 0) * (item.unitCost ?? 0);
-      }
-      return sum + (item.amount || 0);
-    }, 0);
+  // Financial markups are NO LONGER auto-applied to the SOV. The markup editor
+  // still persists rates to the project-level `vertical_markup` config, but it
+  // never generates synthetic SOV line items. Insurance/fee/etc. must be entered
+  // as regular SOV line items by the user. This is intentionally always empty so
+  // auto-application cannot happen on any SOV.
+  const computedMarkupSovItems = React.useMemo((): SOVLineItem[] => [], []);
 
-    const sorted = [...markups].sort(
-      (a, b) => a.calculation_order - b.calculation_order,
-    );
-    let runningTotal = baseTotal;
-    return sorted
-      .filter((m) => m.percentage > 0)
-      .map((m) => {
-        const base = m.compound ? runningTotal : baseTotal;
-        const markupAmount = (base * m.percentage) / 100;
-        runningTotal += markupAmount;
-        const label =
-          m.markup_type.charAt(0).toUpperCase() + m.markup_type.slice(1);
-        const budgetCode =
-          m.maps_to !== "all"
-            ? budgetCodes.find((c) => c.id === m.maps_to)
-            : undefined;
-        return {
-          id: `sov-markup-${m.id}`,
-          isMarkup: true,
-          markupType: m.markup_type,
-          budgetCodeId: budgetCode?.id,
-          budgetCodeLabel: budgetCode?.fullLabel,
-          description: `${label} (${Number(m.percentage).toFixed(2)}%)`,
-          amount: markupAmount,
-          billedToDate: 0,
-          amountRemaining: markupAmount,
-        };
-      });
-  }, [markups, formData.sovItems, formData.accountingMethod, budgetCodes]);
-
-  // Merged SOV items for display: user items + computed markup rows
+  // SOV items for display: user-entered items only (no auto-computed markup rows)
   const sovDisplayItems = React.useMemo(
-    () => [...(formData.sovItems || []), ...computedMarkupSovItems],
-    [formData.sovItems, computedMarkupSovItems],
+    () => [...(formData.sovItems || [])],
+    [formData.sovItems],
   );
 
   React.useEffect(() => {
@@ -419,15 +385,14 @@ export function usePrimeContractFormState({
 
       const submitData: ContractFormData = {
         ...(formData as ContractFormData),
-        // Include markup SOV items at the end of the SOV for line-item creation
-        sovItems: [...(formData.sovItems || []), ...computedMarkupSovItems],
+        // Markups are never auto-applied to the SOV — persist only user-entered lines.
+        sovItems: [...(formData.sovItems || [])],
         markups,
       };
       await onSubmit(submitData, pendingAttachmentFiles);
     },
     [
       formData,
-      computedMarkupSovItems,
       markups,
       onSubmit,
       pendingAttachmentFiles,

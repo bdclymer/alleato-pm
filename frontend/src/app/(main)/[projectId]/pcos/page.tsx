@@ -153,6 +153,72 @@ function buildPCOTableColumns(projectId: string): TableColumn<PCO>[] {
   ];
 }
 
+function formatCardDate(value: string | null | undefined): string {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function renderPCOCard(
+  item: PCO,
+  onClick: (item: PCO) => void,
+): React.ReactElement {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      onClick={() => onClick(item)}
+      className="h-auto w-full flex-col items-stretch gap-0 whitespace-normal rounded-lg border p-4 text-left hover:bg-muted/50"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {item.number}
+          </p>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
+          <h3 className="mt-0.5 line-clamp-2 font-medium text-foreground">
+            {item.title || "Untitled"}
+          </h3>
+        </div>
+        <StatusBadge status={STATUS_LABELS[item.status] ?? item.status} />
+      </div>
+
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
+        <div>
+          <dt className="text-xs text-muted-foreground">Est. Value</dt>
+          <dd className="tabular-nums font-medium text-foreground">
+            {formatCurrency(item.estimated_value ?? 0)}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Type</dt>
+          <dd className="text-sm text-foreground">
+            {TYPE_LABELS[item.type] ?? item.type}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Schedule Impact</dt>
+          <dd className="tabular-nums text-sm text-foreground">
+            {item.schedule_impact_days != null
+              ? `${item.schedule_impact_days} day${item.schedule_impact_days === 1 ? "" : "s"}`
+              : "—"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Created</dt>
+          <dd className="text-sm text-foreground">
+            {formatCardDate(item.created_at)}
+            <span className="text-muted-foreground"> · v{item.current_version}</span>
+          </dd>
+        </div>
+      </dl>
+    </Button>
+  );
+}
+
 const pcoFilters = [
   {
     id: "status",
@@ -219,8 +285,8 @@ export default function PCOListPage() {
     pathname,
     router,
     defaults: {
-      view: "table",
-      allowedViews: ["table"],
+      view: "card",
+      allowedViews: ["card", "table"],
       page: 1,
       perPage: 25,
       search: "",
@@ -375,6 +441,7 @@ export default function PCOListPage() {
           tableState.setCurrentView(view);
           tableState.setSearchParams({ view });
         },
+        enabledViews: ["card", "table"],
         filters: pcoFilters,
         activeFilters,
         onFilterChange: handleFilterChange,
@@ -392,6 +459,12 @@ export default function PCOListPage() {
         columns: tableColumns,
         getRowId: (item) => String(item.id),
         onRowClick: handleRowClick,
+      }}
+      views={{
+        card: (item) => renderPCOCard(item, handleRowClick),
+      }}
+      layout={{
+        cardGridClassName: "grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4",
       }}
       sorting={{
         sortBy: tableState.sortBy,

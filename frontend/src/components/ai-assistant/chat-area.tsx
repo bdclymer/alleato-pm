@@ -641,11 +641,48 @@ async function prepareMessageWithFileUIParts(
   );
 
   return {
-    message: [message, "Attached readable files:", ...attachmentText]
+    message: [message, ATTACHMENT_SECTION_MARKER, ...attachmentText]
       .filter(Boolean)
       .join("\n\n"),
     files: nonTextFiles,
   };
+}
+
+/**
+ * Marker prepended to inlined readable-file content so the model receives the
+ * full text. `parseUserMessageAttachments` strips this section back out for
+ * display so the user sees a file chip instead of the raw dump.
+ */
+const ATTACHMENT_SECTION_MARKER = "Attached readable files:";
+
+type ParsedMessageAttachment = { filename: string; mediaType: string };
+
+/**
+ * Splits a stored user message into its visible text and the inlined readable
+ * file attachments. The raw file content (wrapped in `--- name (mime) --- ...
+ * --- end name ---` blocks) is kept out of the visible bubble — only the
+ * filename + type are surfaced as chips.
+ */
+function parseUserMessageAttachments(text: string): {
+  visibleText: string;
+  attachments: ParsedMessageAttachment[];
+} {
+  const markerIndex = text.indexOf(ATTACHMENT_SECTION_MARKER);
+  if (markerIndex === -1) return { visibleText: text, attachments: [] };
+
+  const body = text.slice(markerIndex + ATTACHMENT_SECTION_MARKER.length);
+  const headerRegex = /--- (.+?) \(([^)]+)\) ---/g;
+  const attachments: ParsedMessageAttachment[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = headerRegex.exec(body)) !== null) {
+    attachments.push({ filename: match[1], mediaType: match[2] });
+  }
+
+  // Only treat this as an attachment section if we actually found file blocks —
+  // otherwise the user just happened to type the marker text themselves.
+  if (attachments.length === 0) return { visibleText: text, attachments: [] };
+
+  return { visibleText: text.slice(0, markerIndex).trim(), attachments };
 }
 
 /** Renders thumbnails for files attached via PromptInput's internal attachment state. */
@@ -1933,7 +1970,36 @@ export function ChatArea({
                             ))}
                           </div>
                         )}
-                        <MessageResponse>{text}</MessageResponse>
+                        {(() => {
+                          const { visibleText, attachments } =
+                            parseUserMessageAttachments(text);
+                          return (
+                            <>
+                              {attachments.length > 0 && (
+                                <div className="mb-1 flex flex-wrap gap-1.5">
+                                  {attachments.map((file, fileIndex) => (
+                                    <span
+                                      key={`${file.filename}-${fileIndex}`}
+                                      className="inline-flex items-center gap-1.5 rounded-full bg-background px-2.5 py-1 text-xs text-foreground"
+                                      title={file.filename}
+                                    >
+                                      <FileTextIcon
+                                        className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                                        aria-hidden="true"
+                                      />
+                                      <span className="max-w-48 truncate">
+                                        {file.filename}
+                                      </span>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              {visibleText.trim() && (
+                                <MessageResponse>{visibleText}</MessageResponse>
+                              )}
+                            </>
+                          );
+                        })()}
                       </MessageContent>
                     </Message>
                   );

@@ -42,7 +42,7 @@ export default function ProjectHubPage() {
   }));
 
   return (
-    <PageShell variant="content" title="Project Hub">
+    <PageShell variant="dashboard" title="Project Hub">
       <div className="flex h-screen flex-col">
         <div className="border-b px-4 sm:px-6 lg:px-8 pt-3">
           <PageTabs

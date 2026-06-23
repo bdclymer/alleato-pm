@@ -13,17 +13,17 @@ const WHERE = "/api/admin/rag-snapshots#GET";
  * Returns one row per day for the last N days, with per-source totals for
  * items successfully synced and items that failed. Source rows in
  * `source_sync_runs` are bucketed into the four user-visible sources
- * (OneDrive, Outlook, Meetings, Teams). Days with no sync activity at all
+ * (SharePoint, Outlook, Meetings, Teams). Days with no sync activity at all
  * still appear so a multi-day stall is obvious at a glance.
  */
 
-export type SourceKey = "onedrive" | "outlook" | "meetings" | "teams";
+export type SourceKey = "sharepoint" | "outlook" | "meetings" | "teams";
 
 export type DailySyncRow = {
   /** ISO date (YYYY-MM-DD), UTC. */
   date: string;
-  onedrive_synced: number;
-  onedrive_failed: number;
+  sharepoint_synced: number;
+  sharepoint_failed: number;
   outlook_synced: number;
   outlook_failed: number;
   meetings_synced: number;
@@ -35,8 +35,7 @@ export type DailySyncRow = {
 };
 
 const SOURCE_BUCKETS: Record<string, SourceKey> = {
-  onedrive_file: "onedrive",
-  sharepoint_file: "onedrive",
+  sharepoint_file: "sharepoint",
   outlook_email: "outlook",
   fireflies: "meetings",
   teams_message: "teams",
@@ -51,9 +50,9 @@ function addSourceTotals(
   synced: number,
   failed: number,
 ) {
-  if (bucket === "onedrive") {
-    day.onedrive_synced += synced;
-    day.onedrive_failed += failed;
+  if (bucket === "sharepoint") {
+    day.sharepoint_synced += synced;
+    day.sharepoint_failed += failed;
     return;
   }
   if (bucket === "outlook") {
@@ -125,8 +124,8 @@ export const GET = withApiGuardrails(WHERE, async ({ request }) => {
     if (!day) {
       day = {
         date,
-        onedrive_synced: 0,
-        onedrive_failed: 0,
+        sharepoint_synced: 0,
+        sharepoint_failed: 0,
         outlook_synced: 0,
         outlook_failed: 0,
         meetings_synced: 0,
@@ -159,8 +158,8 @@ export const GET = withApiGuardrails(WHERE, async ({ request }) => {
     if (!byDay.has(date)) {
       byDay.set(date, {
         date,
-        onedrive_synced: 0,
-        onedrive_failed: 0,
+        sharepoint_synced: 0,
+        sharepoint_failed: 0,
         outlook_synced: 0,
         outlook_failed: 0,
         meetings_synced: 0,

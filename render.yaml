@@ -155,7 +155,7 @@ services:
       - key: TEAMS_DM_EXPORT_MAX_PAGES
         value: "2"
 
-  # Runs Outlook/OneDrive/SharePoint sync every 2 hours, staggered away from
+  # Runs Outlook/SharePoint sync every 2 hours, staggered away from
   # Teams-only crons. Embedding is capped at 25 documents per run.
   - type: cron
     name: alleato-graph-sync
@@ -212,10 +212,6 @@ services:
         sync: false
       - key: OUTLOOK_SYNC_MAX_USERS
         value: "1"
-      - key: ONEDRIVE_SYNC_MAX_USERS
-        value: "1"
-      - key: ONEDRIVE_SYNC_MAX_FOLDERS
-        value: "2"
       - key: SHAREPOINT_SYNC_MAX_FOLDERS
         value: "2"
       - key: GRAPH_SYNC_ENABLED
@@ -227,6 +223,8 @@ services:
       - key: GRAPH_SYNC_TEAMS_DM
         value: "false"
       - key: GRAPH_SYNC_ONEDRIVE
+        value: "false"
+      - key: GRAPH_SYNC_SHAREPOINT
         value: "true"
       - key: GRAPH_EMBEDDING_LIMIT
         value: "25"
@@ -568,6 +566,12 @@ services:
         sync: false
       - key: RAG_DATABASE_READS_ENABLED
         value: "true"
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: NOTIFICATION_SERVICE_KEY
+        sync: false
+      - key: RAG_HEALTH_ALERT_TEAMS_USER_ID
+        sync: false
       - key: RAG_HEALTH_REMEDIATION_WEBHOOK_URL
         sync: false
       - key: RAG_HEALTH_REMEDIATION_WEBHOOK_TOKEN

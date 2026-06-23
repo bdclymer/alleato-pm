@@ -169,11 +169,32 @@ export const PUT = withApiGuardrails(
       );
     }
 
-    // Business rule: approved contracts must have a non-zero contract value
+    // Business rule: approved contracts must have a non-zero contract value.
+    // The stored original_contract_value can be stale or 0 for imported/migrated
+    // contracts whose displayed total is computed live from line items, so fall
+    // back to the actual SOV line-item total before blocking — and heal the
+    // stored column when we do, so it stops lying.
     if (validatedData.status === "approved") {
-      const effectiveValue = validatedData.original_contract_value !== undefined
+      let effectiveValue = validatedData.original_contract_value !== undefined
         ? validatedData.original_contract_value
-        : (existingContract.original_contract_value ?? 0);
+        : Number(existingContract.original_contract_value ?? 0);
+      if (effectiveValue <= 0) {
+        const { data: sovLines } = await supabase
+          .from("contract_line_items")
+          .select("quantity, unit_cost, total_cost")
+          .eq("contract_id", contractId);
+        effectiveValue = (sovLines ?? []).reduce((sum, line) => {
+          const qtyUnit =
+            (Number(line.quantity) || 0) * (Number(line.unit_cost) || 0);
+          return sum + (qtyUnit || Number(line.total_cost) || 0);
+        }, 0);
+        if (
+          effectiveValue > 0 &&
+          validatedData.original_contract_value === undefined
+        ) {
+          validatedData.original_contract_value = effectiveValue;
+        }
+      }
       if (effectiveValue <= 0) {
         return NextResponse.json(
           { error: "Cannot approve a contract with $0 contract value. Add line items with amounts before approving." },

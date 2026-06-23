@@ -3,7 +3,9 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { useState } from "react";
+import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import {
   Archive,
@@ -14,6 +16,7 @@ import {
   Pencil,
   Plus,
   Bell,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
@@ -34,6 +37,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalHeader,
+  ModalTitle,
+  ModalTrigger,
+} from "@/components/ui/unified-modal";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 import {
   SpecificationUploadDialog,
@@ -188,6 +202,190 @@ function renderSpecList(spec: SpecificationWithRevision, onView: (id: number) =>
         <Badge variant={spec.status === "active" ? "default" : "secondary"}>{spec.status}</Badge>
       </div>
     </div>
+  );
+}
+
+function CreateDivisionDialog({ projectId }: { projectId: string }) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [divisionNumber, setDivisionNumber] = useState("");
+  const [title, setTitle] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const canSubmit = divisionNumber.trim().length > 0 && title.trim().length > 0;
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!canSubmit) return;
+
+    setIsSubmitting(true);
+    try {
+      await apiFetch(`/api/projects/${projectId}/specifications/divisions`, {
+        method: "POST",
+        body: JSON.stringify({
+          division_number: divisionNumber.trim(),
+          title: title.trim(),
+        }),
+      });
+      await queryClient.invalidateQueries({ queryKey: ["specification-divisions", projectId] });
+      toast.success("Specification division created");
+      setDivisionNumber("");
+      setTitle("");
+      setOpen(false);
+    } catch (error) {
+      toast.error("Could not create division", {
+        description: error instanceof Error ? error.message : "Try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onOpenChange={setOpen}>
+      <ModalTrigger asChild>
+        <Button size="sm" variant="outline">
+          <Plus className="h-4 w-4" />
+          Create Division
+        </Button>
+      </ModalTrigger>
+      <ModalContent size="md">
+        <ModalHeader>
+          <ModalTitle>Create Division</ModalTitle>
+          <ModalDescription>
+            Adds a division label. Section assignment is derived from section numbers until division mapping is stored.
+          </ModalDescription>
+        </ModalHeader>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div className="space-y-2">
+            <Label htmlFor="spec-division-number">Number</Label>
+            <Input
+              id="spec-division-number"
+              value={divisionNumber}
+              onChange={(event) => setDivisionNumber(event.target.value)}
+              placeholder="08"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="spec-division-title">Description</Label>
+            <Textarea
+              id="spec-division-title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Openings"
+              required
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!canSubmit || isSubmitting}>
+              Create
+            </Button>
+          </div>
+        </form>
+      </ModalContent>
+    </Modal>
+  );
+}
+
+function CreateSpecificationDialog({ projectId }: { projectId: string }) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [sectionNumber, setSectionNumber] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const canSubmit = sectionNumber.trim().length > 0 && title.trim().length > 0;
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!canSubmit) return;
+
+    setIsSubmitting(true);
+    try {
+      await apiFetch(`/api/projects/${projectId}/specifications/sections`, {
+        method: "POST",
+        body: JSON.stringify({
+          section_number: sectionNumber.trim(),
+          title: title.trim(),
+          description: description.trim() || null,
+        }),
+      });
+      await queryClient.invalidateQueries({ queryKey: ["specifications", projectId] });
+      toast.success("Specification created");
+      setSectionNumber("");
+      setTitle("");
+      setDescription("");
+      setOpen(false);
+    } catch (error) {
+      toast.error("Could not create specification", {
+        description: error instanceof Error ? error.message : "Try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onOpenChange={setOpen}>
+      <ModalTrigger asChild>
+        <Button size="sm" variant="outline">
+          <Plus className="h-4 w-4" />
+          Create Specification
+        </Button>
+      </ModalTrigger>
+      <ModalContent size="xl">
+        <ModalHeader>
+          <ModalTitle>Create Specification</ModalTitle>
+          <ModalDescription>
+            Creates a section record. Upload a file separately to add the first revision.
+          </ModalDescription>
+        </ModalHeader>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div className="space-y-2">
+            <Label htmlFor="spec-section-number">Number</Label>
+            <Input
+              id="spec-section-number"
+              value={sectionNumber}
+              onChange={(event) => setSectionNumber(event.target.value)}
+              placeholder="08-1113"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="spec-section-title">Description</Label>
+            <Input
+              id="spec-section-title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Doors, Frames, Hardware"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="spec-section-notes">Notes</Label>
+            <Textarea
+              id="spec-section-notes"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Optional internal notes"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!canSubmit || isSubmitting}>
+              Create
+            </Button>
+          </div>
+        </form>
+      </ModalContent>
+    </Modal>
   );
 }
 
@@ -424,13 +622,19 @@ export default function ProjectSpecificationsPage() {
   }, [activeTab, pathname, searchParams]);
 
   const headerActions = (
-    <div className="flex items-center gap-2">
-      <SpecificationUploadDialog projectId={projectId}>
-        <Button size="sm">
-          <Plus className="h-4 w-4" />
-          Upload
-        </Button>
-      </SpecificationUploadDialog>
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      {activeTab === "specifications" && (
+        <>
+          <SpecificationUploadDialog projectId={projectId}>
+            <Button size="sm">
+              <Plus className="h-4 w-4" />
+              Upload
+            </Button>
+          </SpecificationUploadDialog>
+          <CreateDivisionDialog projectId={projectId} />
+          <CreateSpecificationDialog projectId={projectId} />
+        </>
+      )}
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -444,6 +648,12 @@ export default function ProjectSpecificationsPage() {
           <DropdownMenuItem onClick={handleExportCsv}>Export as CSV</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <Button size="sm" variant="ghost" asChild>
+        <Link href={`/${projectId}/specifications/settings`}>
+          <Settings className="h-4 w-4" />
+          Settings
+        </Link>
+      </Button>
     </div>
   );
 

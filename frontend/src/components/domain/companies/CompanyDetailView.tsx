@@ -269,6 +269,12 @@ export function CompanyDetailView({
                 </div>
                 <div>
                   <Text size="sm" weight="medium" tone="muted">
+                    License Number
+                  </Text>
+                  <Text>{companyData?.license_number || "-"}</Text>
+                </div>
+                <div>
+                  <Text size="sm" weight="medium" tone="muted">
                     Status
                   </Text>
                   <Badge

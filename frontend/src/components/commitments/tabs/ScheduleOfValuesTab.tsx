@@ -47,12 +47,23 @@ interface LineItem {
   isDirty?: boolean;
 }
 
+interface CommitmentSovSummary {
+  subtotal: number;
+  originalContract: number;
+  approvedChanges: number;
+  contractTotal: number;
+  billedToDate: number;
+  amountRemaining: number;
+  currentRetainage: number;
+}
+
 interface ScheduleOfValuesTabProps {
   lineItems: LineItem[];
   projectId: number;
   commitmentId: string;
   commitmentType?: "subcontract" | "purchase_order" | string;
   accountingMethod?: "amount" | "unit" | "percent";
+  summary?: CommitmentSovSummary;
   showHeader?: boolean;
   onImportComplete?: () => void | Promise<void>;
   onLineItemsChange?: (items: LineItem[]) => void;
@@ -74,6 +85,7 @@ export function ScheduleOfValuesTab({
   commitmentId,
   commitmentType,
   accountingMethod = "amount",
+  summary,
   showHeader = true,
   onImportComplete,
   onLineItemsChange,
@@ -137,6 +149,28 @@ export function ScheduleOfValuesTab({
   );
 
   const amountRemaining = Math.max(totals.amount - totals.billed, 0);
+  const summaryRows = useMemo(
+    () => [
+      { label: "Subtotal", value: summary?.subtotal ?? totals.amount },
+      {
+        label: "Original Contract",
+        value: summary?.originalContract ?? totals.amount,
+      },
+      { label: "Approved Changes", value: summary?.approvedChanges ?? 0 },
+      {
+        label: "Contract Total",
+        value: summary?.contractTotal ?? totals.amount,
+        strong: true,
+      },
+      { label: "Billed to Date", value: summary?.billedToDate ?? totals.billed },
+      {
+        label: "Amount Remaining",
+        value: summary?.amountRemaining ?? amountRemaining,
+      },
+      { label: "Current Retainage", value: summary?.currentRetainage ?? 0 },
+    ],
+    [amountRemaining, summary, totals.amount, totals.billed],
+  );
 
   const handleAdd = () => {
     const nextLineNumber = (items[items.length - 1]?.line_number || items.length) + 1;
@@ -531,6 +565,25 @@ export function ScheduleOfValuesTab({
             <InlineTableFooterCell align="right" numeric>{formatCurrency(amountRemaining)}</InlineTableFooterCell>
             <InlineTableFooterCell />
           </InlineTableFooterRow>
+          {summaryRows.map((row) => (
+            <InlineTableFooterRow key={row.label}>
+              <InlineTableFooterCell
+                align="right"
+                colSpan={accountingMethod === "unit" ? 8 : 5}
+                className={row.strong ? "font-semibold" : undefined}
+              >
+                {row.label}
+              </InlineTableFooterCell>
+              <InlineTableFooterCell
+                align="right"
+                numeric
+                className={row.strong ? "font-semibold" : undefined}
+              >
+                {formatCurrency(row.value)}
+              </InlineTableFooterCell>
+              <InlineTableFooterCell />
+            </InlineTableFooterRow>
+          ))}
         </InlineTableFooter>
       </InlineTable>
 

@@ -209,6 +209,11 @@ export interface ChangeEventDetail extends ChangeEvent {
   lineItems?: ChangeEventDetailLineItem[];
   attachments?: ChangeEventAttachment[];
   history?: Array<Record<string, unknown>>;
+  totals?: {
+    revenueRom: string | number;
+    costRom: string | number;
+    nonCommittedCost: string | number;
+  };
   expectingRevenue?: boolean;
   originId?: string | null;
   lineItemRevenueSource?: string | null;

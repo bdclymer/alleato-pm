@@ -986,28 +986,21 @@ function ToolItem({
   isDisabled: boolean;
   onClose: () => void;
 }) {
+  const isExternal = tool.path.startsWith("http");
   const href = buildToolUrl(tool.path, projectId, tool.requiresProject);
   const Icon = tool.icon;
 
-  return (
-    <Link
-      href={href}
-      onClick={(e) => {
-        if (isDisabled) {
-          e.preventDefault();
-          return;
-        }
-        onClose();
-      }}
-      className={cn(
-        "group flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors",
-        isDisabled
-          ? "pointer-events-none opacity-30"
-          : isActive
-            ? "bg-muted text-foreground"
-            : "text-foreground/75 hover:bg-muted hover:text-foreground",
-      )}
-    >
+  const className = cn(
+    "group flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors",
+    isDisabled
+      ? "pointer-events-none opacity-30"
+      : isActive
+        ? "bg-muted text-foreground"
+        : "text-foreground/75 hover:bg-muted hover:text-foreground",
+  );
+
+  const content = (
+    <>
       {Icon && (
         <span
           className={cn(
@@ -1028,6 +1021,36 @@ function ToolItem({
       >
         {tool.name}
       </span>
+    </>
+  );
+
+  if (isExternal) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => onClose()}
+        className={className}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      onClick={(e) => {
+        if (isDisabled) {
+          e.preventDefault();
+          return;
+        }
+        onClose();
+      }}
+      className={className}
+    >
+      {content}
     </Link>
   );
 }

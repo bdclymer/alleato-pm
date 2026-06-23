@@ -10,6 +10,7 @@ type VendorCompany = {
   id: string;
   name: string | null;
   legal_name: string | null;
+  license_number: string | null;
 };
 
 type ProjectVendorRow = {
@@ -36,11 +37,11 @@ export const GET = withApiGuardrails<{ projectId: string }>(
   const [projectVendorsResult, allVendorsResult] = await Promise.all([
     supabase
       .from("project_vendors")
-      .select("vendor_id, companies(id, name, legal_name)")
+      .select("vendor_id, companies(id, name, legal_name, license_number)")
       .eq("project_id", projectId),
     supabase
       .from("companies")
-      .select("id, name, legal_name")
+      .select("id, name, legal_name, license_number")
       .eq("is_vendor", true)
       .order("name"),
   ]);
@@ -66,6 +67,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         vendor_name: company?.name ?? "",
         company_id: row.vendor_id,
         company: company?.name ?? "",
+        license_number: company?.license_number ?? null,
       };
     },
   );
@@ -77,6 +79,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       vendor_name: c.name ?? "",
       company_id: c.id,
       company: c.name ?? "",
+      license_number: c.license_number ?? null,
     }));
 
   return NextResponse.json([...projectVendorRows, ...globalVendorRows]);

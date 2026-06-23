@@ -22,7 +22,7 @@ import type { DailySyncRow } from "@/app/api/admin/rag-snapshots/route";
 // ─── Source columns ───────────────────────────────────────────────────────────
 
 const SOURCES = [
-  { key: "onedrive", label: "OneDrive" },
+  { key: "sharepoint", label: "SharePoint" },
   { key: "outlook", label: "Outlook" },
   { key: "meetings", label: "Meetings" },
   { key: "teams", label: "Teams" },
@@ -149,7 +149,7 @@ export default function RagDashboardPage() {
           <InlineTableHeaderRow type="group">
             <InlineTableHeaderCell rowSpan={2}>Date</InlineTableHeaderCell>
             <InlineTableHeaderCell colSpan={2} align="center" divider>
-              OneDrive
+              SharePoint
             </InlineTableHeaderCell>
             <InlineTableHeaderCell colSpan={2} align="center" divider>
               Outlook

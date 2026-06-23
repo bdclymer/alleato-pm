@@ -501,7 +501,7 @@ export function ChangeEventLineItemsTable({
             variant="edit"
             tableClassName={cn(
               "table-fixed",
-              expectingRevenue ? "w-[127.25rem] min-w-[127.25rem]" : "w-[95.25rem] min-w-[95.25rem]",
+              expectingRevenue ? "w-[127.25rem] min-w-[127.25rem]" : "w-[103.25rem] min-w-[103.25rem]",
             )}
           >
             <colgroup>
@@ -518,9 +518,9 @@ export function ChangeEventLineItemsTable({
                   <col className="w-24" />
                   <col className="w-28" />
                   <col className="w-44" />
-                  <col className="w-32" />
                 </>
               )}
+              <col className="w-32" />
               <col className="w-36" />
               <col className="w-32" />
               <col className="w-12" />
@@ -536,11 +536,11 @@ export function ChangeEventLineItemsTable({
                   Cost
                 </InlineTableHeaderCell>
                 {expectingRevenue && (
-                  <InlineTableHeaderCell colSpan={4} className="line-item-group-end line-item-group-start border-b border-l border-border/60 px-2 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
+                  <InlineTableHeaderCell colSpan={3} className="line-item-group-end line-item-group-start border-b border-l border-border/60 px-2 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
                     Revenue
                   </InlineTableHeaderCell>
                 )}
-                <InlineTableHeaderCell colSpan={2} className="line-item-group-start border-b border-l border-border/60 px-2 py-1 text-right text-xs font-semibold normal-case tracking-normal text-muted-foreground">
+                <InlineTableHeaderCell colSpan={3} className="line-item-group-start border-b border-l border-border/60 px-2 py-1 text-right text-xs font-semibold normal-case tracking-normal text-muted-foreground">
                   Summary
                 </InlineTableHeaderCell>
                 <InlineTableHeaderCell className="w-12 border-b border-border/60 px-1 py-1" />
@@ -558,10 +558,10 @@ export function ChangeEventLineItemsTable({
                   <>
                     <InlineTableHeaderCell className="line-item-group-start w-24 border-l border-border/60 px-2 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">UOM</InlineTableHeaderCell>
                     <InlineTableHeaderCell className="w-28 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Qty</InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="w-44 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="line-item-group-end w-32 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Revenue ROM</InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="line-item-group-end w-44 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</InlineTableHeaderCell>
                   </>
                 )}
+                <InlineTableHeaderCell className="line-item-group-start w-32 border-l border-border/60 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Revenue ROM</InlineTableHeaderCell>
                 <InlineTableHeaderCell className="line-item-group-start w-36 border-l border-border/60 px-2 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Non-committed</InlineTableHeaderCell>
                 <InlineTableHeaderCell className="w-32 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Over / Under</InlineTableHeaderCell>
                 <InlineTableHeaderCell className="w-12 px-1 py-1.5" />
@@ -654,11 +654,11 @@ export function ChangeEventLineItemsTable({
                         <InlineTableCell className="w-44 px-1 py-1.5 align-top text-right text-[13px]">
                           {li.unitCost != null ? formatCurrency(li.unitCost) : "--"}
                         </InlineTableCell>
-                        <InlineTableCell className="line-item-group-end w-32 px-1 py-1.5 align-top text-right text-[13px] font-semibold">
-                          {formatCurrency(li.revenueRom)}
-                        </InlineTableCell>
                       </>
                     )}
+                    <InlineTableCell className="line-item-group-start w-32 border-l border-border/60 px-1 py-1.5 align-top text-right text-[13px] font-semibold">
+                      {formatCurrency(li.revenueRom)}
+                    </InlineTableCell>
                     <InlineTableCell className="line-item-group-start w-36 border-l border-border/60 px-2 py-1.5 align-top text-right text-[13px] font-semibold">
                       {formatCurrency(li.nonCommittedCost ?? 0)}
                     </InlineTableCell>
@@ -717,11 +717,11 @@ export function ChangeEventLineItemsTable({
                 {expectingRevenue && (
                   <>
                     <InlineTableCell colSpan={3} className="border-t border-border px-1.5 pb-2.5 pt-4" />
-                    <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4 text-right text-sm font-semibold text-foreground">
-                      {formatCurrency(lineItemSubtotals.revenueRom)}
-                    </InlineTableCell>
                   </>
                 )}
+                <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4 text-right text-sm font-semibold text-foreground">
+                  {formatCurrency(lineItemSubtotals.revenueRom)}
+                </InlineTableCell>
                 <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4 text-right text-sm font-semibold text-foreground">
                   {formatCurrency(lineItemSubtotals.nonCommittedCost)}
                 </InlineTableCell>

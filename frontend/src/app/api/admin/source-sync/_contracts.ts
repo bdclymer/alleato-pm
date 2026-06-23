@@ -55,6 +55,50 @@ export const SourceSyncStuckItemSchema = z.object({
   metadata: z.record(z.string(), z.unknown()),
 });
 
+export const RagLifecycleStageSchema = z.object({
+  key: z.enum([
+    "synced",
+    "vectorized",
+    "projectAssigned",
+    "tasksExtracted",
+    "projectIntelligenceUpdated",
+  ]),
+  label: z.string(),
+  status: z.enum(["healthy", "warning", "critical", "unknown"]),
+  count: z.number(),
+  total: z.number(),
+  latestAt: z.string().nullable(),
+  message: z.string(),
+  ownerHint: z.string(),
+});
+
+export const RagLifecycleSourceSchema = z.object({
+  key: z.enum(["meetings", "teams", "emails", "sharepoint"]),
+  label: z.string(),
+  sourceSystems: z.array(z.string()),
+  totalSources: z.number(),
+  latestSourceAt: z.string().nullable(),
+  status: z.enum(["healthy", "warning", "critical", "unknown"]),
+  stages: z.array(RagLifecycleStageSchema),
+  alerts: z.array(SourceSyncAlertSchema),
+});
+
+export const RagLifecycleNotificationSchema = z.object({
+  status: z.enum(["sent", "ready", "blocked", "failed", "skipped"]),
+  channel: z.string(),
+  message: z.string(),
+  checkedAt: z.string(),
+});
+
+export const RagLifecycleStatusSchema = z.object({
+  generatedAt: z.string(),
+  lookbackHours: z.number(),
+  maxPacketAgeHours: z.number(),
+  status: z.enum(["healthy", "degraded", "unavailable"]),
+  sources: z.array(RagLifecycleSourceSchema),
+  notifications: z.array(RagLifecycleNotificationSchema),
+});
+
 export const SourceSyncStatusSchema = z.object({
   status: z.enum(["healthy", "degraded", "unavailable"]),
   healthy: z.boolean(),
@@ -76,6 +120,7 @@ export const SourceSyncStatusSchema = z.object({
     graphSubscriptions: z.number(),
     stuckItems: z.number(),
   }),
+  ragLifecycle: RagLifecycleStatusSchema.optional(),
 });
 
 export type SourceSyncStatus = z.infer<typeof SourceSyncStatusSchema>;

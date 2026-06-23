@@ -21,6 +21,7 @@ const commitmentEditSchema = z
     contract_number: z.string().optional(),
     title: z.string().optional(),
     contract_company_id: z.string().nullable().optional(),
+    company_license_number: z.string().nullable().optional(),
     status: z.string().optional(),
     description: z.string().nullable().optional(),
     inclusions: z.string().nullable().optional(),
@@ -243,11 +244,16 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
 
     // Fetch contract company — contract_company_id FK references companies(id)
     const record = data as Record<string, unknown>;
-    let contractCompany: { id: string; name: string; type: string | null } | null = null;
+    let contractCompany: {
+      id: string;
+      name: string;
+      type: string | null;
+      license_number: string | null;
+    } | null = null;
     if (record?.contract_company_id) {
       const { data: companyData } = await supabase
         .from("companies")
-        .select("id, name")
+        .select("id, name, license_number")
         .eq("id", record.contract_company_id as string)
         .single();
       if (companyData) {
@@ -255,6 +261,7 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
           id: companyData.id,
           name: companyData.name,
           type: "vendor",
+          license_number: companyData.license_number ?? null,
         };
       }
     }
@@ -502,6 +509,23 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
 
     if (error) {
       return apiErrorResponse(error);
+    }
+
+    if (
+      validatedData.company_license_number !== undefined &&
+      validatedData.contract_company_id
+    ) {
+      const { error: companyUpdateError } = await supabase
+        .from("companies")
+        .update({
+          license_number: validatedData.company_license_number,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", validatedData.contract_company_id);
+
+      if (companyUpdateError) {
+        return apiErrorResponse(companyUpdateError);
+      }
     }
 
     // Update SOV line items (budget_code, description, amount) if provided.

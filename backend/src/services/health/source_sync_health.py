@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
+import os
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from src.services.supabase_helpers import get_rag_read_client, get_rag_write_client
@@ -61,10 +62,58 @@ GRAPH_DOCUMENT_TYPE_SOURCE_KEYS = {
     "teams_dm_conversation": "teams_chat_export",
     "onedrive_file": "onedrive_file",
     "sharepoint_file": "sharepoint_file",
-    "document": "onedrive_file",
+    "document": "sharepoint_file",
 }
 
-GRAPH_PROJECT_DOCUMENT_SOURCES = {"onedrive", "sharepoint"}
+GRAPH_PROJECT_DOCUMENT_SOURCES = {"sharepoint"}
+
+
+def _active_sharepoint_resource_ids() -> set[str]:
+    entries = [
+        entry.strip()
+        for entry in os.environ.get("SHAREPOINT_SYNC_FOLDERS", "").split(",")
+        if entry.strip()
+    ]
+    resource_ids: set[str] = set()
+    for entry in entries:
+        try:
+            site_part, folder_path = entry.split(":", 1) if ":" in entry else (entry, "/")
+            _, site_name = site_part.split("/", 1)
+            resource_ids.add(f"sharepoint:{site_name}:{folder_path}")
+        except ValueError:
+            continue
+    return resource_ids
+
+
+def _is_inactive_graph_resource(state: Dict[str, Any]) -> bool:
+    return _is_inactive_graph_resource_with_active_ids(state, _active_sharepoint_resource_ids())
+
+
+def _is_inactive_graph_resource_with_active_ids(state: Dict[str, Any], active_sharepoint_ids: set[str]) -> bool:
+    source = str(state.get("source") or "")
+    resource_id = str(state.get("resource_id") or "")
+
+    if source == "onedrive_file":
+        return True
+    if source == "sharepoint_file":
+        return bool(active_sharepoint_ids) and resource_id not in active_sharepoint_ids
+    return False
+
+
+def _recent_sharepoint_resource_ids(graph_states: Sequence[Dict[str, Any]], now: datetime) -> set[str]:
+    resource_ids: set[str] = set()
+    for state in graph_states:
+        if str(state.get("source") or "") != "sharepoint_file":
+            continue
+        if str(state.get("sync_status") or "") == "error":
+            continue
+        last_sync = _parse_datetime(state.get("last_sync_at"))
+        stale = _age_minutes(last_sync, now)
+        if stale is not None and stale <= STALE_SYNC_MINUTES * 2:
+            resource_id = str(state.get("resource_id") or "")
+            if resource_id:
+                resource_ids.add(resource_id)
+    return resource_ids
 
 
 def _utcnow() -> datetime:
@@ -695,7 +744,7 @@ def detect_source_sync_alerts(
                 "source": "microsoft_graph",
                 "resourceId": "project_documents",
                 "message": (
-                    f"{missing_project_documents} assigned OneDrive/SharePoint document(s) "
+                    f"{missing_project_documents} assigned SharePoint document(s) "
                     "are searchable in AI but missing from project Documents."
                 ),
                 "detectedAt": _iso(now),
@@ -1018,13 +1067,18 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
     )
     document_by_id = {str(row.get("id")): row for row in documents if row.get("id")}
 
+    active_sharepoint_resource_ids = _active_sharepoint_resource_ids() or _recent_sharepoint_resource_ids(graph_states, now)
+
     sources: List[Dict[str, Any]] = []
     for state in graph_states:
         last_sync = _parse_datetime(state.get("last_sync_at"))
         last_error = state.get("error_message") if state.get("sync_status") == "error" else None
         stale = _age_minutes(last_sync, now)
         source = str(state.get("source") or "microsoft_graph")
-        if source in LEGACY_GRAPH_STATE_SOURCES:
+        if (
+            source in LEGACY_GRAPH_STATE_SOURCES
+            or _is_inactive_graph_resource_with_active_ids(state, active_sharepoint_resource_ids)
+        ):
             continue
         sources.append(
             _source_row(
@@ -1134,6 +1188,11 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         if snapshot_source in LEGACY_GRAPH_STATE_SOURCES:
             continue
         snapshot_resource = str(snapshot.get("resource_id") or "default")
+        if _is_inactive_graph_resource_with_active_ids(
+            {"source": snapshot_source, "resource_id": snapshot_resource},
+            active_sharepoint_resource_ids,
+        ):
+            continue
         if any(
             row["source"] == snapshot_source and row["resourceId"] == snapshot_resource
             for row in sources

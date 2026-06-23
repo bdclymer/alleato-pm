@@ -6,7 +6,7 @@ Currently registered jobs:
   - Fireflies pipeline backlog: periodic drain of stale raw_ingested/provider-error jobs
   - Daily digest: 6 PM daily, aggregates meetings into executive briefing
   - Acumatica financial sync: daily incremental ERP import into Supabase
-  - Microsoft Graph sync: periodic incremental sync of Outlook/Teams/OneDrive
+  - Microsoft Graph sync: periodic incremental sync of Outlook/Teams/SharePoint
   - Microsoft Graph subscriptions: periodic webhook subscription creation/renewal
   - Microsoft Graph embedding: periodic vectorization of pending Graph documents
   - AI intelligence compiler: periodic drain of source and packet queue rows
@@ -256,7 +256,7 @@ def init_scheduler() -> None:
             health_interval_minutes,
         )
 
-    # Microsoft Graph sync (Outlook + Teams + OneDrive) — hourly by default
+    # Microsoft Graph sync (Outlook + Teams + SharePoint) — hourly by default
     # Auto-enable when Graph credentials are configured (unless explicitly disabled)
     graph_has_creds = bool(
         os.getenv("MICROSOFT_CLIENT_ID") and
@@ -330,7 +330,7 @@ def init_scheduler() -> None:
         )
 
     if graph_sync_enabled:
-        # The heavy full mailbox sweep (run_graph_sync: Outlook/Teams/OneDrive for
+        # The heavy full mailbox sweep (run_graph_sync: Outlook/Teams/SharePoint for
         # ALL mailboxes) is the main DB-pressure source. It is decoupled from the
         # lightweight webhook drain so we can run real-time webhook freshness
         # WITHOUT the periodic heavy sweep. Set GRAPH_FULL_SYNC_JOB_ENABLED=false to
@@ -345,7 +345,7 @@ def init_scheduler() -> None:
                 run_graph_sync_job,
                 IntervalTrigger(minutes=graph_interval_minutes),
                 id="graph_sync",
-                name="Microsoft Graph Sync (Outlook / Teams / OneDrive)",
+                name="Microsoft Graph Sync (Outlook / Teams / SharePoint)",
                 replace_existing=True,
                 max_instances=1,
             )
@@ -1229,7 +1229,7 @@ def _run_source_sync_health_recompute() -> dict:
 
 
 async def run_graph_sync_job() -> None:
-    """Scheduled job: fetch changed Outlook, Teams, and OneDrive rows via Microsoft Graph."""
+    """Scheduled job: fetch changed Outlook, Teams, and SharePoint rows via Microsoft Graph."""
     import asyncio
 
     logger.info("[Scheduler] Running Microsoft Graph fetch-only sync job")
@@ -1237,11 +1237,11 @@ async def run_graph_sync_job() -> None:
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(None, _run_graph_sync)
         logger.info(
-            "[Scheduler] Microsoft Graph fetch-only sync complete: %d total synced (outlook=%d, teams=%d, onedrive=%d)",
+            "[Scheduler] Microsoft Graph fetch-only sync complete: %d total synced (outlook=%d, teams=%d, sharepoint=%d)",
             result.get("total_synced", 0),
             result.get("outlook", 0),
             result.get("teams", 0),
-            result.get("onedrive", 0),
+            result.get("sharepoint", 0),
         )
         if result.get("errors"):
             logger.warning("[Scheduler] Graph sync reported errors: %s", result["errors"])

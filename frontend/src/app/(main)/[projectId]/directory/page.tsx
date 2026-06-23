@@ -10,7 +10,6 @@ import {
   UserX,
   Package,
   Mail,
-  Download,
   Search,
   SlidersHorizontal,
   X,
@@ -2488,12 +2487,6 @@ export default function ProjectDirectoryPage() {
         ) : undefined
       }
       contentClassName="space-y-12"
-      actions={
-        <Button variant="outline" size="sm">
-          <Download className="mr-1.5 h-3.5 w-3.5" />
-          Export
-        </Button>
-      }
     >
       {/* Section 1: Companies */}
       <section>

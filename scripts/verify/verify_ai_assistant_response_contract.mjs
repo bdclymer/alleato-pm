@@ -7,6 +7,8 @@ const repoRoot = resolve(import.meta.dirname, "..", "..");
 
 const files = {
   route: "frontend/src/app/api/ai-assistant/chat/route.ts",
+  handlerV2: "frontend/src/app/api/ai-assistant/chat/handler-v2.ts",
+  orchestrator: "frontend/src/lib/ai/orchestrator.ts",
   strategist: "frontend/src/lib/ai/agents/strategist.ts",
   botCore: "frontend/src/lib/ai/bot-core.ts",
   projectTools: "frontend/src/lib/ai/tools/project-tools.ts",
@@ -22,19 +24,12 @@ function read(relativePath) {
 const checks = [
   {
     file: files.route,
-    description: "chat route streams explicit strategist failure responses",
+    description: "chat route delegates to the v2 handler under API guardrails",
     test: (content) =>
-      content.includes("createStrategistFailureResponse") &&
-      content.includes("createUIMessageStream") &&
-      content.includes("strategist-failure-response") &&
-      content.includes("generateRecoveryResponse") &&
-      content.includes("buildBusinessContextPreflight") &&
-      content.includes("serverBusinessContextPreflight") &&
-      content.includes("shouldForceBusinessRetrieval") &&
-      content.includes("experimental_onStepStart") &&
-      content.includes("preparedStepCount") &&
-      content.includes("clientProjectIntelligencePacket") &&
-      content.includes("provider_path"),
+      content.includes("withApiGuardrails") &&
+      content.includes("handleChatV2") &&
+      content.includes("flushLangfuse") &&
+      content.includes("maxDuration = 300"),
   },
   {
     file: files.failureResponse,
@@ -46,76 +41,55 @@ const checks = [
       content.includes("persisted tool trace"),
   },
   {
-    file: files.route,
-    description: "chat route uses deterministic executive briefing retrieval and persisted Brandon daily brief drafts",
+    file: files.handlerV2,
+    description: "chat handler plans retrieval, assembles context, and runs AI SDK strategist tools",
     test: (content) =>
-      content.includes("generateSourceGroundedSynthesis") &&
-      content.includes('model: getLanguageModel("openai/gpt-4.1")') &&
-      content.includes("sourceGroundedSynthesisFallback") &&
-      content.includes("createDeterministicProjectBriefing") &&
-      content.includes("getExecutiveBriefingDashboard") &&
-      content.includes("loadBrandonDailyUpdateWidget") &&
-      content.includes("daily_recaps.recap_kind=executive_briefing") &&
-      content.includes("ExecutiveBriefingRetrievalPacket") &&
-      content.includes("formatExecutiveBriefingRetrievalContext") &&
-      content.includes("formatExecutiveRecentSignals") &&
-      content.includes("searchMeetingsByTopic") &&
-      content.includes("searchTeamsMessages") &&
-      content.includes("searchEmails") &&
-      content.includes("searchExternalDocuments") &&
-      content.includes("Recent Communication Signals") &&
-      content.includes("Sources Checked") &&
-      !content.includes("source-grounded synthesis exceeded the fast briefing budget") &&
-      !content.includes("reason: \"deterministic broad briefing path\"") &&
-      content.includes("shouldEnableStreamingModelTools(providerDecision)") &&
-      content.includes("streamingModelToolsEnabled") &&
-      content.includes("tools: modelTools") &&
-      content.includes("availableToolNames"),
+      content.includes("planRetrieval") &&
+      content.includes("executeRetrievalPlan") &&
+      content.includes("assembleSystemPromptFromContext") &&
+      content.includes("createStrategistTools(args.user.id") &&
+      content.includes("includeActionTools: true") &&
+      content.includes("tools,") &&
+      content.includes("stopWhen: stepCountIs(10)") &&
+      content.includes("tool_count: Object.keys(tools).length"),
   },
   {
-    file: files.route,
-    description: "chat route streams live AI SDK status data before long retrieval work",
+    file: files.orchestrator,
+    description: "strategist tool registry exposes inspectable tool names and write guardrails",
     test: (content) =>
-      content.includes("writeStrategistStatus") &&
+      content.includes("createStrategistTools") &&
+      content.includes("allowWrites: Boolean(options.includeActionTools)") &&
+      content.includes("filterRegisteredToolSet") &&
+      content.includes("availableToolNames: Object.keys(toolsWithoutSelfInspection).sort()"),
+  },
+  {
+    file: files.handlerV2,
+    description: "chat handler streams live AI SDK status data before long retrieval work",
+    test: (content) =>
       content.includes('type: "data-status"') &&
-      content.includes("Reading conversation memory and project context") &&
-      content.includes("Pulling budget, contract, RFIs, submittals, schedule, and commitments") &&
-      content.includes("Searching meetings, documents, and vectorized project history") &&
-      content.includes("Checking recent meetings, Teams, email, and OneDrive sources"),
+      content.includes("Plan: ${plan.reason}") &&
+      content.includes("Searching project knowledge") &&
+      content.includes("Retrieved (${Object.keys(retrievalCtx.durationsMs).length} sources"),
   },
   {
-    file: files.route,
-    description: "chat route injects canonical project briefing snapshot for broad PM updates",
+    file: files.handlerV2,
+    description: "chat handler traces canonical project briefing snapshot retrieval",
     test: (content) =>
-      content.includes("formatProjectBriefingSnapshotContext") &&
-      content.includes("enforceProjectBriefingResponseContract") &&
-      content.includes("projectBriefingResponseContract") &&
       content.includes("getProjectBriefingSnapshot") &&
-      content.includes("projectBriefingSnapshot") &&
-      content.includes("createDeterministicActionBriefing") &&
-      content.includes("createDeterministicSourceQualityAnswer") &&
-      content.includes("shouldUseActionFollowUpResponse") &&
-      content.includes("shouldUseSourceQualityFollowUpResponse") &&
-      content.includes("extractPriorProjectName") &&
-      content.includes("!actionFollowUpResponse && !sourceQualityFollowUpResponse") &&
-      content.includes("Hard Facts") &&
-      content.includes("What Changed") &&
-      content.includes("Recent Communication Signals") &&
-      content.includes("Sources Checked") &&
-      content.includes("Insider Analysis") &&
-      content.includes("Recommended Actions") &&
-      content.includes("Next Step"),
+      content.includes('agent: "retrieval-planner-v2"') &&
+      content.includes("ctx.projectSnapshot") &&
+      content.includes("durationsMs.project_snapshot"),
   },
   {
     file: files.strategist,
     description: "strategist prompt enforces natural strategic responses and project briefing structure",
     test: (content) =>
-      content.includes("Conversation Quality Contract") &&
       content.includes("Broad Project Update Contract") &&
       content.includes("Hard Facts") &&
-      content.includes("always end with a concrete next step") &&
-      content.includes("Do not use robotic fallback phrases") &&
-      content.includes("If product data is missing"),
+      content.includes("What Changed") &&
+      content.includes("Insider Analysis") &&
+      content.includes("Recommended Actions") &&
+      content.includes("Next Step"),
   },
   {
     file: files.botCore,

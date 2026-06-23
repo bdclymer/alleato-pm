@@ -1,4 +1,6 @@
 from src.services.integrations.microsoft_graph import sync
+from src.services.integrations.microsoft_graph import ocr_worker
+import time
 
 
 class _FakeGraph:
@@ -8,6 +10,35 @@ class _FakeGraph:
 
 class _FakeSupabase:
     pass
+
+
+class _SlowOcrQuery:
+    not_ = None
+
+    def __init__(self):
+        self.not_ = self
+
+    def select(self, *_args, **_kwargs):
+        return self
+
+    def eq(self, *_args, **_kwargs):
+        return self
+
+    def is_(self, *_args, **_kwargs):
+        return self
+
+    def limit(self, *_args, **_kwargs):
+        return self
+
+    def execute(self):
+        time.sleep(2)
+        return type("Result", (), {"data": []})()
+
+
+class _SlowOcrSupabase:
+    def from_(self, table_name):
+        assert table_name == "document_metadata"
+        return _SlowOcrQuery()
 
 
 def test_run_graph_sync_can_skip_heavy_embedding_and_compiler(monkeypatch):
@@ -33,6 +64,17 @@ def test_run_graph_sync_can_skip_heavy_embedding_and_compiler(monkeypatch):
     assert result["status"] == "complete"
     assert result["phases"]["embedding"] == "skipped"
     assert result["embed"]["status"] == "skipped"
+
+
+def test_ocr_no_text_fetch_times_out_loudly(monkeypatch):
+    monkeypatch.setenv("GRAPH_OCR_FETCH_TIMEOUT_SECONDS", "1")
+
+    try:
+        ocr_worker._fetch_no_text_records(_SlowOcrSupabase(), 1)
+    except TimeoutError as exc:
+        assert "OCR no_text fetch exceeded 1s" in str(exc)
+    else:
+        raise AssertionError("stalled OCR no_text fetch should time out")
 
 
 class _FakeQuery:

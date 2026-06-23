@@ -198,8 +198,12 @@ function inferLayout(route: string, file: string, kind: string): InventoryRoute[
   const segments = route.split("/").filter(Boolean);
   const lastSegment = segments[segments.length - 1] ?? "";
 
-  // Create/edit pages are forms.
-  if (routeLower.endsWith("/new") || routeLower.endsWith("/edit") || routeLower.endsWith("/create") || routeLower.includes("/form")) {
+  // Edit pages are tracked separately from generic create/form workflows.
+  if (routeLower.endsWith("/edit")) {
+    return "Edit";
+  }
+  // Create pages are forms.
+  if (routeLower.endsWith("/new") || routeLower.endsWith("/create") || routeLower.includes("/form")) {
     return "Form";
   }
   // A trailing dynamic id segment (other than the project root) is a record detail page.

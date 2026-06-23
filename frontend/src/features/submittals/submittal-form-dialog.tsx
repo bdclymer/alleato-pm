@@ -35,8 +35,15 @@ import {
 import { apiFetch } from "@/lib/api-client";
 import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { useAuthUsers } from "@/hooks/use-auth-users";
+import { useCompanyContacts } from "@/hooks/use-company-contacts";
 import { useCreateSubmittal, useUpdateSubmittal, type SubmittalSummary } from "@/hooks/use-submittals";
 import { SectionRuleHeading } from "@/components/layout/spacing";
+import {
+  buildAuthUserOptions,
+  buildCompanyContactOptions,
+  isAlleatoEmployee,
+  isCompanyContact,
+} from "@/lib/submittals/people-options";
 
 // ─── Inline hook: submittal types ────────────────────────────────────────────
 
@@ -104,6 +111,11 @@ function getSubmittalTypeId(v: SubmittalSummary["submittal_type"] | undefined): 
 }
 
 function buildDefaults(submittal: SubmittalSummary | undefined, overrides?: { submittal_package_id?: string; specification_section?: string }): SubmittalFormValues {
+  const submittalPackage =
+    typeof submittal?.submittal_package === "object"
+      ? (submittal.submittal_package as { id?: string } | null)
+      : null;
+
   return {
     title: submittal?.title ?? "",
     submittal_number: submittal?.submittal_number ?? "",
@@ -121,7 +133,7 @@ function buildDefaults(submittal: SubmittalSummary | undefined, overrides?: { su
     responsible_contractor_id: null,
     received_from_id: null,
     submittal_manager_id: null,
-    submittal_package_id: overrides?.submittal_package_id ?? (typeof submittal?.submittal_package === "object" ? (submittal?.submittal_package as any)?.id : null) ?? null,
+    submittal_package_id: overrides?.submittal_package_id ?? submittalPackage?.id ?? null,
   };
 }
 
@@ -143,7 +155,7 @@ export function SubmittalFormDialog({
     String(projectId),
     { per_page: 200 },
   );
-  const { users, isLoading: usersLoading } = useAuthUsers(String(projectId));
+  const { users, allUsers, isLoading: usersLoading } = useAuthUsers(String(projectId));
   const { data: submittalTypes, isLoading: typesLoading } = useSubmittalTypes(projectId);
   const { data: packages, isLoading: packagesLoading } = useQuery({
     queryKey: ["submittal-packages", projectId],
@@ -157,13 +169,47 @@ export function SubmittalFormDialog({
     resolver: zodResolver(submittalFormSchema),
     defaultValues: buildDefaults(submittal, defaultOverrides),
   });
+  const watchedResponsibleContractor = form.watch("responsible_contractor_id");
+  const previousResponsibleContractor = React.useRef(watchedResponsibleContractor);
+  const {
+    contacts: responsibleContractorContacts,
+    isLoading: receivedFromLoading,
+  } = useCompanyContacts({
+    companyId: watchedResponsibleContractor ?? undefined,
+    enabled: Boolean(watchedResponsibleContractor),
+  });
+
+  const managerOptions = React.useMemo(
+    () => buildAuthUserOptions(allUsers.filter(isAlleatoEmployee)),
+    [allUsers],
+  );
+
+  const receivedFromOptions = React.useMemo(
+    () =>
+      buildCompanyContactOptions(
+        responsibleContractorContacts.filter(isCompanyContact),
+      ),
+    [responsibleContractorContacts],
+  );
 
   // Reset when dialog opens
   React.useEffect(() => {
     if (open) {
       form.reset(buildDefaults(submittal, defaultOverrides));
+      previousResponsibleContractor.current =
+        buildDefaults(submittal, defaultOverrides).responsible_contractor_id ?? null;
     }
   }, [open, submittal, defaultOverrides, form]);
+
+  React.useEffect(() => {
+    if (previousResponsibleContractor.current !== watchedResponsibleContractor) {
+      previousResponsibleContractor.current = watchedResponsibleContractor;
+      form.setValue("received_from_id", null, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [form, watchedResponsibleContractor]);
 
   async function onSubmit(values: SubmittalFormValues) {
     const payload = {
@@ -429,27 +475,28 @@ export function SubmittalFormDialog({
                           field.onChange(val === "__none__" ? null : val)
                         }
                         value={field.value ?? "__none__"}
+                        disabled={!watchedResponsibleContractor || receivedFromLoading}
                       >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue
-                              placeholder={usersLoading ? "Loading..." : "Select person"}
+                              placeholder={
+                                !watchedResponsibleContractor
+                                  ? "Select responsible contractor first"
+                                  : receivedFromLoading
+                                    ? "Loading..."
+                                    : "Select contact"
+                              }
                             />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="__none__">None</SelectItem>
-                          {users.map((u) => {
-                            const name =
-                              u.first_name || u.last_name
-                                ? `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim()
-                                : u.email;
-                            return (
-                              <SelectItem key={u.id} value={u.id}>
-                                {name} ({u.email})
-                              </SelectItem>
-                            );
-                          })}
+                          {receivedFromOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -479,17 +526,11 @@ export function SubmittalFormDialog({
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="__none__">None</SelectItem>
-                          {users.map((u) => {
-                            const name =
-                              u.first_name || u.last_name
-                                ? `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim()
-                                : u.email;
-                            return (
-                              <SelectItem key={u.id} value={u.id}>
-                                {name} ({u.email})
-                              </SelectItem>
-                            );
-                          })}
+                          {managerOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />

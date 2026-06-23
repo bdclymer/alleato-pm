@@ -8,9 +8,9 @@ storing them in the existing tables (risks, decisions, opportunities, tasks).
 Usage:
     cd backend
     source venv/bin/activate
-    PYTHONPATH="src/services:src/workers" python scripts/extract_meeting_insights.py --meeting-id <uuid>
-    PYTHONPATH="src/services:src/workers" python scripts/extract_meeting_insights.py --project-id <id> --unprocessed
-    PYTHONPATH="src/services:src/workers" python scripts/extract_meeting_insights.py --all-unprocessed
+    PYTHONPATH="src" python scripts/extract_meeting_insights.py --meeting-id <uuid>
+    PYTHONPATH="src" python scripts/extract_meeting_insights.py --project-id <id> --unprocessed
+    PYTHONPATH="src" python scripts/extract_meeting_insights.py --all-unprocessed
 
 Options:
     --meeting-id      Process a specific meeting by document_metadata ID
@@ -30,8 +30,9 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'services'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'workers'))
+# Add canonical backend src path for imports. Retired worker package paths must
+# not be reintroduced; background ingestion lives under src/services.
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from dotenv import load_dotenv
 
@@ -47,7 +48,7 @@ for env_path in env_locations:
         break
 
 from openai import OpenAI
-from supabase_helpers import get_supabase_client
+from services.supabase_helpers import get_supabase_client
 
 
 EXTRACTION_PROMPT = """You are an AI assistant analyzing a construction project meeting transcript. Extract structured insights from the transcript.

@@ -90,8 +90,12 @@ module.exports = {
         // and then an icon inside it
         const hasFlex = /\bflex\b/.test(raw);
         const hasGap = /\bgap-/.test(raw);
+        // Only a *persistent* tinted background signals a callout. State-prefixed
+        // backgrounds (hover:/focus:/active:/group-hover: etc.) are interaction
+        // affordances on clickable rows/list items, not callouts — the `(?<!:)`
+        // lookbehind excludes any bg- token preceded by a variant colon.
         const hasTintedBg =
-          /\bbg-(muted|primary|blue|yellow|red|green|amber|orange|destructive)/.test(raw);
+          /(?<!:)\bbg-(muted|primary|blue|yellow|red|green|amber|orange|destructive)/.test(raw);
         const hasBorder = /\bborder\b/.test(raw) && !/\bborder-(border|transparent)\b/.test(raw);
 
         // Must look like a callout: flex + gap + tinted background (not just a content section)

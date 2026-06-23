@@ -22,6 +22,24 @@ from .project_inference import infer_project_id
 from ...supabase_helpers import SupabaseRagStore, get_rag_read_client, storage_upload_with_retry
 
 logger = logging.getLogger(__name__)
+_WARNED_OPTIONAL_DEPENDENCIES: set[str] = set()
+
+
+def _warn_once(key: str, message: str, *args) -> None:
+    if key in _WARNED_OPTIONAL_DEPENDENCIES:
+        logger.debug(message, *args)
+        return
+    _WARNED_OPTIONAL_DEPENDENCIES.add(key)
+    logger.warning(message, *args)
+
+
+def _bounded_int_env(name: str, default: int, minimum: int, maximum: int) -> int:
+    raw = os.environ.get(name)
+    try:
+        value = int(raw) if raw not in (None, "") else default
+    except (TypeError, ValueError):
+        return default
+    return max(minimum, min(maximum, value))
 
 
 def _actual_parent_path(item: dict) -> str:
@@ -152,7 +170,7 @@ def _extract_text_from_pdf(content: bytes) -> str:
         if len(extracted.strip()) >= 50:
             return extracted
     except ImportError:
-        logger.warning("[OneDrive] pypdf not installed — skipping PDF extraction")
+        _warn_once("pypdf_missing", "[OneDrive] pypdf not installed — skipping PDF extraction")
     except Exception as e:
         pypdf_error = e
         logger.warning("[OneDrive] pypdf PDF extraction failed, trying PyMuPDF fallback: %s", e)
@@ -170,7 +188,7 @@ def _extract_text_from_pdf(content: bytes) -> str:
             if extracted.strip():
                 return extracted
     except ImportError:
-        logger.warning("[OneDrive] PyMuPDF not installed — PDF fallback unavailable")
+        _warn_once("pymupdf_missing", "[OneDrive] PyMuPDF not installed — PDF fallback unavailable")
     except Exception as e:
         logger.warning("[OneDrive] PyMuPDF PDF extraction failed: %s", e)
 
@@ -267,10 +285,11 @@ def sync_onedrive_folder(
     try:
         items, new_delta_token = graph.get_delta(delta_path, delta_token)
     except Exception as e:
-        logger.error(f"[OneDrive] Delta query failed for {user_email}{folder_path}: {e}")
-        return 0, delta_token or ""
+        raise RuntimeError(f"OneDrive delta query failed for {user_email}{folder_path}: {e}") from e
 
     synced = 0
+    processed_files = 0
+    max_files = _bounded_int_env("GRAPH_INGEST_MAX_FILES_PER_FOLDER", 250, 1, 5000)
     for item in items:
         if "@removed" in item:
             continue
@@ -291,6 +310,17 @@ def sync_onedrive_folder(
         if size > MAX_FILE_SIZE_BYTES:
             logger.info(f"[OneDrive] Skipping large file: {name} ({size} bytes)")
             continue
+
+        if processed_files >= max_files:
+            logger.warning(
+                "[OneDrive] File ingestion capped at %s supported files for %s%s; "
+                "run another pass or raise GRAPH_INGEST_MAX_FILES_PER_FOLDER to continue",
+                max_files,
+                user_email,
+                folder_path,
+            )
+            break
+        processed_files += 1
 
         item_id = item.get("id", "")
         doc_id = f"onedrive_{item_id}"
@@ -443,7 +473,7 @@ def sync_onedrive_folder(
         except Exception as e:
             logger.warning(f"[OneDrive] Failed to insert metadata for {name}: {e}")
 
-    logger.info(f"[OneDrive] Synced {synced} files for {user_email}{folder_path}")
+    logger.info(f"[OneDrive] Synced {synced} files for {user_email}{folder_path} (processed={processed_files})")
     return synced, new_delta_token
 
 
@@ -483,10 +513,11 @@ def sync_sharepoint_folder(
     try:
         items, new_delta_token = graph.get_delta(delta_path, delta_token)
     except Exception as e:
-        logger.error(f"[SharePoint] Delta query failed for {site_name}{folder_path}: {e}")
-        return 0, delta_token or ""
+        raise RuntimeError(f"SharePoint delta query failed for {site_name}{folder_path}: {e}") from e
 
     synced = 0
+    processed_files = 0
+    max_files = _bounded_int_env("GRAPH_INGEST_MAX_FILES_PER_FOLDER", 250, 1, 5000)
     for item in items:
         if "@removed" in item or "folder" in item:
             continue
@@ -499,6 +530,17 @@ def sync_sharepoint_folder(
             continue
         if size > MAX_FILE_SIZE_BYTES:
             continue
+
+        if processed_files >= max_files:
+            logger.warning(
+                "[SharePoint] File ingestion capped at %s supported files for %s%s; "
+                "run another pass or raise GRAPH_INGEST_MAX_FILES_PER_FOLDER to continue",
+                max_files,
+                site_name,
+                folder_path,
+            )
+            break
+        processed_files += 1
 
         item_id = item.get("id", "")
         doc_id = f"sharepoint_{item_id}"
@@ -635,5 +677,5 @@ def sync_sharepoint_folder(
         except Exception as e:
             logger.warning(f"[SharePoint] Failed to insert metadata for {name}: {e}")
 
-    logger.info(f"[SharePoint] Synced {synced} files from {site_name}{folder_path}")
+    logger.info(f"[SharePoint] Synced {synced} files from {site_name}{folder_path} (processed={processed_files})")
     return synced, new_delta_token

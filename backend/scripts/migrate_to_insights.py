@@ -5,7 +5,7 @@ Migrate existing risks, decisions, and opportunities to the unified insights tab
 Usage:
     cd backend
     source venv/bin/activate
-    PYTHONPATH="src/services:src/workers" python scripts/migrate_to_insights.py
+    PYTHONPATH="src" python scripts/migrate_to_insights.py
 
 Options:
     --dry-run    Show what would be migrated without actually inserting
@@ -17,8 +17,9 @@ import sys
 from datetime import datetime
 from uuid import uuid4
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'services'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'workers'))
+# Add canonical backend src path for imports. Retired worker package paths must
+# not be reintroduced; background ingestion lives under src/services.
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from dotenv import load_dotenv
 
@@ -32,7 +33,7 @@ for env_path in env_locations:
         load_dotenv(env_path)
         break
 
-from supabase_helpers import get_supabase_client
+from services.supabase_helpers import get_supabase_client
 
 
 def migrate_risks(client, dry_run: bool = False) -> int:

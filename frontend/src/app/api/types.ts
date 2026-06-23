@@ -45,6 +45,7 @@ export interface Company {
   contact_phone?: string;
   address?: string;
   tax_id?: string;
+  license_number?: string;
 }
 
 export interface User {

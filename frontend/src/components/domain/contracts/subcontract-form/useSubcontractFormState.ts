@@ -39,6 +39,7 @@ function buildDefaults(initialData?: Partial<CreateSubcontractInput>) {
     },
     title: initialData?.title || "",
     contractCompanyId: initialData?.contractCompanyId || "",
+    companyLicenseNumber: initialData?.companyLicenseNumber || "",
     description: initialData?.description || "",
     inclusions: initialData?.inclusions || "",
     exclusions: initialData?.exclusions || "",
@@ -136,7 +137,9 @@ export function useSubcontractFormState({
     const fetchCompanies = async () => {
       try {
         setIsLoadingVendors(true);
-        const data = await apiFetchWithTransientRouteRetry<Array<{ id: string; name: string }>>(
+        const data = await apiFetchWithTransientRouteRetry<
+          Array<{ id: string; name: string; license_number?: string | null }>
+        >(
           `/api/companies`,
         );
         setVendorOptions(
@@ -144,6 +147,7 @@ export function useSubcontractFormState({
             value: c.id,
             label: c.name,
             companyId: c.id,
+            licenseNumber: c.license_number ?? null,
           })),
         );
       } catch {
@@ -200,6 +204,14 @@ export function useSubcontractFormState({
     () => vendorOptions.find((vendor) => vendor.value === contractCompanyId) ?? null,
     [contractCompanyId, vendorOptions],
   );
+
+  React.useEffect(() => {
+    if (!selectedVendor) return;
+    setValue("companyLicenseNumber", selectedVendor.licenseNumber ?? "", {
+      shouldDirty: false,
+      shouldValidate: false,
+    });
+  }, [selectedVendor, setValue]);
 
   // --- Reset on edit ---
   React.useEffect(() => {

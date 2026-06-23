@@ -65,13 +65,14 @@ class GraphClient:
         params: Optional[dict] = None,
         max_retries: int = 4,
         base_delay: float = 2.0,
+        timeout: float = 90,
     ) -> dict:
         """GET with exponential-backoff retry for transient network errors."""
         last_exc: Optional[Exception] = None
         for attempt in range(max_retries):
             try:
                 headers = {"Authorization": f"Bearer {self._get_token()}"}
-                resp = httpx.get(url, headers=headers, params=params, timeout=90)
+                resp = httpx.get(url, headers=headers, params=params, timeout=timeout)
                 # Retry on 429 (throttle) or 503 (service unavailable)
                 if resp.status_code in (429, 503):
                     retry_after = int(resp.headers.get("Retry-After", base_delay * (2 ** attempt)))
@@ -81,7 +82,7 @@ class GraphClient:
                     continue
                 resp.raise_for_status()
                 return resp.json()
-            except httpx.ConnectError as exc:
+            except (httpx.ConnectError, httpx.TimeoutException) as exc:
                 last_exc = exc
             except OSError as exc:
                 if getattr(exc, "errno", None) in _RETRY_ERRNO:
@@ -92,12 +93,19 @@ class GraphClient:
             logger.warning("[Graph] Transient error on attempt %d/%d (%s) — retrying in %.1fs",
                            attempt + 1, max_retries, last_exc, delay)
             time.sleep(delay)
-        raise last_exc  # type: ignore[misc]
+        raise last_exc or RuntimeError(f"Graph GET failed without a captured exception: {url}")
 
-    def get(self, path: str, params: Optional[dict] = None) -> dict:
+    def get(
+        self,
+        path: str,
+        params: Optional[dict] = None,
+        *,
+        timeout: float = 90,
+        max_retries: int = 4,
+    ) -> dict:
         """GET request to Graph API. `path` can be full URL or relative path."""
         url = path if path.startswith("https://") else f"{GRAPH_BASE}{path}"
-        return self._get_with_retry(url, params)
+        return self._get_with_retry(url, params, max_retries=max_retries, timeout=timeout)
 
     def post(self, path: str, payload: dict) -> dict:
         """POST JSON to Graph API. `path` can be full URL or relative path."""
@@ -129,6 +137,8 @@ class GraphClient:
         *,
         max_pages: Optional[int] = None,
         max_items: Optional[int] = None,
+        timeout: float = 90,
+        max_retries: int = 4,
     ) -> list[dict]:
         """Fetch pages following @odata.nextLink with a production safety cap."""
         results = []
@@ -139,7 +149,12 @@ class GraphClient:
         item_limit = max_items or _bounded_int_env("GRAPH_PAGE_MAX_ITEMS", 500, 1, 5000)
         pages_fetched = 0
         while url and pages_fetched < page_limit and len(results) < item_limit:
-            data = self.get(url, params if is_first else None)
+            data = self.get(
+                url,
+                params if is_first else None,
+                timeout=timeout,
+                max_retries=max_retries,
+            )
             is_first = False
             results.extend(data.get("value", [])[: max(0, item_limit - len(results))])
             url = data.get("@odata.nextLink")

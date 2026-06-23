@@ -1,14 +1,9 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { GuardrailError } from "@/lib/guardrails/errors";
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { apiErrorResponse } from "@/lib/api-error";
+import { listSpecificationLookupOptions } from "@/lib/specifications/compatibility";
 import { createClient } from "@/lib/supabase/server";
-
-interface RouteParams {
-  params: Promise<{ projectId: string }>;
-}
 
 /**
  * GET /api/projects/[projectId]/submittals/specs
@@ -21,14 +16,15 @@ export const GET = withApiGuardrails(
     const { projectId } = await params;
     const supabase = await createClient();
 
-    const { data, error } = await supabase
-      .from("specifications")
-      .select("id, section_number, section_title, division")
-      .eq("project_id", parseInt(projectId, 10))
-      .order("section_number");
+    try {
+      const data = await listSpecificationLookupOptions(
+        supabase,
+        parseInt(projectId, 10),
+      );
 
-    if (error) return apiErrorResponse(error);
-
-    return NextResponse.json(data ?? []);
+      return NextResponse.json(data);
+    } catch (error) {
+      return apiErrorResponse(error);
+    }
     },
 );

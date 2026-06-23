@@ -154,7 +154,7 @@ export function ChangeOrdersClient({
     pathname,
     router,
     defaults: {
-      view: "table",
+      view: "card",
       allowedViews: ["table", "card", "list"],
       page: 1,
       perPage: 25,
@@ -173,7 +173,7 @@ export function ChangeOrdersClient({
     pathname,
     router,
     defaults: {
-      view: "table",
+      view: "card",
       allowedViews: ["table", "card", "list"],
       page: 1,
       perPage: 25,
@@ -589,6 +589,9 @@ export function ChangeOrdersClient({
             card: (item) => renderPrimeCard(item, handleViewPrime),
             list: (item) => renderPrimeList(item, handleViewPrime),
           }}
+          layout={{
+            cardGridClassName: "grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4",
+          }}
           footerTotals={{
             label: "Totals",
             values: {
@@ -707,6 +710,9 @@ export function ChangeOrdersClient({
         views={{
           card: (item) => renderCommitmentCard(item, handleViewCommitment),
           list: (item) => renderCommitmentList(item, handleViewCommitment),
+        }}
+        layout={{
+          cardGridClassName: "grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4",
         }}
         footerTotals={{
           label: "Totals",

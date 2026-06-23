@@ -43,7 +43,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const { data, error } = await serviceClient
       .from("specification_section_revisions")
       .select(
-        "id, section_id, revision_number, file_name, file_size, uploaded_at, uploaded_by, notes, specification_sections!inner(section_number, title, project_id)",
+        "id, section_id, revision_number, file_name, file_size, uploaded_at, uploaded_by, notes, specification_sections!specification_section_revisions_section_id_fkey!inner(section_number, title, project_id)",
       )
       .eq("specification_sections.project_id", projectIdNum)
       .order("uploaded_at", { ascending: false });

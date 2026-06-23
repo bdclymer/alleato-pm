@@ -17,6 +17,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
+  calculateChangeEventOverUnder,
+  toCurrencyNumber,
+} from "@/lib/change-events/financial-summary";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -339,9 +343,10 @@ export function ChangeEventGeneralInfoPanel({
     changeEvent.line_item_revenue_source ?? changeEvent.lineItemRevenueSource;
   const expectingRevenue =
     changeEvent.expectingRevenue ?? changeEvent.expecting_revenue ?? true;
-  type TotalsShape = { revenueRom: string | number; costRom: string | number; nonCommittedCost: string | number };
-  const totals: TotalsShape = ((changeEvent as unknown as Record<string, unknown>).totals as TotalsShape | undefined)
-    ?? { revenueRom: "0", costRom: "0", nonCommittedCost: "0" };
+  const totals = changeEvent.totals ?? { revenueRom: 0, costRom: 0, nonCommittedCost: 0 };
+  const revenueRom = toCurrencyNumber(totals.revenueRom);
+  const costRom = toCurrencyNumber(totals.costRom);
+  const overUnder = calculateChangeEventOverUnder(totals);
 
   const save = useCallback(
     async (updates: Record<string, unknown>) => {
@@ -491,13 +496,27 @@ export function ChangeEventGeneralInfoPanel({
               <SectionRuleHeading label="Financial Summary" className="mb-4 pb-0" />
               <dl className="space-y-3 text-sm">
                 <LabelValueRow label="Revenue ROM">
-                  {formatCurrency(totals.revenueRom)}
+                  {formatCurrency(revenueRom)}
                 </LabelValueRow>
                 <LabelValueRow label="Cost ROM">
-                  {formatCurrency(totals.costRom)}
+                  {formatCurrency(costRom)}
                 </LabelValueRow>
                 <LabelValueRow label="Non-Committed Cost">
                   {formatCurrency(totals.nonCommittedCost)}
+                </LabelValueRow>
+                <LabelValueRow label="Over/Under">
+                  <span
+                    className={cn(
+                      "tabular-nums",
+                      overUnder < 0
+                        ? "text-destructive"
+                        : overUnder > 0
+                          ? "text-emerald-700 dark:text-emerald-400"
+                          : "text-foreground",
+                    )}
+                  >
+                    {formatCurrency(overUnder)}
+                  </span>
                 </LabelValueRow>
               </dl>
             </DetailPanel>

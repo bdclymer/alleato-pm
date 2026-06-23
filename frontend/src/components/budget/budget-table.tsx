@@ -336,16 +336,16 @@ function CurrencyCell({ value }: { value: number }) {
   );
 }
 
-function getBudgetLineLabel(lineItem: BudgetLineItem) {
+export function getBudgetLineLabel(lineItem: BudgetLineItem) {
   const { costCode, costCodeDescription, costType, description } = lineItem;
-  const codeLabelBase = costCode
-    ? `${costCode}${costCodeDescription ? ` - ${costCodeDescription}` : ""}`
-    : costCodeDescription || "";
-  const codeLabel = codeLabelBase
-    ? (costType ? `${codeLabelBase}.${costType}` : codeLabelBase)
+  const codeLabel = costCode
+    ? `${costCode}${costType ? `.${costType}` : ""}`
     : null;
   const fallbackDescription = `${costCode}${costCodeDescription ? ` - ${costCodeDescription}` : ""}${costType ? ` (${costType})` : ""}`;
   const normalizedDescription = description.trim();
+  const isGenericDivisionDescription = /^division\s+\d+$/i.test(
+    normalizedDescription,
+  );
   const isRedundantWithCode = Boolean(
     costCodeDescription &&
     normalizedDescription.toLowerCase().startsWith(costCodeDescription.toLowerCase()),
@@ -354,6 +354,7 @@ function getBudgetLineLabel(lineItem: BudgetLineItem) {
     normalizedDescription &&
     normalizedDescription !== codeLabel &&
     normalizedDescription !== fallbackDescription &&
+    !isGenericDivisionDescription &&
     !isRedundantWithCode,
   );
 
@@ -634,6 +635,7 @@ export function BudgetTable({
         const hasChildren = Boolean(
           row.original.children && row.original.children.length > 0);
         if (hasChildren) {
+          const label = getBudgetLineLabel(row.original).fullLabel;
           return (
             <Button
               type="button"
@@ -646,8 +648,8 @@ export function BudgetTable({
               className="h-6 w-6 hover:bg-muted"
               aria-label={
                 row.getIsExpanded()
-                  ? `Collapse ${row.original.description}`
-                  : `Expand ${row.original.description}`
+                  ? `Collapse ${label}`
+                  : `Expand ${label}`
               }
             >
               {row.getIsExpanded() ? (

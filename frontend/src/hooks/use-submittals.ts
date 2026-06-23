@@ -105,6 +105,31 @@ export type SubmittalAttachment = {
     created_at: string | null;
 };
 
+export async function uploadSubmittalAttachments(
+  projectId: number,
+  submittalId: string,
+  files: File[],
+): Promise<SubmittalAttachment[]> {
+  const uploaded: SubmittalAttachment[] = [];
+
+  for (const file of files) {
+    const body = new FormData();
+    body.append("file", file);
+
+    const attachment = await apiFetch<SubmittalAttachment>(
+      `/api/projects/${projectId}/submittals/${submittalId}/attachments`,
+      {
+        method: "POST",
+        body,
+      },
+    );
+
+    uploaded.push(attachment);
+  }
+
+  return uploaded;
+}
+
 export interface CreateSubmittalInput {
   title: string;
   submittal_number: string;
@@ -129,6 +154,11 @@ export interface CreateSubmittalInput {
   ball_in_court?: string | null;
   required_approval_date?: string | null;
   submission_date?: string | null;
+  initial_workflow_steps?: Array<{
+    user_id: string;
+    step_type: string;
+    required?: boolean;
+  }>;
 }
 
 export type UpdateSubmittalInput = Partial<CreateSubmittalInput>;

@@ -433,20 +433,42 @@ export function renderPrimeCard(
     <Button
       type="button"
       variant="ghost"
-      className="h-auto w-full justify-start rounded-lg border p-4 text-left hover:bg-muted/50"
+      className="h-auto w-full flex-col items-stretch gap-0 whitespace-normal rounded-lg border p-4 text-left hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
-      <div className="mb-2 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase text-muted-foreground">{item.pcco_number || "-"}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {item.pcco_number || "-"}
+          </p>
           {/* eslint-disable-next-line design-system/no-raw-heading */}
-          <h3 className="font-medium line-clamp-2">{item.title || "Untitled"}</h3>
+          <h3 className="mt-0.5 line-clamp-2 font-medium text-foreground">
+            {item.title || "Untitled"}
+          </h3>
         </div>
         <StatusBadge status={statusLabel(item.status)} />
       </div>
-      <p className="mt-2 text-sm text-muted-foreground">
-        {formatCurrency(item.total_amount)}
-      </p>
+
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
+        <div>
+          <dt className="text-xs text-muted-foreground">Amount</dt>
+          <dd className="tabular-nums font-medium text-foreground">
+            {formatCurrency(item.total_amount)}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Executed</dt>
+          <dd className="text-sm text-foreground">{item.executed ? "Yes" : "No"}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Due</dt>
+          <dd className="text-sm text-foreground">{formatDate(item.due_date)}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Approved</dt>
+          <dd className="text-sm text-foreground">{formatDate(item.approved_at)}</dd>
+        </div>
+      </dl>
     </Button>
   );
 }
@@ -482,20 +504,46 @@ export function renderCommitmentCard(
     <Button
       type="button"
       variant="ghost"
-      className="h-auto w-full justify-start rounded-lg border p-4 text-left hover:bg-muted/50"
+      className="h-auto w-full flex-col items-stretch gap-0 whitespace-normal rounded-lg border p-4 text-left hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
-      <div className="mb-2 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase text-muted-foreground">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {item.change_order_number || "-"}
           </p>
           {/* eslint-disable-next-line design-system/no-raw-heading */}
-          <h3 className="font-medium line-clamp-2">{item.title || item.description || "Untitled"}</h3>
+          <h3 className="mt-0.5 line-clamp-2 font-medium text-foreground">
+            {item.title || item.description || "Untitled"}
+          </h3>
         </div>
         <StatusBadge status={statusLabel(item.status)} />
       </div>
-      <p className="mt-2 text-sm text-muted-foreground">{formatCurrency(item.amount)}</p>
+
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
+        <div>
+          <dt className="text-xs text-muted-foreground">Amount</dt>
+          <dd className="tabular-nums font-medium text-foreground">
+            {formatCurrency(item.amount)}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Type</dt>
+          <dd className="text-sm text-foreground">
+            {item.contract_type
+              ? item.contract_type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+              : "—"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Due</dt>
+          <dd className="text-sm text-foreground">{formatDate(item.due_date)}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Approved</dt>
+          <dd className="text-sm text-foreground">{formatDate(item.approved_date)}</dd>
+        </div>
+      </dl>
     </Button>
   );
 }

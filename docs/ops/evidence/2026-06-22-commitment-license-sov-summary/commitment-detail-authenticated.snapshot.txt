@@ -1,0 +1,703 @@
+- document:
+  - alert
+  - region "Notifications alt+T" [ref=e1]
+  - dialog
+  - link "Alleato" [ref=e2]:
+    - /url: /
+    - img "Alleato"
+  - button "Project" [ref=e3]
+  - text: Project
+  - link "Home" [ref=e4]:
+    - /url: /1067/home
+  - link "Project Directory" [ref=e5]:
+    - /url: /1067/directory
+  - link "Project Admin" [ref=e6]:
+    - /url: /1067/admin
+  - button "Financial" [ref=e7]
+  - text: Financial
+  - link "Estimates" [ref=e8]:
+    - /url: /1067/estimates
+  - link "Budget" [ref=e9]:
+    - /url: /1067/budget
+  - link "Prime Contracts" [ref=e10]:
+    - /url: /1067/prime-contracts
+  - link "Commitments" [ref=e11]:
+    - /url: /1067/commitments
+  - link "Change Orders" [ref=e12]:
+    - /url: /1067/change-orders
+  - link "Change Events" [ref=e13]:
+    - /url: /1067/change-events
+  - link "Direct Costs" [ref=e14]:
+    - /url: /1067/direct-costs
+  - link "Invoicing" [ref=e15]:
+    - /url: /1067/invoices
+  - link "Project Status Report" [ref=e16]:
+    - /url: /1067/project-status-report
+  - button "Operations" [ref=e17]
+  - text: Operations
+  - link "Tasks" [ref=e18]:
+    - /url: /1067/tasks
+  - link "Schedule" [ref=e19]:
+    - /url: /1067/schedule
+  - link "Progress Reports" [ref=e20]:
+    - /url: /1067/progress-reports
+  - link "Meetings" [ref=e21]:
+    - /url: /1067/meetings
+  - link "Daily Log" [ref=e22]:
+    - /url: /1067/daily-log
+  - link "Punch List" [ref=e23]:
+    - /url: /1067/punch-list
+  - link "RFIs" [ref=e24]:
+    - /url: /1067/rfis
+  - link "Submittals" [ref=e25]:
+    - /url: /1067/submittals
+  - link "Transmittals" [ref=e26]:
+    - /url: /1067/transmittals
+  - link "Photos" [ref=e27]:
+    - /url: /1067/photos
+  - link "Drawings" [ref=e28]:
+    - /url: /1067/drawings
+  - link "Specifications" [ref=e29]:
+    - /url: /1067/specifications
+  - link "Documents" [ref=e30]:
+    - /url: /1067/documents
+  - button "Admin" [ref=e31]
+  - text: Admin
+  - link "Admin Dashboard" [ref=e32]:
+    - /url: /admin
+  - link "Project Intelligence" [ref=e33]:
+    - /url: /1067/intelligence
+  - link "Project Attribution" [ref=e34]:
+    - /url: /project-attribution
+  - link "Operations Readiness" [ref=e35]:
+    - /url: /operations-readiness
+  - link "AI Work Runs" [ref=e36]:
+    - /url: /ai-work-runs
+  - link "Task Training" [ref=e37]:
+    - /url: /task-training
+  - link "Knowledge Sources" [ref=e38]:
+    - /url: /knowledge/manage
+  - link "Assistant Eval Runs" [ref=e39]:
+    - /url: /eval-runs
+  - link "Deep Research Archive" [ref=e40]:
+    - /url: /deep-research
+  - link "Annotation Inbox" [ref=e41]:
+    - /url: /annotation-inbox
+  - button "View Company Tools" [ref=e42]
+  - text: Company-wide tools
+  - link "AI" [ref=e43]:
+    - /url: /ai
+  - link "Skill Library" [ref=e44]:
+    - /url: /ai/skills
+  - link "Teach Alleato" [ref=e45]:
+    - /url: /ai/teach
+  - link "AI Learning Promotions" [ref=e46]:
+    - /url: /ai/learning-promotions
+  - link "AI Skills Admin" [ref=e47]:
+    - /url: /ai/admin/skills
+  - link "Projects" [ref=e48]:
+    - /url: /
+  - link "Company Directory" [ref=e49]:
+    - /url: /directory/companies
+  - link "Settings" [ref=e50]:
+    - /url: /settings/account
+  - link "Meetings" [ref=e51] [nth=1]:
+    - /url: /meetings
+  - link "Tasks" [ref=e52] [nth=1]:
+    - /url: /tasks
+  - link "Manpower" [ref=e53]:
+    - /url: /manpower
+  - link "Knowledge Base" [ref=e54]:
+    - /url: /knowledge
+  - link "Documentation" [ref=e55]:
+    - /url: https://alleato-os-docs.vercel.app/
+  - link "Documents" [ref=e56] [nth=1]:
+    - /url: /files
+  - link "Teams Conversations" [ref=e57]:
+    - /url: /teams-conversations
+  - link "Assignment Inbox" [ref=e58]:
+    - /url: /assignment-inbox
+  - link "Estimates" [ref=e59] [nth=1]:
+    - /url: /estimates
+  - link "Prime Contracts" [ref=e60] [nth=1]:
+    - /url: /prime-contracts
+  - link "Change Events" [ref=e61] [nth=1]:
+    - /url: /change-events
+  - link "Admin Dashboard" [ref=e62] [nth=1]:
+    - /url: /admin
+  - link "Project Intelligence" [ref=e63] [nth=1]:
+    - /url: /1067/intelligence
+  - link "Project Attribution" [ref=e64] [nth=1]:
+    - /url: /project-attribution
+  - link "Operations Readiness" [ref=e65] [nth=1]:
+    - /url: /operations-readiness
+  - link "AI Work Runs" [ref=e66] [nth=1]:
+    - /url: /ai-work-runs
+  - link "Task Training" [ref=e67] [nth=1]:
+    - /url: /task-training
+  - link "Knowledge Sources" [ref=e68] [nth=1]:
+    - /url: /knowledge/manage
+  - link "Assistant Eval Runs" [ref=e69] [nth=1]:
+    - /url: /eval-runs
+  - link "Deep Research Archive" [ref=e70] [nth=1]:
+    - /url: /deep-research
+  - link "Annotation Inbox" [ref=e71] [nth=1]:
+    - /url: /annotation-inbox
+  - button "Toggle Sidebar" [ref=e72]
+  - main:
+    - button "Expand sidebar" [ref=e73]
+    - link "Projects" [ref=e74] [nth=1]:
+      - /url: /
+    - link "Playmakers" [ref=e75]:
+      - /url: /1067/home
+    - link "Commitments" [ref=e76] [nth=1]:
+      - /url: /1067/commitments
+    - text: Playmakers Restaurant TI
+    - combobox [ref=e77]: Playmakers 26-123
+    - button "Commitments" [ref=e78]
+    - link "AI" [ref=e79] [nth=1]:
+      - /url: /ai
+    - link "Feedback inbox" [ref=e80]:
+      - /url: /feedback-inbox
+    - button "Comments" [ref=e81]
+    - button "Notifications" [ref=e82]
+    - button "Open user menu" [ref=e83]:
+      - img "User avatar"
+    - main:
+      - heading "Playmakers Restaurant TI" [ref=e84] [level=1]
+      - button "Create" [ref=e85]
+      - button "More actions" [ref=e86]
+      - navigation "Tabs" [ref=e87]:
+        - button "General" [ref=e88]
+        - button "SOV" [ref=e89]
+        - button "Subcontractor SOV (0)" [ref=e90]
+        - button "Change Orders" [ref=e91]
+        - button "RFQs" [ref=e92]
+        - button "Invoices" [ref=e93]
+        - button "Payments Issued" [ref=e94]
+        - button "Emails" [ref=e95]
+        - button "Change History" [ref=e96]
+        - button "Related Items" [ref=e97]
+      - text: General Information
+      - paragraph: "Subcontract #"
+      - text: SC-9299-0002
+      - paragraph: Start Date
+      - button "—" [ref=e98]
+      - paragraph: Title
+      - button "Playmakers Restaurant TI" [ref=e99]
+      - paragraph: Contract Date
+      - button "Jun 8, 2026" [ref=e100]
+      - paragraph: Status
+      - button "Approved" [ref=e101]
+      - paragraph: Signed Date
+      - button "—" [ref=e102] [nth=1]
+      - paragraph: Contract Company
+      - link "Right Image Construction LLC" [ref=e103]:
+        - /url: /directory/companies/a24e9512-742a-492f-b32f-a858653eeb20
+      - paragraph: License Number
+      - text: —
+      - paragraph: Actual Completion
+      - button "—" [ref=e104] [nth=2]
+      - paragraph: Invoice Contact
+      - link "Mike Marino" [ref=e105]:
+        - /url: /directory/contacts/ec3e3c91-601c-4600-a088-e07dd5c5a172
+      - paragraph: Issued On
+      - button "—" [ref=e106] [nth=3]
+      - paragraph: Default Retainage
+      - button "10%" [ref=e107]
+      - paragraph: Accounting Method
+      - text: Amount Based
+      - paragraph: Est. Completion
+      - button "—" [ref=e108] [nth=4]
+      - paragraph: Created By
+      - text: —
+      - paragraph: Private Commitment
+      - text: "Yes"
+      - paragraph: Executed
+      - button "No" [ref=e109]
+      - paragraph: Non-Admin SOV
+      - text: Hidden
+      - paragraph: Attachments
+      - button "Drop files here or browse to upload" [ref=e110]
+      - paragraph: Drop files here or browse to upload
+      - list:
+        - listitem:
+          - paragraph: Right Image Signed Subcontract.pdf
+          - paragraph: 5.2 MB · Executed Contract · Jun 22, 2026
+          - combobox [ref=e111] [nth=1]: Executed Contract
+          - button "Download" [ref=e112]
+          - button "Remove" [ref=e113]
+      - text: Description
+      - button "Expand" [ref=e114]
+      - text: Inclusions + Exclusions
+      - button "Expand" [ref=e115] [nth=1]
+      - complementary:
+        - text: Financial Summary
+        - term: Original Amount
+        - definition: $55,650.00
+        - term: Revised Amount
+        - definition: $55,650.00
+        - term: Pending Amount
+        - definition: $55,650.00
+        - term: Pending COs
+        - definition: $0.00
+        - term: Approved COs
+        - definition: $0.00
+        - term: Draft COs
+        - definition: $0.00
+        - term: Invoiced
+        - definition: $0.00
+        - term: Payments Issued
+        - definition: $0.00
+        - term: Retainage Released
+        - definition: $0.00
+        - term: Balance
+        - definition: $55,650.00
+        - term: Percent Paid
+        - definition: 0.00%
+      - text: Schedule of Values
+      - table:
+        - rowgroup:
+          - row "# Budget Code Description Amount Billed to Date Remaining":
+            - columnheader "#" [ref=e116]
+            - columnheader "Budget Code" [ref=e117]
+            - columnheader "Description" [ref=e118]
+            - columnheader "Amount" [ref=e119]
+            - columnheader "Billed to Date" [ref=e120]
+            - columnheader "Remaining" [ref=e121]
+            - columnheader
+        - rowgroup:
+          - row "1 Remove & Re-install plumbing fixtures, FRP work, faux stone install $ 3,800.00 $0.00 $3,800.00 Move line 1 up Move line 1 down Delete line 1":
+            - cell "1" [ref=e122]
+            - cell:
+              - combobox [ref=e123] [nth=2]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Remove & Re-install plumbing fixtures, FRP work, faux stone install" [ref=e124]:
+              - textbox "Description 1" [ref=e125]: Remove & Re-install plumbing fixtures, FRP work, faux stone install
+            - cell "$ 3,800.00" [ref=e126]:
+              - text: $
+              - textbox "Amount 1" [ref=e127]:
+                - /placeholder: ""
+                - text: 3,800.00
+            - cell "$0.00" [ref=e128]
+            - cell "$3,800.00" [ref=e129]
+            - cell "Move line 1 up Move line 1 down Delete line 1" [ref=e130]:
+              - button "Move line 1 up" [ref=e131] [disabled]
+              - button "Move line 1 down" [ref=e132]
+              - button "Delete line 1" [ref=e133]
+          - row "2 Demo existing Host Desk $ 300.00 $0.00 $300.00 Move line 2 up Move line 2 down Delete line 2":
+            - cell "2" [ref=e134]
+            - cell:
+              - combobox [ref=e135] [nth=3]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Demo existing Host Desk" [ref=e136]:
+              - textbox "Description 2" [ref=e137]: Demo existing Host Desk
+            - cell "$ 300.00" [ref=e138]:
+              - text: $
+              - textbox "Amount 2" [ref=e139]:
+                - /placeholder: ""
+                - text: "300.00"
+            - cell "$0.00" [ref=e140] [nth=1]
+            - cell "$300.00" [ref=e141]
+            - cell "Move line 2 up Move line 2 down Delete line 2" [ref=e142]:
+              - button "Move line 2 up" [ref=e143]
+              - button "Move line 2 down" [ref=e144]
+              - button "Delete line 2" [ref=e145]
+          - row "3 Remove existing walk in cooler/freezer door $ 300.00 $0.00 $300.00 Move line 3 up Move line 3 down Delete line 3":
+            - cell "3" [ref=e146]
+            - cell:
+              - combobox [ref=e147] [nth=4]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Remove existing walk in cooler/freezer door" [ref=e148]:
+              - textbox "Description 3" [ref=e149]: Remove existing walk in cooler/freezer door
+            - cell "$ 300.00" [ref=e150] [nth=1]:
+              - text: $
+              - textbox "Amount 3" [ref=e151]:
+                - /placeholder: ""
+                - text: "300.00"
+            - cell "$0.00" [ref=e152] [nth=2]
+            - cell "$300.00" [ref=e153] [nth=1]
+            - cell "Move line 3 up Move line 3 down Delete line 3" [ref=e154]:
+              - button "Move line 3 up" [ref=e155]
+              - button "Move line 3 down" [ref=e156]
+              - button "Delete line 3" [ref=e157]
+          - row "4 Demo Exterior patio wood decking $ 2,300.00 $0.00 $2,300.00 Move line 4 up Move line 4 down Delete line 4":
+            - cell "4" [ref=e158]
+            - cell:
+              - combobox [ref=e159] [nth=5]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Demo Exterior patio wood decking" [ref=e160]:
+              - textbox "Description 4" [ref=e161]: Demo Exterior patio wood decking
+            - cell "$ 2,300.00" [ref=e162]:
+              - text: $
+              - textbox "Amount 4" [ref=e163]:
+                - /placeholder: ""
+                - text: 2,300.00
+            - cell "$0.00" [ref=e164] [nth=3]
+            - cell "$2,300.00" [ref=e165]
+            - cell "Move line 4 up Move line 4 down Delete line 4" [ref=e166]:
+              - button "Move line 4 up" [ref=e167]
+              - button "Move line 4 down" [ref=e168]
+              - button "Delete line 4" [ref=e169]
+          - row "5 Install LVT over existing tile, vinyl base $ 2,000.00 $0.00 $2,000.00 Move line 5 up Move line 5 down Delete line 5":
+            - cell "5" [ref=e170]
+            - cell:
+              - combobox [ref=e171] [nth=6]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Install LVT over existing tile, vinyl base" [ref=e172]:
+              - textbox "Description 5" [ref=e173]: Install LVT over existing tile, vinyl base
+            - cell "$ 2,000.00" [ref=e174]:
+              - text: $
+              - textbox "Amount 5" [ref=e175]:
+                - /placeholder: ""
+                - text: 2,000.00
+            - cell "$0.00" [ref=e176] [nth=4]
+            - cell "$2,000.00" [ref=e177]
+            - cell "Move line 5 up Move line 5 down Delete line 5" [ref=e178]:
+              - button "Move line 5 up" [ref=e179]
+              - button "Move line 5 down" [ref=e180]
+              - button "Delete line 5" [ref=e181]
+          - row "6 Frame new host stand, clad in wood $ 300.00 $0.00 $300.00 Move line 6 up Move line 6 down Delete line 6":
+            - cell "6" [ref=e182]
+            - cell:
+              - combobox [ref=e183] [nth=7]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Frame new host stand, clad in wood" [ref=e184]:
+              - textbox "Description 6" [ref=e185]: Frame new host stand, clad in wood
+            - cell "$ 300.00" [ref=e186] [nth=2]:
+              - text: $
+              - textbox "Amount 6" [ref=e187]:
+                - /placeholder: ""
+                - text: "300.00"
+            - cell "$0.00" [ref=e188] [nth=5]
+            - cell "$300.00" [ref=e189] [nth=2]
+            - cell "Move line 6 up Move line 6 down Delete line 6" [ref=e190]:
+              - button "Move line 6 up" [ref=e191]
+              - button "Move line 6 down" [ref=e192]
+              - button "Delete line 6" [ref=e193]
+          - row "7 Frame new kitchen wall, install door $ 1,200.00 $0.00 $1,200.00 Move line 7 up Move line 7 down Delete line 7":
+            - cell "7" [ref=e194]
+            - cell:
+              - combobox [ref=e195] [nth=8]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Frame new kitchen wall, install door" [ref=e196]:
+              - textbox "Description 7" [ref=e197]: Frame new kitchen wall, install door
+            - cell "$ 1,200.00" [ref=e198]:
+              - text: $
+              - textbox "Amount 7" [ref=e199]:
+                - /placeholder: ""
+                - text: 1,200.00
+            - cell "$0.00" [ref=e200] [nth=6]
+            - cell "$1,200.00" [ref=e201]
+            - cell "Move line 7 up Move line 7 down Delete line 7" [ref=e202]:
+              - button "Move line 7 up" [ref=e203]
+              - button "Move line 7 down" [ref=e204]
+              - button "Delete line 7" [ref=e205]
+          - row "8 Hang, Tape & Finish new drywall $ 500.00 $0.00 $500.00 Move line 8 up Move line 8 down Delete line 8":
+            - cell "8" [ref=e206]
+            - cell:
+              - combobox [ref=e207] [nth=9]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Hang, Tape & Finish new drywall" [ref=e208]:
+              - textbox "Description 8" [ref=e209]: Hang, Tape & Finish new drywall
+            - cell "$ 500.00" [ref=e210]:
+              - text: $
+              - textbox "Amount 8" [ref=e211]:
+                - /placeholder: ""
+                - text: "500.00"
+            - cell "$0.00" [ref=e212] [nth=7]
+            - cell "$500.00" [ref=e213]
+            - cell "Move line 8 up Move line 8 down Delete line 8" [ref=e214]:
+              - button "Move line 8 up" [ref=e215]
+              - button "Move line 8 down" [ref=e216]
+              - button "Delete line 8" [ref=e217]
+          - row "9 Remove existing ceiling tile, install new ceiling tile, touch up grid $ 12,000.00 $0.00 $12,000.00 Move line 9 up Move line 9 down Delete line 9":
+            - cell "9" [ref=e218]
+            - cell:
+              - combobox [ref=e219] [nth=10]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Remove existing ceiling tile, install new ceiling tile, touch up grid" [ref=e220]:
+              - textbox "Description 9" [ref=e221]: Remove existing ceiling tile, install new ceiling tile, touch up grid
+            - cell "$ 12,000.00" [ref=e222]:
+              - text: $
+              - textbox "Amount 9" [ref=e223]:
+                - /placeholder: ""
+                - text: 12,000.00
+            - cell "$0.00" [ref=e224] [nth=8]
+            - cell "$12,000.00" [ref=e225]
+            - cell "Move line 9 up Move line 9 down Delete line 9" [ref=e226]:
+              - button "Move line 9 up" [ref=e227]
+              - button "Move line 9 down" [ref=e228]
+              - button "Delete line 9" [ref=e229]
+          - row "10 Paint existing wood ceiling and exposed structure above bar $ 600.00 $0.00 $600.00 Move line 10 up Move line 10 down Delete line 10":
+            - cell "10" [ref=e230]
+            - cell:
+              - combobox [ref=e231] [nth=11]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Paint existing wood ceiling and exposed structure above bar" [ref=e232]:
+              - textbox "Description 10" [ref=e233]: Paint existing wood ceiling and exposed structure above bar
+            - cell "$ 600.00" [ref=e234]:
+              - text: $
+              - textbox "Amount 10" [ref=e235]:
+                - /placeholder: ""
+                - text: "600.00"
+            - cell "$0.00" [ref=e236] [nth=9]
+            - cell "$600.00" [ref=e237]
+            - cell "Move line 10 up Move line 10 down Delete line 10" [ref=e238]:
+              - button "Move line 10 up" [ref=e239]
+              - button "Move line 10 down" [ref=e240]
+              - button "Delete line 10" [ref=e241]
+          - row "11 Expoxy painting of kitchen walls, clean and paint existing wood walls. $ 8,000.00 $0.00 $8,000.00 Move line 11 up Move line 11 down Delete line 11":
+            - cell "11" [ref=e242]
+            - cell:
+              - combobox [ref=e243] [nth=12]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Expoxy painting of kitchen walls, clean and paint existing wood walls." [ref=e244]:
+              - textbox "Description 11" [ref=e245]: Expoxy painting of kitchen walls, clean and paint existing wood walls.
+            - cell "$ 8,000.00" [ref=e246]:
+              - text: $
+              - textbox "Amount 11" [ref=e247]:
+                - /placeholder: ""
+                - text: 8,000.00
+            - cell "$0.00" [ref=e248] [nth=10]
+            - cell "$8,000.00" [ref=e249]
+            - cell "Move line 11 up Move line 11 down Delete line 11" [ref=e250]:
+              - button "Move line 11 up" [ref=e251]
+              - button "Move line 11 down" [ref=e252]
+              - button "Delete line 11" [ref=e253]
+          - row "12 Paint kitchen hoods $ 500.00 $0.00 $500.00 Move line 12 up Move line 12 down Delete line 12":
+            - cell "12" [ref=e254]
+            - cell:
+              - combobox [ref=e255] [nth=13]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Paint kitchen hoods" [ref=e256]:
+              - textbox "Description 12" [ref=e257]: Paint kitchen hoods
+            - cell "$ 500.00" [ref=e258] [nth=1]:
+              - text: $
+              - textbox "Amount 12" [ref=e259]:
+                - /placeholder: ""
+                - text: "500.00"
+            - cell "$0.00" [ref=e260] [nth=11]
+            - cell "$500.00" [ref=e261] [nth=1]
+            - cell "Move line 12 up Move line 12 down Delete line 12" [ref=e262]:
+              - button "Move line 12 up" [ref=e263]
+              - button "Move line 12 down" [ref=e264]
+              - button "Delete line 12" [ref=e265]
+          - row "13 Patch damaged laminate on partitions, replace hardware and paint $ 2,300.00 $0.00 $2,300.00 Move line 13 up Move line 13 down Delete line 13":
+            - cell "13" [ref=e266]
+            - cell:
+              - combobox [ref=e267] [nth=14]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Patch damaged laminate on partitions, replace hardware and paint" [ref=e268]:
+              - textbox "Description 13" [ref=e269]: Patch damaged laminate on partitions, replace hardware and paint
+            - cell "$ 2,300.00" [ref=e270] [nth=1]:
+              - text: $
+              - textbox "Amount 13" [ref=e271]:
+                - /placeholder: ""
+                - text: 2,300.00
+            - cell "$0.00" [ref=e272] [nth=12]
+            - cell "$2,300.00" [ref=e273] [nth=1]
+            - cell "Move line 13 up Move line 13 down Delete line 13" [ref=e274]:
+              - button "Move line 13 up" [ref=e275]
+              - button "Move line 13 down" [ref=e276]
+              - button "Delete line 13" [ref=e277]
+          - row "14 Clean existing FRP in Kitchen $ 350.00 $0.00 $350.00 Move line 14 up Move line 14 down Delete line 14":
+            - cell "14" [ref=e278]
+            - cell:
+              - combobox [ref=e279] [nth=15]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Clean existing FRP in Kitchen" [ref=e280]:
+              - textbox "Description 14" [ref=e281]: Clean existing FRP in Kitchen
+            - cell "$ 350.00" [ref=e282]:
+              - text: $
+              - textbox "Amount 14" [ref=e283]:
+                - /placeholder: ""
+                - text: "350.00"
+            - cell "$0.00" [ref=e284] [nth=13]
+            - cell "$350.00" [ref=e285]
+            - cell "Move line 14 up Move line 14 down Delete line 14" [ref=e286]:
+              - button "Move line 14 up" [ref=e287]
+              - button "Move line 14 down" [ref=e288]
+              - button "Delete line 14" [ref=e289]
+          - row "15 Install new 1\"x10\" exterior fascia trim $ 700.00 $0.00 $700.00 Move line 15 up Move line 15 down Delete line 15":
+            - cell "15" [ref=e290]
+            - cell:
+              - combobox [ref=e291] [nth=16]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Install new 1\" [ref=e292]x10\" exterior fascia trim":
+              - textbox "Description 15" [ref=e293]: Install new 1"x10" exterior fascia trim
+            - cell "$ 700.00" [ref=e294]:
+              - text: $
+              - textbox "Amount 15" [ref=e295]:
+                - /placeholder: ""
+                - text: "700.00"
+            - cell "$0.00" [ref=e296] [nth=14]
+            - cell "$700.00" [ref=e297]
+            - cell "Move line 15 up Move line 15 down Delete line 15" [ref=e298]:
+              - button "Move line 15 up" [ref=e299]
+              - button "Move line 15 down" [ref=e300]
+              - button "Delete line 15" [ref=e301]
+          - row "16 Epoxy paint concrete patio front area $ 1,000.00 $0.00 $1,000.00 Move line 16 up Move line 16 down Delete line 16":
+            - cell "16" [ref=e302]
+            - cell:
+              - combobox [ref=e303] [nth=17]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Epoxy paint concrete patio front area" [ref=e304]:
+              - textbox "Description 16" [ref=e305]: Epoxy paint concrete patio front area
+            - cell "$ 1,000.00" [ref=e306]:
+              - text: $
+              - textbox "Amount 16" [ref=e307]:
+                - /placeholder: ""
+                - text: 1,000.00
+            - cell "$0.00" [ref=e308] [nth=15]
+            - cell "$1,000.00" [ref=e309]
+            - cell "Move line 16 up Move line 16 down Delete line 16" [ref=e310]:
+              - button "Move line 16 up" [ref=e311]
+              - button "Move line 16 down" [ref=e312]
+              - button "Delete line 16" [ref=e313]
+          - row "17 Pressure wash and paint exterior of buiding $ 16,400.00 $0.00 $16,400.00 Move line 17 up Move line 17 down Delete line 17":
+            - cell "17" [ref=e314]
+            - cell:
+              - combobox [ref=e315] [nth=18]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Pressure wash and paint exterior of buiding" [ref=e316]:
+              - textbox "Description 17" [ref=e317]: Pressure wash and paint exterior of buiding
+            - cell "$ 16,400.00" [ref=e318]:
+              - text: $
+              - textbox "Amount 17" [ref=e319]:
+                - /placeholder: ""
+                - text: 16,400.00
+            - cell "$0.00" [ref=e320] [nth=16]
+            - cell "$16,400.00" [ref=e321]
+            - cell "Move line 17 up Move line 17 down Delete line 17" [ref=e322]:
+              - button "Move line 17 up" [ref=e323]
+              - button "Move line 17 down" [ref=e324]
+              - button "Delete line 17" [ref=e325]
+          - row "18 Demo existing furniture and place in dumpster $ 1,600.00 $0.00 $1,600.00 Move line 18 up Move line 18 down Delete line 18":
+            - cell "18" [ref=e326]
+            - cell:
+              - combobox [ref=e327] [nth=19]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Demo existing furniture and place in dumpster" [ref=e328]:
+              - textbox "Description 18" [ref=e329]: Demo existing furniture and place in dumpster
+            - cell "$ 1,600.00" [ref=e330]:
+              - text: $
+              - textbox "Amount 18" [ref=e331]:
+                - /placeholder: ""
+                - text: 1,600.00
+            - cell "$0.00" [ref=e332] [nth=17]
+            - cell "$1,600.00" [ref=e333]
+            - cell "Move line 18 up Move line 18 down Delete line 18" [ref=e334]:
+              - button "Move line 18 up" [ref=e335]
+              - button "Move line 18 down" [ref=e336]
+              - button "Delete line 18" [ref=e337]
+          - row "19 Disconnect and remove existing kitchen equipment and shelving, place in connex $ 1,500.00 $0.00 $1,500.00 Move line 19 up Move line 19 down Delete line 19":
+            - cell "19" [ref=e338]
+            - cell:
+              - combobox [ref=e339] [nth=20]: 09-5100.S – Acoustical Ceilings – Subcontract
+            - cell "Disconnect and remove existing kitchen equipment and shelving, place in connex" [ref=e340]:
+              - textbox "Description 19" [ref=e341]: Disconnect and remove existing kitchen equipment and shelving, place in connex
+            - cell "$ 1,500.00" [ref=e342]:
+              - text: $
+              - textbox "Amount 19" [ref=e343]:
+                - /placeholder: ""
+                - text: 1,500.00
+            - cell "$0.00" [ref=e344] [nth=18]
+            - cell "$1,500.00" [ref=e345]
+            - cell "Move line 19 up Move line 19 down Delete line 19" [ref=e346]:
+              - button "Move line 19 up" [ref=e347]
+              - button "Move line 19 down" [ref=e348] [disabled]
+              - button "Delete line 19" [ref=e349]
+        - rowgroup:
+          - row "Totals $55,650.00 $0.00 $55,650.00":
+            - cell "Totals" [ref=e350]
+            - cell "$55,650.00" [ref=e351]
+            - cell "$0.00" [ref=e352] [nth=19]
+            - cell "$55,650.00" [ref=e353] [nth=1]
+            - cell
+          - row "Subtotal $55,650.00":
+            - cell "Subtotal" [ref=e354]
+            - cell "$55,650.00" [ref=e355] [nth=2]
+            - cell
+          - row "Original Contract $55,650.00":
+            - cell "Original Contract" [ref=e356]
+            - cell "$55,650.00" [ref=e357] [nth=3]
+            - cell
+          - row "Approved Changes $0.00":
+            - cell "Approved Changes" [ref=e358]
+            - cell "$0.00" [ref=e359] [nth=20]
+            - cell
+          - row "Contract Total $55,650.00":
+            - cell "Contract Total" [ref=e360]
+            - cell "$55,650.00" [ref=e361] [nth=4]
+            - cell
+          - row "Billed to Date $0.00":
+            - cell "Billed to Date" [ref=e362]
+            - cell "$0.00" [ref=e363] [nth=21]
+            - cell
+          - row "Amount Remaining $55,650.00":
+            - cell "Amount Remaining" [ref=e364]
+            - cell "$55,650.00" [ref=e365] [nth=5]
+            - cell
+          - row "Current Retainage $0.00":
+            - cell "Current Retainage" [ref=e366]
+            - cell "$0.00" [ref=e367] [nth=22]
+            - cell
+      - button "Add Line Item" [ref=e368]
+      - button "Import from Budget" [ref=e369]
+      - navigation:
+        - button "Admin" [ref=e370] [nth=1]
+      - paragraph: © 2026 Alleato Group. All rights reserved.
+  - button "Feedback mode" [ref=e371]
+  - application "Text comment adder":
+    - button "Add text comment" [ref=e372]
+  - region "Recording controls for floating recording" [ref=e373]:
+    - dialog "Recording control panel"
+  - button "MCP Connected v3.0.2 Output Detail Standard React Components Hide Until Restart Marker Color Clear on copy/send Block page interactions Manage MCP & Webhooks Manage MCP & Webhooks MCP Connection Connected MCP connection allows agents to receive and act on annotations. Learn more Webhooks Auto-Send The webhook URL will receive live annotation changes and annotation data." [ref=e374]:
+    - img
+    - button [ref=e375]:
+      - img
+    - button [ref=e376] [nth=1]:
+      - img
+    - button [ref=e377] [nth=2] [disabled]:
+      - img
+    - button [ref=e378] [nth=3] [disabled]:
+      - img
+    - button [ref=e379] [nth=4] [disabled]:
+      - img
+    - button [ref=e380] [nth=5] [disabled]:
+      - img
+    - button [ref=e381] [nth=6]:
+      - img
+    - button [ref=e382] [nth=7]:
+      - img
+    - link [ref=e383]:
+      - /url: https://agentation.com
+      - img
+    - paragraph: v3.0.2
+    - button "Switch to dark mode" [ref=e384]:
+      - img
+    - text: Output Detail
+    - img
+    - button "Standard" [ref=e385]
+    - text: React Components
+    - img
+    - checkbox [ref=e386] [checked]
+    - text: Hide Until Restart
+    - img
+    - checkbox [ref=e387] [nth=1]
+    - text: Marker Color
+    - button "Indigo" [ref=e388]
+    - button "Blue" [ref=e389]
+    - button "Cyan" [ref=e390]
+    - button "Green" [ref=e391]
+    - button "Yellow" [ref=e392]
+    - button "Orange" [ref=e393]
+    - button "Red" [ref=e394]
+    - checkbox "Clear on copy/send" [ref=e395]
+    - img
+    - text: Clear on copy/send
+    - img
+    - checkbox "Block page interactions" [ref=e396]
+    - img
+    - text: Block page interactions
+    - button "Manage MCP & Webhooks" [ref=e397]:
+      - text: Manage MCP & Webhooks
+      - img
+    - button "Manage MCP & Webhooks" [ref=e398] [nth=1]:
+      - img
+      - text: Manage MCP & Webhooks
+    - text: MCP Connection
+    - img
+    - paragraph:
+      - text: MCP connection allows agents to receive and act on annotations.
+      - link "Learn more" [ref=e399]:
+        - /url: https://agentation.dev/mcp
+    - text: Webhooks
+    - img
+    - text: Auto-Send
+    - checkbox "Auto-Send" [ref=e400] [checked] [disabled]
+    - paragraph: The webhook URL will receive live annotation changes and annotation data.
+    - textbox "Webhook URL" [ref=e401]

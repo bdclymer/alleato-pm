@@ -1,4 +1,5 @@
 from src.services.integrations.microsoft_graph import onedrive
+import pytest
 
 
 class _Result:
@@ -55,6 +56,11 @@ class _Table:
         self.payload = payload
         return self
 
+    def upsert(self, payload):
+        self.action = "upsert"
+        self.payload = payload
+        return self
+
     def execute(self):
         rows = self.store.setdefault(self.name, [])
         matches = [
@@ -71,6 +77,15 @@ class _Table:
                 row.update(self.payload)
             return _Result(matches)
 
+        if self.action == "upsert":
+            payload = self.payload
+            existing = next((row for row in rows if row.get("id") == payload.get("id")), None)
+            if existing:
+                existing.update(payload)
+                return _Result([existing])
+            rows.append(dict(payload))
+            return _Result([payload])
+
         return _Result(matches)
 
 
@@ -81,6 +96,9 @@ class _Supabase:
 
     def from_(self, name):
         return _Table(self.store, name)
+
+    def table(self, name):
+        return self.from_(name)
 
 
 class _Graph:
@@ -101,6 +119,14 @@ class _Graph:
         return b"This is enough project scope text to pass extraction and assign a project."
 
 
+class _FailingDeltaGraph(_Graph):
+    def __init__(self):
+        super().__init__([])
+
+    def get_delta(self, path, delta_token):
+        raise RuntimeError("404 Not Found")
+
+
 def _drive_item():
     return {
         "id": "drive-item-1",
@@ -113,6 +139,14 @@ def _drive_item():
         "parentReference": {"driveId": "drive-1"},
         "createdBy": {"user": {"displayName": "Project Manager"}},
     }
+
+
+def _drive_item_with_id(item_id):
+    item = _drive_item()
+    item["id"] = item_id
+    item["name"] = f"Scope {item_id}.txt"
+    item["@microsoft.graph.downloadUrl"] = f"https://download.example/{item_id}"
+    return item
 
 
 def test_onedrive_sync_promotes_assigned_file_to_project_documents(monkeypatch):
@@ -163,3 +197,43 @@ def test_existing_onedrive_metadata_still_promotes_to_project_documents(monkeypa
     assert project_doc["project_id"] == 25125
     assert project_doc["source_system"] == "onedrive"
     assert project_doc["source_item_id"] == "drive-item-1"
+
+
+def test_onedrive_sync_caps_supported_files_per_folder(monkeypatch, caplog):
+    supabase = _Supabase()
+    graph = _Graph([_drive_item_with_id("a"), _drive_item_with_id("b")])
+    monkeypatch.setenv("GRAPH_INGEST_MAX_FILES_PER_FOLDER", "1")
+    monkeypatch.setattr(onedrive, "get_graph_client", lambda: graph)
+    monkeypatch.setattr(onedrive, "infer_project_id", lambda *_args, **_kwargs: (25125, "project_number", 0.95))
+
+    count, token = onedrive.sync_onedrive_folder(supabase, "pm@example.com", "/Projects")
+
+    assert count == 1
+    assert token == "next-token"
+    assert graph.downloads == ["https://download.example/a"]
+    assert "File ingestion capped at 1 supported files" in caplog.text
+
+
+def test_pdf_optional_dependency_warning_logs_once(monkeypatch, caplog):
+    real_import = __import__
+
+    def fake_import(name, *args, **kwargs):
+        if name in {"pypdf", "fitz"}:
+            raise ImportError(name)
+        return real_import(name, *args, **kwargs)
+
+    onedrive._WARNED_OPTIONAL_DEPENDENCIES.clear()
+    monkeypatch.setattr("builtins.__import__", fake_import)
+
+    assert onedrive._extract_text_from_pdf(b"%PDF no text") == ""
+    assert onedrive._extract_text_from_pdf(b"%PDF no text") == ""
+
+    assert caplog.text.count("pypdf not installed") == 1
+    assert caplog.text.count("PyMuPDF not installed") == 1
+
+
+def test_onedrive_delta_failure_raises_for_orchestrator(monkeypatch):
+    monkeypatch.setattr(onedrive, "get_graph_client", lambda: _FailingDeltaGraph())
+
+    with pytest.raises(RuntimeError, match="OneDrive delta query failed"):
+        onedrive.sync_onedrive_folder(_Supabase(), "pm@example.com", "/Projects")

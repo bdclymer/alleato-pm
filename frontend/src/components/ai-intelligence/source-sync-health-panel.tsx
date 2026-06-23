@@ -97,8 +97,53 @@ interface SourceSyncStuckItem {
   metadata: Record<string, unknown>;
 }
 
+type RagLifecycleStageKey =
+  | "synced"
+  | "vectorized"
+  | "projectAssigned"
+  | "tasksExtracted"
+  | "projectIntelligenceUpdated";
+
+interface RagLifecycleStage {
+  key: RagLifecycleStageKey;
+  label: string;
+  status: "healthy" | "warning" | "critical" | "unknown";
+  count: number;
+  total: number;
+  latestAt: string | null;
+  message: string;
+  ownerHint: string;
+}
+
+interface RagLifecycleSource {
+  key: "meetings" | "teams" | "emails" | "sharepoint";
+  label: string;
+  sourceSystems: string[];
+  totalSources: number;
+  latestSourceAt: string | null;
+  status: "healthy" | "warning" | "critical" | "unknown";
+  stages: RagLifecycleStage[];
+  alerts: SourceSyncAlert[];
+}
+
+interface RagLifecycleNotification {
+  status: "sent" | "ready" | "blocked" | "failed" | "skipped";
+  channel: string;
+  message: string;
+  checkedAt: string;
+}
+
+interface RagLifecycleStatus {
+  generatedAt: string;
+  lookbackHours: number;
+  maxPacketAgeHours: number;
+  status: "healthy" | "degraded" | "unavailable";
+  sources: RagLifecycleSource[];
+  notifications: RagLifecycleNotification[];
+}
+
 interface SourceSyncStatus {
-  status: "healthy" | "degraded";
+  status: "healthy" | "degraded" | "unavailable";
   healthy: boolean;
   generatedAt: string;
   thresholds: Record<string, number>;
@@ -118,6 +163,7 @@ interface SourceSyncStatus {
     graphSubscriptions: number;
     stuckItems: number;
   };
+  ragLifecycle?: RagLifecycleStatus;
 }
 
 interface RecomputeResult {
@@ -858,6 +904,144 @@ function StatusPill({
       )}
       {status.replace("_", " ")}
     </Badge>
+  );
+}
+
+function lifecycleBadgeVariant(
+  status: RagLifecycleStage["status"] | RagLifecycleSource["status"],
+): "active" | "destructive" | "outline" {
+  if (status === "healthy") return "active";
+  if (status === "critical") return "destructive";
+  return "outline";
+}
+
+function LifecycleStageCell({ stage }: { stage: RagLifecycleStage }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="min-w-36 space-y-1">
+          <div className="flex items-center gap-2">
+            <Badge
+              variant={lifecycleBadgeVariant(stage.status)}
+              className="capitalize"
+            >
+              {humanizeToken(stage.status)}
+            </Badge>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {stage.count}/{stage.total}
+            </span>
+          </div>
+          <p className="truncate text-xs text-muted-foreground">
+            {formatDate(stage.latestAt)}
+          </p>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-sm">
+        <div className="space-y-1 text-xs">
+          <p className="font-medium">{stage.message}</p>
+          <p>Owner: {stage.ownerHint}</p>
+          <p>Latest: {formatDate(stage.latestAt)}</p>
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function RagLifecycleMatrix({
+  lifecycle,
+}: {
+  lifecycle: RagLifecycleStatus | undefined;
+}) {
+  if (!lifecycle) {
+    return (
+      <InfoAlert variant="error">
+        Daily RAG lifecycle status was not returned by the source-sync API.
+      </InfoAlert>
+    );
+  }
+
+  const notification = lifecycle.notifications[0] ?? null;
+  const stageLabels =
+    lifecycle.sources[0]?.stages.map((stage) => ({
+      key: stage.key,
+      label: stage.label,
+    })) ?? [];
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-1">
+          <SectionRuleHeading label="Daily RAG trust" className="mb-0 pb-0" />
+          <p className="text-sm text-muted-foreground">
+            Last {lifecycle.lookbackHours} hours · packet freshness threshold{" "}
+            {lifecycle.maxPacketAgeHours} hours
+          </p>
+        </div>
+        <StatusPill status={lifecycle.status} />
+      </div>
+
+      <div className="overflow-x-auto rounded-md border border-border/70">
+        <table className="min-w-full divide-y divide-border/70 text-sm">
+          <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+            <tr>
+              <th className="whitespace-nowrap px-3 py-2 text-left font-medium">
+                Source
+              </th>
+              {stageLabels.map((stage) => (
+                <th
+                  key={stage.key}
+                  className="whitespace-nowrap px-3 py-2 text-left font-medium"
+                >
+                  {stage.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/60">
+            {lifecycle.sources.map((source) => (
+              <tr key={source.key} className="align-top">
+                <th className="w-52 px-3 py-3 text-left font-medium">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span>{source.label}</span>
+                      <Badge
+                        variant={lifecycleBadgeVariant(source.status)}
+                        className="capitalize"
+                      >
+                        {humanizeToken(source.status)}
+                      </Badge>
+                    </div>
+                    <p className="text-xs font-normal text-muted-foreground">
+                      {source.totalSources} source rows · newest{" "}
+                      {formatDate(source.latestSourceAt)}
+                    </p>
+                  </div>
+                </th>
+                {source.stages.map((stage) => (
+                  <td key={stage.key} className="px-3 py-3">
+                    <LifecycleStageCell stage={stage} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {notification ? (
+        <InfoAlert
+          variant={
+            notification.status === "ready" ||
+            notification.status === "blocked" ||
+            notification.status === "failed"
+              ? "warning"
+              : "success"
+          }
+        >
+          Notification {notification.status}: {notification.message}
+        </InfoAlert>
+      ) : null}
+    </div>
   );
 }
 
@@ -2033,6 +2217,7 @@ export function SourceSyncHealthPanel() {
         ) : status ? (
           <div className="space-y-4">
             <OperationsBrief status={status} />
+            <RagLifecycleMatrix lifecycle={status.ragLifecycle} />
               {aiSummary ? (
                 <AiOperationsSummary
                   summary={aiSummary}

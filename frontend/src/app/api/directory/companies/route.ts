@@ -160,6 +160,7 @@ export const POST = withApiGuardrails(
         city: body.city || null,
         state: body.state || null,
         website: body.website || null,
+        license_number: body.license_number || null,
         type: companyType,
         status: body.status || "ACTIVE",
         is_vendor: isVendor,

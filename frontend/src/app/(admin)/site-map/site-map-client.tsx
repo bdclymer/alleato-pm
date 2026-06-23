@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import {
   CheckCircle2,
@@ -81,6 +81,7 @@ export type InventoryType =
 
 export type InventoryLayout =
   | "Form"
+  | "Edit"
   | "Detail"
   | "Table"
   | "Dashboard"
@@ -162,6 +163,7 @@ const TYPES: InventoryType[] = [
 
 const LAYOUTS: InventoryLayout[] = [
   "Form",
+  "Edit",
   "Detail",
   "Table",
   "Dashboard",
@@ -468,6 +470,17 @@ function sortRoutes(routes: InventoryRoute[], sortBy: string, direction: "asc" |
     return String(leftValue ?? "").localeCompare(String(rightValue ?? ""));
   });
   return direction === "desc" ? sorted.reverse() : sorted;
+}
+
+function PanelField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-4">
+      <label className="w-28 shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </label>
+      <div className="flex-1">{children}</div>
+    </div>
+  );
 }
 
 function fieldSelect<TValue extends string>({
@@ -1401,52 +1414,90 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
               content: (
                 <div className="space-y-6 p-5">
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-semibold text-foreground">{activeRoute.page}</h2>
-                      <span className="text-xs text-muted-foreground">{activeRoute.status}</span>
-                    </div>
+                    <h2 className="text-lg font-semibold text-foreground">{activeRoute.page}</h2>
                     <code className="block break-all text-xs text-muted-foreground">{activeRoute.route}</code>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Access</p>
-                      <p className="font-medium">{PAGE_ACCESS_LEVEL_LABELS[activeRoute.accessLevel]}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Access source</p>
-                      <p className="font-medium">{activeRoute.accessIsExplicit ? "Explicit" : "Inferred"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Category</p>
-                      <p className="font-medium">{activeRoute.category}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Type</p>
-                      <p className="font-medium">{activeRoute.type}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Layout</p>
-                      <p className="font-medium">{activeRoute.layout}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Last reviewed</p>
-                      <p className="font-medium">{formatDateTime(activeRoute.lastReviewed)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">References</p>
-                      <p className="font-medium">{activeRoute.refCount}</p>
-                    </div>
-                  </div>
-
+                  {/* All editable fields — horizontal detail layout */}
                   <div className="space-y-3">
-                    <p className="text-sm font-medium text-foreground">Page Access</p>
-                    <div className="grid grid-cols-2 gap-3">
+                    <PanelField label="Status">
+                      <Select
+                        value={activeRoute.status}
+                        onValueChange={(value) => handleFieldChange(activeRoute.route, "status", value as InventoryStatus)}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUSES.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              <StatusBadge status={option} />
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </PanelField>
+
+                    <PanelField label="Category">
+                      <Select
+                        value={activeRoute.category}
+                        onValueChange={(value) => handleFieldChange(activeRoute.route, "category", value as InventoryCategory)}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CATEGORIES.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </PanelField>
+
+                    <PanelField label="Type">
+                      <Select
+                        value={activeRoute.type}
+                        onValueChange={(value) => handleFieldChange(activeRoute.route, "type", value as InventoryType)}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TYPES.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </PanelField>
+
+                    <PanelField label="Layout">
+                      <Select
+                        value={activeRoute.layout}
+                        onValueChange={(value) => handleFieldChange(activeRoute.route, "layout", value as InventoryLayout)}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {LAYOUTS.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </PanelField>
+
+                    <PanelField label="Access">
                       <Select
                         value={activeRoute.accessLevel}
                         onValueChange={(value) => handleAccessChange(activeRoute, value as PageAccessLevel)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="h-9">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1457,12 +1508,15 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
                           ))}
                         </SelectContent>
                       </Select>
+                    </PanelField>
+
+                    <PanelField label="Module">
                       {accessLevelRequiresModule(activeRoute.accessLevel) ? (
                         <Select
                           value={activeRoute.permissionModule ?? "directory"}
                           onValueChange={(value) => handleModuleChange(activeRoute, value as PermissionModule)}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="h-9">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -1474,11 +1528,11 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
                           </SelectContent>
                         </Select>
                       ) : (
-                        <div className="flex h-10 items-center rounded-md border border-input bg-background px-3 text-sm text-muted-foreground">
+                        <div className="flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm text-muted-foreground">
                           N/A
                         </div>
                       )}
-                    </div>
+                    </PanelField>
                   </div>
 
                   <div className="space-y-2">
@@ -1492,6 +1546,34 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
                       className="min-h-40 resize-y"
                       onChange={(event) => handleFieldChange(activeRoute.route, "notes", event.target.value)}
                     />
+                  </div>
+
+                  {/* Read-only metadata */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-4 text-sm">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Access source</p>
+                      <p className="font-medium">{activeRoute.accessIsExplicit ? "Explicit" : "Inferred"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Dynamic</p>
+                      <p className="font-medium">{isDynamicRoute(activeRoute.route) ? "Dynamic" : "Static"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Kind</p>
+                      <p className="font-medium">{activeRoute.kind || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">References</p>
+                      <p className="font-medium">{activeRoute.refCount}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Last reviewed</p>
+                      <p className="font-medium">{formatDateTime(activeRoute.lastReviewed) || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Access updated</p>
+                      <p className="font-medium">{formatDateTime(activeRoute.accessUpdatedAt ?? undefined) || "—"}</p>
+                    </div>
                   </div>
 
                   <div className="space-y-2">

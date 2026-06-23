@@ -156,6 +156,27 @@ describe("navigation config", () => {
     });
   });
 
+  it("keeps Specifications in the project sidebar and site tools dropdown", () => {
+    const sidebarTool = projectManagementTools.find(
+      (tool) => tool.name === "Specifications",
+    );
+    const headerTool = headerTools.find((tool) => tool.name === "Specifications");
+
+    expect(sidebarTool).toMatchObject({
+      name: "Specifications",
+      path: "specifications",
+      requiresProject: true,
+      module: "documents",
+    });
+    expect(headerTool).toMatchObject({
+      name: "Specifications",
+      path: "specifications",
+      requiresProject: true,
+      module: "documents",
+    });
+    expect(buildToolUrl("specifications", 876, true)).toBe("/876/specifications");
+  });
+
   it("keeps the AI section available to non-developer users", () => {
     // Guardrail: the AI assistant is intentionally available to ALL authenticated
     // users. It must not be marked developerOnly (which would hide its nav link)

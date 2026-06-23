@@ -32,13 +32,6 @@ PHASE_FLAGS = {
         "GRAPH_SYNC_ONEDRIVE": "false",
         "GRAPH_SYNC_SHAREPOINT": "false",
     },
-    "onedrive": {
-        "GRAPH_SYNC_OUTLOOK": "false",
-        "GRAPH_SYNC_TEAMS": "false",
-        "GRAPH_SYNC_TEAMS_DM": "false",
-        "GRAPH_SYNC_ONEDRIVE": "true",
-        "GRAPH_SYNC_SHAREPOINT": "false",
-    },
     "sharepoint": {
         "GRAPH_SYNC_OUTLOOK": "false",
         "GRAPH_SYNC_TEAMS": "false",
@@ -66,6 +59,8 @@ def main() -> int:
     parser.add_argument("phase", choices=sorted(PHASE_FLAGS))
     parser.add_argument("--embed-limit", type=int, default=25)
     parser.add_argument("--skip-embedding", action="store_true")
+    parser.add_argument("--skip-ocr", action="store_true")
+    parser.add_argument("--skip-attachment-promotion", action="store_true")
     args = parser.parse_args()
 
     for key, value in PHASE_FLAGS[args.phase].items():
@@ -77,6 +72,8 @@ def main() -> int:
     result = run_graph_sync(
         get_supabase_client(),
         run_embedding=not args.skip_embedding,
+        run_ocr=not args.skip_ocr,
+        run_attachment_promotion=not args.skip_attachment_promotion,
         embed_limit=max(1, min(args.embed_limit, 25)),
     )
     result["phase"] = args.phase

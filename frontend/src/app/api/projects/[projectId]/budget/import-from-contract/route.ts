@@ -27,6 +27,47 @@ function isSupportedMarkupType(value: string | null): value is MarkupType {
   return value != null && value in MARKUP_BUDGET_CODE_BY_TYPE;
 }
 
+type ResolvedSovItem = {
+  contractLineItemId: string;
+  lineNumber: number | null;
+  description: string | null;
+  costCodeId: string;
+  costTypeId: string;
+  budgetCodeId: string | null;
+  originalAmount: number;
+  quantity: number | null;
+  unitCost: number | null;
+  unitOfMeasure: string | null;
+};
+
+type BudgetLineLookup = {
+  id: string;
+  project_budget_code_id: string | null;
+  cost_code_id: string;
+  cost_type_id: string;
+  original_amount: number | string | null;
+  source_contract_line_item_id: string | null;
+};
+
+const amountMatches = (left: number, right: number) =>
+  Math.abs(left - right) < 0.005;
+
+function getBudgetLineKey(row: {
+  budgetCodeId?: string | null;
+  project_budget_code_id?: string | null;
+  costCodeId?: string | null;
+  cost_code_id?: string | null;
+  costTypeId?: string | null;
+  cost_type_id?: string | null;
+}) {
+  const budgetCodeId = row.budgetCodeId ?? row.project_budget_code_id;
+  if (budgetCodeId) return `budget-code:${budgetCodeId}`;
+
+  const costCodeId = row.costCodeId ?? row.cost_code_id;
+  const costTypeId = row.costTypeId ?? row.cost_type_id;
+  return `cost-code:${costCodeId ?? ""}|cost-type:${costTypeId ?? ""}`;
+}
+
 export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/budget/import-from-contract#POST",
   async ({ request, params }) => {
@@ -161,8 +202,10 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       }
     }
 
-    const resolvedItems = [];
-    const imported: unknown[] = [];
+    const resolvedItems: ResolvedSovItem[] = [];
+    const created: unknown[] = [];
+    const updated: unknown[] = [];
+    const matched: string[] = [];
     const skipped: string[] = [];
 
     for (const item of lineItems) {
@@ -191,44 +234,119 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         continue;
       }
 
-      const originalAmount = item.total_cost ?? (item.unit_cost != null && item.quantity != null ? item.unit_cost * item.quantity : 0);
+      const originalAmount = Number(
+        item.total_cost ??
+          (item.unit_cost != null && item.quantity != null
+            ? item.unit_cost * item.quantity
+            : 0),
+      );
 
       resolvedItems.push({
-        item,
+      contractLineItemId: item.id,
+      lineNumber: item.line_number ?? null,
+      description: item.description ?? null,
         costCodeId,
         costTypeId,
         budgetCodeId,
         originalAmount,
+        quantity: item.quantity ?? null,
+        unitCost: item.unit_cost ?? null,
+        unitOfMeasure: item.unit_of_measure ?? null,
       });
     }
 
-    const resolvedBudgetCodeIds = Array.from(
-      new Set(resolvedItems.map((row) => row.budgetCodeId).filter((id): id is string => id != null)),
-    );
-    const existingBudgetCodeIds = new Set<string>();
+    const { data: existingLines, error: existingLinesError } = await supabase
+      .from("budget_lines")
+      .select("id, project_budget_code_id, cost_code_id, cost_type_id, original_amount, source_contract_line_item_id")
+      .eq("project_id", numericProjectId);
 
-    if (resolvedBudgetCodeIds.length > 0) {
-      const { data: existingLines, error: existingLinesError } = await supabase
-        .from("budget_lines")
-        .select("project_budget_code_id")
-        .eq("project_id", numericProjectId)
-        .in("project_budget_code_id", resolvedBudgetCodeIds);
+    if (existingLinesError) {
+      return NextResponse.json(
+        { error: "Failed to check existing budget lines", details: existingLinesError.message },
+        { status: 500 },
+      );
+    }
 
-      if (existingLinesError) {
-        return NextResponse.json(
-          { error: "Failed to check existing budget lines", details: existingLinesError.message },
-          { status: 500 },
-        );
-      }
-
-      for (const line of existingLines ?? []) {
-        if (line.project_budget_code_id) existingBudgetCodeIds.add(line.project_budget_code_id);
+    const existingLinesBySource = new Map<string, BudgetLineLookup[]>();
+    const unsourcedLegacyLinesByKey = new Map<string, BudgetLineLookup[]>();
+    for (const line of (existingLines ?? []) as BudgetLineLookup[]) {
+      if (line.source_contract_line_item_id) {
+        const bucket = existingLinesBySource.get(line.source_contract_line_item_id) ?? [];
+        bucket.push(line);
+        existingLinesBySource.set(line.source_contract_line_item_id, bucket);
+      } else {
+        const key = getBudgetLineKey(line);
+        const bucket = unsourcedLegacyLinesByKey.get(key) ?? [];
+        bucket.push(line);
+        unsourcedLegacyLinesByKey.set(key, bucket);
       }
     }
 
-    for (const { item, costCodeId, costTypeId, budgetCodeId, originalAmount } of resolvedItems) {
-      if (budgetCodeId && existingBudgetCodeIds.has(budgetCodeId)) {
-        skipped.push(`Line ${item.line_number}: "${item.description}" — budget line already exists`);
+    const updateBudgetLine = async (lineId: string, item: ResolvedSovItem) =>
+      supabase
+        .from("budget_lines")
+        .update({
+          source_contract_line_item_id: item.contractLineItemId,
+          cost_code_id: item.costCodeId,
+          cost_type_id: item.costTypeId,
+          project_budget_code_id: item.budgetCodeId,
+          original_amount: item.originalAmount,
+          description: item.description ?? null,
+          quantity: item.quantity,
+          unit_cost: item.unitCost,
+          unit_of_measure: item.unitOfMeasure,
+        })
+        .eq("id", lineId)
+        .select("id")
+        .single();
+
+    for (const item of resolvedItems) {
+      const label = item.lineNumber != null
+        ? `Line ${item.lineNumber}`
+        : `Contract line ${item.contractLineItemId}`;
+      const existingForSource = existingLinesBySource.get(item.contractLineItemId) ?? [];
+
+      if (existingForSource.length > 1) {
+        skipped.push(
+          `${label} — multiple budget lines already reference this SOV line; reconcile duplicates before importing`,
+        );
+        continue;
+      }
+
+      if (existingForSource.length === 1) {
+        const existingLine = existingForSource[0];
+        const existingAmount = Number(existingLine.original_amount ?? 0);
+
+        if (amountMatches(existingAmount, item.originalAmount)) {
+          matched.push(existingLine.id);
+          continue;
+        }
+
+        const { data: updateResult, error: updateError } =
+          await updateBudgetLine(existingLine.id, item);
+
+        if (updateError) {
+          skipped.push(`${label} — ${updateError.message}`);
+        } else {
+          updated.push(updateResult);
+        }
+        continue;
+      }
+
+      const legacyKey = getBudgetLineKey(item);
+      const legacyBucket = unsourcedLegacyLinesByKey.get(legacyKey) ?? [];
+      const legacyLine = legacyBucket.shift();
+
+      if (legacyLine) {
+        unsourcedLegacyLinesByKey.set(legacyKey, legacyBucket);
+        const { data: updateResult, error: updateError } =
+          await updateBudgetLine(legacyLine.id, item);
+
+        if (updateError) {
+          skipped.push(`${label} — ${updateError.message}`);
+        } else {
+          updated.push(updateResult);
+        }
         continue;
       }
 
@@ -236,32 +354,40 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         .from("budget_lines")
         .insert({
           project_id: numericProjectId,
-          cost_code_id: costCodeId,
-          cost_type_id: costTypeId,
-          project_budget_code_id: budgetCodeId,
-          description: item.description || null,
-          original_amount: originalAmount,
-          quantity: item.quantity ?? null,
-          unit_cost: item.unit_cost ?? null,
-          unit_of_measure: item.unit_of_measure ?? null,
+          source_contract_line_item_id: item.contractLineItemId,
+          cost_code_id: item.costCodeId,
+          cost_type_id: item.costTypeId,
+          project_budget_code_id: item.budgetCodeId,
+          description: item.description ?? null,
+          original_amount: item.originalAmount,
+          quantity: item.quantity,
+          unit_cost: item.unitCost,
+          unit_of_measure: item.unitOfMeasure,
         })
         .select("id")
         .single();
 
       if (insertError) {
-        skipped.push(`Line ${item.line_number}: "${item.description}" — ${insertError.message}`);
+        skipped.push(`${label} — ${insertError.message}`);
       } else {
-        imported.push(inserted);
+        created.push(inserted);
       }
     }
 
+    const changedCount = created.length + updated.length;
+    const reconciledCount = changedCount + matched.length;
+
     return NextResponse.json({
       success: true,
-      importedCount: imported.length,
+      importedCount: changedCount,
+      createdCount: created.length,
+      updatedCount: updated.length,
+      matchedCount: matched.length,
+      reconciledCount,
       totalRows: lineItems.length,
       skippedCount: skipped.length,
       skipped: skipped.length > 0 ? skipped : undefined,
-      message: `Imported ${imported.length} of ${lineItems.length} line items from "${contract.title || contract.contract_number}"`,
+      message: `Reconciled ${reconciledCount} budget line${reconciledCount === 1 ? "" : "s"} from ${lineItems.length} SOV row${lineItems.length === 1 ? "" : "s"} in "${contract.title || contract.contract_number}"`,
     });
   },
 );

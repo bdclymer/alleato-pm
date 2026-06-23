@@ -1,6 +1,6 @@
 """
 Microsoft Graph Sync Orchestrator
-Coordinates sync of all three sources: Outlook, Teams, OneDrive.
+Coordinates sync of Outlook, Teams, and SharePoint files.
 Saves delta tokens between runs for incremental sync.
 """
 import logging
@@ -393,7 +393,8 @@ def run_graph_sync(
     *,
     run_outlook: bool = True,
     run_teams: bool = True,
-    run_onedrive: bool = True,
+    run_onedrive: bool = False,
+    run_sharepoint: bool = True,
     run_embedding: bool = True,
     run_ocr: bool = True,
     run_attachment_promotion: bool = True,
@@ -430,6 +431,7 @@ def run_graph_sync(
         "teams": 0,
         "teams_dm": 0,
         "onedrive": 0,
+        "sharepoint": 0,
         "errors": [],
         "phases": {
             "source_sync": "enabled",
@@ -628,7 +630,11 @@ def run_graph_sync(
                 )
 
     # ── OneDrive ─────────────────────────────────────────────────────────────
-    sync_onedrive = run_onedrive and os.environ.get("GRAPH_SYNC_ONEDRIVE", "true").lower() == "true"
+    # Personal OneDrive sync is disabled by default. Alleato project/company
+    # files live in SharePoint-backed libraries, and syncing a shared library
+    # through an individual user's OneDrive path creates duplicate/stale health
+    # signals.
+    sync_onedrive = run_onedrive and os.environ.get("GRAPH_SYNC_ONEDRIVE", "false").lower() == "true"
     if sync_onedrive:
         user_emails = [
             e.strip()
@@ -693,7 +699,7 @@ def run_graph_sync(
 
     # ── SharePoint Sites ──────────────────────────────────────────────────────
     # Format: "hostname/site_name:folder_path" e.g. "alleato.sharepoint.com/AlleatoGroup:/SOP"
-    sync_sharepoint = run_onedrive and os.environ.get("GRAPH_SYNC_SHAREPOINT", "true").lower() == "true"
+    sync_sharepoint = run_sharepoint and os.environ.get("GRAPH_SYNC_SHAREPOINT", "true").lower() == "true"
     sp_raw = os.environ.get("SHAREPOINT_SYNC_FOLDERS", "") if sync_sharepoint else ""
     sp_entries = [e.strip() for e in sp_raw.split(",") if e.strip()]
     sp_entries = _limit_sync_items(
@@ -723,7 +729,7 @@ def run_graph_sync(
                     items_seen=count,
                     items_synced=count,
                 )
-                summary["sharepoint"] = summary.get("sharepoint", 0) + count
+                summary["sharepoint"] += count
             except Exception as e:
                 err = f"SharePoint sync failed for {resource_name}: {e}"
                 logger.error(f"[GraphSync] {err}")
@@ -742,10 +748,20 @@ def run_graph_sync(
         except Exception as e:
             logger.error(f"[GraphSync] Bad SHAREPOINT_SYNC_FOLDERS entry '{entry}': {e}")
 
-    total = summary["outlook"] + summary["teams"] + summary["teams_dm"] + summary["onedrive"]
+    total = (
+        summary["outlook"]
+        + summary["teams"]
+        + summary["teams_dm"]
+        + summary["onedrive"]
+        + summary["sharepoint"]
+    )
     logger.info(
-        "[GraphSync] Complete — Outlook: %d, Teams channels: %d, Teams DMs: %d, OneDrive: %d",
-        summary["outlook"], summary["teams"], summary["teams_dm"], summary["onedrive"],
+        "[GraphSync] Complete — Outlook: %d, Teams channels: %d, Teams DMs: %d, OneDrive: %d, SharePoint: %d",
+        summary["outlook"],
+        summary["teams"],
+        summary["teams_dm"],
+        summary["onedrive"],
+        summary["sharepoint"],
     )
 
     # ── Embed any newly ingested documents ───────────────────────────────────

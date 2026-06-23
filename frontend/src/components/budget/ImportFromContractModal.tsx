@@ -36,6 +36,10 @@ interface SovLineItem {
 interface ImportResult {
   success: boolean;
   importedCount: number;
+  createdCount?: number;
+  updatedCount?: number;
+  matchedCount?: number;
+  reconciledCount?: number;
   totalRows: number;
   skippedCount: number;
   skipped?: string[];
@@ -113,7 +117,7 @@ export function ImportFromContractModal({
 
       toast.success(result.message);
       if (result.skipped && result.skipped.length > 0) {
-        toast.warning(`${result.skippedCount} line item(s) skipped — no cost code mapping found`);
+        toast.warning(`${result.skippedCount} budget group(s) need review`);
       }
       onOpenChange(false);
       onSuccess?.();
@@ -143,9 +147,8 @@ export function ImportFromContractModal({
           <div className="rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground flex items-start gap-3">
             <FileText className="h-4 w-4 mt-0.5 shrink-0 text-foreground" />
             <p>
-              Imports all Schedule of Values line items from a Prime Contract into the budget.
-              Each line item&apos;s cost code and cost type will be resolved from the contract&apos;s budget code mapping or supported markup mapping.
-              Existing budget lines are not affected.
+              Reconciles the budget to a Prime Contract Schedule of Values.
+              Each SOV row becomes its own budget line so repeated budget codes can keep separate cost detail.
             </p>
           </div>
 
@@ -231,7 +234,7 @@ export function ImportFromContractModal({
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Unsupported line items without a budget code or markup mapping will be skipped.
+                    Unsupported rows without a budget code or markup mapping will be reported after import.
                   </p>
                 </>
               )}

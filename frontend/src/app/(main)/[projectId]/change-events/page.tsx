@@ -107,7 +107,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
       page: 1,
       perPage: 25,
       search: "",
-      sortBy: "number",
+      sortBy: "number_title",
       sortDirection: "asc",
       visibleColumns: changeEventDefaultVisibleColumns,
       filters: initialFilters,

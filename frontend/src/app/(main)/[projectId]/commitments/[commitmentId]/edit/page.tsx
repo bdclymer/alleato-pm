@@ -121,12 +121,16 @@ export default function EditCommitmentPage() {
       : [];
 
     if (isPO) {
-      const companyObj = r.contract_company as { id: string; name: string } | null | undefined;
+      const companyObj = r.contract_company as
+        | { id: string; name: string; license_number?: string | null }
+        | null
+        | undefined;
       const data: PurchaseOrderInitialData = {
         contractNumber: typeof r.contract_number === "string" ? r.contract_number : "",
         title: typeof r.title === "string" ? r.title : "",
         contractCompanyId: typeof r.contract_company_id === "string" ? r.contract_company_id : undefined,
         contractCompanyName: companyObj?.name,
+        companyLicenseNumber: companyObj?.license_number ?? "",
         status: normalizedPurchaseOrderStatus,
         executed: typeof r.executed === "boolean" ? r.executed : false,
         defaultRetainagePercent: typeof r.default_retainage_percent === "number" ? r.default_retainage_percent : undefined,
@@ -165,6 +169,13 @@ export default function EditCommitmentPage() {
       contractNumber: typeof r.contract_number === "string" ? r.contract_number : "",
       title: typeof r.title === "string" ? r.title : "",
       contractCompanyId: typeof r.contract_company_id === "string" ? r.contract_company_id : "",
+      companyLicenseNumber:
+        r.contract_company &&
+        typeof r.contract_company === "object" &&
+        "license_number" in r.contract_company &&
+        typeof (r.contract_company as { license_number?: unknown }).license_number === "string"
+          ? (r.contract_company as { license_number: string }).license_number
+          : "",
       status: normalizedSubcontractStatus,
       executed: typeof r.executed === "boolean" ? r.executed : false,
       accountingMethod,
@@ -246,6 +257,7 @@ export default function EditCommitmentPage() {
         contract_number: data.contractNumber,
         title: data.title,
         contract_company_id: data.contractCompanyId || null,
+        company_license_number: data.companyLicenseNumber || null,
         status: data.status,
         description: data.description || null,
         inclusions: data.inclusions || null,
@@ -293,6 +305,7 @@ export default function EditCommitmentPage() {
         contract_number: data.contractNumber,
         title: data.title,
         contract_company_id: data.contractCompanyId || null,
+        company_license_number: data.companyLicenseNumber || null,
         status: data.status,
         executed: data.executed ?? false,
         description: data.description || null,

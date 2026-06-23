@@ -127,11 +127,38 @@ def _call_llm(prompt: str, json_mode: bool = False, max_tokens: Optional[int] = 
     logger.info("[LLM] Calling %s (json=%s)", CHAT_MODEL, json_mode)
     if json_mode:
         kwargs["response_format"] = {"type": "json_object"}
-    response = retry_ai_call(
-        lambda: _client().chat.completions.create(**kwargs),
-        provider_name="OpenAI",
-        operation="chat completion",
-    )
+
+    try:
+        response = retry_ai_call(
+            lambda: _client().chat.completions.create(**kwargs),
+            provider_name="OpenAI",
+            operation="chat completion",
+        )
+    except Exception as exc:
+        message = str(exc).lower()
+        response_format_rejected = (
+            json_mode
+            and "response_format" in message
+            and (
+                "invalid input" in message
+                or "invalid_request_error" in message
+                or "unsupported" in message
+            )
+        )
+        if not response_format_rejected:
+            raise
+
+        logger.warning(
+            "[LLM] %s rejected response_format=json_object; retrying once with prompt-only JSON contract.",
+            CHAT_MODEL,
+        )
+        fallback_kwargs = dict(kwargs)
+        fallback_kwargs.pop("response_format", None)
+        response = retry_ai_call(
+            lambda: _client().chat.completions.create(**fallback_kwargs),
+            provider_name="OpenAI",
+            operation="chat completion without response_format",
+        )
     record_model_usage(context, model=CHAT_MODEL, response=response, status="succeeded")
     return response.choices[0].message.content or ""
 

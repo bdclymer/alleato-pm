@@ -22,6 +22,7 @@ import {
   type ListOutlookMessagesResult,
 } from "@/lib/microsoft-graph/mail";
 import { buildMeetingSignalBuckets } from "@/lib/ai/meeting-insight-signals";
+import { createRagServiceClient } from "@/lib/supabase/service";
 
 export type SourceSpecificRagRow = {
   id: string;
@@ -58,6 +59,8 @@ type SourceSpecificRagFormatOptions = {
   liveEmails?: ListOutlookMessagesResult | null;
 };
 
+type RagMetadataClient = Pick<SupabaseClient, "from">;
+
 function formatSourceSpecificDate(row: SourceSpecificRagRow): string {
   const value = row.date ?? row.created_at;
   if (!value) return "unknown date";
@@ -68,6 +71,10 @@ function sourceSpecificSnippet(row: SourceSpecificRagRow, maxLength = 260): stri
   const content = preferredSourceSpecificContent(row).replace(/\s+/g, " ").trim();
   if (!content) return "No text excerpt stored.";
   return content.length > maxLength ? `${content.slice(0, maxLength).trim()}...` : content;
+}
+
+function needsSourceSpecificContentHydration(row: SourceSpecificRagRow): boolean {
+  return preferredSourceSpecificContent(row).trim().length === 0;
 }
 
 function sourceSpecificTitle(row: SourceSpecificRagRow): string {
@@ -87,6 +94,50 @@ function preferredSourceSpecificContent(row: SourceSpecificRagRow): string {
     return row.overview ?? row.summary ?? row.content ?? row.raw_text ?? "";
   }
   return row.content ?? row.summary ?? row.overview ?? row.raw_text ?? "";
+}
+
+async function hydrateRowsFromRagMetadata(
+  rows: SourceSpecificRagRow[],
+  ragSupabase: RagMetadataClient,
+): Promise<SourceSpecificRagRow[]> {
+  const ids = rows
+    .filter((row) => row.source !== "microsoft_graph_live")
+    .filter(needsSourceSpecificContentHydration)
+    .map((row) => row.id);
+
+  if (ids.length === 0) return rows;
+
+  const { data, error } = await ragSupabase
+    .from("rag_document_metadata")
+    .select("id, content, raw_text, summary, overview")
+    .in("id", ids);
+
+  if (error) {
+    throw new Error(`Failed to hydrate Teams RAG metadata content: ${error.message}`);
+  }
+
+  const byId = new Map(
+    ((data ?? []) as Array<{
+      id: string;
+      content: string | null;
+      raw_text: string | null;
+      summary: string | null;
+      overview: string | null;
+    }>).map((row) => [row.id, row]),
+  );
+
+  return rows.map((row) => {
+    if (!needsSourceSpecificContentHydration(row)) return row;
+    const ragRow = byId.get(row.id);
+    if (!ragRow) return row;
+    return {
+      ...row,
+      content: row.content ?? ragRow.content ?? ragRow.raw_text ?? null,
+      summary: row.summary ?? ragRow.summary ?? null,
+      overview: row.overview ?? ragRow.overview ?? null,
+      raw_text: row.raw_text ?? ragRow.raw_text ?? null,
+    };
+  });
 }
 
 function compareTeamsRows(a: SourceSpecificRagRow, b: SourceSpecificRagRow): number {
@@ -260,6 +311,7 @@ function formatSourceSpecificRagContent(
 
 export async function buildSourceSpecificRagAnswer(params: {
   supabase: SupabaseClient<Database>;
+  ragSupabase?: RagMetadataClient;
   request: SourceSpecificRagRequest;
   scope: ToolScope;
 }): Promise<SourceSpecificRagAnswer> {
@@ -504,7 +556,10 @@ export async function buildSourceSpecificRagAnswer(params: {
         .limit(request.limit),
     );
     if (error) throw new Error(error.message);
-    const storedRows = ((data ?? []) as SourceSpecificRagRow[]).sort(compareTeamsRows);
+    const storedRows = await hydrateRowsFromRagMetadata(
+      ((data ?? []) as SourceSpecificRagRow[]).sort(compareTeamsRows),
+      params.ragSupabase ?? createRagServiceClient(),
+    );
     const liveRows: SourceSpecificRagRow[] = (liveTeams.rows ?? []).map((message) => ({
       id: `live-teams:${message.mailbox}:${message.id}`,
       title: `Live Teams: ${message.chatLabel}`,

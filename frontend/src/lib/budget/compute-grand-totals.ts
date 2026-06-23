@@ -58,6 +58,15 @@ interface CostAggregation {
   pendingBudgetChanges: number;
 }
 
+const EMPTY_COST_AGGREGATION: CostAggregation = {
+  jobToDateCostDetail: 0,
+  directCosts: 0,
+  pendingCostChanges: 0,
+  committedCosts: 0,
+  approvedBudgetChanges: 0,
+  pendingBudgetChanges: 0,
+};
+
 interface DirectCostParent {
   cost_type: string | null;
   status: string | null;
@@ -542,6 +551,19 @@ export function reduceGrandTotals(lineItems: BudgetLineItem[]): GrandTotals {
   );
 }
 
+export function consumeCostAggregationOnce(
+  costCodeId: string,
+  costsByCode: Record<string, CostAggregation>,
+  consumedCostCodes: Set<string>,
+): CostAggregation {
+  if (consumedCostCodes.has(costCodeId)) {
+    return EMPTY_COST_AGGREGATION;
+  }
+
+  consumedCostCodes.add(costCodeId);
+  return costsByCode[costCodeId] || EMPTY_COST_AGGREGATION;
+}
+
 // ---------------------------------------------------------------------------
 // Orchestrator — fetches all 10 sources and returns line items + grand totals
 // ---------------------------------------------------------------------------
@@ -872,6 +894,7 @@ export async function computeBudgetGrandTotals(
   // ---- Map budget rows to full line items ----
   const usingBudgetTableFallback = budgetRowsResult.source === "table";
 
+  const consumedCostCodes = new Set<string>();
   const lineItems: BudgetLineItem[] = (budgetRowsResult.data || []).map(
     (item: Record<string, unknown>) => {
       const costCode = item.cost_code as
@@ -885,14 +908,11 @@ export async function computeBudgetGrandTotals(
         | undefined;
       const costCodeId = item.cost_code_id as string;
 
-      const costData = costsByCode[costCodeId] || {
-        jobToDateCostDetail: 0,
-        directCosts: 0,
-        pendingCostChanges: 0,
-        committedCosts: 0,
-        approvedBudgetChanges: 0,
-        pendingBudgetChanges: 0,
-      };
+      const costData = consumeCostAggregationOnce(
+        costCodeId,
+        costsByCode,
+        consumedCostCodes,
+      );
 
       const originalBudgetAmount =
         parseFloat(item.original_amount as string) || 0;

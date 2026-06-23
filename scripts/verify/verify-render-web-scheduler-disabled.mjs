@@ -58,11 +58,11 @@ const SAFE_RESTART_REQUIRED_ENV = new Map([
     new Map([
       ["GRAPH_SYNC_TEAMS", "false"],
       ["GRAPH_SYNC_TEAMS_DM", "false"],
+      ["GRAPH_SYNC_ONEDRIVE", "false"],
+      ["GRAPH_SYNC_SHAREPOINT", "true"],
       ["GRAPH_DELTA_MAX_PAGES", "3"],
       ["GRAPH_DELTA_MAX_ITEMS", "250"],
       ["OUTLOOK_SYNC_MAX_USERS", "1"],
-      ["ONEDRIVE_SYNC_MAX_USERS", "1"],
-      ["ONEDRIVE_SYNC_MAX_FOLDERS", "2"],
       ["SHAREPOINT_SYNC_MAX_FOLDERS", "2"],
       ["GRAPH_EMBEDDING_LIMIT", "25"],
       ["TEAMS_COMPILER_BATCH_SIZE", "25"],

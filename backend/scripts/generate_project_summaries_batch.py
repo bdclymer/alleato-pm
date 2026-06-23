@@ -5,9 +5,9 @@ Generate AI-powered project summaries for all projects with meetings using GPT-4
 Usage:
     cd backend
     source venv/bin/activate
-    PYTHONPATH="src/services:src/workers" python scripts/generate_project_summaries_batch.py
-    PYTHONPATH="src/services:src/workers" python scripts/generate_project_summaries_batch.py --project-id 67
-    PYTHONPATH="src/services:src/workers" python scripts/generate_project_summaries_batch.py --update
+    PYTHONPATH="src" python scripts/generate_project_summaries_batch.py
+    PYTHONPATH="src" python scripts/generate_project_summaries_batch.py --project-id 67
+    PYTHONPATH="src" python scripts/generate_project_summaries_batch.py --update
 
 This script:
 1. Fetches all projects with associated meeting documents (document_metadata)
@@ -23,9 +23,9 @@ import sys
 from typing import Optional, List, Dict
 from datetime import datetime
 
-# Add paths for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'services'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'workers'))
+# Add canonical backend src path for imports. Retired worker package paths must
+# not be reintroduced; background ingestion now lives under src/services.
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 # Load environment variables
 from dotenv import load_dotenv
@@ -45,7 +45,7 @@ for env_path in env_locations:
         break
 
 from openai import OpenAI
-from supabase_helpers import get_supabase_client
+from services.supabase_helpers import get_supabase_client
 
 
 SUMMARY_PROMPT = """You are an AI Chief of Staff analyzing meeting documents for a construction/engineering project.

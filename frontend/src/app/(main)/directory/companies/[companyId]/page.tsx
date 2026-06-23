@@ -205,6 +205,7 @@ export default function CompanyDetailsPage() {
     city: "",
     state: "",
     website: "",
+    license_number: "",
     status: "ACTIVE",
   });
 
@@ -308,6 +309,7 @@ export default function CompanyDetailsPage() {
         city: payload.company.city || "",
         state: payload.company.state || "",
         website: payload.company.website || "",
+        license_number: payload.company.license_number || "",
         status: payload.company.status || "ACTIVE",
       });
     } catch (err) {
@@ -375,6 +377,7 @@ export default function CompanyDetailsPage() {
           city: companyForm.city || null,
           state: companyForm.state || null,
           website: companyForm.website || null,
+          license_number: companyForm.license_number || null,
           status: companyForm.status || "ACTIVE",
         }),
       });
@@ -1020,6 +1023,10 @@ export default function CompanyDetailsPage() {
                     <p className="text-right font-medium text-foreground">{company.acumatica_vendor_id || "—"}</p>
                   </div>
                   <div className="flex items-center justify-between gap-4">
+                    <p className="shrink-0 text-muted-foreground">License Number</p>
+                    <p className="text-right font-medium text-foreground">{company.license_number || "—"}</p>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
                     <p className="shrink-0 text-muted-foreground">Website</p>
                     {websiteUrl ? (
                       <a
@@ -1065,7 +1072,6 @@ export default function CompanyDetailsPage() {
         <ModalContent className="sm:max-w-xl">
           <ModalHeader>
             <ModalTitle>Edit Company</ModalTitle>
-            <ModalDescription>Update company profile details.</ModalDescription>
           </ModalHeader>
           <div className="grid gap-4">
             <div className="grid gap-2">
@@ -1108,6 +1114,14 @@ export default function CompanyDetailsPage() {
                 id="edit-company-website"
                 value={companyForm.website}
                 onChange={(e) => setCompanyForm((prev) => ({ ...prev, website: e.target.value }))}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-company-license">License Number</Label>
+              <Input
+                id="edit-company-license"
+                value={companyForm.license_number}
+                onChange={(e) => setCompanyForm((prev) => ({ ...prev, license_number: e.target.value }))}
               />
             </div>
             <div className="grid gap-2">

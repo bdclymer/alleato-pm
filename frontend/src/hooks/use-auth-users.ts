@@ -15,6 +15,8 @@ export interface AuthUser {
   person_id: string | null;
   membership_status: string | null;
   invite_status: string | null;
+  person_type: string | null;
+  status: string | null;
 }
 
 export function useAuthUsers(projectId: string) {
@@ -37,8 +39,10 @@ export function useAuthUsers(projectId: string) {
             last_name,
             email,
             job_title,
+            person_type,
+            status,
             created_at,
-            company:companies(name),
+            company:companies!people_company_id_fkey(name),
             project_directory_memberships(
               status,
               invite_status,
@@ -75,6 +79,8 @@ export function useAuthUsers(projectId: string) {
           person_id: userAuth.person_id,
           membership_status: projectMembership?.status || null,
           invite_status: projectMembership?.invite_status || null,
+          person_type: userAuth.person?.person_type || null,
+          status: userAuth.person?.status || null,
         };
       });
 

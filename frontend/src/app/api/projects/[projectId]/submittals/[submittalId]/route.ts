@@ -121,6 +121,26 @@ export const GET = withApiGuardrails(
       }
     }
 
+    let received_from: string | null = null;
+    if (data.received_from_id) {
+      const { data: person, error: receivedFromError } = await supabase
+        .from("people")
+        .select("id, first_name, last_name, email")
+        .eq("id", data.received_from_id)
+        .maybeSingle();
+
+      if (receivedFromError) {
+        return apiErrorResponse(receivedFromError);
+      }
+
+      if (person) {
+        received_from =
+          [person.first_name, person.last_name].filter(Boolean).join(" ").trim() ||
+          person.email ||
+          null;
+      }
+    }
+
     // Fetch linked RFIs via the junction table
     const { data: rfiLinks } = await supabase
       .from("rfis_submittals_links")
@@ -150,6 +170,7 @@ export const GET = withApiGuardrails(
     return NextResponse.json({
       ...data,
       responsible_contractor,
+      received_from,
       linked_rfis: (rfiLinks ?? []).map((link) => ({
         link_id: link.id,
         link_type: link.link_type,

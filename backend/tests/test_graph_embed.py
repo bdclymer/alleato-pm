@@ -98,3 +98,40 @@ def test_embed_graph_document_skips_app_status_update_when_using_rag_metadata(mo
     assert chunks == 0
     assert rag.tables["document_chunks"] == []
     assert rag.tables["rag_document_metadata"][0]["embedding_status"] == "skipped"
+
+
+def test_graph_embed_queues_source_intelligence_by_default(monkeypatch):
+    queued = []
+    monkeypatch.setattr(embed, "GRAPH_EMBED_INLINE_SOURCE_INTELLIGENCE", False)
+
+    def fake_import(name, *args, **kwargs):
+        if name.endswith("intelligence.compiler"):
+            class _Compiler:
+                @staticmethod
+                def enqueue_source_intelligence_job(_client, metadata_id, **job_kwargs):
+                    queued.append({"metadata_id": metadata_id, **job_kwargs})
+                    return {"id": "job-1", "status": "queued"}
+
+                @staticmethod
+                def process_source_document_to_packet(*_args, **_kwargs):
+                    raise AssertionError("inline compiler should not run")
+
+            return _Compiler
+        return original_import(name, *args, **kwargs)
+
+    original_import = __import__
+    monkeypatch.setattr("builtins.__import__", fake_import)
+
+    embed._run_source_intelligence_compiler(object(), "outlook_message-1")
+
+    assert queued == [
+        {
+            "metadata_id": "outlook_message-1",
+            "job_type": "attribution",
+            "priority": 0,
+            "input_snapshot": {
+                "path": "microsoft_graph.embed_graph_document",
+                "reason": "queued_to_keep_embedding_path_bounded",
+            },
+        }
+    ]

@@ -18,6 +18,10 @@ distinctly so operators can spot PDFs that weren't fully read.
 """
 import logging
 import os
+import signal
+import threading
+from contextlib import contextmanager
+from typing import Any, Iterator
 from typing import Optional
 
 from supabase import Client
@@ -29,6 +33,43 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_BATCH = 20
 _DEFAULT_PAGE_CAP = 20
+_DEFAULT_FETCH_TIMEOUT_SECONDS = 8
+
+
+def _env_int(name: str, default: int, *, minimum: int = 1) -> int:
+    try:
+        value = int(os.environ.get(name, str(default)))
+    except ValueError:
+        return default
+    return max(minimum, value)
+
+
+@contextmanager
+def _ocr_fetch_timeout() -> Iterator[None]:
+    timeout_seconds = _env_int(
+        "GRAPH_OCR_FETCH_TIMEOUT_SECONDS",
+        _DEFAULT_FETCH_TIMEOUT_SECONDS,
+    )
+    alarm_enabled = (
+        threading.current_thread() is threading.main_thread()
+        and hasattr(signal, "SIGALRM")
+        and hasattr(signal, "alarm")
+    )
+    previous_handler = None
+
+    def _raise_timeout(_signum: int, _frame: Any) -> None:
+        raise TimeoutError(f"OCR no_text fetch exceeded {timeout_seconds}s")
+
+    if alarm_enabled:
+        previous_handler = signal.getsignal(signal.SIGALRM)
+        signal.signal(signal.SIGALRM, _raise_timeout)
+        signal.alarm(timeout_seconds)
+    try:
+        yield
+    finally:
+        if alarm_enabled:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, previous_handler)
 
 
 def _get_page_cap() -> int:
@@ -52,14 +93,15 @@ def _fetch_no_text_records(supabase: Client, limit: int) -> list[dict]:
     when pypdf extracts < 50 chars — no further type filtering needed.
     We exclude records with no source_web_url since we can't download them.
     """
-    result = (
-        supabase.from_("document_metadata")
-        .select("id, title, source_web_url, source_path, type")
-        .eq("status", "no_text")
-        .not_.is_("source_web_url", "null")
-        .limit(limit)
-        .execute()
-    )
+    with _ocr_fetch_timeout():
+        result = (
+            supabase.from_("document_metadata")
+            .select("id, title, source_web_url, source_path, type")
+            .eq("status", "no_text")
+            .not_.is_("source_web_url", "null")
+            .limit(limit)
+            .execute()
+        )
     return result.data or []
 
 

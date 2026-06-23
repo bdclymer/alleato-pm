@@ -759,9 +759,8 @@ Exhaustive inventory of every file that meaningfully touches AI assistant logic 
 | `frontend/src/lib/ai/chat-handler.ts` | Legacy chat handler extracted from route.ts. Holds special-case agent dispatch branches (executive brief metadata, personal task register, Brandon daily widget, source-specific RAG, source-lookup synthesis, RFI preview, packet-first intent) plus the `streamText` fallback chain. | route.ts, fallback-chain.ts, preflights.ts |
 | `frontend/src/lib/ai/bot-core.ts` | Shared bot core used by web chat route and external channel adapters (Slack, Teams, Telegram). Extracts the common orchestrator setup: system prompt assembly, tool creation, memory injection. | orchestrator.ts, system-prompt.ts, conversation-memory.ts |
 | `frontend/src/lib/ai/system-prompt.ts` | Single source of truth for system-prompt assembly. Wraps `assembleSystemPrompt` with dev-only token-count logging for context bloat detection. | bot-core.ts, soul.ts, identity.ts, persona-and-memory.ts |
-| `frontend/src/lib/ai/providers.ts` | AI Gateway provider setup. `getLanguageModel(modelId)` is the single entry point for all LLM calls. Adds `openai/` provider prefix automatically. | provider-config.ts, provider-routing.ts, models.ts |
+| `frontend/src/lib/ai/providers.ts` | AI Gateway provider setup. `getLanguageModel(modelId)` is the single entry point for all LLM calls. Adds `openai/` provider prefix automatically. | provider-config.ts, models.ts |
 | `frontend/src/lib/ai/provider-config.ts` | OpenAI-compatible client config (gateway base URL vs direct OpenAI), provider-failure formatting helpers. | providers.ts |
-| `frontend/src/lib/ai/provider-routing.ts` | Cross-provider routing logic (fallbacks, retries, model substitution). | providers.ts, fallback-chain.ts |
 | `frontend/src/lib/ai/fallback-chain.ts` | `generateRecoveryResponse` — hard fallback when the Strategist returns empty/garbled text. Always uses `openai/gpt-4.1` because the active model just failed. | strategist-failure-response.ts, score-response-quality.ts |
 | `frontend/src/lib/ai/strategist-failure-response.ts` | Builds the user-facing failure message with cause, project hint, and tool trace summary. Regression-guarded against bare generic strings. | fallback-chain.ts |
 | `frontend/src/lib/ai/score-response-quality.ts` | Detects meta-commentary stalling phrases ("let me search for…") and scores response confidence/source quality. Triggers fallback on low scores. | chat-handler.ts |
@@ -971,7 +970,6 @@ Exhaustive inventory of every file that meaningfully touches AI assistant logic 
 | `frontend/src/lib/ai/__tests__/score-response-quality.test.ts` | Meta-commentary phrase detection coverage. | score-response-quality.ts |
 | `frontend/src/lib/ai/__tests__/prompt-diagnostics.test.ts` | Prompt token counting + bloat warning thresholds. | prompt-diagnostics.ts |
 | `frontend/src/lib/ai/__tests__/provider-config.test.ts` | Gateway vs direct OpenAI client config switching. | provider-config.ts |
-| `frontend/src/lib/ai/__tests__/provider-routing.test.ts` | Cross-provider routing/fallback behavior. | provider-routing.ts |
 | `frontend/src/lib/ai/__tests__/model-pricing.test.ts` | Pricing table sanity checks. | model-pricing.ts |
 | `frontend/src/lib/ai/__tests__/rag-meeting-retrieval.test.ts` | Meeting retrieval shape + filter coverage. | operational.ts |
 | `frontend/src/lib/ai/__tests__/personal-daily-brief.test.ts` | Daily-brief critique-request detection. | personal-daily-brief.ts |
@@ -1020,7 +1018,7 @@ Exhaustive inventory of every file that meaningfully touches AI assistant logic 
 | `scripts/verify/verify_ai_assistant_risk_routing.py` | Risk queries route to `getProjectsWithRisks` not `getPortfolioOverview`. | strategist.ts |
 | `scripts/verify/verify_ai_assistant_latest_briefing_shape.mjs` | Latest briefing structured-output shape. | executive-briefing-workflow.ts |
 | `scripts/verify/verify_ai_admin_comms_guardrails.mjs` | Admin comms guardrails (PII, role scope). | guardrails.ts |
-| `scripts/verify/verify_ai_tool_calling_provider_matrix.mjs` | Tool-calling support across providers. | provider-routing.ts |
+| `scripts/verify/verify_ai_tool_calling_provider_matrix.mjs` | Tool-calling support across providers. | handler-v2.ts, orchestrator.ts |
 | `scripts/verify/verify_executive_daily_brief_fresh.mjs` | Daily brief freshness — uses today's data. | daily-brief.ts |
 | `scripts/verify/verify_financial_fallback_retrieval.py` | Financial queries fall back to packet/RAG when tools fail. | financial.ts |
 | `scripts/verify/verify_financial_numeric_retrieval.py` | Numeric financial answers cite source rows. | financial.ts |

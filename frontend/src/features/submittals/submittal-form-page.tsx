@@ -2,11 +2,12 @@
 
 import * as React from "react";
 import { useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { Plus, Trash2 } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
 import {
@@ -21,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { FileUploadField } from "@/components/forms/FileUploadField";
 import {
   Select,
   SelectContent,
@@ -32,14 +34,34 @@ import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { useAuthUsers } from "@/hooks/use-auth-users";
+import { useCompanyContacts } from "@/hooks/use-company-contacts";
 import {
   useCreateSubmittal,
   useUpdateSubmittal,
+  useWorkflowTemplates,
+  uploadSubmittalAttachments,
   type SubmittalDetail,
   type SubmittalSummary,
 } from "@/hooks/use-submittals";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
+import {
+  buildAuthUserOptions,
+  buildCompanyContactOptions,
+  isAlleatoEmployee,
+  isCompanyContact,
+} from "@/lib/submittals/people-options";
+import {
+  normalizeSubmittalWorkflowRole,
+  SUBMITTAL_WORKFLOW_ROLES,
+} from "@/lib/submittals/workflow-roles";
+import {
+  reconcilePendingAttachmentEntries,
+  toPendingAttachmentEntry,
+  type PendingAttachmentEntry,
+  type PendingAttachmentFileInfo,
+} from "@/lib/submittals/attachment-files";
+import { appToast as toast } from "@/lib/toast/app-toast";
 
 // ─── Division lead time defaults (days) ──────────────────────────────────────
 
@@ -122,12 +144,24 @@ const submittalFormSchema = z.object({
   received_from_id: z.string().nullable().optional(),
   submittal_manager_id: z.string().nullable().optional(),
   submittal_package_id: z.string().nullable().optional(),
+  workflow_template_id: z.string().nullable().optional(),
+  // No .default() here: keeping the schema transform-free means the Zod input
+  // and output types stay identical, so zodResolver matches useForm<SubmittalFormValues>.
+  // Runtime defaults are supplied by buildDefaults() via the form's defaultValues.
+  initial_workflow_steps: z.array(
+    z.object({
+      user_id: z.string().min(1, "Reviewer is required"),
+      step_type: z.string().min(1, "Role is required"),
+      required: z.boolean(),
+    }),
+  ),
 });
 
 type SubmittalFormValues = z.infer<typeof submittalFormSchema>;
 type EditableSubmittal = SubmittalSummary & Partial<SubmittalDetail>;
 
 const STATUS_OPTIONS = ["Draft", "Open", "Distributed", "Closed"] as const;
+const WORKFLOW_ROLE_OPTIONS = SUBMITTAL_WORKFLOW_ROLES;
 
 function getSubmittalTypeId(v: SubmittalSummary["submittal_type"] | undefined): string | null {
   if (!v) return null;
@@ -163,6 +197,8 @@ function buildDefaults(
         ? (submittal?.submittal_package as { id?: string } | null)?.id
         : null) ??
       null,
+    workflow_template_id: null,
+    initial_workflow_steps: [],
   };
 }
 
@@ -192,12 +228,18 @@ export function SubmittalFormPage({
 
   const createMutation = useCreateSubmittal(projectId);
   const updateMutation = useUpdateSubmittal(projectId, submittal?.id ?? "");
+  const [pendingAttachmentEntries, setPendingAttachmentEntries] = React.useState<
+    PendingAttachmentEntry[]
+  >([]);
+  const [isUploadingAttachments, setIsUploadingAttachments] = React.useState(false);
 
   const { companies, isLoading: companiesLoading } = useProjectCompanies(String(projectId), {
     per_page: 200,
   });
-  const { users, isLoading: usersLoading } = useAuthUsers(String(projectId));
+  const { users, allUsers, isLoading: usersLoading } = useAuthUsers(String(projectId));
   const { data: submittalTypes, isLoading: typesLoading } = useSubmittalTypes(projectId);
+  const { data: workflowTemplates, isLoading: workflowTemplatesLoading } =
+    useWorkflowTemplates(projectId);
   const { data: packages, isLoading: packagesLoading } = useQuery({
     queryKey: ["submittal-packages", projectId],
     queryFn: async () =>
@@ -211,11 +253,26 @@ export function SubmittalFormPage({
     defaultValues: buildDefaults(submittal, defaultOverrides),
   });
 
+  const workflowFieldArray = useFieldArray({
+    control: form.control,
+    name: "initial_workflow_steps",
+  });
+
   const watchedStatus = form.watch("status");
   const watchedSubmittalManager = form.watch("submittal_manager_id");
+  const watchedResponsibleContractor = form.watch("responsible_contractor_id");
   const watchedRequiredOnSite = form.watch("required_on_site_date");
   const watchedLeadTime = form.watch("lead_time");
   const watchedSpecSection = form.watch("specification_section");
+  const previousResponsibleContractor = React.useRef(watchedResponsibleContractor);
+
+  const {
+    contacts: responsibleContractorContacts,
+    isLoading: receivedFromLoading,
+  } = useCompanyContacts({
+    companyId: watchedResponsibleContractor ?? undefined,
+    enabled: Boolean(watchedResponsibleContractor),
+  });
 
   // When creating new: default submittal_manager_id to the current logged-in user.
   // Run once on mount — supabase client is a stable singleton, safe to omit from deps.
@@ -265,7 +322,8 @@ export function SubmittalFormPage({
     }
   }, [watchedSpecSection, form]);
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending =
+    createMutation.isPending || updateMutation.isPending || isUploadingAttachments;
 
   const companyOptions = useMemo(
     () =>
@@ -294,9 +352,96 @@ export function SubmittalFormPage({
     [users],
   );
 
+  const managerOptions = useMemo(
+    () => buildAuthUserOptions(allUsers.filter(isAlleatoEmployee)),
+    [allUsers],
+  );
+
+  const receivedFromOptions = useMemo(
+    () =>
+      buildCompanyContactOptions(
+        responsibleContractorContacts.filter(isCompanyContact),
+      ),
+    [responsibleContractorContacts],
+  );
+
+  React.useEffect(() => {
+    if (previousResponsibleContractor.current !== watchedResponsibleContractor) {
+      previousResponsibleContractor.current = watchedResponsibleContractor;
+      form.setValue("received_from_id", null, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [form, watchedResponsibleContractor]);
+
+  function handleWorkflowTemplateChange(templateId: string) {
+    form.setValue("workflow_template_id", templateId === "__none__" ? null : templateId, {
+      shouldDirty: true,
+    });
+
+    if (templateId === "__none__") {
+      workflowFieldArray.replace([]);
+      return;
+    }
+
+    const template = workflowTemplates?.find((item) => item.id === templateId);
+    workflowFieldArray.replace(
+      (template?.steps ?? []).map((step) => ({
+        user_id: step.user_id ?? "",
+        step_type: normalizeSubmittalWorkflowRole(step.step_type),
+        required: step.required ?? true,
+      })),
+    );
+  }
+
+  function addWorkflowStep() {
+    workflowFieldArray.append({
+      user_id: "",
+      step_type: "Approver",
+      required: true,
+    });
+  }
+
+  function handleAttachmentFilesSelected(files: File[]) {
+    setPendingAttachmentEntries((current) =>
+      [...current, ...files.map(toPendingAttachmentEntry)].slice(0, 10),
+    );
+  }
+
+  function handleAttachmentListChange(nextFiles: PendingAttachmentFileInfo[]) {
+    setPendingAttachmentEntries((current) =>
+      reconcilePendingAttachmentEntries(current, nextFiles),
+    );
+  }
+
+  async function uploadPendingAttachments(submittalId: string) {
+    const files = pendingAttachmentEntries.map((entry) => entry.file);
+    if (files.length === 0) return;
+
+    setIsUploadingAttachments(true);
+    try {
+      await uploadSubmittalAttachments(projectId, submittalId, files);
+      toast.success(
+        files.length === 1
+          ? "Attachment uploaded"
+          : `${files.length} attachments uploaded`,
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "The server did not return a reason.";
+      toast.error("Submittal was created, but attachments did not upload", {
+        description: message,
+      });
+    } finally {
+      setIsUploadingAttachments(false);
+    }
+  }
+
   async function onSubmit(values: SubmittalFormValues) {
+    const { workflow_template_id: _workflowTemplateId, ...submittalValues } = values;
     const payload = {
-      ...values,
+      ...submittalValues,
       specification_section: values.specification_section || null,
       submittal_type_id: values.submittal_type_id || null,
       division: values.division || null,
@@ -308,6 +453,13 @@ export function SubmittalFormPage({
       received_from_id: values.received_from_id || null,
       submittal_manager_id: values.submittal_manager_id || null,
       submittal_package_id: values.submittal_package_id || null,
+      initial_workflow_steps: isEditing
+        ? undefined
+        : values.initial_workflow_steps.map((step) => ({
+            user_id: step.user_id,
+            step_type: step.step_type,
+            required: step.required,
+          })),
     };
 
     if (isEditing && submittal) {
@@ -321,6 +473,7 @@ export function SubmittalFormPage({
       const result = await createMutation.mutateAsync(payload);
       const newId = (result as { id?: string } | null)?.id;
       if (newId) {
+        await uploadPendingAttachments(newId);
         router.push(`/${projectId}/submittals/${newId}`);
       } else {
         router.push(`/${projectId}/submittals`);
@@ -382,19 +535,52 @@ export function SubmittalFormPage({
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Title *</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. Doors, Frames, Hardware" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Doors, Frames, Hardware" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="submittal_package_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Submittal Package</FormLabel>
+                  <Select
+                    onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
+                    value={field.value ?? "__none__"}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={packagesLoading ? "Loading..." : "Select package"}
+                        />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="__none__">None</SelectItem>
+                      {(packages ?? []).map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField
@@ -491,64 +677,40 @@ export function SubmittalFormPage({
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="submittal_package_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Submittal Package</FormLabel>
-                <Select
-                  onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
-                  value={field.value ?? "__none__"}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={packagesLoading ? "Loading..." : "Select package"}
-                      />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="__none__">None</SelectItem>
-                    {(packages ?? []).map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </section>
 
         {/* ── People & Companies ── */}
         <section className="space-y-4">
           <SectionRuleHeading label="People & Companies" />
 
-          <RHFComboboxField
-            control={form.control}
-            name="responsible_contractor_id"
-            label="Responsible Contractor"
-            placeholder={companiesLoading ? "Loading..." : "Select company"}
-            searchPlaceholder="Search companies..."
-            emptyMessage="No matching company found."
-            options={companyOptions}
-            disabled={companiesLoading}
-            clearable
-          />
-
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <RHFComboboxField
+              control={form.control}
+              name="responsible_contractor_id"
+              label="Responsible Contractor"
+              placeholder={companiesLoading ? "Loading..." : "Select company"}
+              searchPlaceholder="Search companies..."
+              emptyMessage="No matching company found."
+              options={companyOptions}
+              disabled={companiesLoading}
+              clearable
+            />
+
             <RHFComboboxField
               control={form.control}
               name="received_from_id"
               label="Received From"
-              placeholder={usersLoading ? "Loading..." : "Select person"}
-              searchPlaceholder="Search by name or email..."
-              emptyMessage="No matching person found."
-              options={userOptions}
-              disabled={usersLoading}
+              placeholder={
+                !watchedResponsibleContractor
+                  ? "Select responsible contractor first"
+                  : receivedFromLoading
+                    ? "Loading..."
+                    : "Select contact"
+              }
+              searchPlaceholder="Search contacts..."
+              emptyMessage="No contacts found for this contractor."
+              options={receivedFromOptions}
+              disabled={!watchedResponsibleContractor || receivedFromLoading}
               clearable
             />
 
@@ -558,8 +720,8 @@ export function SubmittalFormPage({
               label="Submittal Manager"
               placeholder={usersLoading ? "Loading..." : "Select person"}
               searchPlaceholder="Search by name or email..."
-              emptyMessage="No matching person found."
-              options={userOptions}
+              emptyMessage="No Alleato employees found."
+              options={managerOptions}
               disabled={usersLoading}
               clearable
             />
@@ -584,6 +746,21 @@ export function SubmittalFormPage({
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="required_on_site_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Required On-Site Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="lead_time"
@@ -607,34 +784,40 @@ export function SubmittalFormPage({
                 </FormItem>
               )}
             />
+
+            <RHFComboboxField
+              control={form.control}
+              name="ball_in_court"
+              label="Ball In Court"
+              placeholder={usersLoading ? "Loading..." : "Select person"}
+              searchPlaceholder="Search by name or email..."
+              emptyMessage="No matching person found."
+              options={userOptions}
+              disabled={usersLoading}
+              clearable
+            />
           </div>
-
-          <FormField
-            control={form.control}
-            name="required_on_site_date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Required On-Site Date</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <RHFComboboxField
-            control={form.control}
-            name="ball_in_court"
-            label="Ball In Court"
-            placeholder={usersLoading ? "Loading..." : "Select person"}
-            searchPlaceholder="Search by name or email..."
-            emptyMessage="No matching person found."
-            options={userOptions}
-            disabled={usersLoading}
-            clearable
-          />
         </section>
+
+        {!isEditing ? (
+          <section className="space-y-4">
+            <SectionRuleHeading label="Attachments" />
+            <FileUploadField
+              value={pendingAttachmentEntries.map((entry) => entry.info)}
+              onChange={handleAttachmentListChange}
+              onFilesSelected={handleAttachmentFilesSelected}
+              multiple
+              maxFiles={10}
+              maxSize={50 * 1024 * 1024}
+              variant="minimal"
+              showMetaText={false}
+              dropzoneTestId="submittal-attachments-dropzone"
+              inputTestId="submittal-attachments-input"
+              fileListTestId="submittal-attachments-list"
+              disabled={isPending}
+            />
+          </section>
+        ) : null}
 
         {/* ── Content ── */}
         <section className="space-y-4">
@@ -675,13 +858,142 @@ export function SubmittalFormPage({
           />
         </section>
 
+        {!isEditing ? (
+          <section className="space-y-4">
+            <SectionRuleHeading label="Submittal Workflow" />
+
+            {(workflowTemplates?.length ?? 0) > 0 ? (
+              <div className="max-w-sm">
+                <FormField
+                  control={form.control}
+                  name="workflow_template_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Workflow Template</FormLabel>
+                      <Select
+                        onValueChange={handleWorkflowTemplateChange}
+                        value={field.value ?? "__none__"}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                workflowTemplatesLoading
+                                  ? "Loading..."
+                                  : "Select template"
+                              }
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="__none__">Build from scratch</SelectItem>
+                          {(workflowTemplates ?? []).map((template) => (
+                            <SelectItem key={template.id} value={template.id}>
+                              {template.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            ) : null}
+
+            <div className="space-y-3">
+              {workflowFieldArray.fields.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <div className="min-w-full divide-y rounded-md border">
+                    <div className="grid grid-cols-[4rem_minmax(16rem,1fr)_12rem_4rem] gap-3 bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
+                      <span>Step</span>
+                      <span>Name</span>
+                      <span>Role</span>
+                      <span className="sr-only">Actions</span>
+                    </div>
+                    {workflowFieldArray.fields.map((field, index) => (
+                      <div
+                        key={field.id}
+                        className="grid grid-cols-[4rem_minmax(16rem,1fr)_12rem_4rem] items-start gap-3 px-3 py-3"
+                      >
+                        <div className="pt-2 text-sm text-muted-foreground">
+                          {index + 1}
+                        </div>
+                        <RHFComboboxField
+                          control={form.control}
+                          name={`initial_workflow_steps.${index}.user_id`}
+                          label="Name"
+                          placeholder={usersLoading ? "Loading..." : "Select person"}
+                          searchPlaceholder="Search by name or email..."
+                          emptyMessage="No matching person found."
+                          options={userOptions}
+                          disabled={usersLoading}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`initial_workflow_steps.${index}.step_type`}
+                          render={({ field: roleField }) => (
+                            <FormItem>
+                              <FormLabel>Role</FormLabel>
+                              <Select
+                                onValueChange={roleField.onChange}
+                                value={roleField.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select role" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {WORKFLOW_ROLE_OPTIONS.map((role) => (
+                                    <SelectItem key={role} value={role}>
+                                      {role}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="mt-6"
+                          aria-label={`Remove workflow step ${index + 1}`}
+                          onClick={() => workflowFieldArray.remove(index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addWorkflowStep}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Step
+              </Button>
+            </div>
+          </section>
+        ) : null}
+
         {/* ── Actions ── */}
         <div className="flex items-center gap-3 pt-2">
           <Button type="submit" disabled={isPending}>
             {isPending
               ? isEditing
                 ? "Updating..."
-                : "Creating..."
+                : isUploadingAttachments
+                  ? "Uploading attachments..."
+                  : "Creating..."
               : isEditing
                 ? "Update Submittal"
                 : "Create Submittal"}

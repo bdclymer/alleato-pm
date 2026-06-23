@@ -3,12 +3,51 @@
 from __future__ import annotations
 
 import mimetypes
+import os
+import signal
+import threading
 from datetime import datetime, timezone
+from contextlib import contextmanager
 from pathlib import PurePosixPath
-from typing import Any, Optional
+from typing import Any, Iterator, Optional
 
 
 DOCUMENT_BUCKET = "documents"
+
+
+def _env_int(name: str, default: int, *, minimum: int = 1) -> int:
+    try:
+        value = int(os.getenv(name, str(default)))
+    except ValueError:
+        return default
+    return max(minimum, value)
+
+
+@contextmanager
+def _project_document_timeout() -> Iterator[None]:
+    timeout_seconds = _env_int("GRAPH_PROJECT_DOCUMENT_UPSERT_TIMEOUT_SECONDS", 8)
+    alarm_enabled = (
+        threading.current_thread() is threading.main_thread()
+        and hasattr(signal, "SIGALRM")
+        and hasattr(signal, "alarm")
+    )
+    previous_handler = None
+
+    def _raise_timeout(_signum: int, _frame: Any) -> None:
+        raise TimeoutError(
+            f"project document promotion exceeded {timeout_seconds}s"
+        )
+
+    if alarm_enabled:
+        previous_handler = signal.getsignal(signal.SIGALRM)
+        signal.signal(signal.SIGALRM, _raise_timeout)
+        signal.alarm(timeout_seconds)
+    try:
+        yield
+    finally:
+        if alarm_enabled:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, previous_handler)
 
 
 def source_path(folder_path: str, name: str) -> str:
@@ -103,20 +142,21 @@ def upsert_project_document_by_source(supabase_client, payload: dict) -> str:
     if not project_id or not source_system or not source_item_id:
         raise ValueError("project_id, source_system, and source_item_id are required for source-backed documents")
 
-    existing = (
-        supabase_client.from_("project_documents")
-        .select("id")
-        .eq("project_id", project_id)
-        .eq("source_system", source_system)
-        .eq("source_item_id", source_item_id)
-        .is_("deleted_at", "null")
-        .limit(1)
-        .execute()
-    )
-    rows = existing.data or []
-    if rows:
-        supabase_client.from_("project_documents").update(payload).eq("id", rows[0]["id"]).execute()
-        return "updated"
+    with _project_document_timeout():
+        existing = (
+            supabase_client.from_("project_documents")
+            .select("id")
+            .eq("project_id", project_id)
+            .eq("source_system", source_system)
+            .eq("source_item_id", source_item_id)
+            .is_("deleted_at", "null")
+            .limit(1)
+            .execute()
+        )
+        rows = existing.data or []
+        if rows:
+            supabase_client.from_("project_documents").update(payload).eq("id", rows[0]["id"]).execute()
+            return "updated"
 
-    supabase_client.from_("project_documents").insert(payload).execute()
-    return "inserted"
+        supabase_client.from_("project_documents").insert(payload).execute()
+        return "inserted"

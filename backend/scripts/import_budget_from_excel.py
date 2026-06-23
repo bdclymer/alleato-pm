@@ -5,7 +5,7 @@ Import budget data from Excel file into Supabase for a project.
 Usage:
     cd backend
     source .venv/bin/activate
-    PYTHONPATH="src/services:src/workers" python scripts/import_budget_from_excel.py --file path/to/budget.xlsx --project-id 67
+    PYTHONPATH="src" python scripts/import_budget_from_excel.py --file path/to/budget.xlsx --project-id 67
 """
 
 import argparse
@@ -15,9 +15,9 @@ from datetime import datetime, UTC
 from typing import Optional, List, Dict
 import openpyxl
 
-# Add paths for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'services'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'workers'))
+# Add canonical backend src path for imports. Retired worker package paths must
+# not be reintroduced; background ingestion lives under src/services.
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 # Load environment variables
 from dotenv import load_dotenv
@@ -36,7 +36,7 @@ for env_path in env_locations:
         print(f"Loaded env from: {env_path}")
         break
 
-from supabase_helpers import get_supabase_client
+from services.supabase_helpers import get_supabase_client
 
 
 def read_excel_budget(file_path: str) -> Dict:

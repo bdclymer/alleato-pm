@@ -15,6 +15,7 @@ const CreateCompanySchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   website: z.string().optional(),
+  license_number: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -22,6 +23,7 @@ const CompanyResponseSchema = z.object({
   id: z.string(),
   name: z.string(),
   type: z.string().nullable().optional(),
+  license_number: z.string().nullable().optional(),
 });
 
 export const GET = withApiGuardrails("/api/companies#GET", async ({ request }) => {
@@ -77,6 +79,7 @@ export const GET = withApiGuardrails("/api/companies#GET", async ({ request }) =
     contact_phone: r.contact_phone ?? undefined,
     address: r.address ?? undefined,
     tax_id: r.tax_id ?? undefined,
+    license_number: r.license_number ?? undefined,
   }));
   validateResponseContract(
     z.array(CompanyResponseSchema),
@@ -115,6 +118,7 @@ export const POST = withApiGuardrails("/api/companies#POST", async ({ request })
       city: body.city,
       state: body.state,
       website: body.website,
+      license_number: body.license_number,
       notes: body.notes,
     })
     .select()

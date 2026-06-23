@@ -874,7 +874,22 @@ export default function ProjectContractDetailPage() {
           .filter((item) => item.markup_type)
           .map((item) => [item.markup_type as string, item]),
       );
-      const itemsToPersist = sovItems.map((item, index) => {
+      // Auto-sort SOV line items by cost code (ascending) before assigning
+      // line numbers, so the saved order is grouped by budget/cost code.
+      // Unmapped lines (no resolvable cost code) sort to the bottom.
+      const costCodeForSort = (item: (typeof sovItems)[number]): string | null =>
+        (item.budgetCodeId ? budgetCodeIdToCostCode.get(item.budgetCodeId) : null) ??
+        existingCostCodeByLineId.get(item.id) ??
+        null;
+      const sortedSovItems = [...sovItems].sort((a, b) => {
+        const ca = costCodeForSort(a);
+        const cb = costCodeForSort(b);
+        if (ca === cb) return 0;
+        if (ca == null) return 1;
+        if (cb == null) return -1;
+        return ca.localeCompare(cb, undefined, { numeric: true });
+      });
+      const itemsToPersist = sortedSovItems.map((item, index) => {
         const budgetCodeId = item.budgetCodeId || "";
         const existingMarkupLineItem =
           item.isMarkup && item.markupType
@@ -1004,7 +1019,12 @@ export default function ProjectContractDetailPage() {
       );
     }
 
-    const sovItems = lineItems.filter((item) => !item.markup_type).map((item) => {
+    // Include ALL line items (including legacy markup_type-tagged rows) as regular
+    // editable SOV lines. Markups are no longer auto-applied, so previously
+    // auto-generated markup lines must surface here — otherwise they'd be absent
+    // from the form and silently deleted on the next save. On save they persist
+    // with markup_type=null, permanently converting them to regular line items.
+    const sovItems = lineItems.map((item) => {
       const budgetCodeResolution = resolveContractLineBudgetCode(item, budgetCodes);
       return {
         id: item.id, budgetCodeId: budgetCodeResolution.budgetCodeId, budgetCodeLabel: budgetCodeResolution.budgetCode?.fullLabel ?? (item.cost_code ? `${item.cost_code.code} ${item.cost_code.name}` : undefined),
@@ -1035,6 +1055,14 @@ export default function ProjectContractDetailPage() {
       </PageShell>
     );
   }
+
+  const approvedChangeOrdersAmount =
+    changeOrders.length > 0
+      ? changeOrders.reduce((sum, co) => {
+          const status = (co.status || "").toLowerCase();
+          return status === "approved" ? sum + (Number(co.amount) || 0) : sum;
+        }, 0)
+      : Number(contract.approved_change_orders) || 0;
 
   return (
     <PageShell
@@ -1187,6 +1215,7 @@ export default function ProjectContractDetailPage() {
             onDeleteSovLine={sov.handleDeleteSovLine}
             onImportEstimateToSov={() => setShowEstimateImportModal(true)}
             invoicedAmount={contract.invoiced_amount}
+            approvedChangesAmount={approvedChangeOrdersAmount}
           />
         )}
 

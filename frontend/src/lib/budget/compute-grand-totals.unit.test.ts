@@ -1,5 +1,6 @@
 import {
   EMPTY_GRAND_TOTALS,
+  consumeCostAggregationOnce,
   normalizeBudgetCode,
   normalizeBudgetCodeLookupKey,
   reduceGrandTotals,
@@ -151,5 +152,35 @@ describe("reduceGrandTotals", () => {
     expect(totals.projectedOverUnder).toBe(-20);
     expect(totals.revisedBudget).toBe(100);
     expect(totals.projectedCosts).toBe(120);
+  });
+});
+
+describe("consumeCostAggregationOnce", () => {
+  it("returns cost-code rollups only once for duplicate budget rows", () => {
+    const consumed = new Set<string>();
+    const costsByCode = {
+      "09-9123": {
+        jobToDateCostDetail: 100,
+        directCosts: 25,
+        pendingCostChanges: 50,
+        committedCosts: 200,
+        approvedBudgetChanges: 10,
+        pendingBudgetChanges: 5,
+      },
+    };
+
+    expect(
+      consumeCostAggregationOnce("09-9123", costsByCode, consumed),
+    ).toEqual(costsByCode["09-9123"]);
+    expect(
+      consumeCostAggregationOnce("09-9123", costsByCode, consumed),
+    ).toEqual({
+      jobToDateCostDetail: 0,
+      directCosts: 0,
+      pendingCostChanges: 0,
+      committedCosts: 0,
+      approvedBudgetChanges: 0,
+      pendingBudgetChanges: 0,
+    });
   });
 });

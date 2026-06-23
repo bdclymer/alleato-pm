@@ -276,23 +276,53 @@ def rewrite_action_items(
     last_error: Optional[str] = None
     for attempt in range(REWRITER_EMPTY_RESPONSE_RETRIES + 1):
         try:
-            response = retry_ai_call(
-                lambda: get_openai_client().chat.completions.create(
-                    model=REWRITER_MODEL,
-                    messages=[
+            def _create_completion(*, use_response_format: bool = True):
+                kwargs = {
+                    "model": REWRITER_MODEL,
+                    "messages": [
                         {"role": "system", "content": _REWRITER_SYSTEM_PROMPT},
                         {"role": "user", "content": user_prompt},
                     ],
-                    max_completion_tokens=REWRITER_MAX_COMPLETION_TOKENS,
-                    response_format={"type": "json_object"},
-                ),
+                    "max_completion_tokens": REWRITER_MAX_COMPLETION_TOKENS,
+                }
+                if use_response_format:
+                    kwargs["response_format"] = {"type": "json_object"}
+                return get_openai_client().chat.completions.create(**kwargs)
+
+            response = retry_ai_call(
+                lambda: _create_completion(use_response_format=True),
                 provider_name="OpenAI",
                 operation="fireflies task rewrite",
             )
         except Exception as exc:
-            last_error = str(exc)
-            logger.error("[FirefliesTaskRewriter] OpenAI call failed: %s", exc)
-            break
+            message = str(exc).lower()
+            response_format_rejected = (
+                "response_format" in message
+                and (
+                    "invalid input" in message
+                    or "invalid_request_error" in message
+                    or "unsupported" in message
+                )
+            )
+            if not response_format_rejected:
+                last_error = str(exc)
+                logger.error("[FirefliesTaskRewriter] OpenAI call failed: %s", exc)
+                break
+
+            logger.warning(
+                "[FirefliesTaskRewriter] %s rejected response_format=json_object; retrying once with prompt-only JSON contract.",
+                REWRITER_MODEL,
+            )
+            try:
+                response = retry_ai_call(
+                    lambda: _create_completion(use_response_format=False),
+                    provider_name="OpenAI",
+                    operation="fireflies task rewrite without response_format",
+                )
+            except Exception as fallback_exc:
+                last_error = str(fallback_exc)
+                logger.error("[FirefliesTaskRewriter] OpenAI fallback call failed: %s", fallback_exc)
+                break
 
         finish_reason = response.choices[0].finish_reason
         raw = (response.choices[0].message.content or "").strip()

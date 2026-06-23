@@ -152,6 +152,24 @@ class _AttachmentListFailureGraph(_DeltaGraph):
         raise TimeoutError("attachment list timed out")
 
 
+class _AttachmentListCaptureGraph:
+    def __init__(self):
+        self.calls = []
+
+    def get_all_pages(self, path, params=None, **kwargs):
+        self.calls.append({"path": path, "params": params or {}, "kwargs": kwargs})
+        return [{"id": "attachment-1", "name": "permit.pdf", "size": 100}]
+
+
+class _AttachmentDetailCaptureGraph:
+    def __init__(self):
+        self.calls = []
+
+    def get(self, path, params=None, **kwargs):
+        self.calls.append({"path": path, "params": params or {}, "kwargs": kwargs})
+        return {"id": "attachment/1=", "contentBytes": "YQ=="}
+
+
 class _NonProjectFinanceGraph(_DeltaGraph):
     def get_delta(self, base_path, _delta_token):
         if "Inbox" not in base_path:
@@ -236,6 +254,23 @@ class _LearnedNotProjectRuleGraph(_DeltaGraph):
         ], "inbox-token"
 
 
+class _ManyMessagesGraph(_DeltaGraph):
+    def get_delta(self, base_path, _delta_token):
+        if "Inbox" not in base_path:
+            return [], "sent-token"
+        template = super().get_delta(base_path, _delta_token)[0][0]
+        return [
+            {
+                **template,
+                "id": f"message-raw-{index}",
+                "subject": f"Project schedule coordination {index}",
+                "internetMessageId": f"<message-raw-{index}@example.com>",
+                "conversationId": f"conversation-raw-{index}",
+            }
+            for index in range(1, 5)
+        ], "inbox-token"
+
+
 def test_sync_outlook_emails_assigns_project_before_rag_intake(monkeypatch):
     supabase = _Supabase()
     _route_outlook_intake_clients(monkeypatch, supabase)
@@ -268,6 +303,28 @@ def test_sync_outlook_emails_assigns_project_before_rag_intake(monkeypatch):
     assert row["document_metadata_id"] is not None
     assert row["source_metadata"]["project_assignment"]["status"] == "assigned"
     assert row["source_metadata"]["project_assignment"]["confidence"] == 0.98
+
+
+def test_sync_outlook_emails_respects_mailbox_message_cap(monkeypatch):
+    supabase = _Supabase()
+    _route_outlook_intake_clients(monkeypatch, supabase)
+    monkeypatch.setattr(outlook, "get_graph_client", lambda: _ManyMessagesGraph())
+    monkeypatch.setattr(outlook, "OUTLOOK_SYNC_MAX_MESSAGES_PER_MAILBOX", 2)
+    monkeypatch.setattr(outlook, "_run_source_intelligence_compiler", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(outlook, "infer_project_id", lambda *_args, **_kwargs: (876, "title_match", 0.98))
+
+    synced, token = outlook.sync_outlook_emails(
+        supabase,
+        "bclymer@alleatogroup.com",
+        project_keywords=[],
+    )
+
+    assert synced == 2
+    assert token == "inbox:inbox-token|sent:sent-token"
+    assert [row["graph_message_id"] for row in supabase.store["outlook_email_intake"]] == [
+        "message-raw-1",
+        "message-raw-2",
+    ]
 
 
 def test_sync_outlook_emails_marks_clear_non_project_mail(monkeypatch):
@@ -359,9 +416,80 @@ def test_sync_outlook_emails_records_attachment_list_failure_on_intake(monkeypat
     assert row["source_metadata"]["intake_attachment_count_synced"] == 0
 
 
+def test_list_message_attachments_uses_metadata_only_short_timeout(monkeypatch):
+    graph = _AttachmentListCaptureGraph()
+    monkeypatch.setattr(outlook, "OUTLOOK_ATTACHMENT_LIST_TIMEOUT_SECONDS", 7)
+
+    attachments = outlook._list_message_attachments(
+        graph,
+        "bclymer@alleatogroup.com",
+        {"id": "message-1", "hasAttachments": True},
+        set(),
+    )
+
+    assert attachments == [{"id": "attachment-1", "name": "permit.pdf", "size": 100}]
+    call = graph.calls[0]
+    assert call["path"] == "/users/bclymer@alleatogroup.com/messages/message-1/attachments"
+    assert call["params"]["$select"] == "id,name,contentType,size,isInline,lastModifiedDateTime"
+    assert "contentBytes" not in call["params"]["$select"]
+    assert call["kwargs"]["max_pages"] == 1
+    assert call["kwargs"]["max_items"] == outlook.MAX_ATTACHMENTS_PER_EMAIL
+    assert call["kwargs"]["timeout"] == 7
+    assert call["kwargs"]["max_retries"] == 1
+
+
+def test_fetch_file_attachment_detail_escapes_graph_path_ids():
+    graph = _AttachmentDetailCaptureGraph()
+
+    detail = outlook._fetch_file_attachment_detail(
+        graph,
+        "awehner@alleatogroup.com",
+        "message/1=",
+        "attachment/1=",
+    )
+
+    assert detail["id"] == "attachment/1="
+    call = graph.calls[0]
+    assert call["path"] == (
+        "/users/awehner@alleatogroup.com/messages/message%2F1%3D/"
+        "attachments/attachment%2F1%3D/microsoft.graph.fileAttachment"
+    )
+    assert call["params"]["$select"] == "id,name,contentType,size,isInline,contentBytes"
+
+
+def test_outlook_source_intelligence_is_queued_by_default(monkeypatch):
+    queued = []
+    monkeypatch.setattr(outlook, "OUTLOOK_INLINE_SOURCE_INTELLIGENCE", False)
+    monkeypatch.setattr(
+        outlook,
+        "enqueue_source_intelligence_job",
+        lambda _client, doc_id, **kwargs: queued.append({"doc_id": doc_id, **kwargs}) or {"id": "job-1", "status": "queued"},
+    )
+    monkeypatch.setattr(
+        outlook,
+        "process_source_document_to_packet",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("inline compiler should not run")),
+    )
+
+    outlook._run_source_intelligence_compiler(object(), "outlook_message-1")
+
+    assert queued == [
+        {
+            "doc_id": "outlook_message-1",
+            "job_type": "attribution",
+            "priority": 0,
+            "input_snapshot": {
+                "path": "outlook.sync_outlook_emails",
+                "reason": "queued_to_keep_mailbox_sync_fresh",
+            },
+        }
+    ]
+
+
 def test_outlook_intake_attachment_stores_bytea_hex_content(monkeypatch):
     supabase = _Supabase()
     _route_outlook_intake_clients(monkeypatch, supabase)
+    monkeypatch.setattr(outlook, "OUTLOOK_INTAKE_ATTACHMENT_CONTENT_MAX_BYTES", 8 * 1024 * 1024)
     attachment = {
         "@odata.type": "#microsoft.graph.fileAttachment",
         "id": "attachment-1",

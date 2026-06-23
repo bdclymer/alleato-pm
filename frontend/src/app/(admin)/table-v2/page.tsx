@@ -29,6 +29,7 @@ interface CompanyData {
   city: string | null;
   state: string | null;
   website: string | null;
+  license_number: string | null;
   currency_code: string | null;
   currency_symbol: string | null;
   notes: string | null;

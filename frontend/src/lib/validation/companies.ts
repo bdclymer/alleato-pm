@@ -22,6 +22,7 @@ const CompanySchema = z
     city: z.string().nullable().optional(),
     state: z.string().nullable().optional(),
     zip: z.string().nullable().optional(),
+    license_number: z.string().nullable().optional(),
     website: z.string().nullable().optional(),
     created_at: z.string().nullable().optional(),
     updated_at: z.string().nullable().optional(),

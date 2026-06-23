@@ -5,15 +5,10 @@
  * unit-testable without importing the full Next.js route (which has server-only
  * dependencies). The route imports these types/functions directly from here.
  *
- * Background: All AI tools are globally disabled (modelTools = undefined) as a
- * workaround for an AI Gateway finishReason:other bug. Server-side pre-retrieval
- * via detectSourceSpecificRagRequest is the only data path for queries that match
- * known patterns. Keeping this logic in a standalone module makes it testable and
+ * Background: source-specific requests should use deterministic server-side
+ * retrieval before model synthesis, even though the assistant also has AI SDK
+ * tools. Keeping this logic in a standalone module makes it testable and
  * prevents silent regression when patterns are added or removed.
- *
- * TODO(tool-reenable): This entire module is a workaround for the AI Gateway
- * finishReason:other bug (modelTools = undefined). When tools are re-enabled,
- * delete this file and restore the tool-calling path in chat/route.ts.
  */
 
 export type SourceSpecificRagKind =
@@ -197,8 +192,8 @@ export function detectRecentEmailInboxRequest(message: string): RecentEmailInbox
  * Detects whether the user message targets a specific data source that should be
  * retrieved server-side before the model responds.
  *
- * This bypasses the AI Gateway tool-calling bug (modelTools = undefined) by
- * injecting context directly into the system prompt on the server side.
+ * This injects source-grounded context directly into the system prompt on the
+ * server side before the assistant's AI SDK tool loop runs.
  *
  * Returns null if no source-specific pattern is matched, in which case the
  * standard shouldForceBusinessRetrieval / noToolRetry paths apply.

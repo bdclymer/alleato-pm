@@ -146,6 +146,10 @@ interface CostCodeOption {
   division_title: string | null;
 }
 
+type PurchaseOrderCompanyOption = CompanyOption & {
+  licenseNumber?: string | null;
+};
+
 const STATUS_OPTIONS = [
   { value: "Draft", label: "Draft" },
   { value: "Approved", label: "Approved" },
@@ -201,7 +205,7 @@ export function CreatePurchaseOrderForm({
   const [expandedDivisions, setExpandedDivisions] = React.useState<Set<string>>(new Set());
   const [isCreatingBudgetCode, setIsCreatingBudgetCode] = React.useState(false);
 
-  const [vendorOptions, setVendorOptions] = React.useState<CompanyOption[]>([]);
+  const [vendorOptions, setVendorOptions] = React.useState<PurchaseOrderCompanyOption[]>([]);
   const [isLoadingVendors, setIsLoadingVendors] = React.useState(true);
 
   React.useEffect(() => {
@@ -211,8 +215,13 @@ export function CreatePurchaseOrderForm({
         const data = await apiFetch<Array<{
           id: string;
           vendor_name: string;
+          license_number?: string | null;
         }>>(`/api/projects/${projectId}/vendors`);
-        const options = (data || []).map((v) => ({ value: v.id, label: v.vendor_name }));
+        const options = (data || []).map((v) => ({
+          value: v.id,
+          label: v.vendor_name,
+          licenseNumber: v.license_number ?? null,
+        }));
 
         // Ensure the saved company appears in options even if not in project vendors
         if (
@@ -223,6 +232,7 @@ export function CreatePurchaseOrderForm({
           options.unshift({
             value: initialData.contractCompanyId,
             label: initialData.contractCompanyName,
+            licenseNumber: initialData.companyLicenseNumber ?? null,
           });
         }
 
@@ -251,6 +261,7 @@ export function CreatePurchaseOrderForm({
       },
       title: initialData?.title || "",
       contractCompanyId: initialData?.contractCompanyId || "",
+      companyLicenseNumber: initialData?.companyLicenseNumber || "",
       description: initialData?.description || "",
       assignedTo: initialData?.assignedTo || "",
       billTo: initialData?.billTo || "",
@@ -284,6 +295,19 @@ export function CreatePurchaseOrderForm({
     });
   }, [projectContactOptions, companyContactOptions]);
   const loadingContacts = loadingProjectContacts || loadingCompanyContacts;
+
+  const selectedVendor = React.useMemo(
+    () => vendorOptions.find((vendor) => vendor.value === contractCompanyId) ?? null,
+    [contractCompanyId, vendorOptions],
+  );
+
+  React.useEffect(() => {
+    if (!selectedVendor) return;
+    setValue("companyLicenseNumber", selectedVendor.licenseNumber ?? "", {
+      shouldDirty: false,
+      shouldValidate: false,
+    });
+  }, [selectedVendor, setValue]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -596,6 +620,14 @@ export function CreatePurchaseOrderForm({
             label="Status"
             options={STATUS_OPTIONS}
             disabled={isSubmitting}
+          />
+
+          <RHFTextField
+            control={control}
+            name="companyLicenseNumber"
+            label="License Number"
+            placeholder="e.g., CGC #1537130"
+            disabled={isSubmitting || !contractCompanyId}
           />
         </FormGrid>
 

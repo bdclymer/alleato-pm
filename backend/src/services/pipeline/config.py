@@ -42,12 +42,12 @@ MODEL_TEXT_CLEANUP: str = _env_first(
 )
 MODEL_SIGNAL_EXTRACTION_TARGET: str = _env_first(
     "PIPELINE_MODEL_SIGNAL_EXTRACTION_TARGET",
-    default="gpt-5.5-mini",
+    default="gpt-5.4-mini",
 )
 MODEL_SIGNAL_EXTRACTION: str = _env_first(
     "PIPELINE_MODEL_SIGNAL_EXTRACTION",
     "COMPILER_MODEL_LIGHT",
-    default="gpt-5.5-mini",
+    default="gpt-5.4-mini",
 )
 MODEL_PROJECT_INTELLIGENCE: str = _env_first(
     "PIPELINE_MODEL_PROJECT_INTELLIGENCE",

@@ -37,6 +37,10 @@ export function PrimeContractChangeEventsTab({
       {
         id: "number",
         label: "#",
+        // CE numbers are text identifiers (e.g. "CE-5092-0001"), not numeric
+        // values — force left alignment so they hug the column start. Without
+        // this the "#" label triggers auto right-alignment in resolveColumnAlignment.
+        align: "left",
         render: (ce) => (
           <span className="font-medium text-foreground">{ce.number ?? "—"}</span>
         ),

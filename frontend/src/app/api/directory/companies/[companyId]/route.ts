@@ -101,6 +101,7 @@ export const PATCH = withApiGuardrails(
         ...(body.city !== undefined && { city: body.city }),
         ...(body.state !== undefined && { state: body.state }),
         ...(body.website !== undefined && { website: body.website }),
+        ...(body.license_number !== undefined && { license_number: body.license_number }),
         ...(body.company_type !== undefined && { type: body.company_type }),
         ...(body.type !== undefined && { type: body.type }),
         ...(body.status !== undefined && { status: body.status }),

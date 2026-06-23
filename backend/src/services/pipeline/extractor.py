@@ -675,9 +675,10 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
             "[Extractor] Skipping Fireflies task replacement for non-meeting metadata_id=%s",
             metadata_id,
         )
+    persisted_task_count = 0
     for task in tasks_to_persist:
         rewriter_match = rewriter_lookup.get((task.description or "").strip().lower())
-        _upsert_task(
+        if _upsert_task(
             client,
             task,
             metadata_id,
@@ -685,7 +686,8 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
             doc_project_id,
             metadata.get("client_id"),
             rewriter_match=rewriter_match,
-        )
+        ):
+            persisted_task_count += 1
     # Route decisions / risks / opportunities into the packet-first intelligence
     # layer (insight_cards) via the same candidate -> promotion path the Teams
     # compiler uses. Replaces the deprecated no-op _upsert_insight writer so
@@ -714,7 +716,9 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         "decisions": len(structured.decisions),
         "risks": len(structured.risks),
         "opportunities": len(structured.opportunities),
-        "tasks": len(tasks_to_persist),
+        "tasks": persisted_task_count,
+        "tasksAttempted": len(tasks_to_persist),
+        "tasksSkipped": max(len(tasks_to_persist) - persisted_task_count, 0),
         "signalsWritten": signal_result.get("signals_written", 0),
         "signalsPromoted": signal_result.get("signals_promoted", 0),
     }
@@ -1021,7 +1025,7 @@ def _upsert_task(
     client_id: int | None = None,
     rewriter_match: Any = None,
     source_system: str = "fireflies",
-) -> None:
+) -> bool:
     resolved_project_id = project_id
     if resolved_project_id is None and project_ids:
         try:
@@ -1036,7 +1040,7 @@ def _upsert_task(
             task.assignee,
             (task.description or "")[:80],
         )
-        return
+        return False
 
     # Only employees can own tasks. Skip external owners.
     assignee = TaskAssigneeResolver(client).resolve(task.assignee, task.assignee_email)
@@ -1047,7 +1051,7 @@ def _upsert_task(
             assignee.person_type,
             (task.description or "")[:120],
         )
-        return
+        return False
 
     title = (rewriter_match.title if rewriter_match else None) or _derive_title(task.description)
     if not title:
@@ -1055,7 +1059,7 @@ def _upsert_task(
             "Skipping task with no derivable title: description=%r",
             (task.description or "")[:120],
         )
-        return
+        return False
 
     extraction_metadata: Dict[str, Any] = {
         "assignee_resolution_method": assignee.method,
@@ -1133,3 +1137,4 @@ def _upsert_task(
         data,
         on_conflict="metadata_id,description",
     ).execute()
+    return True

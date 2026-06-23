@@ -309,7 +309,7 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right">
         <form onSubmit={handleSubmit}>
-          <div className="space-y-6">
+          <div className="space-y-6 px-6 pt-6">
             <SheetHeader className="px-0 pt-0 pb-2">
               <SheetTitle className="text-xl font-semibold text-left">Edit Project</SheetTitle>
             </SheetHeader>
@@ -554,7 +554,7 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
             </section>
           </div>
 
-          <SheetFooter className="px-0">
+          <SheetFooter className="px-6 pb-6">
             <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
               Cancel
             </Button>

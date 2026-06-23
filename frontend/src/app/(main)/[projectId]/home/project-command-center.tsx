@@ -21,6 +21,8 @@ import {
   FileSpreadsheet,
   FileText,
   Image,
+  Mail,
+  Phone,
   Presentation,
   Users,
 } from "lucide-react";
@@ -912,56 +914,82 @@ export function SidebarTeamSection({
 
   return (
     <div className="space-y-2">
-      <Tabs value={activeGroup} onValueChange={(value) => setActiveGroup(value as "internal" | "subcontractor")}>
-        <TabsList className="h-8">
-          <TabsTrigger value="internal" className="h-7 text-xs">
-            Internal ({internalSlots.length})
-          </TabsTrigger>
-          <TabsTrigger value="subcontractor" className="h-7 text-xs">
-            Subs ({subcontractorSlots.length})
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="flex items-center gap-4 text-[11px] font-medium">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setActiveGroup("internal")}
+          className={cn(
+            "h-auto p-0 hover:bg-transparent",
+            activeGroup === "internal" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          Internal {internalSlots.length}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setActiveGroup("subcontractor")}
+          className={cn(
+            "h-auto p-0 hover:bg-transparent",
+            activeGroup === "subcontractor" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          Subs {subcontractorSlots.length}
+        </Button>
+      </div>
       {visibleSlots.length === 0 ? (
         <div className="py-3 text-xs text-muted-foreground">
           No {activeGroup === "internal" ? "internal team members" : "subcontractors"} assigned.
         </div>
-      ) : visibleSlots.map(({ key, roleName, displayName, email, phone }) => (
-        <Button
-          key={key}
-          asChild
-          variant="ghost"
-          className="h-auto w-full justify-start gap-2 px-2 py-1.5 text-left hover:bg-muted/40 -mx-2 rounded-md"
-        >
-          <Link href={`/${projectId}/directory`}>
-            {displayName ? (
-              <>
-                <Avatar className="h-6 w-6 shrink-0">
-                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                    {initials(displayName)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid min-w-0 flex-1 grid-cols-[minmax(5rem,1.1fr)_minmax(4rem,0.8fr)_minmax(6rem,1.2fr)_minmax(4.5rem,0.8fr)] items-center gap-2 text-left">
-                  <span className="truncate text-xs font-medium text-foreground">{displayName}</span>
-                  <span className="truncate text-[11px] text-muted-foreground">{roleName}</span>
-                  <span className="truncate text-[11px] text-muted-foreground">{email || "—"}</span>
-                  <span className="truncate text-[11px] text-muted-foreground">{phone || "—"}</span>
+      ) : (
+        <div className="space-y-0.5">
+          {visibleSlots.map(({ key, roleName, displayName, email, phone }) => (
+            <div
+              key={key}
+              className="-mx-2 flex items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-muted/40"
+            >
+              <Link href={`/${projectId}/directory`} className="flex min-w-0 flex-1 items-center gap-2.5">
+                {displayName ? (
+                  <Avatar className="h-7 w-7 shrink-0">
+                    <AvatarFallback className="bg-primary/10 text-[10px] text-primary">
+                      {initials(displayName)}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <div className="h-7 w-7 shrink-0 rounded-full border border-dashed border-border/60" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-xs font-medium text-foreground">
+                    {displayName ?? <span className="italic text-muted-foreground">Unassigned</span>}
+                  </div>
+                  <div className="truncate text-[11px] text-muted-foreground">{roleName}</div>
                 </div>
-              </>
-            ) : (
-              <>
-                <div className="h-6 w-6 shrink-0 rounded-full border border-dashed border-border/60" />
-                <div className="grid min-w-0 flex-1 grid-cols-[minmax(5rem,1.1fr)_minmax(4rem,0.8fr)_minmax(6rem,1.2fr)_minmax(4.5rem,0.8fr)] items-center gap-2 text-left">
-                  <span className="truncate text-xs text-muted-foreground italic">Unassigned</span>
-                  <span className="truncate text-[11px] text-muted-foreground">{roleName}</span>
-                  <span className="truncate text-[11px] text-muted-foreground">—</span>
-                  <span className="truncate text-[11px] text-muted-foreground">—</span>
-                </div>
-              </>
-            )}
-          </Link>
-        </Button>
-      ))}
+              </Link>
+              <div className="flex shrink-0 items-center gap-1.5">
+                {email && (
+                  <a
+                    href={`mailto:${email}`}
+                    aria-label={`Email ${displayName ?? roleName}`}
+                    className="text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                {phone && (
+                  <a
+                    href={`tel:${phone}`}
+                    aria-label={`Call ${displayName ?? roleName}`}
+                    className="text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    <Phone className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

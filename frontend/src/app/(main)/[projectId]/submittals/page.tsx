@@ -14,6 +14,7 @@ import {
   MoreVertical,
   Plus,
   RotateCcw,
+  Save,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -27,6 +28,7 @@ import {
   type TableColumn,
 } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -40,8 +42,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+} from "@/components/ds";
+import { PageShell, PageTabs } from "@/components/layout";
+import { FormSection, ToggleField } from "@/components/forms";
 import {
   useSubmittals,
   useDeleteSubmittal,
@@ -62,9 +84,170 @@ import {
   type SubmittalTableRow,
 } from "@/features/submittals/submittals-table-config";
 import { useConfirm } from "@/hooks/use-confirm";
+import { useContacts } from "@/hooks/use-contacts";
+import {
+  useDirectoryPermissions,
+  type PermissionLevel,
+} from "@/hooks/use-directory-permissions";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type SubmittalFilterState = Record<string, FilterValue>;
+
+type SubmittalSettings = {
+  project_id: number;
+  default_submittal_manager_id: string | null;
+  default_distribution: string | null;
+  package_sort_order: "ascending" | "descending";
+  default_submit_response_days: number;
+  include_spec_section_number: boolean;
+  submittals_private_by_default: boolean;
+  allow_approvers_to_add_reviewers: boolean;
+  approver_responses_required_by_default: boolean;
+  enable_reject_workflow: boolean;
+  enable_dynamic_approver_due_dates: boolean;
+  enable_overdue_email_reminders: boolean;
+  enable_qr_codes: boolean;
+  enable_schedule_calculations: boolean;
+  allow_email_attachment_download_without_login: boolean;
+  email_notify_submittal_created: boolean;
+  email_notify_submittal_updated: boolean;
+  email_notify_submittal_distributed: boolean;
+  email_notify_submittal_closed: boolean;
+  updated_at: string | null;
+};
+
+type SubmittalSettingsKey = keyof Omit<
+  SubmittalSettings,
+  "project_id" | "updated_at"
+>;
+
+type SubmittalsPageTab = {
+  label: string;
+  href: string;
+  count?: number;
+  isActive?: boolean;
+  testId?: string;
+};
+
+type SubmittalSettingsSection =
+  | "general"
+  | "responses"
+  | "workflow-templates"
+  | "replace-workflow-user"
+  | "imports"
+  | "custom-reports"
+  | "permissions";
+
+type EmailNotificationRole =
+  | "creator"
+  | "manager"
+  | "submitter"
+  | "approver"
+  | "reviewer"
+  | "distribution";
+
+type EmailNotificationRow = {
+  event: string;
+} & Record<EmailNotificationRole, boolean>;
+
+const SETTINGS_TAB_PARAM = "settings_tab";
+
+const SUBMITTAL_SETTINGS_TABS: Array<{
+  label: string;
+  value: SubmittalSettingsSection;
+}> = [
+  { label: "General", value: "general" },
+  { label: "Responses", value: "responses" },
+  { label: "Workflow Templates", value: "workflow-templates" },
+  { label: "Replace Workflow User", value: "replace-workflow-user" },
+  { label: "Imports", value: "imports" },
+  { label: "Custom Reports", value: "custom-reports" },
+  { label: "Permissions", value: "permissions" },
+];
+
+const WORKFLOW_RESPONSE_ROWS = [
+  ["Approved", "Approved"],
+  ["Approved As Noted", "Approved as Noted"],
+  ["For Record Only", "For Record Only"],
+  ["Pending", "Pending"],
+  ["Rejected", "Rejected"],
+  ["Revise And Resubmit", "Revise and Resubmit"],
+  ["Submitted", "Submitted"],
+  ["Void", "Void"],
+] as const;
+
+const EMAIL_NOTIFICATION_ROWS: EmailNotificationRow[] = [
+  {
+    event: "Submittal Created",
+    creator: false,
+    manager: true,
+    submitter: false,
+    approver: false,
+    reviewer: false,
+    distribution: true,
+  },
+  {
+    event: '"Submitter" Role Submits (via Workflow)',
+    creator: false,
+    manager: true,
+    submitter: false,
+    approver: false,
+    reviewer: false,
+    distribution: false,
+  },
+  {
+    event: '"Approver" Role Responds (via Workflow)',
+    creator: false,
+    manager: true,
+    submitter: false,
+    approver: true,
+    reviewer: false,
+    distribution: true,
+  },
+  {
+    event: '"Reviewer" Responds (via Workflow)',
+    creator: false,
+    manager: false,
+    submitter: false,
+    approver: true,
+    reviewer: false,
+    distribution: false,
+  },
+  {
+    event: "Submittal Closed (Not Distributed)",
+    creator: false,
+    manager: true,
+    submitter: false,
+    approver: false,
+    reviewer: false,
+    distribution: false,
+  },
+  {
+    event: "Submittal Distributed",
+    creator: false,
+    manager: true,
+    submitter: true,
+    approver: false,
+    reviewer: false,
+    distribution: true,
+  },
+  {
+    event: "Submittal Updated",
+    creator: false,
+    manager: false,
+    submitter: false,
+    approver: false,
+    reviewer: false,
+    distribution: true,
+  },
+];
+
+function getSettingsSection(value: string | null): SubmittalSettingsSection {
+  return (
+    SUBMITTAL_SETTINGS_TABS.find((tab) => tab.value === value)?.value ??
+    "general"
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Picker types
@@ -558,6 +741,818 @@ function PackageManageDialog({
   );
 }
 
+function ReadOnlyCheck({ checked, label }: { checked: boolean; label: string }) {
+  return (
+    <Checkbox
+      checked={checked}
+      disabled
+      aria-label={label}
+      className="mx-auto"
+    />
+  );
+}
+
+function SettingsTable({ children }: { children: ReactNode }) {
+  return (
+    <div className="overflow-hidden rounded-md border border-border/60">
+      {children}
+    </div>
+  );
+}
+
+function SubmittalGeneralSettingsPanel({
+  settings,
+  update,
+  managerOptions,
+  contactsLoading,
+}: {
+  settings: SubmittalSettings;
+  update: <K extends SubmittalSettingsKey>(
+    key: K,
+    value: SubmittalSettings[K],
+  ) => void;
+  managerOptions: Array<{ value: string; label: string; email?: string }>;
+  contactsLoading: boolean;
+}) {
+  return (
+    <div className="space-y-8">
+      <FormSection
+        title="General Settings"
+        description="Project defaults applied when new submittals are created."
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="default-submittal-manager">
+              Default Submittal Manager
+            </Label>
+            <Select
+              value={settings.default_submittal_manager_id ?? "_none"}
+              onValueChange={(value) =>
+                update(
+                  "default_submittal_manager_id",
+                  value === "_none" ? null : value,
+                )
+              }
+              disabled={contactsLoading}
+            >
+              <SelectTrigger id="default-submittal-manager">
+                <SelectValue
+                  placeholder={
+                    contactsLoading
+                      ? "Loading project contacts..."
+                      : "Select Submittal Manager"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_none">No default manager</SelectItem>
+                {managerOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.email
+                      ? `${option.label} (${option.email})`
+                      : option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="package-sort-order">Package Item Sort Order</Label>
+            <Select
+              value={settings.package_sort_order}
+              onValueChange={(value) =>
+                update(
+                  "package_sort_order",
+                  value as SubmittalSettings["package_sort_order"],
+                )
+              }
+            >
+              <SelectTrigger id="package-sort-order">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ascending">Ascending</SelectItem>
+                <SelectItem value="descending">Descending</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="default-distribution">Default Distribution</Label>
+          <Textarea
+            id="default-distribution"
+            value={settings.default_distribution ?? ""}
+            onChange={(event) =>
+              update(
+                "default_distribution",
+                event.target.value.trim() ? event.target.value : null,
+              )
+            }
+            placeholder="Add default recipients or distribution notes"
+            className="min-h-24"
+          />
+        </div>
+      </FormSection>
+
+      <FormSection
+        title="Submittal Numbering"
+        description="Controls whether new submittal numbers include the specification section."
+      >
+        <ToggleField
+          label="Include Spec Section Number"
+          hint="Example: the first submittal in spec section 03-3000-Concrete is numbered 03-3000-1."
+          checked={settings.include_spec_section_number}
+          onCheckedChange={(checked) =>
+            update("include_spec_section_number", checked)
+          }
+        />
+      </FormSection>
+
+      <FormSection
+        title="Workflow Defaults"
+        description="Defaults for submit/respond due dates and approval routing."
+      >
+        <div className="max-w-xs space-y-2">
+          <Label htmlFor="default-submit-response-days">
+            Default Days to Submit/Respond
+          </Label>
+          <Input
+            id="default-submit-response-days"
+            type="number"
+            min={0}
+            max={365}
+            value={settings.default_submit_response_days}
+            onChange={(event) =>
+              update(
+                "default_submit_response_days",
+                Number.parseInt(event.target.value || "0", 10),
+              )
+            }
+          />
+          <p className="text-sm text-muted-foreground">
+            Due dates respect the project working days configured in Admin.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <ToggleField
+            label="Allow approvers to add reviewers"
+            hint="Reviewers can view and respond, but cannot add more reviewers."
+            checked={settings.allow_approvers_to_add_reviewers}
+            onCheckedChange={(checked) =>
+              update("allow_approvers_to_add_reviewers", checked)
+            }
+          />
+          <ToggleField
+            label="Approver responses are required by default"
+            checked={settings.approver_responses_required_by_default}
+            onCheckedChange={(checked) =>
+              update("approver_responses_required_by_default", checked)
+            }
+          />
+          <ToggleField
+            label="Enable Reject Workflow"
+            hint="Reject or Revise and Resubmit responses route Ball in Court to the Submittal Manager for the next step."
+            checked={settings.enable_reject_workflow}
+            onCheckedChange={(checked) =>
+              update("enable_reject_workflow", checked)
+            }
+          />
+          <ToggleField
+            label="Enable dynamic approver due dates"
+            checked={settings.enable_dynamic_approver_due_dates}
+            onCheckedChange={(checked) =>
+              update("enable_dynamic_approver_due_dates", checked)
+            }
+          />
+        </div>
+      </FormSection>
+
+      <FormSection
+        title="Access and Delivery"
+        description="Privacy, reminders, QR codes, schedule calculations, and email attachment access."
+      >
+        <div className="space-y-4">
+          <ToggleField
+            label="Submittals private by default"
+            hint="Limits new submittals to admins, distribution members, and assigned workflow reviewers."
+            checked={settings.submittals_private_by_default}
+            onCheckedChange={(checked) =>
+              update("submittals_private_by_default", checked)
+            }
+          />
+          <ToggleField
+            label="Enable email reminders for overdue submittals"
+            checked={settings.enable_overdue_email_reminders}
+            onCheckedChange={(checked) =>
+              update("enable_overdue_email_reminders", checked)
+            }
+          />
+          <ToggleField
+            label="Enable QR codes"
+            checked={settings.enable_qr_codes}
+            onCheckedChange={(checked) => update("enable_qr_codes", checked)}
+          />
+          <ToggleField
+            label="Enable submittal schedule calculations"
+            hint="Adds schedule calculation defaults for required on-site and planned return dates."
+            checked={settings.enable_schedule_calculations}
+            onCheckedChange={(checked) =>
+              update("enable_schedule_calculations", checked)
+            }
+          />
+          <ToggleField
+            label="Allow email attachment downloads without login"
+            hint="Email attachment links expire 14 calendar days after the email is sent."
+            checked={settings.allow_email_attachment_download_without_login}
+            onCheckedChange={(checked) =>
+              update("allow_email_attachment_download_without_login", checked)
+            }
+          />
+        </div>
+      </FormSection>
+
+      <FormSection
+        title="Email Notifications"
+        description="Recipient routing for default Submittals email events."
+      >
+        <SettingsTable>
+          <InlineTable variant="read">
+            <InlineTableHeader>
+              <InlineTableHeaderRow>
+                <InlineTableHeaderCell>Email Event</InlineTableHeaderCell>
+                <InlineTableHeaderCell align="center">Creator</InlineTableHeaderCell>
+                <InlineTableHeaderCell align="center">
+                  Submittal Manager
+                </InlineTableHeaderCell>
+                <InlineTableHeaderCell align="center">Submitter</InlineTableHeaderCell>
+                <InlineTableHeaderCell align="center">Approver</InlineTableHeaderCell>
+                <InlineTableHeaderCell align="center">Reviewer</InlineTableHeaderCell>
+                <InlineTableHeaderCell align="center">
+                  Distribution Group
+                </InlineTableHeaderCell>
+              </InlineTableHeaderRow>
+            </InlineTableHeader>
+            <InlineTableBody>
+              {EMAIL_NOTIFICATION_ROWS.map((row) => (
+                <InlineTableRow key={row.event}>
+                  <InlineTableCell className="font-medium text-foreground">
+                    {row.event}
+                  </InlineTableCell>
+                  {(
+                    [
+                      "creator",
+                      "manager",
+                      "submitter",
+                      "approver",
+                      "reviewer",
+                      "distribution",
+                    ] as const
+                  ).map((role) => (
+                    <InlineTableCell key={role} align="center">
+                      <ReadOnlyCheck
+                        checked={row[role]}
+                        label={`${row.event} ${role}`}
+                      />
+                    </InlineTableCell>
+                  ))}
+                </InlineTableRow>
+              ))}
+            </InlineTableBody>
+          </InlineTable>
+        </SettingsTable>
+      </FormSection>
+    </div>
+  );
+}
+
+function SubmittalResponsesPanel() {
+  return (
+    <FormSection
+      title="Workflow Responses"
+      description="Configured response labels mapped to Procore default submittal response categories."
+    >
+      <SettingsTable>
+        <InlineTable variant="read">
+          <InlineTableHeader>
+            <InlineTableHeaderRow>
+              <InlineTableHeaderCell>Response Type</InlineTableHeaderCell>
+              <InlineTableHeaderCell>Custom Response Label</InlineTableHeaderCell>
+            </InlineTableHeaderRow>
+          </InlineTableHeader>
+          <InlineTableBody>
+            {WORKFLOW_RESPONSE_ROWS.map(([type, label]) => (
+              <InlineTableRow key={type}>
+                <InlineTableCell className="font-medium text-foreground">
+                  {type}
+                </InlineTableCell>
+                <InlineTableCell>{label}</InlineTableCell>
+              </InlineTableRow>
+            ))}
+          </InlineTableBody>
+        </InlineTable>
+      </SettingsTable>
+    </FormSection>
+  );
+}
+
+function WorkflowTemplatesPanel() {
+  return (
+    <FormSection
+      title="Workflow Templates"
+      description="Create workflow templates by defining submitters and approvers for each workflow step."
+    >
+      <div className="py-12 text-center">
+        <p className="text-sm font-medium text-foreground">
+          No workflow templates created
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          No templates exist for this project.
+        </p>
+      </div>
+    </FormSection>
+  );
+}
+
+function ReplaceWorkflowUserPanel({
+  managerOptions,
+  contactsLoading,
+}: {
+  managerOptions: Array<{ value: string; label: string; email?: string }>;
+  contactsLoading: boolean;
+}) {
+  const [currentUser, setCurrentUser] = React.useState("");
+  const [newUser, setNewUser] = React.useState("");
+  const canReplace = Boolean(currentUser && newUser && currentUser !== newUser);
+
+  return (
+    <FormSection
+      title="Replace Workflow User"
+      description="Replace a user in active submittal workflows where the current user still has a Pending response."
+      actions={
+        <Button size="sm" disabled={!canReplace}>
+          Replace and Save
+        </Button>
+      }
+    >
+      <div className="space-y-3 text-sm text-muted-foreground">
+        <p>
+          Only workflow users with a Pending status are replaced. Users who have
+          already responded remain on those workflows, and the new user receives
+          new workflow emails only.
+        </p>
+        <p>
+          This action does not replace users in workflow templates; template
+          members must be changed separately.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="replace-current-user">
+            Current User (Approver or Submitter)
+            <span className="ml-1 text-destructive">*</span>
+          </Label>
+          <Select
+            value={currentUser}
+            onValueChange={setCurrentUser}
+            disabled={contactsLoading}
+          >
+            <SelectTrigger id="replace-current-user">
+              <SelectValue placeholder="Select a user" />
+            </SelectTrigger>
+            <SelectContent>
+              {managerOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.email
+                    ? `${option.label} (${option.email})`
+                    : option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="replace-new-user">
+            New User (Approver or Submitter)
+            <span className="ml-1 text-destructive">*</span>
+          </Label>
+          <Select
+            value={newUser}
+            onValueChange={setNewUser}
+            disabled={contactsLoading}
+          >
+            <SelectTrigger id="replace-new-user">
+              <SelectValue placeholder="Select a user" />
+            </SelectTrigger>
+            <SelectContent>
+              {managerOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.email
+                    ? `${option.label} (${option.email})`
+                    : option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </FormSection>
+  );
+}
+
+function ImportsPanel() {
+  return (
+    <FormSection
+      title="Submittal Imports"
+      description="Reference settings for bulk submittal imports."
+    >
+      <SettingsTable>
+        <InlineTable variant="read">
+          <InlineTableHeader>
+            <InlineTableHeaderRow>
+              <InlineTableHeaderCell>Setting</InlineTableHeaderCell>
+              <InlineTableHeaderCell>Value</InlineTableHeaderCell>
+            </InlineTableHeaderRow>
+          </InlineTableHeader>
+          <InlineTableBody>
+            <InlineTableRow>
+              <InlineTableCell className="font-medium text-foreground">
+                Submittal Imports
+              </InlineTableCell>
+              <InlineTableCell>
+                Available via the Procore Imports desktop app on Windows 7 or
+                newer.
+              </InlineTableCell>
+            </InlineTableRow>
+            <InlineTableRow>
+              <InlineTableCell className="font-medium text-foreground">
+                Import Template
+              </InlineTableCell>
+              <InlineTableCell>.xlsx template available for download.</InlineTableCell>
+            </InlineTableRow>
+            <InlineTableRow>
+              <InlineTableCell className="font-medium text-foreground">
+                Import Method
+              </InlineTableCell>
+              <InlineTableCell>Procore Imports desktop application.</InlineTableCell>
+            </InlineTableRow>
+          </InlineTableBody>
+        </InlineTable>
+      </SettingsTable>
+    </FormSection>
+  );
+}
+
+function CustomReportsPanel() {
+  return (
+    <div className="space-y-8">
+      <FormSection title="Custom Reports">
+        <div className="py-12 text-center">
+          <p className="text-sm font-medium text-foreground">
+            No custom reports
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            No custom reports are configured for this project.
+          </p>
+        </div>
+      </FormSection>
+
+      <FormSection title="My Reports">
+        <div className="py-12 text-center">
+          <p className="text-sm font-medium text-foreground">
+            No custom reports
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            No personal custom reports are configured for this project.
+          </p>
+        </div>
+      </FormSection>
+    </div>
+  );
+}
+
+function PermissionsPanel({ projectId }: { projectId: number }) {
+  const [search, setSearch] = React.useState("");
+  const { users, isLoading, error, searchUsers } = useDirectoryPermissions(
+    String(projectId),
+  );
+  const rows = users.slice(0, 10);
+
+  React.useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      searchUsers(search);
+    }, 250);
+
+    return () => window.clearTimeout(timeout);
+  }, [search, searchUsers]);
+
+  const isLevel = (permissionLevel: PermissionLevel, level: PermissionLevel) =>
+    permissionLevel === level;
+
+  return (
+    <FormSection
+      title="User Permissions for Submittals"
+      description="View user permissions for Submittals. Company Admins and users assigned through permission templates are managed in Admin."
+    >
+      <div className="max-w-sm">
+        <Input
+          placeholder="Search"
+          aria-label="Search permissions"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      </div>
+
+      <SettingsTable>
+        <InlineTable variant="read">
+          <InlineTableHeader>
+            <InlineTableHeaderRow>
+              <InlineTableHeaderCell>Name</InlineTableHeaderCell>
+              <InlineTableHeaderCell>Company</InlineTableHeaderCell>
+              <InlineTableHeaderCell align="center">None</InlineTableHeaderCell>
+              <InlineTableHeaderCell align="center">Read Only</InlineTableHeaderCell>
+              <InlineTableHeaderCell align="center">Standard</InlineTableHeaderCell>
+              <InlineTableHeaderCell align="center">Admin</InlineTableHeaderCell>
+            </InlineTableHeaderRow>
+          </InlineTableHeader>
+          <InlineTableBody>
+            {isLoading ? (
+              <InlineTableRow>
+                <InlineTableCell colSpan={6}>Loading permissions...</InlineTableCell>
+              </InlineTableRow>
+            ) : error ? (
+              <InlineTableRow>
+                <InlineTableCell colSpan={6} className="text-destructive">
+                  {error.message}
+                </InlineTableCell>
+              </InlineTableRow>
+            ) : rows.length > 0 ? (
+              rows.map((user) => (
+                <InlineTableRow key={user.id}>
+                  <InlineTableCell className="font-medium text-primary">
+                    {user.full_name || user.email || "Unnamed user"}
+                  </InlineTableCell>
+                  <InlineTableCell>{user.company_name ?? "-"}</InlineTableCell>
+                  <InlineTableCell align="center">
+                    <ReadOnlyCheck
+                      checked={isLevel(user.permission_level, "none")}
+                      label={`${user.full_name} none`}
+                    />
+                  </InlineTableCell>
+                  <InlineTableCell align="center">
+                    <ReadOnlyCheck
+                      checked={isLevel(user.permission_level, "read_only")}
+                      label={`${user.full_name} read only`}
+                    />
+                  </InlineTableCell>
+                  <InlineTableCell align="center">
+                    <ReadOnlyCheck
+                      checked={isLevel(user.permission_level, "standard")}
+                      label={`${user.full_name} standard`}
+                    />
+                  </InlineTableCell>
+                  <InlineTableCell align="center">
+                    <ReadOnlyCheck
+                      checked={isLevel(user.permission_level, "admin")}
+                      label={`${user.full_name} admin`}
+                    />
+                  </InlineTableCell>
+                </InlineTableRow>
+              ))
+            ) : (
+              <InlineTableRow>
+                <InlineTableCell colSpan={6}>
+                  No project users are available for permission display.
+                </InlineTableCell>
+              </InlineTableRow>
+            )}
+          </InlineTableBody>
+        </InlineTable>
+      </SettingsTable>
+    </FormSection>
+  );
+}
+
+function SubmittalSettingsTab({
+  projectId,
+  tabs,
+}: {
+  projectId: number;
+  tabs: SubmittalsPageTab[];
+}) {
+  const pathname = usePathname()!;
+  const router = useRouter();
+  const searchParams = useSearchParams()!;
+  const settingsSection = getSettingsSection(searchParams.get(SETTINGS_TAB_PARAM));
+  const [settings, setSettings] = React.useState<SubmittalSettings | null>(
+    null,
+  );
+  const [loading, setLoading] = React.useState(true);
+  const [saving, setSaving] = React.useState(false);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
+  const {
+    contacts,
+    options: managerOptions,
+    isLoading: contactsLoading,
+  } = useContacts({
+    projectId: String(projectId),
+    enabled: Number.isFinite(projectId),
+  });
+
+  const settingsTabs = React.useMemo(
+    () =>
+      SUBMITTAL_SETTINGS_TABS.map((tab) => {
+        const nextParams = new URLSearchParams(searchParams.toString());
+        nextParams.set("tab", "settings");
+        nextParams.set(SETTINGS_TAB_PARAM, tab.value);
+
+        return {
+          label: tab.label,
+          href: `${pathname}?${nextParams.toString()}`,
+          isActive: settingsSection === tab.value,
+        };
+      }),
+    [pathname, searchParams, settingsSection],
+  );
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function loadSettings() {
+      try {
+        setLoading(true);
+        setLoadError(null);
+        const data = await apiFetch<SubmittalSettings>(
+          `/api/projects/${projectId}/submittals/settings`,
+        );
+        if (!cancelled) setSettings(data);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to load submittal settings.";
+        if (!cancelled) setLoadError(message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    if (Number.isFinite(projectId)) {
+      void loadSettings();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
+
+  const update = React.useCallback(
+    <K extends SubmittalSettingsKey>(key: K, value: SubmittalSettings[K]) => {
+      setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
+    },
+    [],
+  );
+
+  const handleSave = React.useCallback(async () => {
+    if (!settings) return;
+    try {
+      setSaving(true);
+      const saved = await apiFetch<SubmittalSettings>(
+        `/api/projects/${projectId}/submittals/settings`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            default_submittal_manager_id:
+              settings.default_submittal_manager_id,
+            default_distribution: settings.default_distribution,
+            package_sort_order: settings.package_sort_order,
+            default_submit_response_days:
+              settings.default_submit_response_days,
+            include_spec_section_number: settings.include_spec_section_number,
+            submittals_private_by_default:
+              settings.submittals_private_by_default,
+            allow_approvers_to_add_reviewers:
+              settings.allow_approvers_to_add_reviewers,
+            approver_responses_required_by_default:
+              settings.approver_responses_required_by_default,
+            enable_reject_workflow: settings.enable_reject_workflow,
+            enable_dynamic_approver_due_dates:
+              settings.enable_dynamic_approver_due_dates,
+            enable_overdue_email_reminders:
+              settings.enable_overdue_email_reminders,
+            enable_qr_codes: settings.enable_qr_codes,
+            enable_schedule_calculations: settings.enable_schedule_calculations,
+            allow_email_attachment_download_without_login:
+              settings.allow_email_attachment_download_without_login,
+            email_notify_submittal_created:
+              settings.email_notify_submittal_created,
+            email_notify_submittal_updated:
+              settings.email_notify_submittal_updated,
+            email_notify_submittal_distributed:
+              settings.email_notify_submittal_distributed,
+            email_notify_submittal_closed: settings.email_notify_submittal_closed,
+          }),
+        },
+      );
+      setSettings(saved);
+      toast.success("Submittal settings saved");
+    } catch (error) {
+      handleFormError(error, {
+        entity: "submittal settings",
+        action: "save",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }, [projectId, settings]);
+
+  const renderActiveSettingsPanel = () => {
+    if (settingsSection === "general") {
+      if (loading) {
+        return (
+          <div className="space-y-8">
+            {["general", "numbering", "workflow", "email"].map((section) => (
+              <section key={section} className="space-y-3">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-9 w-full max-w-xl" />
+                <Skeleton className="h-9 w-full max-w-2xl" />
+              </section>
+            ))}
+          </div>
+        );
+      }
+
+      if (loadError) {
+        return (
+          <div className="space-y-2 py-6">
+            <p className="text-sm font-semibold text-destructive">
+              Submittal settings failed to load
+            </p>
+            <p className="text-sm text-muted-foreground">{loadError}</p>
+          </div>
+        );
+      }
+
+      if (settings) {
+        return (
+          <SubmittalGeneralSettingsPanel
+            settings={settings}
+            update={update}
+            managerOptions={managerOptions}
+            contactsLoading={contactsLoading}
+          />
+        );
+      }
+
+      return null;
+    }
+
+    if (settingsSection === "responses") return <SubmittalResponsesPanel />;
+    if (settingsSection === "workflow-templates") {
+      return <WorkflowTemplatesPanel />;
+    }
+    if (settingsSection === "replace-workflow-user") {
+      return (
+        <ReplaceWorkflowUserPanel
+          managerOptions={managerOptions}
+          contactsLoading={contactsLoading}
+        />
+      );
+    }
+    if (settingsSection === "imports") return <ImportsPanel />;
+    if (settingsSection === "custom-reports") return <CustomReportsPanel />;
+    return <PermissionsPanel projectId={projectId} />;
+  };
+
+  return (
+    <PageShell
+      variant="table"
+      title="Submittals"
+      description="Manage submittal items, packages, and review workflows"
+      actions={
+        settingsSection === "general" ? (
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={loading || saving || !settings}
+          >
+            <Save className="h-4 w-4" />
+            {saving ? "Saving..." : "Save Settings"}
+          </Button>
+        ) : null
+      }
+    >
+      <PageTabs tabs={tabs} variant="inline" className="mb-0" />
+      <PageTabs tabs={settingsTabs} variant="inline" className="mb-6" />
+      {renderActiveSettingsPanel()}
+    </PageShell>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
@@ -570,7 +1565,7 @@ export default function SubmittalsPage(): ReactElement {
   const qc = useQueryClient();
 
   const projectId = parseInt(params.projectId ?? "", 10);
-  const activeTab = searchParams.get("tab") || "packages";
+  const activeTab = searchParams.get("tab") || "items";
 
   useProjectTitle("Submittals");
 
@@ -766,18 +1761,18 @@ export default function SubmittalsPage(): ReactElement {
   // Tabs
   // -------------------------------------------------------------------------
 
-  const tabs = [
+  const tabs: SubmittalsPageTab[] = [
     {
-      label: "Packages",
+      label: "Items",
       href: `/${projectId}/submittals`,
-      isActive: activeTab === "packages",
-    },
-    {
-      label: "All Items",
-      href: `/${projectId}/submittals?tab=items`,
       count: activeTab === "items" ? filteredItems.length : undefined,
       isActive: activeTab === "items",
       testId: "submittals-tab-items",
+    },
+    {
+      label: "Packages",
+      href: `/${projectId}/submittals?tab=packages`,
+      isActive: activeTab === "packages",
     },
     {
       label: "Spec Sections",
@@ -794,6 +1789,12 @@ export default function SubmittalsPage(): ReactElement {
       label: "Recycle Bin",
       href: `/${projectId}/submittals?tab=recycle-bin`,
       isActive: activeTab === "recycle-bin",
+    },
+    {
+      label: "Settings",
+      href: `/${projectId}/submittals?tab=settings`,
+      isActive: activeTab === "settings",
+      testId: "submittals-tab-settings",
     },
   ];
 
@@ -995,6 +1996,10 @@ export default function SubmittalsPage(): ReactElement {
     printWindow.document.close();
     printWindow.print();
   }, [filteredItems, tableState.visibleColumns]);
+
+  if (activeTab === "settings") {
+    return <SubmittalSettingsTab projectId={projectId} tabs={tabs} />;
+  }
 
   return (
     <>

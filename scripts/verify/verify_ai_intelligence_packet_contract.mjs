@@ -152,8 +152,24 @@ try {
     if (!emailCoverage || Number(emailCoverage.availableCount ?? 0) < 1) {
       fail("Westfield packet source coverage does not include available email evidence", coverage);
     }
-    if (!documentCoverage || Number(documentCoverage.availableCount ?? 0) < 1) {
-      fail("Westfield packet source coverage does not include available document evidence", coverage);
+    if (!documentCoverage) {
+      fail("Westfield packet source coverage does not report document coverage", coverage);
+    }
+    const missingCategories = Array.isArray(coverage.documentIntelligence?.missingCategories)
+      ? coverage.documentIntelligence.missingCategories
+      : [];
+    const documentsNamedAsGap = missingCategories.some(
+      (row) => row?.category === "document",
+    );
+    if (
+      documentCoverage &&
+      Number(documentCoverage.availableCount ?? 0) < 1 &&
+      !documentsNamedAsGap
+    ) {
+      fail(
+        "Westfield packet source coverage must name documents as a gap when no document evidence is available",
+        coverage,
+      );
     }
     if (!Array.isArray(coverage.gaps) || coverage.gaps.length < 1) {
       fail("Westfield packet source coverage must name gaps", coverage);

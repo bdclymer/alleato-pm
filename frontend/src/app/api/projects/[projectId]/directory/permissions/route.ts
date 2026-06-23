@@ -38,7 +38,7 @@ export const GET = withApiGuardrails(
           first_name,
           last_name,
           email,
-          company:companies (
+          company:companies!people_company_id_fkey (
             id,
             name
           )

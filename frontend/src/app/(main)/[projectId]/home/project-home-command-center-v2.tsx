@@ -4,7 +4,7 @@ import * as React from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { isPast } from "date-fns";
-import { ArrowRight, Sparkles, Users } from "lucide-react";
+import { ArrowRight, FileText, Pencil, Sparkles, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { apiFetch } from "@/lib/api-client";
@@ -42,6 +42,10 @@ type Meeting = Pick<
 type DailyLog = Pick<
   Database["public"]["Tables"]["daily_logs"]["Row"],
   "id" | "log_date" | "general_notes" | "status" | "weather_conditions"
+>;
+type ProjectDocument = Pick<
+  Database["public"]["Tables"]["project_documents"]["Row"],
+  "id" | "title" | "file_name" | "category" | "created_at"
 >;
 
 interface ChangeOrder {
@@ -250,6 +254,7 @@ export function ProjectHomeCommandCenterV2({
   // Lazily fetch meetings + daily logs via the existing tab-data endpoint.
   const [meetings, setMeetings] = React.useState<Meeting[]>([]);
   const [dailyLogs, setDailyLogs] = React.useState<DailyLog[]>([]);
+  const [documents, setDocuments] = React.useState<ProjectDocument[]>([]);
   const [commsLoading, setCommsLoading] = React.useState(true);
   React.useEffect(() => {
     let cancelled = false;
@@ -257,10 +262,12 @@ export function ProjectHomeCommandCenterV2({
     Promise.allSettled([
       apiFetch<{ kind: "meetings"; data: Meeting[] }>(`/api/projects/${projectId}/home/tab-data?kind=meetings`),
       apiFetch<{ kind: "daily-logs"; data: DailyLog[] }>(`/api/projects/${projectId}/home/tab-data?kind=daily-logs`),
+      apiFetch<ProjectDocument[]>(`/api/projects/${projectId}/documents`),
     ]).then((results) => {
       if (cancelled) return;
       if (results[0].status === "fulfilled") setMeetings(results[0].value.data ?? []);
       if (results[1].status === "fulfilled") setDailyLogs(results[1].value.data ?? []);
+      if (results[2].status === "fulfilled") setDocuments(results[2].value ?? []);
       setCommsLoading(false);
     });
     return () => {
@@ -443,18 +450,15 @@ export function ProjectHomeCommandCenterV2({
     () => [...dailyLogs].sort((a, b) => getDateMs(b.log_date) - getDateMs(a.log_date)).slice(0, 3),
     [dailyLogs],
   );
+  const recentDocuments = React.useMemo(
+    () => [...documents].sort((a, b) => getDateMs(b.created_at) - getDateMs(a.created_at)).slice(0, 6),
+    [documents],
+  );
 
   return (
     <div className="min-h-full">
       {/* ── HEADER ───────────────────────────────────────── */}
-      <div className="mb-6 border-b border-border pb-5">
-        <div className="mb-1 flex items-center gap-1.5 text-[13px] text-muted-foreground">
-          <Link href="/projects" prefetch={false} className="transition-colors hover:text-foreground">
-            Projects
-          </Link>
-          <span className="opacity-50">›</span>
-          <span className="font-medium text-foreground">{project.name ?? "Untitled Project"}</span>
-        </div>
+      <div className="mb-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-4">
             <div>
@@ -467,8 +471,14 @@ export function ProjectHomeCommandCenterV2({
           </div>
           <div className="flex items-center gap-2">
             <ReadinessIndicator completedCount={setupCompleted} totalCount={4} onOpen={() => setIsSetupOpen(true)} />
-            <Button variant="outline" size="sm" onClick={() => setIsEditOpen(true)}>
-              Edit project
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setIsEditOpen(true)}
+              aria-label="Edit project"
+              title="Edit project"
+            >
+              <Pencil className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -493,49 +503,6 @@ export function ProjectHomeCommandCenterV2({
               )}
             </div>
             <p className="text-[13px] leading-relaxed text-foreground/80">{summaryText || computedBrief}</p>
-          </div>
-
-          {/* Snapshot */}
-          <div className="grid grid-cols-2 divide-x divide-y divide-border overflow-hidden rounded-lg border border-border md:grid-cols-4 md:divide-y-0">
-            <div className="p-4">
-              <div className={EYE}>Phase</div>
-              <div className="mt-1 text-[15px] font-semibold text-foreground">{phase ?? "—"}</div>
-              {project.type ? <div className="mt-0.5 text-[11px] text-muted-foreground">{project.type}</div> : null}
-            </div>
-            <div className="p-4">
-              <div className={EYE}>Completion</div>
-              <div className="mt-1 text-[15px] font-semibold text-foreground">{completionPct}%</div>
-              <div className="mt-2 flex">
-                <ProgressBar value={completionPct} max={100} />
-              </div>
-            </div>
-            <div className="p-4">
-              <div className={EYE}>Est. Completion</div>
-              <div className="mt-1 text-[15px] font-semibold text-foreground">
-                {formatShortDate(completionDate) ?? "—"}
-              </div>
-              {timeline && (
-                <div className="mt-0.5 text-[11px] text-muted-foreground">{timeline.remainingDays} days remaining</div>
-              )}
-            </div>
-            <div className="p-4">
-              <div className={EYE}>Project Manager</div>
-              {pm ? (
-                <div className="mt-1.5 flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary">
-                    {initials(pm.full_name)}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="truncate text-[13px] font-medium text-foreground">{pm.full_name}</div>
-                    {pm.company_name ? (
-                      <div className="truncate text-[11px] text-muted-foreground">{pm.company_name}</div>
-                    ) : null}
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-1 text-[13px] text-muted-foreground/50">Unassigned</div>
-              )}
-            </div>
           </div>
 
           {/* Schedule timeline */}
@@ -804,6 +771,85 @@ export function ProjectHomeCommandCenterV2({
               )}
             </section>
           )}
+
+          {/* Documents */}
+          <section>
+            <SectionHeading
+              title="Documents"
+              count={documents.length || undefined}
+              action={<ViewAllLink href={`/${projectId}/documents`} />}
+            />
+            {commsLoading ? (
+              <div className="py-4 text-sm text-muted-foreground">Loading documents…</div>
+            ) : recentDocuments.length === 0 ? (
+              <EmptyState title="No documents yet" description="Uploaded project documents will appear here." />
+            ) : (
+              <div className="divide-y divide-border/60">
+                {recentDocuments.map((doc) => {
+                  const title = doc.title || doc.file_name || "Untitled document";
+                  return (
+                    <Link
+                      key={doc.id}
+                      href={`/${projectId}/documents`}
+                      prefetch={false}
+                      className="group grid gap-2 py-3.5 transition-colors sm:grid-cols-[minmax(0,1fr)_6rem] sm:items-center"
+                    >
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <p className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary">{title}</p>
+                      </div>
+                      <span className="text-xs tabular-nums text-muted-foreground sm:justify-self-end">
+                        {formatMonthDay(doc.created_at) || "—"}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          {/* Snapshot */}
+          <div className="grid grid-cols-2 divide-x divide-y divide-border overflow-hidden rounded-lg border border-border md:grid-cols-4 md:divide-y-0">
+            <div className="p-4">
+              <div className={EYE}>Phase</div>
+              <div className="mt-1 text-[15px] font-semibold text-foreground">{phase ?? "—"}</div>
+              {project.type ? <div className="mt-0.5 text-[11px] text-muted-foreground">{project.type}</div> : null}
+            </div>
+            <div className="p-4">
+              <div className={EYE}>Completion</div>
+              <div className="mt-1 text-[15px] font-semibold text-foreground">{completionPct}%</div>
+              <div className="mt-2 flex">
+                <ProgressBar value={completionPct} max={100} />
+              </div>
+            </div>
+            <div className="p-4">
+              <div className={EYE}>Est. Completion</div>
+              <div className="mt-1 text-[15px] font-semibold text-foreground">
+                {formatShortDate(completionDate) ?? "—"}
+              </div>
+              {timeline && (
+                <div className="mt-0.5 text-[11px] text-muted-foreground">{timeline.remainingDays} days remaining</div>
+              )}
+            </div>
+            <div className="p-4">
+              <div className={EYE}>Project Manager</div>
+              {pm ? (
+                <div className="mt-1.5 flex items-center gap-2">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary">
+                    {initials(pm.full_name)}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="truncate text-[13px] font-medium text-foreground">{pm.full_name}</div>
+                    {pm.company_name ? (
+                      <div className="truncate text-[11px] text-muted-foreground">{pm.company_name}</div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-1 text-[13px] text-muted-foreground/50">Unassigned</div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* ── RIGHT RAIL ──────────────────────────────────── */}

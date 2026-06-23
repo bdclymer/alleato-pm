@@ -2,7 +2,7 @@
  * POST /api/cron/graph-sync
  *
  * Hourly cron that triggers a Microsoft Graph incremental sync on the Render backend.
- * Syncs Outlook emails, Teams channel messages, and OneDrive files, then runs the
+ * Syncs Outlook emails, Teams channel messages, and SharePoint files, then runs the
  * embedding pass. Uses delta tokens so only new/changed items are fetched.
  *
  * Why this exists: without an automated trigger, Teams and email data never gets

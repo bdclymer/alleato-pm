@@ -5835,6 +5835,7 @@ export type Database = {
           project_budget_code_id: string | null
           project_id: number
           quantity: number | null
+          source_contract_line_item_id: string | null
           sub_job_id: string | null
           sub_job_key: string | null
           unit_cost: number | null
@@ -5857,6 +5858,7 @@ export type Database = {
           project_budget_code_id?: string | null
           project_id: number
           quantity?: number | null
+          source_contract_line_item_id?: string | null
           sub_job_id?: string | null
           sub_job_key?: string | null
           unit_cost?: number | null
@@ -5879,6 +5881,7 @@ export type Database = {
           project_budget_code_id?: string | null
           project_id?: number
           quantity?: number | null
+          source_contract_line_item_id?: string | null
           sub_job_id?: string | null
           sub_job_key?: string | null
           unit_cost?: number | null
@@ -5969,6 +5972,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_source_contract_line_item_id_fkey"
+            columns: ["source_contract_line_item_id"]
+            isOneToOne: false
+            referencedRelation: "contract_line_items"
             referencedColumns: ["id"]
           },
           {
@@ -8681,6 +8691,7 @@ export type Database = {
           is_tax_agency: boolean | null
           is_vendor: boolean
           legal_name: string | null
+          license_number: string | null
           logo_url: string | null
           metadata: Json | null
           name: string
@@ -8720,6 +8731,7 @@ export type Database = {
           is_tax_agency?: boolean | null
           is_vendor?: boolean
           legal_name?: string | null
+          license_number?: string | null
           logo_url?: string | null
           metadata?: Json | null
           name: string
@@ -8759,6 +8771,7 @@ export type Database = {
           is_tax_agency?: boolean | null
           is_vendor?: boolean
           legal_name?: string | null
+          license_number?: string | null
           logo_url?: string | null
           metadata?: Json | null
           name?: string
@@ -30712,6 +30725,124 @@ export type Database = {
           },
         ]
       }
+      submittal_project_settings: {
+        Row: {
+          allow_approvers_to_add_reviewers: boolean
+          allow_email_attachment_download_without_login: boolean
+          approver_responses_required_by_default: boolean
+          created_at: string
+          default_distribution: string | null
+          default_submit_response_days: number
+          default_submittal_manager_id: string | null
+          email_notify_submittal_closed: boolean
+          email_notify_submittal_created: boolean
+          email_notify_submittal_distributed: boolean
+          email_notify_submittal_updated: boolean
+          enable_dynamic_approver_due_dates: boolean
+          enable_overdue_email_reminders: boolean
+          enable_qr_codes: boolean
+          enable_reject_workflow: boolean
+          enable_schedule_calculations: boolean
+          include_spec_section_number: boolean
+          package_sort_order: string
+          project_id: number
+          submittals_private_by_default: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allow_approvers_to_add_reviewers?: boolean
+          allow_email_attachment_download_without_login?: boolean
+          approver_responses_required_by_default?: boolean
+          created_at?: string
+          default_distribution?: string | null
+          default_submit_response_days?: number
+          default_submittal_manager_id?: string | null
+          email_notify_submittal_closed?: boolean
+          email_notify_submittal_created?: boolean
+          email_notify_submittal_distributed?: boolean
+          email_notify_submittal_updated?: boolean
+          enable_dynamic_approver_due_dates?: boolean
+          enable_overdue_email_reminders?: boolean
+          enable_qr_codes?: boolean
+          enable_reject_workflow?: boolean
+          enable_schedule_calculations?: boolean
+          include_spec_section_number?: boolean
+          package_sort_order?: string
+          project_id: number
+          submittals_private_by_default?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allow_approvers_to_add_reviewers?: boolean
+          allow_email_attachment_download_without_login?: boolean
+          approver_responses_required_by_default?: boolean
+          created_at?: string
+          default_distribution?: string | null
+          default_submit_response_days?: number
+          default_submittal_manager_id?: string | null
+          email_notify_submittal_closed?: boolean
+          email_notify_submittal_created?: boolean
+          email_notify_submittal_distributed?: boolean
+          email_notify_submittal_updated?: boolean
+          enable_dynamic_approver_due_dates?: boolean
+          enable_overdue_email_reminders?: boolean
+          enable_qr_codes?: boolean
+          enable_reject_workflow?: boolean
+          enable_schedule_calculations?: boolean
+          include_spec_section_number?: boolean
+          package_sort_order?: string
+          project_id?: number
+          submittals_private_by_default?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submittal_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "submittal_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "submittal_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       submittal_responses: {
         Row: {
           comments: string | null
@@ -37493,6 +37624,7 @@ export type Database = {
           project_budget_code_id: string | null
           project_id: number
           quantity: number | null
+          source_contract_line_item_id: string | null
           sub_job_id: string | null
           sub_job_key: string | null
           unit_cost: number | null

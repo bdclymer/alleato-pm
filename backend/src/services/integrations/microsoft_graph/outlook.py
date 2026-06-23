@@ -17,9 +17,9 @@ import re
 import logging
 from datetime import datetime, timezone
 from typing import Optional
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
-from ...intelligence.compiler import process_source_document_to_packet
+from ...intelligence.compiler import enqueue_source_intelligence_job, process_source_document_to_packet
 from ...supabase_helpers import (
     SupabaseRagStore,
     get_outlook_intake_read_client,
@@ -209,15 +209,21 @@ EMAIL_BODY_MAX_CHARS = 8000
 MAX_ATTACHMENT_BYTES = int(os.environ.get("OUTLOOK_ATTACHMENT_MAX_BYTES", str(50 * 1024 * 1024)))
 OUTLOOK_INTAKE_ATTACHMENT_CONTENT_MAX_BYTES = int(os.environ.get(
     "OUTLOOK_INTAKE_ATTACHMENT_CONTENT_MAX_BYTES",
-    str(8 * 1024 * 1024),
+    "0",
 ))
 MAX_ATTACHMENTS_PER_EMAIL = int(os.environ.get("OUTLOOK_MAX_ATTACHMENTS_PER_EMAIL", "25"))
+OUTLOOK_ATTACHMENT_LIST_TIMEOUT_SECONDS = int(os.environ.get("OUTLOOK_ATTACHMENT_LIST_TIMEOUT_SECONDS", "15"))
 MAX_LINKS_PER_EMAIL = int(os.environ.get("OUTLOOK_MAX_LINKS_PER_EMAIL", "10"))
+OUTLOOK_SYNC_MAX_MESSAGES_PER_MAILBOX = int(os.environ.get("OUTLOOK_SYNC_MAX_MESSAGES_PER_MAILBOX", "25"))
 DOCUMENT_BUCKET = os.environ.get("SUPABASE_DOCUMENTS_BUCKET", "documents")
 SYNC_LEGACY_OUTLOOK_ATTACHMENTS = os.environ.get("OUTLOOK_SYNC_LEGACY_ATTACHMENTS", "false").lower() in {"1", "true", "yes"}
 SYNC_LEGACY_OUTLOOK_LINKS = os.environ.get("OUTLOOK_SYNC_LEGACY_LINKS", "false").lower() in {"1", "true", "yes"}
 SYNC_LEGACY_PROJECT_EMAILS = os.environ.get("OUTLOOK_SYNC_LEGACY_PROJECT_EMAILS", "false").lower() in {"1", "true", "yes"}
 SYNC_OUTLOOK_INTAKE = os.environ.get("OUTLOOK_SYNC_INTAKE", "true").lower() in {"1", "true", "yes"}
+OUTLOOK_INLINE_SOURCE_INTELLIGENCE = os.environ.get(
+    "OUTLOOK_INLINE_SOURCE_INTELLIGENCE",
+    "false",
+).lower() in {"1", "true", "yes"}
 
 
 def _outlook_intake_read_client():
@@ -271,15 +277,23 @@ DOCUMENT_LINK_HOST_KEYWORDS = {
 
 def _run_source_intelligence_compiler(supabase_client, doc_id: str) -> None:
     try:
-        existing = (
-            supabase_client.from_("document_metadata")
-            .select("id")
-            .eq("id", doc_id)
-            .limit(1)
-            .execute()
-        )
-        if not (existing.data or []):
-            logger.info("[Outlook] Skipping intelligence compiler for %s; document_metadata row is not visible.", doc_id)
+        if not OUTLOOK_INLINE_SOURCE_INTELLIGENCE:
+            job = enqueue_source_intelligence_job(
+                supabase_client,
+                doc_id,
+                job_type="attribution",
+                priority=0,
+                input_snapshot={
+                    "path": "outlook.sync_outlook_emails",
+                    "reason": "queued_to_keep_mailbox_sync_fresh",
+                },
+            )
+            logger.info(
+                "[Outlook] Queued source intelligence job for %s: job=%s status=%s",
+                doc_id,
+                job.get("id"),
+                job.get("status"),
+            )
             return
         result = process_source_document_to_packet(supabase_client, doc_id)
         logger.info(
@@ -566,7 +580,14 @@ def _list_message_attachments(graph, user_id: str, msg: dict, cid_refs: set[str]
     try:
         attachments = graph.get_all_pages(
             f"/users/{user_id}/messages/{msg_id}/attachments",
-            params={"$top": str(MAX_ATTACHMENTS_PER_EMAIL)},
+            params={
+                "$top": str(MAX_ATTACHMENTS_PER_EMAIL),
+                "$select": "id,name,contentType,size,isInline,lastModifiedDateTime",
+            },
+            max_pages=1,
+            max_items=MAX_ATTACHMENTS_PER_EMAIL,
+            timeout=OUTLOOK_ATTACHMENT_LIST_TIMEOUT_SECONDS,
+            max_retries=1,
         )
         return attachments[:MAX_ATTACHMENTS_PER_EMAIL]
     except Exception as exc:
@@ -585,8 +606,11 @@ def _extract_attachment_bytes(attachment: dict) -> Optional[bytes]:
 
 
 def _fetch_file_attachment_detail(graph, user_id: str, msg_id: str, attachment_id: str) -> dict:
+    encoded_user_id = quote(user_id, safe="@.")
+    encoded_msg_id = quote(msg_id, safe="")
+    encoded_attachment_id = quote(attachment_id, safe="")
     return graph.get(
-        f"/users/{user_id}/messages/{msg_id}/attachments/{attachment_id}/microsoft.graph.fileAttachment",
+        f"/users/{encoded_user_id}/messages/{encoded_msg_id}/attachments/{encoded_attachment_id}/microsoft.graph.fileAttachment",
         params={"$select": "id,name,contentType,size,isInline,contentBytes"},
     )
 
@@ -2080,6 +2104,16 @@ def sync_outlook_emails(
                 logger.error(f"[Outlook] {folder_name} delta failed for {user_email}: {e}")
 
     new_delta_token = f"inbox:{new_inbox_token}|sent:{new_sent_token}" if (new_inbox_token or new_sent_token) else ""
+    max_messages = max(1, int(OUTLOOK_SYNC_MAX_MESSAGES_PER_MAILBOX or 25))
+    if len(items) > max_messages:
+        logger.warning(
+            "[Outlook] Limiting %s mailbox sync to %d/%d delta items. "
+            "Raise OUTLOOK_SYNC_MAX_MESSAGES_PER_MAILBOX for a deliberate backlog drain.",
+            user_email,
+            max_messages,
+            len(items),
+        )
+        items = items[:max_messages]
 
     # Load user-trained filter rules once per sync run. These are applied as
     # Gate 1.5 between the hand-coded noise filter and the heuristic classifier.

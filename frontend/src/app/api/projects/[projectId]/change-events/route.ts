@@ -35,6 +35,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, createClientWithToken } from '@/lib/supabase/server'
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from 'next/server'
 import { createChangeEventSchema, changeEventQuerySchema } from './validation'
 import type { Database } from '@/types/database.types'
@@ -87,9 +88,17 @@ type ChangeEventLineItemAggregateRow = {
   cost_rom: number | null
   non_committed_cost: number | null
   contract_id: string | null
+  commitment_id: string | null
+  commitment_type: string | null
 }
 
 type PrimeContractSummaryRow = {
+  id: string
+  contract_number: string | null
+  title: string | null
+}
+
+type CommitmentSummaryRow = {
   id: string
   contract_number: string | null
   title: string | null
@@ -357,7 +366,7 @@ export const GET = withApiGuardrails(
     const { data: allLineItems } = eventIds.length
       ? await supabase
           .from('change_event_line_items')
-          .select('change_event_id, revenue_rom, cost_rom, non_committed_cost, contract_id')
+          .select('change_event_id, revenue_rom, cost_rom, non_committed_cost, contract_id, commitment_id, commitment_type')
           .in('change_event_id', eventIds)
       : { data: [] as ChangeEventLineItemAggregateRow[] }
 
@@ -369,6 +378,8 @@ export const GET = withApiGuardrails(
         costRom: number
         count: number
         contractId: string | null
+        commitmentId: string | null
+        commitmentType: string | null
       }
     >()
 
@@ -380,6 +391,8 @@ export const GET = withApiGuardrails(
         costRom: 0,
         count: 0,
         contractId: null,
+        commitmentId: null,
+        commitmentType: null,
       }
       existing.rom += item.revenue_rom || 0
       existing.costRom += item.cost_rom || 0
@@ -387,6 +400,10 @@ export const GET = withApiGuardrails(
       existing.count += 1
       if (!existing.contractId && item.contract_id) {
         existing.contractId = item.contract_id
+      }
+      if (!existing.commitmentId && item.commitment_id) {
+        existing.commitmentId = item.commitment_id
+        existing.commitmentType = item.commitment_type
       }
       lineItemMap.set(key, existing)
     }
@@ -425,6 +442,67 @@ export const GET = withApiGuardrails(
         contractNumber: contract.contract_number || null,
         title: contract.title || null,
       })
+    }
+
+    const rawCommitmentIds = Array.from(
+      new Set(
+        Array.from(lineItemMap.values())
+          .map((entry) => entry.commitmentId)
+          .filter((id): id is string => id !== null)
+      )
+    )
+    const commitmentIds = rawCommitmentIds.filter(isUuid)
+    const droppedCommitmentIds = rawCommitmentIds.length - commitmentIds.length
+
+    if (droppedCommitmentIds > 0) {
+      logger.warn({ msg: `[change-events GET] Ignored ${droppedCommitmentIds} invalid commitment_id value(s) while building list rows for project ${projectId}.` })
+    }
+
+    const commitmentMap = new Map<
+      string,
+      { contractNumber: string | null; title: string | null }
+    >()
+
+    if (commitmentIds.length > 0) {
+      const serviceSupabase = createServiceClient()
+      const [{ data: subcontracts, error: subcontractsError }, { data: purchaseOrders, error: purchaseOrdersError }] =
+        await Promise.all([
+          serviceSupabase
+            .from('subcontracts')
+            .select('id, contract_number, title')
+            .in('id', commitmentIds),
+          serviceSupabase
+            .from('purchase_orders')
+            .select('id, contract_number, title')
+            .in('id', commitmentIds),
+        ])
+
+      if (subcontractsError) {
+        return apiErrorResponse(subcontractsError)
+      }
+
+      if (purchaseOrdersError) {
+        return apiErrorResponse(purchaseOrdersError)
+      }
+
+      for (const commitment of (subcontracts || []) as CommitmentSummaryRow[]) {
+        commitmentMap.set(commitment.id, {
+          contractNumber: commitment.contract_number || null,
+          title: commitment.title || null,
+        })
+      }
+
+      for (const commitment of (purchaseOrders || []) as CommitmentSummaryRow[]) {
+        commitmentMap.set(commitment.id, {
+          contractNumber: commitment.contract_number || null,
+          title: commitment.title || null,
+        })
+      }
+    }
+
+    const unresolvedCommitmentCount = commitmentIds.filter((id) => !commitmentMap.has(id)).length
+    if (unresolvedCommitmentCount > 0) {
+      logger.warn({ msg: `[change-events GET] Could not resolve ${unresolvedCommitmentCount} assigned commitment_id value(s) while building list rows for project ${projectId}.` })
     }
 
     const { data: rfqs } = eventIds.length
@@ -493,6 +571,8 @@ export const GET = withApiGuardrails(
         const lineItemAgg = lineItemMap.get(String(event.id))
         const contractInfo =
           lineItemAgg?.contractId ? contractMap.get(lineItemAgg.contractId) : undefined
+        const commitmentInfo =
+          lineItemAgg?.commitmentId ? commitmentMap.get(lineItemAgg.commitmentId) : undefined
 
         const baseRevenueRom = lineItemAgg?.rom || 0
         const baseCostRom = lineItemAgg?.costRom || 0
@@ -516,8 +596,8 @@ export const GET = withApiGuardrails(
           prime_pco: pcoMap.get(String(event.id))?.number ?? null,
           prime_pco_title: pcoMap.get(String(event.id))?.title ?? null,
           rfq_title: rfqMap.get(String(event.id)) || null,
-          commitment: contractInfo?.contractNumber || null,
-          commitment_title: contractInfo?.title || null,
+          commitment: commitmentInfo?.contractNumber ?? contractInfo?.contractNumber ?? null,
+          commitment_title: commitmentInfo?.title ?? contractInfo?.title ?? null,
         }
       }
     )

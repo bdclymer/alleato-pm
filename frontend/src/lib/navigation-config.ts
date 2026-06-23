@@ -197,6 +197,13 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     description: "Team knowledge, insights, and lessons learned",
   },
   {
+    name: "Documentation",
+    path: "https://alleato-os-docs.vercel.app/",
+    requiresProject: false,
+    icon: BookOpen,
+    description: "Alleato OS documentation site",
+  },
+  {
     name: "Documents",
     path: "files",
     requiresProject: false,
@@ -351,6 +358,7 @@ export const companyWideToolSections: CompanyWideToolSection[] = [
       "Tasks",
       "Manpower",
       "Knowledge Base",
+      "Documentation",
       "Documents",
       "Teams Conversations",
     ],
@@ -439,6 +447,10 @@ export const buildToolUrl = (
   projectId: number | null,
   requiresProject: boolean = true
 ): string => {
+  // External links (docs site, dev tools) are absolute — return as-is.
+  if (toolPath.startsWith("http")) {
+    return toolPath;
+  }
   if (requiresProject && projectId) {
     return `/${projectId}/${toolPath}`;
   }

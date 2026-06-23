@@ -425,6 +425,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
             city: data.city,
             state: data.state,
             website: data.website,
+            license_number: data.license_number || undefined,
             company_type: forcedCompanyType ?? "vendor",
           }),
         });

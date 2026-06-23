@@ -31,12 +31,6 @@
 - **Purpose:** Reads `AI_PROVIDER_PATH` / `AI_GATEWAY_API_KEY` to determine routing. Exports `getAiProviderPath()`, `getOpenAICompatibleClientConfig(purpose)`, `getOpenAIModelId(modelId)`, `formatAIProviderFailure(error, purpose)`.
 - **Used by:** `providers.ts`, `services/conversation-memory.ts`, `services/ai-memory-service.ts`, `services/agent-learning-service.ts`
 
-### `provider-routing.ts`
-- **Lines:** 74
-- **Role:** provider-config
-- **Purpose:** Determines whether streaming model tools are enabled. Reads `AI_ASSISTANT_TOOL_PROVIDER_PATH` and `AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS`. Exports `getAssistantToolCallingDecision(modelId)`.
-- **Used by:** `handler-v2.ts`
-
 ### `fallback-chain.ts`
 - **Lines:** 59
 - **Role:** utility

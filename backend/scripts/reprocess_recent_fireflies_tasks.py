@@ -10,9 +10,9 @@ Default behavior:
 
 Usage:
   cd backend
-  PYTHONPATH="src/services:src/workers" python scripts/reprocess_recent_fireflies_tasks.py
-  PYTHONPATH="src/services:src/workers" python scripts/reprocess_recent_fireflies_tasks.py --limit 30
-  PYTHONPATH="src/services:src/workers" python scripts/reprocess_recent_fireflies_tasks.py --dry-run
+  PYTHONPATH="src" python scripts/reprocess_recent_fireflies_tasks.py
+  PYTHONPATH="src" python scripts/reprocess_recent_fireflies_tasks.py --limit 30
+  PYTHONPATH="src" python scripts/reprocess_recent_fireflies_tasks.py --dry-run
 """
 
 from __future__ import annotations

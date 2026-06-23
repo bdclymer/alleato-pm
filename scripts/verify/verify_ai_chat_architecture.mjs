@@ -277,8 +277,12 @@ requireCondition(routeImplementation.includes("response_quality"), "chat route m
 requireCondition(routeImplementation.includes("scoreResponseQuality"), "chat route must compute response quality metadata");
 requireCondition(routeImplementation.includes("planRetrieval"), "chat route must plan retrieval before synthesis");
 requireCondition(routeImplementation.includes("executeRetrievalPlan"), "chat route must execute planned retrieval before local synthesis");
-requireCondition(routeImplementation.includes("fetchDeepAgentExecutiveBriefing"), "chat route must check backend Deep Agents executive briefing");
-requireCondition(routeImplementation.includes("backendDeepAgentExecutiveBriefing"), "chat route must persist canonical backend executive bridge trace");
+requireCondition(
+  routeImplementation.includes("executive_deep_agent_broad_operator_question") &&
+    routeImplementation.includes("directDeepAgent:") &&
+    routeImplementation.includes("render-backend-deep-agents-v1"),
+  "chat route must check and persist backend Deep Agents executive/operator bridge trace",
+);
 
 requireCondition(client.includes("useChat"), "client must use useChat");
 requireCondition(client.includes("DefaultChatTransport"), "client must use DefaultChatTransport");

@@ -30,8 +30,8 @@ const MULTI_PROJECT_PATTERNS = [
 ];
 
 const INTERNAL_PROJECT_PATTERNS = [
-  /\btimesheet\b/i,
-  /\btimecard\b/i,
+  /\btimesheets?\b/i,
+  /\btimecards?\b/i,
   /\bsalary\b/i,
   /\bpto\b/i,
   /\bpayroll\b/i,
@@ -54,6 +54,14 @@ const INTERNAL_PROJECT_PATTERNS = [
   /\bgathering content for marketing\b/i,
   /\bpending invoices in notion\b/i,
   /\btransaction coding\b/i,
+  /\bbusiness trust\b/i,
+  /\btrust funding\b/i,
+  /\btrust governance\b/i,
+  /\btrust income\b/i,
+  /\bextraordinary dividends?\b/i,
+  /\bholding company\b/i,
+  /\bmanagement service agreements?\b/i,
+  /\btax compliance\b/i,
 ];
 
 const PROJECT_SIGNAL_PATTERNS = [

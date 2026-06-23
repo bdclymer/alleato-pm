@@ -6,6 +6,10 @@ import { z, ZodError } from "zod";
 
 import { apiErrorResponse } from "@/lib/api-error";
 import { getNormalizedSubmittalTypeCatalog } from "@/lib/submittals/submittal-type-catalog";
+import {
+  buildSubmittalWorkflowResponseRows,
+  buildSubmittalWorkflowStepRows,
+} from "@/lib/submittals/create-workflow";
 import { createClient } from "@/lib/supabase/server";
 
 interface RouteParams {
@@ -36,6 +40,17 @@ const createSubmittalSchema = z.object({
   ball_in_court: z.string().nullable().optional(),
   required_approval_date: z.string().nullable().optional(),
   submission_date: z.string().nullable().optional(),
+  initial_workflow_steps: z
+    .array(
+      z.object({
+        user_id: z.string().uuid(),
+        step_type: z.string().min(1),
+        required: z.boolean().optional().default(true),
+      }),
+    )
+    .max(20, "A submittal workflow can include at most 20 steps.")
+    .optional()
+    .default([]),
 });
 
 /**
@@ -175,7 +190,20 @@ export const POST = withApiGuardrails(
       throw new GuardrailError({ code: "BAD_REQUEST", where: "projects/[projectId]/submittals#POST", message: "Request body must be valid JSON." });
     }
 
-    const validatedData = createSubmittalSchema.parse(body);
+    let validatedData: z.infer<typeof createSubmittalSchema>;
+    try {
+      validatedData = createSubmittalSchema.parse(body);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw new GuardrailError({
+          code: "BAD_REQUEST",
+          where: "projects/[projectId]/submittals#POST",
+          message: "Submittal create request is invalid.",
+          details: error.issues,
+        });
+      }
+      throw error;
+    }
     const submittalTypes = await getNormalizedSubmittalTypeCatalog(supabase as unknown as Parameters<typeof getNormalizedSubmittalTypeCatalog>[0]);
     const fallbackType =
       submittalTypes.find((type) => type.name === "Other") ?? submittalTypes[0] ?? null;
@@ -228,10 +256,12 @@ export const POST = withApiGuardrails(
       }
     }
 
+    const { initial_workflow_steps: initialWorkflowSteps, ...submittalData } = validatedData;
+
     const { data, error } = await supabase
       .from("submittals")
       .insert({
-        ...validatedData,
+        ...submittalData,
         project_id: parseInt(projectId, 10),
         submitted_by: user.id,
         created_by: user.id,
@@ -249,6 +279,59 @@ export const POST = withApiGuardrails(
 
     if (error) {
       return apiErrorResponse(error);
+    }
+
+    if (initialWorkflowSteps.length > 0) {
+      const workflowRows = buildSubmittalWorkflowStepRows(data.id, initialWorkflowSteps);
+
+      const { data: steps, error: stepsError } = await supabase
+        .from("submittal_workflow_steps")
+        .insert(workflowRows)
+        .select("id, step_order");
+
+      if (stepsError || !steps || steps.length !== initialWorkflowSteps.length) {
+        await supabase.from("submittals").delete().eq("id", data.id);
+        if (stepsError) {
+          return apiErrorResponse(stepsError);
+        }
+        return NextResponse.json(
+          {
+            error:
+              "Submittal workflow could not be saved. No submittal was created.",
+          },
+          { status: 500 },
+        );
+      }
+
+      let responseRows: ReturnType<typeof buildSubmittalWorkflowResponseRows>;
+      try {
+        responseRows = buildSubmittalWorkflowResponseRows(
+          data.id,
+          initialWorkflowSteps,
+          steps,
+        );
+      } catch {
+        await supabase.from("submittal_workflow_steps").delete().eq("submittal_id", data.id);
+        await supabase.from("submittals").delete().eq("id", data.id);
+        return NextResponse.json(
+          {
+            error:
+              "Submittal workflow could not be saved. No submittal was created.",
+          },
+          { status: 500 },
+        );
+      }
+
+      const { error: responsesError } = await supabase
+        .from("submittal_responses")
+        .insert(responseRows);
+
+      if (responsesError) {
+        await supabase.from("submittal_responses").delete().eq("submittal_id", data.id);
+        await supabase.from("submittal_workflow_steps").delete().eq("submittal_id", data.id);
+        await supabase.from("submittals").delete().eq("id", data.id);
+        return apiErrorResponse(responsesError);
+      }
     }
 
     return NextResponse.json(data, { status: 201 });

@@ -119,6 +119,16 @@ type CommitmentDetail = Commitment & {
   }>;
 };
 
+type CommitmentSovSummary = {
+  subtotal: number;
+  originalContract: number;
+  approvedChanges: number;
+  contractTotal: number;
+  billedToDate: number;
+  amountRemaining: number;
+  currentRetainage: number;
+};
+
 // ---------------------------------------------------------------------------
 // Data normalizer
 // ---------------------------------------------------------------------------
@@ -334,12 +344,6 @@ function safeNumber(n: string | undefined): string | undefined {
   return n;
 }
 
-/** Uppercase the leading letter of each word while preserving existing acronym casing. */
-function capitalizeWords(value: string | undefined | null): string {
-  if (!value) return "";
-  return value.replace(/\b[a-z]/g, (char) => char.toUpperCase());
-}
-
 function parseTextLines(value: string | null | undefined): string[] {
   if (!value) return [];
   return value
@@ -353,6 +357,37 @@ function parseTextLines(value: string | null | undefined): string[] {
     .split(/[\n•]+/)
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
+}
+
+function getCommitmentSovSummary(commitment: CommitmentDetail): CommitmentSovSummary {
+  const subtotal =
+    commitment.line_items?.reduce(
+      (sum, item) => sum + Number(item.amount ?? 0),
+      0,
+    ) ?? commitment.original_amount ?? 0;
+  const approvedChanges =
+    commitment.change_order_totals?.approved ??
+    commitment.approved_change_orders ??
+    0;
+  const originalContract = commitment.original_amount || subtotal;
+  const contractTotal = originalContract + approvedChanges;
+  const billedToDate = commitment.billed_to_date ?? 0;
+  const amountRemaining = Math.max(contractTotal - billedToDate, 0);
+  const retainagePercent = Number(commitment.retention_percentage ?? 0);
+  const currentRetainage =
+    retainagePercent > 0 && retainagePercent < 100
+      ? (billedToDate * retainagePercent) / (100 - retainagePercent)
+      : 0;
+
+  return {
+    subtotal,
+    originalContract,
+    approvedChanges,
+    contractTotal,
+    billedToDate,
+    amountRemaining,
+    currentRetainage,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -482,7 +517,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                   <InlineEditField
                     label="Title"
                     value={commitment.title ?? ""}
-                    display={capitalizeWords(commitment.title) || undefined}
+                    display={commitment.title || undefined}
                     onSave={(v) => onSaveField("title", v)}
                   />
                 </DetailField>
@@ -534,6 +569,9 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                   ) : (
                     "—"
                   )}
+                </DetailField>
+                <DetailField label="License Number">
+                  {commitment.contract_company?.license_number || "—"}
                 </DetailField>
                 <DetailField label="Actual Completion">
                   <InlineEditField
@@ -670,7 +708,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                 <CollapsibleSectionHeading label="Description" />
                 <CollapsibleContent className="mt-4">
                   <p className={`text-sm leading-relaxed ${!commitment.description ? "text-muted-foreground/50" : "text-foreground"}`}>
-                    {capitalizeWords(commitment.description) || "—"}
+                    {commitment.description || "—"}
                   </p>
                 </CollapsibleContent>
               </Collapsible>
@@ -731,6 +769,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
           commitmentId={commitmentId}
           commitmentType={commitment.type}
           accountingMethod={commitment.accounting_method}
+          summary={getCommitmentSovSummary(commitment)}
           showHeader={false}
           onImportComplete={onImportComplete}
         />
@@ -993,7 +1032,7 @@ export default function CommitmentDetailPage() {
   return (
     <PageShell
       variant="detailWide"
-      title={capitalizeWords(commitment.title) || (displayNumber ? `#${displayNumber}` : "Commitment")}
+      title={commitment.title || (displayNumber ? `#${displayNumber}` : "Commitment")}
       actions={headerActions}
       onBack={() => router.back()}
       contentClassName="space-y-0"
@@ -1042,6 +1081,7 @@ export default function CommitmentDetailPage() {
             commitmentId={commitment.id}
             commitmentType={commitment.type}
             accountingMethod={commitment.accounting_method}
+            summary={getCommitmentSovSummary(commitment)}
             showHeader={false}
             onImportComplete={() => void fetchCommitment()}
           />
@@ -1113,7 +1153,7 @@ export default function CommitmentDetailPage() {
         recordType="commitment"
         recordId={commitment.id}
         number={commitment.number}
-        title={capitalizeWords(commitment.title)}
+        title={commitment.title || "Commitment"}
       />
     </PageShell>
   );

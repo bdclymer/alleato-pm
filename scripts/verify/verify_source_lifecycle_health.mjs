@@ -4,7 +4,7 @@
  * End-to-end source lifecycle health gate.
  *
  * This is intentionally read-only and model-free. It verifies that recent
- * Fireflies, Teams, Outlook, and OneDrive/SharePoint sources are visible across
+ * Fireflies, Teams, Outlook, and SharePoint sources are visible across
  * the app DB and the split RAG DB, then fails loudly when the pipeline cannot
  * prove project assignment, vectorization, task assignment, and packet updates.
  */
@@ -84,7 +84,7 @@ function classifySource(row) {
     id.startsWith("sharepoint_") ||
     id.startsWith("onedrive_")
   ) {
-    return "onedrive_document";
+    return "sharepoint_document";
   }
   if (type === "email_attachment") return "outlook_email";
   return null;
@@ -244,9 +244,42 @@ try {
     [lookbackDays, sourceLimit],
   );
 
-  const sourceRows = recentSourcesResult.rows
+  const appSourceRows = recentSourcesResult.rows
     .map((row) => ({ ...row, source_family: classifySource(row) }))
     .filter((row) => row.source_family);
+  const appSourceIds = new Set(appSourceRows.map((row) => String(row.id)));
+  const ragEmailResult = await ragClient.query(
+    `
+      select id, title, source, type, source_system, source_item_id, source_web_url,
+        created_at, updated_at, project_id, parsing_status
+      from public.rag_document_metadata
+      where source = 'microsoft_graph'
+        and (type in ('email', 'email_attachment') or id like 'outlook_%')
+        and coalesce(updated_at, created_at) >= now() - ($1::text || ' days')::interval
+      order by coalesce(updated_at, created_at) desc
+      limit $2
+    `,
+    [lookbackDays, sourceLimit],
+  );
+  const ragOnlyEmailRows = ragEmailResult.rows
+    .filter((row) => !appSourceIds.has(String(row.id)))
+    .map((row) => ({
+      id: row.id,
+      title: row.title,
+      source: row.source,
+      category: row.type === "email_attachment" ? "email_attachment" : "email",
+      type: row.type,
+      project_id: row.project_id,
+      source_item_id: row.source_item_id,
+      fireflies_id: null,
+      content_hash: null,
+      status: row.parsing_status || "raw_ingested",
+      created_at: row.updated_at || row.created_at,
+      date: row.created_at,
+      source_last_modified_at: row.updated_at,
+      source_family: "outlook_email",
+    }));
+  const sourceRows = [...appSourceRows, ...ragOnlyEmailRows];
   const sourceIds = sourceRows.map((row) => String(row.id));
   const sourceItemIds = [
     ...new Set(
@@ -339,7 +372,7 @@ try {
     [Math.max(lookbackDays, 14)],
   );
 
-  const families = ["fireflies", "teams", "outlook_email", "onedrive_document"];
+  const families = ["fireflies", "teams", "outlook_email", "sharepoint_document"];
   const sourceFamilySummary = families.map((family) => {
     const rows = sourceRows.filter((row) => row.source_family === family);
     const rowsWithApplicability = rows.map((row) => ({

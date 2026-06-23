@@ -9,6 +9,9 @@ import { Calendar, ChevronDown, ChevronRight, Clock, ExternalLink, File, FileTex
 import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/ds";
+import { TeamsConversation } from "@/components/document-metadata/teams-conversation";
+import { Markdown } from "@/components/misc/markdown";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -69,6 +72,9 @@ interface DocumentMetadataItem {
   source_web_url: string | null;
   keywords: string[] | null;
   source_metadata?: unknown;
+  contentSource?: string | null;
+  contentCheckedSources?: string[];
+  contentUnavailableReason?: string | null;
 }
 
 interface AllProject {
@@ -218,20 +224,108 @@ function DocumentDateValue({ item }: { item: DocumentMetadataItem }) {
   return <span className="tabular-nums text-muted-foreground">{formatted}</span>;
 }
 
-async function fetchDocumentContent(id: string): Promise<string | null> {
+interface DocumentContentPayload {
+  content?: string | null;
+  contentSource?: string | null;
+  checkedSources?: string[];
+  unavailableReason?: string | null;
+  error?: string;
+  details?: string;
+}
+
+async function fetchDocumentContent(id: string): Promise<{
+  content: string | null;
+  contentSource: string | null;
+  checkedSources: string[];
+  unavailableReason: string | null;
+}> {
   const response = await fetch(`/api/document-metadata/${encodeURIComponent(id)}/content`);
-  const payload = (await response.json().catch(() => null)) as {
-    content?: string | null;
-    error?: string;
-    details?: string;
-  } | null;
+  const payload = (await response.json().catch(() => null)) as DocumentContentPayload | null;
 
   if (!response.ok) {
     const message = payload?.details ?? payload?.error ?? "Document content request failed.";
     throw new Error(message);
   }
 
-  return payload?.content ?? null;
+  return {
+    content: payload?.content ?? null,
+    contentSource: payload?.contentSource ?? null,
+    checkedSources: Array.isArray(payload?.checkedSources) ? payload.checkedSources : [],
+    unavailableReason: payload?.unavailableReason ?? null,
+  };
+}
+
+// ── Tags ───────────────────────────────────────────────────────────────────
+
+/**
+ * Tags are stored inconsistently: Postgres array literals (`{tag a,tag b}`),
+ * JSON-array strings (`["teams","general"]`), comma- or semicolon-separated
+ * lists, and hybrids of these. Many rows also carry internal ingestion
+ * metadata — `strategy:spec_section`, `local_path:.../file.pdf`,
+ * `project_auto:...`, teams thread ids like `19:3036d234-` — which are
+ * plumbing, not user-facing tags. Normalize to a clean, de-duplicated list of
+ * display tags, dropping the internal `key:value` and file-path tokens.
+ */
+function parseTags(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  let working = raw.trim();
+  const tokens: string[] = [];
+
+  const arrayMatch = working.match(/\[.*?\]/);
+  if (arrayMatch) {
+    try {
+      const parsed = JSON.parse(arrayMatch[0]);
+      if (Array.isArray(parsed)) tokens.push(...parsed.map((t) => String(t)));
+    } catch {
+      // fall through to delimiter splitting on the bracket contents
+    }
+    working = working.replace(arrayMatch[0], "");
+  }
+
+  // Split on `;` first. Internal metadata is stored as whole `key:value`
+  // segments (`local_path:.../a, b.pdf`) whose value can itself contain commas,
+  // so the segment must be dropped BEFORE any comma-splitting.
+  working.split(/;+/).forEach((segment) => {
+    const trimmed = segment.trim();
+    if (!trimmed) return;
+    if (/^[a-z][a-z0-9_]*:/i.test(trimmed)) return; // internal key:value metadata
+    trimmed.split(",").forEach((t) => tokens.push(t));
+  });
+
+  const cleaned = tokens
+    .map((t) => t.replace(/["[\]{}]/g, "").trim())
+    .filter(Boolean)
+    // Drop any residual internal metadata: `key:value` plumbing and file paths.
+    .filter((t) => !t.includes(":") && !t.includes("/") && !/\.\w{2,4}$/.test(t));
+
+  return Array.from(new Set(cleaned));
+}
+
+const MAX_VISIBLE_TAGS = 3;
+
+function TagsCell({ value }: { value: string | null }): React.ReactElement {
+  const tags = parseTags(value);
+  if (tags.length === 0) return <CellText value={null} muted />;
+
+  const visible = tags.slice(0, MAX_VISIBLE_TAGS);
+  const overflow = tags.length - visible.length;
+
+  return (
+    <div className="flex flex-nowrap items-center gap-1 overflow-hidden">
+      {visible.map((tag) => (
+        <Badge
+          key={tag}
+          variant="inactive"
+          className="max-w-36 shrink-0 truncate font-normal"
+        >
+          {tag}
+        </Badge>
+      ))}
+      {overflow > 0 && (
+        <span className="shrink-0 text-xs text-muted-foreground">+{overflow}</span>
+      )}
+    </div>
+  );
 }
 
 // ── Column metadata ──────────────────────────────────────────────────────────
@@ -240,7 +334,7 @@ const columns: ColumnConfig[] = [
   { id: "expand", label: "", alwaysVisible: true },
   { id: "title", label: "Title", alwaysVisible: true },
   { id: "project", label: "Project", defaultVisible: true },
-  { id: "content", label: "Content", defaultVisible: true },
+  { id: "content", label: "Content", defaultVisible: false },
   { id: "source_system", label: "Source", defaultVisible: true },
   { id: "date", label: "Date", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
@@ -393,9 +487,9 @@ function buildTableColumns(
     },
     {
       ...columns[COL.tags],
-      render: (item) => <CellText value={item.tags} muted />,
-      csvValue: (item) => item.tags ?? "",
-      sortValue: (item) => item.tags ?? "",
+      render: (item) => <TagsCell value={item.tags} />,
+      csvValue: (item) => parseTags(item.tags).join(", "),
+      sortValue: (item) => parseTags(item.tags).join(", "),
       sortable: true,
     },
     {
@@ -747,18 +841,33 @@ export function DocumentMetadataClient({
 
   const loadContent = React.useCallback(
     async (item: DocumentMetadataItem) => {
-      if (loadedContentIds.has(item.id)) return item.content;
+      if (loadedContentIds.has(item.id)) {
+        return {
+          content: item.content,
+          contentSource: item.contentSource ?? null,
+          checkedSources: item.contentCheckedSources ?? [],
+          unavailableReason: item.contentUnavailableReason ?? null,
+        };
+      }
 
       setLoadingContentIds((prev) => new Set(prev).add(item.id));
       try {
-        const content = await fetchDocumentContent(item.id);
+        const result = await fetchDocumentContent(item.id);
         setItems((prev) =>
           prev.map((current) =>
-            current.id === item.id ? { ...current, content } : current,
+            current.id === item.id
+              ? {
+                  ...current,
+                  content: result.content,
+                  contentSource: result.contentSource,
+                  contentCheckedSources: result.checkedSources,
+                  contentUnavailableReason: result.unavailableReason,
+                }
+              : current,
           ),
         );
         setLoadedContentIds((prev) => new Set(prev).add(item.id));
-        return content;
+        return result;
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Document content could not be loaded.";
@@ -786,9 +895,11 @@ export function DocumentMetadataClient({
         return;
       }
 
-      void loadContent(item).then((content) => {
-        if (!content) {
-          toast.info("No content is available for this record.");
+      void loadContent(item).then((result) => {
+        if (!result.content) {
+          toast.info("No content is available for this record.", {
+            description: result.unavailableReason ?? undefined,
+          });
           return;
         }
         setExpandedIds((prev) => new Set(prev).add(item.id));
@@ -1214,10 +1325,16 @@ export function DocumentMetadataClient({
             return (
               <TableExpandedRow colSpan={colSpan}>
                 <div className="px-6 py-3 bg-muted/40 border-t border-border/50">
-                  <p className="text-xs font-medium text-muted-foreground mb-1.5">Full content</p>
-                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                    {item.content}
+                  <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+                    {item.type?.startsWith("teams") ? "Conversation" : "Full content"}
                   </p>
+                  {item.type?.startsWith("teams") ? (
+                    <TeamsConversation content={item.content} />
+                  ) : (
+                    <Markdown className="text-sm text-foreground [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h1]:mb-1 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-medium [&_h3]:mt-2 [&_h3]:mb-0.5 [&_p]:leading-relaxed [&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:mb-2 [&_li]:mb-0.5 [&_strong]:font-semibold">
+                      {item.content}
+                    </Markdown>
+                  )}
                 </div>
               </TableExpandedRow>
             );

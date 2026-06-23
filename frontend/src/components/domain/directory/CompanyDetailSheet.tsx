@@ -248,6 +248,7 @@ export function CompanyDetailSheet({
                 <FactRow label="Status" value={company.status || "—"} />
                 <FactRow label="Type" value={company.type || "—"} />
                 <FactRow label="ERP Vendor ID" value={company.acumatica_vendor_id || "—"} />
+                <FactRow label="License Number" value={company.license_number || "—"} />
                 <FactRow label="Email" value={company.contact_email || "—"} />
                 <FactRow label="Phone" value={company.contact_phone || "—"} />
                 <FactRow

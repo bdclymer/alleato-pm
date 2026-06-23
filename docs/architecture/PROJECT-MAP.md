@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (308)
+## UI Routes (309)
 
-_307/308 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_308/309 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -126,7 +126,8 @@ _307/308 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/sov` | View and manage schedule of values across all contracts | frontend/src/app/(main)/[projectId]/sov/page.tsx |
 | `/[projectId]/specifications` | Browse, upload, and manage project specifications by section with revision tracking | frontend/src/app/(main)/[projectId]/specifications/page.tsx |
 | `/[projectId]/specifications/[sectionId]` | Upload a revision to start tracking changes to this specification section. | frontend/src/app/(main)/[projectId]/specifications/[sectionId]/page.tsx |
-| `/[projectId]/submittals` | Organize construction submittals by packages, specs, and review workflows with approval tracking | frontend/src/app/(main)/[projectId]/submittals/page.tsx |
+| `/[projectId]/specifications/settings` | Create a division from the Specifications page. | frontend/src/app/(main)/[projectId]/specifications/settings/page.tsx |
+| `/[projectId]/submittals` | Project defaults applied when new submittals are created. | frontend/src/app/(main)/[projectId]/submittals/page.tsx |
 | `/[projectId]/submittals/[submittalId]` | View submittal detail, workflow responses, and linked attachments | frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx |
 | `/[projectId]/submittals/[submittalId]/edit` | Edit submittal metadata, type, package, and specification associations | frontend/src/app/(main)/[projectId]/submittals/[submittalId]/edit/page.tsx |
 | `/[projectId]/submittals/new` | Create new submittal with optional package or spec section prefill | frontend/src/app/(main)/[projectId]/submittals/new/page.tsx |
@@ -326,7 +327,7 @@ _307/308 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management` | Manage app users, project access, and permission templates with granular capability controls | frontend/src/app/(admin)/user-management/page.tsx |
 | `/user-management/users/[personId]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[personId]/page.tsx |
 
-## API Endpoints (661)
+## API Endpoints (664)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -909,7 +910,9 @@ _307/308 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/specifications/[sectionId]/subscribe` | POST, DELETE | frontend/src/app/api/projects/[projectId]/specifications/[sectionId]/subscribe/route.ts |
 | `/api/projects/[projectId]/specifications/areas` | GET, POST | frontend/src/app/api/projects/[projectId]/specifications/areas/route.ts |
 | `/api/projects/[projectId]/specifications/areas/[areaId]` | GET, PATCH, DELETE | frontend/src/app/api/projects/[projectId]/specifications/areas/[areaId]/route.ts |
+| `/api/projects/[projectId]/specifications/divisions` | GET, POST | frontend/src/app/api/projects/[projectId]/specifications/divisions/route.ts |
 | `/api/projects/[projectId]/specifications/revisions` | GET | frontend/src/app/api/projects/[projectId]/specifications/revisions/route.ts |
+| `/api/projects/[projectId]/specifications/sections` | POST | frontend/src/app/api/projects/[projectId]/specifications/sections/route.ts |
 | `/api/projects/[projectId]/subcontracts` | GET, POST | frontend/src/app/api/projects/[projectId]/subcontracts/route.ts |
 | `/api/projects/[projectId]/submittal-packages` | GET, POST | frontend/src/app/api/projects/[projectId]/submittal-packages/route.ts |
 | `/api/projects/[projectId]/submittal-spec-sections` | GET | frontend/src/app/api/projects/[projectId]/submittal-spec-sections/route.ts |
@@ -928,6 +931,7 @@ _307/308 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/submittals/export` | GET | frontend/src/app/api/projects/[projectId]/submittals/export/route.ts |
 | `/api/projects/[projectId]/submittals/packages` | GET, POST | frontend/src/app/api/projects/[projectId]/submittals/packages/route.ts |
 | `/api/projects/[projectId]/submittals/packages/[packageId]` | PATCH, DELETE | frontend/src/app/api/projects/[projectId]/submittals/packages/[packageId]/route.ts |
+| `/api/projects/[projectId]/submittals/settings` | GET, PUT | frontend/src/app/api/projects/[projectId]/submittals/settings/route.ts |
 | `/api/projects/[projectId]/submittals/specs` | GET | frontend/src/app/api/projects/[projectId]/submittals/specs/route.ts |
 | `/api/projects/[projectId]/submittals/workflow-templates` | GET, POST | frontend/src/app/api/projects/[projectId]/submittals/workflow-templates/route.ts |
 | `/api/projects/[projectId]/submittals/workflow-templates/[templateId]` | PUT, DELETE | frontend/src/app/api/projects/[projectId]/submittals/workflow-templates/[templateId]/route.ts |

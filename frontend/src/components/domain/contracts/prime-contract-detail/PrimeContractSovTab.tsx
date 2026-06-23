@@ -49,6 +49,7 @@ import {
 import { EmptyState } from "@/components/ds";
 import type { BudgetCode, ContractLineItem } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 import { resolveContractLineBudgetCode } from "./budget-code-resolution";
+import { buildSovSummaryValues, SovSummaryFooterRows } from "./sov-summary-footer";
 
 function getLineTotal(item: ContractLineItem) {
   return (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
@@ -80,6 +81,8 @@ export interface PrimeContractSovTabProps {
   onImportEstimateToSov?: () => void;
   /** Billed-to-date amount used to compute per-line percentages. */
   invoicedAmount?: number | null;
+  approvedChangesAmount?: number | null;
+  originalContractAmount?: number | null;
 }
 
 export function PrimeContractSovTab({
@@ -104,6 +107,8 @@ export function PrimeContractSovTab({
   onDeleteSovLine,
   onImportEstimateToSov,
   invoicedAmount,
+  approvedChangesAmount,
+  originalContractAmount,
 }: PrimeContractSovTabProps) {
   const displayedSovItems = isSovEditing ? sovDraftItems : lineItems;
 
@@ -134,6 +139,40 @@ export function PrimeContractSovTab({
   const invoicesTotal = Number(invoicedAmount) || 0;
   const billedToDateRatio =
     displayedSovTotal > 0 ? Math.min(1, Math.max(0, invoicesTotal / displayedSovTotal)) : 0;
+  const sovSummary = buildSovSummaryValues({
+    subtotal: displayedSovTotal,
+    originalContract: originalContractAmount ?? (displayedSovTotal > 0 ? displayedSovTotal : null),
+    approvedChanges: approvedChangesAmount,
+    billedToDate: invoicesTotal,
+  });
+
+  const addSovAction = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5">
+          <Plus />
+          Add
+          <ChevronDown className="text-muted-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={onAddSovLine}>
+          <Plus className="mr-2 h-4 w-4" />
+          Line Item
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onAddSovGroup}>
+          <Rows3 className="mr-2 h-4 w-4" />
+          Group
+        </DropdownMenuItem>
+        {onImportEstimateToSov ? (
+          <DropdownMenuItem onClick={onImportEstimateToSov}>
+            <Upload className="mr-2 h-4 w-4" />
+            Estimate Workbook
+          </DropdownMenuItem>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   const sovRowsWithSubtotals = useMemo(() => {
     const rows: Array<
@@ -189,6 +228,7 @@ export function PrimeContractSovTab({
         actions={
           isSovEditing ? (
             <>
+              {addSovAction}
               <Button variant="ghost" size="sm" onClick={onCancelSovEdit}>
                 Cancel
               </Button>
@@ -196,7 +236,9 @@ export function PrimeContractSovTab({
                 {isSavingSovChanges ? "Saving..." : "Save"}
               </Button>
             </>
-          ) : undefined
+          ) : (
+            addSovAction
+          )
         }
       />
 
@@ -216,19 +258,6 @@ export function PrimeContractSovTab({
             icon={<FileText />}
             title="No SOV lines yet"
             description="Add SOV lines with budget codes to track the contract value."
-            action={
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  onStartSovEdit();
-                  onAddSovLine();
-                }}
-              >
-                <Plus />
-                Add SOV Line
-              </Button>
-            }
           />
         ) : (
           <DndContext
@@ -237,33 +266,32 @@ export function PrimeContractSovTab({
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-              <div className="overflow-hidden overflow-x-auto rounded-md border border-border/70 bg-muted/20">
-                <InlineTable variant="edit">
-                  <InlineTableHeader className="border-y-0 [&_tr]:border-b-0">
-                    <InlineTableHeaderRow className="bg-muted/70 hover:bg-muted/70">
-                      <InlineTableHeaderCell className="w-10 px-1 py-1.5" />
-                      <InlineTableHeaderCell className="min-w-72 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+              <InlineTable variant="edit">
+                  <InlineTableHeader>
+                    <InlineTableHeaderRow>
+                      <InlineTableHeaderCell className="w-10" />
+                      <InlineTableHeaderCell className="min-w-72">
                         Budget Code
                       </InlineTableHeaderCell>
-                      <InlineTableHeaderCell className="min-w-64 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      <InlineTableHeaderCell className="min-w-64">
                         Description
                       </InlineTableHeaderCell>
-                      <InlineTableHeaderCell align="right" className="w-20 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      <InlineTableHeaderCell align="right" className="w-20">
                         Qty
                       </InlineTableHeaderCell>
-                      <InlineTableHeaderCell className="w-16 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      <InlineTableHeaderCell className="w-16">
                         UOM
                       </InlineTableHeaderCell>
-                      <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      <InlineTableHeaderCell align="right" className="w-40">
                         Amount
                       </InlineTableHeaderCell>
-                      <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      <InlineTableHeaderCell align="right" className="w-40">
                         Bill to Date
                       </InlineTableHeaderCell>
-                      <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      <InlineTableHeaderCell align="right" className="w-40">
                         Amount Remaining
                       </InlineTableHeaderCell>
-                      <InlineTableHeaderCell className="w-24 px-1 py-1.5" />
+                      <InlineTableHeaderCell className="w-24" />
                     </InlineTableHeaderRow>
                   </InlineTableHeader>
                   <InlineTableBody>
@@ -579,39 +607,17 @@ export function PrimeContractSovTab({
                       );
                     })}
                   </InlineTableBody>
+                  <tbody aria-label="Schedule of Values summary">
+                    <SovSummaryFooterRows
+                      summary={sovSummary}
+                      formatCurrency={formatCurrency}
+                      labelColSpan={7}
+                    />
+                  </tbody>
                 </InlineTable>
-              </div>
             </SortableContext>
           </DndContext>
         )}
-
-        <div className="pt-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5">
-                <Plus />
-                Add
-                <ChevronDown className="text-muted-foreground" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={onAddSovLine}>
-                <Plus className="mr-2 h-4 w-4" />
-                Line Item
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onAddSovGroup}>
-                <Rows3 className="mr-2 h-4 w-4" />
-                Group
-              </DropdownMenuItem>
-              {onImportEstimateToSov ? (
-                <DropdownMenuItem onClick={onImportEstimateToSov}>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Estimate Workbook
-                </DropdownMenuItem>
-              ) : null}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
 
         {!lineItemsLoading && displayedSovItems.length > 0 && (
           <div className="flex justify-end pt-5">

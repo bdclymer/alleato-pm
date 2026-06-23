@@ -10,7 +10,7 @@ Checks:
   1. Outlook emails      — document_metadata where category='email'
   2. Teams messages       — document_metadata where category='teams_message'
   3. Meeting transcripts  — document_metadata where type like 'meeting%'
-  4. OneDrive documents   — document_metadata where category='document'
+  4. SharePoint documents — document_metadata where category='document'
   5. Graph sync state     — graph_sync_state for errors and staleness
   6. Fireflies sync       — recent meeting transcripts
   7. Acumatica finance    — acumatica_* tables for freshness
@@ -81,11 +81,11 @@ SOURCE_CHECKS = [
         "critical": True,
     },
     {
-        "name": "OneDrive Documents",
+        "name": "SharePoint Documents",
         "table": "document_metadata",
-        "filters": {"category": "document"},
+        "filters": {"source_system": "sharepoint"},
         "date_column": "created_at",
-        "sync_state_sources": ["onedrive_file", "sharepoint_file"],
+        "sync_state_sources": ["sharepoint_file"],
         "critical": False,  # May not have daily uploads
     },
 ]
@@ -103,13 +103,6 @@ CHUNK_SOURCE_TYPES = [
     {"type": "meeting_segment_summary", "min_chunks": 50, "label": "Meeting segment summary chunks"},
     {"type": "meeting_summary", "min_chunks": 20, "label": "Meeting summary chunks"},
 ]
-
-
-def _active_onedrive_resource_ids() -> set[str]:
-    users = [u.strip() for u in os.environ.get("MICROSOFT_SYNC_USERS", "").split(",") if u.strip()]
-    folders_raw = os.environ.get("ONEDRIVE_SYNC_FOLDERS") or os.environ.get("ONEDRIVE_SYNC_FOLDER", "/Projects")
-    folders = [folder.strip() for folder in folders_raw.split(",") if folder.strip()]
-    return {f"{user}:{folder}" for user in users for folder in folders}
 
 
 def _active_sharepoint_resource_ids() -> set[str]:
@@ -131,7 +124,7 @@ def _is_inactive_graph_resource(row: dict) -> bool:
     if source == "onedrive_file" and str(resource_id).startswith("sharepoint:"):
         return resource_id not in _active_sharepoint_resource_ids()
     if source == "onedrive_file":
-        return resource_id not in _active_onedrive_resource_ids()
+        return True
     if source == "sharepoint_file":
         return resource_id not in _active_sharepoint_resource_ids()
     return False

@@ -547,9 +547,14 @@
       "description": "Upload a revision to start tracking changes to this specification section."
     },
     {
+      "url": "/[projectId]/specifications/settings",
+      "title": "Specifications Settings",
+      "description": "Create a division from the Specifications page."
+    },
+    {
       "url": "/[projectId]/submittals",
-      "title": "Export PDF",
-      "description": "Organize construction submittals by packages, specs, and review workflows with approval tracking"
+      "title": "General Settings",
+      "description": "Project defaults applied when new submittals are created."
     },
     {
       "url": "/[projectId]/submittals/[submittalId]",

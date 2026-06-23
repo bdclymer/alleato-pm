@@ -713,7 +713,7 @@ export function PrimeContractFinancialMarkupTab({
                     <InlineTableHeaderCell align="right">Actions</InlineTableHeaderCell>
                   </InlineTableHeaderRow>
                 </InlineTableHeader>
-                <InlineTableBody>
+                <InlineTableBody className="[&_tr:last-child]:border-b-0">
                   {sortedMarkups.map((markup, index) => {
                     const isEditingRow = Boolean(editingMarkupRowIds[markup.id]);
                     const displayIn = markupDisplayById[markup.id] ?? "vertical";

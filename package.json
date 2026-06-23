@@ -165,7 +165,8 @@
     "rag:verify:strategic-rag-operator-evals:prod": "AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=150000 npm run rag:verify:strategic-rag-operator-evals",
     "langsmith:upload:strategic-operator": "node scripts/ops/upload-langsmith-strategic-dataset.mjs",
     "rag:verify:assistant-operational-readiness": "node scripts/verify/verify_ai_assistant_operational_readiness.mjs",
-    "rag:verify:source-freshness": "python3 scripts/verify/verify_integration_health.py --skip-env"
+    "rag:verify:source-freshness": "python3 scripts/verify/verify_integration_health.py --skip-env",
+    "eval:compare-models": "node scripts/verify/compare-openai-models.mjs"
   },
   "devDependencies": {
     "@playwright/mcp": "^0.0.63",
