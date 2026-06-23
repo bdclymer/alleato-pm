@@ -105,6 +105,44 @@ export type SubmittalAttachment = {
     created_at: string | null;
 };
 
+export interface LinkedDrawing {
+  id: string;
+  submittal_id: string;
+  drawing_id: string;
+  drawing_number: string;
+  title: string;
+  discipline: string | null;
+  revision: string | null;
+  has_vectorized_content: boolean;
+}
+
+export interface AIReviewResult {
+  submittal: {
+    id: string;
+    number: string;
+    title: string;
+    status: string;
+  };
+  linkedDrawings: Array<{
+    drawingNumber: string;
+    title: string;
+    discipline: string;
+    hasVectorizedContent: boolean;
+  }>;
+  comparisonContext: {
+    submittalText: string | null;
+    drawingText: string | null;
+    additionalRelevantDrawingChunks: Array<{ title: string; excerpt: string }>;
+    focusArea: string | null;
+  };
+  readiness: {
+    canCompare: boolean;
+    missingSubmittalText?: string;
+    missingDrawingText?: string;
+  };
+  nextStep: string;
+}
+
 export async function uploadSubmittalAttachments(
   projectId: number,
   submittalId: string,
@@ -576,6 +614,74 @@ export function useDistributeSubmittal(projectId: number, submittalId: string) {
     },
     onError: (err: Error) => {
       toast.error("Could not distribute submittal", { description: err.message });
+    },
+  });
+}
+
+// ─── Linked Drawings & AI Review hooks ───────────────────────────────────────
+
+export function useSubmittalLinkedDrawings(projectId: number, submittalId: string) {
+  return useQuery({
+    queryKey: ["submittal-linked-drawings", projectId, submittalId],
+    queryFn: async (): Promise<LinkedDrawing[]> => {
+      const res = await apiFetch<{ linkedDrawings: LinkedDrawing[] }>(
+        `/api/projects/${projectId}/submittals/${submittalId}/linked-drawings`
+      );
+      return res.linkedDrawings;
+    },
+    enabled: !!submittalId,
+  });
+}
+
+export function useAddLinkedDrawing(projectId: number, submittalId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ drawingId }: { drawingId: string }) => {
+      return apiFetch<{ linkedDrawing: LinkedDrawing } | { alreadyLinked: true }>(
+        `/api/projects/${projectId}/submittals/${submittalId}/linked-drawings`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ drawingId }),
+        }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["submittal-linked-drawings", projectId, submittalId],
+      });
+    },
+  });
+}
+
+export function useRemoveLinkedDrawing(projectId: number, submittalId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ drawingId }: { drawingId: string }) => {
+      return apiFetch<{ success: true }>(
+        `/api/projects/${projectId}/submittals/${submittalId}/linked-drawings/${drawingId}`,
+        { method: "DELETE" }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["submittal-linked-drawings", projectId, submittalId],
+      });
+    },
+  });
+}
+
+export function useSubmittalAIReview(projectId: number, submittalId: string) {
+  return useMutation({
+    mutationFn: async ({ focusArea }: { focusArea?: string } = {}) => {
+      return apiFetch<AIReviewResult>(
+        `/api/projects/${projectId}/submittals/${submittalId}/ai-review`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ focusArea }),
+        }
+      );
     },
   });
 }
