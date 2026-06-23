@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Modal,
   ModalContent,
@@ -3550,6 +3551,34 @@ export function hasAssistantDynamicToolComponent(part: AssistantToolPartForRegis
   return Boolean(assistantToolComponentRegistry[part.type.replace(/^tool-/, "")]);
 }
 
+const TOOL_LOADING_LABELS: Record<string, string> = {
+  generateExecutiveDailyBrief: "Generating daily brief…",
+  getMeetingIntelligence: "Analyzing meeting…",
+  getRecentEmails: "Loading emails…",
+};
+
+function ToolLoadingSkeleton({ toolName }: { toolName: string }) {
+  const label = TOOL_LOADING_LABELS[toolName] ?? "Working…";
+  return (
+    <div className="w-full space-y-3 rounded-2xl bg-card/60 p-4">
+      <div className="flex items-center gap-2">
+        <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">{label}</span>
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-4 w-2/3" />
+      </div>
+      <div className="flex gap-2 pt-1">
+        <Skeleton className="h-7 w-20 rounded-full" />
+        <Skeleton className="h-7 w-24 rounded-full" />
+        <Skeleton className="h-7 w-20 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
 export function AssistantDynamicToolRenderer({
   part,
   selectedProjectId,
@@ -3561,8 +3590,13 @@ export function AssistantDynamicToolRenderer({
   onSubmit: (message: string) => void;
   onEditDraft: (message: string) => void;
 }) {
-  if (part.state !== "output-available") return null;
   const toolName = part.type.replace(/^tool-/, "");
+  const isRegistered = toolName in assistantToolComponentRegistry;
+
+  if (part.state !== "output-available") {
+    return isRegistered ? <ToolLoadingSkeleton toolName={toolName} /> : null;
+  }
+
   const buildWidget = assistantToolComponentRegistry[toolName];
   if (!buildWidget) return null;
   const widget = buildWidget(part.output);
