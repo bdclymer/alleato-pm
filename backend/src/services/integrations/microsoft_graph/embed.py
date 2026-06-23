@@ -1,8 +1,11 @@
 """
 Chunk and embed Microsoft Graph documents into document_chunks.
 
-Called after sync for any document_metadata row with status='raw_ingested'
+Called after sync for any document_metadata row with status in
+('raw_ingested', 'segmented', 'compiled', 'error', 'ocr_partial')
 and source='microsoft_graph' (emails, Teams messages, OneDrive files).
+ocr_partial rows are scanned PDFs where Azure OCR hit the page cap — they
+have partial text and should be embedded so they're searchable.
 
 Uses text-embedding-3-large at native 3072 dimensions to match the existing
 pgvector columns.
@@ -503,8 +506,8 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
             supabase_client.from_("document_metadata")
             .select(
                 "id, title, category, source, date, participants, tags, project_id, type, "
-                "status, source_system, source_item_id, source_drive_id, source_site_id, "
-                "source_path, source_web_url, file_path, storage_bucket, content_hash"
+                "document_type, status, source_system, source_item_id, source_drive_id, "
+                "source_site_id, source_path, source_web_url, file_path, storage_bucket, content_hash"
             )
             .eq("id", metadata_id)
             .single()
@@ -671,6 +674,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         "category": doc.get("category"),
         "source": doc.get("source"),
         "type": doc.get("type"),
+        "document_type": doc.get("document_type"),
         "date": doc.get("date"),
         "project_id": doc.get("project_id"),
         "participants": doc.get("participants"),
@@ -930,7 +934,7 @@ def _count_pending_status_rows(supabase_client) -> int:
             supabase_client.from_("document_metadata")
             .select("id", count="exact", head=True)
             .eq("source", "microsoft_graph")
-            .in_("status", ["raw_ingested", "segmented", "compiled", "error"])
+            .in_("status", ["raw_ingested", "segmented", "compiled", "error", "ocr_partial"])
             .gte("date", cutoff)
             .execute()
         )
@@ -982,7 +986,7 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
             date
           from public.document_metadata
           where source = 'microsoft_graph'
-            and status in ('raw_ingested', 'segmented', 'compiled', 'error')
+            and status in ('raw_ingested', 'segmented', 'compiled', 'error', 'ocr_partial')
             and coalesce(captured_at, date, created_at::timestamptz) >= now() - interval '365 days'
           order by captured_at desc nulls last,
             date desc nulls last,
@@ -1037,7 +1041,7 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
             date
           from public.document_metadata
           where source = 'microsoft_graph'
-            and status in ('raw_ingested', 'segmented', 'compiled', 'error')
+            and status in ('raw_ingested', 'segmented', 'compiled', 'error', 'ocr_partial')
             and length(coalesce(content, '')) > 0
             and coalesce(captured_at, date, created_at::timestamptz) >= now() - interval '365 days'
           order by captured_at desc nulls last,
@@ -1188,7 +1192,7 @@ def _fetch_graph_embedding_candidates_via_supabase(
             supabase_client.from_("document_metadata")
             .select("id, category, status, source_system, created_at, date")
             .eq("source", "microsoft_graph")
-            .in_("status", ["raw_ingested", "segmented", "compiled", "error"])
+            .in_("status", ["raw_ingested", "segmented", "compiled", "error", "ocr_partial"])
             .gte("created_at", cutoff_iso)
             .order("created_at", desc=True)
             .limit(limit)

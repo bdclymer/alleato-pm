@@ -1631,6 +1631,10 @@
       "description": "Cross-reference the submittal register against what the project scope and spec documents suggest is needed. Returns submittals that appear to be missing or incomplete. Use when asked 'what submittals are we missing?' or 'is our submittal log complete?'"
     },
     {
+      "name": "reviewSubmittalAgainstDrawings",
+      "description": "Compare a submittal's documents against the project drawings to identify conflicts, missing information, or compliance issues. Fetches the submittal details and linked drawings, retrieves vectorized content from both, and returns a structured comparison. Use when asked to review a submittal, check if a submittal matches the drawings, or identify what drawing packages are needed for a spec section."
+    },
+    {
       "name": "logFeedback",
       "description": "Record a human correction or validation of an AI document review finding. Use when the user says 'that finding was wrong', 'that's correct', or wants to annotate an AI review result. This feeds the learning loop."
     },

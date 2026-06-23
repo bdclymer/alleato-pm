@@ -800,6 +800,19 @@ def run_graph_sync(
     else:
         summary["ocr"] = {"status": "skipped", "reason": "run_ocr=false"}
 
+    # ── Second embed pass — picks up docs that OCR just converted from no_text ─
+    # OCR runs after the first embed pass (above). Docs it promotes to
+    # raw_ingested or ocr_partial weren't eligible when embed first ran.
+    # A second bounded pass closes that gap in the same sync cycle.
+    if run_embedding and run_ocr and ocr_result.get("ocr_full", 0) + ocr_result.get("ocr_partial", 0) > 0:
+        try:
+            post_ocr_embed_result = embed_pending_graph_documents(supabase, limit=min(embed_limit, ocr_result.get("ocr_full", 0) + ocr_result.get("ocr_partial", 0)))
+            summary["embed_post_ocr"] = post_ocr_embed_result
+            logger.info("[GraphSync] Post-OCR embedding complete: %s", post_ocr_embed_result)
+        except Exception as e:
+            logger.warning("[GraphSync] Post-OCR embedding step failed (non-fatal): %s", e)
+            summary["embed_post_ocr"] = {"error": str(e)}
+
     # ── Embed email attachment documents (Pattern C backfill) ────────────────
     # Picks up email_attachment_legacy rows with raw_text that the Graph embed
     # sweep misses (they have source=NULL, not source='microsoft_graph').

@@ -406,7 +406,259 @@ export function createDocumentIntelligenceTools(
     }),
 
     // -----------------------------------------------------------------------
-    // 4. logFeedback
+    // 4. reviewSubmittalAgainstDrawings
+    // -----------------------------------------------------------------------
+    reviewSubmittalAgainstDrawings: tool({
+      description:
+        "Compare a submittal's documents against the project drawings to identify conflicts, " +
+        "missing information, or compliance issues. Fetches the submittal details and linked " +
+        "drawings, retrieves vectorized content from both, and returns a structured comparison. " +
+        "Use when asked to review a submittal, check if a submittal matches the drawings, or " +
+        "identify what drawing packages are needed for a spec section.",
+      inputSchema: z.object({
+        submittalId: z
+          .string()
+          .optional()
+          .describe("UUID of the submittal to review"),
+        submittalNumber: z
+          .string()
+          .optional()
+          .describe("Submittal number (e.g. '001', 'MECH-003') — used to look up submittalId"),
+        projectId: z
+          .number()
+          .optional()
+          .describe("Project ID — required if submittalId is not provided"),
+        projectName: z
+          .string()
+          .optional()
+          .describe("Project name — used to resolve projectId if not provided"),
+        focusArea: z
+          .string()
+          .optional()
+          .describe(
+            "Specific area to focus the comparison on, e.g. 'rebar size', 'fire rating', " +
+            "'dimensions'. Leave blank for a full review.",
+          ),
+      }),
+      execute: withTrace(
+        "reviewSubmittalAgainstDrawings",
+        options,
+        async ({ submittalId, submittalNumber, projectId, projectName, focusArea }) => {
+          // ── 1. Resolve project ──────────────────────────────────────────────
+          const resolvedProjectId = await resolveProject(
+            supabase,
+            projectId,
+            projectName,
+            options.pinnedProjectId,
+          );
+
+          // ── 2. Resolve submittal ────────────────────────────────────────────
+          let resolvedSubmittalId = submittalId;
+          if (!resolvedSubmittalId) {
+            if (!submittalNumber) {
+              return {
+                error: "Provide either submittalId or submittalNumber to identify the submittal.",
+              };
+            }
+            const lookupResp = await supabase
+              .from("submittals")
+              .select("id, title, status, submittal_number, description")
+              .eq("project_id", resolvedProjectId)
+              .ilike("submittal_number", `%${submittalNumber}%`)
+              .limit(1)
+              .single();
+            if (!lookupResp.data) {
+              return {
+                error: `No submittal found matching number "${submittalNumber}" on project ${resolvedProjectId}.`,
+              };
+            }
+            resolvedSubmittalId = lookupResp.data.id;
+          }
+
+          // ── 3. Fetch submittal details ──────────────────────────────────────
+          const submittalResp = await supabase
+            .from("submittals")
+            .select(
+              "id, title, submittal_number, status, description, " +
+              "submittal_type_id, specification_id, submission_date, " +
+              "required_approval_date, priority",
+            )
+            .eq("id", resolvedSubmittalId)
+            .single();
+          const submittal = submittalResp.data;
+          if (!submittal) {
+            return { error: `Submittal ${resolvedSubmittalId} not found.` };
+          }
+
+          // ── 4. Fetch submittal documents (uploaded files with extracted text) ─
+          const submittalDocsResp = await supabase
+            .from("submittal_documents")
+            .select("id, document_name, document_type, extracted_text, ai_analysis, page_count")
+            .eq("submittal_id", resolvedSubmittalId)
+            .not("extracted_text", "is", null);
+          const submittalDocs = submittalDocsResp.data ?? [];
+
+          // ── 5. Fetch linked drawings via submittal_linked_drawings ──────────
+          const linkedDrawingsResp = await supabase
+            .from("submittal_linked_drawings")
+            .select(
+              "drawing_id, drawings!inner(id, title, drawing_number, drawing_type, " +
+              "discipline, document_metadata_id)",
+            )
+            .eq("submittal_id", resolvedSubmittalId);
+          const linkedDrawings = (linkedDrawingsResp.data ?? []).map(
+            (r) => (r as unknown as { drawing_id: string; drawings: AnyRow }).drawings,
+          );
+
+          // ── 6. Pull vectorized content for each linked drawing ──────────────
+          const drawingContents: Array<{
+            drawingNumber: string;
+            title: string;
+            discipline: string | null;
+            textExcerpts: string[];
+          }> = [];
+
+          for (const drawing of linkedDrawings) {
+            const metaId = drawing.document_metadata_id as string | null;
+            if (!metaId) continue;
+
+            const chunksResp = await ragSupabase
+              .from("document_chunks")
+              .select("text, chunk_index")
+              .eq("document_id", metaId)
+              .order("chunk_index", { ascending: true })
+              .limit(8);
+
+            const excerpts = (chunksResp.data ?? []).map((c) =>
+              (c.text as string).substring(0, 600),
+            );
+            if (excerpts.length > 0) {
+              drawingContents.push({
+                drawingNumber: drawing.drawing_number as string,
+                title: drawing.title as string,
+                discipline: drawing.discipline as string | null,
+                textExcerpts: excerpts,
+              });
+            }
+          }
+
+          // ── 7. Semantic search: find additional drawing chunks relevant to this submittal ──
+          const searchQuery = [
+            submittal.title,
+            submittal.description ?? "",
+            focusArea ?? "",
+          ]
+            .filter(Boolean)
+            .join(" ");
+
+          const additionalChunks: Array<{ title: string; excerpt: string }> = [];
+          if (searchQuery.trim()) {
+            try {
+              const queryEmbedding = await generateEmbedding(searchQuery, EMBEDDING.LARGE);
+              const vectorResp = await ragSupabase.rpc("search_document_chunks", {
+                query_embedding: queryEmbedding,
+                match_count: 8,
+                filter_project_id: resolvedProjectId,
+              });
+              for (const chunk of vectorResp.data ?? []) {
+                const metadata = (chunk.metadata ?? {}) as AnyRow;
+                if (
+                  (metadata.document_type as string | null) === "drawing" ||
+                  (metadata.type as string | null) === "document"
+                ) {
+                  additionalChunks.push({
+                    title:
+                      (metadata.title as string | null) ??
+                      (chunk.doc_title as string | null) ??
+                      "Drawing",
+                    excerpt: (chunk.text as string).substring(0, 500),
+                  });
+                }
+              }
+            } catch {
+              // Vector search is best-effort — continue with what we have
+            }
+          }
+
+          // ── 8. Build comparison context ─────────────────────────────────────
+          const submittalTextSummary = submittalDocs
+            .map((d) => `[${d.document_name}]\n${(d.extracted_text as string).substring(0, 800)}`)
+            .join("\n\n");
+
+          const drawingTextSummary = drawingContents
+            .map(
+              (d) =>
+                `[Drawing ${d.drawingNumber}: ${d.title}${d.discipline ? ` (${d.discipline})` : ""}]\n` +
+                d.textExcerpts.join("\n"),
+            )
+            .join("\n\n");
+
+          const hasSubmittalText = submittalTextSummary.trim().length > 0;
+          const hasDrawingText = drawingTextSummary.trim().length > 0;
+
+          return {
+            submittal: {
+              id: submittal.id,
+              number: submittal.submittal_number,
+              title: submittal.title,
+              status: submittal.status,
+              priority: submittal.priority,
+              submissionDate: submittal.submission_date,
+              requiredApprovalDate: submittal.required_approval_date,
+            },
+            linkedDrawings: linkedDrawings.map((d) => ({
+              drawingNumber: d.drawing_number as string,
+              title: d.title as string,
+              discipline: d.discipline as string | null,
+              hasVectorizedContent:
+                drawingContents.some((c) => c.drawingNumber === (d.drawing_number as string)),
+            })),
+            submittalDocuments: submittalDocs.map((d) => ({
+              name: d.document_name,
+              type: d.document_type,
+              pages: d.page_count,
+              hasText: Boolean(d.extracted_text),
+            })),
+            comparisonContext: {
+              submittalText: hasSubmittalText
+                ? submittalTextSummary.substring(0, 3000)
+                : null,
+              drawingText: hasDrawingText
+                ? drawingTextSummary.substring(0, 3000)
+                : null,
+              additionalRelevantDrawingChunks: additionalChunks,
+              focusArea: focusArea ?? null,
+            },
+            readiness: {
+              canCompare: hasSubmittalText && hasDrawingText,
+              missingSubmittalText: !hasSubmittalText
+                ? "No extracted text found in submittal documents. The submittal PDFs may " +
+                  "not be uploaded or text extraction has not run yet."
+                : null,
+              missingDrawingText: !hasDrawingText
+                ? linkedDrawings.length === 0
+                  ? "No drawings are linked to this submittal. Link drawings via the " +
+                    "submittal detail page before running a review."
+                  : "Linked drawings exist but have no vectorized content. Drawings may be " +
+                    "scanned PDFs — OCR runs automatically on the next sync cycle (every 30 min)."
+                : null,
+            },
+            nextStep: hasSubmittalText && hasDrawingText
+              ? focusArea
+                ? `Compare the submittal text against the drawing text, focusing on "${focusArea}". ` +
+                  "Identify any conflicts, missing specs, or dimension mismatches."
+                : "Analyze the submittal text against the drawing excerpts. Identify: " +
+                  "(1) items in the submittal not covered by the drawings, " +
+                  "(2) drawing requirements not addressed by the submittal, " +
+                  "(3) any explicit conflicts in dimensions, materials, or specs."
+              : "Resolve the missing content issues above before comparison can proceed.",
+          };
+        },
+      ),
+    }),
+
+    // -----------------------------------------------------------------------
+    // 5. logFeedback
     // -----------------------------------------------------------------------
     logFeedback: tool({
       description:

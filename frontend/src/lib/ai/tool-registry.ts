@@ -820,6 +820,7 @@ const documentIntelligenceAssistantTools = factoryToolEntries({
     "getSubmittalLog",
     "getSpecRequirements",
     "detectMissingSubmittals",
+    "reviewSubmittalAgainstDrawings",
     "logFeedback",
     "reviewDocument",
   ],

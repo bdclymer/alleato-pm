@@ -313,7 +313,7 @@ _294/295 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management` | Manage app users, project access, and permission templates with granular capability controls | frontend/src/app/(admin)/user-management/page.tsx |
 | `/user-management/users/[personId]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[personId]/page.tsx |
 
-## API Endpoints (665)
+## API Endpoints (664)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -465,7 +465,6 @@ _294/295 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/dev/make-admin` | GET, POST | frontend/src/app/api/dev/make-admin/route.ts |
 | `/api/dev/schema` | GET, POST | frontend/src/app/api/dev/schema/route.ts |
 | `/api/dev/test-email` | GET, POST | frontend/src/app/api/dev/test-email/route.ts |
-| `/api/dev/test-results/[resultId]` | PATCH | frontend/src/app/api/dev/test-results/[resultId]/route.ts |
 | `/api/dev/test-runs` | POST | frontend/src/app/api/dev/test-runs/route.ts |
 | `/api/dev/test-runs/[runId]` | GET | frontend/src/app/api/dev/test-runs/[runId]/route.ts |
 | `/api/dev/test-suites/[tool]` | GET | frontend/src/app/api/dev/test-suites/[tool]/route.ts |
@@ -983,7 +982,7 @@ _294/295 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/velt/token` | POST | frontend/src/app/api/velt/token/route.ts |
 | `/api/webhooks/resend` | POST | frontend/src/app/api/webhooks/resend/route.ts |
 
-## AI Tools (106)
+## AI Tools (107)
 
 These are the tools the AI assistant can call. Each lives in `frontend/src/lib/ai/tools/`.
 
@@ -1037,7 +1036,7 @@ These are the tools the AI assistant can call. Each lives in `frontend/src/lib/a
 | `findAppPage` | Find which page, screen, or AI tool in this application does something, by purpose. Use for 'where do I…', 'what page shows…', 'does the app have a…', 'which screen lets me…'. Searches the generated inventory of EVERY route and tool (not just curated help articles), matching on what each page does — so it finds pages even when the user doesn't know the name. Returns route URLs you can link the user to. Prefer searchAppHelp for step-by-step instructions; use this to locate a page or capability. |
 | `searchAppHelp` | Search the controlled Alleato OS help center for instructions on how to use this application. Use this first for questions like 'how do I', 'where do I', 'show me how to', app setup, user management, profile settings, permissions, and feature walkthroughs. Only published AI-visible help articles are returned. |
 
-### `document-intelligence.ts` (5)
+### `document-intelligence.ts` (6)
 
 | Tool | Description |
 |------|-------------|
@@ -1046,6 +1045,7 @@ These are the tools the AI assistant can call. Each lives in `frontend/src/lib/a
 | `getSubmittalLog` | Fetch the submittal register for a project — what submittals are required, submitted, approved, rejected, or missing. Use when asked about submittal status, pipeline, or progress. Also use as the first step before detectMissingSubmittals. |
 | `logFeedback` | Record a human correction or validation of an AI document review finding. Use when the user says 'that finding was wrong', 'that's correct', or wants to annotate an AI review result. This feeds the learning loop. |
 | `reviewDocument` | Request a structured pre-review of a submittal document against project spec requirements. Returns a requirements matrix comparing what the spec requires against what the submittal provides. Use when asked to 'review this submittal', 'check this against the spec', or 'pre-review this document'. |
+| `reviewSubmittalAgainstDrawings` | Compare a submittal's documents against the project drawings to identify conflicts, missing information, or compliance issues. Fetches the submittal details and linked drawings, retrieves vectorized content from both, and returns a structured comparison. Use when asked to review a submittal, check if a submittal matches the drawings, or identify what drawing packages are needed for a spec section. |
 
 ### `executive-brief-tools.ts` (1)
 
