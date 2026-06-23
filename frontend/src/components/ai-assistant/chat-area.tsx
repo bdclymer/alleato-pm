@@ -1704,22 +1704,18 @@ export function ChatArea({
             </Tooltip>
           </TooltipProvider>
 
-          <PromptInputAction tooltip={councilMode ? "Council mode on" : "Council mode"}>
-            <Button
-              type="button"
-              variant="ghost"
-              role="switch"
-              aria-checked={councilMode}
-              size="icon-sm"
-              onClick={handleCouncilToggle}
-              className={cn(
-                composerIconButtonClass,
-                councilMode && "text-primary hover:text-primary",
-              )}
-              aria-label={councilMode ? "Turn off council mode" : "Turn on council mode"}
-            >
-              <UsersRoundIcon className="h-3.5 w-3.5" />
-            </Button>
+          <PromptInputAction
+            tooltip={councilMode ? "Council mode on" : "Council mode"}
+            role="switch"
+            aria-checked={councilMode}
+            onClick={handleCouncilToggle}
+            className={cn(
+              composerIconButtonClass,
+              councilMode && "text-primary hover:text-primary",
+            )}
+            aria-label={councilMode ? "Turn off council mode" : "Turn on council mode"}
+          >
+            <UsersRoundIcon className="h-3.5 w-3.5" />
           </PromptInputAction>
           <TooltipProvider delayDuration={150}>
             <Tooltip>
