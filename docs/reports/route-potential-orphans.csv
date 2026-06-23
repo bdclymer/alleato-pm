@@ -8,5 +8,4 @@ route,file,dynamic,refCount
 /eval-runs,frontend/src/app/(admin)/eval-runs/page.tsx,false,0
 /fm-global/fm_global_tables,frontend/src/app/(main)/fm-global/fm_global_tables/page.tsx,false,0
 /invoice/list,frontend/src/app/(dashboard)/invoice/list/page.tsx,false,0
-/motion/project-created-preview,frontend/src/app/(admin)/motion/project-created-preview/page.tsx,false,0
 /outlook-draft-feedback,frontend/src/app/(admin)/outlook-draft-feedback/page.tsx,false,0

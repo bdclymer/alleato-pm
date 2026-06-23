@@ -7,7 +7,6 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   CheckIcon,
-  CalendarIcon,
   ChevronDownIcon,
   ClockIcon,
   Cross2Icon,
@@ -60,6 +59,7 @@ import { cn } from "@/lib/utils";
 import type { EmailSource, ProjectEmail } from "@/hooks/use-emails";
 import { useProjects } from "@/hooks/use-projects";
 import { EmailImportanceFeedbackDialog } from "@/features/emails/email-importance-feedback-dialog";
+import type { EmailImportanceFeedbackState } from "@/lib/ai/email-importance-feedback-types";
 import {
   EmailDetailSheet,
   projectEmailToDetailRecord,
@@ -154,6 +154,7 @@ const ATTACHMENT_TYPES = [
   "Pay App",
   "RFI",
   "Contract",
+  "Proposal",
   "Specifications",
   "Photos",
   "Correspondence",
@@ -352,30 +353,26 @@ function resolvePrimaryContact(email: ProjectEmail): {
   };
 }
 
-function buildContextItems(email: ProjectEmail): Array<{
+export function buildContextItems(email: ProjectEmail): Array<{
   icon: React.ReactNode;
   label: string;
   value: string;
 }> {
-  const directionItem =
-    email.status === "Received"
-      ? {
-          icon: <EnvelopeClosedIcon className="h-4 w-4" />,
-          label: "From",
-          value: email.from_email?.trim() || email.from_name?.trim() || "Not provided",
-        }
-      : {
-          icon: <PaperPlaneIcon className="h-4 w-4" />,
-          label: "To",
-          value: formatRecipientLine(email.to_list),
-        };
-
   return [
-    directionItem,
     {
-      icon: <CalendarIcon className="h-4 w-4" />,
-      label: "Created",
-      value: formatLongTimestamp(email.created_at),
+      icon: <EnvelopeClosedIcon className="h-4 w-4" />,
+      label: "From",
+      value: email.from_email?.trim() || email.from_name?.trim() || "Not provided",
+    },
+    {
+      icon: <PaperPlaneIcon className="h-4 w-4" />,
+      label: "To",
+      value: formatRecipientLine(email.to_list),
+    },
+    {
+      icon: <FolderOpen className="h-4 w-4" />,
+      label: "Project",
+      value: projectLabel(email.project) ?? "No project assigned",
     },
     {
       icon: <ClockIcon className="h-4 w-4" />,
@@ -713,6 +710,619 @@ function AttachmentPreviewModal({
   );
 }
 
+interface EmailReadingPanelProps {
+  email: ProjectEmail | null;
+  canCompose?: boolean;
+  canEditEmail?: boolean;
+  canDelete?: boolean;
+  onCompose?: () => void;
+  onEdit?: (email: ProjectEmail) => void;
+  onDelete?: (email: ProjectEmail) => void;
+  showDetailsButton?: boolean;
+  onOpenDetails?: () => void;
+  importanceFeedback?: EmailImportanceFeedbackState | null;
+  onImportanceRecorded?: (
+    emailId: number,
+    feedback: EmailImportanceFeedbackState,
+  ) => void;
+  className?: string;
+}
+
+export function EmailReadingPanel({
+  email,
+  canCompose = true,
+  canEditEmail = false,
+  canDelete = true,
+  onCompose,
+  onEdit,
+  onDelete,
+  showDetailsButton = false,
+  onOpenDetails,
+  importanceFeedback = null,
+  onImportanceRecorded,
+  className,
+}: EmailReadingPanelProps) {
+  const router = useRouter();
+  const [importanceDialogOpen, setImportanceDialogOpen] = React.useState(false);
+  const [importanceSignal, setImportanceSignal] = React.useState<"important" | "not_important" | null>(null);
+  const [createTaskOpen, setCreateTaskOpen] = React.useState(false);
+  const [taskTitle, setTaskTitle] = React.useState("");
+  const [taskDescription, setTaskDescription] = React.useState("");
+  const [taskPriority, setTaskPriority] = React.useState<"high" | "medium" | "low">("medium");
+  const [taskStatus, setTaskStatus] = React.useState<"open" | "in_progress" | "blocked">("open");
+  const [taskDueDate, setTaskDueDate] = React.useState("");
+  const [isCreatingTask, setIsCreatingTask] = React.useState(false);
+  const [previewAttachment, setPreviewAttachment] = React.useState<EmailAttachmentRecord | null>(null);
+  const [attachmentOverrides, setAttachmentOverrides] = React.useState<Record<number, string | null>>({});
+  const [summaryOpen, setSummaryOpen] = React.useState(false);
+  const [summary, setSummary] = React.useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = React.useState(false);
+
+  const selectedBody = React.useMemo(
+    () => (email ? plainTextBody(email) : ""),
+    [email],
+  );
+  const selectedBodyBlocks = React.useMemo(
+    () => (email ? emailBodyBlocks(email) : []),
+    [email],
+  );
+  const { data: projectAttachments = [] } = useQuery<EmailAttachmentRecord[]>({
+    queryKey: ["email-attachments", email?.project_id],
+    queryFn: ({ signal }) =>
+      apiFetch<EmailAttachmentRecord[]>(
+        `/api/projects/${email?.project_id}/email-attachments`,
+        { signal },
+      ),
+    enabled: Boolean(email?.project_id),
+  });
+  const selectedAttachments = React.useMemo(
+    () =>
+      projectAttachments
+        .filter((attachment) => attachment.emailId === email?.id)
+        .map((attachment) => ({
+          ...attachment,
+          attachmentType:
+            attachmentOverrides[attachment.id] !== undefined
+              ? attachmentOverrides[attachment.id]
+              : attachment.attachmentType,
+        })),
+    [attachmentOverrides, projectAttachments, email?.id],
+  );
+  const attachmentTypeOptions = React.useMemo(
+    () => buildAttachmentTypeOptions(projectAttachments),
+    [projectAttachments],
+  );
+
+  const handleImportanceIntent = React.useCallback(
+    (signal: "important" | "not_important") => {
+      setImportanceSignal(signal);
+      setImportanceDialogOpen(true);
+    },
+    [],
+  );
+
+  const handleAttachmentTypeUpdate = React.useCallback(
+    (attachmentId: number, nextType: string | null) => {
+      setAttachmentOverrides((current) => ({ ...current, [attachmentId]: nextType }));
+    },
+    [],
+  );
+
+  React.useEffect(() => {
+    setSummaryOpen(false);
+    setSummary(null);
+    setSummaryLoading(false);
+  }, [email?.id]);
+
+  const handleSummarize = React.useCallback(async () => {
+    if (!email) return;
+    setSummaryOpen(true);
+    if (summary) return;
+    setSummaryLoading(true);
+    try {
+      const result = await apiFetch<{ summary: string }>(
+        `/api/projects/${email.project_id}/emails/${email.id}/summarize`,
+        { method: "POST" },
+      );
+      setSummary(result.summary);
+    } catch (error) {
+      setSummary(
+        error instanceof Error
+          ? `Could not generate summary: ${error.message}`
+          : "Could not generate summary.",
+      );
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, [email, summary]);
+
+  const handleOpenCreateTask = React.useCallback(() => {
+    if (!email) return;
+    setTaskTitle(suggestedTaskTitle(email));
+    setTaskDescription(suggestedTaskDescription(email));
+    setTaskPriority("medium");
+    setTaskStatus("open");
+    setTaskDueDate("");
+    setCreateTaskOpen(true);
+  }, [email]);
+
+  const handleCreateTask = React.useCallback(async () => {
+    if (!email) return;
+
+    const trimmedTitle = taskTitle.trim();
+    const trimmedDescription = taskDescription.trim();
+
+    if (!trimmedTitle || !trimmedDescription) {
+      toast.error("Task title and description are required.");
+      return;
+    }
+
+    setIsCreatingTask(true);
+    try {
+      await apiFetch(`/api/projects/${email.project_id}/emails/${email.id}/tasks`, {
+        method: "POST",
+        body: JSON.stringify({
+          title: trimmedTitle,
+          description: trimmedDescription,
+          dueDate: taskDueDate || null,
+          priority: taskPriority,
+          status: taskStatus,
+        }),
+      });
+      setCreateTaskOpen(false);
+      toast.success("Task created from email.");
+      router.refresh();
+    } catch (error) {
+      const message =
+        error instanceof Error && /already exists/i.test(error.message)
+          ? "A matching task already exists for this email."
+          : error instanceof Error
+            ? error.message
+            : "Could not create task from email.";
+      toast.error(message);
+    } finally {
+      setIsCreatingTask(false);
+    }
+  }, [router, email, taskDescription, taskDueDate, taskPriority, taskStatus, taskTitle]);
+
+  return (
+    <>
+      <AnimatePresence mode="wait">
+        {email ? (
+          <motion.div
+            key={email.id}
+            initial={{ opacity: 0, x: 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -12 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className={cn("flex h-full flex-col", className)}
+            style={{ minHeight: "30rem" }}
+          >
+            <div className="border-b border-border/70 px-8 py-4 xl:px-10">
+              <div className="flex items-start justify-between gap-6">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-3">
+                    <div className="truncate text-[15px] font-semibold tracking-[-0.01em] text-foreground">
+                      {email.subject || "Untitled email"}
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-y-1.5 text-[13px] text-muted-foreground sm:grid-cols-[3.25rem_minmax(0,1fr)_auto] sm:gap-x-3">
+                    <span className="font-medium text-foreground/75">From</span>
+                    <span className="min-w-0 truncate text-foreground">
+                      <span className="font-medium">{email.from_name || "Unknown sender"}</span>
+                      {email.from_email ? `  ${email.from_email}` : ""}
+                    </span>
+                    <span className="row-span-3 hidden whitespace-nowrap text-right text-[12px] text-muted-foreground sm:block">
+                      {formatMetaDate(
+                        email.received_at ||
+                          email.sent_at ||
+                          email.created_at,
+                      )}
+                    </span>
+                    <span className="font-medium text-foreground/75">To</span>
+                    <span className="min-w-0 truncate text-foreground">
+                      {formatRecipientLine(email.to_list)}
+                    </span>
+                    <span className="font-medium text-foreground/75 sm:hidden">Date</span>
+                    <span className="text-foreground sm:hidden">
+                      {formatMetaDate(
+                        email.received_at ||
+                          email.sent_at ||
+                          email.created_at,
+                      )}
+                    </span>
+                    <span className="font-medium text-foreground/75">Project</span>
+                    <span className="min-w-0 truncate text-foreground">
+                      {projectLabel(email.project) ?? "No project assigned"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleImportanceIntent("important")}
+                    aria-label="Importance feedback"
+                    className="h-8 w-8 rounded-full"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                  {showDetailsButton && onOpenDetails ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={onOpenDetails}
+                      aria-label="Open email content panel"
+                      className="hidden h-8 w-8 rounded-full text-muted-foreground xl:inline-flex 2xl:hidden"
+                    >
+                      <MixerHorizontalIcon className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                  {canEditEmail && onEdit ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEdit(email)}
+                      className="h-8 w-8 rounded-full"
+                      aria-label="Edit email"
+                    >
+                      <Pencil1Icon className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                  {canDelete && onDelete ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete(email)}
+                      className="h-8 w-8 rounded-full"
+                      aria-label="Delete email"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            {summaryOpen ? (
+              <InfoAlert
+                role="status"
+                icon={<Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />}
+                className="items-start gap-2 rounded-none border-x-0 border-t-0 border-b border-border/60 bg-muted/30 px-8 py-3 text-muted-foreground [&>div]:flex-1 xl:px-10"
+              >
+                <div className="flex w-full items-start gap-2">
+                  {summaryLoading ? (
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Summarizing…
+                    </span>
+                  ) : (
+                    <p className="flex-1 text-xs leading-relaxed text-muted-foreground">
+                      {summary}
+                    </p>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSummaryOpen(false)}
+                    aria-label="Close summary"
+                    className="size-6 shrink-0 text-muted-foreground"
+                  >
+                    <Cross2Icon className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </InfoAlert>
+            ) : null}
+
+            <ScrollArea className="flex-1">
+              <div className="flex flex-col gap-8 px-8 pb-8 pt-8 xl:px-10">
+                <div className="space-y-5 text-[16px] leading-8 text-foreground [overflow-wrap:anywhere]">
+                  {selectedBody ? (
+                    selectedBodyBlocks.map((block) => {
+                      if (block.kind === "metadata" || block.kind === "quote-header") {
+                        return null;
+                      }
+
+                      if (block.kind === "warning") {
+                        return (
+                          <div
+                            key={block.id}
+                            className="inline-flex rounded-full bg-warning/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-warning-foreground"
+                          >
+                            {block.lines.join(" ")}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div key={block.id} className="space-y-3">
+                          {block.lines.map((line) => (
+                            <p key={`${block.id}-${line}`} className="whitespace-pre-wrap break-words">
+                              {line}
+                            </p>
+                          ))}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-muted-foreground">This draft does not have body copy yet.</p>
+                  )}
+                </div>
+
+                {selectedAttachments.length > 0 ? (
+                  <div className="space-y-3 border-t border-border/60 pt-5">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                      <Paperclip className="h-3.5 w-3.5" />
+                      {selectedAttachments.length}{" "}
+                      {selectedAttachments.length === 1 ? "Attachment" : "Attachments"}
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {selectedAttachments.map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className="space-y-3 rounded-2xl border border-border/70 p-3"
+                        >
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setPreviewAttachment(attachment)}
+                            disabled={!isPreviewableAttachment(attachment)}
+                            aria-label={`Preview ${attachment.fileName}`}
+                            className={cn(
+                              "flex h-28 w-full items-center justify-center overflow-hidden rounded-xl bg-muted/30 p-0 disabled:opacity-100",
+                              isPreviewableAttachment(attachment) && "hover:bg-muted/50",
+                            )}
+                          >
+                            {isImageAttachment(attachment) ? (
+                              <img
+                                src={previewUrl(email.project_id, attachment.id)}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            ) : isPdfAttachment(attachment) ? (
+                              <PdfDocument
+                                file={previewUrl(email.project_id, attachment.id)}
+                                loading={<FileTextIcon className="h-5 w-5 text-muted-foreground" />}
+                                error={<FileTextIcon className="h-5 w-5 text-muted-foreground" />}
+                              >
+                                <PdfPage pageNumber={1} width={160} renderAnnotationLayer={false} renderTextLayer={false} />
+                              </PdfDocument>
+                            ) : (
+                              <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </Button>
+                          <div className="space-y-1">
+                            <div className="truncate text-sm font-medium text-foreground">
+                              {attachment.fileName}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {formatBytes(attachment.fileSize)}
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <AttachmentTypePopover
+                              attachment={attachment}
+                              projectId={email.project_id}
+                              availableTypes={attachmentTypeOptions}
+                              onUpdated={handleAttachmentTypeUpdate}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 rounded-full text-muted-foreground hover:text-foreground"
+                              onClick={() =>
+                                window.open(
+                                  attachmentUrl(email.project_id, attachment.id),
+                                  "_blank",
+                                )
+                              }
+                              aria-label={`Download ${attachment.fileName}`}
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-5">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void handleSummarize()}
+                    className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Summarize
+                  </Button>
+
+                  <ProjectAssignmentPopover email={email} />
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleImportanceIntent("important")}
+                    className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <Star className="h-3.5 w-3.5" />
+                    Mark important
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleImportanceIntent("not_important")}
+                    className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <StarOff className="h-3.5 w-3.5" />
+                    Not important
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleOpenCreateTask}
+                    disabled={!email.project_id}
+                    className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <ListTodo className="h-3.5 w-3.5" />
+                    Create task
+                  </Button>
+                </div>
+              </div>
+            </ScrollArea>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="empty-detail"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className={cn("flex h-full items-center justify-center px-8 py-10", className)}
+            style={{ minHeight: "30rem" }}
+          >
+            <div className="max-w-md text-center">
+              <div className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-[1.75rem] bg-muted text-muted-foreground">
+                <EnvelopeClosedIcon className="h-6 w-6" />
+              </div>
+              <div className="mt-6 text-2xl font-semibold tracking-[-0.03em] text-foreground">
+                Nothing selected
+              </div>
+              <p className="mt-3 text-[15px] leading-7 text-muted-foreground">
+                Select a message from the inbox rail{canCompose ? " or start a new draft" : ""}. This center pane is where the thread stays in focus.
+              </p>
+              {canCompose && onCompose ? (
+                <Button
+                  size="sm"
+                  onClick={onCompose}
+                  className="mt-6 h-10 rounded-full px-4 shadow-none"
+                >
+                  <PlusIcon className="mr-2 h-4 w-4" />
+                  Compose email
+                </Button>
+              ) : null}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <EmailImportanceFeedbackDialog
+        email={email}
+        open={importanceDialogOpen}
+        signal={importanceSignal}
+        existingFeedback={importanceFeedback}
+        onOpenChange={(open) => {
+          setImportanceDialogOpen(open);
+          if (!open) {
+            setImportanceSignal(null);
+          }
+        }}
+        onRecorded={(emailId, feedback) => {
+          setImportanceDialogOpen(false);
+          setImportanceSignal(null);
+          onImportanceRecorded?.(emailId, feedback);
+        }}
+      />
+      <AttachmentPreviewModal
+        attachment={previewAttachment}
+        projectId={email?.project_id ?? 0}
+        open={Boolean(previewAttachment)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewAttachment(null);
+        }}
+      />
+      <Modal open={createTaskOpen} onOpenChange={setCreateTaskOpen}>
+        <ModalContent size="lg">
+          <ModalHeader>
+            <ModalTitle>Create task from email</ModalTitle>
+            <ModalDescription>
+              Capture a follow-up without leaving the thread.
+            </ModalDescription>
+          </ModalHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-1.5">
+              <div className="text-xs font-medium text-muted-foreground">Title</div>
+              <Input
+                value={taskTitle}
+                onChange={(event) => setTaskTitle(event.target.value)}
+                placeholder="What needs to happen?"
+                autoFocus
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <div className="text-xs font-medium text-muted-foreground">Description</div>
+              <Textarea
+                value={taskDescription}
+                onChange={(event) => setTaskDescription(event.target.value)}
+                rows={7}
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-1.5">
+                <div className="text-xs font-medium text-muted-foreground">Priority</div>
+                <Select value={taskPriority} onValueChange={(value) => setTaskPriority(value as typeof taskPriority)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-1.5">
+                <div className="text-xs font-medium text-muted-foreground">Status</div>
+                <Select value={taskStatus} onValueChange={(value) => setTaskStatus(value as typeof taskStatus)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">Open</SelectItem>
+                    <SelectItem value="in_progress">In progress</SelectItem>
+                    <SelectItem value="blocked">Blocked</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-1.5">
+                <div className="text-xs font-medium text-muted-foreground">Due date</div>
+                <Input
+                  type="date"
+                  value={taskDueDate}
+                  onChange={(event) => setTaskDueDate(event.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          <ModalFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setCreateTaskOpen(false)}
+              disabled={isCreatingTask}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={() => void handleCreateTask()} disabled={isCreatingTask}>
+              {isCreatingTask ? "Creating..." : "Create task"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
+  );
+}
+
 function EmailDetailsPanel({
   selectedEmail,
   primaryContact,
@@ -874,26 +1484,11 @@ export function ProjectEmailsWorkspace({
   onEdit,
   onDelete,
 }: ProjectEmailsWorkspaceProps) {
-  const router = useRouter();
   const [selectedEmailId, setSelectedEmailId] = React.useState<number | null>(null);
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = React.useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = React.useState(
     () => searchValue.trim().length > 0,
   );
-  const [importanceDialogOpen, setImportanceDialogOpen] = React.useState(false);
-  const [importanceSignal, setImportanceSignal] = React.useState<"important" | "not_important" | null>(null);
-  const [createTaskOpen, setCreateTaskOpen] = React.useState(false);
-  const [taskTitle, setTaskTitle] = React.useState("");
-  const [taskDescription, setTaskDescription] = React.useState("");
-  const [taskPriority, setTaskPriority] = React.useState<"high" | "medium" | "low">("medium");
-  const [taskStatus, setTaskStatus] = React.useState<"open" | "in_progress" | "blocked">("open");
-  const [taskDueDate, setTaskDueDate] = React.useState("");
-  const [isCreatingTask, setIsCreatingTask] = React.useState(false);
-  const [previewAttachment, setPreviewAttachment] = React.useState<EmailAttachmentRecord | null>(null);
-  const [attachmentOverrides, setAttachmentOverrides] = React.useState<Record<number, string | null>>({});
-  const [summaryOpen, setSummaryOpen] = React.useState(false);
-  const [summary, setSummary] = React.useState<string | null>(null);
-  const [summaryLoading, setSummaryLoading] = React.useState(false);
 
   React.useEffect(() => {
     if (searchValue.trim().length > 0) {
@@ -923,15 +1518,6 @@ export function ProjectEmailsWorkspace({
     [visibleEmails, selectedEmailId],
   );
 
-  const selectedBody = React.useMemo(
-    () => (selectedEmail ? plainTextBody(selectedEmail) : ""),
-    [selectedEmail],
-  );
-  const selectedBodyBlocks = React.useMemo(
-    () => (selectedEmail ? emailBodyBlocks(selectedEmail) : []),
-    [selectedEmail],
-  );
-
   const contextItems = React.useMemo(
     () => (selectedEmail ? buildContextItems(selectedEmail) : []),
     [selectedEmail],
@@ -946,32 +1532,6 @@ export function ProjectEmailsWorkspace({
     () => (selectedEmail ? projectEmailToDetailRecord(selectedEmail) : null),
     [selectedEmail],
   );
-  const { data: projectAttachments = [] } = useQuery<EmailAttachmentRecord[]>({
-    queryKey: ["email-attachments", selectedEmail?.project_id],
-    queryFn: ({ signal }) =>
-      apiFetch<EmailAttachmentRecord[]>(
-        `/api/projects/${selectedEmail?.project_id}/email-attachments`,
-        { signal },
-      ),
-    enabled: Boolean(selectedEmail?.project_id),
-  });
-  const selectedAttachments = React.useMemo(
-    () =>
-      projectAttachments
-        .filter((attachment) => attachment.emailId === selectedEmail?.id)
-        .map((attachment) => ({
-          ...attachment,
-          attachmentType:
-            attachmentOverrides[attachment.id] !== undefined
-              ? attachmentOverrides[attachment.id]
-              : attachment.attachmentType,
-        })),
-    [attachmentOverrides, projectAttachments, selectedEmail?.id],
-  );
-  const attachmentTypeOptions = React.useMemo(
-    () => buildAttachmentTypeOptions(projectAttachments),
-    [projectAttachments],
-  );
 
   const selectedEmailEditable = selectedEmail
     ? canEdit
@@ -983,99 +1543,6 @@ export function ProjectEmailsWorkspace({
     setSelectedEmailId(email.id);
     setIsDetailsPanelOpen(false);
   }, []);
-
-  const handleImportanceIntent = React.useCallback(
-    (signal: "important" | "not_important") => {
-      setImportanceSignal(signal);
-      setImportanceDialogOpen(true);
-    },
-    [],
-  );
-  const handleAttachmentTypeUpdate = React.useCallback(
-    (attachmentId: number, nextType: string | null) => {
-      setAttachmentOverrides((current) => ({ ...current, [attachmentId]: nextType }));
-    },
-    [],
-  );
-
-  // Reset the AI summary whenever the selected email changes — a summary for one
-  // thread must never leak into another.
-  React.useEffect(() => {
-    setSummaryOpen(false);
-    setSummary(null);
-    setSummaryLoading(false);
-  }, [selectedEmailId]);
-
-  const handleSummarize = React.useCallback(async () => {
-    if (!selectedEmail) return;
-    setSummaryOpen(true);
-    if (summary) return;
-    setSummaryLoading(true);
-    try {
-      const result = await apiFetch<{ summary: string }>(
-        `/api/projects/${selectedEmail.project_id}/emails/${selectedEmail.id}/summarize`,
-        { method: "POST" },
-      );
-      setSummary(result.summary);
-    } catch (error) {
-      setSummary(
-        error instanceof Error
-          ? `Could not generate summary: ${error.message}`
-          : "Could not generate summary.",
-      );
-    } finally {
-      setSummaryLoading(false);
-    }
-  }, [selectedEmail, summary]);
-
-  const handleOpenCreateTask = React.useCallback(() => {
-    if (!selectedEmail) return;
-    setTaskTitle(suggestedTaskTitle(selectedEmail));
-    setTaskDescription(suggestedTaskDescription(selectedEmail));
-    setTaskPriority("medium");
-    setTaskStatus("open");
-    setTaskDueDate("");
-    setCreateTaskOpen(true);
-  }, [selectedEmail]);
-
-  const handleCreateTask = React.useCallback(async () => {
-    if (!selectedEmail) return;
-
-    const trimmedTitle = taskTitle.trim();
-    const trimmedDescription = taskDescription.trim();
-
-    if (!trimmedTitle || !trimmedDescription) {
-      toast.error("Task title and description are required.");
-      return;
-    }
-
-    setIsCreatingTask(true);
-    try {
-      await apiFetch(`/api/projects/${selectedEmail.project_id}/emails/${selectedEmail.id}/tasks`, {
-        method: "POST",
-        body: JSON.stringify({
-          title: trimmedTitle,
-          description: trimmedDescription,
-          dueDate: taskDueDate || null,
-          priority: taskPriority,
-          status: taskStatus,
-        }),
-      });
-      setCreateTaskOpen(false);
-      toast.success("Task created from email.");
-      router.refresh();
-    } catch (error) {
-      const message =
-        error instanceof Error && /already exists/i.test(error.message)
-          ? "A matching task already exists for this email."
-          : error instanceof Error
-            ? error.message
-            : "Could not create task from email.";
-      toast.error(message);
-    } finally {
-      setIsCreatingTask(false);
-    }
-  }, [router, selectedEmail, taskDescription, taskDueDate, taskPriority, taskStatus, taskTitle]);
 
   return (
     <div className="relative flex min-h-[calc(100dvh-8.5rem)] flex-col">
@@ -1240,333 +1707,17 @@ export function ProjectEmailsWorkspace({
         </div>
 
         <div className="min-h-0 border-b border-border/70 xl:border-b-0 xl:border-r 2xl:border-r">
-          <AnimatePresence mode="wait">
-            {selectedEmail ? (
-              <motion.div
-                key={selectedEmail.id}
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: 0.22, ease: "easeOut" }}
-                className="flex h-full flex-col"
-                style={{ minHeight: "30rem" }}
-              >
-                <div className="border-b border-border/70 px-8 py-4 xl:px-10">
-                  <div className="flex items-start justify-between gap-6">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-3">
-                        <div className="truncate text-[15px] font-semibold tracking-[-0.01em] text-foreground">
-                          {selectedEmail.subject || "Untitled email"}
-                        </div>
-                      </div>
-                      <div className="mt-3 grid gap-y-1.5 text-[13px] text-muted-foreground sm:grid-cols-[3.25rem_minmax(0,1fr)_auto] sm:gap-x-3">
-                        <span className="font-medium text-foreground/75">From</span>
-                        <span className="min-w-0 truncate text-foreground">
-                          <span className="font-medium">{selectedEmail.from_name || "Unknown sender"}</span>
-                          {selectedEmail.from_email ? `  ${selectedEmail.from_email}` : ""}
-                        </span>
-                        <span className="row-span-3 hidden whitespace-nowrap text-right text-[12px] text-muted-foreground sm:block">
-                          {formatMetaDate(
-                            selectedEmail.received_at ||
-                              selectedEmail.sent_at ||
-                              selectedEmail.created_at,
-                          )}
-                        </span>
-                        <span className="font-medium text-foreground/75">To</span>
-                        <span className="min-w-0 truncate text-foreground">
-                          {formatRecipientLine(selectedEmail.to_list)}
-                        </span>
-                        <span className="font-medium text-foreground/75 sm:hidden">Date</span>
-                        <span className="text-foreground sm:hidden">
-                          {formatMetaDate(
-                            selectedEmail.received_at ||
-                              selectedEmail.sent_at ||
-                              selectedEmail.created_at,
-                          )}
-                        </span>
-                        <span className="font-medium text-foreground/75">Project</span>
-                        <span className="min-w-0 truncate text-foreground">
-                          {projectLabel(selectedEmail.project) ?? "No project assigned"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleImportanceIntent("important")}
-                        aria-label="Importance feedback"
-                        className="h-8 w-8 rounded-full"
-                      >
-                        <Sparkles className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setIsDetailsPanelOpen(true)}
-                        aria-label="Open email content panel"
-                        className="hidden h-8 w-8 rounded-full text-muted-foreground xl:inline-flex 2xl:hidden"
-                      >
-                        <MixerHorizontalIcon className="h-4 w-4" />
-                      </Button>
-                      {selectedEmailEditable ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onEdit(selectedEmail)}
-                          className="h-8 w-8 rounded-full"
-                          aria-label="Edit email"
-                        >
-                          <Pencil1Icon className="h-4 w-4" />
-                        </Button>
-                      ) : null}
-                      {canDelete ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onDelete(selectedEmail)}
-                          className="h-8 w-8 rounded-full"
-                          aria-label="Delete email"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-
-                {summaryOpen ? (
-                  <InfoAlert
-                    role="status"
-                    icon={<Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />}
-                    className="items-start gap-2 rounded-none border-x-0 border-t-0 border-b border-border/60 bg-muted/30 px-8 py-3 text-muted-foreground [&>div]:flex-1 xl:px-10"
-                  >
-                    <div className="flex w-full items-start gap-2">
-                      {summaryLoading ? (
-                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Loader2 className="h-3 w-3 animate-spin" /> Summarizing…
-                        </span>
-                      ) : (
-                        <p className="flex-1 text-xs leading-relaxed text-muted-foreground">
-                          {summary}
-                        </p>
-                      )}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setSummaryOpen(false)}
-                        aria-label="Close summary"
-                        className="size-6 shrink-0 text-muted-foreground"
-                      >
-                        <Cross2Icon className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </InfoAlert>
-                ) : null}
-
-                <ScrollArea className="flex-1">
-                  <div className="flex flex-col gap-8 px-8 pb-8 pt-8 xl:px-10">
-                    <div className="space-y-5 text-[16px] leading-8 text-foreground [overflow-wrap:anywhere]">
-                      {selectedBody ? (
-                        selectedBodyBlocks.map((block) => {
-                          if (block.kind === "metadata" || block.kind === "quote-header") {
-                            return null;
-                          }
-
-                          if (block.kind === "warning") {
-                            return (
-                              <div
-                                key={block.id}
-                                className="inline-flex rounded-full bg-warning/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-warning-foreground"
-                              >
-                                {block.lines.join(" ")}
-                              </div>
-                            );
-                          }
-
-                          return (
-                            <div key={block.id} className="space-y-3">
-                              {block.lines.map((line) => (
-                                <p key={`${block.id}-${line}`} className="whitespace-pre-wrap break-words">
-                                  {line}
-                                </p>
-                              ))}
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <p className="text-muted-foreground">This draft does not have body copy yet.</p>
-                      )}
-                    </div>
-
-                    {selectedAttachments.length > 0 ? (
-                      <div className="space-y-3 border-t border-border/60 pt-5">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                          <Paperclip className="h-3.5 w-3.5" />
-                          {selectedAttachments.length}{" "}
-                          {selectedAttachments.length === 1 ? "Attachment" : "Attachments"}
-                        </div>
-                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                          {selectedAttachments.map((attachment) => (
-                            <div
-                              key={attachment.id}
-                              className="space-y-3 rounded-2xl border border-border/70 p-3"
-                            >
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                onClick={() => setPreviewAttachment(attachment)}
-                                disabled={!isPreviewableAttachment(attachment)}
-                                aria-label={`Preview ${attachment.fileName}`}
-                                className={cn(
-                                  "flex h-28 w-full items-center justify-center overflow-hidden rounded-xl bg-muted/30 p-0 disabled:opacity-100",
-                                  isPreviewableAttachment(attachment) && "hover:bg-muted/50",
-                                )}
-                              >
-                                {isImageAttachment(attachment) ? (
-                                  <img
-                                    src={previewUrl(selectedEmail.project_id, attachment.id)}
-                                    alt=""
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : isPdfAttachment(attachment) ? (
-                                  <PdfDocument
-                                    file={previewUrl(selectedEmail.project_id, attachment.id)}
-                                    loading={<FileTextIcon className="h-5 w-5 text-muted-foreground" />}
-                                    error={<FileTextIcon className="h-5 w-5 text-muted-foreground" />}
-                                  >
-                                    <PdfPage pageNumber={1} width={160} renderAnnotationLayer={false} renderTextLayer={false} />
-                                  </PdfDocument>
-                                ) : (
-                                  <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                                )}
-                              </Button>
-                              <div className="space-y-1">
-                                <div className="truncate text-sm font-medium text-foreground">
-                                  {attachment.fileName}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {formatBytes(attachment.fileSize)}
-                                </div>
-                              </div>
-                              <div className="flex items-center justify-between gap-2">
-                                <AttachmentTypePopover
-                                  attachment={attachment}
-                                  projectId={selectedEmail.project_id}
-                                  availableTypes={attachmentTypeOptions}
-                                  onUpdated={handleAttachmentTypeUpdate}
-                                />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 rounded-full text-muted-foreground hover:text-foreground"
-                                  onClick={() =>
-                                    window.open(
-                                      attachmentUrl(selectedEmail.project_id, attachment.id),
-                                      "_blank",
-                                    )
-                                  }
-                                  aria-label={`Download ${attachment.fileName}`}
-                                >
-                                  <Download className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
-                    <div className="flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-5">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => void handleSummarize()}
-                        className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        <Sparkles className="h-3.5 w-3.5" />
-                        Summarize
-                      </Button>
-
-                      <ProjectAssignmentPopover email={selectedEmail} />
-
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleImportanceIntent("important")}
-                        className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        <Star className="h-3.5 w-3.5" />
-                        Mark important
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleImportanceIntent("not_important")}
-                        className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        <StarOff className="h-3.5 w-3.5" />
-                        Not important
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleOpenCreateTask}
-                        disabled={!selectedEmail.project_id}
-                        className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        <ListTodo className="h-3.5 w-3.5" />
-                        Create task
-                      </Button>
-                    </div>
-                  </div>
-                </ScrollArea>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="empty-detail"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex h-full items-center justify-center px-8 py-10"
-                style={{ minHeight: "30rem" }}
-              >
-                <div className="max-w-md text-center">
-                  <div className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-[1.75rem] bg-muted text-muted-foreground">
-                    <EnvelopeClosedIcon className="h-6 w-6" />
-                  </div>
-                  <div className="mt-6 text-2xl font-semibold tracking-[-0.03em] text-foreground">
-                    Nothing selected
-                  </div>
-                  <p className="mt-3 text-[15px] leading-7 text-muted-foreground">
-                    Select a message from the inbox rail{canCompose ? " or start a new draft" : ""}. This center pane is where the thread stays in focus.
-                  </p>
-                  {canCompose ? (
-                    <Button
-                      size="sm"
-                      onClick={onCompose}
-                      className="mt-6 h-10 rounded-full px-4 shadow-none"
-                    >
-                      <PlusIcon className="mr-2 h-4 w-4" />
-                      Compose email
-                    </Button>
-                  ) : null}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <EmailReadingPanel
+            email={selectedEmail}
+            canCompose={canCompose}
+            canEditEmail={selectedEmailEditable}
+            canDelete={canDelete}
+            onCompose={onCompose}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            showDetailsButton
+            onOpenDetails={() => setIsDetailsPanelOpen(true)}
+          />
         </div>
 
         <div className="hidden min-h-0 2xl:block">
@@ -1613,118 +1764,6 @@ export function ProjectEmailsWorkspace({
           ) : null
         }
       />
-      <EmailImportanceFeedbackDialog
-        email={selectedEmail}
-        open={importanceDialogOpen}
-        signal={importanceSignal}
-        existingFeedback={null}
-        onOpenChange={(open) => {
-          setImportanceDialogOpen(open);
-          if (!open) {
-            setImportanceSignal(null);
-          }
-        }}
-        onRecorded={() => {
-          setImportanceDialogOpen(false);
-          setImportanceSignal(null);
-        }}
-      />
-      <AttachmentPreviewModal
-        attachment={previewAttachment}
-        projectId={selectedEmail?.project_id ?? 0}
-        open={Boolean(previewAttachment)}
-        onOpenChange={(open) => {
-          if (!open) setPreviewAttachment(null);
-        }}
-      />
-      <Modal open={createTaskOpen} onOpenChange={setCreateTaskOpen}>
-        <ModalContent size="lg">
-          <ModalHeader>
-            <ModalTitle>Create task from email</ModalTitle>
-            <ModalDescription>
-              Capture a follow-up without leaving the thread.
-            </ModalDescription>
-          </ModalHeader>
-          <div className="grid gap-4">
-            <div className="grid gap-1.5">
-              <div className="text-xs font-medium text-muted-foreground">Title</div>
-              <Input
-                value={taskTitle}
-                onChange={(event) => setTaskTitle(event.target.value)}
-                placeholder="What needs to happen?"
-                autoFocus
-              />
-            </div>
-            <div className="grid gap-1.5">
-              <div className="text-xs font-medium text-muted-foreground">Description</div>
-              <Textarea
-                value={taskDescription}
-                onChange={(event) => setTaskDescription(event.target.value)}
-                rows={8}
-                placeholder="Add task detail"
-                className="min-h-40 resize-y"
-              />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="grid gap-1.5">
-                <div className="text-xs font-medium text-muted-foreground">Priority</div>
-                <Select
-                  value={taskPriority}
-                  onValueChange={(value) => setTaskPriority(value as "high" | "medium" | "low")}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-1.5">
-                <div className="text-xs font-medium text-muted-foreground">Status</div>
-                <Select
-                  value={taskStatus}
-                  onValueChange={(value) =>
-                    setTaskStatus(value as "open" | "in_progress" | "blocked")
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="open">Open</SelectItem>
-                    <SelectItem value="in_progress">In progress</SelectItem>
-                    <SelectItem value="blocked">Blocked</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-1.5">
-                <div className="text-xs font-medium text-muted-foreground">Due date</div>
-                <Input
-                  type="date"
-                  value={taskDueDate}
-                  onChange={(event) => setTaskDueDate(event.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-          <ModalFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setCreateTaskOpen(false)}
-              disabled={isCreatingTask}
-            >
-              Cancel
-            </Button>
-            <Button type="button" onClick={() => void handleCreateTask()} disabled={isCreatingTask}>
-              {isCreatingTask ? "Creating..." : "Create task"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </div>
   );
 }

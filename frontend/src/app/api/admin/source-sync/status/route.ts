@@ -10,6 +10,7 @@ import { fetchBackendSourceSync, requireAdmin } from "../_shared";
 
 const RAG_LIFECYCLE_LOOKBACK_HOURS = 24;
 const RAG_LIFECYCLE_MAX_PACKET_AGE_HOURS = 36;
+const RAG_LIFECYCLE_BATCH_SIZE = 25;
 
 type LifecycleStageKey =
   | "synced"
@@ -182,7 +183,12 @@ function coverageStatus(count: number, total: number): LifecycleStatus {
 
 function latestJobMetadataByDocumentId(jobRows: LifecycleJobRow[]) {
   const metadataByDocumentId = new Map<string, Record<string, unknown>>();
-  const sorted = [...jobRows].sort((a, b) => String(b.updated_at ?? "").localeCompare(String(a.updated_at ?? "")));
+  const sorted = [...jobRows].sort((a, b) => {
+    const aHasTaskStatus = Boolean(a.metadata?.task_extraction_status);
+    const bHasTaskStatus = Boolean(b.metadata?.task_extraction_status);
+    if (aHasTaskStatus !== bHasTaskStatus) return aHasTaskStatus ? -1 : 1;
+    return String(b.updated_at ?? "").localeCompare(String(a.updated_at ?? ""));
+  });
   for (const row of sorted) {
     const documentId = row.source_document_id ? String(row.source_document_id) : "";
     if (!documentId || metadataByDocumentId.has(documentId)) continue;
@@ -199,7 +205,7 @@ function hasTaskExtractionOutcome(
 ) {
   if (taskIds.has(documentId)) return true;
   const status = String(jobMetadataByDocumentId.get(documentId)?.task_extraction_status ?? "").toLowerCase();
-  return status === "tasks_created" || status === "no_actionable_tasks";
+  return status === "tasks_created" || status === "no_actionable_tasks" || status === "task_signal_staged";
 }
 
 function sourceStatus(stages: Array<{ status: LifecycleStatus }>): LifecycleStatus {
@@ -225,12 +231,33 @@ function sourceAlert(params: {
   };
 }
 
-function batches<T>(values: T[], size = 100): T[][] {
+function batches<T>(values: T[], size = RAG_LIFECYCLE_BATCH_SIZE): T[][] {
   const grouped: T[][] = [];
   for (let index = 0; index < values.length; index += size) {
     grouped.push(values.slice(index, index + size));
   }
   return grouped;
+}
+
+function isTransientSupabaseReadError(error: { message?: string } | null | undefined) {
+  return String(error?.message ?? "").toLowerCase().includes("fetch failed");
+}
+
+async function readSupabaseRows<T>(
+  label: string,
+  queryFactory: () => PromiseLike<{ data: T[] | null; error: { message?: string } | null }>,
+): Promise<T[]> {
+  let lastMessage = "";
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const result = await queryFactory();
+    if (!result.error) return result.data ?? [];
+    lastMessage = result.error.message ?? "unknown error";
+    if (!isTransientSupabaseReadError(result.error) || attempt === 3) {
+      throw new Error(`Failed to load ${label}: ${lastMessage}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, attempt * 250));
+  }
+  throw new Error(`Failed to load ${label}: ${lastMessage}`);
 }
 
 async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["ragLifecycle"]>> {
@@ -244,37 +271,33 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
   const appClient = createServiceClient();
   const ragClient = createRagServiceClient();
 
-  const { data: sourceRows, error: sourceError } = await appClient
-    .from("document_metadata")
-    .select(
-      "id,title,source,category,type,project_id,source_system,source_item_id,fireflies_id,created_at,date,source_last_modified_at",
-    )
-    .is("deleted_at", null)
-    .gte("created_at", cutoff)
-    .in("source", ["fireflies", "microsoft_graph"])
-    .order("created_at", { ascending: false })
-    .limit(2000);
+  const sourceRows = await readSupabaseRows<SourceRow>("daily source metadata", () =>
+    appClient
+      .from("document_metadata")
+      .select(
+        "id,title,source,category,type,project_id,source_system,source_item_id,fireflies_id,created_at,date,source_last_modified_at",
+      )
+      .is("deleted_at", null)
+      .gte("created_at", cutoff)
+      .in("source", ["fireflies", "microsoft_graph"])
+      .order("created_at", { ascending: false })
+      .limit(2000),
+  );
 
-  if (sourceError) {
-    throw new Error(`Failed to load daily source metadata: ${sourceError.message}`);
-  }
-
-  const appRows = (sourceRows ?? []) as SourceRow[];
+  const appRows = sourceRows;
   const appRowIds = new Set(appRows.map((row) => row.id));
-  const { data: ragEmailRows, error: ragEmailError } = await ragClient
-    .from("rag_document_metadata")
-    .select("id,title,source,type,source_system,source_item_id,source_web_url,created_at,updated_at,project_id")
-    .eq("source", "microsoft_graph")
-    .or("type.in.(email,email_attachment),id.like.outlook_%")
-    .gte("updated_at", cutoff)
-    .order("updated_at", { ascending: false })
-    .limit(2000);
+  const ragEmailRows = await readSupabaseRows<RagEmailSourceRow>("RAG email metadata", () =>
+    ragClient
+      .from("rag_document_metadata")
+      .select("id,title,source,type,source_system,source_item_id,source_web_url,created_at,updated_at,project_id")
+      .eq("source", "microsoft_graph")
+      .or("type.in.(email,email_attachment),id.like.outlook_%")
+      .gte("updated_at", cutoff)
+      .order("updated_at", { ascending: false })
+      .limit(2000),
+  );
 
-  if (ragEmailError) {
-    throw new Error(`Failed to load RAG email metadata: ${ragEmailError.message}`);
-  }
-
-  const ragOnlyEmailRows = ((ragEmailRows ?? []) as RagEmailSourceRow[])
+  const ragOnlyEmailRows = ragEmailRows
     .filter((row) => !appRowIds.has(row.id))
     .map<SourceRow>((row) => ({
       id: row.id,
@@ -307,65 +330,139 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
   const jobRows: LifecycleJobRow[] = [];
 
   for (const batch of batches(sourceIds)) {
-    const [chunkResult, taskResult, evidenceResult, jobResult] = await Promise.all([
-      ragClient
-        .from("document_chunks")
-        .select("document_id,updated_at")
-        .in("document_id", batch)
-        .not("embedding", "is", null)
-        .limit(1000),
-      appClient
-        .from("tasks")
-        .select("metadata_id,source_system,project_id,created_at")
-        .in("metadata_id", batch)
-        .gte("created_at", cutoff)
-        .limit(1000),
-      appClient
-        .from("insight_card_evidence")
-        .select("source_document_id,created_at")
-        .in("source_document_id", batch)
-        .gte("created_at", cutoff)
-        .limit(1000),
-      ragClient
-        .from("source_processing_jobs")
-        .select("source_document_id,source_item_id,source_system,status,updated_at,error_code,error_message,metadata")
-        .in("source_document_id", batch)
-        .order("updated_at", { ascending: false })
-        .limit(1000),
+    const [chunkResult, taskResult, evidenceResult, jobResult, intelligenceJobResult] = await Promise.all([
+      readSupabaseRows<{ document_id: string; updated_at: string | null }>("RAG chunks", () =>
+        ragClient
+          .from("document_chunks")
+          .select("document_id,updated_at")
+          .in("document_id", batch)
+          .not("embedding", "is", null)
+          .limit(1000),
+      ),
+      readSupabaseRows<{ metadata_id: string; project_id: number | null; created_at: string }>("extracted tasks", () =>
+        appClient
+          .from("tasks")
+          .select("metadata_id,source_system,project_id,created_at")
+          .in("metadata_id", batch)
+          .gte("created_at", cutoff)
+          .limit(1000),
+      ),
+      readSupabaseRows<{ source_document_id: string | null; created_at: string }>("Project Intelligence evidence", () =>
+        appClient
+          .from("insight_card_evidence")
+          .select("source_document_id,created_at")
+          .in("source_document_id", batch)
+          .gte("created_at", cutoff)
+          .limit(1000),
+      ),
+      readSupabaseRows<LifecycleJobRow>("source processing jobs", () =>
+        ragClient
+          .from("source_processing_jobs")
+          .select("source_document_id,source_item_id,source_system,status,updated_at,error_code,error_message,metadata")
+          .in("source_document_id", batch)
+          .order("updated_at", { ascending: false })
+          .limit(1000)
+          .returns<LifecycleJobRow[]>(),
+      ),
+      readSupabaseRows<{
+        source_document_id: string | null;
+        status: string;
+        updated_at: string;
+        last_error: string | null;
+        output_summary: Record<string, unknown> | null;
+      }>("source intelligence jobs", () =>
+        ragClient
+          .from("source_intelligence_jobs")
+          .select("source_document_id,status,updated_at,last_error,output_summary")
+          .in("source_document_id", batch)
+          .order("updated_at", { ascending: false })
+          .limit(1000)
+          .returns<
+            {
+              source_document_id: string | null;
+              status: string;
+              updated_at: string;
+              last_error: string | null;
+              output_summary: Record<string, unknown> | null;
+            }[]
+          >(),
+      ),
     ]);
 
-    if (chunkResult.error) throw new Error(`Failed to load RAG chunks: ${chunkResult.error.message}`);
-    if (taskResult.error) throw new Error(`Failed to load extracted tasks: ${taskResult.error.message}`);
-    if (evidenceResult.error) {
-      throw new Error(`Failed to load Project Intelligence evidence: ${evidenceResult.error.message}`);
-    }
-    if (jobResult.error) throw new Error(`Failed to load source processing jobs: ${jobResult.error.message}`);
-
-    chunkRows.push(...((chunkResult.data ?? []) as Array<{ document_id: string; updated_at: string | null }>));
-    taskRows.push(...((taskResult.data ?? []) as typeof taskRows));
-    evidenceRows.push(...((evidenceResult.data ?? []) as typeof evidenceRows));
-    jobRows.push(...((jobResult.data ?? []) as LifecycleJobRow[]));
+    chunkRows.push(...chunkResult);
+    taskRows.push(...taskResult);
+    evidenceRows.push(...evidenceResult);
+    jobRows.push(...jobResult);
+    jobRows.push(
+      ...intelligenceJobResult.map<LifecycleJobRow>((row) => ({
+        source_document_id: row.source_document_id,
+        source_item_id: null,
+        source_system: "source_intelligence_jobs",
+        status: row.status,
+        updated_at: row.updated_at,
+        error_code: row.status === "failed" ? "source_intelligence_failed" : null,
+        error_message: row.last_error,
+        metadata: row.output_summary,
+      })),
+    );
   }
 
-  const [packetResult, recentJobResult] =
+  const [packetResult, recentJobResult, recentIntelligenceJobResult] =
     await Promise.all([
-      appClient
-        .from("intelligence_packets")
-        .select("id,generated_at")
-        .eq("packet_type", "current")
-        .gte("generated_at", maxFreshPacketCutoff)
-        .order("generated_at", { ascending: false })
-        .limit(100),
-      ragClient
-        .from("source_processing_jobs")
-        .select("source_document_id,source_item_id,source_system,status,updated_at,error_code,error_message,metadata")
-        .gte("updated_at", cutoff)
-        .limit(5000),
+      readSupabaseRows<{ id: string; generated_at: string }>("Project Intelligence packets", () =>
+        appClient
+          .from("intelligence_packets")
+          .select("id,generated_at")
+          .eq("packet_type", "current")
+          .gte("generated_at", maxFreshPacketCutoff)
+          .order("generated_at", { ascending: false })
+          .limit(100),
+      ),
+      readSupabaseRows<LifecycleJobRow>("source processing jobs", () =>
+        ragClient
+          .from("source_processing_jobs")
+          .select("source_document_id,source_item_id,source_system,status,updated_at,error_code,error_message,metadata")
+          .gte("updated_at", cutoff)
+          .limit(5000)
+          .returns<LifecycleJobRow[]>(),
+      ),
+      readSupabaseRows<{
+        source_document_id: string | null;
+        status: string;
+        updated_at: string;
+        last_error: string | null;
+        output_summary: Record<string, unknown> | null;
+      }>("source intelligence jobs", () =>
+        ragClient
+          .from("source_intelligence_jobs")
+          .select("source_document_id,status,updated_at,last_error,output_summary")
+          .gte("updated_at", cutoff)
+          .limit(5000)
+          .returns<
+            {
+              source_document_id: string | null;
+              status: string;
+              updated_at: string;
+              last_error: string | null;
+              output_summary: Record<string, unknown> | null;
+            }[]
+          >(),
+      ),
     ]);
 
-  if (packetResult.error) throw new Error(`Failed to load Project Intelligence packets: ${packetResult.error.message}`);
-  if (recentJobResult.error) throw new Error(`Failed to load source processing jobs: ${recentJobResult.error.message}`);
-  jobRows.push(...((recentJobResult.data ?? []) as LifecycleJobRow[]));
+  jobRows.push(...recentJobResult);
+  jobRows.push(
+    ...recentIntelligenceJobResult.map<LifecycleJobRow>((row) => ({
+      source_document_id: row.source_document_id,
+      source_item_id: null,
+      source_system: "source_intelligence_jobs",
+      status: row.status,
+      updated_at: row.updated_at,
+      error_code: row.status === "failed" ? "source_intelligence_failed" : null,
+      error_message: row.last_error,
+      metadata: row.output_summary,
+    })),
+  );
 
   const embeddedIds = new Set(chunkRows.map((row) => row.document_id));
   const taskIds = new Set(taskRows.map((row) => row.metadata_id));
@@ -375,7 +472,7 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
       .map((row) => row.source_document_id)
       .filter((id): id is string => Boolean(id)),
   );
-  const latestPacketAt = newest((packetResult.data ?? []).map((row) => row.generated_at));
+  const latestPacketAt = newest(packetResult.map((row) => row.generated_at));
   const hasFreshPackets = Boolean(latestPacketAt);
 
   const sources = SOURCE_FAMILIES.map((family) => {

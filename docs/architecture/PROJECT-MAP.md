@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (309)
+## UI Routes (296)
 
-_308/309 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_296/296 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -156,12 +156,10 @@ _308/309 have a description (from the page's `PageShell` or the curated `fronten
 | `/admin/company-info` | Manage company profile and knowledge articles for the AI assistant | frontend/src/app/(admin)/admin/company-info/page.tsx |
 | `/admin/errors` | Redirect to /errors; grouped application errors and issue review | frontend/src/app/admin/errors/page.tsx |
 | `/ai` | AI chat interface for conversing with Alleato AI and running workflows | frontend/src/app/(main)/ai/page.tsx |
-| `/ai-agents` | Redirect to /ai/admin/agents; AI agent registry with pipeline, chat, and write tools | frontend/src/app/(admin)/ai-agents/page.tsx |
 | `/ai-assistant` | Redirect to /ai; AI assistant and chat interface for projects | frontend/src/app/(main)/ai-assistant/page.tsx |
 | `/ai-assistant/feature-requests` | Durable AIS request packets, readiness state, and implementation handoffs. | frontend/src/app/(main)/ai-assistant/feature-requests/page.tsx |
 | `/ai-assistant/feature-requests/[requestId]` | Feature request workspace and details for AI assistant improvements | frontend/src/app/(main)/ai-assistant/feature-requests/[requestId]/page.tsx |
 | `/ai-assistant/marketing` | Review source-backed CMO content plans, draft assets, citations, and approval states. | frontend/src/app/(main)/ai-assistant/marketing/page.tsx |
-| `/ai-assistant/skills` | Redirect to /ai/skills; approved AI skills available to the assistant | frontend/src/app/(main)/ai-assistant/skills/page.tsx |
 | `/ai-assistant/teach` | Redirect to /ai/teach; submit reviewed workflow knowledge to the AI system | frontend/src/app/(main)/ai-assistant/teach/page.tsx |
 | `/ai-avatar` | A separate live Tavus avatar experience for onboarding and internal experiments. | frontend/src/app/(main)/ai-avatar/page.tsx |
 | `/ai-learning-promotions` | Redirect to /ai/learning-promotions; approve retrieval-learning candidates | frontend/src/app/(admin)/ai-learning-promotions/page.tsx |
@@ -194,19 +192,16 @@ _308/309 have a description (from the page's `PageShell` or the curated `fronten
 | `/change-events` | Global table of change events and modifications across all projects | frontend/src/app/(tables)/change-events/page.tsx |
 | `/command-center` | Kanban-style task board for tracking initiatives across idea, planned, in progress, and done statuses | frontend/src/app/(admin)/command-center/page.tsx |
 | `/comments` | Use the annotation button on any page to leave a comment. | frontend/src/app/(main)/comments/page.tsx |
-| `/crawled-pages` | Explore crawled Procore support documentation organized by tools and resource types | frontend/src/app/(admin)/(procore)/crawled-pages/page.tsx |
 | `/create-project` | Set up core project details, location, and delivery defaults. | frontend/src/app/(main)/create-project/page.tsx |
 | `/daily-briefs` | Historical record of executive Daily Brief packets and delivery status | frontend/src/app/(tables)/daily-briefs/page.tsx |
 | `/daily-briefs/[briefId]` | Daily Brief history is limited to users with executive briefing access. | frontend/src/app/(tables)/daily-briefs/[briefId]/page.tsx |
 | `/daily-logs` | Table of daily construction logs with weather, manpower, and work completed entries | frontend/src/app/(tables)/daily-logs/page.tsx |
 | `/daily-logs/[dailyLogId]` | Detailed view of a specific daily log entry | frontend/src/app/(tables)/daily-logs/[dailyLogId]/page.tsx |
 | `/daily-reports` | AI-generated daily recap summaries of meetings and project decisions | frontend/src/app/(tables)/daily-reports/page.tsx |
-| `/database` | — | frontend/src/app/(admin)/database/page.tsx |
 | `/database-inventory` | Schema inventory of database tables with row counts, size, and gotchas | frontend/src/app/(admin)/database-inventory/page.tsx |
 | `/deep-research` | Run an LLM wiki workflow, then refresh this archive. | frontend/src/app/(admin)/deep-research/page.tsx |
 | `/design` | Living inventory of every token and component. Import from @/components/ds. | frontend/src/app/(admin)/design/page.tsx |
 | `/design-ideas` | Design system showcase and reference page for UI components and patterns | frontend/src/app/(admin)/design-ideas/page.tsx |
-| `/design-system` | Single source of truth for UI standards, tokens, and components. | frontend/src/app/(admin)/design-system/page.tsx |
 | `/design-system-update` | Premium light mode UI examples and design hierarchy documentation | frontend/src/app/(admin)/design-system-update/page.tsx |
 | `/design-violations` | Flagged design system violations — right-click any element in dev mode to flag | frontend/src/app/(admin)/design-violations/page.tsx |
 | `/dev/table-generator` | Generate UnifiedTablePage + feature config from your Supabase schema | frontend/src/app/(admin)/dev/table-generator/page.tsx |
@@ -263,7 +258,6 @@ _308/309 have a description (from the page's `PageShell` or the curated `fronten
 | `/meetings` | Table of all meetings with summaries, participants, and action items | frontend/src/app/(tables)/meetings/page.tsx |
 | `/meetings/[meetingId]` | Meeting detail page with transcript, segments, extracted items, and related meetings | frontend/src/app/(tables)/meetings/[meetingId]/page.tsx |
 | `/motion` | Animated text with various presets | frontend/src/app/(admin)/motion/page.tsx |
-| `/motion/project-created-preview` | Design preview/sandbox for the project creation success modal | frontend/src/app/(admin)/motion/project-created-preview/page.tsx |
 | `/notifications` | You'll be notified about comments, mentions, and project activity. | frontend/src/app/(main)/notifications/page.tsx |
 | `/operations-readiness` | Four operating answers: source data, generated tasks, project intelligence packets, and the daily brief. | frontend/src/app/(admin)/operations-readiness/page.tsx |
 | `/outlook-draft-feedback` | Review Brandon draft feedback captured from assistant Outlook draft widgets. | frontend/src/app/(admin)/outlook-draft-feedback/page.tsx |
@@ -276,8 +270,6 @@ _308/309 have a description (from the page's `PageShell` or the curated `fronten
 | `/procore-docs/[...slug]` | Article page displaying cached Procore help documentation with breadcrumb navigation | frontend/src/app/(admin)/procore-docs/[...slug]/page.tsx |
 | `/procore-tools` | Admin table of Procore tools with categories, status, and tutorial/test result tracking | frontend/src/app/(admin)/(procore)/procore-tools/page.tsx |
 | `/procore-tools/[slug]` | View detailed Procore tool information including status, implementation, test scenarios, and resources | frontend/src/app/(admin)/(procore)/procore-tools/[slug]/page.tsx |
-| `/procore-tracker` | Track Procore features by implementation status, priority, complexity, and estimated hours | frontend/src/app/(admin)/(procore)/procore-tracker/page.tsx |
-| `/procore-tracker/[featureId]` | View detailed Procore feature mapped to implementation routes, status, and test coverage | frontend/src/app/(admin)/(procore)/procore-tracker/[featureId]/page.tsx |
 | `/product-board` | Dashboard for product planning and feature tracking across the development roadmap | frontend/src/app/(admin)/product-board/page.tsx |
 | `/progress-reports` | This will permanently delete the report and its photo selections. This action cannot be undone. | frontend/src/app/(tables)/progress-reports/page.tsx |
 | `/project-attribution` | Review communication records that have candidate project matches but were not safe enough to assign automatically. | frontend/src/app/(admin)/project-attribution/page.tsx |
@@ -300,11 +292,6 @@ _308/309 have a description (from the page's `PageShell` or the curated `fronten
 | `/stats` | Daily activity summary including meetings, tasks, emails, documents, and project activity breakdown | frontend/src/app/(main)/stats/page.tsx |
 | `/support-articles` | Browse Procore support articles with chunking stats and embedding coverage for the knowledge base | frontend/src/app/(admin)/(procore)/support-articles/page.tsx |
 | `/support-articles/[articleId]` | This article has not been crawled yet. | frontend/src/app/(admin)/(procore)/support-articles/[articleId]/page.tsx |
-| `/table-pages` | Admin table explorer dashboard listing all registered database tables for browsing and management | frontend/src/app/(admin)/table-pages/page.tsx |
-| `/table-pages/[table]` | View, search, sort, and filter records from any database table with multiple view options | frontend/src/app/(admin)/table-pages/[table]/page.tsx |
-| `/table-pages/[table]/[recordId]` | View and edit a single database record with inline form and field visibility controls | frontend/src/app/(admin)/table-pages/[table]/[recordId]/page.tsx |
-| `/table-pages/[table]/new` | Create a new record in a database table with auto-generated form fields and validation | frontend/src/app/(admin)/table-pages/[table]/new/page.tsx |
-| `/table-v2` | Manage companies, clients, contacts, users, and employees across your organization | frontend/src/app/(admin)/table-v2/page.tsx |
 | `/tables-directory` | Browse and access all data tables in the system. | frontend/src/app/(admin)/tables-directory/page.tsx |
 | `/task-training` | Admin page to review and manage good vs bad task generation feedback for AI model training | frontend/src/app/(admin)/task-training/page.tsx |
 | `/tasks` | Task inbox for viewing and managing all generated and assigned tasks with filtering | frontend/src/app/(tables)/tasks/page.tsx |

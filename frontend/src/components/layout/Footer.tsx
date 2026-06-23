@@ -12,10 +12,6 @@ const footerLinks = [
     href: "/tables-directory",
   },
   {
-    title: "Playwright Crawl",
-    href: "/crawled-pages",
-  },
-  {
     title: "Procore Tools",
     href: "/procore-tools",
   },

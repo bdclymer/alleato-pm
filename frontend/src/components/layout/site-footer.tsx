@@ -30,7 +30,6 @@ const adminSections = [
     links: [
       { label: "Design", href: "/design" },
       { label: "Style Guide", href: "/style-guide" },
-      { label: "Design System", href: "/design-system" },
       { label: "Design Violations", href: "/design-violations" },
     ],
   },

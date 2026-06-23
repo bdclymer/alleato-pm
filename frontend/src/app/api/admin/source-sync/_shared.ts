@@ -9,9 +9,11 @@ export function getBackendSourceSyncUrl(
   searchParams?: Record<string, string | number | boolean | null | undefined>,
 ): string {
   const backendUrl = (
-    process.env.BACKEND_URL ||
-    process.env.PYTHON_BACKEND_URL ||
-    (process.env.NODE_ENV === "development" ? "http://127.0.0.1:8000" : "")
+    process.env.SOURCE_SYNC_BACKEND_URL ||
+    (process.env.NODE_ENV === "development"
+      ? "http://127.0.0.1:8000"
+      : process.env.BACKEND_URL || process.env.PYTHON_BACKEND_URL) ||
+    ""
   )
     .replace(/\/+$/, "")
     .trim();

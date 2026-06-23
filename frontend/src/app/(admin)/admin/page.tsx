@@ -269,27 +269,6 @@ const sections: AdminMenuSection[] = [
         icon: Table2,
       },
       {
-        label: "Admin Table Explorer",
-        href: "/table-pages",
-        route: "/table-pages",
-        description: "Browse configured admin table pages.",
-        icon: Table2,
-      },
-      {
-        label: "Table Explorer Detail",
-        route: "/table-pages/[table]",
-        description: "Dynamic route for a specific table explorer.",
-        icon: Table2,
-        badge: "Dynamic",
-      },
-      {
-        label: "Table V2",
-        href: "/table-v2",
-        route: "/table-v2",
-        description: "Experimental table surface.",
-        icon: Table2,
-      },
-      {
         label: "Projects Table Demo",
         href: "/projects-table-demo",
         route: "/projects-table-demo",
@@ -462,13 +441,6 @@ const sections: AdminMenuSection[] = [
         icon: HardHat,
       },
       {
-        label: "Procore Tracker",
-        href: "/procore-tracker",
-        route: "/procore-tracker",
-        description: "Feature tracking against Procore capabilities.",
-        icon: ListChecks,
-      },
-      {
         label: "Procore Docs",
         href: "/procore-docs",
         route: "/procore-docs",
@@ -482,13 +454,6 @@ const sections: AdminMenuSection[] = [
         description: "Crawled support article index.",
         icon: FileText,
       },
-      {
-        label: "Crawled Pages",
-        href: "/crawled-pages",
-        route: "/crawled-pages",
-        description: "Raw crawled-page review and diagnostics.",
-        icon: FileSearch,
-      },
     ],
   },
   {
@@ -500,13 +465,6 @@ const sections: AdminMenuSection[] = [
         href: "/design",
         route: "/design",
         description: "Live component gallery and design-system examples.",
-        icon: Palette,
-      },
-      {
-        label: "Design System",
-        href: "/design-system",
-        route: "/design-system",
-        description: "Design-system reference surface.",
         icon: Palette,
       },
       {

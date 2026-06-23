@@ -1,14 +1,14 @@
 # Route Audit
 
-Generated: 2026-06-22T14:22:31.469Z
+Generated: 2026-06-23T05:47:22.266Z
 
 ## Summary
 
-- Pages: 310
-- API routes: 663
+- Pages: 296
+- API routes: 667
 - Metadata routes: 2
-- Disabled non-prod pages: 3
-- Potentially orphaned static pages (heuristic): 11
+- Disabled non-prod pages: 2
+- Potentially orphaned static pages (heuristic): 10
 
 ## Notes
 
@@ -29,13 +29,11 @@ Generated: 2026-06-22T14:22:31.469Z
 | /eval-runs | frontend/src/app/(admin)/eval-runs/page.tsx |
 | /fm-global/fm_global_tables | frontend/src/app/(main)/fm-global/fm_global_tables/page.tsx |
 | /invoice/list | frontend/src/app/(dashboard)/invoice/list/page.tsx |
-| /motion/project-created-preview | frontend/src/app/(admin)/motion/project-created-preview/page.tsx |
 | /outlook-draft-feedback | frontend/src/app/(admin)/outlook-draft-feedback/page.tsx |
 
 ## Disabled Non-Prod Pages
 
 | Route | File |
 |---|---|
-| /dev | frontend/src/app/(admin)/dev/page.nonprod.tsx |
 | /test-form | frontend/src/app/(admin)/test-form/page.nonprod.tsx |
 | /test-modals | frontend/src/app/(admin)/test-modals/page.nonprod.tsx |

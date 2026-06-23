@@ -697,11 +697,6 @@
       "description": "AI chat interface for conversing with Alleato AI and running workflows"
     },
     {
-      "url": "/ai-agents",
-      "title": null,
-      "description": "Redirect to /ai/admin/agents; AI agent registry with pipeline, chat, and write tools"
-    },
-    {
       "url": "/ai-assistant",
       "title": "AI",
       "description": "Redirect to /ai; AI assistant and chat interface for projects"
@@ -720,11 +715,6 @@
       "url": "/ai-assistant/marketing",
       "title": "Marketing calendar could not load",
       "description": "Review source-backed CMO content plans, draft assets, citations, and approval states."
-    },
-    {
-      "url": "/ai-assistant/skills",
-      "title": null,
-      "description": "Redirect to /ai/skills; approved AI skills available to the assistant"
     },
     {
       "url": "/ai-assistant/teach",
@@ -887,11 +877,6 @@
       "description": "Use the annotation button on any page to leave a comment."
     },
     {
-      "url": "/crawled-pages",
-      "title": "Procore Documentation Knowledge Base",
-      "description": "Explore crawled Procore support documentation organized by tools and resource types"
-    },
-    {
       "url": "/create-project",
       "title": "Create Project",
       "description": "Set up core project details, location, and delivery defaults."
@@ -922,11 +907,6 @@
       "description": "AI-generated daily recap summaries of meetings and project decisions"
     },
     {
-      "url": "/database",
-      "title": null,
-      "description": null
-    },
-    {
       "url": "/database-inventory",
       "title": null,
       "description": "Schema inventory of database tables with row counts, size, and gotchas"
@@ -945,11 +925,6 @@
       "url": "/design-ideas",
       "title": null,
       "description": "Design system showcase and reference page for UI components and patterns"
-    },
-    {
-      "url": "/design-system",
-      "title": "Design System",
-      "description": "Single source of truth for UI standards, tokens, and components."
     },
     {
       "url": "/design-system-update",
@@ -1083,7 +1058,7 @@
     },
     {
       "url": "/emails",
-      "title": "Emails",
+      "title": null,
       "description": "Global view of all synced emails with search and filtering"
     },
     {
@@ -1232,11 +1207,6 @@
       "description": "Animated text with various presets"
     },
     {
-      "url": "/motion/project-created-preview",
-      "title": "Project Created Modal — Preview",
-      "description": "Design preview/sandbox for the project creation success modal"
-    },
-    {
       "url": "/notifications",
       "title": "No notifications",
       "description": "You'll be notified about comments, mentions, and project activity."
@@ -1295,16 +1265,6 @@
       "url": "/procore-tools/[slug]",
       "title": null,
       "description": "View detailed Procore tool information including status, implementation, test scenarios, and resources"
-    },
-    {
-      "url": "/procore-tracker",
-      "title": null,
-      "description": "Track Procore features by implementation status, priority, complexity, and estimated hours"
-    },
-    {
-      "url": "/procore-tracker/[featureId]",
-      "title": null,
-      "description": "View detailed Procore feature mapped to implementation routes, status, and test coverage"
     },
     {
       "url": "/product-board",
@@ -1415,31 +1375,6 @@
       "url": "/support-articles/[articleId]",
       "title": "No content available",
       "description": "This article has not been crawled yet."
-    },
-    {
-      "url": "/table-pages",
-      "title": null,
-      "description": "Admin table explorer dashboard listing all registered database tables for browsing and management"
-    },
-    {
-      "url": "/table-pages/[table]",
-      "title": null,
-      "description": "View, search, sort, and filter records from any database table with multiple view options"
-    },
-    {
-      "url": "/table-pages/[table]/[recordId]",
-      "title": null,
-      "description": "View and edit a single database record with inline form and field visibility controls"
-    },
-    {
-      "url": "/table-pages/[table]/new",
-      "title": null,
-      "description": "Create a new record in a database table with auto-generated form fields and validation"
-    },
-    {
-      "url": "/table-v2",
-      "title": "Directory",
-      "description": "Manage companies, clients, contacts, users, and employees across your organization"
     },
     {
       "url": "/tables-directory",
