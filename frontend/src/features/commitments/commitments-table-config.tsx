@@ -283,7 +283,7 @@ export function buildCommitmentTableColumns(
         <div className="flex items-center gap-1.5">
           <Link
             href={`/${projectId}/commitments/${item.id}`}
-            className="font-medium max-w-32 truncate text-primary hover:underline underline-offset-2"
+            className="font-medium max-w-32 truncate text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
             title={item.number}
             onClick={(e) => e.stopPropagation()}
           >
@@ -322,7 +322,7 @@ export function buildCommitmentTableColumns(
         item.contract_company?.id && item.contract_company?.name ? (
           <Link
             href={`/directory/companies/${item.contract_company.id}`}
-            className="text-primary hover:underline"
+            className="text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             {item.contract_company.name}
@@ -480,7 +480,7 @@ export function buildCommitmentTableColumns(
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1 text-primary hover:underline"
+            className="text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
             title={`Open ${item.number} in Acumatica`}
           >
             View
@@ -499,14 +499,14 @@ export function buildCommitmentTableColumns(
     },
     original_amount: {
       align: "right",
-      render: (item) => <span>{formatCurrency(item.original_amount)}</span>,
+      render: (item) => <span className="tabular-nums">{formatCurrency(item.original_amount)}</span>,
       csvValue: (item) => String(item.original_amount),
       sortValue: (item) => item.original_amount,
     },
     approved_change_orders: {
       align: "right",
       render: (item) => (
-        <span>{formatCurrency(item.approved_change_orders)}</span>
+        <span className="tabular-nums">{formatCurrency(item.approved_change_orders)}</span>
       ),
       csvValue: (item) => String(item.approved_change_orders),
       sortValue: (item) => item.approved_change_orders,
@@ -514,7 +514,7 @@ export function buildCommitmentTableColumns(
     revised_contract_amount: {
       align: "right",
       render: (item) => (
-        <span>{formatCurrency(item.revised_contract_amount)}</span>
+        <span className="tabular-nums">{formatCurrency(item.revised_contract_amount)}</span>
       ),
       csvValue: (item) => String(item.revised_contract_amount),
       sortValue: (item) => item.revised_contract_amount,
@@ -522,26 +522,26 @@ export function buildCommitmentTableColumns(
     pending_change_orders: {
       align: "right",
       render: (item) => (
-        <span>{formatCurrency(item.pending_change_orders)}</span>
+        <span className="tabular-nums">{formatCurrency(item.pending_change_orders)}</span>
       ),
       csvValue: (item) => String(item.pending_change_orders),
       sortValue: (item) => item.pending_change_orders,
     },
     draft_change_orders: {
       align: "right",
-      render: (item) => <span>{formatCurrency(item.draft_change_orders)}</span>,
+      render: (item) => <span className="tabular-nums">{formatCurrency(item.draft_change_orders)}</span>,
       csvValue: (item) => String(item.draft_change_orders),
       sortValue: (item) => item.draft_change_orders,
     },
     invoiced_amount: {
       align: "right",
-      render: (item) => <span>{formatCurrency(item.invoiced_amount)}</span>,
+      render: (item) => <span className="tabular-nums">{formatCurrency(item.invoiced_amount)}</span>,
       csvValue: (item) => String(item.invoiced_amount),
       sortValue: (item) => item.invoiced_amount,
     },
     payments_issued: {
       align: "right",
-      render: (item) => <span>{formatCurrency(item.payments_issued)}</span>,
+      render: (item) => <span className="tabular-nums">{formatCurrency(item.payments_issued)}</span>,
       csvValue: (item) => String(item.payments_issued),
       sortValue: (item) => item.payments_issued,
     },
@@ -552,7 +552,7 @@ export function buildCommitmentTableColumns(
     },
     remaining_balance: {
       align: "right",
-      render: (item) => <span>{formatCurrency(item.remaining_balance)}</span>,
+      render: (item) => <span className="tabular-nums">{formatCurrency(item.remaining_balance)}</span>,
       csvValue: (item) => String(item.remaining_balance),
       sortValue: (item) => item.remaining_balance,
     },

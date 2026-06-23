@@ -130,7 +130,7 @@ export function buildPrimeContractTableColumns(
       ...primeContractColumns[COL.contract_number],
       width: 220,
       render: (item) => (
-        <span className="font-medium text-primary underline decoration-primary/40 underline-offset-4">
+        <span className="font-medium text-foreground">
           {item.contract_number ?? "-"}
         </span>
       ),
@@ -148,7 +148,7 @@ export function buildPrimeContractTableColumns(
     {
       ...primeContractColumns[COL.title],
       render: (item) => (
-        <span className="font-medium text-primary underline decoration-primary/40 underline-offset-4">
+        <span className="font-medium text-foreground">
           {item.title ?? "-"}
         </span>
       ),
@@ -198,54 +198,57 @@ export function buildPrimeContractTableColumns(
     },
     {
       ...primeContractColumns[COL.original_contract_value],
-      render: (item) => <span>{formatCurrency(item.original_contract_value)}</span>,
+      align: "right" as const,
+      render: (item) => <span className="tabular-nums">{formatCurrency(item.original_contract_value)}</span>,
       csvValue: (item) => String(item.original_contract_value ?? ""),
       sortValue: (item) => item.original_contract_value ?? 0,
     },
     {
       ...primeContractColumns[COL.approved_change_orders],
       align: "right" as const,
-      render: (item) => <span>{formatCurrency(item.approved_change_orders)}</span>,
+      render: (item) => <span className="tabular-nums">{formatCurrency(item.approved_change_orders)}</span>,
       csvValue: (item) => String(item.approved_change_orders ?? ""),
       sortValue: (item) => item.approved_change_orders ?? 0,
     },
     {
       ...primeContractColumns[COL.revised_contract_value],
       align: "right" as const,
-      render: (item) => <span>{formatCurrency(item.revised_contract_value)}</span>,
+      render: (item) => <span className="tabular-nums">{formatCurrency(item.revised_contract_value)}</span>,
       csvValue: (item) => String(item.revised_contract_value ?? ""),
       sortValue: (item) => item.revised_contract_value ?? 0,
     },
     {
       ...primeContractColumns[COL.pending_change_orders],
       align: "right" as const,
-      render: (item) => <span>{formatCurrency(item.pending_change_orders)}</span>,
+      render: (item) => <span className="tabular-nums">{formatCurrency(item.pending_change_orders)}</span>,
       csvValue: (item) => String(item.pending_change_orders ?? ""),
       sortValue: (item) => item.pending_change_orders ?? 0,
     },
     {
       ...primeContractColumns[COL.draft_change_orders],
       align: "right" as const,
-      render: (item) => <span>{formatCurrency(item.draft_change_orders)}</span>,
+      render: (item) => <span className="tabular-nums">{formatCurrency(item.draft_change_orders)}</span>,
       csvValue: (item) => String(item.draft_change_orders ?? ""),
       sortValue: (item) => item.draft_change_orders ?? 0,
     },
     {
       ...primeContractColumns[COL.invoiced_amount],
-      render: (item) => <span>{formatCurrency(item.invoiced_amount)}</span>,
+      align: "right" as const,
+      render: (item) => <span className="tabular-nums">{formatCurrency(item.invoiced_amount)}</span>,
       csvValue: (item) => String(item.invoiced_amount ?? ""),
       sortValue: (item) => item.invoiced_amount ?? 0,
     },
     {
       ...primeContractColumns[COL.payments_received],
       align: "right" as const,
-      render: (item) => <span>{formatCurrency(item.payments_received)}</span>,
+      render: (item) => <span className="tabular-nums">{formatCurrency(item.payments_received)}</span>,
       csvValue: (item) => String(item.payments_received ?? ""),
       sortValue: (item) => item.payments_received ?? 0,
     },
     {
       ...primeContractColumns[COL.remaining_balance],
-      render: (item) => <span>{formatCurrency(item.remaining_balance)}</span>,
+      align: "right" as const,
+      render: (item) => <span className="tabular-nums">{formatCurrency(item.remaining_balance)}</span>,
       csvValue: (item) => String(item.remaining_balance ?? ""),
       sortValue: (item) => item.remaining_balance ?? 0,
     },

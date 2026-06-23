@@ -132,6 +132,7 @@ export function buildPrimeTableColumns(): TableColumn<PrimeContractCO>[] {
     },
     {
       ...col("amount"),
+      align: "right" as const,
       width: 130,
       render: (item) => (
         <span className="tabular-nums">{formatCurrency(item.total_amount)}</span>
@@ -296,6 +297,7 @@ export function buildCommitmentTableColumns(): TableColumn<CommitmentCO>[] {
     },
     {
       ...col("amount"),
+      align: "right" as const,
       width: 130,
       render: (item) => (
         <span className="tabular-nums">{formatCurrency(item.amount)}</span>

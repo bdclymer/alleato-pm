@@ -273,7 +273,7 @@ export function buildDocumentTableColumns(opts?: {
             target={external ? "_blank" : undefined}
             rel={external ? "noopener noreferrer" : undefined}
             onClick={(event) => event.stopPropagation()}
-            className="font-medium hover:underline underline-offset-2"
+            className="font-medium text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
           >
             {item.title || "Untitled Document"}
           </a>
