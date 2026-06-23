@@ -577,6 +577,47 @@ services:
       - key: RAG_HEALTH_REMEDIATION_WEBHOOK_TOKEN
         sync: false
 
+  # Outcome-based pipeline alerting. Reads the source_sync_runs ledger every 15
+  # minutes and DMs the owner on Teams the moment any source goes dark (>=2
+  # failed runs with no success in the window). This is the alert that did NOT
+  # exist during the 2026-06-23 incident, when graph embedding failed 25/25
+  # every run for 36h+ with zero notification. Throttled to re-nag at most every
+  # 6h while a source stays down; resolves silently on recovery.
+  - type: cron
+    name: alleato-pipeline-alert
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "*/15 * * * *"
+    dockerCommand: python3 -m src.services.health.pipeline_alert_notifier
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: NOTIFICATION_SERVICE_KEY
+        sync: false
+      - key: AI_HEALTH_ALERT_TEAMS_USER_ID
+        sync: false
+
   # Domain (company_process) packet compiler — synthesizes cross-project
   # communications about a single business function (accounting, operations,
   # business development, people & talent) into an intelligence_packets row
