@@ -1,5 +1,7 @@
 import type { UIMessage } from "@ai-sdk/react";
 import type { ResponseQuality } from "./chat-area";
+import type { MemoryUsage } from "./memory-usage-disclosure";
+import type { SkillUsage } from "./skill-usage-disclosure";
 import type { AssistantTraceDiagnostics, ToolTraceItem } from "./trace-panel";
 
 /**
@@ -28,8 +30,8 @@ export interface ChatHistoryMessage {
     loop_diagnostic?: Record<string, unknown> | null;
     data_parts?: PersistedDataPart[];
     // memory_usage / skill_usage are read by their dedicated extractors
-    memory_usage?: unknown;
-    skill_usage?: unknown;
+    memory_usage?: MemoryUsage;
+    skill_usage?: SkillUsage;
     response_message_id?: unknown;
   } | null;
   created_at: string | null;
