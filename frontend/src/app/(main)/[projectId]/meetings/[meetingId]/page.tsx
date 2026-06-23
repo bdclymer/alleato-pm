@@ -54,7 +54,7 @@ export default async function ProjectMeetingDetailPage({
   // Fetch related meetings for this project
   const { data: relatedMeetingsData } = await supabase
     .from("document_metadata")
-    .select("id, title, date, duration_minutes")
+    .select("id, title, date, created_at, duration_minutes")
     .eq("project_id", numericProjectId)
     .eq("type", "meeting")
     .is("deleted_at", null)

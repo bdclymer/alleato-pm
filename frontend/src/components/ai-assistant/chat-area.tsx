@@ -1200,7 +1200,11 @@ export function ChatArea({
   const finalTranscriptsRef = useRef("");
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [loadingSpeechMessageId, setLoadingSpeechMessageId] = useState<string | null>(null);
-  const { projects, isLoading: projectsLoading } = useProjects({ limit: 50 });
+  // Load the full active project list (≈112) so the composer's project picker
+  // can reach and filter every project. With limit:50 the cmdk search only ran
+  // over the first 50 alphabetical projects, so most projects (e.g. "Union
+  // Collective") returned "No projects found".
+  const { projects, isLoading: projectsLoading } = useProjects({ limit: 500 });
   const selectedProject = projects.find((p) => p.id === selectedProjectIdProp) ?? null;
   const selectedModelOption =
     AI_ASSISTANT_MODELS.find((model) => model.id === selectedModel) ??

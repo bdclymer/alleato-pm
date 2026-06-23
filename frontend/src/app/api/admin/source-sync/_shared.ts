@@ -1,4 +1,5 @@
 import { GuardrailError } from "@/lib/guardrails/errors";
+import type { DependencyPolicy } from "@/lib/guardrails/dependency";
 import { fetchWithPolicy } from "@/lib/guardrails/dependency";
 import { createClient } from "@/lib/supabase/server";
 
@@ -111,6 +112,7 @@ export async function fetchBackendSourceSync(
   path: SourceSyncPath,
   init?: RequestInit,
   searchParams?: Record<string, string | number | boolean | null | undefined>,
+  policy?: Partial<DependencyPolicy>,
 ): Promise<Response> {
   const apiKey = getBackendAdminApiKey();
   const headers = new Headers(init?.headers);
@@ -139,6 +141,7 @@ export async function fetchBackendSourceSync(
             : 25_000,
       maxRetries: path === "recompute" || path === "graph-sync" ? 0 : 1,
       backoffMs: 250,
+      ...policy,
     },
   );
 }

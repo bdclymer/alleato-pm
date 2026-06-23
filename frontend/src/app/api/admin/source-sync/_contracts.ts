@@ -99,6 +99,35 @@ export const RagLifecycleStatusSchema = z.object({
   notifications: z.array(RagLifecycleNotificationSchema),
 });
 
+export const LifecycleDocumentSchema = z.object({
+  id: z.string(),
+  title: z.string().nullable(),
+  date: z.string().nullable(),
+  projectId: z.number().nullable(),
+  projectName: z.string().nullable(),
+  stages: z.object({
+    synced: z.boolean(),
+    vectorized: z.boolean(),
+    projectAssigned: z.boolean(),
+    tasksExtracted: z.boolean(),
+    projectIntelligenceUpdated: z.boolean(),
+  }),
+  detailHref: z.string().nullable(),
+});
+
+export const LifecycleDocumentsResponseSchema = z.object({
+  source: z.enum(["meetings", "teams", "emails", "sharepoint"]),
+  sourceLabel: z.string(),
+  stageKey: z.string(),
+  generatedAt: z.string(),
+  total: z.number(),
+  returned: z.number(),
+  truncated: z.boolean(),
+  documents: z.array(LifecycleDocumentSchema),
+});
+
+export type LifecycleDocumentsResponse = z.infer<typeof LifecycleDocumentsResponseSchema>;
+
 export const SourceSyncStatusSchema = z.object({
   status: z.enum(["healthy", "degraded", "unavailable"]),
   healthy: z.boolean(),

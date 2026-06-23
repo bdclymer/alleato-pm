@@ -2429,7 +2429,24 @@ export function createActionTools(
         specSection: z.string().optional().describe("Spec section number, e.g. '05 12 00'"),
         dueDate: z.string().optional().describe("ISO due date"),
         submittedBy: z.string().default("TBD").describe("Subcontractor or party submitting"),
-        status: z.enum(["pending", "submitted", "under_review", "approved", "rejected", "revise_resubmit"]).default("pending"),
+        // Must match the submittals_status_check DB constraint. The old enum
+        // used "pending"/"revise_resubmit" (neither allowed), so every insert
+        // failed the check constraint. Default "Draft" mirrors the real
+        // submittals create API.
+        status: z
+          .enum([
+            "Draft",
+            "Open",
+            "Distributed",
+            "Closed",
+            "submitted",
+            "under_review",
+            "requires_revision",
+            "approved",
+            "rejected",
+            "superseded",
+          ])
+          .default("Draft"),
         confirmed: z.boolean().default(false),
         idempotencyKey: z.string().optional(),
       }),
@@ -2445,7 +2462,7 @@ export function createActionTools(
             message: "Here's the submittal I'll create. Reply **confirm** to proceed.",
             preview: {
               table: "submittals",
-              fields: { project_id: projectId, title, specification_section: specSection ?? null, final_due_date: dueDate ?? null, submitted_by: submittedBy, status },
+              fields: { project_id: projectId, title, specification_section: specSection ?? null, final_due_date: dueDate ?? null, submitter_company: submittedBy, status },
             },
           };
         }
@@ -2472,7 +2489,15 @@ export function createActionTools(
             title,
             specification_section: specSection ?? null,
             final_due_date: dueDate ?? null,
-            submitted_by: submittedBy,
+            // submitted_by is a NOT NULL uuid FK to the authenticated user.
+            // The free-text "submittedBy" (subcontractor / party submitting)
+            // belongs in submitter_company, not this column.
+            submitted_by: userId,
+            submitter_company:
+              submittedBy && submittedBy.trim() && submittedBy.trim().toUpperCase() !== "TBD"
+                ? submittedBy.trim()
+                : null,
+            created_by: userId,
             status,
             submittal_number: nextNumber,
             revision: 0,

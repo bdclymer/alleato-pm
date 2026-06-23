@@ -97,9 +97,15 @@ export const PATCH = withApiGuardrails(
       .from("companies")
       .update({
         ...(body.name !== undefined && { name: body.name }),
+        ...(body.title !== undefined && { title: body.title }),
+        ...(body.legal_name !== undefined && { legal_name: body.legal_name }),
         ...(body.address !== undefined && { address: body.address }),
         ...(body.city !== undefined && { city: body.city }),
         ...(body.state !== undefined && { state: body.state }),
+        ...(body.zip_code !== undefined && { zip_code: body.zip_code }),
+        ...(body.country !== undefined && { country: body.country }),
+        ...(body.tax_id !== undefined && { tax_id: body.tax_id }),
+        ...(body.notes !== undefined && { notes: body.notes }),
         ...(body.website !== undefined && { website: body.website }),
         ...(body.license_number !== undefined && { license_number: body.license_number }),
         ...(body.company_type !== undefined && { type: body.company_type }),

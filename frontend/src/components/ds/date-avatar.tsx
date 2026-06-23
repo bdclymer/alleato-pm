@@ -20,13 +20,15 @@ export function DateAvatar({ date, size = "md", className }: DateAvatarProps) {
   const day = parsed.getDate();
 
   const sizeClasses = {
-    sm: "w-9 h-9 text-sm",
+    sm: "w-7 h-7 text-xs",
     md: "w-10 h-10 text-base",
   };
 
+  const monthTextClass = size === "sm" ? "text-[8px]" : "text-[10px]";
+
   return (
     <div className={cn("flex flex-col items-center gap-0.5 shrink-0", className)}>
-      <span className="text-[10px] font-bold uppercase tracking-wider text-primary leading-none">
+      <span className={cn("font-bold uppercase tracking-wider text-primary leading-none", monthTextClass)}>
         {month}
       </span>
       <div

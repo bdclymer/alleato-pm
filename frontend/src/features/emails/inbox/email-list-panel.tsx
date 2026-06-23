@@ -6,13 +6,12 @@ import {
   Inbox,
   Mail,
   Paperclip,
-  Search,
   Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ExpandingSearch } from "@/components/ds";
 import type { InboxEmail, InboxTab } from "./email-inbox-client";
 
 interface EmailListPanelProps {
@@ -244,15 +243,11 @@ export function EmailListPanel({
 
       {/* Search */}
       <div className="px-3 py-2 shrink-0">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-          <Input
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search emails…"
-            className="pl-8 h-8 text-xs bg-muted/50 border-border/40 focus-visible:ring-primary/20"
-          />
-        </div>
+        <ExpandingSearch
+          value={search}
+          onChange={onSearchChange}
+          placeholder="Search emails…"
+        />
       </div>
 
       {/* Email list */}

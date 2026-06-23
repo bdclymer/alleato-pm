@@ -304,10 +304,28 @@ try {
         `
           select distinct on (source_document_id)
             source_document_id,
-            metadata
-          from public.source_processing_jobs
-          where source_document_id = any($1::text[])
-          order by source_document_id, updated_at desc
+            metadata,
+            updated_at
+          from (
+            select
+              source_document_id,
+              metadata,
+              updated_at
+            from public.source_processing_jobs
+            where source_document_id = any($1::text[])
+            union all
+            select
+              source_document_id,
+              output_summary as metadata,
+              updated_at
+            from public.source_intelligence_jobs
+            where source_document_id = any($1::text[])
+              and status = 'succeeded'
+          ) jobs
+          order by
+            source_document_id,
+            ((metadata ->> 'task_extraction_status') is not null) desc,
+            updated_at desc
         `,
         [sourceIds],
       )).rows

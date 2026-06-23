@@ -144,9 +144,13 @@ function parseEmails(raw: unknown[]): InboxEmail[] {
   });
 }
 
-export function EmailInboxClient() {
+export function EmailInboxClient({
+  initialTab = "brandon-queue",
+}: {
+  initialTab?: InboxTab;
+} = {}) {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = React.useState<InboxTab>("brandon-queue");
+  const [activeTab, setActiveTab] = React.useState<InboxTab>(initialTab);
   const [search, setSearch] = React.useState("");
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
   const [selectedId, setSelectedId] = React.useState<number | null>(null);

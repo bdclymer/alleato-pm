@@ -15,6 +15,7 @@ import {
   ErrorState,
   SectionHeader as DsSectionHeader,
   Skeleton,
+  InlineEditField,
 } from "@/components/ds";
 import {
   DropdownMenu,
@@ -23,7 +24,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CompanyEditDialog } from "@/components/directory/CompanyEditDialog";
 import { ContactFormSheet } from "@/components/domain/contacts/ContactFormSheet";
 import { apiFetch } from "@/lib/api-client";
 import { formatDate } from "@/lib/format";
@@ -95,7 +95,7 @@ function FactRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium text-foreground">{value}</span>
+      <div className="text-sm font-medium text-foreground">{value}</div>
     </div>
   );
 }
@@ -115,7 +115,6 @@ export function CompanyDetailSheet({
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [settingPrimaryContactId, setSettingPrimaryContactId] = React.useState<string | null>(null);
-  const [editCompanyOpen, setEditCompanyOpen] = React.useState(false);
   const [addContactOpen, setAddContactOpen] = React.useState(false);
 
   const loadDetails = React.useCallback(async (cancelledRef?: { current: boolean }) => {
@@ -151,6 +150,23 @@ export function CompanyDetailSheet({
       cancelled = true;
     };
   }, [open, companyId, loadDetails]);
+
+  const saveCompanyField = React.useCallback(
+    async (patch: Record<string, string>) => {
+      if (!companyId) return;
+      const updated = await apiFetch<Company>(
+        `/api/directory/companies/${companyId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(patch),
+        },
+      );
+      setData((prev) =>
+        prev ? { ...prev, company: { ...prev.company, ...updated } } : prev,
+      );
+    },
+    [companyId],
+  );
 
   async function handleSetPrimaryContact(contactId: string) {
     if (!companyId) return;
@@ -208,9 +224,6 @@ export function CompanyDetailSheet({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onSelect={() => setEditCompanyOpen(true)}>
-                    Edit company
-                  </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => setAddContactOpen(true)}>
                     <UserPlus className="mr-2 h-3.5 w-3.5" />
                     Add contact
@@ -218,6 +231,7 @@ export function CompanyDetailSheet({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href={`/directory/companies/${companyId}`}>
+                      <ExternalLink className="mr-2 h-3.5 w-3.5" />
                       View full profile
                     </Link>
                   </DropdownMenuItem>
@@ -245,35 +259,206 @@ export function CompanyDetailSheet({
           {company && !isLoading && (
             <>
               <section className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-                <FactRow label="Status" value={company.status || "—"} />
-                <FactRow label="Type" value={company.type || "—"} />
-                <FactRow label="ERP Vendor ID" value={company.acumatica_vendor_id || "—"} />
-                <FactRow label="License Number" value={company.license_number || "—"} />
-                <FactRow label="Email" value={company.contact_email || "—"} />
-                <FactRow label="Phone" value={company.contact_phone || "—"} />
+                <FactRow
+                  label="Status"
+                  value={
+                    <InlineEditField
+                      label="Status"
+                      value={company.status ?? ""}
+                      placeholder="Add status"
+                      onSave={(next) => saveCompanyField({ status: next })}
+                    />
+                  }
+                />
+                <FactRow
+                  label="Type"
+                  value={
+                    <InlineEditField
+                      label="Type"
+                      value={company.type ?? ""}
+                      placeholder="Add type"
+                      onSave={(next) => saveCompanyField({ type: next })}
+                    />
+                  }
+                />
+                <FactRow
+                  label="ERP Vendor ID"
+                  value={
+                    <InlineEditField
+                      label="ERP Vendor ID"
+                      value={company.acumatica_vendor_id ?? ""}
+                      placeholder="Add vendor ID"
+                      onSave={(next) =>
+                        saveCompanyField({ acumatica_vendor_id: next })
+                      }
+                    />
+                  }
+                />
+                <FactRow
+                  label="License Number"
+                  value={
+                    <InlineEditField
+                      label="License Number"
+                      value={company.license_number ?? ""}
+                      placeholder="Add license number"
+                      onSave={(next) =>
+                        saveCompanyField({ license_number: next })
+                      }
+                    />
+                  }
+                />
+                <FactRow
+                  label="Email"
+                  value={
+                    <InlineEditField
+                      label="Email"
+                      value={company.contact_email ?? ""}
+                      placeholder="Add email"
+                      onSave={(next) =>
+                        saveCompanyField({ contact_email: next })
+                      }
+                    />
+                  }
+                />
+                <FactRow
+                  label="Phone"
+                  value={
+                    <InlineEditField
+                      label="Phone"
+                      value={company.contact_phone ?? ""}
+                      placeholder="Add phone"
+                      onSave={(next) =>
+                        saveCompanyField({ contact_phone: next })
+                      }
+                    />
+                  }
+                />
                 <FactRow
                   label="Website"
                   value={
-                    websiteUrl ? (
-                      <a
-                        href={websiteUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 underline-offset-4 hover:underline"
-                      >
-                        <span className="truncate">{company.website}</span>
-                        <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
-                      </a>
-                    ) : (
-                      "—"
-                    )
+                    <InlineEditField
+                      label="Website"
+                      value={company.website ?? ""}
+                      placeholder="Add website"
+                      display={
+                        websiteUrl ? (
+                          <a
+                            href={websiteUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 underline-offset-4 hover:underline"
+                          >
+                            <span className="truncate">{company.website}</span>
+                            <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
+                          </a>
+                        ) : undefined
+                      }
+                      onSave={(next) => saveCompanyField({ website: next })}
+                    />
                   }
                 />
                 <FactRow
                   label="Address"
-                  value={company.address || "—"}
+                  value={
+                    <InlineEditField
+                      label="Address"
+                      value={company.address ?? ""}
+                      placeholder="Add address"
+                      onSave={(next) => saveCompanyField({ address: next })}
+                    />
+                  }
                 />
-                <FactRow label="Location" value={location || "—"} />
+                <FactRow
+                  label="City"
+                  value={
+                    <InlineEditField
+                      label="City"
+                      value={company.city ?? ""}
+                      placeholder="Add city"
+                      onSave={(next) => saveCompanyField({ city: next })}
+                    />
+                  }
+                />
+                <FactRow
+                  label="State"
+                  value={
+                    <InlineEditField
+                      label="State"
+                      value={company.state ?? ""}
+                      placeholder="Add state"
+                      onSave={(next) => saveCompanyField({ state: next })}
+                    />
+                  }
+                />
+                <FactRow
+                  label="Postal Code"
+                  value={
+                    <InlineEditField
+                      label="Postal Code"
+                      value={company.zip_code ?? ""}
+                      placeholder="Add postal code"
+                      onSave={(next) => saveCompanyField({ zip_code: next })}
+                    />
+                  }
+                />
+                <FactRow
+                  label="Country"
+                  value={
+                    <InlineEditField
+                      label="Country"
+                      value={company.country ?? ""}
+                      placeholder="Add country"
+                      onSave={(next) => saveCompanyField({ country: next })}
+                    />
+                  }
+                />
+                <FactRow
+                  label="Legal Name"
+                  value={
+                    <InlineEditField
+                      label="Legal Name"
+                      value={company.legal_name ?? ""}
+                      placeholder="Add legal name"
+                      onSave={(next) => saveCompanyField({ legal_name: next })}
+                    />
+                  }
+                />
+                <FactRow
+                  label="Display Name"
+                  value={
+                    <InlineEditField
+                      label="Display Name"
+                      value={company.title ?? ""}
+                      placeholder="Add display name"
+                      onSave={(next) => saveCompanyField({ title: next })}
+                    />
+                  }
+                />
+                <FactRow
+                  label="Tax ID"
+                  value={
+                    <InlineEditField
+                      label="Tax ID"
+                      value={company.tax_id ?? ""}
+                      placeholder="Add tax ID"
+                      onSave={(next) => saveCompanyField({ tax_id: next })}
+                    />
+                  }
+                />
+              </section>
+
+              <section className="space-y-1.5">
+                <span className="text-xs text-muted-foreground">Notes</span>
+                <div className="text-sm text-foreground">
+                  <InlineEditField
+                    label="Notes"
+                    type="textarea"
+                    value={company.notes ?? ""}
+                    placeholder="Add notes"
+                    onSave={(next) => saveCompanyField({ notes: next })}
+                  />
+                </div>
               </section>
 
               <section className="space-y-3">
@@ -490,18 +675,6 @@ export function CompanyDetailSheet({
             </>
           )}
         </div>
-
-        {company && (
-          <CompanyEditDialog
-            open={editCompanyOpen}
-            onOpenChange={setEditCompanyOpen}
-            company={company}
-            projectId={projectId}
-            onSuccess={() => {
-              void loadDetails();
-            }}
-          />
-        )}
 
         <ContactFormSheet
           open={addContactOpen}

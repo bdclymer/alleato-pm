@@ -137,6 +137,13 @@ function sortValueForDate(value: string | null | undefined): number {
   return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
+// The date a message is ordered and displayed by: received time for inbound
+// mail, otherwise the sent time, falling back to the row's created time. This
+// keeps the sort key identical to the timestamp shown in every email view.
+export function emailDisplayDate(item: ProjectEmail): string | null | undefined {
+  return item.received_at || item.sent_at || item.created_at;
+}
+
 function formatRecipients(list: string[] | null | undefined): string {
   if (!list || list.length === 0) return "-";
   return list.join(", ");
@@ -189,9 +196,9 @@ export function buildEmailTableColumns(options?: {
     {
       ...emailColumns[4],
       width: 180,
-      render: (item) => <CellDate value={item.sent_at || item.created_at} showTime />,
-      csvValue: (item) => item.sent_at || item.created_at || "",
-      sortValue: (item) => sortValueForDate(item.sent_at || item.created_at),
+      render: (item) => <CellDate value={emailDisplayDate(item)} showTime />,
+      csvValue: (item) => emailDisplayDate(item) || "",
+      sortValue: (item) => sortValueForDate(emailDisplayDate(item)),
     },
     {
       ...emailColumns[5],
@@ -329,7 +336,7 @@ export function renderEmailCard(
         <span>To: {formatRecipients(item.to_list)}</span>
         <div className="flex items-center gap-2">
           {item.has_attachments && <Paperclip className="h-3 w-3" />}
-          <span>{formatDate(item.sent_at || item.created_at)}</span>
+          <span>{formatDate(emailDisplayDate(item))}</span>
         </div>
       </div>
     </div>
@@ -368,7 +375,7 @@ export function renderEmailList(
         <div className="ml-3 flex shrink-0 items-center gap-2">
           <StatusBadge status={item.status} />
           <span className="text-xs text-muted-foreground whitespace-nowrap">
-            {formatDate(item.sent_at || item.created_at)}
+            {formatDate(emailDisplayDate(item))}
           </span>
         </div>
       </div>

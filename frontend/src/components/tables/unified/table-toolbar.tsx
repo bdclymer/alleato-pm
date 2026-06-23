@@ -1918,6 +1918,12 @@ export function TableToolbar({
             </TooltipProvider>
           )}
         </div>
+
+        <span className="ml-auto shrink-0 pl-3 text-xs tabular-nums text-muted-foreground">
+          {filteredItems === totalItems
+            ? `${totalItems} ${totalItems === 1 ? "row" : "rows"}`
+            : `${filteredItems} of ${totalItems} rows`}
+        </span>
       </div>
     </div>
   );

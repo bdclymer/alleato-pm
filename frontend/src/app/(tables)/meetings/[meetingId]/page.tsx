@@ -51,7 +51,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
   // Fetch related meetings (same project if available, or recent meetings)
   const relatedQuery = supabase
     .from("document_metadata")
-    .select("id, title, date, duration_minutes")
+    .select("id, title, date, created_at, duration_minutes")
     .eq("type", "meeting")
     .is("deleted_at", null)
     .neq("id", meetingId)

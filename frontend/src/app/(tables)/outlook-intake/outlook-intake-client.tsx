@@ -18,6 +18,7 @@ import {
   MessageSquare,
   MoreVertical,
   RefreshCw,
+  Tag,
   X,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -90,6 +91,10 @@ interface OutlookIntakeEmail {
   hasAttachments: boolean | null;
   webLink: string | null;
   createdAt: string | null;
+  tags: string[];
+  triageAction: string | null;
+  triageReason: string | null;
+  triageAt: string | null;
   intakeClassification: {
     action: string | null;
     category: string | null;
@@ -115,7 +120,9 @@ const columnsConfig = [
   { id: "from", label: "From", defaultVisible: true },
   { id: "project", label: "Project", defaultVisible: true },
   { id: "match", label: "Status", defaultVisible: true },
+  { id: "tags", label: "Tags", defaultVisible: true },
   { id: "classifier", label: "Classifier", defaultVisible: true },
+  { id: "triage", label: "Triage", defaultVisible: false },
   { id: "pipeline", label: "Pipeline", defaultVisible: true },
   { id: "received", label: "Date", defaultVisible: true },
   { id: "attachments", label: "Attachments", defaultVisible: true },
@@ -437,6 +444,10 @@ export function OutlookIntakeClient({
   const initialMatchStatus = searchParams?.get("match_status") ?? "";
   const initialClassificationAction =
     classificationAction ?? searchParams?.get("classification_action") ?? "";
+  const initialSentFrom = searchParams?.get("sent_from") ?? "";
+  const initialSentTo = searchParams?.get("sent_to") ?? "";
+  const initialTag = searchParams?.get("tag") ?? "";
+  const initialTriageAction = searchParams?.get("triage_action") ?? "";
 
   React.useEffect(() => {
     if (isThreadOnly) setThreadView(true);
@@ -460,6 +471,10 @@ export function OutlookIntakeClient({
       filters: {
         match_status: initialMatchStatus || undefined,
         classification_action: initialClassificationAction || undefined,
+        sent_from: initialSentFrom || undefined,
+        sent_to: initialSentTo || undefined,
+        tag: initialTag || undefined,
+        triage_action: initialTriageAction || undefined,
       },
     },
   });
@@ -473,9 +488,21 @@ export function OutlookIntakeClient({
   const vectorizedFilter = tableState.activeFilters.vectorized as
     | string
     | undefined;
+  const sentFromFilter = tableState.activeFilters.sent_from as
+    | string
+    | undefined;
+  const sentToFilter = tableState.activeFilters.sent_to as string | undefined;
+  const tagFilter = tableState.activeFilters.tag as string | undefined;
+  const triageFilter = tableState.activeFilters.triage_action as
+    | string
+    | undefined;
   const params = new URLSearchParams();
   if (matchStatus) params.set("match_status", matchStatus);
   if (classifierFilter) params.set("classification_action", classifierFilter);
+  if (sentFromFilter) params.set("sent_from", sentFromFilter);
+  if (sentToFilter) params.set("sent_to", sentToFilter);
+  if (tagFilter) params.set("tag", tagFilter);
+  if (triageFilter) params.set("triage_action", triageFilter);
   if (unassigned) params.set("unassigned", "true");
   const queryString = params.toString();
 
@@ -488,6 +515,10 @@ export function OutlookIntakeClient({
       "outlook-intake",
       matchStatus ?? "",
       classifierFilter ?? "",
+      sentFromFilter ?? "",
+      sentToFilter ?? "",
+      tagFilter ?? "",
+      triageFilter ?? "",
       unassigned ? "unassigned" : "all",
     ],
     queryFn: ({ signal }) =>
@@ -506,6 +537,9 @@ export function OutlookIntakeClient({
       email.subject,
       senderLabel(email),
       email.mailboxUserId,
+      email.toList.join(" "),
+      email.tags.join(" "),
+      email.triageAction ?? "",
       email.project?.name ?? "",
       email.project?.projectNumber ?? "",
       email.attachments.map((attachment) => attachment.fileName).join(" "),
@@ -618,6 +652,19 @@ export function OutlookIntakeClient({
         sortValue: (email) => email.matchStatus,
       },
       {
+        id: "tags",
+        label: "Tags",
+        width: 180,
+        render: (email) => (
+          <CellText
+            value={email.tags.length > 0 ? email.tags.join(", ") : null}
+            muted
+          />
+        ),
+        sortable: true,
+        sortValue: (email) => email.tags.join(", "),
+      },
+      {
         id: "classifier",
         label: "Classifier",
         width: 150,
@@ -638,6 +685,16 @@ export function OutlookIntakeClient({
         },
         sortable: true,
         sortValue: (email) => email.intakeClassification?.action ?? "",
+      },
+      {
+        id: "triage",
+        label: "Triage",
+        width: 130,
+        render: (email) => (
+          <CellText value={email.triageAction ?? null} muted />
+        ),
+        sortable: true,
+        sortValue: (email) => email.triageAction ?? "",
       },
       {
         id: "pipeline",
@@ -719,6 +776,10 @@ export function OutlookIntakeClient({
         | string
         | null,
       vectorized: (next.vectorized ?? null) as string | null,
+      sent_from: (next.sent_from ?? null) as string | null,
+      sent_to: (next.sent_to ?? null) as string | null,
+      tag: (next.tag ?? null) as string | null,
+      triage_action: (next.triage_action ?? null) as string | null,
       page: "1",
     });
     tableState.setPage(1);
@@ -742,6 +803,70 @@ export function OutlookIntakeClient({
       if (succeeded > 0)
         toast.success(
           `${succeeded} email${succeeded !== 1 ? "s" : ""} marked as filtered`,
+        );
+      if (failed > 0)
+        toast.error(
+          `${failed} email${failed !== 1 ? "s" : ""} failed to update`,
+        );
+      setSelectedIds([]);
+      void queryClient.invalidateQueries({ queryKey: ["outlook-intake"] });
+    } finally {
+      setIsBulkActing(false);
+    }
+  }
+
+  async function saveTags(emailId: number, tags: string[]) {
+    await apiFetch(`/api/outlook-intake/${emailId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_tags: tags }),
+    });
+    void queryClient.invalidateQueries({ queryKey: ["outlook-intake"] });
+  }
+
+  async function promptAndSaveTags(email: OutlookIntakeEmail) {
+    const nextValue = window.prompt(
+      "Tags, separated by commas",
+      email.tags.join(", "),
+    );
+    if (nextValue === null) return;
+    const nextTags = [
+      ...new Set(
+        nextValue
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+      ),
+    ];
+    try {
+      await saveTags(email.id, nextTags);
+      toast.success(nextTags.length > 0 ? "Tags updated" : "Tags cleared");
+    } catch (err) {
+      toast.error("Failed to update tags");
+    }
+  }
+
+  async function handleBulkTagSelected() {
+    if (selectedIds.length === 0) return;
+    const tag = window.prompt("Add tag to selected emails");
+    const normalizedTag = tag?.trim();
+    if (!normalizedTag) return;
+
+    const selectedEmails = data.filter((email) =>
+      selectedIds.includes(String(email.id)),
+    );
+    setIsBulkActing(true);
+    try {
+      const results = await Promise.allSettled(
+        selectedEmails.map((email) =>
+          saveTags(email.id, [...new Set([...email.tags, normalizedTag])]),
+        ),
+      );
+      const failed = results.filter((result) => result.status === "rejected").length;
+      const succeeded = results.length - failed;
+      if (succeeded > 0)
+        toast.success(
+          `${succeeded} email${succeeded !== 1 ? "s" : ""} tagged`,
         );
       if (failed > 0)
         toast.error(
@@ -864,6 +989,37 @@ export function OutlookIntakeClient({
           enabledViews: ["table"],
           filters: [
             {
+              id: "sent_from",
+              label: "From",
+              type: "text",
+              placeholder: "name or email",
+            },
+            {
+              id: "sent_to",
+              label: "To",
+              type: "text",
+              placeholder: "email",
+            },
+            {
+              id: "tag",
+              label: "Tag",
+              type: "text",
+              placeholder: "tag",
+            },
+            {
+              id: "triage_action",
+              label: "Triage",
+              type: "select",
+              options: [
+                { value: "urgent", label: "Urgent" },
+                { value: "reply_needed", label: "Reply needed" },
+                { value: "delegate", label: "Delegate" },
+                { value: "fyi", label: "FYI" },
+                { value: "delete", label: "Delete" },
+                { value: "watch", label: "Watch" },
+              ],
+            },
+            {
               id: "match_status",
               label: "Match",
               type: "select",
@@ -930,7 +1086,14 @@ export function OutlookIntakeClient({
           title: "No threads found",
           description: "No synced Outlook conversations are stored yet.",
           filteredDescription: "Try adjusting your search or filters.",
-          isFiltered: Boolean(tableState.searchInput) || Boolean(matchStatus),
+          isFiltered:
+            Boolean(tableState.searchInput) ||
+            Boolean(matchStatus) ||
+            Boolean(classifierFilter) ||
+            Boolean(sentFromFilter) ||
+            Boolean(sentToFilter) ||
+            Boolean(tagFilter) ||
+            Boolean(triageFilter),
           icon: <MessageSquare className="size-10 text-muted-foreground" />,
         }}
         pagination={{
@@ -1020,6 +1183,16 @@ export function OutlookIntakeClient({
                     variant="outline"
                     className="text-muted-foreground"
                     disabled={isBulkActing}
+                    onClick={handleBulkTagSelected}
+                  >
+                    <Tag className="mr-1.5 size-3.5" />
+                    Tag {selectedIds.length}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-muted-foreground"
+                    disabled={isBulkActing}
                     onClick={handleBulkMarkFiltered}
                   >
                     <Ban className="mr-1.5 size-3.5" />
@@ -1044,6 +1217,37 @@ export function OutlookIntakeClient({
             tableState.setSearchParams({ view });
           },
           filters: [
+            {
+              id: "sent_from",
+              label: "From",
+              type: "text",
+              placeholder: "name or email",
+            },
+            {
+              id: "sent_to",
+              label: "To",
+              type: "text",
+              placeholder: "email",
+            },
+            {
+              id: "tag",
+              label: "Tag",
+              type: "text",
+              placeholder: "tag",
+            },
+            {
+              id: "triage_action",
+              label: "Triage",
+              type: "select",
+              options: [
+                { label: "Urgent", value: "urgent" },
+                { label: "Reply needed", value: "reply_needed" },
+                { label: "Delegate", value: "delegate" },
+                { label: "FYI", value: "fyi" },
+                { label: "Delete", value: "delete" },
+                { label: "Watch", value: "watch" },
+              ],
+            },
             {
               id: "match_status",
               label: "Match",
@@ -1082,6 +1286,10 @@ export function OutlookIntakeClient({
                 | string
                 | undefined,
               vectorized: filters.vectorized as string | undefined,
+              sent_from: filters.sent_from as string | undefined,
+              sent_to: filters.sent_to as string | undefined,
+              tag: filters.tag as string | undefined,
+              triage_action: filters.triage_action as string | undefined,
             }),
           onClearFilters: () => updateFilters({}),
           columns: columnsConfig,
@@ -1117,6 +1325,13 @@ export function OutlookIntakeClient({
                     </a>
                   </DropdownMenuItem>
                 ) : null}
+                <DropdownMenuItem
+                  className="text-muted-foreground"
+                  onClick={() => void promptAndSaveTags(email)}
+                >
+                  <Tag className="mr-2 size-4" />
+                  Edit tags
+                </DropdownMenuItem>
                 {email.matchStatus !== "ignored" ? (
                   <>
                     <DropdownMenuItem
@@ -1145,7 +1360,7 @@ export function OutlookIntakeClient({
                       }}
                     >
                       <Ban className="mr-2 size-4" />
-                      Mark as filtered
+                      Filter as unimportant
                     </DropdownMenuItem>
                   </>
                 ) : (
@@ -1218,6 +1433,7 @@ export function OutlookIntakeClient({
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span>{email.attachments.length} attachments</span>
                 <span>{email.project?.name ?? "Unassigned"}</span>
+                {email.tags.length > 0 ? <span>{email.tags.join(", ")}</span> : null}
                 <span>{formatDate(email.receivedAt || email.createdAt)}</span>
               </div>
             </div>
@@ -1230,7 +1446,11 @@ export function OutlookIntakeClient({
           isFiltered:
             Boolean(tableState.searchInput) ||
             Boolean(matchStatus) ||
-            Boolean(classifierFilter),
+            Boolean(classifierFilter) ||
+            Boolean(sentFromFilter) ||
+            Boolean(sentToFilter) ||
+            Boolean(tagFilter) ||
+            Boolean(triageFilter),
           icon: <Inbox className="size-10 text-muted-foreground" />,
         }}
         pagination={{

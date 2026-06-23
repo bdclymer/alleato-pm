@@ -6,108 +6,90 @@ import { logEvent } from "@/lib/guardrails/observability";
 import { createRagServiceClient, createServiceClient } from "@/lib/supabase/service";
 
 import { SourceSyncStatusSchema, type SourceSyncStatus } from "../_contracts";
+import {
+  SOURCE_FAMILIES,
+  batches,
+  computeDocumentStages,
+  coverageStatus,
+  hasFullTranscriptReadProof,
+  hasTaskExtractionOutcome,
+  latestJobMetadataByDocumentId,
+  newest,
+  readSupabaseRows,
+  type LifecycleJobRow,
+  type LifecycleStageKey,
+  type LifecycleStatus,
+  type LifecycleSupport,
+  type RagEmailSourceRow,
+  type SourceFamilyKey,
+  type SourceRow,
+} from "../_lifecycle";
 import { fetchBackendSourceSync, requireAdmin } from "../_shared";
 
 const RAG_LIFECYCLE_LOOKBACK_HOURS = 24;
 const RAG_LIFECYCLE_MAX_PACKET_AGE_HOURS = 36;
-const RAG_LIFECYCLE_BATCH_SIZE = 25;
+const RAG_LIFECYCLE_MAX_WINDOW_DAYS = 180;
 
-type LifecycleStageKey =
-  | "synced"
-  | "vectorized"
-  | "projectAssigned"
-  | "tasksExtracted"
-  | "projectIntelligenceUpdated";
-
-type LifecycleStatus = "healthy" | "warning" | "critical" | "unknown";
-
-type SourceFamilyKey = "meetings" | "teams" | "emails" | "sharepoint";
-
-type SourceRow = {
-  id: string;
-  title: string | null;
-  source: string | null;
-  category: string | null;
-  type: string | null;
-  project_id: number | null;
-  source_system: string | null;
-  source_item_id: string | null;
-  fireflies_id: string | null;
-  created_at: string | null;
-  date: string | null;
-  source_last_modified_at: string | null;
+/**
+ * The cohort window the lifecycle funnel is scoped to. `sinceISO` is the lower
+ * bound on source-document creation; `untilISO` is an optional upper bound
+ * (set only for explicit custom ranges). Downstream stage checks (vectorized,
+ * tasks, evidence) always reflect current state — only the source cohort is
+ * date-bounded.
+ */
+type LifecycleWindow = {
+  sinceISO: string;
+  untilISO: string | null;
+  lookbackHours: number;
 };
 
-type RagEmailSourceRow = {
-  id: string;
-  title: string | null;
-  source: string | null;
-  type: string | null;
-  source_system: string | null;
-  source_item_id: string | null;
-  source_web_url: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  project_id: number | null;
-};
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
-type LifecycleJobRow = {
-  source_document_id: string | null;
-  source_item_id: string | null;
-  source_system: string;
-  status: string;
-  updated_at: string;
-  error_code: string | null;
-  error_message: string | null;
-  metadata: Record<string, unknown> | null;
-};
+function defaultLifecycleWindow(): LifecycleWindow {
+  return {
+    sinceISO: new Date(Date.now() - RAG_LIFECYCLE_LOOKBACK_HOURS * 60 * 60 * 1000).toISOString(),
+    untilISO: null,
+    lookbackHours: RAG_LIFECYCLE_LOOKBACK_HOURS,
+  };
+}
 
-type SourceFamilyConfig = {
-  key: SourceFamilyKey;
-  label: string;
-  sourceSystems: string[];
-  matches: (row: SourceRow) => boolean;
-};
+/**
+ * Resolve the lifecycle cohort window from query params. Supported, in order:
+ * - `start` + `end` (YYYY-MM-DD): explicit inclusive UTC date range.
+ * - `days` (1-180): trailing window of N days ending now.
+ * - neither: the default 24h window (preserves cron + legacy behavior).
+ */
+function parseLifecycleWindow(request: Request): LifecycleWindow {
+  const url = new URL(request.url);
+  const start = url.searchParams.get("start");
+  const end = url.searchParams.get("end");
 
-const SOURCE_FAMILIES: SourceFamilyConfig[] = [
-  {
-    key: "meetings",
-    label: "Meeting transcripts",
-    sourceSystems: ["fireflies"],
-    matches: (row) => row.source === "fireflies",
-  },
-  {
-    key: "teams",
-    label: "Teams messages",
-    sourceSystems: ["microsoft_graph", "teams"],
-    matches: (row) =>
-      row.source === "microsoft_graph" &&
-      (row.category === "teams_message" || String(row.type ?? "").includes("teams")),
-  },
-  {
-    key: "emails",
-    label: "Emails",
-    sourceSystems: ["microsoft_graph", "outlook_email"],
-    matches: (row) =>
-      row.source === "microsoft_graph" &&
-      (row.category === "email" ||
-        row.type === "email" ||
-        row.type === "email_attachment" ||
-        row.id.startsWith("outlook_")),
-  },
-  {
-    key: "sharepoint",
-    label: "SharePoint files",
-    sourceSystems: ["microsoft_graph", "sharepoint_file"],
-    matches: (row) =>
-      row.source === "microsoft_graph" &&
-      (row.id.startsWith("sharepoint_") ||
-        String(row.source_item_id ?? "").startsWith("sharepoint_") ||
-        String(row.source_item_id ?? "").startsWith("sites/") ||
-        String(row.source_item_id ?? "").includes("sharepoint") ||
-        String(row.source_system ?? "").includes("sharepoint")),
-  },
-];
+  if (start && end && DATE_ONLY.test(start) && DATE_ONLY.test(end)) {
+    const [lo, hi] = start <= end ? [start, end] : [end, start];
+    const sinceISO = new Date(`${lo}T00:00:00.000Z`).toISOString();
+    const untilISO = new Date(`${hi}T23:59:59.999Z`).toISOString();
+    const lookbackHours = Math.max(
+      1,
+      Math.round((new Date(untilISO).getTime() - new Date(sinceISO).getTime()) / (60 * 60 * 1000)),
+    );
+    return { sinceISO, untilISO, lookbackHours };
+  }
+
+  const daysParam = url.searchParams.get("days");
+  if (daysParam) {
+    const days = Math.min(
+      Math.max(parseInt(daysParam, 10) || 1, 1),
+      RAG_LIFECYCLE_MAX_WINDOW_DAYS,
+    );
+    return {
+      sinceISO: new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString(),
+      untilISO: null,
+      lookbackHours: days * 24,
+    };
+  }
+
+  return defaultLifecycleWindow();
+}
 
 function emptyRagLifecycleStatus(
   status: "unavailable" | "degraded",
@@ -167,47 +149,6 @@ function lifecycleStage(
   return { key, label, status, count, total, latestAt, message, ownerHint };
 }
 
-function newest(values: Array<string | null | undefined>): string | null {
-  const sorted = values
-    .filter((value): value is string => Boolean(value))
-    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-  return sorted[0] ?? null;
-}
-
-function coverageStatus(count: number, total: number): LifecycleStatus {
-  if (total === 0) return "unknown";
-  if (count === total) return "healthy";
-  if (count > 0) return "warning";
-  return "critical";
-}
-
-function latestJobMetadataByDocumentId(jobRows: LifecycleJobRow[]) {
-  const metadataByDocumentId = new Map<string, Record<string, unknown>>();
-  const sorted = [...jobRows].sort((a, b) => {
-    const aHasTaskStatus = Boolean(a.metadata?.task_extraction_status);
-    const bHasTaskStatus = Boolean(b.metadata?.task_extraction_status);
-    if (aHasTaskStatus !== bHasTaskStatus) return aHasTaskStatus ? -1 : 1;
-    return String(b.updated_at ?? "").localeCompare(String(a.updated_at ?? ""));
-  });
-  for (const row of sorted) {
-    const documentId = row.source_document_id ? String(row.source_document_id) : "";
-    if (!documentId || metadataByDocumentId.has(documentId)) continue;
-    const metadata = row.metadata && typeof row.metadata === "object" ? row.metadata : {};
-    metadataByDocumentId.set(documentId, { ...metadata, _updated_at: row.updated_at });
-  }
-  return metadataByDocumentId;
-}
-
-function hasTaskExtractionOutcome(
-  documentId: string,
-  taskIds: Set<string>,
-  jobMetadataByDocumentId: Map<string, Record<string, unknown>>,
-) {
-  if (taskIds.has(documentId)) return true;
-  const status = String(jobMetadataByDocumentId.get(documentId)?.task_extraction_status ?? "").toLowerCase();
-  return status === "tasks_created" || status === "no_actionable_tasks" || status === "task_signal_staged";
-}
-
 function sourceStatus(stages: Array<{ status: LifecycleStatus }>): LifecycleStatus {
   if (stages.some((stage) => stage.status === "critical")) return "critical";
   if (stages.some((stage) => stage.status === "warning")) return "warning";
@@ -231,40 +172,13 @@ function sourceAlert(params: {
   };
 }
 
-function batches<T>(values: T[], size = RAG_LIFECYCLE_BATCH_SIZE): T[][] {
-  const grouped: T[][] = [];
-  for (let index = 0; index < values.length; index += size) {
-    grouped.push(values.slice(index, index + size));
-  }
-  return grouped;
-}
-
-function isTransientSupabaseReadError(error: { message?: string } | null | undefined) {
-  return String(error?.message ?? "").toLowerCase().includes("fetch failed");
-}
-
-async function readSupabaseRows<T>(
-  label: string,
-  queryFactory: () => PromiseLike<{ data: T[] | null; error: { message?: string } | null }>,
-): Promise<T[]> {
-  let lastMessage = "";
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    const result = await queryFactory();
-    if (!result.error) return result.data ?? [];
-    lastMessage = result.error.message ?? "unknown error";
-    if (!isTransientSupabaseReadError(result.error) || attempt === 3) {
-      throw new Error(`Failed to load ${label}: ${lastMessage}`);
-    }
-    await new Promise((resolve) => setTimeout(resolve, attempt * 250));
-  }
-  throw new Error(`Failed to load ${label}: ${lastMessage}`);
-}
-
-async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["ragLifecycle"]>> {
+async function buildRagLifecycleStatus(
+  window: LifecycleWindow,
+): Promise<NonNullable<SourceSyncStatus["ragLifecycle"]>> {
   const generatedAt = new Date().toISOString();
-  const cutoff = new Date(
-    Date.now() - RAG_LIFECYCLE_LOOKBACK_HOURS * 60 * 60 * 1000,
-  ).toISOString();
+  const cutoff = window.sinceISO;
+  const until = window.untilISO;
+  const lookbackHours = window.lookbackHours;
   const maxFreshPacketCutoff = new Date(
     Date.now() - RAG_LIFECYCLE_MAX_PACKET_AGE_HOURS * 60 * 60 * 1000,
   ).toISOString();
@@ -279,6 +193,7 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
       )
       .is("deleted_at", null)
       .gte("created_at", cutoff)
+      .lte("created_at", until ?? new Date().toISOString())
       .in("source", ["fireflies", "microsoft_graph"])
       .order("created_at", { ascending: false })
       .limit(2000),
@@ -293,6 +208,7 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
       .eq("source", "microsoft_graph")
       .or("type.in.(email,email_attachment),id.like.outlook_%")
       .gte("updated_at", cutoff)
+      .lte("updated_at", until ?? new Date().toISOString())
       .order("updated_at", { ascending: false })
       .limit(2000),
   );
@@ -480,17 +396,31 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
   const latestPacketAt = newest(packetResult.map((row) => row.generated_at));
   const hasFreshPackets = Boolean(latestPacketAt);
 
+  // Single source of truth for per-document stage evaluation. Shared with the
+  // /rag drill-down (lifecycle-documents/route.ts) so the matrix counts and the
+  // document list can never disagree about which stages a document has cleared.
+  const support: LifecycleSupport = {
+    embeddedIds,
+    embeddedMeetingTranscriptIds,
+    taskIds,
+    evidenceIds,
+    jobMetadataByDocumentId,
+  };
+
   const sources = SOURCE_FAMILIES.map((family) => {
     const familyRows = rows.filter(family.matches);
     const ids = new Set(familyRows.map((row) => row.id));
     const total = familyRows.length;
-    const vectorizedIds = family.key === "meetings" ? embeddedMeetingTranscriptIds : embeddedIds;
-    const vectorized = familyRows.filter((row) => vectorizedIds.has(row.id)).length;
-    const projectAssigned = familyRows.filter((row) => row.project_id !== null).length;
-    const tasksExtracted = familyRows.filter((row) =>
-      hasTaskExtractionOutcome(row.id, taskIds, jobMetadataByDocumentId),
+    const stageFlags = familyRows.map((row) => computeDocumentStages(row, family, support));
+    const vectorized = stageFlags.filter((flags) => flags.vectorized).length;
+    const projectAssigned = stageFlags.filter((flags) => flags.projectAssigned).length;
+    const tasksExtracted = stageFlags.filter((flags) => flags.tasksExtracted).length;
+    const evidenceOnlyProjectIntelligence = familyRows.filter(
+      (row) => family.key === "meetings" && evidenceIds.has(row.id) && !hasFullTranscriptReadProof(row.id, jobMetadataByDocumentId),
     ).length;
-    const intelligenceUpdated = familyRows.filter((row) => evidenceIds.has(row.id)).length;
+    const intelligenceUpdated = stageFlags.filter(
+      (flags) => flags.projectIntelligenceUpdated,
+    ).length;
     const latestSourceAt = newest(
       familyRows.map((row) => row.source_last_modified_at ?? row.date ?? row.created_at),
     );
@@ -512,15 +442,26 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
         .filter((row) => row.source_document_id && ids.has(row.source_document_id))
         .map((row) => row.created_at),
     );
-    const recentFailures = jobRows.filter((job) => {
-      if (!String(job.status).startsWith("failed") && job.status !== "error") return false;
-      return familyRows.some((row) =>
-        [row.id, row.source_item_id, row.fireflies_id]
-          .filter(Boolean)
-          .map(String)
-          .includes(String(job.source_document_id ?? job.source_item_id ?? "")),
-      );
-    });
+    const familySourceIds = new Set(
+      familyRows.flatMap((row) =>
+        [row.id, row.source_item_id, row.fireflies_id].filter(Boolean).map(String),
+      ),
+    );
+    const latestJobBySourceId = new Map<string, LifecycleJobRow>();
+    for (const job of [...jobRows].sort((a, b) =>
+      String(b.updated_at ?? "").localeCompare(String(a.updated_at ?? "")),
+    )) {
+      const jobSourceIds = [job.source_document_id, job.source_item_id]
+        .filter(Boolean)
+        .map(String)
+        .filter((sourceId) => familySourceIds.has(sourceId));
+      for (const sourceId of jobSourceIds) {
+        if (!latestJobBySourceId.has(sourceId)) latestJobBySourceId.set(sourceId, job);
+      }
+    }
+    const recentFailures = [...new Set(latestJobBySourceId.values())].filter(
+      (job) => String(job.status).startsWith("failed") || job.status === "error",
+    );
 
     const stages = [
       lifecycleStage(
@@ -531,8 +472,8 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
         total,
         latestSourceAt,
         total > 0
-          ? `${total} ${family.label.toLowerCase()} synced in the last ${RAG_LIFECYCLE_LOOKBACK_HOURS} hours.`
-          : `No ${family.label.toLowerCase()} synced in the last ${RAG_LIFECYCLE_LOOKBACK_HOURS} hours.`,
+          ? `${total} ${family.label.toLowerCase()} synced in the selected window.`
+          : `No ${family.label.toLowerCase()} synced in the selected window.`,
         "source adapter",
       ),
       lifecycleStage(
@@ -575,7 +516,9 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
         total,
         latestEvidenceAt ?? latestPacketAt,
         hasFreshPackets
-          ? `${intelligenceUpdated}/${total} have recent Project Intelligence evidence; newest current packet ${latestPacketAt ?? "not found"}.`
+          ? family.key === "meetings"
+            ? `${intelligenceUpdated}/${total} have Project Intelligence evidence with full transcript-read proof; ${evidenceOnlyProjectIntelligence} have evidence without read proof; newest current packet ${latestPacketAt ?? "not found"}.`
+            : `${intelligenceUpdated}/${total} have recent Project Intelligence evidence; newest current packet ${latestPacketAt ?? "not found"}.`
           : `No fresh current Project Intelligence packet within ${RAG_LIFECYCLE_MAX_PACKET_AGE_HOURS} hours.`,
         "intelligence compiler",
       ),
@@ -620,7 +563,7 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
 
   return {
     generatedAt,
-    lookbackHours: RAG_LIFECYCLE_LOOKBACK_HOURS,
+    lookbackHours,
     maxPacketAgeHours: RAG_LIFECYCLE_MAX_PACKET_AGE_HOURS,
     status: degraded ? "degraded" : "healthy",
     sources,
@@ -637,9 +580,12 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
   };
 }
 
-async function withRagLifecycle(status: SourceSyncStatus): Promise<SourceSyncStatus> {
+async function withRagLifecycle(
+  status: SourceSyncStatus,
+  window: LifecycleWindow,
+): Promise<SourceSyncStatus> {
   try {
-    const ragLifecycle = await buildRagLifecycleStatus();
+    const ragLifecycle = await buildRagLifecycleStatus(window);
     const lifecycleAlerts = ragLifecycle.sources.flatMap((source) => source.alerts);
     return {
       ...status,
@@ -744,8 +690,10 @@ function unavailableStatus(reason: string, requestId: string): SourceSyncStatus 
 
 export const GET = withApiGuardrails(
   "api.admin.source-sync.status.GET",
-  async ({ requestId }) => {
+  async ({ requestId, request }) => {
     await requireAdmin("api.admin.source-sync.status.GET");
+
+    const lifecycleWindow = parseLifecycleWindow(request);
 
     let backendResponse: Response;
     try {
@@ -777,6 +725,7 @@ export const GET = withApiGuardrails(
         });
         const statusWithLifecycle = await withRagLifecycle(
           unavailableStatus((err as GuardrailError).message, requestId),
+          lifecycleWindow,
         );
         return NextResponse.json(statusWithLifecycle);
       }
@@ -792,7 +741,7 @@ export const GET = withApiGuardrails(
 
     const enrichedStatus = validateResponseContract(
       SourceSyncStatusSchema,
-      await withRagLifecycle(status),
+      await withRagLifecycle(status, lifecycleWindow),
       "api.admin.source-sync.status.GET.rag-lifecycle",
     );
 

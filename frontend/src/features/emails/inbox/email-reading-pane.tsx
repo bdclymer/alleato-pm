@@ -57,6 +57,7 @@ import type { BrandonReviewOutcome } from "@/lib/email-assistant/brandon-review"
 
 const ATTACHMENT_TYPES = [
   "Contract",
+  "Proposal",
   "Revised Drawings",
   "Change Order",
   "COI",

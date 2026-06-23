@@ -56,6 +56,11 @@ def _parse_timestamp(value: Any) -> Optional[datetime]:
         return None
 
 
+def _json_timestamp(value: Any) -> str:
+    parsed = _parse_timestamp(value)
+    return parsed.isoformat() if parsed else _utc_now()
+
+
 def _older_than(value: Any, now: datetime, minutes: int) -> bool:
     parsed = _parse_timestamp(value)
     if not parsed:
@@ -191,6 +196,47 @@ def _source_hash(document: Dict[str, Any]) -> str:
         ]
     )
     return hashlib.sha256(digest_source.encode("utf-8")).hexdigest()
+
+
+def _source_read_proof(document: Dict[str, Any], *, compiler_version: str, stage: str) -> Optional[Dict[str, Any]]:
+    category = _source_category(document.get("category") or document.get("source") or document.get("type") or "")
+    if category != "meeting":
+        return None
+
+    content = str(document.get("content") or document.get("raw_text") or "")
+    if not content:
+        return {
+            "status": "missing_source_text",
+            "scope": "full_transcript",
+            "source_text_table": "rag_document_metadata",
+            "source_text_field": "content|raw_text",
+            "source_hash": _source_hash(document),
+            "content_chars": 0,
+            "transcript_marker_present": False,
+            "model_stage": stage,
+            "compiler_version": compiler_version,
+            "read_at": _utc_now(),
+            "truncated": False,
+        }
+
+    return {
+        "status": "full_source_read",
+        "scope": "full_transcript",
+        "source_text_table": "rag_document_metadata",
+        "source_text_field": "content" if document.get("content") else "raw_text",
+        "source_hash": _source_hash(document),
+        "content_chars": len(content),
+        "transcript_marker_present": (
+            "Transcript" in content
+            or "## Transcript" in content
+            or "Speaker" in content
+            or "**Fireflies ID:**" in content
+        ),
+        "model_stage": stage,
+        "compiler_version": compiler_version,
+        "read_at": _utc_now(),
+        "truncated": False,
+    }
 
 
 def _participants(document: Dict[str, Any]) -> List[str]:
@@ -3106,6 +3152,23 @@ def process_source_document(
 
     if existing_job.get("status") == "succeeded" and not force:
         output_summary = existing_job.get("output_summary") if isinstance(existing_job.get("output_summary"), dict) else {}
+        read_proof = _source_read_proof(
+            document,
+            compiler_version=compiler_version,
+            stage="source_intelligence.process_source_document",
+        )
+        if read_proof and not isinstance(output_summary.get("read_proof"), dict):
+            output_summary = {
+                **output_summary,
+                "read_proof": read_proof,
+            }
+            if existing_job.get("id"):
+                _rag_write().table("source_intelligence_jobs").update(
+                    {
+                        "output_summary": output_summary,
+                        "updated_at": _utc_now(),
+                    }
+                ).eq("id", existing_job["id"]).execute()
         output_project_id = output_summary.get("project_id")
         document_project_id = document.get("project_id")
         project_id = output_project_id or document_project_id
@@ -3227,7 +3290,7 @@ def process_source_document(
     if job_id:
         update_payload = {
             "status": "running",
-            "started_at": existing_job.get("started_at") or _utc_now(),
+            "started_at": _json_timestamp(existing_job.get("started_at")),
             "updated_at": _utc_now(),
         }
         if existing_job.get("status") != "running":
@@ -3429,6 +3492,22 @@ def process_source_document(
             "project_review_reason": invalid_project_note,
             "confidence": confidence_label(confidence_score),
             "confidence_score": confidence_score,
+            "task_extraction_status": (
+                "task_signal_staged"
+                if signal.get("signal_type") == "task" and signal_candidate
+                else "no_actionable_tasks"
+            ),
+            "task_signal_candidate_id": (
+                signal_candidate.get("id")
+                if signal.get("signal_type") == "task" and signal_candidate
+                else None
+            ),
+            "tasks_created_count": 0,
+            "read_proof": _source_read_proof(
+                document,
+                compiler_version=compiler_version,
+                stage="source_intelligence.process_source_document",
+            ),
         }
         if job_id:
             mark_source_job_succeeded(supabase, job_id, output_summary=output_summary)

@@ -639,12 +639,41 @@ const deliveryActionTools = new Set([
   "sendTeamsMessage",
 ]);
 
+// Tools that must NOT be hidden when no project is selected in the composer.
+//
+// Every project-scoped action tool re-validates access at execution time via
+// `enforceProjectWriteAccess(input.projectId)` (action-tools.ts), so the
+// registry visibility gate is redundant for them — and worse, when it fired
+// with no project selected it stripped the tool entirely, making the model
+// falsely claim "I can't create submittals/RFIs/etc. from here". The create/
+// update tools resolve their target project from their own `projectId`
+// argument (or the resolved record) and enforce per-project write permission,
+// so they are safe to expose without a pinned project.
 const nonProjectScopedActionTools = new Set([
   "createContact",
   "submitFeedback",
   "addBoardItem",
   "draftOutlookEmail",
   "sendTeamsMessage",
+  // Project-resolving writes — projectId comes from the tool input and access
+  // is enforced at execution via enforceProjectWriteAccess.
+  "createChangeOrder",
+  "createChangeEvent",
+  "updateProjectStatus",
+  "createRFI",
+  "createTask",
+  "createGeneratedTask",
+  "updateGeneratedTask",
+  "deleteGeneratedTask",
+  "createProjectCompany",
+  "createProjectContact",
+  "flagProjectRisk",
+  "updateRFIStatus",
+  "createMeetingNote",
+  "createSubmittal",
+  "logDailyReport",
+  "generateProjectSummary",
+  "createCommitment",
 ]);
 
 const actionAssistantTools: AssistantToolRegistryEntry[] = actionToolNames.map(

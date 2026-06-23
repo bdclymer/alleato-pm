@@ -62,7 +62,8 @@ def _parse_datetime(value: Any) -> datetime | None:
     if isinstance(value, datetime):
         return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
     try:
-        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
     except ValueError:
         return None
 
@@ -164,8 +165,18 @@ def _is_terminal_vectorization_row(
 
 
 def _latest_job_metadata_by_document_id(job_rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    def sort_key(item: Dict[str, Any]) -> tuple[int, str]:
+        metadata = item.get("metadata")
+        read_proof = metadata.get("read_proof") if isinstance(metadata, dict) else None
+        has_full_read_proof = (
+            isinstance(read_proof, dict)
+            and read_proof.get("status") == "full_source_read"
+            and read_proof.get("scope") == "full_transcript"
+        )
+        return (1 if has_full_read_proof else 0, str(item.get("updated_at") or ""))
+
     metadata_by_id: Dict[str, Dict[str, Any]] = {}
-    for row in sorted(job_rows, key=lambda item: str(item.get("updated_at") or ""), reverse=True):
+    for row in sorted(job_rows, key=sort_key, reverse=True):
         document_id = str(row.get("source_document_id") or "")
         if not document_id or document_id in metadata_by_id:
             continue
@@ -196,7 +207,18 @@ def _has_task_extraction_outcome(document_id: str, task_ids: set[str], job_metad
         return True
     metadata = job_metadata_by_id.get(document_id) or {}
     status = str(metadata.get("task_extraction_status") or "").strip().lower()
-    return status in {"tasks_created", "no_actionable_tasks"}
+    return status in {"tasks_created", "no_actionable_tasks", "task_signal_staged"}
+
+
+def _has_full_transcript_read_proof(document_id: str, job_metadata_by_id: Dict[str, Dict[str, Any]]) -> bool:
+    metadata = job_metadata_by_id.get(document_id) or {}
+    read_proof = metadata.get("read_proof")
+    if not isinstance(read_proof, dict):
+        return False
+    return (
+        read_proof.get("status") == "full_source_read"
+        and read_proof.get("scope") == "full_transcript"
+    )
 
 
 def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
@@ -438,7 +460,15 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
             },
             {
                 "stage": "project_intelligence_updated",
-                "count": sum(1 for row_id in project_required_ids if row_id in evidence_ids),
+                "count": sum(
+                    1
+                    for row_id in project_required_ids
+                    if row_id in evidence_ids
+                    and (
+                        family != "meetings"
+                        or _has_full_transcript_read_proof(row_id, job_metadata_by_id)
+                    )
+                ),
                 "total": len(project_required_ids),
                 "excluded": total - len(project_required_ids),
                 "owner": "intelligence compiler",

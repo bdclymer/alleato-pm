@@ -10,11 +10,19 @@ const PatchSchema = z.union([
   z.object({
     project_id: z.number().int().positive().nullable(),
     match_status: z.undefined(),
+    user_tags: z.undefined(),
   }),
   // Explicit status override (e.g. "ignored" / "filtered")
   z.object({
     project_id: z.undefined(),
     match_status: z.enum(["ignored", "unassigned"]),
+    user_tags: z.undefined(),
+  }),
+  // Manual review tags stored under source_metadata.user_tags.
+  z.object({
+    project_id: z.undefined(),
+    match_status: z.undefined(),
+    user_tags: z.array(z.string().trim().min(1).max(48)).max(12),
   }),
 ]);
 
@@ -77,11 +85,50 @@ export const PATCH = withApiGuardrails(
 
     let update: Record<string, unknown>;
 
-    if ("match_status" in parsed && parsed.match_status !== undefined) {
+    if ("user_tags" in parsed && parsed.user_tags !== undefined) {
+      const { data: current, error: readError } = await intakeService
+        .from("outlook_email_intake")
+        .select("source_metadata")
+        .eq("id", intakeId)
+        .is("deleted_at", null)
+        .single();
+
+      if (readError) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "outlook-intake/[intakeId]#PATCH",
+          message: readError.message,
+        });
+      }
+
+      const sourceMetadata =
+        current?.source_metadata &&
+        typeof current.source_metadata === "object" &&
+        !Array.isArray(current.source_metadata)
+          ? (current.source_metadata as Record<string, unknown>)
+          : {};
+      const userTags = [...new Set(parsed.user_tags.map((tag) => tag.trim()))]
+        .filter(Boolean)
+        .sort((left, right) => left.localeCompare(right));
+
+      update = {
+        source_metadata: {
+          ...sourceMetadata,
+          user_tags: userTags,
+        },
+      };
+    } else if ("match_status" in parsed && parsed.match_status !== undefined) {
       // Explicit status override — preserve project_id, just change status
       update = {
         match_status: parsed.match_status,
         assignment_method: "manual",
+        ...(parsed.match_status === "ignored"
+          ? {
+              triage_action: "delete",
+              triage_reason: "Manually filtered from Outlook intake review.",
+              triage_at: new Date().toISOString(),
+            }
+          : {}),
       };
     } else {
       // Project assignment
@@ -99,7 +146,7 @@ export const PATCH = withApiGuardrails(
       .update(update)
       .eq("id", intakeId)
       .is("deleted_at", null)
-      .select("id, project_id, match_status, assignment_method, assignment_confidence")
+      .select("id, project_id, match_status, assignment_method, assignment_confidence, source_metadata, triage_action, triage_reason, triage_at")
       .single();
 
     if (error) {

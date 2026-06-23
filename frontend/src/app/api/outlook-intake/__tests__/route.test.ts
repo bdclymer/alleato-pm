@@ -41,6 +41,8 @@ interface QueryBuilderMock {
   select: jest.Mock;
   eq: jest.Mock;
   neq: jest.Mock;
+  or: jest.Mock;
+  contains: jest.Mock;
   in: jest.Mock;
   is: jest.Mock;
   order: jest.Mock;
@@ -54,6 +56,8 @@ function createQueryBuilder(result: QueryResult): QueryBuilderMock {
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
     neq: jest.fn().mockReturnThis(),
+    or: jest.fn().mockReturnThis(),
+    contains: jest.fn().mockReturnThis(),
     in: jest.fn().mockReturnThis(),
     is: jest.fn().mockReturnThis(),
     order: jest.fn().mockReturnThis(),
@@ -87,6 +91,7 @@ function makeIntakeRows(count: number) {
     projects: null,
     outlook_email_intake_attachments: [],
     source_metadata: {
+      user_tags: ["automated"],
       intake_classification: {
         action: "quarantine",
         category: "calendar_low_value",
@@ -325,5 +330,58 @@ describe("/api/outlook-intake", () => {
       "source_metadata->intake_classification->>action",
       "quarantine",
     );
+  });
+
+  it("filters by sender, recipient, tag, and triage action", async () => {
+    const intakeBuilder = createQueryBuilder({
+      data: [],
+      error: null,
+    });
+    const builders: Record<string, QueryBuilderMock[]> = {
+      user_profiles: [
+        createQueryBuilder({
+          data: { is_admin: true },
+          error: null,
+        }),
+      ],
+      outlook_email_intake: [intakeBuilder],
+      document_metadata: [],
+    };
+
+    const supabase = {
+      from: jest.fn((table: string) => {
+        const builder = builders[table]?.shift();
+        if (!builder) {
+          throw new Error(`Unexpected query for table: ${table}`);
+        }
+        return builder;
+      }),
+    };
+
+    createClientMock.mockResolvedValue(
+      supabase as Awaited<ReturnType<typeof createClient>>,
+    );
+    createServiceClientMock.mockReturnValue(supabase as never);
+    createOutlookIntakeServiceClientMock.mockReturnValue(supabase as never);
+
+    const response = await GET(
+      new NextRequest(
+        "http://localhost/api/outlook-intake?sent_from=alerts&sent_to=brandon%40alleatogroup.com&tag=automated&triage_action=delete",
+      ),
+      { params: Promise.resolve({}) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(intakeBuilder.or).toHaveBeenCalledWith(
+      "from_email.ilike.%alerts%,from_name.ilike.%alerts%",
+    );
+    expect(intakeBuilder.or).toHaveBeenCalledWith(
+      'mailbox_user_id.ilike.%brandon@alleatogroup.com%,to_list.cs.{"brandon@alleatogroup.com"}',
+    );
+    expect(intakeBuilder.contains).toHaveBeenCalledWith(
+      "source_metadata->user_tags",
+      ["automated"],
+    );
+    expect(intakeBuilder.eq).toHaveBeenCalledWith("triage_action", "delete");
   });
 });

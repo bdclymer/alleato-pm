@@ -26,7 +26,6 @@ import {
   SidePanelTitle,
 } from "@/components/ui/side-panel";
 import { Textarea } from "@/components/ui/textarea";
-import { EmptyState } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import type { Project } from "@/hooks/use-projects";
@@ -382,17 +381,13 @@ export function MeetingTasksManager({
           ))}
         </ul>
       ) : (
-        <EmptyState
-          icon={<CheckCircle2 />}
-          title="No tasks yet"
-          description="Action items captured from this meeting will appear here. Add one to get started."
-          action={
-            <Button size="sm" onClick={openCreate}>
-              <Plus className="mr-1.5 h-4 w-4" />
-              Add task
-            </Button>
-          }
-        />
+        <div className="flex items-center justify-between py-1 text-sm text-muted-foreground">
+          <span>No tasks yet</span>
+          <Button size="sm" variant="ghost" className="-mr-2 h-auto px-2 py-1" onClick={openCreate}>
+            <Plus className="mr-1 h-3.5 w-3.5" />
+            Add
+          </Button>
+        </div>
       )}
 
       {tasks.length > 0 && (

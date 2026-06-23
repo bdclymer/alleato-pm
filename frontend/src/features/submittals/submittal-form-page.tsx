@@ -7,9 +7,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, AlertTriangle } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import {
   Form,
   FormControl,
@@ -263,7 +264,9 @@ export function SubmittalFormPage({
   const watchedResponsibleContractor = form.watch("responsible_contractor_id");
   const watchedRequiredOnSite = form.watch("required_on_site_date");
   const watchedLeadTime = form.watch("lead_time");
+  const watchedFinalDueDate = form.watch("final_due_date");
   const watchedSpecSection = form.watch("specification_section");
+  const watchedWorkflowSteps = form.watch("initial_workflow_steps");
   const previousResponsibleContractor = React.useRef(watchedResponsibleContractor);
 
   const {
@@ -364,6 +367,26 @@ export function SubmittalFormPage({
       ),
     [responsibleContractorContacts],
   );
+
+  // Ball-in-court: when workflow steps are defined, restrict to those participants
+  const ballInCourtOptions = useMemo(() => {
+    const stepUserIds = new Set(
+      (watchedWorkflowSteps ?? []).map((s) => s.user_id).filter(Boolean),
+    );
+    if (stepUserIds.size === 0) return userOptions;
+    return userOptions.filter((u) => stepUserIds.has(u.value));
+  }, [watchedWorkflowSteps, userOptions]);
+
+  // Warning: due date + lead time exceeds required-on-site date
+  const dueDateWarning = useMemo(() => {
+    if (!watchedFinalDueDate || !watchedLeadTime || !watchedRequiredOnSite) return false;
+    try {
+      const projected = addDays(watchedFinalDueDate, watchedLeadTime);
+      return projected > watchedRequiredOnSite;
+    } catch {
+      return false;
+    }
+  }, [watchedFinalDueDate, watchedLeadTime, watchedRequiredOnSite]);
 
   React.useEffect(() => {
     if (previousResponsibleContractor.current !== watchedResponsibleContractor) {
@@ -792,70 +815,17 @@ export function SubmittalFormPage({
               placeholder={usersLoading ? "Loading..." : "Select person"}
               searchPlaceholder="Search by name or email..."
               emptyMessage="No matching person found."
-              options={userOptions}
+              options={ballInCourtOptions}
               disabled={usersLoading}
               clearable
             />
           </div>
-        </section>
 
-        {!isEditing ? (
-          <section className="space-y-4">
-            <SectionRuleHeading label="Attachments" />
-            <FileUploadField
-              value={pendingAttachmentEntries.map((entry) => entry.info)}
-              onChange={handleAttachmentListChange}
-              onFilesSelected={handleAttachmentFilesSelected}
-              multiple
-              maxFiles={10}
-              maxSize={50 * 1024 * 1024}
-              variant="minimal"
-              showMetaText={false}
-              dropzoneTestId="submittal-attachments-dropzone"
-              inputTestId="submittal-attachments-input"
-              fileListTestId="submittal-attachments-list"
-              disabled={isPending}
-            />
-          </section>
-        ) : null}
-
-        {/* ── Content ── */}
-        <section className="space-y-4">
-          <SectionRuleHeading label="Content" />
-
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea
-                    rows={4}
-                    placeholder="Describe this submittal..."
-                    {...field}
-                    value={field.value ?? ""}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="is_private"
-            render={({ field }) => (
-              <FormItem className="flex items-center gap-2 space-y-0">
-                <FormControl>
-                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                </FormControl>
-                <FormLabel className="cursor-pointer font-normal">
-                  Private (visible only to admins and distribution list)
-                </FormLabel>
-              </FormItem>
-            )}
-          />
+          {dueDateWarning && (
+            <InfoAlert variant="warning">
+              Due date plus lead time extends past the required on-site date. The submittal may not arrive in time.
+            </InfoAlert>
+          )}
         </section>
 
         {!isEditing ? (
@@ -982,6 +952,65 @@ export function SubmittalFormPage({
                 Add Step
               </Button>
             </div>
+          </section>
+        ) : null}
+
+        {/* ── Content ── */}
+        <section className="space-y-4">
+          <SectionRuleHeading label="Content" />
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    rows={4}
+                    placeholder="Describe this submittal..."
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="is_private"
+            render={({ field }) => (
+              <FormItem className="flex items-center gap-2 space-y-0">
+                <FormControl>
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+                <FormLabel className="cursor-pointer font-normal">
+                  Private (visible only to admins and distribution list)
+                </FormLabel>
+              </FormItem>
+            )}
+          />
+        </section>
+
+        {!isEditing ? (
+          <section className="space-y-4">
+            <SectionRuleHeading label="Attachments" />
+            <FileUploadField
+              value={pendingAttachmentEntries.map((entry) => entry.info)}
+              onChange={handleAttachmentListChange}
+              onFilesSelected={handleAttachmentFilesSelected}
+              multiple
+              maxFiles={10}
+              maxSize={50 * 1024 * 1024}
+              variant="minimal"
+              showMetaText={false}
+              dropzoneTestId="submittal-attachments-dropzone"
+              inputTestId="submittal-attachments-input"
+              fileListTestId="submittal-attachments-list"
+              disabled={isPending}
+            />
           </section>
         ) : null}
 

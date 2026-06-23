@@ -98,6 +98,7 @@ export const ATTACHMENT_TYPES = [
   "Pay App",
   "RFI",
   "Contract",
+  "Proposal",
   "Specifications",
   "Photos",
   "Correspondence",

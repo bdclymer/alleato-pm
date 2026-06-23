@@ -90,7 +90,7 @@ export function AttendeeAvatarStack({
           ) : null}
         </AvatarGroup>
 
-        <div className="max-h-0 overflow-hidden opacity-0 transition-all duration-200 group-hover/attendees:max-h-80 group-hover/attendees:opacity-100 group-focus-within/attendees:max-h-80 group-focus-within/attendees:opacity-100">
+        <div className="max-h-0 overflow-y-hidden opacity-0 transition-all duration-200 group-hover/attendees:max-h-80 group-hover/attendees:overflow-y-auto group-hover/attendees:opacity-100 group-focus-within/attendees:max-h-80 group-focus-within/attendees:overflow-y-auto group-focus-within/attendees:opacity-100">
           <ul className="space-y-2 pt-1">
             {participants.map((participant) => {
               const contactId = emailToContactId[participant.toLowerCase()];

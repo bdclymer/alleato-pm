@@ -217,12 +217,12 @@ function projectHref(projectId: number | null | undefined) {
 }
 
 function emailHref(projectId: number | null | undefined) {
-  return projectId ? `/${projectId}/emails` : "/email-inbox";
+  return projectId ? `/${projectId}/emails` : "/emails";
 }
 
 function assistantEmailHref(email: BrandonIntakeEmailRow) {
   if (email.project_id) return `/${email.project_id}/emails`;
-  return "/email-inbox?tab=brandon-queue";
+  return "/emails?tab=brandon-queue";
 }
 
 function taskHref(projectId: number | null | undefined) {
@@ -809,7 +809,7 @@ export default async function BrandonDashboardPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 divide-x divide-y divide-border overflow-hidden rounded-lg border border-border/70 sm:grid-cols-4 sm:divide-y-0">
               <Link
-                href="/email-inbox?tab=brandon-queue"
+                href="/emails?tab=brandon-queue"
                 className="space-y-1 px-4 py-4 transition-colors hover:bg-muted/30"
               >
                 <p className="text-2xl font-semibold text-foreground">
@@ -820,7 +820,7 @@ export default async function BrandonDashboardPage() {
                 </p>
               </Link>
               <Link
-                href="/email-inbox?tab=brandon-queue"
+                href="/emails?tab=brandon-queue"
                 className="space-y-1 px-4 py-4 transition-colors hover:bg-muted/30"
               >
                 <p className="text-2xl font-semibold text-foreground">
@@ -882,7 +882,7 @@ export default async function BrandonDashboardPage() {
                   Top review queue
                 </p>
                 <Link
-                  href="/email-inbox?tab=brandon-queue"
+                  href="/emails?tab=brandon-queue"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Open queue

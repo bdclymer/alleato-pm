@@ -252,6 +252,199 @@ describe("generated task DB contract normalization", () => {
   });
 });
 
+describe("createSubmittal DB contract", () => {
+  const userId = "00000000-0000-0000-0000-000000000001";
+  const UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  function setupSubmittalMocks() {
+    const submittalInsert = jest.fn(() => ({
+      select: jest.fn(() => ({
+        single: jest.fn().mockResolvedValue({
+          data: {
+            id: "sub-1",
+            title: "Structural Steel Shop Drawings",
+            submittal_number: "001",
+            status: "pending",
+          },
+          error: null,
+        }),
+      })),
+    }));
+    const auditInsert = jest.fn().mockResolvedValue({ error: null });
+    const from = jest.fn((tableName: string) => {
+      if (tableName === "ai_tool_write_audits") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                eq: jest.fn(() => ({
+                  eq: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      limit: jest.fn(() => ({
+                        maybeSingle: jest
+                          .fn()
+                          .mockResolvedValue({ data: null, error: null }),
+                      })),
+                    })),
+                  })),
+                })),
+              })),
+            })),
+          })),
+          insert: auditInsert,
+        };
+      }
+      if (tableName === "submittals") {
+        return {
+          // read path: fetch the latest submittal_number for numbering
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              order: jest.fn(() => ({
+                limit: jest
+                  .fn()
+                  .mockResolvedValue({ data: [], error: null }),
+              })),
+            })),
+          })),
+          // write path
+          insert: submittalInsert,
+        };
+      }
+      throw new Error(`Unexpected table in submittal test: ${tableName}`);
+    });
+
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn().mockResolvedValue({ ok: true }),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn().mockResolvedValue(1009),
+    } as never);
+    mockedCreateServiceClient.mockReturnValue({ from } as never);
+
+    return { from, submittalInsert };
+  }
+
+  it("writes the authenticated user uuid to submitted_by and the free-text party to submitter_company", async () => {
+    // Regression: submitted_by is a NOT NULL uuid FK. Previously the tool wrote
+    // the free-text "submittedBy" string ("TBD"/subcontractor name) straight
+    // into it, so every confirmed createSubmittal failed at the DB insert and
+    // the model hallucinated an unrelated "due date is required" error.
+    const { submittalInsert } = setupSubmittalMocks();
+
+    const tools = createActionTools(userId);
+    const execute = tools.createSubmittal.execute;
+    if (!execute) throw new Error("createSubmittal execute was not registered");
+
+    await execute(
+      {
+        projectId: 1009,
+        title: "Structural Steel Shop Drawings",
+        specSection: "05 12 00",
+        submittedBy: "ACME Steel Co",
+        status: "Draft",
+        confirmed: true,
+        idempotencyKey: "submittal-key-1",
+      },
+      { toolCallId: "call-1", messages: [] } as never,
+    );
+
+    expect(submittalInsert).toHaveBeenCalledTimes(1);
+    const payload = submittalInsert.mock.calls[0][0] as Record<string, unknown>;
+    expect(payload.submitted_by).toBe(userId);
+    expect(payload.submitted_by).toMatch(UUID_RE);
+    expect(payload.submitted_by).not.toBe("ACME Steel Co");
+    expect(payload.created_by).toBe(userId);
+    expect(payload.submitter_company).toBe("ACME Steel Co");
+  });
+
+  it("only accepts status values permitted by the submittals_status_check DB constraint", () => {
+    // Regression: the tool defaulted status to "pending" and offered
+    // "revise_resubmit", neither of which is in the DB check constraint, so
+    // every insert failed. The schema enum must be a subset of the allowed set
+    // and must default to a valid status.
+    const DB_ALLOWED_STATUSES = new Set([
+      "Draft",
+      "Open",
+      "Distributed",
+      "Closed",
+      "draft",
+      "submitted",
+      "under_review",
+      "requires_revision",
+      "approved",
+      "rejected",
+      "superseded",
+    ]);
+
+    const tools = createActionTools(userId);
+    const schema = (
+      tools.createSubmittal as unknown as { inputSchema: import("zod").ZodTypeAny }
+    ).inputSchema;
+    const statusSchema = (
+      schema as unknown as { shape: { status: import("zod").ZodTypeAny } }
+    ).shape.status;
+
+    // Default must be a valid status (status omitted -> default applied).
+    const parsedDefault = (
+      schema as unknown as {
+        parse: (v: unknown) => { status: string };
+      }
+    ).parse({ projectId: 1009, title: "x" });
+    expect(DB_ALLOWED_STATUSES.has(parsedDefault.status)).toBe(true);
+
+    // Every status the tool offers must be permitted by the DB constraint.
+    const toolStatuses = [
+      "Draft",
+      "Open",
+      "Distributed",
+      "Closed",
+      "submitted",
+      "under_review",
+      "requires_revision",
+      "approved",
+      "rejected",
+      "superseded",
+    ];
+    for (const value of toolStatuses) {
+      expect(statusSchema.safeParse(value).success).toBe(true);
+      expect(DB_ALLOWED_STATUSES.has(value)).toBe(true);
+    }
+
+    // The previously-broken values must be rejected by the tool schema.
+    expect(statusSchema.safeParse("pending").success).toBe(false);
+    expect(statusSchema.safeParse("revise_resubmit").success).toBe(false);
+  });
+
+  it("stores submitter_company as null when the party is blank or 'TBD'", async () => {
+    const { submittalInsert } = setupSubmittalMocks();
+
+    const tools = createActionTools(userId);
+    const execute = tools.createSubmittal.execute;
+    if (!execute) throw new Error("createSubmittal execute was not registered");
+
+    await execute(
+      {
+        projectId: 1009,
+        title: "Door Hardware",
+        submittedBy: "TBD",
+        status: "Draft",
+        confirmed: true,
+        idempotencyKey: "submittal-key-2",
+      },
+      { toolCallId: "call-2", messages: [] } as never,
+    );
+
+    const payload = submittalInsert.mock.calls[0][0] as Record<string, unknown>;
+    expect(payload.submitted_by).toBe(userId);
+    expect(payload.submitter_company).toBeNull();
+  });
+});
+
 describe("buildCommitmentDraftWidget", () => {
   it("marks unresolved vendors as a failing validation item", () => {
     const widget = buildCommitmentDraftWidget({

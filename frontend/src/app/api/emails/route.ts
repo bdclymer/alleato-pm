@@ -59,7 +59,9 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
   const isAdmin = profile?.is_admin === true;
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
-  const source = searchParams.get("source") ?? "app";
+  // Match the project email API: no source parameter means app-composed and
+  // Outlook-synced email are both included. Explicit app/outlook filters narrow.
+  const source = searchParams.get("source") ?? "all";
 
   let query = supabase
     .from("project_emails")

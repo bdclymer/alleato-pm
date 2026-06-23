@@ -43,6 +43,9 @@ interface OutlookIntakeRow {
   web_link: string | null;
   created_at: string | null;
   source_metadata: Record<string, unknown> | null;
+  triage_action: string | null;
+  triage_reason: string | null;
+  triage_at: string | null;
   outlook_email_intake_attachments: IntakeAttachmentRow[] | null;
 }
 
@@ -95,6 +98,10 @@ export const GET = withApiGuardrails(
     const { searchParams } = new URL(request.url);
     const matchStatus = searchParams.get("match_status");
     const classificationAction = searchParams.get("classification_action");
+    const sentFrom = normalizeSearchParam(searchParams.get("sent_from"));
+    const sentTo = normalizeSearchParam(searchParams.get("sent_to"));
+    const tag = normalizeSearchParam(searchParams.get("tag"));
+    const triageAction = normalizeSearchParam(searchParams.get("triage_action"));
     const unassigned = searchParams.get("unassigned") === "true";
 
     let query = intakeService
@@ -119,9 +126,12 @@ export const GET = withApiGuardrails(
         assignment_confidence,
         received_at,
         has_attachments,
-	        web_link,
-	        created_at,
-	        source_metadata,
+        web_link,
+        created_at,
+        source_metadata,
+        triage_action,
+        triage_reason,
+        triage_at,
         outlook_email_intake_attachments (
           id,
           file_name,
@@ -149,6 +159,26 @@ export const GET = withApiGuardrails(
         "source_metadata->intake_classification->>action",
         classificationAction,
       );
+    }
+
+    if (sentFrom) {
+      query = query.or(
+        `from_email.ilike.%${escapePostgrestLike(sentFrom)}%,from_name.ilike.%${escapePostgrestLike(sentFrom)}%`,
+      );
+    }
+
+    if (sentTo) {
+      query = query.or(
+        `mailbox_user_id.ilike.%${escapePostgrestLike(sentTo)}%,to_list.cs.{${escapePostgrestArrayValue(sentTo)}}`,
+      );
+    }
+
+    if (tag) {
+      query = query.contains("source_metadata->user_tags", [tag]);
+    }
+
+    if (triageAction) {
+      query = query.eq("triage_action", triageAction);
     }
 
     const { data, error } = await query;
@@ -255,6 +285,10 @@ export const GET = withApiGuardrails(
         hasAttachments: row.has_attachments,
         webLink: row.web_link,
         createdAt: row.created_at,
+        tags: normalizeUserTags(row.source_metadata),
+        triageAction: row.triage_action,
+        triageReason: row.triage_reason,
+        triageAt: row.triage_at,
         intakeClassification: normalizeIntakeClassification(row.source_metadata),
         project: project
           ? {
@@ -305,4 +339,26 @@ function normalizeIntakeClassification(
         )
       : [],
   };
+}
+
+function normalizeSearchParam(value: string | null): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
+function escapePostgrestLike(value: string): string {
+  return value.replace(/[%_]/g, (match) => `\\${match}`);
+}
+
+function escapePostgrestArrayValue(value: string): string {
+  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
+function normalizeUserTags(sourceMetadata: Record<string, unknown> | null) {
+  const raw = sourceMetadata?.user_tags;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((tag): tag is string => typeof tag === "string")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
 }

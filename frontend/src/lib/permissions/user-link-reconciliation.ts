@@ -56,29 +56,50 @@ type LinkState = {
   usersAuth: UserAuthRow[];
 };
 
+// Supabase caps every select at 1000 rows by default. The `people` table has
+// well over 1000 rows, so an un-paginated fetch silently drops the tail — any
+// user whose linked person row falls outside the first page gets a false
+// `missing_person_auth_link` diagnostic that "Repair links" can never clear
+// (and that the repair path then tries to "fix" by inserting a duplicate).
+// Always page through the full result set so link reconciliation sees every row.
+const PAGE_SIZE = 1000;
+
 async function loadLinkState(service: ServiceClient): Promise<LinkState> {
-  const [profilesResult, peopleResult, usersAuthResult] = await Promise.all([
-    service
+  const profiles: UserProfileRow[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await service
       .from("user_profiles")
       .select("id, email, full_name, is_admin, is_active, role")
-      .eq("is_active", true),
-    service
+      .eq("is_active", true)
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    profiles.push(...((data ?? []) as UserProfileRow[]));
+    if (!data || data.length < PAGE_SIZE) break;
+  }
+
+  const people: PersonLinkRow[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await service
       .from("people")
-      .select("id, first_name, last_name, email, auth_user_id"),
-    service
+      .select("id, first_name, last_name, email, auth_user_id")
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    people.push(...((data ?? []) as PersonLinkRow[]));
+    if (!data || data.length < PAGE_SIZE) break;
+  }
+
+  const usersAuth: UserAuthRow[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await service
       .from("users_auth")
-      .select("person_id, auth_user_id"),
-  ]);
+      .select("person_id, auth_user_id")
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    usersAuth.push(...((data ?? []) as UserAuthRow[]));
+    if (!data || data.length < PAGE_SIZE) break;
+  }
 
-  if (profilesResult.error) throw profilesResult.error;
-  if (peopleResult.error) throw peopleResult.error;
-  if (usersAuthResult.error) throw usersAuthResult.error;
-
-  return {
-    profiles: (profilesResult.data ?? []) as UserProfileRow[],
-    people: (peopleResult.data ?? []) as PersonLinkRow[],
-    usersAuth: (usersAuthResult.data ?? []) as UserAuthRow[],
-  };
+  return { profiles, people, usersAuth };
 }
 
 function normalizeEmail(email: string | null | undefined) {

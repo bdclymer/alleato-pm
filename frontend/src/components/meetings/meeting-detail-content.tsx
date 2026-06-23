@@ -94,6 +94,7 @@ interface RelatedMeeting {
   id: string;
   title: string | null;
   date: string | null;
+  created_at: string | null;
   duration_minutes: number | null;
 }
 
@@ -592,7 +593,7 @@ export function MeetingDetailContent({
         {meeting.date ? (
           <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
             <Calendar className="h-3.5 w-3.5" />
-            {format(new Date(meeting.date), "EEEE, MMMM d, yyyy")}
+            {format(new Date(meeting.date), "EEEE, MMMM d, yyyy · h:mm a")}
           </span>
         ) : null}
         {meeting.duration_minutes ? (
@@ -833,11 +834,11 @@ export function MeetingDetailContent({
                     href={`${relatedMeetingsBaseHref}/${rm.id}`}
                     className="group flex items-center gap-3 py-1.5 transition-colors"
                   >
-                    {rm.date ? (
-                      <DateAvatar date={rm.date} size="sm" />
+                    {(rm.date ?? rm.created_at) ? (
+                      <DateAvatar date={(rm.date ?? rm.created_at)!} size="sm" />
                     ) : (
-                      <div className="w-9 h-9 shrink-0 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
-                        ?
+                      <div className="w-7 h-7 shrink-0 rounded-full bg-muted flex items-center justify-center">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
                       </div>
                     )}
                     <div className="min-w-0">

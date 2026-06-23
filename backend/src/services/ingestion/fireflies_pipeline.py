@@ -2369,9 +2369,11 @@ class FirefliesIngestionPipeline:
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0,
                 max_tokens=512,
+                timeout=20,
             ),
             provider_name="OpenAI",
             operation="meeting memory extraction chat",
+            max_retries=0,
         )
 
         raw = (response.choices[0].message.content or "").strip()

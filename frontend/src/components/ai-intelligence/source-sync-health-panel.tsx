@@ -176,6 +176,14 @@ interface ActionResult {
   payload: unknown;
 }
 
+interface ActionPayload {
+  status?: string;
+  message?: string;
+  nextStep?: string;
+  timeoutMs?: number;
+  requested?: Record<string, unknown>;
+}
+
 interface ProjectIntelligenceSummary {
   schema: "project_intelligence_summary_v1";
   model: string;
@@ -632,10 +640,19 @@ function OperationsBrief({ status }: { status: SourceSyncStatus }) {
   const primaryIssue = issues[0];
   const priorityIssues = issues.slice(0, 3);
   const nextSteps = priorityIssues.map((issue) => issue.nextStep);
+  const ragLifecycle = status.ragLifecycle;
+  const ragBlockers =
+    ragLifecycle?.sources.flatMap((source) =>
+      source.stages
+        .filter((stage) => stage.status === "critical" || stage.status === "warning")
+        .map((stage) => ({ source, stage })),
+    ) ?? [];
   const statusSummary =
-    status.status === "healthy"
+    status.status === "healthy" && ragLifecycle?.status !== "degraded"
       ? "Sources are current and intelligence is ready."
-      : "Sources are loading, but search and intelligence are behind.";
+      : ragLifecycle?.status === "degraded"
+        ? "RAG lifecycle is degraded. Synced content exists, but some sources are not fully searchable, assigned, task-checked, or reflected in Project Intelligence."
+        : "Source sync is degraded. Some provider or processing work still needs attention.";
   const keyCounts = [
     { label: "Not searchable", value: status.counts.unembedded },
     { label: "Not compiled", value: status.counts.uncompiled },
@@ -647,7 +664,15 @@ function OperationsBrief({ status }: { status: SourceSyncStatus }) {
     <div className="space-y-3 border-y border-border/60 py-4">
       <div className="min-w-0 space-y-2">
         <p className="text-sm font-medium text-foreground">{statusSummary}</p>
-        {primaryIssue ? (
+        {ragBlockers.length > 0 ? (
+          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+            Main blocker:{" "}
+            <span className="font-medium text-foreground">
+              {ragBlockers[0].source.label} / {ragBlockers[0].stage.label}
+            </span>
+            . {ragBlockers[0].stage.message}
+          </p>
+        ) : primaryIssue ? (
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
             Main blocker:{" "}
             <span className="font-medium text-foreground">
@@ -690,6 +715,54 @@ function OperationsBrief({ status }: { status: SourceSyncStatus }) {
         </InfoAlert>
       )}
     </div>
+  );
+}
+
+function isActionPayload(value: unknown): value is ActionPayload {
+  return Boolean(value && typeof value === "object");
+}
+
+function ActionResultAlert({ action }: { action: ActionResult }) {
+  const payload = isActionPayload(action.payload) ? action.payload : null;
+  const accepted = payload?.status === "accepted";
+  const requested = payload?.requested;
+
+  return (
+    <InfoAlert variant={accepted ? "success" : "info"} role="status">
+      <div className="space-y-2">
+        <p className="font-medium text-foreground">
+          {accepted ? `${action.label} was accepted` : `${action.label} finished`}
+        </p>
+        <p>
+          {payload?.message ??
+            "The action returned successfully. Refresh the dashboard to read the latest lifecycle state."}
+        </p>
+        {payload?.nextStep ? (
+          <p className="text-xs font-medium">{payload.nextStep}</p>
+        ) : null}
+        {requested ? (
+          <details className="text-xs">
+            <summary className="cursor-pointer font-medium">
+              Show run details
+            </summary>
+            <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2">
+              {Object.entries(requested).map(([key, value]) => (
+                <React.Fragment key={key}>
+                  <dt className="text-muted-foreground">{humanizeToken(key)}</dt>
+                  <dd className="font-mono">{String(value)}</dd>
+                </React.Fragment>
+              ))}
+              {payload?.timeoutMs ? (
+                <>
+                  <dt className="text-muted-foreground">Dashboard wait window</dt>
+                  <dd className="font-mono">{payload.timeoutMs}ms</dd>
+                </>
+              ) : null}
+            </dl>
+          </details>
+        ) : null}
+      </div>
+    </InfoAlert>
   );
 }
 
@@ -916,6 +989,7 @@ function lifecycleBadgeVariant(
 }
 
 function LifecycleStageCell({ stage }: { stage: RagLifecycleStage }) {
+  const missing = Math.max(stage.total - stage.count, 0);
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -932,7 +1006,7 @@ function LifecycleStageCell({ stage }: { stage: RagLifecycleStage }) {
             </span>
           </div>
           <p className="truncate text-xs text-muted-foreground">
-            {formatDate(stage.latestAt)}
+            {missing > 0 ? `${missing} remaining` : formatDate(stage.latestAt)}
           </p>
         </div>
       </TooltipTrigger>
@@ -944,6 +1018,75 @@ function LifecycleStageCell({ stage }: { stage: RagLifecycleStage }) {
         </div>
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+function RagLifecycleBlockers({
+  lifecycle,
+}: {
+  lifecycle: RagLifecycleStatus;
+}) {
+  const blockers = lifecycle.sources
+    .flatMap((source) =>
+      source.stages
+        .filter((stage) => stage.status === "critical" || stage.status === "warning")
+        .map((stage) => ({
+          source,
+          stage,
+          missing: Math.max(stage.total - stage.count, 0),
+        })),
+    )
+    .sort((a, b) => {
+      const severityDelta =
+        (b.stage.status === "critical" ? 1 : 0) -
+        (a.stage.status === "critical" ? 1 : 0);
+      if (severityDelta) return severityDelta;
+      return b.missing - a.missing;
+    })
+    .slice(0, 6);
+
+  if (blockers.length === 0) {
+    return (
+      <InfoAlert variant="success">
+        All required RAG lifecycle stages are healthy for the current window.
+      </InfoAlert>
+    );
+  }
+
+  return (
+    <div className="space-y-3 border-y border-border/60 py-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <SectionRuleHeading label="What needs attention" className="mb-0 pb-0" />
+        <span className="text-xs text-muted-foreground">
+          Ordered by severity and missing rows
+        </span>
+      </div>
+      <div className="divide-y divide-border/60">
+        {blockers.map(({ source, stage, missing }) => (
+          <div
+            key={`${source.key}:${stage.key}`}
+            className="grid gap-2 py-3 text-sm md:grid-cols-[220px_1fr_150px]"
+          >
+            <div className="min-w-0">
+              <p className="font-medium text-foreground">{source.label}</p>
+              <p className="text-xs text-muted-foreground">{stage.label}</p>
+            </div>
+            <p className="leading-6 text-muted-foreground">{stage.message}</p>
+            <div className="text-left md:text-right">
+              <Badge
+                variant={lifecycleBadgeVariant(stage.status)}
+                className="capitalize"
+              >
+                {stage.count}/{stage.total}
+              </Badge>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {missing} remaining · {stage.ownerHint}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -968,7 +1111,7 @@ function RagLifecycleMatrix({
     })) ?? [];
 
   return (
-    <div className="space-y-3">
+      <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
           <SectionRuleHeading label="Daily RAG trust" className="mb-0 pb-0" />
@@ -979,6 +1122,8 @@ function RagLifecycleMatrix({
         </div>
         <StatusPill status={lifecycle.status} />
       </div>
+
+      <RagLifecycleBlockers lifecycle={lifecycle} />
 
       <div className="overflow-x-auto rounded-md border border-border/70">
         <table className="min-w-full divide-y divide-border/70 text-sm">
@@ -1038,7 +1183,8 @@ function RagLifecycleMatrix({
               : "success"
           }
         >
-          Notification {notification.status}: {notification.message}
+          <span className="font-medium">Notification {notification.status}.</span>{" "}
+          {notification.message}
         </InfoAlert>
       ) : null}
     </div>
@@ -2111,9 +2257,12 @@ export function SourceSyncHealthPanel() {
             ? { limit: 100 }
             : key === "graph-sync"
               ? {
+                  runOutlook: true,
+                  runTeams: true,
+                  runOneDrive: false,
                   runEmbedding: false,
                   runTeamsCompiler: false,
-                  embedLimit: 100,
+                  embedLimit: 25,
                   teamsCompilerBatchSize: 10,
                 }
               : undefined;
@@ -2203,14 +2352,7 @@ export function SourceSyncHealthPanel() {
           </InfoAlert>
         ) : null}
 
-        {lastAction ? (
-          <InfoAlert>
-            {lastAction.label} started. Result:{" "}
-            {typeof lastAction.payload === "object"
-              ? JSON.stringify(lastAction.payload)
-              : String(lastAction.payload)}
-          </InfoAlert>
-        ) : null}
+        {lastAction ? <ActionResultAlert action={lastAction} /> : null}
 
         {loading ? (
           <LoadingState />

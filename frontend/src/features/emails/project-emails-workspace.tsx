@@ -118,6 +118,12 @@ interface ProjectEmailsWorkspaceProps {
   viewSwitcher?: React.ReactNode;
   /** Filter control rendered next to search in the list header. */
   filterControl?: React.ReactNode;
+  /** Active sort column id (matches the email table column ids). */
+  sortBy?: string;
+  /** Active sort direction. */
+  sortDirection?: "asc" | "desc";
+  /** Called when the user picks a different sort from the rail header. */
+  onSortChange?: (sortBy: string, direction: "asc" | "desc") => void;
   onCompose: () => void;
   onEdit: (email: ProjectEmail) => void;
   onDelete: (email: ProjectEmail) => void;
@@ -161,6 +167,23 @@ const ATTACHMENT_TYPES = [
   "Report",
   "Other",
 ] as const;
+
+// Sort options surfaced in the mail-view rail. Each maps to a (column id,
+// direction) pair understood by the shared email table sort state. Newest-first
+// is the default so the most recent message is always at the top.
+const EMAIL_SORT_OPTIONS = [
+  { value: "date_desc", label: "Newest first", sortBy: "sent_at", direction: "desc" as const },
+  { value: "date_asc", label: "Oldest first", sortBy: "sent_at", direction: "asc" as const },
+  { value: "sender_asc", label: "Sender A–Z", sortBy: "from_name", direction: "asc" as const },
+  { value: "subject_asc", label: "Subject A–Z", sortBy: "subject", direction: "asc" as const },
+];
+
+function sortSelectionValue(sortBy?: string, direction?: "asc" | "desc"): string {
+  const match = EMAIL_SORT_OPTIONS.find(
+    (option) => option.sortBy === sortBy && option.direction === direction,
+  );
+  return match?.value ?? "date_desc";
+}
 
 function formatPaneTimestamp(value: string | null | undefined): string {
   if (!value) return "No timestamp";
@@ -1480,6 +1503,9 @@ export function ProjectEmailsWorkspace({
   canDelete = true,
   viewSwitcher,
   filterControl,
+  sortBy,
+  sortDirection,
+  onSortChange,
   onCompose,
   onEdit,
   onDelete,
@@ -1599,8 +1625,35 @@ export function ProjectEmailsWorkspace({
               ))}
             </div>
 
-            {viewSwitcher ? (
-              <div className="mt-3 flex items-center">{viewSwitcher}</div>
+            {viewSwitcher || onSortChange ? (
+              <div className="mt-3 flex items-center justify-between gap-2">
+                {viewSwitcher ?? <span />}
+                {onSortChange ? (
+                  <Select
+                    value={sortSelectionValue(sortBy, sortDirection)}
+                    onValueChange={(value) => {
+                      const option = EMAIL_SORT_OPTIONS.find(
+                        (candidate) => candidate.value === value,
+                      );
+                      if (option) onSortChange(option.sortBy, option.direction);
+                    }}
+                  >
+                    <SelectTrigger
+                      aria-label="Sort emails"
+                      className="h-8 w-auto gap-1.5 rounded-full border-border bg-muted/40 px-3 text-xs font-medium shadow-none"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent align="end">
+                      {EMAIL_SORT_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : null}
+              </div>
             ) : null}
 
             <AnimatePresence initial={false}>

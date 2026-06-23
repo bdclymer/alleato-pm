@@ -506,6 +506,10 @@ export interface UnifiedTablePageProps<T> {
     resizable?: boolean;
     /** Keep panel sticky to viewport on desktop so it scrolls independently and stays in view (default: true). Pass false to let the panel scroll with the page. */
     sticky?: boolean;
+    /** Override the inner content wrapper classes. */
+    contentClassName?: string;
+    /** Show the built-in desktop close button row (default: true when onClose is supplied). */
+    showCloseButton?: boolean;
     /** localStorage key suffix for persisting width/collapsed state */
     storageKey?: string;
     /** Called when the details panel closes. */
@@ -3074,8 +3078,8 @@ export function UnifiedTablePage<T>({
                       <div className="absolute left-0 top-0 h-full w-px bg-border group-hover:bg-primary/50 group-active:bg-primary transition-colors" />
                     </div>
                   )}
-                  <div className="flex-1 flex flex-col min-h-0 pl-4 pr-4">
-                    {sidePanel.onClose ? (
+                  <div className={cn("flex-1 flex flex-col min-h-0 pl-4 pr-4", sidePanel.contentClassName)}>
+                    {sidePanel.onClose && sidePanel.showCloseButton !== false ? (
                       <div className="flex h-10 shrink-0 items-center justify-end border-b border-border/60">
                         <Button
                           variant="ghost"

@@ -86,6 +86,7 @@ export type InventoryLayout =
   | "Table"
   | "Dashboard"
   | "Content"
+  | "Deprecated"
   | "Other";
 
 export type InventoryStatus =
@@ -133,6 +134,9 @@ type SitemapTab =
   | "admin-pages"
   | "table-pages"
   | "form-pages"
+  | "detail-pages"
+  | "edit-pages"
+  | "deprecated-pages"
   | "needs-review";
 
 const OVERLAY_STORAGE_KEY = "sitemap-inventory-overrides";
@@ -168,6 +172,7 @@ const LAYOUTS: InventoryLayout[] = [
   "Table",
   "Dashboard",
   "Content",
+  "Deprecated",
   "Other",
 ];
 
@@ -198,6 +203,9 @@ const TAB_LABELS: Record<SitemapTab, string> = {
   "admin-pages": "Admin Pages",
   "table-pages": "Table Pages",
   "form-pages": "Form Pages",
+  "detail-pages": "Detail Pages",
+  "edit-pages": "Edit Pages",
+  "deprecated-pages": "Deprecated",
   "needs-review": "Needs Review",
 };
 
@@ -235,6 +243,9 @@ function parseTab(value: string | null): SitemapTab {
     value === "admin-pages" ||
     value === "table-pages" ||
     value === "form-pages" ||
+    value === "detail-pages" ||
+    value === "edit-pages" ||
+    value === "deprecated-pages" ||
     value === "needs-review"
   ) {
     return value;
@@ -371,8 +382,11 @@ function matchesTab(route: InventoryRoute, tab: SitemapTab): boolean {
   if (tab === "api") return route.kind === "api";
   if (tab === "project-pages") return isPageRoute && (route.type === "Project Page" || route.route.includes("[projectId]"));
   if (tab === "admin-pages") return isPageRoute && (route.type === "Admin Page" || route.category === "Admin");
-  if (tab === "table-pages") return isPageRoute && (route.type === "Database / Table" || route.file.includes("/(tables)/"));
-  if (tab === "form-pages") return isPageRoute && (route.type === "Workflow" || route.route.includes("/new") || route.route.includes("/edit") || route.route.includes("/create"));
+  if (tab === "table-pages") return isPageRoute && route.layout === "Table";
+  if (tab === "form-pages") return isPageRoute && route.layout === "Form";
+  if (tab === "detail-pages") return isPageRoute && route.layout === "Detail";
+  if (tab === "edit-pages") return isPageRoute && route.layout === "Edit";
+  if (tab === "deprecated-pages") return isPageRoute && route.layout === "Deprecated";
   if (tab === "needs-review") return route.status === "Needs Review" || route.status === "Broken" || route.status === "Missing Nav";
   return true;
 }

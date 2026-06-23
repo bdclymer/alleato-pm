@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Mail, Plus, Star, StarOff } from "lucide-react";
+import { Mail, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
@@ -51,10 +51,9 @@ import { EmailComposeDialog } from "@/features/emails/email-compose-dialog";
 import { EmailImportanceFeedbackDialog } from "@/features/emails/email-importance-feedback-dialog";
 import { MarkAsJunkDialog } from "@/features/emails/mark-as-junk-dialog";
 import {
-  EmailDetailPanel,
-  projectEmailToDetailRecord,
-} from "@/features/emails/email-detail-sheet";
-import { ProjectEmailsWorkspace } from "@/features/emails/project-emails-workspace";
+  EmailReadingPanel,
+  ProjectEmailsWorkspace,
+} from "@/features/emails/project-emails-workspace";
 import {
   EmailViewSwitcher,
   type EmailViewMode,
@@ -201,6 +200,20 @@ export function EmailsClient({
       : embedded
         ? "table"
         : "mail";
+
+  const handleSortChange = React.useCallback(
+    (sortBy: string, direction: "asc" | "desc") => {
+      tableState.setSortBy(sortBy);
+      tableState.setSortDirection(direction);
+      tableState.setSearchParams({
+        sort: sortBy,
+        sort_dir: direction,
+        page: "1",
+      });
+      tableState.setPage(1);
+    },
+    [tableState],
+  );
 
   const handleEmailViewChange = React.useCallback(
     (next: EmailViewMode) => {
@@ -701,6 +714,9 @@ export function EmailsClient({
           canEdit={canEditEmail}
           canCompose={!noWriteActions}
           canDelete={!noWriteActions}
+          sortBy={tableState.sortBy ?? undefined}
+          sortDirection={tableState.sortDirection}
+          onSortChange={handleSortChange}
           viewSwitcher={
             <EmailViewSwitcher
               value={emailView}
@@ -861,16 +877,7 @@ export function EmailsClient({
         sorting={{
           sortBy: tableState.sortBy,
           sortDirection: tableState.sortDirection,
-          onSortChange: (sortBy, direction) => {
-            tableState.setSortBy(sortBy);
-            tableState.setSortDirection(direction);
-            tableState.setSearchParams({
-              sort: sortBy,
-              sort_dir: direction,
-              page: "1",
-            });
-            tableState.setPage(1);
-          },
+          onSortChange: handleSortChange,
         }}
         selection={{
           selectedIds: tableState.selectedIds,
@@ -923,68 +930,30 @@ export function EmailsClient({
           selectedEmail
             ? {
                 content: (
-                  <EmailDetailPanel
-                    email={projectEmailToDetailRecord(selectedEmail)}
-                    onClose={() => setSelectedEmail(null)}
-                    actions={
-                      <>
-                        {isOutlook ? (
-                          <>
-                            <Button
-                              type="button"
-                              variant={
-                                importanceFeedbackByEmailId[String(selectedEmail.id)]
-                                  ?.signal === "important"
-                                  ? "secondary"
-                                  : "ghost"
-                              }
-                              size="sm"
-                              onClick={() =>
-                                handleImportanceIntent(selectedEmail, "important")
-                              }
-                            >
-                              <Star className="h-4 w-4" />
-                              Important
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={
-                                importanceFeedbackByEmailId[String(selectedEmail.id)]
-                                  ?.signal === "not_important"
-                                  ? "secondary"
-                                  : "ghost"
-                              }
-                              size="sm"
-                              onClick={() =>
-                                handleImportanceIntent(
-                                  selectedEmail,
-                                  "not_important",
-                                )
-                              }
-                            >
-                              <StarOff className="h-4 w-4" />
-                              Not important
-                            </Button>
-                          </>
-                        ) : null}
-                        {!noWriteActions ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(selectedEmail)}
-                          >
-                            Edit
-                          </Button>
-                        ) : null}
-                      </>
+                  <EmailReadingPanel
+                    email={selectedEmail}
+                    canCompose={!noWriteActions}
+                    canEditEmail={canEditEmail(selectedEmail)}
+                    canDelete={!noWriteActions}
+                    onCompose={() => {
+                      setEditingEmail(null);
+                      setComposeOpen(true);
+                    }}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteIntent}
+                    importanceFeedback={
+                      importanceFeedbackByEmailId[String(selectedEmail.id)] ?? null
                     }
+                    onImportanceRecorded={handleImportanceRecorded}
+                    className="h-full"
                   />
                 ),
                 variant: "wide",
                 defaultWidth: 560,
                 minWidth: 440,
                 storageKey: isGlobal ? "global-email-detail" : "project-email-detail",
+                contentClassName: "pl-0 pr-0",
+                showCloseButton: false,
                 onClose: () => setSelectedEmail(null),
               }
             : undefined

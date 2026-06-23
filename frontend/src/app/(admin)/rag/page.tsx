@@ -1,12 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { format } from "date-fns";
+import { AlertTriangle, CalendarIcon, RefreshCw, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import type { DateRange } from "react-day-picker";
 
 import { PageShell, PageTabs } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   InfoAlert,
   InlineTable,
@@ -39,14 +42,67 @@ const STAGE_ORDER = [
   "projectIntelligenceUpdated",
 ] as const;
 
+// Short, scannable labels for the funnel + matrix. The full labels live on the
+// lifecycle payload (stage.label) and are used in the detail panel.
+const STAGE_SHORT: Record<(typeof STAGE_ORDER)[number], string> = {
+  synced: "Synced",
+  vectorized: "Vectorized",
+  projectAssigned: "Assigned",
+  tasksExtracted: "Tasks",
+  projectIntelligenceUpdated: "Intelligence",
+};
+
+// The lifecycle payload keys sources as meetings/teams/emails/sharepoint.
+const SOURCE_SHORT: Record<string, string> = {
+  meetings: "Meetings",
+  teams: "Teams",
+  emails: "Outlook",
+  sharepoint: "SharePoint",
+};
+
 type SourceKey = (typeof SOURCES)[number]["key"];
 
 type Lifecycle = NonNullable<SourceSyncStatus["ragLifecycle"]>;
 type LifecycleSource = Lifecycle["sources"][number];
 type LifecycleStage = LifecycleSource["stages"][number];
+type StageStatus = LifecycleStage["status"];
+
+type Tone = {
+  bar: string;
+  text: string;
+  chip: string;
+  label: string;
+};
+
+const TONE: Record<StageStatus, Tone> = {
+  healthy: {
+    bar: "bg-status-success",
+    text: "text-status-success",
+    chip: "bg-status-success/10 text-status-success",
+    label: "On track",
+  },
+  warning: {
+    bar: "bg-status-warning",
+    text: "text-status-warning",
+    chip: "bg-status-warning/10 text-status-warning",
+    label: "Lagging",
+  },
+  critical: {
+    bar: "bg-status-error",
+    text: "text-status-error",
+    chip: "bg-status-error/10 text-status-error",
+    label: "Stuck",
+  },
+  unknown: {
+    bar: "bg-muted-foreground/40",
+    text: "text-muted-foreground",
+    chip: "bg-muted text-muted-foreground",
+    label: "No data",
+  },
+};
 
 function formatNumber(value: number): string {
-  if (!value) return "—";
+  if (!value) return "0";
   return new Intl.NumberFormat("en-US").format(value);
 }
 
@@ -71,10 +127,6 @@ function formatDate(value: string | null): string {
     hour: value.length === 10 ? undefined : "numeric",
     minute: value.length === 10 ? undefined : "2-digit",
   });
-}
-
-function humanize(value: string): string {
-  return value.replaceAll("_", " ").replaceAll("-", " ");
 }
 
 function isToday(value: string): boolean {
@@ -124,58 +176,345 @@ function rowTotalFailed(row: DailySyncRow): number {
   }, 0);
 }
 
-function MissingRunIcon({ label }: { label: string }) {
+// ---------------------------------------------------------------------------
+// RAG lifecycle: date window
+// ---------------------------------------------------------------------------
+
+type LifecycleWindow = { days: number | null; start: string | null; end: string | null };
+
+const PRESETS: Array<{ label: string; days: number }> = [
+  { label: "Today", days: 1 },
+  { label: "Last 7 days", days: 7 },
+  { label: "Last 30 days", days: 30 },
+];
+
+function parseLocalDate(iso: string): Date {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isoDaysAgo(days: number): string {
+  const date = new Date();
+  date.setUTCHours(0, 0, 0, 0);
+  date.setUTCDate(date.getUTCDate() - days);
+  return date.toISOString().slice(0, 10);
+}
+
+function windowQuery(window: LifecycleWindow): string {
+  if (window.start && window.end) {
+    return `?start=${window.start}&end=${window.end}`;
+  }
+  return `?days=${window.days ?? 7}`;
+}
+
+function windowBounds(window: LifecycleWindow): { start: string; end: string; days: number } {
+  if (window.start && window.end) {
+    const [lo, hi] =
+      window.start <= window.end ? [window.start, window.end] : [window.end, window.start];
+    const days = Math.max(
+      1,
+      Math.round(
+        (new Date(`${hi}T00:00:00Z`).getTime() - new Date(`${lo}T00:00:00Z`).getTime()) /
+          (24 * 60 * 60 * 1000),
+      ) + 1,
+    );
+    return { start: lo, end: hi, days };
+  }
+  const days = window.days ?? 7;
+  return { start: isoDaysAgo(days - 1), end: todayISO(), days };
+}
+
+function LifecyclePicker({
+  window,
+  onChange,
+  disabled,
+}: {
+  window: LifecycleWindow;
+  onChange: (next: LifecycleWindow) => void;
+  disabled: boolean;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const bounds = windowBounds(window);
+  const activeDays = !window.start && !window.end ? window.days : null;
+  const range: DateRange = {
+    from: parseLocalDate(bounds.start),
+    to: parseLocalDate(bounds.end),
+  };
+  const label =
+    activeDays != null
+      ? PRESETS.find((preset) => preset.days === activeDays)?.label ?? `${bounds.days} days`
+      : `${format(range.from as Date, "MMM d")} – ${format(range.to as Date, "MMM d, yyyy")}`;
+
   return (
-    <span
-      aria-label={`${label} did not run`}
-      className="inline-flex items-center justify-end text-status-warning"
-      title={`${label} did not run`}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" disabled={disabled} className="gap-2 font-normal">
+          <CalendarIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          {label}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="flex w-auto p-0" align="start">
+        <div className="flex w-36 flex-col gap-0.5 border-r border-border p-2">
+          {PRESETS.map((preset) => (
+            <Button
+              key={preset.days}
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                onChange({ days: preset.days, start: null, end: null });
+                setOpen(false);
+              }}
+              className={cn(
+                "justify-start font-normal",
+                activeDays === preset.days
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground",
+              )}
+            >
+              {preset.label}
+            </Button>
+          ))}
+        </div>
+        <Calendar
+          mode="range"
+          selected={range}
+          defaultMonth={range.from}
+          numberOfMonths={1}
+          disabled={{ after: new Date() }}
+          onSelect={(next) => {
+            if (next?.from && next?.to) {
+              onChange({
+                days: null,
+                start: format(next.from, "yyyy-MM-dd"),
+                end: format(next.to, "yyyy-MM-dd"),
+              });
+              setOpen(false);
+            }
+          }}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// RAG lifecycle: funnel + matrix
+// ---------------------------------------------------------------------------
+
+function stageByKey(
+  source: LifecycleSource,
+  key: (typeof STAGE_ORDER)[number],
+): LifecycleStage | null {
+  return source.stages.find((stage) => stage.key === key) ?? null;
+}
+
+function aggregateFunnel(lifecycle: Lifecycle) {
+  return STAGE_ORDER.map((key, index) => {
+    let count = 0;
+    for (const source of lifecycle.sources) {
+      const stage = stageByKey(source, key);
+      if (stage) count += stage.count;
+    }
+    return { key, index, label: STAGE_SHORT[key], count };
+  });
+}
+
+function FunnelStrip({ lifecycle }: { lifecycle: Lifecycle }) {
+  const stages = aggregateFunnel(lifecycle);
+  const top = stages[0]?.count ?? 0;
+
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 lg:gap-0">
+      {stages.map((stage, index) => {
+        const prev = index === 0 ? stage.count : stages[index - 1].count;
+        const drop = prev - stage.count;
+        const dropPct = prev > 0 ? Math.round((drop / prev) * 100) : 0;
+        const retained = top > 0 ? Math.round((stage.count / top) * 100) : 0;
+        const bad = dropPct >= 10;
+        return (
+          <div
+            key={stage.key}
+            className={cn(
+              "relative rounded-lg bg-muted/50 px-3 py-3.5",
+              "lg:rounded-none lg:border-r lg:border-border",
+              index === 0 && "lg:rounded-l-lg",
+              index === stages.length - 1 && "lg:rounded-r-lg lg:border-r-0",
+            )}
+          >
+            {index > 0 ? (
+              <span
+                className={cn(
+                  "absolute left-0 top-1/2 z-10 hidden -translate-x-1/2 -translate-y-1/2 items-center rounded-md px-1.5 py-0.5 text-[10.5px] font-medium lg:inline-flex",
+                  bad
+                    ? "bg-status-error/10 text-status-error"
+                    : "border border-border bg-background text-muted-foreground",
+                )}
+                title={`${formatNumber(drop)} did not advance from ${stages[index - 1].label}`}
+              >
+                {drop > 0 ? `−${formatNumber(drop)}` : "0"}
+              </span>
+            ) : null}
+            <div className="text-[11.5px] font-medium text-muted-foreground">{stage.label}</div>
+            <div className="mt-1.5 text-xl font-medium text-foreground">
+              {formatNumber(stage.count)}
+            </div>
+            <div className="mt-2 h-1 overflow-hidden rounded-full bg-border">
+              <div
+                className={cn(
+                  "h-full rounded-full",
+                  retained < 70 ? "bg-status-warning" : "bg-status-success",
+                )}
+                style={{ width: `${retained}%` }}
+              />
+            </div>
+            <div className="mt-1.5 text-[11px] text-muted-foreground">{retained}% retained</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+type CellRef = { sourceKey: string; stageKey: (typeof STAGE_ORDER)[number] };
+
+function MatrixCell({
+  stage,
+  syncedTotal,
+  selected,
+  onSelect,
+}: {
+  stage: LifecycleStage | null;
+  syncedTotal: number;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  if (!stage) {
+    return <div className="px-2 py-3 text-right text-xs text-muted-foreground/50">—</div>;
+  }
+  const tone = TONE[stage.status];
+  const pct = syncedTotal > 0 ? Math.round((stage.count / syncedTotal) * 100) : 0;
+  const behind = Math.max(stage.total - stage.count, 0);
+  const showBehind = (stage.status === "critical" || stage.status === "warning") && behind > 0;
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
+      className={cn(
+        "cursor-pointer px-2 py-2.5 text-right outline-none transition-colors",
+        stage.status === "critical" ? "bg-status-error/5" : "hover:bg-muted/60",
+        selected && "ring-2 ring-inset ring-primary",
+      )}
     >
-      <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+      <div className="text-sm font-medium text-foreground">{formatNumber(stage.count)}</div>
+      <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-border">
+        <div className={cn("h-full rounded-full", tone.bar)} style={{ width: `${pct}%` }} />
+      </div>
+      {showBehind ? (
+        <div className={cn("mt-1 text-[10.5px] font-medium", tone.text)}>
+          {formatNumber(behind)} behind
+        </div>
+      ) : (
+        <div className="mt-1 text-[10.5px] text-muted-foreground">{pct}%</div>
+      )}
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-muted/50 px-2.5 py-2">
+      <div className="mb-0.5 text-[11px] text-muted-foreground">{label}</div>
+      <div className="text-sm font-medium text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function DetailPanel({
+  source,
+  stage,
+  onClose,
+}: {
+  source: LifecycleSource;
+  stage: LifecycleStage;
+  onClose: () => void;
+}) {
+  const tone = TONE[stage.status];
+  const behind = Math.max(stage.total - stage.count, 0);
+  return (
+    <div className="rounded-lg bg-muted p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-foreground">
+            {SOURCE_SHORT[source.key] ?? source.label}
+          </span>
+          <span className="text-muted-foreground">→</span>
+          <span className="text-sm font-medium text-foreground">{stage.label}</span>
+          <span
+            className={cn(
+              "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium",
+              tone.chip,
+            )}
+          >
+            {tone.label}
+          </span>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={onClose}
+          aria-label="Close detail"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="mb-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <Metric label="Complete" value={`${formatNumber(stage.count)} / ${formatNumber(stage.total)}`} />
+        <Metric label="Behind" value={formatNumber(behind)} />
+        <Metric label="Owner" value={stage.ownerHint} />
+        <Metric label="Latest" value={formatDate(stage.latestAt)} />
+      </div>
+      <p className="text-sm leading-relaxed text-muted-foreground">{stage.message}</p>
+    </div>
+  );
+}
+
+function LegendDot({ className, label }: { className: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={cn("h-2 w-2 rounded-[2px]", className)} />
+      {label}
     </span>
   );
 }
 
-function badgeVariant(status: LifecycleStage["status"] | LifecycleSource["status"] | Lifecycle["status"]) {
-  if (status === "healthy") return "active";
-  if (status === "critical" || status === "degraded") return "destructive";
-  return "outline";
-}
+function LifecycleView({
+  lifecycle,
+  controls,
+}: {
+  lifecycle: Lifecycle | undefined;
+  controls?: React.ReactNode;
+}) {
+  const [selected, setSelected] = React.useState<CellRef | null>(null);
 
-function missingCount(stage: LifecycleStage) {
-  return Math.max(stage.total - stage.count, 0);
-}
+  // Reset selection whenever the underlying window/data changes.
+  const generatedAt = lifecycle?.generatedAt;
+  React.useEffect(() => {
+    setSelected(null);
+  }, [generatedAt]);
 
-function lifecycleRows(lifecycle: Lifecycle) {
-  return lifecycle.sources
-    .flatMap((source) => {
-      const stagesByKey = new Map(source.stages.map((stage) => [stage.key, stage]));
-      return STAGE_ORDER.map((key) => {
-        const stage = stagesByKey.get(key);
-        return stage
-          ? {
-              source,
-              stage,
-              missing: missingCount(stage),
-            }
-          : null;
-      }).filter((row): row is { source: LifecycleSource; stage: LifecycleStage; missing: number } =>
-        Boolean(row),
-      );
-    })
-    .sort((left, right) => {
-      const severityDelta =
-        (right.stage.status === "critical" ? 1 : 0) -
-        (left.stage.status === "critical" ? 1 : 0);
-      if (severityDelta) return severityDelta;
-      const missingDelta = right.missing - left.missing;
-      if (missingDelta) return missingDelta;
-      return STAGE_ORDER.indexOf(left.stage.key as (typeof STAGE_ORDER)[number]) -
-        STAGE_ORDER.indexOf(right.stage.key as (typeof STAGE_ORDER)[number]);
-    });
-}
-
-function LifecycleTable({ lifecycle }: { lifecycle: Lifecycle | undefined }) {
   if (!lifecycle) {
     return (
       <InfoAlert variant="error" role="alert">
@@ -184,74 +523,106 @@ function LifecycleTable({ lifecycle }: { lifecycle: Lifecycle | undefined }) {
     );
   }
 
-  const rows = lifecycleRows(lifecycle);
-  const notification = lifecycle.notifications[0] ?? null;
+  const sources = lifecycle.sources;
+  const bottlenecks = sources.reduce(
+    (sum, source) =>
+      sum +
+      source.stages.filter((stage) => stage.status === "critical" || stage.status === "warning")
+        .length,
+    0,
+  );
+
+  const selectedSource = selected
+    ? sources.find((source) => source.key === selected.sourceKey) ?? null
+    : null;
+  const selectedStage =
+    selected && selectedSource ? stageByKey(selectedSource, selected.stageKey) : null;
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3 text-sm">
-          <span className="text-xs font-medium uppercase text-muted-foreground">
-            RAG lifecycle
-          </span>
-          <Badge variant={badgeVariant(lifecycle.status)} className="capitalize">
-            {humanize(lifecycle.status)}
-          </Badge>
+        <div className="flex items-center gap-2.5">
+          {controls}
+          {bottlenecks > 0 ? (
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-status-warning/10 px-2.5 py-1 text-xs font-medium text-status-warning">
+              <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+              {bottlenecks} {bottlenecks === 1 ? "bottleneck" : "bottlenecks"}
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-md bg-status-success/10 px-2.5 py-1 text-xs font-medium text-status-success">
+              All stages flowing
+            </span>
+          )}
         </div>
-        <div className="text-sm text-muted-foreground">
+        <span className="text-sm text-muted-foreground">
           Updated {formatDate(lifecycle.generatedAt)}
+        </span>
+      </div>
+
+      <FunnelStrip lifecycle={lifecycle} />
+
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-muted-foreground">
+          By source{" "}
+          <span className="font-normal text-muted-foreground/70">· click a cell for detail</span>
+        </span>
+        <div className="flex gap-3.5 text-[11px] text-muted-foreground">
+          <LegendDot className="bg-status-success" label="On track" />
+          <LegendDot className="bg-status-warning" label="Lagging" />
+          <LegendDot className="bg-status-error" label="Stuck" />
         </div>
       </div>
 
-      <InlineTable variant="read">
-        <InlineTableHeader>
-          <InlineTableHeaderRow>
-            <InlineTableHeaderCell>Source</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Stage</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Status</InlineTableHeaderCell>
-            <InlineTableHeaderCell align="right">Complete</InlineTableHeaderCell>
-            <InlineTableHeaderCell align="right">Remaining</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Owner</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Current evidence</InlineTableHeaderCell>
-          </InlineTableHeaderRow>
-        </InlineTableHeader>
-        <InlineTableBody>
-          {rows.map(({ source, stage, missing }) => (
-            <InlineTableRow key={`${source.key}:${stage.key}`}>
-              <InlineTableCell className="font-medium text-foreground">
-                {source.label}
-              </InlineTableCell>
-              <InlineTableCell>{stage.label}</InlineTableCell>
-              <InlineTableCell>
-                <Badge variant={badgeVariant(stage.status)} className="capitalize">
-                  {humanize(stage.status)}
-                </Badge>
-              </InlineTableCell>
-              <InlineTableCell align="right" numeric>
-                {formatNumber(stage.count)}/{formatNumber(stage.total)}
-              </InlineTableCell>
-              <InlineTableCell
-                align="right"
-                numeric
-                className={cn(missing > 0 && "font-semibold text-foreground")}
-              >
-                {formatNumber(missing)}
-              </InlineTableCell>
-              <InlineTableCell className="whitespace-nowrap">
-                {stage.ownerHint}
-              </InlineTableCell>
-              <InlineTableCell className="max-w-xl text-muted-foreground">
-                {stage.message}
-              </InlineTableCell>
-            </InlineTableRow>
+      <div className="overflow-hidden rounded-lg border border-border">
+        <div className="grid grid-cols-[120px_repeat(5,1fr)] border-b border-border bg-muted/50">
+          <div className="px-3 py-2 text-[11px] font-medium text-muted-foreground">Source</div>
+          {STAGE_ORDER.map((key) => (
+            <div
+              key={key}
+              className="px-2 py-2 text-right text-[11px] font-medium text-muted-foreground"
+            >
+              {STAGE_SHORT[key]}
+            </div>
           ))}
-        </InlineTableBody>
-      </InlineTable>
+        </div>
+        {sources.map((source, rowIndex) => {
+          const syncedTotal = stageByKey(source, "synced")?.count ?? 0;
+          return (
+            <div
+              key={source.key}
+              className={cn(
+                "grid grid-cols-[120px_repeat(5,1fr)] items-stretch bg-card",
+                rowIndex < sources.length - 1 && "border-b border-border",
+              )}
+            >
+              <div className="flex items-center border-r border-border px-3 py-2.5">
+                <span className="text-[13px] font-medium text-foreground">
+                  {SOURCE_SHORT[source.key] ?? source.label}
+                </span>
+              </div>
+              {STAGE_ORDER.map((key) => {
+                const stage = stageByKey(source, key);
+                const isSelected =
+                  selected?.sourceKey === source.key && selected?.stageKey === key;
+                return (
+                  <MatrixCell
+                    key={key}
+                    stage={stage}
+                    syncedTotal={syncedTotal}
+                    selected={isSelected}
+                    onSelect={() =>
+                      setSelected(isSelected ? null : { sourceKey: source.key, stageKey: key })
+                    }
+                  />
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
 
-      {notification ? (
-        <p className="text-xs text-muted-foreground">
-          Notification {notification.status}: {notification.message}
-        </p>
+      {selectedSource && selectedStage ? (
+        <DetailPanel source={selectedSource} stage={selectedStage} onClose={() => setSelected(null)} />
       ) : null}
     </section>
   );
@@ -344,7 +715,8 @@ function DailySyncHistory({ days, loading }: { days: DailySyncRow[]; loading: bo
                   const runs = runsFor(day, source.key);
                   const isMeetings = source.key === "meetings";
                   const hasRun = isMeetings || runs > 0;
-                  const meetingComplete = isMeetings && day.meetings_added > 0 && day.meetings_complete === day.meetings_added;
+                  const meetingsComplete =
+                    isMeetings && day.meetings_added > 0 && day.meetings_complete === day.meetings_added;
                   return (
                     <React.Fragment key={source.key}>
                       <InlineTableCell
@@ -352,14 +724,11 @@ function DailySyncHistory({ days, loading }: { days: DailySyncRow[]; loading: bo
                         numeric
                         divider={index === 0}
                         className={cn(
-                          !hasRun
-                            ? "text-status-warning"
-                            : firstValue === 0
-                              ? "text-destructive"
-                              : undefined,
+                          firstValue === 0 ? "text-destructive" : undefined,
+                          !hasRun && "text-muted-foreground/60",
                         )}
                       >
-                        {hasRun ? formatSyncedNumber(firstValue) : <MissingRunIcon label={source.label} />}
+                        {formatSyncedNumber(firstValue)}
                       </InlineTableCell>
                       <InlineTableCell
                         align="right"
@@ -370,18 +739,18 @@ function DailySyncHistory({ days, loading }: { days: DailySyncRow[]; loading: bo
                             : undefined
                         }
                         className={
-                          !hasRun
-                            ? "text-muted-foreground/60"
-                            : isMeetings
-                              ? meetingComplete || day.meetings_added === 0
-                                ? "text-emerald-700"
-                                : "text-destructive"
+                          isMeetings
+                            ? meetingsComplete || day.meetings_added === 0
+                              ? "text-emerald-700"
+                              : "text-destructive"
+                            : !hasRun
+                              ? "text-muted-foreground/60"
                               : secondValue > 0
                                 ? "text-destructive"
                                 : "text-emerald-700"
                         }
                       >
-                        {hasRun ? formatFailedNumber(secondValue) : "0"}
+                        {formatFailedNumber(secondValue)}
                       </InlineTableCell>
                     </React.Fragment>
                   );
@@ -420,12 +789,14 @@ export default function RagDashboardPage() {
   const [historyLoading, setHistoryLoading] = React.useState(true);
   const [lifecycleLoading, setLifecycleLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [lifecycleWindow, setLifecycleWindow] = React.useState<LifecycleWindow>({
+    days: 7,
+    start: null,
+    end: null,
+  });
   const activeTab = searchParams?.get("tab") === "lifecycle" ? "lifecycle" : "sync";
-  const loading = historyLoading || lifecycleLoading;
 
-  const load = React.useCallback(async () => {
-    setError(null);
-
+  const loadHistory = React.useCallback(() => {
     setHistoryLoading(true);
     void apiFetch<{ days: DailySyncRow[] }>("/api/admin/rag-snapshots?days=30")
       .then((history) => {
@@ -437,9 +808,12 @@ export default function RagDashboardPage() {
       .finally(() => {
         setHistoryLoading(false);
       });
+  }, []);
 
+  const loadLifecycle = React.useCallback((window: LifecycleWindow) => {
+    setError(null);
     setLifecycleLoading(true);
-    void apiFetch<SourceSyncStatus>("/api/admin/source-sync/status")
+    void apiFetch<SourceSyncStatus>(`/api/admin/source-sync/status${windowQuery(window)}`)
       .then((lifecycleStatus) => {
         setStatus(lifecycleStatus);
       })
@@ -452,8 +826,14 @@ export default function RagDashboardPage() {
   }, []);
 
   React.useEffect(() => {
-    void load();
-  }, [load]);
+    loadHistory();
+  }, [loadHistory]);
+
+  React.useEffect(() => {
+    loadLifecycle(lifecycleWindow);
+  }, [loadLifecycle, lifecycleWindow]);
+
+  const loading = historyLoading || lifecycleLoading;
 
   return (
     <PageShell
@@ -461,7 +841,15 @@ export default function RagDashboardPage() {
       title="RAG Health"
       eyebrow="Admin"
       actions={
-        <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            loadHistory();
+            loadLifecycle(lifecycleWindow);
+          }}
+          disabled={loading}
+        >
           <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
           Refresh
         </Button>
@@ -493,9 +881,25 @@ export default function RagDashboardPage() {
       {activeTab === "sync" ? (
         <DailySyncHistory days={days} loading={historyLoading} />
       ) : lifecycleLoading && !status ? (
-        <InfoAlert>Loading RAG lifecycle health...</InfoAlert>
+        <div className="space-y-4">
+          <LifecyclePicker
+            window={lifecycleWindow}
+            onChange={setLifecycleWindow}
+            disabled={lifecycleLoading}
+          />
+          <InfoAlert>Loading RAG lifecycle health...</InfoAlert>
+        </div>
       ) : (
-        <LifecycleTable lifecycle={status?.ragLifecycle} />
+        <LifecycleView
+          lifecycle={status?.ragLifecycle}
+          controls={
+            <LifecyclePicker
+              window={lifecycleWindow}
+              onChange={setLifecycleWindow}
+              disabled={lifecycleLoading}
+            />
+          }
+        />
       )}
     </PageShell>
   );
