@@ -1157,6 +1157,8 @@ interface ChatAreaProps {
   onSubmit: (message: string, files?: FileUIPart[]) => void;
   onToolApprovalResponse?: ToolApprovalResponseHandler;
   onStop: () => void;
+  /** Omit the decorative orb on the welcome screen (compact floating widget). */
+  welcomeHideOrb?: boolean;
 }
 
 export function ChatArea({
@@ -1183,6 +1185,7 @@ export function ChatArea({
   onSubmit,
   onToolApprovalResponse,
   onStop,
+  welcomeHideOrb = false,
 }: ChatAreaProps) {
   // Council mode can be controlled externally (via prop) or internally
   const [councilModeInternal, setCouncilModeInternal] = useState(false);
@@ -1790,6 +1793,7 @@ export function ChatArea({
       {showWelcome ? (
         <div className="flex min-h-0 flex-1 pb-6 md:pb-8">
           <WelcomeScreen
+            hideOrb={welcomeHideOrb}
             composer={promptInputEl}
             error={
               chatError ? (

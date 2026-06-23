@@ -9,12 +9,15 @@ interface WelcomeScreenProps {
   children?: ReactNode;
   composer?: ReactNode;
   error?: ReactNode;
+  /** Omit the decorative animated orb (used by the compact floating widget). */
+  hideOrb?: boolean;
 }
 
 export function WelcomeScreen({
   children,
   composer,
   error,
+  hideOrb = false,
 }: WelcomeScreenProps) {
   const fullName = useCurrentUserName();
   const rawFirstName = fullName.split(" ")[0] ?? "";
@@ -26,9 +29,11 @@ export function WelcomeScreen({
     <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 pb-40 pt-16 sm:px-6">
       <div className="w-full max-w-xl">
         <div className="space-y-3 text-center">
-          <div className="orb-intro mx-auto flex h-24 w-24 items-center justify-center">
-            <AnimatedOrb size={96} />
-          </div>
+          {!hideOrb && (
+            <div className="orb-intro mx-auto flex h-24 w-24 items-center justify-center">
+              <AnimatedOrb size={96} />
+            </div>
+          )}
           <h1 className="text-blur-intro text-xl font-semibold text-muted-foreground sm:text-2xl">
             Hello, {firstName}
           </h1>

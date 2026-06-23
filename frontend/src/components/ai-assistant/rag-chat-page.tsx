@@ -15,7 +15,7 @@ import {
   useRenameConversation,
   useDeleteConversation,
 } from "@/hooks/use-rag-conversations";
-import { apiFetch } from "@/lib/api-client";
+import { useChatSessionMessages } from "@/hooks/use-chat-session-messages";
 import {
   DEFAULT_AI_ASSISTANT_MODEL,
   type AiAssistantModelId,
@@ -26,35 +26,8 @@ import { MessageSquareIcon } from "lucide-react";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ChatArea, type ResponseQuality } from "./chat-area";
 import type { MemoryUsage } from "./memory-usage-disclosure";
-import { extractMemoryUsage } from "./memory-usage-metadata";
 import type { SkillUsage } from "./skill-usage-disclosure";
-import { extractSkillUsage } from "./skill-usage-metadata";
 import type { AssistantTraceDiagnostics, ToolTraceItem } from "./trace-panel";
-
-type PersistedDataPart = {
-  type: `data-${string}`;
-  id?: string;
-  data: unknown;
-};
-
-interface ChatHistoryMessage {
-  id: string;
-  role: string;
-  content: string;
-  sources: unknown[] | null;
-  metadata?: {
-    tool_trace?: ToolTraceItem[];
-    memory_usage?: MemoryUsage;
-    skill_usage?: SkillUsage;
-    response_quality?: ResponseQuality;
-    provider_path?: string;
-    model?: string;
-    provider_decision?: Record<string, unknown> | null;
-    loop_diagnostic?: Record<string, unknown> | null;
-    data_parts?: PersistedDataPart[];
-  } | null;
-  created_at: string | null;
-}
 
 type StrategistLiveStatus = {
   stage: string;
@@ -84,94 +57,7 @@ function stripStatusParts(messages: UIMessage[]): UIMessage[] {
   }));
 }
 
-function normalizePersistedDataParts(message: ChatHistoryMessage): PersistedDataPart[] {
-  const parts = message.metadata?.data_parts;
-  if (!Array.isArray(parts)) return [];
-
-  return parts.filter((part): part is PersistedDataPart => {
-    if (!part || typeof part !== "object") return false;
-    const record = part as Record<string, unknown>;
-    return typeof record.type === "string" && record.type.startsWith("data-");
-  });
-}
-
-function dbMessageToUIMessage(msg: ChatHistoryMessage): UIMessage {
-  return {
-    id: msg.id,
-    role: msg.role as "user" | "assistant",
-    parts: [
-      ...normalizePersistedDataParts(msg),
-      ...(msg.content ? [{ type: "text" as const, text: msg.content }] : []),
-    ],
-  };
-}
-
-function extractToolTraces(
-  messages: ChatHistoryMessage[],
-): Record<string, ToolTraceItem[]> {
-  const tracesByMessageId: Record<string, ToolTraceItem[]> = {};
-  messages.forEach((msg) => {
-    const traces = msg.metadata?.tool_trace;
-    if (Array.isArray(traces) && traces.length > 0) {
-      tracesByMessageId[msg.id] = traces;
-    }
-  });
-  return tracesByMessageId;
-}
-
-function extractSources(
-  messages: ChatHistoryMessage[],
-): Record<string, unknown[]> {
-  const sourcesByMessageId: Record<string, unknown[]> = {};
-  messages.forEach((msg) => {
-    if (Array.isArray(msg.sources) && msg.sources.length > 0) {
-      sourcesByMessageId[msg.id] = msg.sources;
-    }
-  });
-  return sourcesByMessageId;
-}
-
-function extractResponseQuality(
-  messages: ChatHistoryMessage[],
-): Record<string, ResponseQuality> {
-  const byMessageId: Record<string, ResponseQuality> = {};
-  messages.forEach((msg) => {
-    const quality = msg.metadata?.response_quality;
-    if (quality) {
-      byMessageId[msg.id] = quality;
-    }
-  });
-  return byMessageId;
-}
-
-function extractTraceDiagnostics(
-  messages: ChatHistoryMessage[],
-): Record<string, AssistantTraceDiagnostics> {
-  const byMessageId: Record<string, AssistantTraceDiagnostics> = {};
-  messages.forEach((msg) => {
-    const metadata = msg.metadata;
-    if (!metadata) return;
-
-    const diagnostics: AssistantTraceDiagnostics = {
-      providerPath: metadata.provider_path ?? null,
-      model: metadata.model ?? null,
-      providerDecision: metadata.provider_decision ?? null,
-      loopDiagnostic: metadata.loop_diagnostic ?? null,
-    };
-
-    if (
-      diagnostics.providerPath ||
-      diagnostics.model ||
-      diagnostics.providerDecision ||
-      diagnostics.loopDiagnostic
-    ) {
-      byMessageId[msg.id] = diagnostics;
-    }
-  });
-  return byMessageId;
-}
-
-function ChatWithSession({
+export function ChatWithSession({
   sessionId,
   initialMessages,
   toolTracesByMessageId,
@@ -191,6 +77,7 @@ function ChatWithSession({
   selectedModel,
   onModelChange,
   onFinishMessage,
+  welcomeHideOrb,
 }: {
   sessionId: string;
   initialMessages: UIMessage[];
@@ -214,6 +101,7 @@ function ChatWithSession({
   selectedModel: AiAssistantModelId;
   onModelChange: (model: AiAssistantModelId) => void;
   onFinishMessage: (sessionId: string) => void;
+  welcomeHideOrb?: boolean;
 }) {
   const [input, setInput] = useState("");
   const [liveStatus, setLiveStatus] = useState<StrategistLiveStatus | null>(null);
@@ -349,6 +237,7 @@ function ChatWithSession({
       onSubmit={handleSubmit}
       onToolApprovalResponse={addToolApprovalResponse}
       onStop={stop}
+      welcomeHideOrb={welcomeHideOrb}
     />
   );
 }
@@ -366,27 +255,19 @@ export function RagChatPage() {
     null,
   );
   const [pendingFirstFiles, setPendingFirstFiles] = useState<FileUIPart[] | undefined>();
-  const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
-  const [toolTracesByMessageId, setToolTracesByMessageId] = useState<
-    Record<string, ToolTraceItem[]>
-  >({});
-  const [sourcesByMessageId, setSourcesByMessageId] = useState<
-    Record<string, unknown[]>
-  >({});
-  const [memoryUsageByMessageId, setMemoryUsageByMessageId] = useState<
-    Record<string, MemoryUsage>
-  >({});
-  const [skillUsageByMessageId, setSkillUsageByMessageId] = useState<
-    Record<string, SkillUsage>
-  >({});
-  const [responseQualityByMessageId, setResponseQualityByMessageId] = useState<
-    Record<string, ResponseQuality>
-  >({});
-  const [traceDiagnosticsByMessageId, setTraceDiagnosticsByMessageId] = useState<
-    Record<string, AssistantTraceDiagnostics>
-  >({});
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const [loadMessagesError, setLoadMessagesError] = useState<string | null>(null);
+  const {
+    initialMessages,
+    toolTracesByMessageId,
+    sourcesByMessageId,
+    memoryUsageByMessageId,
+    skillUsageByMessageId,
+    responseQualityByMessageId,
+    traceDiagnosticsByMessageId,
+    isLoadingMessages,
+    loadMessagesError,
+    loadSessionMessages,
+    reset: resetSessionMessages,
+  } = useChatSessionMessages();
   const [noSessionInput, setNoSessionInput] = useState("");
   // Optimistic user message shown while a new conversation is being created
   const [optimisticUserMessage, setOptimisticUserMessage] = useState<string | null>(null);
@@ -408,75 +289,11 @@ export function RagChatPage() {
   const renameConversation = useRenameConversation();
   const deleteConversation = useDeleteConversation();
 
-  const loadSessionMessages = useCallback(async (sessionId: string) => {
-    setIsLoadingMessages(true);
-    setLoadMessagesError(null);
-    try {
-      // Transient network failures (browser "Failed to fetch" — dev server
-      // recompiling/restarting, a wifi blip) should self-heal rather than
-      // strand the panel on a permanent error. Retry a few times with backoff;
-      // only surface the error if every attempt fails.
-      const data = await (async () => {
-        const maxAttempts = 3;
-        let lastError: unknown;
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          try {
-            return await apiFetch<{ messages?: ChatHistoryMessage[] }>(
-              `/api/ai-assistant/messages/${sessionId}`,
-            );
-          } catch (err) {
-            lastError = err;
-            // A "Failed to fetch" TypeError means no HTTP response arrived
-            // (transport-level). HTTP errors come back as ApiError with a
-            // status and are not worth retrying here.
-            const isTransient =
-              err instanceof TypeError ||
-              (err instanceof Error && /failed to fetch|load failed|network/i.test(err.message));
-            if (!isTransient || attempt === maxAttempts) throw err;
-            await new Promise((resolve) => setTimeout(resolve, 300 * attempt));
-          }
-        }
-        throw lastError;
-      })();
-      const historyMessages = (data.messages || []) as ChatHistoryMessage[];
-      const msgs: UIMessage[] = historyMessages.map((m) => dbMessageToUIMessage(m));
-      setInitialMessages(msgs);
-      setToolTracesByMessageId(extractToolTraces(historyMessages));
-      setSourcesByMessageId(extractSources(historyMessages));
-      setMemoryUsageByMessageId(extractMemoryUsage(historyMessages));
-      setSkillUsageByMessageId(extractSkillUsage(historyMessages));
-      setResponseQualityByMessageId(extractResponseQuality(historyMessages));
-      setTraceDiagnosticsByMessageId(extractTraceDiagnostics(historyMessages));
-    } catch (error) {
-      setInitialMessages([]);
-      setToolTracesByMessageId({});
-      setSourcesByMessageId({});
-      setMemoryUsageByMessageId({});
-      setSkillUsageByMessageId({});
-      setResponseQualityByMessageId({});
-      setTraceDiagnosticsByMessageId({});
-      setLoadMessagesError(
-        error instanceof Error
-          ? `Conversation history could not be loaded: ${error.message}`
-          : "Conversation history could not be loaded.",
-      );
-    } finally {
-      setIsLoadingMessages(false);
-    }
-  }, []);
-
   // Load messages when session changes
   useEffect(() => {
     const sessionId = activeSessionId;
     if (!sessionId) {
-      setInitialMessages([]);
-      setToolTracesByMessageId({});
-      setSourcesByMessageId({});
-      setMemoryUsageByMessageId({});
-      setSkillUsageByMessageId({});
-      setResponseQualityByMessageId({});
-      setTraceDiagnosticsByMessageId({});
-      setLoadMessagesError(null);
+      resetSessionMessages();
       return;
     }
     // Skip fetching for a session we just created and haven't sent to yet.
@@ -484,7 +301,13 @@ export function RagChatPage() {
     // streaming messages via the ChatWithSession sync effect.
     if (pendingSessionId === sessionId && pendingFirstMessage !== null) return;
     void loadSessionMessages(sessionId);
-  }, [activeSessionId, loadSessionMessages, pendingSessionId, pendingFirstMessage]);
+  }, [
+    activeSessionId,
+    loadSessionMessages,
+    resetSessionMessages,
+    pendingSessionId,
+    pendingFirstMessage,
+  ]);
 
   const effectiveSessionId = activeSessionId || pendingSessionId;
 
@@ -520,8 +343,7 @@ export function RagChatPage() {
   const handleNewChat = useCallback(async () => {
     if (createConversation.isPending) return;
 
-    setInitialMessages([]);
-    setLoadMessagesError(null);
+    resetSessionMessages();
     setPendingFirstMessage(null);
     setPendingFirstFiles(undefined);
     setPendingSessionId(null);
@@ -534,7 +356,7 @@ export function RagChatPage() {
     } catch {
       setActiveSession(null);
     }
-  }, [createConversation, router, setActiveSession]);
+  }, [createConversation, router, setActiveSession, resetSessionMessages]);
 
   const handleSelectConversation = useCallback(
     (sessionId: string) => {

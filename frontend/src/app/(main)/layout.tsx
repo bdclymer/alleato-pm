@@ -15,10 +15,6 @@ import { useProcorePanelStore } from "@/lib/stores/procore-panel-store";
 // AdminFeedbackWidget replaced by UnifiedFeedbackWidget in root layout
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 
-const AiChatSidebarPanel = dynamic(
-  () => import("@/components/ai-assistant/ai-chat-sidebar").then((mod) => mod.AiChatSidebarPanel),
-  { ssr: false },
-);
 const ProcoreReferencePanel = dynamic(
   () => import("@/components/header/procore-reference-panel").then((mod) => mod.ProcoreReferencePanel),
   { ssr: false },
@@ -90,11 +86,6 @@ export default function MainLayout({
       <SidebarInset key="app-shell" className="h-svh overflow-hidden">
         <CreateProjectDevConfigProvider>
           <div className="flex min-h-0 flex-1 overflow-hidden">
-            {shouldMountDeferredPanels && (
-              <React.Suspense fallback={null}>
-                <AiChatSidebarPanel key="ai-chat-sidebar-panel" />
-              </React.Suspense>
-            )}
             <div className="flex min-w-0 flex-1 flex-col overflow-auto scrollbar-hide">
               {!isDrawingViewer && (
                 isAiAssistant ? (

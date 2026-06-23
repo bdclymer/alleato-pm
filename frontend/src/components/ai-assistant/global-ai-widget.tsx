@@ -1,10 +1,29 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import { ChevronDown, ChevronLeft, Ellipsis, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CompactAiChat, type CompactAiChatView } from "./compact-ai-chat";
+import { WidgetAiChat, type WidgetAiChatView } from "./widget-ai-chat";
+
+/**
+ * Routes where the floating widget is hidden: auth screens, and surfaces that
+ * already host the full assistant or need the whole viewport.
+ */
+function shouldHideForRoute(pathname: string) {
+  return (
+    pathname.startsWith("/auth") ||
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/ai" ||
+    pathname.startsWith("/ai/") ||
+    pathname.startsWith("/ai-assistant") ||
+    pathname.startsWith("/ai-avatar") ||
+    pathname.startsWith("/team-chat") ||
+    /\/drawings\/viewer\//.test(pathname)
+  );
+}
 
 function focusFirstPanelElement(panel: HTMLDivElement) {
   const focusable = panel.querySelector<HTMLElement>(
@@ -16,17 +35,24 @@ function focusFirstPanelElement(panel: HTMLDivElement) {
 export function GlobalAiWidget() {
   const [open, setOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
-  const [view, setView] = React.useState<CompactAiChatView>("chat");
+  const [view, setView] = React.useState<WidgetAiChatView>("chat");
   const [expanded, setExpanded] = React.useState(false);
   const [hasUnread, setHasUnread] = React.useState(false);
   const launcherRef = React.useRef<HTMLButtonElement>(null);
   const panelRef = React.useRef<HTMLDivElement>(null);
   const openRef = React.useRef(open);
+  const pathname = usePathname() ?? "/";
+  const hidden = shouldHideForRoute(pathname);
 
   React.useEffect(() => {
     openRef.current = open;
     if (open) setHasUnread(false);
   }, [open]);
+
+  // Collapse the panel when navigating to a route the widget hides on.
+  React.useEffect(() => {
+    if (hidden) setOpen(false);
+  }, [hidden]);
 
   React.useEffect(() => {
     if (open) {
@@ -110,6 +136,8 @@ export function GlobalAiWidget() {
     return () => window.cancelAnimationFrame(frame);
   }, [open]);
 
+  if (hidden) return null;
+
   return (
     <>
       {mounted && (
@@ -117,7 +145,7 @@ export function GlobalAiWidget() {
           ref={panelRef}
           role="dialog"
           aria-modal="false"
-          aria-label="Ask Alleato"
+          aria-label="Alleato AI"
           onKeyDown={handlePanelKeyDown}
           className={cn(
             "global-ai-widget-panel flex flex-col overflow-hidden rounded-xl bg-background",
@@ -156,13 +184,8 @@ export function GlobalAiWidget() {
                 )}
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-foreground">
-                    {view === "history" ? "Messages" : "Ask Alleato"}
+                    {view === "history" ? "History" : "Alleato AI"}
                   </p>
-                  {view === "chat" && (
-                    <p className="truncate text-xs text-muted-foreground">
-                      The team can also help
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
@@ -193,7 +216,7 @@ export function GlobalAiWidget() {
             </div>
           </div>
           <div className="flex min-h-0 flex-1 flex-col">
-            <CompactAiChat
+            <WidgetAiChat
               autoFocusComposer={open && view === "chat"}
               view={view}
               onViewChange={setView}

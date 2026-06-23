@@ -8,6 +8,10 @@ const AskAlleatoRoot = dynamic(
   () => import("@/components/ask-alleato/AskAlleatoRoot").then((mod) => mod.AskAlleatoRoot),
   { ssr: false },
 );
+const GlobalAiWidget = dynamic(
+  () => import("@/components/ai-assistant/global-ai-widget").then((mod) => mod.GlobalAiWidget),
+  { ssr: false },
+);
 const AdminFeedbackWidget = dynamic(
   () => import("@/components/admin-feedback/AdminFeedbackWidget").then((mod) => mod.AdminFeedbackWidget),
   { ssr: false },
@@ -50,6 +54,7 @@ export function RootClientWidgets() {
     <Suspense fallback={null}>
       <AppErrorTelemetryProvider />
       {shouldMountDeferredWidgets && <AskAlleatoRoot />}
+      {shouldMountDeferredWidgets && <GlobalAiWidget />}
       {shouldMountDeferredWidgets && (
         <>
           <AdminFeedbackWidget showLauncher={false} />
