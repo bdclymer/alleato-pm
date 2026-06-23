@@ -1,6 +1,0 @@
-Sub Job,Cost Code,Cost Type,Description,Manual Calculation,Unit Qty,UOM,Unit Cost,Budget Amount,Start Date,End Date,Curve
-,01-3132,L,Intern.Labor,False,1,,5200,5200,,,
-,05-4100,S,Structural Metal Stud Framing.Material,False,1,,200000,200000,,,
-,05-5100,S,Metal Stairs.Material,False,1,,40000,40000,,,
-,55-0500,X,Contractor Fee,False,1,,55000,55000,,,
-,55-0050,X,Insurance,False,1,,8000,8000,,,

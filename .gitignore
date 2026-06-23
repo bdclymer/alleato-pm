@@ -78,10 +78,9 @@ frontend/tests/playwright-report/
 test-results/
 user-data/
 
-# Documentation
-# Ignore docs but keep development documentation and screenshots
+# Documentation — kept locally, not tracked in git
 openai-cs-agents-demo/
-docs/video/
+docs/
 
 # Playwright
 /playwright-report/
