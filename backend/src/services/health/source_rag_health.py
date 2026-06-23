@@ -121,19 +121,25 @@ def _stage_alert(
     owner: str,
     latest_at: str | None,
     total_excluded: int = 0,
+    message: str | None = None,
 ) -> Dict[str, Any]:
     exclusion_text = ""
     if total_excluded:
         exclusion_text = f" Excluded from this stage: {total_excluded}."
+    alert_text = (
+        f"{message} Owner: {owner}. Latest: {latest_at or 'never'}.{exclusion_text}"
+        if message
+        else (
+            f"{family}: {stage} coverage is {count}/{total}. "
+            f"Owner: {owner}. Latest: {latest_at or 'never'}.{exclusion_text}"
+        )
+    )
     return {
         "severity": severity,
         "code": f"rag_lifecycle_{stage}",
         "source": family,
         "resourceId": f"rag-lifecycle:{family}",
-        "message": (
-            f"{family}: {stage} coverage is {count}/{total}. "
-            f"Owner: {owner}. Latest: {latest_at or 'never'}.{exclusion_text}"
-        ),
+        "message": alert_text,
         "detectedAt": _iso(datetime.now(timezone.utc)),
     }
 
@@ -282,7 +288,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
             ).data or [])
             chunk_rows.extend((
                 rag_client.table("document_chunks")
-                .select("document_id,updated_at")
+                .select("document_id,source_type,updated_at")
                 .in_("document_id", batch)
                 .not_.is_("embedding", "null")
                 .limit(1000)
@@ -316,6 +322,11 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
     ).data or []
 
     embedded_ids = {str(row.get("document_id")) for row in chunk_rows if row.get("document_id")}
+    embedded_meeting_transcript_ids = {
+        str(row.get("document_id"))
+        for row in chunk_rows
+        if row.get("document_id") and row.get("source_type") == "meeting_transcript"
+    }
     rag_metadata_by_id = {
         str(row.get("id")): row
         for row in rag_metadata_rows
@@ -361,6 +372,14 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
             and str(row.get("id")) not in vectorization_excluded_ids
             and _is_project_required_row(row, job_metadata_by_id)
         }
+        vectorized_ids = embedded_meeting_transcript_ids if family == "meetings" else embedded_ids
+        vectorized_count = sum(1 for row_id in vectorization_required_ids if row_id in vectorized_ids)
+        vectorized_message = (
+            f"{vectorized_count}/{len(vectorization_required_ids)} Fireflies metadata rows have "
+            "embedded meeting_transcript chunks and are searchable by the AI assistant."
+            if family == "meetings"
+            else f"{vectorized_count}/{len(vectorization_required_ids)} have embedded chunks and are searchable by the AI assistant."
+        )
         stages = [
             {
                 "stage": "synced",
@@ -372,11 +391,17 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
             },
             {
                 "stage": "vectorized",
-                "count": sum(1 for row_id in vectorization_required_ids if row_id in embedded_ids),
+                "count": vectorized_count,
                 "total": len(vectorization_required_ids),
                 "excluded": len(vectorization_excluded_ids),
                 "owner": "RAG embedder",
-                "latestAt": _newest([row.get("updated_at") for row in chunk_rows if str(row.get("document_id")) in vectorization_required_ids]),
+                "latestAt": _newest([
+                    row.get("updated_at")
+                    for row in chunk_rows
+                    if str(row.get("document_id")) in vectorization_required_ids
+                    and (family != "meetings" or row.get("source_type") == "meeting_transcript")
+                ]),
+                "message": vectorized_message,
             },
             {
                 "stage": "project_assigned",
@@ -438,6 +463,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
                         owner=str(stage["owner"]),
                         latest_at=stage.get("latestAt"),
                         total_excluded=int(stage.get("excluded") or 0),
+                        message=stage.get("message"),
                     )
                 )
 

@@ -515,6 +515,19 @@ class SupabaseRagStore:
         data = response.data or []
         return data[0] if data else None
 
+    def has_embedded_chunks_for_document(self, document_id: Optional[str]) -> bool:
+        if not document_id:
+            return False
+        response = (
+            self._rag_read_client.table("document_chunks")
+            .select("chunk_id")
+            .eq("document_id", str(document_id))
+            .not_.is_("embedding", "null")
+            .limit(1)
+            .execute()
+        )
+        return bool(response.data or [])
+
     def find_document_by_fireflies_id(self, fireflies_id: Optional[str]) -> Optional[Dict[str, Any]]:
         if not fireflies_id:
             return None

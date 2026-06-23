@@ -317,7 +317,7 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
   const rows = [...appRows, ...ragOnlyEmailRows];
   const sourceIds = rows.map((row) => row.id);
 
-  const chunkRows: Array<{ document_id: string; updated_at: string | null }> = [];
+  const chunkRows: Array<{ document_id: string; source_type: string | null; updated_at: string | null }> = [];
   const taskRows: Array<{
     metadata_id: string;
     project_id: number | null;
@@ -331,10 +331,10 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
 
   for (const batch of batches(sourceIds)) {
     const [chunkResult, taskResult, evidenceResult, jobResult, intelligenceJobResult] = await Promise.all([
-      readSupabaseRows<{ document_id: string; updated_at: string | null }>("RAG chunks", () =>
+      readSupabaseRows<{ document_id: string; source_type: string | null; updated_at: string | null }>("RAG chunks", () =>
         ragClient
           .from("document_chunks")
-          .select("document_id,updated_at")
+          .select("document_id,source_type,updated_at")
           .in("document_id", batch)
           .not("embedding", "is", null)
           .limit(1000),
@@ -465,6 +465,11 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
   );
 
   const embeddedIds = new Set(chunkRows.map((row) => row.document_id));
+  const embeddedMeetingTranscriptIds = new Set(
+    chunkRows
+      .filter((row) => row.source_type === "meeting_transcript")
+      .map((row) => row.document_id),
+  );
   const taskIds = new Set(taskRows.map((row) => row.metadata_id));
   const jobMetadataByDocumentId = latestJobMetadataByDocumentId(jobRows);
   const evidenceIds = new Set(
@@ -479,7 +484,8 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
     const familyRows = rows.filter(family.matches);
     const ids = new Set(familyRows.map((row) => row.id));
     const total = familyRows.length;
-    const vectorized = familyRows.filter((row) => embeddedIds.has(row.id)).length;
+    const vectorizedIds = family.key === "meetings" ? embeddedMeetingTranscriptIds : embeddedIds;
+    const vectorized = familyRows.filter((row) => vectorizedIds.has(row.id)).length;
     const projectAssigned = familyRows.filter((row) => row.project_id !== null).length;
     const tasksExtracted = familyRows.filter((row) =>
       hasTaskExtractionOutcome(row.id, taskIds, jobMetadataByDocumentId),
@@ -489,7 +495,9 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
       familyRows.map((row) => row.source_last_modified_at ?? row.date ?? row.created_at),
     );
     const latestChunkAt = newest(
-      chunkRows.filter((row) => ids.has(row.document_id)).map((row) => row.updated_at),
+      chunkRows
+        .filter((row) => ids.has(row.document_id) && (family.key !== "meetings" || row.source_type === "meeting_transcript"))
+        .map((row) => row.updated_at),
     );
     const latestTaskAt = newest(
       [
@@ -534,7 +542,9 @@ async function buildRagLifecycleStatus(): Promise<NonNullable<SourceSyncStatus["
         vectorized,
         total,
         latestChunkAt,
-        `${vectorized}/${total} have embedded chunks and are searchable by the AI assistant.`,
+        family.key === "meetings"
+          ? `${vectorized}/${total} Fireflies metadata rows have embedded meeting_transcript chunks and are searchable by the AI assistant.`
+          : `${vectorized}/${total} have embedded chunks and are searchable by the AI assistant.`,
         "RAG embedder",
       ),
       lifecycleStage(

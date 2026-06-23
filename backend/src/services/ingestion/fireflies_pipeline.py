@@ -38,7 +38,12 @@ try:  # Optional OpenAI dependency for embeddings
 except ImportError:  # pragma: no cover - handled in EmbeddingGenerator
     OpenAI = None  # type: ignore
 
-from supabase_helpers import DocumentChunk, SupabaseRagStore, get_rag_write_client
+from supabase_helpers import (
+    DocumentChunk,
+    SupabaseRagStore,
+    get_rag_write_client,
+    update_ingestion_job_state,
+)
 
 TIMESTAMP_LINE = re.compile(r"^\[(?P<stamp>\d{2}:\d{2})\]\s+\*\*(?P<speaker>.+?)\*\*:\s*(?P<text>.+)$")
 SECTION_PREFIX = "## "
@@ -168,6 +173,22 @@ class FirefliesIngestionPipeline:
         self._project_assigner = ProjectAssigner(self.store._client)
         return self._project_assigner
 
+    def _update_ingestion_job_state(
+        self,
+        metadata_id: str,
+        *,
+        stage: str,
+        error_message: Optional[str] = None,
+        fireflies_id: Optional[str] = None,
+    ) -> None:
+        update_ingestion_job_state(
+            metadata_id,
+            stage=stage,
+            error_message=error_message,
+            client=self.store._client,
+            fireflies_id=fireflies_id,
+        )
+
     def _infer_project_id_from_context(
         self,
         title: str,
@@ -279,12 +300,17 @@ class FirefliesIngestionPipeline:
         # work. Fireflies sync polls the latest transcripts repeatedly; without
         # this guard the same meeting is reprocessed every run, re-burning task
         # rewrite, memory extraction, and embedding credits for unchanged content.
-        if existing is not None and not dry_run:
+        existing_document_id = str(existing.get("id") or "") if existing else None
+        if (
+            existing is not None
+            and not dry_run
+            and self.store.has_embedded_chunks_for_document(existing_document_id)
+        ):
             record_source_processing_status(
                 SourceProcessingContext(
                     **{
                         **source_context.__dict__,
-                        "source_document_id": str(existing.get("id") or parsed.fireflies_id or source_item_id),
+                        "source_document_id": str(existing_document_id or parsed.fireflies_id or source_item_id),
                         "project_id": existing.get("project_id"),
                     }
                 ),
@@ -342,7 +368,7 @@ class FirefliesIngestionPipeline:
                 status=status_for_project_assignment(effective_project_id),
                 metadata={"project_assignment_source": "fireflies_context_inference"},
             )
-        skipped = existing is not None and not dry_run
+        skipped = False
 
         # Prepare metadata payload
         metadata = {
@@ -427,6 +453,12 @@ class FirefliesIngestionPipeline:
                     }
                 )
                 self.store.complete_ingestion_job(job_id, status="completed")
+                self._update_ingestion_job_state(
+                    str(document_id),
+                    stage="done",
+                    error_message=reason,
+                    fireflies_id=parsed.fireflies_id,
+                )
                 record_source_processing_status(
                     source_context,
                     status="failed_permanent",
@@ -543,9 +575,20 @@ class FirefliesIngestionPipeline:
                 logger.warning("Memory extraction failed for %s: %s", document_id, mem_exc)
 
             self.store.complete_ingestion_job(job_id, status="completed")
+            self._update_ingestion_job_state(
+                str(document_id),
+                stage="done",
+                fireflies_id=parsed.fireflies_id,
+            )
             record_source_processing_status(source_context, status="complete")
         except Exception as exc:  # pragma: no cover - network errors
             self.store.complete_ingestion_job(job_id, status="failed", error=str(exc))
+            self._update_ingestion_job_state(
+                str(document_id),
+                stage="error",
+                error_message=str(exc),
+                fireflies_id=parsed.fireflies_id,
+            )
             record_source_processing_status(
                 source_context,
                 status="failed_retryable",
@@ -762,7 +805,12 @@ class FirefliesIngestionPipeline:
                 markdown = self._format_transcript_markdown(transcript, apps_outputs)
                 content_hash = hashlib.sha256(markdown.encode("utf-8")).hexdigest()
                 existing = self.store.find_document_by_hash(content_hash)
-                if existing and not dry_run:
+                existing_document_id = str(existing.get("id") or "") if existing else None
+                if (
+                    existing
+                    and not dry_run
+                    and self.store.has_embedded_chunks_for_document(existing_document_id)
+                ):
                     results.append(
                         {
                             "transcript_id": transcript_id,

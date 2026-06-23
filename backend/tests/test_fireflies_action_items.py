@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import pytest
 
+import src.services.ingestion.fireflies_pipeline as fireflies_pipeline
 from src.services.ingestion.fireflies_task_rewriter import (
     _build_user_prompt,
     _looks_like_narration,
@@ -286,8 +287,53 @@ class _SkipGuardStore:
     def find_document_by_hash(self, content_hash):  # noqa: ANN001
         return {"id": "doc-existing", "project_id": 1009, "fireflies_id": "ff-123"}
 
+    def has_embedded_chunks_for_document(self, document_id):  # noqa: ANN001
+        return True
+
     def find_document_by_fireflies_id(self, fireflies_id):  # noqa: ANN001
         raise AssertionError("exact-content skip should not need Fireflies-id lookup")
+
+
+class _MissingChunksStore:
+    def __init__(self):
+        self.metadata_payloads = []
+        self.chunks = []
+
+    def find_document_by_hash(self, content_hash):  # noqa: ANN001
+        return {"id": "doc-existing", "project_id": 1009, "fireflies_id": "ff-123"}
+
+    def has_embedded_chunks_for_document(self, document_id):  # noqa: ANN001
+        return False
+
+    def find_document_by_fireflies_id(self, fireflies_id):  # noqa: ANN001
+        return {"id": "doc-existing", "project_id": 1009, "fireflies_id": fireflies_id}
+
+    def upsert_document_metadata(self, metadata):  # noqa: ANN001
+        self.metadata_payloads.append(metadata)
+        return metadata
+
+    def start_ingestion_job(self, fireflies_id, content_hash):  # noqa: ANN001
+        return None
+
+    def delete_open_rewriter_tasks_for_document(self, document_id):  # noqa: ANN001
+        return None
+
+    def delete_chunks_for_document(self, document_id):  # noqa: ANN001
+        return None
+
+    def upsert_chunks(self, chunks):  # noqa: ANN001
+        self.chunks.extend(chunks)
+
+    def insert_insight(self, insight):  # noqa: ANN001
+        return None
+
+    def complete_ingestion_job(self, job_id, status, error=None):  # noqa: ANN001
+        return None
+
+
+class _FakeEmbedder:
+    def embed(self, texts):  # noqa: ANN001
+        return [[0.1, 0.2, 0.3] for _ in texts]
 
 
 class _UnexpectedWorkEmbedder:
@@ -325,3 +371,41 @@ No material updates.
         assert result.dry_run is False
         assert result.action_item_count == 1
         assert result.chunk_count == 0
+
+    def test_exact_content_reingest_reprocesses_when_embedded_chunks_are_missing(self, monkeypatch):
+        monkeypatch.setattr(
+            fireflies_pipeline,
+            "record_source_processing_status",
+            lambda *args, **kwargs: None,
+        )
+
+        pipeline = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
+        pipeline.store = _MissingChunksStore()
+        pipeline.embedder = _FakeEmbedder()
+        pipeline._fireflies_api_key = None
+        pipeline._project_assigner = None
+        pipeline._infer_project_id_from_context = lambda *args, **kwargs: None
+        pipeline._extract_meeting_memories = lambda *args, **kwargs: None
+        pipeline._update_ingestion_job_state = lambda *args, **kwargs: None
+
+        markdown = """# Weekly Design Sync
+
+**Fireflies ID:** ff-123
+**Date:** 2026-06-16
+
+## Summary
+No material updates.
+
+## Action Items
+- Follow up with architect
+
+## Transcript
+[00:01] **Brandon**: Quick project check-in.
+"""
+
+        result = pipeline.ingest_markdown_text(markdown, dry_run=False)
+
+        assert result.document_id == "doc-existing"
+        assert result.skipped is False
+        assert result.chunk_count == 1
+        assert len(pipeline.store.chunks) == 1
