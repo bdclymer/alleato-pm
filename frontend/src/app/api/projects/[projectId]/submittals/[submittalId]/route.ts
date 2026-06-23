@@ -37,6 +37,15 @@ const updateSubmittalSchema = z.object({
   ball_in_court: z.string().nullable().optional(),
   required_approval_date: z.string().nullable().optional(),
   submission_date: z.string().nullable().optional(),
+  initial_workflow_steps: z
+    .array(
+      z.object({
+        user_id: z.string().uuid(),
+        step_type: z.string().min(1),
+        required: z.boolean().optional().default(true),
+      }),
+    )
+    .optional(),
 });
 
 /**
@@ -220,7 +229,7 @@ export const PUT = withApiGuardrails(
       throw new GuardrailError({ code: "BAD_REQUEST", where: "projects/[projectId]/submittals/[submittalId]#PUT", message: "Request body must be valid JSON." });
     }
 
-    const validatedData = updateSubmittalSchema.parse(body);
+    const { initial_workflow_steps: newWorkflowSteps, ...validatedData } = updateSubmittalSchema.parse(body);
 
     const { data, error } = await supabase
       .from("submittals")
@@ -240,6 +249,42 @@ export const PUT = withApiGuardrails(
 
     if (error) {
       return apiErrorResponse(error);
+    }
+
+    // Append new workflow steps (edit mode: append-only, never replace)
+    if (newWorkflowSteps && newWorkflowSteps.length > 0) {
+      const { data: existingSteps } = await supabase
+        .from("submittal_workflow_steps")
+        .select("step_order")
+        .eq("submittal_id", submittalId)
+        .order("step_order", { ascending: false })
+        .limit(1);
+      const baseOrder = existingSteps?.[0]?.step_order ?? 0;
+
+      const stepRows = newWorkflowSteps.map((step, index) => ({
+        submittal_id: submittalId,
+        step_order: baseOrder + index + 1,
+        step_type: step.step_type,
+      }));
+
+      const { data: insertedSteps, error: stepsError } = await supabase
+        .from("submittal_workflow_steps")
+        .insert(stepRows)
+        .select("id, step_order");
+
+      if (!stepsError && insertedSteps) {
+        const responseRows = insertedSteps.map((step) => {
+          const idx = step.step_order - baseOrder - 1;
+          const source = newWorkflowSteps[idx];
+          return {
+            submittal_id: submittalId,
+            workflow_step_id: step.id,
+            responder_id: source.user_id,
+            response_status: "Pending",
+          };
+        });
+        await supabase.from("submittal_responses").insert(responseRows);
+      }
     }
 
     return NextResponse.json(data);

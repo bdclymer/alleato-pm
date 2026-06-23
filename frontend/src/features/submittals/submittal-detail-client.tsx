@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -12,8 +13,18 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { PageShell, SectionRuleHeading } from "@/components/layout";
-import { EntityAttachments, StatusBadge } from "@/components/ds";
+import {
+  ContentSectionStack,
+  DetailPanel,
+  PageShell,
+  PageTabs,
+  SectionRuleHeading,
+} from "@/components/layout";
+import {
+  EntityAttachments,
+  InlineEditField,
+  StatusBadge,
+} from "@/components/ds";
 import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItemsPanel";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -43,15 +54,20 @@ import {
   useDeleteSubmittal,
   useDuplicateSubmittal,
   useRespondToWorkflowStep,
+  useSubmittalLinkedDrawings,
   useWorkflowTemplates,
   type SubmittalDetail,
   type WorkflowTemplateStep,
 } from "@/hooks/use-submittals";
+import { apiFetch } from "@/lib/api-client";
 import { formatDate } from "@/lib/format";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { useConfirm } from "@/hooks/use-confirm";
 import { SubmittalFormPage } from "./submittal-form-page";
 import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
+import { SubmittalLinkedDrawingsPanel } from "./submittal-linked-drawings-panel";
+import { DrawingPickerDialog } from "./drawing-picker-dialog";
+import { SubmittalAIReviewPanel } from "./submittal-ai-review-panel";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -437,10 +453,10 @@ function WorkflowBuilder({
 function MetaField({ label, value }: { label: string; value?: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <div className="mt-1 min-h-5 truncate text-sm text-foreground">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <div className="mt-1 min-h-5 truncate text-sm font-medium text-foreground">
         {value === null || value === undefined || value === "" ? (
-          <span className="text-muted-foreground/60">Not set</span>
+          <span className="text-muted-foreground/40">—</span>
         ) : (
           value
         )}
@@ -448,8 +464,6 @@ function MetaField({ label, value }: { label: string; value?: React.ReactNode })
     </div>
   );
 }
-
-// ─── SidebarRow ───────────────────────────────────────────────────────────────
 
 function SidebarRow({
   label,
@@ -466,7 +480,13 @@ function SidebarRow({
   return (
     <div className="flex items-start justify-between gap-4 py-2.5">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={cn("text-right text-xs", bold ? "font-semibold text-foreground" : "text-foreground", alert && "text-destructive")}>
+      <span
+        className={cn(
+          "text-right text-sm",
+          bold ? "font-semibold text-foreground" : "font-medium text-foreground",
+          alert && "text-destructive",
+        )}
+      >
         {value}
       </span>
     </div>
@@ -529,10 +549,23 @@ export function SubmittalDetailClient({
 
   const { users, allUsers } = useAuthUsers(String(projectId));
 
+  async function handleSaveField(field: string, value: string | number | boolean | null) {
+    await apiFetch(`/api/projects/${projectId}/submittals/${submittal.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ [field]: value }),
+    });
+    router.refresh();
+  }
+
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [activeTab, setActiveTab] = React.useState("details");
+  const { data: linkedDrawings } = useSubmittalLinkedDrawings(projectId, submittal.id);
+
   const workflowSteps = submittal.submittal_workflow_steps ?? [];
   const distributions = submittal.submittal_distributions ?? [];
   const history = submittal.submittal_history ?? [];
-  const linkedDrawings = submittal.submittal_linked_drawings ?? [];
+  const staticLinkedDrawings = submittal.submittal_linked_drawings ?? [];
   const linkedRfis = submittal.linked_rfis ?? [];
 
   React.useEffect(() => {
@@ -684,48 +717,133 @@ export function SubmittalDetailClient({
             }}
           />
         ) : (
-          <div className="grid grid-cols-1 gap-x-14 gap-y-10 xl:grid-cols-[minmax(0,715px)_368px]">
-            <div className="min-w-0 space-y-10">
+          <div>
+            <PageTabs
+              variant="inline"
+              tabs={[
+                { label: "Details", href: "details", isActive: activeTab === "details" },
+                { label: "Linked Drawings", href: "linked-drawings", isActive: activeTab === "linked-drawings" },
+                { label: "AI Review", href: "ai-review", isActive: activeTab === "ai-review" },
+              ]}
+              onTabClick={(href) => setActiveTab(href)}
+            />
+
+            {activeTab === "details" && (
+          <ContentSectionStack className="pt-3">
+            <section>
+              <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
+                <div className="space-y-6">
+                  <DetailPanel>
+                    <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
+                    <div className="space-y-10">
               <section className="space-y-6">
                 <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-4">
-                  <MetaField label="Spec Section" value={submittal.specification_section} />
-                  <MetaField label="Number" value={submittal.submittal_number} />
-                  <MetaField
-                    label="Revision Number"
-                    value={submittal.revision != null ? `Rev ${submittal.revision}` : null}
-                  />
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">Spec Section</p>
+                    <div className="mt-1">
+                      <InlineEditField
+                        label="Spec Section"
+                        value={submittal.specification_section ?? ""}
+                        placeholder="e.g. 03 30 00"
+                        onSave={(v) => handleSaveField("specification_section", v || null)}
+                      />
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">Number</p>
+                    <div className="mt-1">
+                      <InlineEditField
+                        label="Number"
+                        value={submittal.submittal_number ?? ""}
+                        onSave={(v) => handleSaveField("submittal_number", v)}
+                      />
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">Revision</p>
+                    <div className="mt-1">
+                      <InlineEditField
+                        label="Revision"
+                        type="number"
+                        value={submittal.revision != null ? String(submittal.revision) : ""}
+                        display={submittal.revision != null ? `Rev ${submittal.revision}` : undefined}
+                        onSave={(v) => handleSaveField("revision", v ? parseInt(v, 10) : 0)}
+                      />
+                    </div>
+                  </div>
                   <MetaField label="Package" value={getPackageName(submittal)} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-4">
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">Status</p>
+                    <div className="mt-1">
+                      <InlineEditField
+                        label="Status"
+                        type="select"
+                        value={submittal.status}
+                        display={<StatusBadge status={submittal.status} />}
+                        options={[
+                          { value: "Draft", label: "Draft" },
+                          { value: "Open", label: "Open" },
+                          { value: "Distributed", label: "Distributed" },
+                          { value: "Closed", label: "Closed" },
+                        ]}
+                        onSave={(v) => handleSaveField("status", v)}
+                      />
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">Division</p>
+                    <div className="mt-1">
+                      <InlineEditField
+                        label="Division"
+                        value={submittal.division ?? ""}
+                        placeholder="e.g. Division 03"
+                        onSave={(v) => handleSaveField("division", v || null)}
+                      />
+                    </div>
+                  </div>
                   <MetaField label="Type" value={getSubmittalTypeName(submittal)} />
-                  <MetaField label="Division" value={submittal.division} />
-                  <MetaField
-                    label="Linked Drawings"
-                    value={linkedDrawings.length > 0 ? (
-                      <Link
-                        href={`/${projectId}/drawings`}
-                        className="text-primary underline-offset-2 hover:underline"
-                      >
-                        {linkedDrawings.length} drawing{linkedDrawings.length !== 1 ? "s" : ""}
-                      </Link>
-                    ) : null}
-                  />
-                  <MetaField label="Private Flag" value={submittal.is_private ? "Yes" : "No"} />
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">Private</p>
+                    <div className="mt-1">
+                      <InlineEditField
+                        label="Private"
+                        type="boolean"
+                        value={String(submittal.is_private)}
+                        display={submittal.is_private ? "Yes" : "No"}
+                        onSave={(v) => handleSaveField("is_private", v === "true")}
+                      />
+                    </div>
+                  </div>
                 </div>
+                {staticLinkedDrawings.length > 0 && (
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-4">
+                    <MetaField
+                      label="Linked Drawings"
+                      value={
+                        <Link
+                          href={`/${projectId}/drawings`}
+                          className="text-primary underline-offset-2 hover:underline"
+                        >
+                          {staticLinkedDrawings.length} drawing{staticLinkedDrawings.length !== 1 ? "s" : ""}
+                        </Link>
+                      }
+                    />
+                  </div>
+                )}
               </section>
 
               <section className="space-y-3">
                 <SectionHeader title="Description" />
-                {submittal.description ? (
-                  <div className="rounded-md bg-muted/40 px-4 py-3">
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                      {submittal.description}
-                    </p>
-                  </div>
-                ) : (
-                  <EmptySection>No description has been added.</EmptySection>
-                )}
+                <InlineEditField
+                  label="Description"
+                  type="textarea"
+                  value={submittal.description ?? ""}
+                  placeholder="Add a description…"
+                  onSave={(v) => handleSaveField("description", v || null)}
+                />
               </section>
 
               <section className="space-y-3">
@@ -800,10 +918,6 @@ export function SubmittalDetailClient({
                     })}
                     </div>
                   </div>
-                )}
-
-                {workflowSteps.length === 0 && (
-                  <EmptySection>No workflow steps have been assigned.</EmptySection>
                 )}
 
                 <div id="workflow-builder">
@@ -946,9 +1060,14 @@ export function SubmittalDetailClient({
                   projectId={projectId}
                 />
               </section>
-            </div>
+                    </div>
+                  </DetailPanel>
+                </div>
 
-            <aside className="space-y-8 xl:pt-0">
+                <aside>
+                  <DetailPanel>
+                    <SectionRuleHeading label="Submittal Summary" className="mb-6 pb-0" />
+                    <div className="space-y-8">
               {submittal.ball_in_court && (
                 <div>
                   <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -958,31 +1077,55 @@ export function SubmittalDetailClient({
                 </div>
               )}
 
-              {(submittal.sent_date || submittal.final_due_date || submittal.required_on_site_date || submittal.lead_time != null) && (
-                <div>
-                  <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Dates &amp; Timeline
-                  </p>
-                  <div className="divide-y divide-border">
-                    {submittal.sent_date && (
-                      <SidebarRow label="Submitted" value={formatDate(submittal.sent_date)} />
-                    )}
-                    {submittal.final_due_date && (
-                      <SidebarRow
+              <div>
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Dates &amp; Timeline
+                </p>
+                <div className="divide-y divide-border">
+                  {submittal.sent_date && (
+                    <SidebarRow label="Submitted" value={formatDate(submittal.sent_date)} />
+                  )}
+                  <div className="flex items-center justify-between gap-4 py-2.5">
+                    <span className="text-xs text-muted-foreground">Final Due Date</span>
+                    <div className={cn("text-right text-sm font-medium", getDaysUntil(submittal.final_due_date) !== null && (getDaysUntil(submittal.final_due_date) ?? 0) < 0 ? "text-destructive" : "text-foreground")}>
+                      <InlineEditField
                         label="Final Due Date"
-                        value={formatDate(submittal.final_due_date)}
-                        alert={getDaysUntil(submittal.final_due_date) !== null && (getDaysUntil(submittal.final_due_date) ?? 0) < 0}
+                        type="date"
+                        value={submittal.final_due_date ?? ""}
+                        display={submittal.final_due_date ? formatDate(submittal.final_due_date) : undefined}
+                        emptyLabel="Set date"
+                        onSave={(v) => handleSaveField("final_due_date", v || null)}
                       />
-                    )}
-                    {submittal.required_on_site_date && (
-                      <SidebarRow label="Required On-Site" value={formatDate(submittal.required_on_site_date)} />
-                    )}
-                    {submittal.lead_time != null && (
-                      <SidebarRow label="Lead Time" value={`${submittal.lead_time} days`} />
-                    )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 py-2.5">
+                    <span className="text-xs text-muted-foreground">Required On-Site</span>
+                    <div className="text-right text-sm font-medium text-foreground">
+                      <InlineEditField
+                        label="Required On-Site"
+                        type="date"
+                        value={submittal.required_on_site_date ?? ""}
+                        display={submittal.required_on_site_date ? formatDate(submittal.required_on_site_date) : undefined}
+                        emptyLabel="Set date"
+                        onSave={(v) => handleSaveField("required_on_site_date", v || null)}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 py-2.5">
+                    <span className="text-xs text-muted-foreground">Lead Time</span>
+                    <div className="text-right text-sm font-medium text-foreground">
+                      <InlineEditField
+                        label="Lead Time"
+                        type="number"
+                        value={submittal.lead_time != null ? String(submittal.lead_time) : ""}
+                        display={submittal.lead_time != null ? `${submittal.lead_time} days` : undefined}
+                        emptyLabel="Set days"
+                        onSave={(v) => handleSaveField("lead_time", v ? parseInt(v, 10) : null)}
+                      />
+                    </div>
                   </div>
                 </div>
-              )}
+              </div>
 
               {(submittal.responsible_contractor || submittal.received_from || submittal.received_from_id || submittal.submittal_manager_id) && (
                 <div>
@@ -1010,10 +1153,38 @@ export function SubmittalDetailClient({
                   </div>
                 </div>
               )}
-            </aside>
+                    </div>
+                  </DetailPanel>
+                </aside>
+              </div>
+            </section>
+          </ContentSectionStack>
+            )}
+
+            {activeTab === "linked-drawings" && (
+              <SubmittalLinkedDrawingsPanel
+                projectId={projectId}
+                submittalId={submittal.id}
+                onAddClick={() => setPickerOpen(true)}
+              />
+            )}
+
+            {activeTab === "ai-review" && (
+              <SubmittalAIReviewPanel
+                projectId={projectId}
+                submittalId={submittal.id}
+                linkedDrawingCount={linkedDrawings?.length ?? 0}
+              />
+            )}
           </div>
         )}
       </PageShell>
+      <DrawingPickerDialog
+        projectId={projectId}
+        submittalId={submittal.id}
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+      />
     </>
   );
 }
