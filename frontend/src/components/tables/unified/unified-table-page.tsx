@@ -605,7 +605,11 @@ export function UnifiedTablePage<T>({
     enableRowReorder: features?.enableRowReorder ?? true,
     enableColumnPinning: features?.enableColumnPinning ?? true,
     enableVirtualization: features?.enableVirtualization ?? false,
-    enableInlineEditing: features?.enableInlineEditing ?? false,
+    // Inline editing is ON by default across all tables. It only ever activates
+    // on columns explicitly marked `editable`, so this default is a no-op for
+    // tables that have not opted a column in — it removes the "forgot the flag"
+    // footgun, NOT a free-for-all. Pass `enableInlineEditing: false` to opt out.
+    enableInlineEditing: features?.enableInlineEditing ?? true,
   };
   // Internal sort state — used when the parent does not supply a sorting prop
   const [internalSortBy, setInternalSortBy] = React.useState<string | null>(

@@ -90,6 +90,7 @@ import {
   buildDrawingRowActions,
   drawingColumns,
   drawingDefaultVisibleColumns,
+  matchesDrawingPublishState,
   renderDrawingCard,
   renderDrawingList,
 } from "@/features/drawings/drawings-table-config";
@@ -110,6 +111,7 @@ type BulkEditDraft = {
 const EMPTY_FILTERS: DrawingFilterState = {
   discipline: undefined,
   setId: undefined,
+  publishState: undefined,
 };
 
 const GALLERY_IMAGE_SIZE_STORAGE_KEY = "drawings:gallery-image-size";
@@ -205,6 +207,7 @@ export default function ProjectDrawingsPage() {
   const urlDiscipline = searchParams.get("discipline") ?? undefined;
   const urlSetId = searchParams.get("set") ?? undefined;
   const urlAreaId = searchParams.get("area_id") ?? undefined;
+  const urlPublishState = searchParams.get("status") ?? undefined;
 
   // Delete confirmation state
   const [deleteTarget, setDeleteTarget] = useState<DrawingLogTableRow | null>(
@@ -221,6 +224,7 @@ export default function ProjectDrawingsPage() {
     discipline: urlDiscipline,
     setId: urlSetId,
     areaId: urlAreaId,
+    publishState: urlPublishState,
   };
 
   const tableState = useUnifiedTableState({
@@ -256,7 +260,9 @@ export default function ProjectDrawingsPage() {
       const currentDrawingFilters = current as DrawingFilterState;
       if (
         currentDrawingFilters.discipline === urlDiscipline &&
-        currentDrawingFilters.setId === urlSetId
+        currentDrawingFilters.setId === urlSetId &&
+        currentDrawingFilters.areaId === urlAreaId &&
+        currentDrawingFilters.publishState === urlPublishState
       ) {
         return current;
       }
@@ -265,13 +271,17 @@ export default function ProjectDrawingsPage() {
         ...current,
         discipline: urlDiscipline,
         setId: urlSetId,
+        areaId: urlAreaId,
+        publishState: urlPublishState,
       };
     });
     clearSelectionForUrlFilters([]);
   }, [
     clearSelectionForUrlFilters,
     syncActiveFiltersFromUrl,
+    urlAreaId,
     urlDiscipline,
+    urlPublishState,
     urlSetId,
   ]);
 
@@ -345,6 +355,16 @@ export default function ProjectDrawingsPage() {
           label: set.name,
         })),
       },
+      {
+        id: "publishState",
+        label: "Status",
+        type: "select",
+        options: [
+          { value: "draft", label: "Draft" },
+          { value: "published", label: "Published" },
+          { value: "obsolete", label: "Obsolete" },
+        ],
+      },
     ],
     [allDisciplines, drawingSets],
   );
@@ -355,8 +375,13 @@ export default function ProjectDrawingsPage() {
       typeof activeFilters.discipline === "string"
         ? activeFilters.discipline
         : "";
+    const publishStateFilter =
+      typeof activeFilters.publishState === "string"
+        ? activeFilters.publishState
+        : "";
     return drawings.filter((row) => {
       if (disciplineFilter && row.discipline !== disciplineFilter) return false;
+      if (!matchesDrawingPublishState(row, publishStateFilter)) return false;
       if (!search) return true;
       return (
         row.drawingNumber.toLowerCase().includes(search) ||
@@ -426,6 +451,10 @@ export default function ProjectDrawingsPage() {
           ? nextFilters.discipline
           : null,
       set: typeof nextFilters.setId === "string" ? nextFilters.setId : null,
+      status:
+        typeof nextFilters.publishState === "string"
+          ? nextFilters.publishState
+          : null,
       area_id:
         typeof nextFilters.areaId === "string"
           ? nextFilters.areaId
@@ -720,7 +749,8 @@ export default function ProjectDrawingsPage() {
   const isFiltered =
     Boolean(tableState.searchInput) ||
     Boolean(activeFilters.discipline) ||
-    Boolean(activeFilters.setId);
+    Boolean(activeFilters.setId) ||
+    Boolean(activeFilters.publishState);
 
   const selectedCount = tableState.selectedIds.length;
   const canDecreaseGallerySize =

@@ -59,6 +59,36 @@ export const drawingDefaultVisibleColumns = drawingColumns
   .filter((c) => c.defaultVisible !== false || c.alwaysVisible)
   .map((c) => c.id);
 
+export type DrawingPublishState = "draft" | "published" | "obsolete";
+
+export function getDrawingPublishState(
+  item: Pick<DrawingLogTableRow, "isPublished" | "isObsolete">,
+): DrawingPublishState {
+  if (item.isObsolete) return "obsolete";
+  return item.isPublished ? "published" : "draft";
+}
+
+export function getDrawingPublishStateLabel(
+  state: DrawingPublishState,
+): string {
+  switch (state) {
+    case "draft":
+      return "Draft";
+    case "obsolete":
+      return "Obsolete";
+    case "published":
+      return "Published";
+  }
+}
+
+export function matchesDrawingPublishState(
+  item: Pick<DrawingLogTableRow, "isPublished" | "isObsolete">,
+  state: string | null | undefined,
+): boolean {
+  if (!state) return true;
+  return getDrawingPublishState(item) === state;
+}
+
 // ─── Filters ────────────────────────────────────────────────────────────────
 
 export const drawingFilters: FilterConfig[] = [
@@ -184,20 +214,16 @@ export function buildDrawingTableColumns(
     {
       ...drawingColumns[6],
       render: (item) => {
-        if (item.isObsolete) {
+        const state = getDrawingPublishState(item);
+        if (state === "obsolete") {
           return <Badge variant="secondary">Obsolete</Badge>;
         }
-        if (!item.isPublished) {
+        if (state === "draft") {
           return <Badge variant="destructive">Draft</Badge>;
         }
         return <Badge variant="outline">Published</Badge>;
       },
-      sortValue: (item) =>
-        item.isObsolete
-          ? "obsolete"
-          : !item.isPublished
-            ? "draft"
-            : "published",
+      sortValue: (item) => getDrawingPublishState(item),
     },
     {
       ...drawingColumns[7],
@@ -501,8 +527,10 @@ function DrawingGridCard({
     item.fileType?.startsWith("image/") ||
     /\.(png|jpe?g|tiff?)$/i.test(item.fileUrl ?? "");
 
-  const isDraft = !item.isPublished && !item.isObsolete;
-  const dimmed = item.isObsolete;
+  const publishState = getDrawingPublishState(item);
+  const isDraft = publishState === "draft";
+  const isObsolete = publishState === "obsolete";
+  const dimmed = isObsolete;
   const identity = getDrawingDisplayIdentity(item);
   const primaryLabel = (
     identity.number ||
@@ -568,9 +596,9 @@ function DrawingGridCard({
           <DrawingPreviewFallback />
         )}
         {/* State overlay badge */}
-        {(item.isObsolete || isDraft) && (
+        {(isObsolete || isDraft) && (
           <div className="absolute top-1.5 right-1.5">
-            {item.isObsolete ? (
+            {isObsolete ? (
               <Badge variant="secondary" className="text-[10px] px-1 py-0">
                 Obsolete
               </Badge>
@@ -664,8 +692,10 @@ export function renderDrawingList(
   onDelete?: (item: DrawingLogTableRow) => void,
   onQrCode?: () => void,
 ): ReactElement {
-  const isDraft = !item.isPublished && !item.isObsolete;
-  const dimmed = item.isObsolete;
+  const publishState = getDrawingPublishState(item);
+  const isDraft = publishState === "draft";
+  const isObsolete = publishState === "obsolete";
+  const dimmed = isObsolete;
   const identity = getDrawingDisplayIdentity(item);
   const label =
     identity.number && identity.title
@@ -734,9 +764,9 @@ export function renderDrawingList(
               <span className="sr-only">QR Code</span>
             </Button>
           )}
-          {item.isObsolete && <Badge variant="secondary">Obsolete</Badge>}
+          {isObsolete && <Badge variant="secondary">Obsolete</Badge>}
           {isDraft && <Badge variant="destructive">Draft</Badge>}
-          {item.isPublished && !item.isObsolete && (
+          {publishState === "published" && (
             <Badge variant="outline">Published</Badge>
           )}
         </div>
