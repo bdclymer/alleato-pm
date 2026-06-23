@@ -246,6 +246,7 @@ describe("DrawingUploadDialog partial batch failure guardrails", () => {
     fireEvent.change(screen.getByLabelText("A101 First Floor Plan.pdf revision"), {
       target: { value: "2" },
     });
+    fireEvent.click(screen.getByRole("button", { name: "Rotate A101 First Floor Plan.pdf" }));
     fireEvent.click(screen.getByRole("button", { name: "Process" }));
 
     await waitFor(() => {
@@ -271,6 +272,7 @@ describe("DrawingUploadDialog partial batch failure guardrails", () => {
       title: "First Floor Plan - Revised",
       revision_number: "2",
       discipline: "Architectural",
+      rotation_degrees: 90,
     });
   });
 
@@ -289,6 +291,8 @@ describe("DrawingUploadDialog partial batch failure guardrails", () => {
     fireEvent.change(screen.getByLabelText("S201 Framing Plan.pdf revision"), {
       target: { value: "3" },
     });
+    fireEvent.click(screen.getByRole("button", { name: "Rotate S201 Framing Plan.pdf" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rotate S201 Framing Plan.pdf" }));
     fireEvent.click(screen.getByRole("button", { name: "Process" }));
 
     await waitFor(() => {
@@ -297,8 +301,42 @@ describe("DrawingUploadDialog partial batch failure guardrails", () => {
         title: "Framing Plan",
         revision_number: "3",
         discipline: "Structural",
+        rotation_degrees: 180,
       });
     });
+  });
+
+  it("removes a selected file before batch upload", async () => {
+    uploadResults = [
+      { fileName: "S201 Framing Plan.pdf", drawingId: "drawing-2" },
+      { fileName: "M301 Mechanical Plan.pdf", drawingId: "drawing-3" },
+    ];
+
+    renderDialog([
+      makeFile("A101 First Floor Plan.pdf"),
+      makeFile("S201 Framing Plan.pdf"),
+      makeFile("M301 Mechanical Plan.pdf"),
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove A101 First Floor Plan.pdf" }));
+    fireEvent.change(screen.getByLabelText("Drawing Set"), { target: { value: "set-existing" } });
+    fireEvent.click(screen.getByRole("button", { name: "Process" }));
+
+    await waitFor(() => {
+      expect(uploadMock).toHaveBeenCalledWith(
+        ["S201 Framing Plan.pdf", "M301 Mechanical Plan.pdf"],
+        expect.any(Object),
+        expect.objectContaining({
+          "S201 Framing Plan.pdf": expect.objectContaining({
+            drawing_number: "S201",
+          }),
+          "M301 Mechanical Plan.pdf": expect.objectContaining({
+            drawing_number: "M301",
+          }),
+        }),
+      );
+    });
+    expect(screen.queryByText("A101 First Floor Plan.pdf")).not.toBeInTheDocument();
   });
 
   it("resolves a new drawing set to the returned set id before retrying failed files", async () => {

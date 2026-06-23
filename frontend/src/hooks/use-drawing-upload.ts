@@ -27,7 +27,9 @@ export type DrawingPerFileUploadMetadata = Partial<
     | "discipline"
     | "drawing_type"
   >
->;
+> & {
+  rotation_degrees?: number;
+};
 
 export class DrawingUploadBatchError extends Error {
   constructor(

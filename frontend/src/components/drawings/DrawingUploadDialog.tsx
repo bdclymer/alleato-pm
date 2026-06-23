@@ -5,7 +5,15 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, AlertCircle, CheckCircle2, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  RotateCw,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -79,6 +87,7 @@ interface FileInfo {
   type: string;
   file: File;
   metadata: DrawingUploadDetectedMetadata;
+  rotationDegrees: number;
 }
 
 function createFileInfo(file: File): FileInfo {
@@ -88,6 +97,7 @@ function createFileInfo(file: File): FileInfo {
     type: file.type,
     file,
     metadata: getDrawingUploadDetectedMetadata(file.name),
+    rotationDegrees: 0,
   };
 }
 
@@ -102,6 +112,7 @@ function buildPerFileUploadMetadata(
         title: fileInfo.metadata.title,
         revision_number: fileInfo.metadata.revisionNumber,
         discipline: fileInfo.metadata.discipline,
+        rotation_degrees: fileInfo.rotationDegrees,
       },
     ]),
   );
@@ -156,6 +167,19 @@ export function DrawingUploadDialog({
 
   const removeFile = (index: number) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const rotateFile = (index: number) => {
+    setSelectedFiles((current) =>
+      current.map((fileInfo, fileIndex) =>
+        fileIndex === index
+          ? {
+              ...fileInfo,
+              rotationDegrees: (fileInfo.rotationDegrees + 90) % 360,
+            }
+          : fileInfo,
+      ),
+    );
   };
 
   const updateFileMetadata = (
@@ -298,6 +322,7 @@ export function DrawingUploadDialog({
               drawing_set_id: uploadData.drawing_set_id,
               description: uploadData.description,
               area_id: uploadData.area_id,
+              rotation_degrees: selectedFile.rotationDegrees,
               upload_path: signedUpload.path,
               file_name: file.name,
               file_size: file.size,
@@ -585,15 +610,35 @@ export function DrawingUploadDialog({
                       </div>
                     </div>
                     {!isBusy && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFile(index)}
-                        className="text-muted-foreground"
-                      >
-                        Remove
-                      </Button>
+                      <div className="flex shrink-0 items-center gap-1 self-start">
+                        {file.rotationDegrees !== 0 ? (
+                          <Badge variant="outline" className="h-7 px-2 text-xs">
+                            {file.rotationDegrees}°
+                          </Badge>
+                        ) : null}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => rotateFile(index)}
+                          aria-label={`Rotate ${file.name}`}
+                          title={`Rotate ${file.name}`}
+                          className="h-8 w-8 text-muted-foreground"
+                        >
+                          <RotateCw className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeFile(index)}
+                          aria-label={`Remove ${file.name}`}
+                          title={`Remove ${file.name}`}
+                          className="h-8 w-8 text-muted-foreground"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 );
