@@ -26,6 +26,10 @@ import { cn } from "@/lib/utils";
 
 import type { DailySyncRow } from "@/app/api/admin/rag-snapshots/route";
 import type {
+  ActiveAlert,
+  ActiveAlertsResponse,
+} from "@/app/api/admin/source-sync/active-alerts/route";
+import type {
   LifecycleDocumentsResponse,
   SourceSyncStatus,
 } from "@/app/api/admin/source-sync/_contracts";
@@ -948,6 +952,36 @@ function DailySyncHistory({ days, loading }: { days: DailySyncRow[]; loading: bo
   );
 }
 
+/**
+ * Loud, top-of-page banner for active pipeline alerts (the same rows the Teams
+ * notifier writes). A source going dark must be impossible to miss here, not
+ * just in a DM. Critical alerts render red; warnings amber. Renders nothing when
+ * everything is healthy.
+ */
+function PipelineAlertsBanner({ alerts }: { alerts: ActiveAlert[] }) {
+  if (alerts.length === 0) return null;
+
+  const criticalCount = alerts.filter((a) => a.severity === "critical").length;
+  const headline =
+    criticalCount > 0
+      ? `${criticalCount} pipeline ${criticalCount === 1 ? "source is" : "sources are"} failing`
+      : `${alerts.length} active ${alerts.length === 1 ? "warning" : "warnings"}`;
+
+  return (
+    <InfoAlert variant={criticalCount > 0 ? "error" : "warning"} role="alert">
+      <div className="font-medium">{headline}</div>
+      <ul className="mt-1.5 space-y-1 text-xs">
+        {alerts.map((alert) => (
+          <li key={alert.alertKey}>
+            <span className="font-medium">{alert.title}</span>
+            {alert.message ? ` — ${alert.message}` : null}
+          </li>
+        ))}
+      </ul>
+    </InfoAlert>
+  );
+}
+
 export default function RagDashboardPage() {
   const searchParams = useSearchParams();
   const [days, setDays] = React.useState<DailySyncRow[]>([]);
@@ -955,6 +989,7 @@ export default function RagDashboardPage() {
   const [historyLoading, setHistoryLoading] = React.useState(true);
   const [lifecycleLoading, setLifecycleLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [alerts, setAlerts] = React.useState<ActiveAlert[]>([]);
   const [lifecycleWindow, setLifecycleWindow] = React.useState<LifecycleWindow>({
     days: 7,
     start: null,
@@ -991,9 +1026,24 @@ export default function RagDashboardPage() {
       });
   }, []);
 
+  const loadAlerts = React.useCallback(() => {
+    void apiFetch<ActiveAlertsResponse>("/api/admin/source-sync/active-alerts")
+      .then((res) => {
+        setAlerts(res.alerts ?? []);
+      })
+      .catch(() => {
+        // A failed alert feed must not blank the dashboard; the source-sync
+        // status panel still renders. Leave prior alerts in place.
+      });
+  }, []);
+
   React.useEffect(() => {
     loadHistory();
   }, [loadHistory]);
+
+  React.useEffect(() => {
+    loadAlerts();
+  }, [loadAlerts]);
 
   React.useEffect(() => {
     loadLifecycle(lifecycleWindow);
@@ -1013,6 +1063,7 @@ export default function RagDashboardPage() {
           onClick={() => {
             loadHistory();
             loadLifecycle(lifecycleWindow);
+            loadAlerts();
           }}
           disabled={loading}
         >
@@ -1027,6 +1078,8 @@ export default function RagDashboardPage() {
           <div className="text-xs opacity-80">{error}</div>
         </InfoAlert>
       ) : null}
+
+      <PipelineAlertsBanner alerts={alerts} />
 
       <PageTabs
         variant="inline"
