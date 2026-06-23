@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   CheckCircle2,
-  ChevronDown,
   ChevronRight,
   Circle,
   Clock,
@@ -22,12 +21,7 @@ import {
 } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { EntityAttachments, StatusBadge, EmptyState } from "@/components/ds";
+import { EntityAttachments, StatusBadge } from "@/components/ds";
 import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItemsPanel";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -286,7 +280,6 @@ function WorkflowStepper({
                 />
               )}
               <div className="flex w-36 flex-col items-center gap-1.5 px-1 text-center">
-                {/* State circle */}
                 <div
                   className={cn(
                     "flex h-8 w-8 items-center justify-center rounded-full ring-1",
@@ -453,37 +446,6 @@ function RespondForm({
   );
 }
 
-// ─── Section label ────────────────────────────────────────────────────────────
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-      {children}
-    </p>
-  );
-}
-
-// ─── Field row ────────────────────────────────────────────────────────────────
-
-function FieldRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
-  return (
-    <div className="grid grid-cols-[12rem_minmax(0,1fr)] items-start gap-x-3">
-      <p className="pt-0.5 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
-      <div className="min-w-0 text-sm leading-6 text-foreground break-words">
-        {value ?? "—"}
-      </div>
-    </div>
-  );
-}
-
 // ─── Workflow Builder ─────────────────────────────────────────────────────────
 
 interface WorkflowBuilderProps {
@@ -542,8 +504,6 @@ function WorkflowBuilder({
     e.preventDefault();
     if (!templateName.trim() || currentSteps.length === 0) return;
     const steps: WorkflowTemplateStep[] = currentSteps.map((s) => {
-      // Resolve the assigned user from the first response row on this step.
-      // submittal_responses[0].responder_id is the auth user id for the assignee.
       const assignedUserId =
         s.submittal_responses?.[0]?.responder_id ?? null;
       return {
@@ -555,8 +515,6 @@ function WorkflowBuilder({
 
     const stepsWithUsers = steps.filter((s) => s.user_id !== null);
     if (stepsWithUsers.length === 0) {
-      // All steps lack an assigned user — the template would be unapplyable.
-      // Surface a real error rather than saving a dead template.
       toast.error("Cannot save template", {
         description:
           "No workflow steps have an assigned user. Add at least one step with a user before saving a template.",
@@ -572,7 +530,7 @@ function WorkflowBuilder({
   return (
     <div className="space-y-4 pt-2">
       {templates.length > 0 && (
-        <div className="rounded-lg bg-muted/40 p-4 space-y-2">
+        <div className="space-y-2 mb-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Apply Template
           </p>
@@ -592,8 +550,10 @@ function WorkflowBuilder({
         </div>
       )}
 
-      <div className="rounded-lg bg-muted/40 p-5">
-        <SectionLabel>Add Workflow Step</SectionLabel>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          Add Workflow Step
+        </p>
         <form onSubmit={handleAdd} className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1">
@@ -701,30 +661,43 @@ function WorkflowBuilder({
   );
 }
 
-// ─── Accordion Section ────────────────────────────────────────────────────────
+// ─── MetaField ────────────────────────────────────────────────────────────────
 
-function AccordionSection({
+function MetaField({ label, value }: { label: string; value?: React.ReactNode }) {
+  if (value === null || value === undefined || value === "") return (
+    <div>
+      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+    </div>
+  );
+  return (
+    <div>
+      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm text-foreground">{value}</p>
+    </div>
+  );
+}
+
+// ─── SidebarRow ───────────────────────────────────────────────────────────────
+
+function SidebarRow({
   label,
-  children,
-  defaultOpen = true,
+  value,
+  bold,
+  alert,
 }: {
   label: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
+  value?: string | null;
+  bold?: boolean;
+  alert?: boolean;
 }) {
-  const [open, setOpen] = React.useState(defaultOpen);
-
+  if (!value) return null;
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="flex w-full items-center justify-between group">
-        {/* eslint-disable-next-line design-system/no-raw-heading */}
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">
-          {label}
-        </h2>
-        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="mt-4">{children}</CollapsibleContent>
-    </Collapsible>
+    <div className="flex items-start justify-between gap-4 py-2.5">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className={cn("text-right text-xs", bold ? "font-semibold text-foreground" : "text-foreground", alert && "text-destructive")}>
+        {value}
+      </span>
+    </div>
   );
 }
 
@@ -790,165 +763,7 @@ export function SubmittalDetailClient({
     router.push(`/${projectId}/submittals/${newRecord.id}`);
   }
 
-  const actions = (
-    <div className="flex items-center gap-1.5">
-      {submittal.status !== "Closed" && !submittal.deleted_at && (
-        <Button
-          variant="default"
-          size="sm"
-          onClick={() => setDistributeOpen(true)}
-        >
-          <Mail className="mr-1.5 h-3.5 w-3.5" />
-          Email
-        </Button>
-      )}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setIsEditing(true)}>
-            <SquarePen className="mr-2 h-4 w-4" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={handleDuplicate}
-            disabled={duplicateMutation.isPending}
-          >
-            <Copy className="mr-2 h-4 w-4" />
-            Duplicate
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className="text-destructive focus:text-destructive"
-            onClick={handleDelete}
-            disabled={deleteMutation.isPending}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  );
-
-  const titleContent = (
-    <div className="space-y-2.5">
-      <div>
-        <p className="text-xs text-muted-foreground">
-          {submittal.submittal_number}
-          {submittal.revision != null && ` · Rev ${submittal.revision}`}
-          {submittal.specification_section && (
-            <>
-              {" · "}
-              <Link
-                href={`/${projectId}/specifications`}
-                className="hover:text-foreground underline underline-offset-2 transition-colors"
-              >
-                Spec §{submittal.specification_section}
-              </Link>
-            </>
-          )}
-          {submittal.division && (
-            <span className="text-muted-foreground/60">
-              {" · "}
-              {submittal.division}
-            </span>
-          )}
-        </p>
-        <h1 className="text-xl sm:text-2xl lg:text-[1.75rem] font-medium text-foreground/90 line-clamp-2 break-words">
-          {submittal.title}
-        </h1>
-      </div>
-
-      <div className="flex w-full items-center justify-between gap-2">
-        <StatusBadge status={submittal.status} />
-        {actions}
-      </div>
-
-      {submittal.ball_in_court && (
-        <BallInCourtChip userId={submittal.ball_in_court} users={allUsers} />
-      )}
-
-      <DateTimelineRow submittal={submittal} />
-    </div>
-  );
-
-  // ── Workflow tab ──────────────────────────────────────────────────────────
-
-  const workflowTab = (
-    <div className="space-y-6">
-      {workflowSteps.length === 0 ? (
-        <EmptyState
-          title="No workflow steps configured"
-          description="Add reviewers below to begin routing this submittal for approval."
-        />
-      ) : (
-        <>
-          <WorkflowStepper
-            steps={workflowSteps}
-            users={allUsers}
-            currentUserId={currentUserId}
-            respondingEntry={respondingEntry}
-            onRespond={setRespondingEntry}
-          />
-
-          {respondingEntry && (
-            <RespondForm
-              projectId={projectId}
-              submittalId={submittal.id}
-              stepId={respondingEntry.stepId}
-              onDone={(didSubmit) => {
-                setRespondingEntry(null);
-                if (didSubmit) router.refresh();
-              }}
-            />
-          )}
-        </>
-      )}
-
-      <WorkflowBuilder
-        projectId={projectId}
-        submittalId={submittal.id}
-        users={users}
-        currentSteps={workflowSteps}
-      />
-    </div>
-  );
-
-  // ── Documents tab ─────────────────────────────────────────────────────────
-
-  const documentsTab = (
-    <div className="space-y-6">
-      <EntityAttachments
-        entityType="submittal"
-        entityId={String(submittal.id)}
-        projectId={projectId}
-      />
-
-      {linkedDrawings.length > 0 && (
-        <div className="space-y-2">
-          <SectionLabel>Linked Drawings ({linkedDrawings.length})</SectionLabel>
-          <p className="text-sm text-muted-foreground">
-            {linkedDrawings.length} drawing
-            {linkedDrawings.length !== 1 ? "s" : ""} linked to this submittal.{" "}
-            <Link
-              href={`/${projectId}/drawings`}
-              className="text-foreground underline underline-offset-2 hover:text-primary transition-colors"
-            >
-              View in Drawings
-            </Link>
-          </p>
-        </div>
-      )}
-    </div>
-  );
-
-  // ── Communications section ────────────────────────────────────────────────
-
-  // Build a unified chronological feed from all communication events
+  // Build unified comms feed
   type CommEvent =
     | { kind: "rfi"; date: string; rfi: (typeof linkedRfis)[number] }
     | { kind: "response"; date: string; stepType: string; responder: string; status: string; comment: string | null }
@@ -983,211 +798,14 @@ export function SubmittalDetailClient({
     .filter((e) => !!e.date)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  const communicationsTab = (
-    <div className="space-y-1">
-      {commEvents.length === 0 ? (
-        <EmptyState
-          icon={<MessageSquare />}
-          title="No communications yet"
-          description="Linked RFIs, workflow responses, and distributions will appear here as a unified thread."
-        />
-      ) : (
-        <ol className="relative space-y-0 pl-6">
-          {/* vertical spine */}
-          <div className="absolute left-2 top-2 bottom-2 w-px bg-border" aria-hidden />
-
-          {commEvents.map((event, i) => {
-            if (event.kind === "rfi") {
-              const rfi = event.rfi;
-              const statusColors: Record<string, string> = {
-                open: "text-primary",
-                draft: "text-muted-foreground",
-                closed: "text-foreground",
-                answered: "text-primary",
-              };
-              const color = statusColors[rfi.status?.toLowerCase() ?? ""] ?? "text-muted-foreground";
-              return (
-                <li key={`rfi-${rfi.link_id}`} className="relative flex gap-4 pb-6">
-                  <div className="absolute -left-4 mt-1 flex h-6 w-6 items-center justify-center rounded-full bg-muted">
-                    <MessageSquare className="h-3 w-3 text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0 flex-1 rounded-lg bg-muted/30 p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          RFI #{rfi.number}
-                        </span>
-                        <span className={cn("text-xs font-medium capitalize", color)}>
-                          {rfi.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(event.date)}
-                        </span>
-                        <Link
-                          href={`/${projectId}/rfis/${rfi.id}`}
-                          className="inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          View <ExternalLink className="h-3 w-3" />
-                        </Link>
-                      </div>
-                    </div>
-                    <p className="mt-1.5 text-sm font-medium text-foreground leading-snug">
-                      {rfi.subject}
-                    </p>
-                    {rfi.question && (
-                      <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                        {rfi.question}
-                      </p>
-                    )}
-                    {rfi.note && (
-                      <p className="mt-2 text-xs text-muted-foreground/70 italic">
-                        Note: {rfi.note}
-                      </p>
-                    )}
-                    {rfi.ball_in_court && (
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Ball in court: <span className="text-foreground font-medium">{resolveUserName(allUsers, rfi.ball_in_court)}</span>
-                      </p>
-                    )}
-                  </div>
-                </li>
-              );
-            }
-
-            if (event.kind === "response") {
-              const name = resolveUserName(allUsers, event.responder);
-              const initials = getInitials(name.length > 36 ? name.slice(0, 2) : name);
-              return (
-                <li key={`resp-${i}`} className="relative flex gap-4 pb-6">
-                  <div className="absolute -left-4 mt-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/25">
-                    <span className="text-[9px] font-bold text-primary">{initials}</span>
-                  </div>
-                  <div className="min-w-0 flex-1 rounded-lg bg-muted/30 p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">{name}</span>
-                        <span className="text-xs text-muted-foreground">{event.stepType}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <StatusBadge status={event.status} />
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(event.date)}
-                        </span>
-                      </div>
-                    </div>
-                    {event.comment && (
-                      <p className="mt-2.5 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                        {event.comment}
-                      </p>
-                    )}
-                  </div>
-                </li>
-              );
-            }
-
-            if (event.kind === "distribution") {
-              const name = resolveUserName(allUsers, event.fromId);
-              return (
-                <li key={`dist-${i}`} className="relative flex gap-4 pb-6">
-                  <div className="absolute -left-4 mt-1 flex h-6 w-6 items-center justify-center rounded-full bg-muted">
-                    <Send className="h-3 w-3 text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5 text-sm">
-                      <span className="font-medium text-foreground">{name}</span>
-                      <span className="text-muted-foreground">distributed to</span>
-                      <span className="font-medium text-foreground">
-                        {event.recipientCount} recipient{event.recipientCount !== 1 ? "s" : ""}
-                      </span>
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        {formatDate(event.date)}
-                      </span>
-                    </div>
-                    {event.message && (
-                      <p className="mt-1.5 rounded-lg bg-muted/40 px-3 py-2 text-sm text-muted-foreground italic">
-                        {event.message}
-                      </p>
-                    )}
-                  </div>
-                </li>
-              );
-            }
-
-            return null;
-          })}
-        </ol>
-      )}
-    </div>
-  );
-
-  // ── History tab ───────────────────────────────────────────────────────────
-
-  const historyTab = (
-    <div className="space-y-8">
-      {distributions.length > 0 && (
-        <div>
-          <SectionLabel>Distribution History ({distributions.length})</SectionLabel>
-          <div className="space-y-4">
-            {distributions.map((dist) => (
-              <div key={dist.id} className="rounded-lg bg-muted/40 p-4 text-sm">
-                <p className="font-medium text-foreground">
-                  {formatDate(dist.distributed_at)}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  From {resolveUserName(allUsers, dist.from_id)} ·{" "}
-                  {dist.submittal_distribution_recipients?.length ?? 0} recipient
-                  {dist.submittal_distribution_recipients?.length !== 1 ? "s" : ""}
-                </p>
-                {dist.message && (
-                  <p className="text-xs text-muted-foreground mt-1.5">
-                    {dist.message}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div>
-        <SectionLabel>Change Log ({history.length})</SectionLabel>
-        {history.length === 0 ? (
-          <EmptyState
-            title="No history recorded"
-            description="Changes to this submittal will appear here."
-          />
-        ) : (
-          <ol className="space-y-0">
-            {history.map((entry) => (
-              <li
-                key={entry.id}
-                className="flex gap-4 py-2.5 text-sm"
-              >
-                <span className="text-xs text-muted-foreground w-28 shrink-0 pt-0.5">
-                  {formatDate(entry.occurred_at)}
-                </span>
-                <div className="flex flex-wrap items-center gap-2 min-w-0">
-                  <span className="font-medium text-foreground">
-                    {entry.action ?? "Update"}
-                  </span>
-                  {entry.actor_id && (
-                    <span className="text-xs text-muted-foreground">
-                      by {resolveUserName(allUsers, entry.actor_id)}
-                    </span>
-                  )}
-                  {entry.new_status && (
-                    <StatusBadge status={entry.new_status} />
-                  )}
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
-      </div>
-    </div>
-  );
+  const eyebrow = [
+    submittal.submittal_number,
+    submittal.revision != null ? `Rev ${submittal.revision}` : null,
+    submittal.specification_section ? `Spec §${submittal.specification_section}` : null,
+    submittal.division ?? null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -1201,12 +819,53 @@ export function SubmittalDetailClient({
         onOpenChange={setDistributeOpen}
       />
       <PageShell
-        variant="detailWide"
-        className="pt-6 sm:pt-10"
-        title={`${submittal.submittal_number} — ${submittal.title}`}
-        titleContent={titleContent}
+        variant="detailXWide"
+        eyebrow={eyebrow}
+        title={submittal.title}
         onBack={() => router.push(`/${projectId}/submittals`)}
-        contentClassName="pb-12"
+        actions={
+          <div className="flex items-center gap-2">
+            {submittal.status !== "Closed" && !submittal.deleted_at && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setDistributeOpen(true)}
+              >
+                <Mail className="mr-1.5 h-3.5 w-3.5" />
+                Email
+              </Button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="More actions">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                  <SquarePen className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleDuplicate}
+                  disabled={duplicateMutation.isPending}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Duplicate
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={handleDelete}
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        }
       >
         {isEditing ? (
           <SubmittalFormPage
@@ -1220,105 +879,353 @@ export function SubmittalDetailClient({
             }}
           />
         ) : (
-          <div className="grid gap-16 lg:grid-cols-[minmax(0,1fr)_280px]">
-            {/* Main column */}
-            <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-[1fr_280px]">
+            {/* ── LEFT MAIN COLUMN ── */}
+            <div className="min-w-0 space-y-10">
+
+              {/* Status */}
+              <div className="flex flex-wrap items-center gap-3">
+                <StatusBadge status={submittal.status} />
+                {submittal.ball_in_court && (
+                  <BallInCourtChip userId={submittal.ball_in_court} users={allUsers} />
+                )}
+              </div>
+
+              {/* Metadata grid row 1 */}
+              <div className="grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
+                <MetaField label="Spec Section" value={submittal.specification_section} />
+                <MetaField label="Number" value={submittal.submittal_number} />
+                <MetaField
+                  label="Revision"
+                  value={submittal.revision != null ? `Rev ${submittal.revision}` : null}
+                />
+                <MetaField
+                  label="Package"
+                  value={(submittal.submittal_package as { name?: string } | null)?.name ?? (typeof submittal.submittal_package === "string" ? submittal.submittal_package : null)}
+                />
+              </div>
+
+              {/* Metadata grid row 2 */}
+              <div className="grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
+                <MetaField
+                  label="Type"
+                  value={typeof submittal.submittal_type === "object" ? (submittal.submittal_type as { name?: string } | null)?.name : submittal.submittal_type}
+                />
+                <MetaField label="Division" value={submittal.division} />
+                <MetaField
+                  label="Linked Drawings"
+                  value={linkedDrawings.length > 0 ? (
+                    <Link href={`/${projectId}/drawings`} className="text-primary hover:underline underline-offset-2">
+                      {linkedDrawings.length} drawing{linkedDrawings.length !== 1 ? "s" : ""}
+                    </Link>
+                  ) : null}
+                />
+                <MetaField label="Visibility" value={submittal.is_private ? "Private" : "Public"} />
+              </div>
+
+              {/* Description */}
               {submittal.description && (
-                <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                  {submittal.description}
-                </p>
-              )}
-
-              <AccordionSection
-                label={workflowSteps.length > 0 ? `Workflow (${workflowSteps.length})` : "Workflow"}
-              >
-                {workflowTab}
-              </AccordionSection>
-
-              <section className="border-t border-border pt-6">
-                <AccordionSection label="Documents">
-                  {documentsTab}
-                </AccordionSection>
-              </section>
-
-              {commEvents.length > 0 && (
-                <section className="border-t border-border pt-6">
-                  <AccordionSection label={`Communications (${commEvents.length})`}>
-                    {communicationsTab}
-                  </AccordionSection>
-                </section>
-              )}
-
-              <section className="border-t border-border pt-6">
-                <AccordionSection
-                  label={history.length > 0 ? `History (${history.length})` : "History"}
-                  defaultOpen={false}
-                >
-                  {historyTab}
-                </AccordionSection>
-              </section>
-            </div>
-
-            {/* Sidebar */}
-            <aside className="space-y-8">
-              <div className="space-y-3">
-                <div className="text-xs font-semibold uppercase tracking-widest text-primary">
-                  Details
+                <div>
+                  <p className="mb-2 text-xs text-muted-foreground">Description</p>
+                  <div className="rounded-md bg-muted/40 px-4 py-3">
+                    <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                      {submittal.description}
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-3.5">
-                  <FieldRow
-                    label="Type"
-                    value={
-                      typeof submittal.submittal_type === "object"
-                        ? (submittal.submittal_type as { name?: string } | null)?.name
-                        : submittal.submittal_type
-                    }
-                  />
-                  <FieldRow
-                    label="Package"
-                    value={
-                      (submittal.submittal_package as { name?: string } | null)?.name
-                    }
-                  />
-                  <FieldRow
-                    label="Responsible Contractor"
-                    value={submittal.responsible_contractor?.name}
-                  />
-                  <FieldRow
-                    label="Received From"
-                    value={
-                      submittal.received_from ??
-                      (submittal.received_from_id
-                        ? resolveUserName(allUsers, submittal.received_from_id)
-                        : null)
-                    }
-                  />
-                  <FieldRow
-                    label="Submittal Manager"
-                    value={
-                      submittal.submittal_manager_id
-                        ? resolveUserName(allUsers, submittal.submittal_manager_id)
-                        : null
-                    }
-                  />
-                  <FieldRow
-                    label="Visibility"
-                    value={submittal.is_private ? "Private" : "Public"}
+              )}
+
+              {/* Attachments */}
+              <div>
+                <EntityAttachments
+                  entityType="submittal"
+                  entityId={String(submittal.id)}
+                  projectId={projectId}
+                />
+              </div>
+
+              {/* Workflow */}
+              <div>
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-foreground">Workflow</span>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-auto p-0 text-sm text-primary"
+                    onClick={() => {
+                      const el = document.getElementById("workflow-builder");
+                      el?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                  >
+                    Add Step
+                  </Button>
+                </div>
+
+                {workflowSteps.length > 0 && (
+                  <div className="mb-6">
+                    {/* Table header */}
+                    <div className="grid grid-cols-[2rem_1fr_6rem_10rem_6rem] gap-x-4 border-b border-border pb-2 text-xs font-medium text-muted-foreground">
+                      <span>#</span>
+                      <span>Step</span>
+                      <span>Role</span>
+                      <span>Assignee</span>
+                      <span>Status</span>
+                    </div>
+                    {workflowSteps.map((step, idx) => {
+                      const state = getStepState(step);
+                      const responder = step.submittal_responses?.[0]?.responder_id;
+                      const responderName = responder ? resolveUserName(allUsers, responder) : null;
+                      const responderInitials = responderName ? getInitials(responderName) : null;
+                      const isActive = state === "in-progress";
+                      const canRespond = isActive && currentUserId && step.submittal_responses?.some(r => r.responder_id === currentUserId && r.response_status === "Pending");
+                      const stepResponseEntry = step.submittal_responses?.find(r => r.responder_id === currentUserId && r.response_status === "Pending");
+                      return (
+                        <div key={step.id}>
+                          <div
+                            className={cn(
+                              "grid grid-cols-[2rem_1fr_6rem_10rem_6rem] gap-x-4 border-b border-border py-3 text-sm",
+                              isActive && "relative before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-0.5 before:bg-primary"
+                            )}
+                          >
+                            <span className="text-muted-foreground">{idx + 1}</span>
+                            <span className="font-medium text-foreground">{step.step_type}</span>
+                            <span className="text-muted-foreground">{step.step_type}</span>
+                            <span className="flex items-center gap-2">
+                              {responderInitials && (
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
+                                  {responderInitials}
+                                </span>
+                              )}
+                              <span className="truncate text-foreground">{responderName ?? "—"}</span>
+                            </span>
+                            <span>
+                              <StatusBadge status={state === "done" ? "Completed" : state === "in-progress" ? "In Progress" : state === "rejected" ? "Rejected" : "Pending"} />
+                            </span>
+                          </div>
+                          {canRespond && stepResponseEntry && (
+                            <div className="py-3">
+                              <RespondForm
+                                projectId={projectId}
+                                submittalId={submittal.id}
+                                stepId={step.id}
+                                onDone={(didSubmit) => {
+                                  setRespondingEntry(null);
+                                  if (didSubmit) router.refresh();
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div id="workflow-builder">
+                  <WorkflowBuilder
+                    projectId={projectId}
+                    submittalId={submittal.id}
+                    users={users}
+                    currentSteps={workflowSteps}
                   />
                 </div>
               </div>
 
-              <div className="space-y-3 border-t border-border pt-6">
-                <div className="text-xs font-semibold uppercase tracking-widest text-primary">
-                  Related
+              {/* Activity feed */}
+              {commEvents.length > 0 && (
+                <div>
+                  <div className="mb-4 flex items-center justify-between">
+                    <span className="text-sm font-semibold text-foreground">Activity</span>
+                    {submittal.submittal_number && (
+                      <span className="text-xs text-muted-foreground">
+                        Submittal #{submittal.submittal_number}
+                      </span>
+                    )}
+                  </div>
+                  <ol className="space-y-0">
+                    {commEvents.map((event, i) => {
+                      const isLast = i === commEvents.length - 1;
+
+                      if (event.kind === "response") {
+                        const name = resolveUserName(allUsers, event.responder);
+                        const initials = getInitials(name);
+                        return (
+                          <li key={`resp-${i}`} className="relative flex gap-5">
+                            {/* Rail */}
+                            <div className="relative flex w-6 shrink-0 flex-col items-center">
+                              <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
+                              {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
+                            </div>
+                            {/* Content */}
+                            <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-center gap-2">
+                                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
+                                    {initials}
+                                  </span>
+                                  <div>
+                                    <p className="text-sm font-medium text-foreground leading-tight">{name}</p>
+                                    <p className="text-xs text-muted-foreground">{event.stepType}</p>
+                                  </div>
+                                </div>
+                                <span className="shrink-0 text-xs text-muted-foreground">{formatDate(event.date)}</span>
+                              </div>
+                              {event.comment ? (
+                                <div className="mt-3 rounded-md border border-border bg-muted/30 px-3 py-2.5">
+                                  <p className="mb-1 text-xs font-semibold text-muted-foreground">{event.status}</p>
+                                  <p className="text-sm text-foreground leading-relaxed">{event.comment}</p>
+                                </div>
+                              ) : (
+                                <p className="mt-2 text-sm text-muted-foreground">
+                                  responded <span className="font-medium text-foreground">{event.status}</span>
+                                </p>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      }
+
+                      if (event.kind === "distribution") {
+                        const name = resolveUserName(allUsers, event.fromId);
+                        const initials = getInitials(name);
+                        return (
+                          <li key={`dist-${i}`} className="relative flex gap-5">
+                            <div className="relative flex w-6 shrink-0 flex-col items-center">
+                              <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
+                              {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
+                            </div>
+                            <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-center gap-2">
+                                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
+                                    {initials}
+                                  </span>
+                                  <p className="text-sm font-medium text-foreground">{name}</p>
+                                </div>
+                                <span className="shrink-0 text-xs text-muted-foreground">{formatDate(event.date)}</span>
+                              </div>
+                              <p className="mt-2 text-sm text-muted-foreground">
+                                distributed to{" "}
+                                <span className="font-medium text-foreground">
+                                  {event.recipientCount} recipient{event.recipientCount !== 1 ? "s" : ""}
+                                </span>
+                              </p>
+                              {event.message && (
+                                <div className="mt-2 rounded-md border border-border bg-muted/30 px-3 py-2">
+                                  <p className="text-sm text-muted-foreground italic">{event.message}</p>
+                                </div>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      }
+
+                      if (event.kind === "rfi") {
+                        const rfi = event.rfi;
+                        return (
+                          <li key={`rfi-${rfi.link_id}`} className="relative flex gap-5">
+                            <div className="relative flex w-6 shrink-0 flex-col items-center">
+                              <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
+                              {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
+                            </div>
+                            <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
+                              <div className="flex items-start justify-between gap-4">
+                                <p className="text-sm font-medium text-foreground">{rfi.subject}</p>
+                                <div className="flex shrink-0 items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">{formatDate(event.date)}</span>
+                                  <Link href={`/${projectId}/rfis/${rfi.id}`} className="text-xs text-muted-foreground hover:text-foreground">
+                                    <ExternalLink className="h-3 w-3" />
+                                  </Link>
+                                </div>
+                              </div>
+                              <p className="mt-1 text-xs text-muted-foreground">RFI #{rfi.number} · {rfi.status}</p>
+                            </div>
+                          </li>
+                        );
+                      }
+
+                      return null;
+                    })}
+                  </ol>
                 </div>
+              )}
+
+              {/* Related Items */}
+              <div>
+                <p className="mb-3 text-sm font-semibold text-foreground">Related Items</p>
                 <RelatedItemsPanel
                   entityType="submittal"
                   entityId={submittal.id}
                   projectId={projectId}
                 />
               </div>
-            </aside>
+            </div>
+
+            {/* ── RIGHT SIDEBAR ── */}
+            <div className="space-y-8 lg:pt-0">
+
+              {/* Dates & Timeline */}
+              {(submittal.sent_date || submittal.final_due_date || submittal.required_on_site_date || submittal.lead_time != null) && (
+                <div>
+                  <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Dates &amp; Timeline
+                  </p>
+                  <div className="divide-y divide-border">
+                    {submittal.sent_date && (
+                      <SidebarRow label="Submitted" value={formatDate(submittal.sent_date)} />
+                    )}
+                    {submittal.final_due_date && (
+                      <SidebarRow
+                        label="Final Due Date"
+                        value={formatDate(submittal.final_due_date)}
+                        alert={getDaysUntil(submittal.final_due_date) !== null && (getDaysUntil(submittal.final_due_date) ?? 0) < 0}
+                      />
+                    )}
+                    {submittal.required_on_site_date && (
+                      <SidebarRow label="Required On-Site" value={formatDate(submittal.required_on_site_date)} />
+                    )}
+                    {submittal.lead_time != null && (
+                      <SidebarRow label="Lead Time" value={`${submittal.lead_time} days`} />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Parties & Responsibility */}
+              {(submittal.responsible_contractor || submittal.received_from || submittal.received_from_id || submittal.submittal_manager_id || submittal.ball_in_court) && (
+                <div>
+                  <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Parties &amp; Responsibility
+                  </p>
+                  <div className="divide-y divide-border">
+                    {submittal.responsible_contractor && (
+                      <SidebarRow label="Responsible Contractor" value={submittal.responsible_contractor.name} bold />
+                    )}
+                    {(submittal.received_from ?? submittal.received_from_id) && (
+                      <SidebarRow
+                        label="Received From"
+                        value={submittal.received_from ?? resolveUserName(allUsers, submittal.received_from_id!)}
+                        bold
+                      />
+                    )}
+                    {submittal.submittal_manager_id && (
+                      <SidebarRow
+                        label="Submittal Manager"
+                        value={resolveUserName(allUsers, submittal.submittal_manager_id)}
+                        bold
+                      />
+                    )}
+                    {submittal.ball_in_court && (
+                      <SidebarRow
+                        label="Ball in Court"
+                        value={resolveUserName(allUsers, submittal.ball_in_court)}
+                        bold
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </PageShell>
