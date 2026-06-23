@@ -6,7 +6,7 @@
 2) Task ID: drawings-revision-publish-lifecycle
 3) Linear issue: AAI-613
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-613/add-drawings-revision-level-publish-lifecycle
-5) Current status: Verified - Not Pushed
+5) Current status: Complete - Pushed
 6) Files changed (absolute paths):
    - /Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-23-drawings-revision-publish-lifecycle.md
    - /Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-23-S80-drawings-revision-publish-lifecycle.md
@@ -22,7 +22,7 @@
    - /Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/projects/[projectId]/drawings/bulk-status/route.ts
    - /Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/projects/[projectId]/drawings/__tests__/route.test.ts
    - /Users/meganharrison/Documents/alleato-pm/tests/agent-browser-runs/2026-06-23-drawings-revision-publish-lifecycle/
-7) Commands run and outcome (pass/fail counts): 7 pass, 1 known initial auth failure
+7) Commands run and outcome (pass/fail counts): 8 pass, 1 known initial auth failure
    - PASS: Supabase type generation through `.env` with temp-file guard.
    - PASS: Exact migration apply with `psql`.
    - PASS: `npm run db:migrations:verify-applied -- supabase/migrations/20260623155200_drawing_revision_publication_lifecycle.sql`.
@@ -30,6 +30,7 @@
    - PASS: `npm --prefix frontend run typecheck:changed`.
    - PASS: `npm run test:unit -- --runTestsByPath 'src/app/api/projects/[projectId]/drawings/__tests__/route.test.ts'`.
    - PASS: Browser verification against `http://localhost:3001/1009/drawings`.
+   - PASS: `npm run codex:finish -- --message "Add drawings revision publish lifecycle" --files ...` committed and pushed `bc917687e` to `origin/main`.
    - INITIAL FAIL: Unsourced `npx supabase gen types ...` used the invalid `.env.local` token path and returned `LegacyInvalidAccessTokenError`; `frontend/src/types/database.types.ts` was restored and typegen rerun safely through `.env`.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `tests/agent-browser-runs/2026-06-23-drawings-revision-publish-lifecycle/VERIFICATION_SUMMARY.md`
@@ -53,11 +54,11 @@
 
 ## Current Status
 
-Implemented and verified. Not pushed yet.
+Implemented, verified, and pushed to `origin/main` at `bc917687e`.
 
 ## Exact Next Step
 
-Run `npm run linear:codex:check -- docs/ops/handoffs/2026-06-23-S80-drawings-revision-publish-lifecycle.md`, post Linear update, then close with `codex:finish`.
+Post final Linear closeout and mark AAI-613 done.
 
 ## Known Pitfalls
 
@@ -82,3 +83,4 @@ npm run linear:codex:check -- docs/ops/handoffs/2026-06-23-S80-drawings-revision
 - Targeted Jest — PASS.
 - Browser verification — PASS. `final-readback.json` shows default log Rev `0` published/approved and review log Rev `1` under review/unpublished.
 - Cleanup — PASS. Verification drawing soft-deleted and verification set archived.
+- `npm run codex:finish -- --message "Add drawings revision publish lifecycle" --files ...` — PASS, commit `bc917687e` pushed to `origin/main`.

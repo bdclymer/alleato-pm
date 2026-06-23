@@ -1,6 +1,6 @@
 # Task: Drawings Revision Publish Lifecycle
 
-Status: Verified - Not Pushed
+Status: Complete - Pushed
 Owner: Codex
 Created: 2026-06-23
 Linear Issue: AAI-613 - https://linear.app/megankharrison/issue/AAI-613/add-drawings-revision-level-publish-lifecycle
@@ -114,6 +114,7 @@ Expected failure behavior: missing/invalid revision state fails API route with s
 | Browser/user-flow     | `agent-browser` run against `http://localhost:3001/1009/drawings`; artifacts in `tests/agent-browser-runs/2026-06-23-drawings-revision-publish-lifecycle/` | Pass | Default log shows published Rev `0`; review log shows under-review Rev `1`; verification data cleaned up. |
 | DB/provider read-back | `psql` information schema read-back for `drawing_revisions`/`drawings` publication columns | Pass | Confirmed live revision publication columns and drawing review pointer. |
 | End-to-end proof      | `tests/agent-browser-runs/2026-06-23-drawings-revision-publish-lifecycle/final-readback.json` | Pass | One drawing, published/current-view revision separate from review-current revision. |
+| Finish/publish        | `npm run codex:finish -- --message "Add drawings revision publish lifecycle" --files ...` | Pass | Commit `bc917687e` pushed to `origin/main`; route checks, changed-file quality, migration ledger, lint-staged, and push verification passed. |
 
 ## Files Changed
 
