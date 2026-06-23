@@ -6,7 +6,7 @@
 2) Task ID: drawings-upload-metadata-review
 3) Linear issue: AAI-614
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-614/add-drawings-review-queue-for-unpublished-revisions
-5) Current status: Complete - Pending Push
+5) Current status: Complete - Pushed
 6) Files changed (absolute paths):
    - /Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-23-drawings-upload-metadata-review.md
    - /Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-23-S84-drawings-upload-metadata-review.md
@@ -43,11 +43,11 @@
 
 ## Current Status
 
-Implemented and verified locally. Pending `codex:finish` push to `origin/main`.
+Implemented, verified locally, and pushed to `origin/main`.
 
 ## Exact Next Step
 
-Run `npm run linear:codex:check -- docs/ops/handoffs/2026-06-23-S84-drawings-upload-metadata-review.md`, post the Linear completion comment, then run `codex:finish` with only the S84-owned files.
+No action required for this slice. Continue remaining Drawings parity as separate scoped tasks.
 
 ## Known Pitfalls
 
