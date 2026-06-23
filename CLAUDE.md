@@ -184,6 +184,17 @@ not mention Impeccable.
 Canonical reference: `.agents/skills/impeccable/reference/alleato-product-noise-gate.md`
 Direct command: `impeccable noise-gate [target]`
 
+**Noise Gate Log (case law — `docs/design/noise-gate-log.md`):** READ IT before any
+frontend work — it holds every concrete element Megan has flagged as noise and the
+binding rule extracted from each. When Megan calls anything "noise" / "visual noise" /
+"clutter," you MUST append a new dated row to that log in the same turn (next sequential
+ID, specific complaint → general rule) and then apply the fix. This is non-negotiable —
+the log is how the noise gate learns. Current distilled rules: secondary add action =
+bare plus icon (never a labeled/bordered button); never stack a subtitle under a label;
+no decorative icons (icon only when it's the sole affordance); empty field renders
+nothing, never a "—" dash; sections have no background fill, no border, no card wrapper —
+separate with spacing only.
+
 Required behavior:
 - Before adding UI, identify the primary user, primary job, primary decision,
   Tier 1 content, content hidden until requested, removal candidates, primary

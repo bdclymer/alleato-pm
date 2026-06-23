@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import {
   MoreHorizontal,
   Pencil,
@@ -13,7 +13,7 @@ import {
   Search,
   SlidersHorizontal,
   X,
-  ChevronsUpDown,
+  Plus,
 } from "lucide-react";
 import {
   Button,
@@ -1898,167 +1898,191 @@ function contactDisplayName(c: SubcontractorContact | null): string {
   return name || c.email || "";
 }
 
-function ContactPickerCell({
+type CompanyContact = SubcontractorContact & {
+  job_title: string | null;
+};
+
+function CompanyContactCard({
   projectId,
   companyId,
   projectCompanyId,
   companyName,
-  currentContactId,
-  currentContactName,
-  onChanged,
+  typeLabel,
+  primaryContactId,
+  contacts,
+  removing,
+  onCompanyClick,
+  onRemoveCompany,
+  onRefetch,
 }: {
   projectId: string;
   companyId: string;
   projectCompanyId: string;
   companyName: string;
-  currentContactId: string | null;
-  currentContactName: string;
-  onChanged: () => void;
+  typeLabel: string;
+  primaryContactId: string | null;
+  contacts: CompanyContact[];
+  removing: boolean;
+  onCompanyClick: (companyId: string) => void;
+  onRemoveCompany: (projectCompanyId: string, companyName: string) => void;
+  onRefetch: () => void;
 }) {
-  const [open, setOpen] = React.useState(false);
-  const [people, setPeople] = React.useState<SubcontractorContact[]>([]);
-  const [loading, setLoading] = React.useState(false);
   const [addContactOpen, setAddContactOpen] = React.useState(false);
-  const router = useRouter();
+  const [settingPrimaryId, setSettingPrimaryId] = React.useState<string | null>(
+    null,
+  );
   const updateMutation = useUpdateProjectCompany(projectId);
+  const effectivePrimaryId = primaryContactId ?? contacts[0]?.id ?? null;
 
-  React.useEffect(() => {
-    if (!open) return;
-    setLoading(true);
-    const supabase = createClient();
-    supabase
-      .from("people")
-      .select("id, first_name, last_name, email, phone_business, phone_mobile")
-      .eq("company_id", companyId)
-      .order("first_name", { ascending: true })
-      .then(({ data }) => {
-        setPeople((data ?? []) as SubcontractorContact[]);
-        setLoading(false);
-      });
-  }, [open, companyId]);
-
-  const handleSelect = async (personId: string) => {
-    setOpen(false);
+  const handleSetPrimary = async (personId: string) => {
+    setSettingPrimaryId(personId);
     try {
       await updateMutation.mutateAsync({
         companyId: projectCompanyId,
         data: { primary_contact_id: personId },
       });
-      toast.success("Contact updated");
-      onChanged();
+      toast.success("Primary contact updated");
+      onRefetch();
     } catch {
-      toast.error("Failed to update contact");
+      toast.error("Failed to update primary contact");
+    } finally {
+      setSettingPrimaryId(null);
     }
   };
 
   return (
     <>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            className="group flex h-8 -ml-2 items-center gap-1.5 px-2 text-sm font-normal text-foreground"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {currentContactName ? (
-              <span>{currentContactName}</span>
-            ) : (
-              <span className="text-primary underline-offset-2 group-hover:underline">
-                Set contact
+      <div>
+        <div className="flex items-center justify-between gap-3 border-b border-border/50 py-2.5">
+          <div className="flex min-w-0 items-baseline gap-2.5">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onCompanyClick(companyId)}
+              className="h-auto -ml-2 truncate px-2 py-1 text-sm font-medium text-foreground hover:bg-transparent hover:underline"
+            >
+              {companyName}
+            </Button>
+            {typeLabel && (
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {typeLabel}
               </span>
             )}
-            <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-72 p-0"
-          align="start"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Command>
-            <CommandInput placeholder="Search contacts..." />
-            <CommandList className="max-h-64">
-              <CommandEmpty>
-                {loading ? "Loading..." : "No contacts at this company."}
-              </CommandEmpty>
-              {people.length > 0 && (
-                <CommandGroup heading="Assigned to this company">
-                  {people.map((p) => (
-                    <CommandItem
-                      key={p.id}
-                      value={`${p.first_name ?? ""} ${p.last_name ?? ""} ${p.email ?? ""}`}
-                      onSelect={() => void handleSelect(p.id)}
+          </div>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground"
+              aria-label={`Add contact to ${companyName}`}
+              onClick={() => setAddContactOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground"
+                  aria-label="Company actions"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/directory/companies/${companyId}?edit=1`}>
+                    <Pencil className="mr-2 h-3.5 w-3.5" />
+                    Edit
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  disabled={removing}
+                  onClick={() => onRemoveCompany(projectCompanyId, companyName)}
+                >
+                  <Trash2 className="mr-2 h-3.5 w-3.5" />
+                  {removing ? "Removing..." : "Remove"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {contacts.length === 0 ? (
+          <p className="py-4 text-sm text-muted-foreground">No contacts yet.</p>
+        ) : (
+          <div>
+            <div className="grid grid-cols-[1.3fr_1fr_1.4fr_1fr] gap-3 py-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+              <span>Name</span>
+              <span>Title</span>
+              <span>Email</span>
+              <span>Phone</span>
+            </div>
+            {contacts.map((contact) => {
+              const isPrimary = contact.id === effectivePrimaryId;
+              const phone = contact.phone_business || contact.phone_mobile;
+              return (
+                <div
+                  key={contact.id}
+                  className="group grid grid-cols-[1.3fr_1fr_1.4fr_1fr] items-center gap-3 border-t border-border/60 py-2.5"
+                >
+                  <div className="flex min-w-0 items-baseline gap-2">
+                    <Link
+                      href={`/directory/contacts/${contact.id}`}
+                      className="truncate text-sm text-foreground hover:underline"
                     >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4 shrink-0",
-                          currentContactId === p.id
-                            ? "opacity-100"
-                            : "opacity-0",
-                        )}
-                      />
-                      <div className="min-w-0 flex flex-col">
-                        <span className="truncate text-sm">
-                          {contactDisplayName(p) || "Unnamed"}
-                        </span>
-                        {p.email && (
-                          <span className="truncate text-xs text-muted-foreground">
-                            {p.email}
-                          </span>
-                        )}
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-              <CommandGroup>
-                <CommandItem
-                  value="__add_new_contact__"
-                  onSelect={() => {
-                    setOpen(false);
-                    setAddContactOpen(true);
-                  }}
-                >
-                  <UserPlus className="mr-2 h-4 w-4 shrink-0" />
-                  Add new contact for {companyName}
-                </CommandItem>
-                <CommandItem
-                  value="__manage_company_contacts__"
-                  onSelect={() => {
-                    setOpen(false);
-                    router.push(`/directory/companies/${companyId}`);
-                  }}
-                >
-                  <UserPlus className="mr-2 h-4 w-4 shrink-0" />
-                  Manage contacts for {companyName}
-                </CommandItem>
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+                      {contactDisplayName(contact) || "Unnamed"}
+                    </Link>
+                    {isPrimary ? (
+                      <span className="shrink-0 text-[11px] text-muted-foreground">
+                        Primary
+                      </span>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        disabled={settingPrimaryId === contact.id}
+                        onClick={() => void handleSetPrimary(contact.id)}
+                        className="h-auto shrink-0 p-0 text-[11px] font-normal text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                      >
+                        {settingPrimaryId === contact.id
+                          ? "Saving..."
+                          : "Set primary"}
+                      </Button>
+                    )}
+                  </div>
+                  <span className="truncate text-sm text-muted-foreground">
+                    {contact.job_title}
+                  </span>
+                  {contact.email ? (
+                    <a
+                      href={`mailto:${contact.email}`}
+                      className="truncate text-sm text-muted-foreground hover:underline"
+                    >
+                      {contact.email}
+                    </a>
+                  ) : (
+                    <span />
+                  )}
+                  <span className="truncate text-sm text-muted-foreground">
+                    {phone}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <ContactFormSheet
         open={addContactOpen}
         onOpenChange={setAddContactOpen}
         defaultCompanyId={companyId}
-        onContactCreated={async ({ id }) => {
-          await handleSelect(id);
-        }}
-        onSuccess={() => {
-          const supabase = createClient();
-          supabase
-            .from("people")
-            .select(
-              "id, first_name, last_name, email, phone_business, phone_mobile",
-            )
-            .eq("company_id", companyId)
-            .order("first_name", { ascending: true })
-            .then(({ data }) => {
-              setPeople((data ?? []) as SubcontractorContact[]);
-            });
-        }}
+        onSuccess={() => onRefetch()}
       />
     </>
   );
@@ -2130,253 +2154,135 @@ function CompaniesSection({
     }
   };
 
-  type SubcontractorRow = {
-    id: string;
-    projectCompanyId: string;
-    name: string;
-    contact: SubcontractorContact | null;
-    typeLabel: string;
-  };
-
-  const companyRows = React.useMemo<SubcontractorRow[]>(
-    () =>
-      companies
-        .map((projectCompany) => {
-          const vendorClass = projectCompany.company?.vendor_class ?? null;
-          const isOwner =
-            ownerCompanyId !== null &&
-            projectCompany.company_id === ownerCompanyId;
-          const typeLabel = isOwner
-            ? "Owner"
-            : vendorClass === "SUB"
-              ? "Subcontractor"
-              : vendorClass || "—";
-          return {
-            id: projectCompany.company_id,
-            projectCompanyId: projectCompany.id,
-            name: projectCompany.company?.name || "Untitled Company",
-            contact: (projectCompany.primary_contact ??
-              null) as SubcontractorContact | null,
-            typeLabel,
-          };
-        })
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [companies, ownerCompanyId],
+  const companyIds = React.useMemo(
+    () => companies.map((c) => c.company_id),
+    [companies],
   );
 
-  const filteredRows = React.useMemo(() => {
-    const q = deferredSearch.trim().toLowerCase();
-    if (!q) return companyRows;
-    return companyRows.filter((c) => {
-      const contactStr = contactDisplayName(c.contact).toLowerCase();
-      const email = (c.contact?.email ?? "").toLowerCase();
-      return (
-        c.name.toLowerCase().includes(q) ||
-        contactStr.includes(q) ||
-        email.includes(q)
-      );
-    });
-  }, [companyRows, deferredSearch]);
+  const [contactsByCompany, setContactsByCompany] = React.useState<
+    Map<string, CompanyContact[]>
+  >(new Map());
 
-  const companiesColumns = React.useMemo<TableColumn<SubcontractorRow>[]>(
-    () => [
-      {
-        id: "name",
-        label: "Company Name",
-        render: (company) => (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              onCompanyClick(company.id);
-            }}
-            className="h-auto -ml-2 px-2 py-1 text-left font-medium text-foreground hover:bg-transparent hover:underline"
-          >
-            {company.name}
-          </Button>
-        ),
-        sortValue: (company) => company.name,
-        csvValue: (company) => company.name,
-      },
-      {
-        id: "type",
-        label: "Type",
-        render: (company) => (
-          <span className="text-sm text-muted-foreground">
-            {company.typeLabel}
-          </span>
-        ),
-        sortValue: (company) => company.typeLabel,
-        csvValue: (company) => company.typeLabel,
-      },
-      {
-        id: "contact",
-        label: "Contact Name",
-        render: (company) => (
-          <ContactPickerCell
-            projectId={projectId}
-            companyId={company.id}
-            projectCompanyId={company.projectCompanyId}
-            companyName={company.name}
-            currentContactId={company.contact?.id ?? null}
-            currentContactName={contactDisplayName(company.contact)}
-            onChanged={onRefetch}
-          />
-        ),
-        sortValue: (company) => contactDisplayName(company.contact),
-        csvValue: (company) => contactDisplayName(company.contact),
-      },
-      {
-        id: "email",
-        label: "Email",
-        render: (company) => {
-          const email = company.contact?.email;
-          return email ? (
-            <a
-              href={`mailto:${email}`}
-              className="text-sm text-muted-foreground hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {email}
-            </a>
-          ) : (
-            <span className="text-sm text-muted-foreground">—</span>
-          );
-        },
-        sortValue: (company) => company.contact?.email ?? "",
-        csvValue: (company) => company.contact?.email ?? "",
-      },
-      {
-        id: "phone",
-        label: "Phone",
-        render: (company) => (
-          <span className="text-sm text-muted-foreground">
-            {company.contact?.phone_business || "—"}
-          </span>
-        ),
-        sortValue: (company) => company.contact?.phone_business ?? "",
-        csvValue: (company) => company.contact?.phone_business ?? "",
-      },
-      {
-        id: "phone_mobile",
-        label: "Cell Phone",
-        render: (company) => (
-          <span className="text-sm text-muted-foreground">
-            {company.contact?.phone_mobile || "—"}
-          </span>
-        ),
-        sortValue: (company) => company.contact?.phone_mobile ?? "",
-        csvValue: (company) => company.contact?.phone_mobile ?? "",
-      },
-      {
-        id: "actions",
-        label: "",
-        render: (company) => {
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <DropdownMenuItem asChild>
-                  <Link href={`/directory/companies/${company.id}?edit=1`}>
-                    <Pencil className="mr-2 h-3.5 w-3.5" />
-                    Edit
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive"
-                  disabled={removingCompanyId === company.projectCompanyId}
-                  onClick={() =>
-                    void handleRemoveCompany(
-                      company.projectCompanyId,
-                      company.name,
-                    )
-                  }
-                >
-                  <Trash2 className="mr-2 h-3.5 w-3.5" />
-                  {removingCompanyId === company.projectCompanyId
-                    ? "Removing..."
-                    : "Remove"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
-        },
-      },
-    ],
-    [
-      handleRemoveCompany,
-      onCompanyClick,
-      onRefetch,
-      projectId,
-      removingCompanyId,
-    ],
+  const reloadContacts = React.useCallback(() => {
+    if (companyIds.length === 0) {
+      setContactsByCompany(new Map());
+      return;
+    }
+    const supabase = createClient();
+    supabase
+      .from("people")
+      .select(
+        "id, first_name, last_name, email, phone_business, phone_mobile, job_title, company_id",
+      )
+      .in("company_id", companyIds)
+      .order("first_name", { ascending: true })
+      .then(({ data }) => {
+        const map = new Map<string, CompanyContact[]>();
+        (
+          (data ?? []) as Array<CompanyContact & { company_id: string }>
+        ).forEach((person) => {
+          const list = map.get(person.company_id) ?? [];
+          list.push(person);
+          map.set(person.company_id, list);
+        });
+        setContactsByCompany(map);
+      });
+  }, [companyIds]);
+
+  React.useEffect(() => {
+    reloadContacts();
+  }, [reloadContacts]);
+
+  const companyCards = React.useMemo(() => {
+    const q = deferredSearch.trim().toLowerCase();
+    return companies
+      .map((projectCompany) => {
+        const vendorClass = projectCompany.company?.vendor_class ?? null;
+        const isOwner =
+          ownerCompanyId !== null &&
+          projectCompany.company_id === ownerCompanyId;
+        const typeLabel = isOwner
+          ? "Owner"
+          : vendorClass === "SUB"
+            ? "Subcontractor"
+            : vendorClass || "";
+        return {
+          companyId: projectCompany.company_id,
+          projectCompanyId: projectCompany.id,
+          name: projectCompany.company?.name || "Untitled Company",
+          typeLabel,
+          primaryContactId:
+            projectCompany.primary_contact_id ??
+            projectCompany.primary_contact?.id ??
+            null,
+          contacts: contactsByCompany.get(projectCompany.company_id) ?? [],
+        };
+      })
+      .filter((card) => {
+        if (!q) return true;
+        if (card.name.toLowerCase().includes(q)) return true;
+        return card.contacts.some(
+          (contact) =>
+            contactDisplayName(contact).toLowerCase().includes(q) ||
+            (contact.email ?? "").toLowerCase().includes(q) ||
+            (contact.job_title ?? "").toLowerCase().includes(q),
+        );
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [companies, ownerCompanyId, contactsByCompany, deferredSearch]);
+
+  const addCompanyAction = (
+    <Button size="xs" data-keep-text onClick={onAssignClick}>
+      Add Company
+    </Button>
   );
 
   return (
     <>
-      {isLoading ? (
-        <>
-          <SectionRow
-            title="Subcontractors"
-            action={
-              <Button size="xs" data-keep-text onClick={onAssignClick}>
-                Add Company
-              </Button>
-            }
-          />
-          <div className="mt-4">
-            <SectionSkeleton rows={3} />
-          </div>
-        </>
-      ) : error ? (
-        <>
-          <SectionRow
-            title="Subcontractors"
-            action={
-              <Button size="xs" data-keep-text onClick={onAssignClick}>
-                Add Company
-              </Button>
-            }
-          />
-          <p className="text-sm text-destructive py-4">
+      <SectionRow
+        title="Subcontractors"
+        action={addCompanyAction}
+        search={search}
+        onSearch={setSearch}
+        searchPlaceholder="Search companies or contacts..."
+      />
+      <div className="mt-4">
+        {isLoading ? (
+          <SectionSkeleton rows={3} />
+        ) : error ? (
+          <p className="py-4 text-sm text-destructive">
             Failed to load companies.
           </p>
-        </>
-      ) : (
-        <DirectoryUnifiedTable
-          title="Subcontractors"
-          action={
-            <Button size="xs" data-keep-text onClick={onAssignClick}>
-              Add Company
-            </Button>
-          }
-          items={filteredRows}
-          columns={companiesColumns}
-          getRowId={(company) => company.projectCompanyId}
-          search={search}
-          onSearch={setSearch}
-          searchPlaceholder="Search subcontractors..."
-          totalItems={companyRows.length}
-          emptyTitle="No subcontractors"
-          emptyDescription="Assign companies to this project directory."
-          filteredDescription="No subcontractors match your search."
-          isFiltered={Boolean(search)}
-          enablePagination={filteredRows.length > 10}
-        />
-      )}
+        ) : companyCards.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            {search
+              ? "No companies or contacts match your search."
+              : "No subcontractors yet."}
+          </p>
+        ) : (
+          <div className="flex flex-col gap-8">
+            {companyCards.map((card) => (
+              <CompanyContactCard
+                key={card.projectCompanyId}
+                projectId={projectId}
+                companyId={card.companyId}
+                projectCompanyId={card.projectCompanyId}
+                companyName={card.name}
+                typeLabel={card.typeLabel}
+                primaryContactId={card.primaryContactId}
+                contacts={card.contacts}
+                removing={removingCompanyId === card.projectCompanyId}
+                onCompanyClick={onCompanyClick}
+                onRemoveCompany={handleRemoveCompany}
+                onRefetch={() => {
+                  onRefetch();
+                  reloadContacts();
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
       {CompanyConfirmDialog}
     </>
   );

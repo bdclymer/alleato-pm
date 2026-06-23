@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (296)
+## UI Routes (295)
 
-_296/296 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_294/295 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -227,7 +227,6 @@ _296/296 have a description (from the page's `PageShell` or the curated `fronten
 | `/document-metadata` | Admin dashboard listing all document and meeting metadata with search, filtering, and bulk management | frontend/src/app/(admin)/document-metadata/page.tsx |
 | `/documents` | RAG document library and ingestion status | frontend/src/app/(tables)/documents/page.tsx |
 | `/drawings` | Searchable table of construction drawings and blueprints with upload, download, and publish capabilities | frontend/src/app/(tables)/drawings/page.tsx |
-| `/email-inbox` | Synchronized email inbox showing unread messages from Outlook | frontend/src/app/(tables)/email-inbox/page.tsx |
 | `/emails` | Global view of all synced emails with search and filtering | frontend/src/app/(tables)/emails/page.tsx |
 | `/errors` | Admin dashboard tracking grouped application errors with severity, status, and Linear issue links | frontend/src/app/(admin)/errors/page.tsx |
 | `/estimates` | Global table of all project estimates across types | frontend/src/app/(tables)/estimates/page.tsx |
@@ -277,7 +276,7 @@ _296/296 have a description (from the page's `PageShell` or the curated `fronten
 | `/projects` | Portfolio view of all projects with filtering by phase, category, and client, plus export | frontend/src/app/(tables)/projects/page.tsx |
 | `/projects-table-demo` | Demo page for the projects table component showcasing table functionality and configurations | frontend/src/app/(admin)/projects-table-demo/page.tsx |
 | `/prp-status` | Track Product Readiness Pipeline (PRP) status for tools across specification, audit, and validation stages | frontend/src/app/(admin)/prp-status/page.tsx |
-| `/rag` | Items successfully synced and items that failed, per source, per day. Sourced live from source_sync_runs. | frontend/src/app/(admin)/rag/page.tsx |
+| `/rag` | RAG Health | frontend/src/app/(admin)/rag/page.tsx |
 | `/rag-eval` | Retrieval quality metrics, answer quality scores, and eval runners | frontend/src/app/(admin)/rag-eval/page.tsx |
 | `/redoc` | Explore auth flows, schema details, and every frontend/backend endpoint in one place. | frontend/src/app/(admin)/redoc/page.tsx |
 | `/settings` | Redirect to user profile settings for account and preference management | frontend/src/app/(main)/settings/page.tsx |

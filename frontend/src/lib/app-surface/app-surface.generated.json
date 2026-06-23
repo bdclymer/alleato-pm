@@ -1052,11 +1052,6 @@
       "description": "Searchable table of construction drawings and blueprints with upload, download, and publish capabilities"
     },
     {
-      "url": "/email-inbox",
-      "title": "Email Inbox",
-      "description": "Synchronized email inbox showing unread messages from Outlook"
-    },
-    {
       "url": "/emails",
       "title": null,
       "description": "Global view of all synced emails with search and filtering"
@@ -1303,8 +1298,8 @@
     },
     {
       "url": "/rag",
-      "title": "Sync Health",
-      "description": "Items successfully synced and items that failed, per source, per day. Sourced live from source_sync_runs."
+      "title": "RAG Health",
+      "description": null
     },
     {
       "url": "/rag-eval",
