@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { AlertTriangle, CalendarIcon, RefreshCw, X } from "lucide-react";
+import { AlertTriangle, CalendarIcon, ChevronDown, RefreshCw, X } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { DateRange } from "react-day-picker";
 
@@ -24,7 +25,12 @@ import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
 import type { DailySyncRow } from "@/app/api/admin/rag-snapshots/route";
-import type { SourceSyncStatus } from "@/app/api/admin/source-sync/_contracts";
+import type {
+  LifecycleDocumentsResponse,
+  SourceSyncStatus,
+} from "@/app/api/admin/source-sync/_contracts";
+
+type LifecycleDocument = LifecycleDocumentsResponse["documents"][number];
 
 const SOURCES = [
   { key: "sharepoint", label: "SharePoint" },
@@ -412,11 +418,20 @@ function MatrixCell({
         }
       }}
       className={cn(
-        "cursor-pointer px-2 py-2.5 text-right outline-none transition-colors",
+        "group relative cursor-pointer px-2 py-2.5 text-right outline-none transition-colors",
         stage.status === "critical" ? "bg-status-error/5" : "hover:bg-muted/60",
         selected && "ring-2 ring-inset ring-primary",
       )}
     >
+      <ChevronDown
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute left-1 top-1 h-3 w-3 transition-all",
+          selected
+            ? "rotate-180 text-primary"
+            : "text-muted-foreground/25 group-hover:text-muted-foreground/70",
+        )}
+      />
       <div className="text-sm font-medium text-foreground">{formatNumber(stage.count)}</div>
       <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-border">
         <div className={cn("h-full rounded-full", tone.bar)} style={{ width: `${pct}%` }} />
@@ -441,19 +456,146 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Five-segment lifecycle progress for a single document. The stage the operator
+// clicked is ringed so the row reads against the cell that opened it.
+function StageDots({
+  stages,
+  activeKey,
+}: {
+  stages: LifecycleDocument["stages"];
+  activeKey: (typeof STAGE_ORDER)[number];
+}) {
+  return (
+    <span className="flex shrink-0 items-center gap-1">
+      {STAGE_ORDER.map((key) => {
+        const cleared = stages[key];
+        const active = key === activeKey;
+        return (
+          <span
+            key={key}
+            title={`${STAGE_SHORT[key]}: ${cleared ? "complete" : "not yet"}`}
+            className={cn(
+              "h-1.5 w-1.5 rounded-full",
+              cleared ? "bg-status-success" : "bg-border",
+              active && "ring-2 ring-offset-1 ring-offset-background",
+              active && (cleared ? "ring-status-success/40" : "ring-status-error/40"),
+            )}
+          />
+        );
+      })}
+    </span>
+  );
+}
+
+function LifecycleDocuments({
+  source,
+  stageKey,
+  windowQS,
+}: {
+  source: LifecycleSource;
+  stageKey: (typeof STAGE_ORDER)[number];
+  windowQS: string;
+}) {
+  const [data, setData] = React.useState<LifecycleDocumentsResponse | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError(null);
+    setData(null);
+    const query = `${windowQS}&source=${source.key}&stage=${stageKey}`;
+    void apiFetch<LifecycleDocumentsResponse>(
+      `/api/admin/source-sync/lifecycle-documents${query}`,
+    )
+      .then((result) => {
+        if (active) setData(result);
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof Error ? err.message : "Failed to load documents.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [source.key, stageKey, windowQS]);
+
+  if (loading) {
+    return <p className="py-3 text-sm text-muted-foreground">Loading documents…</p>;
+  }
+  if (error) {
+    return (
+      <InfoAlert variant="error" role="alert">
+        {error}
+      </InfoAlert>
+    );
+  }
+  if (!data || data.documents.length === 0) {
+    return (
+      <p className="py-3 text-sm text-muted-foreground">
+        No {SOURCE_SHORT[source.key] ?? source.label} documents in this window.
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+        <span>
+          Showing {data.returned} of {formatNumber(data.total)} documents
+          {data.truncated ? " (first 500)" : ""}
+        </span>
+        <span className="hidden sm:inline">
+          Dots: synced · vectorized · assigned · tasks · intelligence
+        </span>
+      </div>
+      <div className="divide-y divide-border">
+        {data.documents.map((doc) => (
+          <div key={doc.id} className="flex items-center gap-3 py-1.5">
+            <StageDots stages={doc.stages} activeKey={stageKey} />
+            {doc.detailHref ? (
+              <Link
+                href={doc.detailHref}
+                className="min-w-0 flex-1 truncate text-sm text-foreground hover:text-primary hover:underline"
+              >
+                {doc.title || "Untitled"}
+              </Link>
+            ) : (
+              <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                {doc.title || "Untitled"}
+              </span>
+            )}
+            <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
+              {doc.projectName ?? "Unassigned"}
+            </span>
+            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+              {formatDate(doc.date)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DetailPanel({
   source,
   stage,
+  windowQS,
   onClose,
 }: {
   source: LifecycleSource;
   stage: LifecycleStage;
+  windowQS: string;
   onClose: () => void;
 }) {
   const tone = TONE[stage.status];
   const behind = Math.max(stage.total - stage.count, 0);
   return (
-    <div className="rounded-lg bg-muted p-4">
+    <div className="rounded-lg bg-muted/30 p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-foreground">
@@ -487,6 +629,9 @@ function DetailPanel({
         <Metric label="Latest" value={formatDate(stage.latestAt)} />
       </div>
       <p className="text-sm leading-relaxed text-muted-foreground">{stage.message}</p>
+      <div className="mt-4 border-t border-border pt-3">
+        <LifecycleDocuments source={source} stageKey={stage.key} windowQS={windowQS} />
+      </div>
     </div>
   );
 }
@@ -502,9 +647,11 @@ function LegendDot({ className, label }: { className: string; label: string }) {
 
 function LifecycleView({
   lifecycle,
+  windowQS,
   controls,
 }: {
   lifecycle: Lifecycle | undefined;
+  windowQS: string;
   controls?: React.ReactNode;
 }) {
   const [selected, setSelected] = React.useState<CellRef | null>(null);
@@ -622,7 +769,12 @@ function LifecycleView({
       </div>
 
       {selectedSource && selectedStage ? (
-        <DetailPanel source={selectedSource} stage={selectedStage} onClose={() => setSelected(null)} />
+        <DetailPanel
+          source={selectedSource}
+          stage={selectedStage}
+          windowQS={windowQS}
+          onClose={() => setSelected(null)}
+        />
       ) : null}
     </section>
   );
@@ -892,6 +1044,7 @@ export default function RagDashboardPage() {
       ) : (
         <LifecycleView
           lifecycle={status?.ragLifecycle}
+          windowQS={windowQuery(lifecycleWindow)}
           controls={
             <LifecyclePicker
               window={lifecycleWindow}

@@ -313,7 +313,7 @@ _294/295 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management` | Manage app users, project access, and permission templates with granular capability controls | frontend/src/app/(admin)/user-management/page.tsx |
 | `/user-management/users/[personId]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[personId]/page.tsx |
 
-## API Endpoints (664)
+## API Endpoints (665)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -376,6 +376,7 @@ _294/295 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/admin/set-admin-status` | POST | frontend/src/app/api/admin/set-admin-status/route.ts |
 | `/api/admin/source-sync/graph-embed` | POST | frontend/src/app/api/admin/source-sync/graph-embed/route.ts |
 | `/api/admin/source-sync/graph-sync` | POST | frontend/src/app/api/admin/source-sync/graph-sync/route.ts |
+| `/api/admin/source-sync/lifecycle-documents` | GET | frontend/src/app/api/admin/source-sync/lifecycle-documents/route.ts |
 | `/api/admin/source-sync/onedrive-project-backfill` | POST | frontend/src/app/api/admin/source-sync/onedrive-project-backfill/route.ts |
 | `/api/admin/source-sync/recompute` | POST | frontend/src/app/api/admin/source-sync/recompute/route.ts |
 | `/api/admin/source-sync/status` | GET | frontend/src/app/api/admin/source-sync/status/route.ts |
