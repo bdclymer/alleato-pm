@@ -215,6 +215,8 @@ export function mapDrawingLogRow(row: DrawingLogViewRow): DrawingLogTableRow {
     drawingType: row.drawing_type ?? null,
     drawingCreatedAt: row.drawing_created_at ?? '',
     drawingUpdatedAt: row.drawing_updated_at ?? '',
+    areaId: row.area_id ?? null,
+    areaName: row.area_name ?? null,
     revisionId: row.revision_id ?? null,
     revisionNumber: row.revision_number ?? null,
     drawingDate: row.drawing_date ?? null,
@@ -229,7 +231,7 @@ export function mapDrawingLogRow(row: DrawingLogViewRow): DrawingLogTableRow {
     revisionCreatedAt: row.revision_created_at ?? null,
     setName: row.set_name ?? null,
     uploadedByEmail: row.uploaded_by_email ?? null,
-    isPublished: row.is_published ?? true,
+    isPublished: row.revision_is_published ?? row.is_published ?? true,
     isObsolete: row.is_obsolete ?? false,
   };
 }
@@ -252,6 +254,8 @@ export interface DrawingLogTableRow {
   drawingType: string | null;
   drawingCreatedAt: string;
   drawingUpdatedAt: string;
+  areaId: string | null;
+  areaName: string | null;
   revisionId: string | null;
   revisionNumber: string | null;
   drawingDate: string | null;

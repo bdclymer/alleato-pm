@@ -218,10 +218,44 @@ export function usePublishDrawing(projectId: string) {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
       queryClient.invalidateQueries({ queryKey: ["drawing", projectId, variables.drawingId] });
-      toast.success("Drawing updated");
+      toast.success(variables.publish ? "Drawing published" : "Drawing unpublished");
     },
     onError: (error: Error) => {
-      toast.error("Could not update drawing", { description: error.message });
+      toast.error("Could not update drawing publish status", { description: error.message });
+    },
+  });
+}
+
+/**
+ * React Query mutation for publishing selected drawings in one API operation.
+ */
+export function useBulkPublishDrawings(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (drawingIds: string[]) =>
+      apiFetch<{ succeeded: number; failed: number }>(
+        `/api/projects/${projectId}/drawings/bulk-status`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ drawingIds, action: "publish" }),
+        },
+      ),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
+      if (result.failed > 0) {
+        toast.warning(
+          `${result.succeeded} drawing${result.succeeded === 1 ? "" : "s"} published, ${result.failed} failed`,
+        );
+        return;
+      }
+
+      toast.success(
+        `Published ${result.succeeded} drawing${result.succeeded === 1 ? "" : "s"}`,
+      );
+    },
+    onError: (error: Error) => {
+      toast.error("Could not publish selected drawings", { description: error.message });
     },
   });
 }
