@@ -31,7 +31,6 @@ import {
   MessageCircle,
   Package,
   Receipt,
-  Settings,
   Shield,
   Sparkles,
   Table,
@@ -160,13 +159,6 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     icon: Users,
     description: "People, companies, contacts",
     module: "directory",
-  },
-  {
-    name: "Settings",
-    path: "settings/account",
-    requiresProject: false,
-    icon: Settings,
-    description: "Company account settings",
   },
   {
     name: "Meetings",
@@ -338,7 +330,7 @@ export interface CompanyWideToolSection {
 export const companyWideToolSections: CompanyWideToolSection[] = [
   {
     label: "Company",
-    toolNames: ["Projects", "Company Directory", "Settings"],
+    toolNames: ["Projects", "Company Directory"],
   },
   {
     label: "AI",
@@ -376,7 +368,6 @@ export const coreTools: NavigationTool[] = [
   { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
   { name: "Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" },
   { name: "Tables Directory", path: "tables-directory", icon: Table, requiresProject: false, adminOnly: true },
-  { name: "Settings", path: "settings", icon: Settings, requiresProject: false, adminOnly: true },
   { name: "Admin", path: "admin", icon: Shield, requiresProject: true, adminOnly: true },
 ];
 
@@ -423,7 +414,6 @@ export const subcontractorTools: NavigationTool[] = [
 export const adminTools: NavigationTool[] = [
   { name: "Actions", path: "/actions", icon: Wrench, requiresProject: false, adminOnly: true },
   { name: "Operations Readiness", path: "/operations-readiness", icon: CheckCircle, requiresProject: false, adminOnly: true },
-  { name: "Settings", path: "/settings", icon: Settings, requiresProject: false },
   { name: "Database Inventory", path: "/database-inventory", icon: Table, requiresProject: false, adminOnly: true },
   { name: "What's New", path: "/updates", icon: TrendingUp, requiresProject: false },
   { name: "Documentation", path: "/docs", icon: MessageCircle, requiresProject: false },
@@ -860,14 +850,6 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: MessageCircle,
     description: "Agentation annotation triage",
-    adminOnly: true,
-  },
-  {
-    name: "Settings",
-    path: "settings",
-    requiresProject: false,
-    icon: Settings,
-    description: "App configuration",
     adminOnly: true,
   },
   {
