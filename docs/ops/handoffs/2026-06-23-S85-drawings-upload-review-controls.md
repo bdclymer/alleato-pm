@@ -6,7 +6,7 @@
 2) Task ID: drawings-upload-review-controls
 3) Linear issue: AAI-614
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-614/add-drawings-review-queue-for-unpublished-revisions
-5) Current status: Complete - Pending Push
+5) Current status: Complete - Pushed
 6) Files changed (absolute paths):
    - /Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-23-drawings-upload-review-controls.md
    - /Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-23-S85-drawings-upload-review-controls.md
@@ -43,17 +43,18 @@
 
 ## Current Status
 
-Implemented and verified locally. Pending `codex:finish` push to `origin/main`.
+Implemented, verified locally, and pushed to `origin/main`.
 
 ## Exact Next Step
 
-Run `npm run linear:codex:check -- docs/ops/handoffs/2026-06-23-S85-drawings-upload-review-controls.md`, post the Linear completion comment, then run `codex:finish` with only the S85-owned files.
+No action required for this slice. Continue remaining Drawings parity as separate scoped tasks.
 
 ## Known Pitfalls
 
 - Rotation is reviewed upload metadata only in this slice. The uploaded PDF/image bytes are not transformed yet.
 - No schema migration was introduced; true persisted rotation should be handled in the backend upload/revision model.
 - Do not include unrelated dirty files from active AI/table/drawings viewer slices when finishing.
+- An initial finish commit accidentally included unrelated AI assistant file deletions; repair commit `28384061e` restored those files immediately.
 
 ## Resume Commands
 

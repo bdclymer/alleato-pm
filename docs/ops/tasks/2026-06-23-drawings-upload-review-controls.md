@@ -1,6 +1,6 @@
 # Task: Drawings Upload Review Controls
 
-Status: Complete - Pending Push
+Status: Complete - Pushed
 Owner: Codex
 Created: 2026-06-23
 Linear Issue: AAI-614 - https://linear.app/megankharrison/issue/AAI-614/add-drawings-review-queue-for-unpublished-revisions
