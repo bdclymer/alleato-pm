@@ -1,6 +1,6 @@
 # Task: Drawings Upload Revision Lifecycle
 
-Status: Verified - Not Pushed
+Status: Complete - Pushed
 Owner: Codex
 Created: 2026-06-23
 Linear Issue: AAI-612 - https://linear.app/megankharrison/issue/AAI-612/implement-drawings-uploadrevision-lifecycle-foundation
@@ -93,6 +93,7 @@ filled in. If any item cannot be completed, change `Status` to
 | Browser/user-flow     | `agent-browser` run against `http://localhost:3001/1009/drawings`; artifacts in `tests/agent-browser-runs/2026-06-23-drawings-upload-revision-lifecycle/` | Pass | Uploaded revision `0`, uploaded same drawing number as revision `1`, read back one logical drawing with two revisions, then cleaned up verification data. |
 | DB/provider read-back | N/A | Pass | No migrations or provider configuration changes in this slice. |
 | End-to-end proof      | Route test exercising POST finalization | Pass | Uses signed-upload finalization JSON path and mocked storage public URL. |
+| Finish/publish        | `npm run codex:finish -- --message "Fix drawings upload revision lifecycle" --files ...` | Pass | Commit `db65d2f7c` pushed to `origin/main`; route checks, changed-file quality checks, lint-staged, and push verification passed. |
 
 ## Files Changed
 

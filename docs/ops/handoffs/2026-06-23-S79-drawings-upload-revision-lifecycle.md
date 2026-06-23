@@ -6,7 +6,7 @@
 2) Task ID: drawings-upload-revision-lifecycle
 3) Linear issue: AAI-612
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-612/implement-drawings-uploadrevision-lifecycle-foundation
-5) Current status: Verified - Not Pushed
+5) Current status: Complete - Pushed
 6) Files changed (absolute paths):
    - /Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-23-drawings-procore-parity-audit.md
    - /Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-23-drawings-upload-revision-lifecycle.md
@@ -22,11 +22,12 @@
    - /Users/meganharrison/Documents/alleato-pm/tests/agent-browser-runs/2026-06-23-drawings-upload-revision-lifecycle/readback.json
    - /Users/meganharrison/Documents/alleato-pm/tests/agent-browser-runs/2026-06-23-drawings-upload-revision-lifecycle/cleanup.json
    - /Users/meganharrison/Documents/alleato-pm/tests/agent-browser-runs/2026-06-23-drawings-upload-revision-lifecycle/*.png
-7) Commands run and outcome (pass/fail counts): 4 pass, 1 known timeout
+7) Commands run and outcome (pass/fail counts): 5 pass, 1 known timeout
    - PASS: `npm run test:unit -- --runTestsByPath 'src/app/api/projects/[projectId]/drawings/__tests__/route.test.ts'`
    - PASS: `npx eslint 'src/app/api/projects/[projectId]/drawings/route.ts' 'src/app/api/projects/[projectId]/drawings/__tests__/route.test.ts' 'src/components/drawings/DrawingUploadDialog.tsx' 'src/services/DrawingService.ts' 'src/services/drawings/DrawingRevisionService.ts' 'src/services/drawings/types.ts'`
    - PASS: `npm run linear:codex:check -- docs/ops/handoffs/2026-06-23-S79-drawings-upload-revision-lifecycle.md`
    - PASS: Browser verification with `agent-browser` against `http://localhost:3001/1009/drawings`
+   - PASS: `npm run codex:finish -- --message "Fix drawings upload revision lifecycle" --files ...` committed and pushed `db65d2f7c` to `origin/main`
    - TIMEOUT: `npm run typecheck` failed after the configured 60000ms bounded timeout; command output identifies frontend tsconfig weight as the existing detection gap.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-23-drawings-upload-revision-lifecycle.md`
@@ -53,11 +54,11 @@
 
 ## Current Status
 
-Implemented and verified with targeted tests, targeted lint, and browser read-back. Not pushed because full repository typecheck times out at the existing bounded 60000ms guardrail.
+Implemented, verified with targeted tests, targeted lint, and browser read-back, then pushed to `origin/main` by `codex:finish`.
 
 ## Exact Next Step
 
-Either run `codex:finish` accepting the known typecheck timeout as the blocker, or split the frontend typecheck timeout cleanup into a prerequisite. Next functional slice should be revision-level publish/review schema.
+Next functional slice should be revision-level publish/review schema.
 
 ## Known Pitfalls
 
@@ -79,4 +80,5 @@ npm run linear:codex:check -- docs/ops/handoffs/2026-06-23-S79-drawings-upload-r
 - `npx eslint 'src/app/api/projects/[projectId]/drawings/route.ts' 'src/app/api/projects/[projectId]/drawings/__tests__/route.test.ts' 'src/components/drawings/DrawingUploadDialog.tsx' 'src/services/DrawingService.ts' 'src/services/drawings/DrawingRevisionService.ts' 'src/services/drawings/types.ts'` — PASS.
 - `npm run linear:codex:check -- docs/ops/handoffs/2026-06-23-S79-drawings-upload-revision-lifecycle.md` — PASS.
 - Browser verification — PASS. Evidence shows one logical drawing, revision `1` current, revision `0` retained, drawing `is_published: false`, statuses `under_review`.
+- `npm run codex:finish -- --message "Fix drawings upload revision lifecycle" --files ...` — PASS, commit `db65d2f7c` pushed to `origin/main`.
 - `npm run typecheck` — TIMEOUT after 60000ms with existing bounded-typecheck tsconfig-weight message.
