@@ -49,6 +49,11 @@ function readFilter(
 type DocumentsTableDefinitionOptions = {
   entityKey?: string;
   defaultFilters?: Partial<DocumentFilterState>;
+  /** Filters that ALWAYS win — applied after URL params are merged, preventing
+   *  the parseFiltersFromSearchParams spread from clobbering them back to
+   *  undefined.  Smart-group selection uses this to guarantee the group's
+   *  document_type / type constraint reaches the API regardless of URL state. */
+  forcedFilters?: Partial<DocumentFilterState>;
   searchPlaceholder?: string;
   defaultSortBy?: string;
   defaultSortDirection?: "asc" | "desc";
@@ -127,6 +132,17 @@ export function createDocumentsTableDefinition(
       }
       if (typeof options.forcedProjectId === "number") {
         params.set("project_id", String(options.forcedProjectId));
+      }
+
+      // Apply forced filters AFTER the URL-param-derived filters so that the
+      // parseFiltersFromSearchParams spread (which sets every key, returning
+      // undefined for absent URL params) cannot clobber them back to undefined.
+      if (options.forcedFilters) {
+        for (const [k, v] of Object.entries(options.forcedFilters)) {
+          if (typeof v === "string" && v) {
+            params.set(k, v);
+          }
+        }
       }
       if (
         typeof query.filters.pipeline_stage === "string" &&

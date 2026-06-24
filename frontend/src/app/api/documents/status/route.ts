@@ -123,6 +123,9 @@ export const GET = withApiGuardrails(
       `,
         { count: "exact" },
       )
+      // Align with group-counts/route.ts — exclude soft-deleted records so the
+      // grid count matches the sidebar badge counts.
+      .is("deleted_at", null)
       .order(sortColumn, {
         ascending: sortDirection === "asc",
         nullsFirst: false,

@@ -1,7 +1,4 @@
-import {
-  EMPTY_DOCUMENT_FILTERS,
-  type DocumentFilterState,
-} from "@/features/documents/documents-table-definition";
+import type { DocumentFilterState } from "@/features/documents/documents-table-definition";
 
 export interface SmartGroup {
   id: string;
@@ -24,14 +21,3 @@ export const SMART_GROUPS: SmartGroup[] = [
   { id: "photos", label: "Photos", icon: "photo", filter: { document_type: "photo" }, reclassifyTo: "photo" },
   { id: "emails", label: "Emails", icon: "mail", filter: { type: "email" }, reclassifyTo: null },
 ];
-
-export function smartGroupCountKey(group: SmartGroup): string {
-  return group.id;
-}
-
-export function applySmartGroupFilter(
-  base: DocumentFilterState,
-  group: SmartGroup,
-): DocumentFilterState {
-  return { ...EMPTY_DOCUMENT_FILTERS, ...group.filter };
-}

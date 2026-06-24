@@ -1,9 +1,4 @@
-import {
-  SMART_GROUPS,
-  applySmartGroupFilter,
-  smartGroupCountKey,
-} from "@/features/documents/smart-groups";
-import { EMPTY_DOCUMENT_FILTERS } from "@/features/documents/documents-table-definition";
+import { SMART_GROUPS } from "@/features/documents/smart-groups";
 
 describe("smart-groups", () => {
   it("includes an All group with no filter and no reclassify", () => {
@@ -24,22 +19,8 @@ describe("smart-groups", () => {
     expect(photos!.filter.document_type).toBe("photo");
   });
 
-  it("applySmartGroupFilter overlays group filter onto base, clearing others", () => {
-    const base = { ...EMPTY_DOCUMENT_FILTERS, category: "contract" };
-    const drawings = SMART_GROUPS.find((g) => g.id === "drawings")!;
-    const result = applySmartGroupFilter(base, drawings);
-    expect(result.document_type).toBe("drawing");
-    expect(result.category).toBeUndefined();
-  });
-
-  it("applySmartGroupFilter for All resets to empty filters", () => {
-    const base = { ...EMPTY_DOCUMENT_FILTERS, document_type: "drawing" };
-    const all = SMART_GROUPS.find((g) => g.id === "all")!;
-    expect(applySmartGroupFilter(base, all)).toEqual(EMPTY_DOCUMENT_FILTERS);
-  });
-
-  it("count key is stable and unique per group", () => {
-    const keys = SMART_GROUPS.map(smartGroupCountKey);
-    expect(new Set(keys).size).toBe(keys.length);
+  it("every group has a unique id", () => {
+    const ids = SMART_GROUPS.map((g) => g.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

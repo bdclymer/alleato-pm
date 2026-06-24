@@ -34,6 +34,7 @@ export function ProjectDocumentsBrowser({
   const [activeGroupId, setActiveGroupId] = React.useState("all");
   const [selectedDoc, setSelectedDoc] = React.useState<PipelineDoc | null>(null);
   const [counts, setCounts] = React.useState<SmartGroupCounts>({});
+  const [refreshNonce, setRefreshNonce] = React.useState(0);
   const { ratio, onHandleDown, containerRef } = useResizableSplit(
     "documents-browser-split",
     0.5,
@@ -62,7 +63,7 @@ export function ProjectDocumentsBrowser({
       createDocumentsTableDefinition({
         entityKey: "project-documents-unified",
         forcedProjectId: projectId,
-        defaultFilters: activeGroup.filter,
+        forcedFilters: activeGroup.filter,
         defaultView: "card",
       }),
     [projectId, activeGroup],
@@ -84,6 +85,7 @@ export function ProjectDocumentsBrowser({
         });
         toast.success(`Moved to ${group.label}`);
         loadCounts();
+        setRefreshNonce((n) => n + 1);
       } catch {
         toast.error("Could not reclassify document. Try again.");
       }
@@ -113,7 +115,7 @@ export function ProjectDocumentsBrowser({
               style={{ flexBasis: `${ratio * 100}%` }}
             >
               <DocumentsTablePage
-                key={activeGroupId}
+                key={`${activeGroupId}:${refreshNonce}`}
                 definition={definition}
                 title="Documents"
                 description="Project document library"
