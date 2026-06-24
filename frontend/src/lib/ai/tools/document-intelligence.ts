@@ -497,13 +497,88 @@ export function createDocumentIntelligenceTools(
             return { error: `Submittal ${resolvedSubmittalId} not found.` };
           }
 
-          // ── 4. Fetch submittal documents (uploaded files with extracted text) ─
-          const submittalDocsResp = await supabase
-            .from("submittal_documents")
-            .select("id, document_name, document_type, extracted_text, ai_analysis, page_count")
-            .eq("submittal_id", resolvedSubmittalId)
-            .not("extracted_text", "is", null);
-          const submittalDocs = submittalDocsResp.data ?? [];
+          // ── 4. Fetch submittal documents (extracted text from uploaded files) ─
+          // Primary: submittal_doc_links → document_metadata.content (EntityAttachments uploads)
+          // Fallback: submittal_documents.extracted_text (legacy Procore import path)
+          const docLinksResp = await supabase
+            .from("submittal_doc_links")
+            .select("document_metadata_id")
+            .eq("submittal_id", resolvedSubmittalId);
+          const docLinkMetaIds = (docLinksResp.data ?? []).map(
+            (r) => (r as unknown as { document_metadata_id: string }).document_metadata_id,
+          );
+
+          let submittalDocs: Array<{
+            document_name: string;
+            extracted_text: string | null;
+          }> = [];
+
+          if (docLinkMetaIds.length > 0) {
+            for (const metaId of docLinkMetaIds) {
+              // Primary: vision page summaries (GPT-4o extracted clean prose)
+              const visionResp = await supabase
+                .from("document_page_intelligence")
+                .select("page_number, sheet_number, sheet_title, ai_summary, implied_submittals, notes_and_requirements")
+                .eq("document_metadata_id", metaId)
+                .order("page_number", { ascending: true });
+              const visionPages = visionResp.data ?? [];
+              if (visionPages.length > 0) {
+                const combined = visionPages
+                  .filter((p) => p.ai_summary)
+                  .map((p) => {
+                    const header = [p.sheet_number, p.sheet_title].filter(Boolean).join(" — ");
+                    return header ? `[${header}]\n${p.ai_summary}` : String(p.ai_summary);
+                  })
+                  .join("\n\n");
+                if (combined.trim()) {
+                  submittalDocs.push({ document_name: "Submittal Attachment", extracted_text: combined });
+                  continue;
+                }
+              }
+
+              // Fallback 1: RAG chunks (vision embeddings or OCR chunks)
+              const chunksResp = await ragSupabase
+                .from("document_chunks")
+                .select("text, chunk_index")
+                .eq("document_id", metaId)
+                .order("chunk_index", { ascending: true })
+                .limit(10);
+              if ((chunksResp.data ?? []).length > 0) {
+                const combined = (chunksResp.data ?? [])
+                  .map((c) => (c.text as string).substring(0, 600))
+                  .join("\n\n");
+                submittalDocs.push({ document_name: "Submittal Attachment", extracted_text: combined });
+                continue;
+              }
+
+              // Fallback 2: OCR text from document_metadata.content
+              const metaResp = await supabase
+                .from("document_metadata")
+                .select("title, content")
+                .eq("id", metaId)
+                .maybeSingle();
+              const text = (metaResp.data?.content as string | null)?.trim();
+              if (text) {
+                submittalDocs.push({
+                  document_name: (metaResp.data?.title as string) ?? "Attachment",
+                  extracted_text: text,
+                });
+              }
+            }
+          }
+
+          // Fallback: legacy submittal_documents table
+          if (submittalDocs.length === 0) {
+            const submittalDocsResp = await supabase
+              .from("submittal_documents")
+              .select("id, document_name, document_type, extracted_text, ai_analysis, page_count")
+              .eq("submittal_id", resolvedSubmittalId)
+              .not("extracted_text", "is", null);
+            submittalDocs = (submittalDocsResp.data ?? []).map((d) => ({
+              document_name: d.document_name as string,
+              extracted_text: d.extracted_text as string | null,
+            }));
+          }
 
           // ── 5. Fetch linked drawings via submittal_linked_drawings ──────────
           const linkedDrawingsResp = await supabase
@@ -611,26 +686,48 @@ export function createDocumentIntelligenceTools(
             const metaId = drawing.document_metadata_id as string | null;
             if (!metaId) continue;
 
-            // Primary: RAG DB chunks (post-embedding)
-            const chunksResp = await ragSupabase
-              .from("document_chunks")
-              .select("text, chunk_index")
-              .eq("document_id", metaId)
-              .order("chunk_index", { ascending: true })
-              .limit(8);
+            const excerpts: string[] = [];
 
-            const excerpts = (chunksResp.data ?? []).map((c) =>
-              (c.text as string).substring(0, 600),
-            );
+            // Primary: vision page summaries (GPT-4o extracted, spatially aware)
+            const drawVisionResp = await supabase
+              .from("document_page_intelligence")
+              .select("page_number, sheet_number, sheet_title, ai_summary, implied_submittals, notes_and_requirements")
+              .eq("document_metadata_id", metaId)
+              .order("page_number", { ascending: true });
+            for (const p of drawVisionResp.data ?? []) {
+              if (!p.ai_summary) continue;
+              const header = [p.sheet_number, p.sheet_title].filter(Boolean).join(" — ");
+              const extra = [
+                ...(p.implied_submittals as string[] ?? []).map((s: string) => `Required submittal: ${s}`),
+                ...(p.notes_and_requirements as string[] ?? []).slice(0, 3),
+              ].join("; ");
+              excerpts.push(
+                [header ? `[${header}]` : null, p.ai_summary, extra || null]
+                  .filter(Boolean)
+                  .join("\n") as string
+              );
+            }
 
-            // Fallback: OCR text from PM APP document_metadata.content
-            // (drawings are OCR'd immediately on upload; embedding happens on the next 30-min cron)
+            // Fallback 1: RAG DB chunks (post-embedding)
+            if (excerpts.length === 0) {
+              const chunksResp = await ragSupabase
+                .from("document_chunks")
+                .select("text, chunk_index")
+                .eq("document_id", metaId)
+                .order("chunk_index", { ascending: true })
+                .limit(8);
+              excerpts.push(
+                ...(chunksResp.data ?? []).map((c) => (c.text as string).substring(0, 600))
+              );
+            }
+
+            // Fallback 2: OCR text from PM APP document_metadata.content
             if (excerpts.length === 0) {
               const dmResp = await supabase
                 .from("document_metadata")
                 .select("content, status")
                 .eq("id", metaId)
-                .in("status", ["raw_ingested", "ocr_partial"])
+                .in("status", ["raw_ingested", "ocr_partial", "embedded"])
                 .maybeSingle();
               const rawText = (dmResp.data?.content as string | null) ?? "";
               if (rawText.trim()) {

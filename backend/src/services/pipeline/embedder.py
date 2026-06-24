@@ -414,6 +414,49 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
 
     logger.info("[Embedder] Created %d chunks (transcript + sections)", len(all_chunks))
 
+    # 5b. Add vision page summaries (for PDF documents analyzed by vision_analyzer)
+    # These are clean GPT-4o prose summaries of each page — far more useful for
+    # semantic search than raw OCR text.
+    try:
+        vision_resp = (
+            client.table("document_page_intelligence")
+            .select("page_number, sheet_number, sheet_title, discipline, ai_summary, implied_submittals, notes_and_requirements")
+            .eq("document_metadata_id", metadata_id)
+            .order("page_number")
+            .execute()
+        )
+        vision_pages = vision_resp.data or []
+        for page in vision_pages:
+            summary = page.get("ai_summary") or ""
+            if not summary.strip():
+                continue
+            # Enrich with structured fields so embedding captures the metadata too
+            extras = []
+            if page.get("sheet_number"):
+                extras.append(f"Sheet: {page['sheet_number']}")
+            if page.get("sheet_title"):
+                extras.append(f"Title: {page['sheet_title']}")
+            if page.get("discipline"):
+                extras.append(f"Discipline: {page['discipline']}")
+            if page.get("implied_submittals"):
+                extras.append("Implied submittals: " + ", ".join(page["implied_submittals"]))
+            if page.get("notes_and_requirements"):
+                extras.append("Key notes: " + "; ".join(page["notes_and_requirements"][:5]))
+            enriched = "\n".join(extras + [summary]) if extras else summary
+            all_chunks.append(
+                DocumentChunk(
+                    content=enriched,
+                    chunk_index=page.get("page_number", 0),
+                    segment_index=-3,  # sentinel: vision page
+                    doc_type="vision_page_summary",
+                    content_hash=_hash_content(enriched),
+                )
+            )
+        if vision_pages:
+            logger.info("[Embedder] Added %d vision page chunks", len(vision_pages))
+    except Exception as exc:
+        logger.warning("[Embedder] Failed to load vision pages (non-fatal): %s", exc)
+
     # 6. Mark job as chunked before expensive embedding calls
     update_ingestion_job_state(
         metadata_id,
@@ -499,6 +542,7 @@ def _doc_type_to_source_type(doc_type: str) -> str:
         "meeting_summary": "meeting_summary",
         "segment_summary": "meeting_segment_summary",
         "notes_topic": "meeting_notes",
+        "vision_page_summary": "vision_page_summary",
     }
     if doc_type in mapping:
         return mapping[doc_type]

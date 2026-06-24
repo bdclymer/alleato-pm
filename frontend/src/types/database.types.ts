@@ -12045,6 +12045,114 @@ export type Database = {
           },
         ]
       }
+      document_page_intelligence: {
+        Row: {
+          ai_summary: string | null
+          detail_references: string[] | null
+          discipline: string | null
+          document_metadata_id: string
+          id: string
+          implied_submittals: string[] | null
+          notes_and_requirements: string[] | null
+          page_number: number
+          processed_at: string | null
+          raw_extraction: Json | null
+          scale: string | null
+          sheet_number: string | null
+          sheet_title: string | null
+          vision_model: string | null
+        }
+        Insert: {
+          ai_summary?: string | null
+          detail_references?: string[] | null
+          discipline?: string | null
+          document_metadata_id: string
+          id?: string
+          implied_submittals?: string[] | null
+          notes_and_requirements?: string[] | null
+          page_number: number
+          processed_at?: string | null
+          raw_extraction?: Json | null
+          scale?: string | null
+          sheet_number?: string | null
+          sheet_title?: string | null
+          vision_model?: string | null
+        }
+        Update: {
+          ai_summary?: string | null
+          detail_references?: string[] | null
+          discipline?: string | null
+          document_metadata_id?: string
+          id?: string
+          implied_submittals?: string[] | null
+          notes_and_requirements?: string[] | null
+          page_number?: number
+          processed_at?: string | null
+          raw_extraction?: Json | null
+          scale?: string | null
+          sheet_number?: string | null
+          sheet_title?: string | null
+          vision_model?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_rows: {
         Row: {
           dataset_id: string | null
@@ -20538,11 +20646,11 @@ export type Database = {
           country: string | null
           created_at: string | null
           email: string | null
+          facebook: string | null
           first_name: string
           id: string
           job_title: string | null
           last_name: string
-          facebook: string | null
           linkedin: string | null
           metadata: Json | null
           notes: string | null
@@ -20567,9 +20675,9 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           email?: string | null
+          facebook?: string | null
           first_name: string
           id?: string
-          facebook?: string | null
           job_title?: string | null
           last_name: string
           linkedin?: string | null
