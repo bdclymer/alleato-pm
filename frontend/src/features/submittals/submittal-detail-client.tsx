@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -60,7 +59,6 @@ import {
   useDeleteSubmittal,
   useDuplicateSubmittal,
   useRespondToWorkflowStep,
-  useSubmittalLinkedDrawings,
   useWorkflowTemplates,
   type SubmittalDetail,
   type WorkflowTemplateStep,
@@ -71,8 +69,6 @@ import { appToast as toast } from "@/lib/toast/app-toast";
 import { useConfirm } from "@/hooks/use-confirm";
 import { SubmittalFormPage } from "./submittal-form-page";
 import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
-import { SubmittalLinkedDrawingsPanel } from "./submittal-linked-drawings-panel";
-import { DrawingPickerDialog } from "./drawing-picker-dialog";
 import { SubmittalAIReviewPanel } from "./submittal-ai-review-panel";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -505,15 +501,12 @@ export function SubmittalDetailClient({
     router.refresh();
   }
 
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [activeTab, setActiveTab] = React.useState("details");
   const [showAddStep, setShowAddStep] = React.useState(false);
-  const { data: linkedDrawings } = useSubmittalLinkedDrawings(projectId, submittal.id);
 
   const workflowSteps = submittal.submittal_workflow_steps ?? [];
   const distributions = submittal.submittal_distributions ?? [];
   const history = submittal.submittal_history ?? [];
-  const staticLinkedDrawings = submittal.submittal_linked_drawings ?? [];
   const linkedRfis = submittal.linked_rfis ?? [];
 
   React.useEffect(() => {
@@ -917,15 +910,6 @@ export function SubmittalDetailClient({
                     )}
                   </DetailPanel>
 
-                  {/* Linked Drawings */}
-                  <section>
-                    <SubmittalLinkedDrawingsPanel
-                      projectId={projectId}
-                      submittalId={submittal.id}
-                      onAddClick={() => setPickerOpen(true)}
-                    />
-                  </section>
-
                   {/* Attachments */}
                   <section>
                     <SectionRuleHeading label="Attachments" />
@@ -1063,12 +1047,6 @@ export function SubmittalDetailClient({
           </div>
         )}
       </PageShell>
-      <DrawingPickerDialog
-        projectId={projectId}
-        submittalId={submittal.id}
-        open={pickerOpen}
-        onOpenChange={setPickerOpen}
-      />
     </>
   );
 }
