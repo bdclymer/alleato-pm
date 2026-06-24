@@ -421,11 +421,7 @@ export interface CompanyWideToolSection {
 export const companyWideToolSections: CompanyWideToolSection[] = [
   {
     label: "Company",
-    toolNames: ["Projects", "Company Directory"],
-  },
-  {
-    label: "AI",
-    toolNames: ["Alleato AI"],
+    toolNames: ["Projects", "Company Directory", "Alleato AI"],
   },
   {
     label: "Work",

@@ -858,7 +858,7 @@ function CompanyToolsPanel({
   const sections = adminTools.length
     ? [
         ...companyWideToolSections,
-        { label: "Admin", toolNames: adminTools.map((tool) => tool.name) },
+        { label: "AI", toolNames: adminTools.map((tool) => tool.name) },
       ]
     : companyWideToolSections;
   const allTools = [...tools, ...adminTools];
