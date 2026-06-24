@@ -87,8 +87,9 @@ const STEP_TYPES = ["Approver", "Submitter", "Reviewer"] as const;
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveUserName(users: AuthUser[], id: string): string {
-  const u = users.find((u) => u.id === id);
-  if (!u) return id;
+  // Match by auth_user_id OR people.id (submittal fields store people.id)
+  const u = users.find((u) => u.id === id || u.person_id === id);
+  if (!u) return "";
   const name = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim();
   return name || u.email;
 }
@@ -133,7 +134,8 @@ function BallInCourtChip({
   users: AuthUser[];
 }) {
   const name = resolveUserName(users, userId);
-  const initials = getInitials(name === userId ? "??" : name);
+  if (!name) return null;
+  const initials = getInitials(name);
   return (
     <div className="flex items-center gap-2">
       <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -759,7 +761,7 @@ export function SubmittalDetailClient({
                             value={submittal.received_from ?? resolveUserName(allUsers, submittal.received_from_id!)}
                           />
                         )}
-                        {submittal.submittal_manager_id && (
+                        {submittal.submittal_manager_id && resolveUserName(allUsers, submittal.submittal_manager_id) && (
                           <Property
                             label="Manager"
                             value={resolveUserName(allUsers, submittal.submittal_manager_id)}
