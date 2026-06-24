@@ -132,12 +132,19 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const supabase = createServiceClient();
 
     async function loadCategory(category: IngestionCategory): Promise<IngestionItem[]> {
-      let query = supabase
+      const base = supabase
         .from("document_metadata")
         .select(SELECT_COLS)
         .eq("project_id", numericProjectId)
         .is("deleted_at", null);
-      query = CATEGORY_FILTERS[category](query) as typeof query;
+      let query =
+        category === "meetings"
+          ? base.eq("type", "meeting")
+          : category === "emails"
+            ? base.in("type", ["email", "email_attachment"])
+            : category === "teams"
+              ? base.ilike("type", "teams%")
+              : base.or("source_system.ilike.%sharepoint%,source_system.ilike.%onedrive%,type.eq.document");
       if (bounds) {
         query = query.gte("created_at", bounds.start).lt("created_at", bounds.end);
       }
