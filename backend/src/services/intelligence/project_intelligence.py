@@ -670,9 +670,28 @@ def refresh_project_intelligence(
         )
         return result
 
+    # Confidence is calibrated from how well-grounded this read is — cited-source
+    # count + whether the model tried to fabricate citations — capped by the model's
+    # own self-assessment. (Previously every packet shipped a flat "medium".)
+    cited_sources = len((packet_json.get("sourceSet") or {}).get("sources") or [])
+    fabricated = int(result.get("fabricated_cites_dropped") or 0)
+    if cited_sources >= 12 and fabricated <= 1:
+        _derived = "high"
+    elif cited_sources <= 3 or fabricated > 3:
+        _derived = "low"
+    else:
+        _derived = "medium"
+    # The model's own confidence is uselessly flat ("medium" on every run), so the
+    # grounding-derived value drives it — but still honor a genuine model "low".
+    _llm = (summary.get("confidence") or "medium").lower()
+    overall_confidence = "low" if _llm == "low" else _derived
     confidence_summary = {
-        "overall": summary.get("confidence") or "medium",
-        "reason": "Synthesized from prior state + raw communications + structured numbers.",
+        "overall": overall_confidence,
+        "reason": (
+            f"Grounded in {cited_sources} cited source{'' if cited_sources == 1 else 's'}"
+            + (f"; {fabricated} unverifiable citation(s) dropped" if fabricated else "")
+            + (f"; {len(docs)} new this run." if docs else "; no new source docs this run.")
+        ),
     }
     source_coverage = {
         "deltaDocCount": len(docs),
@@ -680,6 +699,23 @@ def refresh_project_intelligence(
         "latestSourceAt": covered_end_at,
         "categoryCoverage": [],
     }
+
+    # Distinct fields: current_status = the single most important current focus (a
+    # headline, NOT a copy of the executive read); why_it_matters = the top
+    # immediate-attention rationale. (Previously current_status duplicated
+    # executive_summary verbatim and why_it_matters was always null.)
+    _focus = summary.get("currentFocus") or []
+    current_status_line = (
+        (_focus[0].get("title") or _focus[0].get("summary"))
+        if _focus and isinstance(_focus[0], dict)
+        else None
+    )
+    _attention = summary.get("immediateAttention") or []
+    why_it_matters_text = (
+        (_attention[0].get("detail") or _attention[0].get("title"))
+        if _attention and isinstance(_attention[0], dict)
+        else None
+    )
 
     payload = {
         "target_id": target_id,
@@ -690,9 +726,9 @@ def refresh_project_intelligence(
         "covered_end_at": covered_end_at,
         "freshness_status": "fresh" if docs else "partial",
         "executive_summary": summary.get("currentExecutiveRead"),
-        "current_status": summary.get("currentExecutiveRead"),
+        "current_status": current_status_line,
         "strategic_read": (summary.get("financialPosition") or {}).get("summary"),
-        "why_it_matters": None,
+        "why_it_matters": why_it_matters_text,
         "recommended_next_moves": [a["title"] for a in summary.get("recommendedActions", [])][:5],
         "confidence_summary": confidence_summary,
         "source_coverage": source_coverage,
