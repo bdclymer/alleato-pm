@@ -55,6 +55,7 @@ type DocumentsTableDefinitionOptions = {
   columns?: ColumnConfig[];
   defaultVisibleColumns?: string[];
   forcedProjectId?: number;
+  defaultView?: "table" | "card" | "list";
 };
 
 export function createDocumentsTableDefinition(
@@ -63,7 +64,7 @@ export function createDocumentsTableDefinition(
   return {
     entityKey: options.entityKey ?? "documents",
     allowedViews: ["table", "card", "list"],
-    defaultView: "table",
+    defaultView: options.defaultView ?? "table",
     defaultPerPage: 25,
     defaultSortBy: options.defaultSortBy ?? "created_at",
     defaultSortDirection: options.defaultSortDirection ?? "desc",
