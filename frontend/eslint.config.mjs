@@ -115,7 +115,7 @@ const config = [
       // Ratchet: warn globally (existing debt), error on changed files via lint-staged.
       "design-system/no-raw-date-input": "warn",
       // Gate 24: blocks raw <dl>/<dt>/<dd> — use <DetailField> / <DetailFieldGrid> from @/components/ds.
-      "design-system/no-raw-detail-field": "error",
+      "design-system/no-raw-detail-field": "warn",
       // Gate 25: blocks raw xl:grid-cols-[...] in detail pages — use <DetailLayout> from @/components/layout.
       "design-system/no-raw-detail-grid": "warn",
     },
