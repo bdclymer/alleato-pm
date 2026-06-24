@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Calendar, ExternalLink, FileText, Mail, MessageSquare } from "lucide-react";
+import { Calendar, ExternalLink, FileText, Mail, MessageSquare } from "lucide-react";
 
 import { EmptyState, InfoAlert } from "@/components/ds";
+import { Sparkline } from "@/components/ui/charts";
 import {
   InlineTable,
   InlineTableBody,
@@ -16,7 +17,6 @@ import {
 } from "@/components/ds/inline-table";
 import { apiFetch } from "@/lib/api-client";
 import type {
-  IngestionFeedError,
   IngestionFeedResponse,
   IngestionItem,
 } from "@/app/api/projects/[projectId]/ingestion-feed/route";
@@ -33,19 +33,13 @@ function formatItemDate(iso: string | null): string {
   return d.toLocaleDateString("en-US", opts);
 }
 
-const worstSeverity = (errors: IngestionFeedError[]): "critical" | "warning" | "info" =>
-  errors.some((e) => e.severity === "critical")
-    ? "critical"
-    : errors.some((e) => e.severity === "warning")
-      ? "warning"
-      : "info";
-
 function CategoryTable({
   label,
   emptyNoun,
   icon,
   items,
   capped,
+  trend,
   showSource = false,
 }: {
   label: string;
@@ -53,8 +47,10 @@ function CategoryTable({
   icon: React.ReactNode;
   items: IngestionItem[];
   capped: boolean;
+  trend: number[];
   showSource?: boolean;
 }) {
+  const hasTrend = trend.some((v) => v > 0);
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
@@ -64,6 +60,15 @@ function CategoryTable({
           {items.length}
           {capped ? "+" : ""}
         </span>
+        {hasTrend ? (
+          <Sparkline
+            data={trend.map((v) => ({ v }))}
+            categories={["v"]}
+            height="22px"
+            className="ml-auto w-20 shrink-0"
+            colors={["hsl(var(--primary))"]}
+          />
+        ) : null}
       </div>
 
       {items.length === 0 ? (
@@ -117,7 +122,6 @@ export function DailyIngestionFeed({ projectId }: { projectId: number }) {
     staleTime: 60_000,
   });
 
-  const errors = data?.errors ?? [];
   const limit = data?.perCategoryLimit ?? 25;
   const total =
     (data?.counts.meetings ?? 0) +
@@ -137,25 +141,6 @@ export function DailyIngestionFeed({ projectId }: { projectId: number }) {
           </span>
         </p>
       </div>
-
-      {errors.length > 0 ? (
-        <InfoAlert variant={worstSeverity(errors) === "critical" ? "error" : "warning"} role="alert">
-          <span className="font-semibold">
-            {errors.length} active pipeline {errors.length === 1 ? "alert" : "alerts"} — synced data may be stale.
-          </span>
-          <ul className="mt-1.5 space-y-1">
-            {errors.slice(0, 5).map((e, i) => (
-              <li key={`${e.source}-${i}`} className="flex items-start gap-1.5 text-sm">
-                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                <span>
-                  <span className="font-medium">{e.title}</span>
-                  {e.message ? ` — ${e.message}` : ""}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </InfoAlert>
-      ) : null}
 
       {isError ? (
         <InfoAlert variant="error" role="alert">
@@ -177,6 +162,7 @@ export function DailyIngestionFeed({ projectId }: { projectId: number }) {
             icon={<Calendar className="h-4 w-4" />}
             items={data?.meetings ?? []}
             capped={capped(data?.counts.meetings)}
+            trend={data?.trends.meetings ?? []}
           />
           <CategoryTable
             label="SharePoint documents"
@@ -184,6 +170,7 @@ export function DailyIngestionFeed({ projectId }: { projectId: number }) {
             icon={<FileText className="h-4 w-4" />}
             items={data?.documents ?? []}
             capped={capped(data?.counts.documents)}
+            trend={data?.trends.documents ?? []}
             showSource
           />
           <CategoryTable
@@ -192,6 +179,7 @@ export function DailyIngestionFeed({ projectId }: { projectId: number }) {
             icon={<Mail className="h-4 w-4" />}
             items={data?.emails ?? []}
             capped={capped(data?.counts.emails)}
+            trend={data?.trends.emails ?? []}
           />
           <CategoryTable
             label="Teams messages"
@@ -199,6 +187,7 @@ export function DailyIngestionFeed({ projectId }: { projectId: number }) {
             icon={<MessageSquare className="h-4 w-4" />}
             items={data?.teams ?? []}
             capped={capped(data?.counts.teams)}
+            trend={data?.trends.teams ?? []}
           />
         </div>
       )}

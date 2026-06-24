@@ -54,6 +54,8 @@ export type IngestionFeedResponse = {
   date: string | null; // set in "day" mode
   perCategoryLimit: number;
   counts: Record<IngestionCategory, number>;
+  /** Daily ingested-item counts per category over the last TREND_DAYS (oldest→newest), for sparklines. */
+  trends: Record<IngestionCategory, number[]>;
   meetings: IngestionItem[];
   documents: IngestionItem[];
   emails: IngestionItem[];
@@ -62,6 +64,26 @@ export type IngestionFeedResponse = {
 };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TREND_DAYS = 14;
+
+function categoryOf(type: string | null, sourceSystem: string | null): IngestionCategory | null {
+  const t = (type || "").toLowerCase();
+  const s = (sourceSystem || "").toLowerCase();
+  if (t === "meeting") return "meetings";
+  if (t === "email" || t === "email_attachment") return "emails";
+  if (t.startsWith("teams")) return "teams";
+  if (s.includes("sharepoint") || s.includes("onedrive") || t === "document") return "documents";
+  return null;
+}
+
+function emptyTrends(): Record<IngestionCategory, number[]> {
+  return {
+    meetings: Array<number>(TREND_DAYS).fill(0),
+    documents: Array<number>(TREND_DAYS).fill(0),
+    emails: Array<number>(TREND_DAYS).fill(0),
+    teams: Array<number>(TREND_DAYS).fill(0),
+  };
+}
 
 type DocRow = {
   id: string;
@@ -165,6 +187,30 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       );
     }
 
+    // Per-category daily activity over the last TREND_DAYS, for the sparklines.
+    // Best-effort: a trend read failure must not break the feed.
+    const trends = emptyTrends();
+    try {
+      const now = new Date();
+      const todayStartMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+      const windowStartMs = todayStartMs - (TREND_DAYS - 1) * 86_400_000;
+      const { data: trendRows } = await supabase
+        .from("document_metadata")
+        .select("type, source_system, created_at")
+        .eq("project_id", numericProjectId)
+        .is("deleted_at", null)
+        .gte("created_at", new Date(windowStartMs).toISOString())
+        .limit(5000);
+      for (const row of (trendRows ?? []) as Pick<DocRow, "type" | "source_system" | "created_at">[]) {
+        const cat = categoryOf(row.type, row.source_system);
+        if (!cat || !row.created_at) continue;
+        const idx = Math.floor((Date.parse(row.created_at) - windowStartMs) / 86_400_000);
+        if (idx >= 0 && idx < TREND_DAYS) trends[cat][idx] += 1;
+      }
+    } catch {
+      // leave zeroed trends
+    }
+
     // Active pipeline alerts (operational health). Best-effort: a broken alert
     // feed must not break the page.
     let errors: IngestionFeedError[] = [];
@@ -197,6 +243,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         emails: emails.length,
         teams: teams.length,
       },
+      trends,
       meetings,
       documents,
       emails,
