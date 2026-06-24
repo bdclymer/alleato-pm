@@ -273,9 +273,36 @@ def notify(alerts: List[Dict[str, Any]], *, now: Optional[datetime] = None) -> D
     }
 
 
+def _outlook_promotion_alert() -> Optional[Dict[str, Any]]:
+    """Page-worthy descriptor when Outlook emails arrive but stop promoting into
+    the document store (the 2026-06-17 silent-block signature). Best-effort —
+    never raises, so it cannot take down the notifier it rides on."""
+    try:
+        from .outlook_promotion_freshness import check_outlook_promotion_freshness
+
+        promo = check_outlook_promotion_freshness()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[PipelineAlert] promotion-freshness check failed: %s", exc)
+        return None
+    if promo.get("status") != "blocked":
+        return None
+    return {
+        "source": "outlook_promotion",
+        "label": "Outlook email promotion (intake → document store)",
+        "reason": promo.get("detail") or "Promotion into document_metadata is blocked.",
+        "failed": promo.get("doc_store_age_minutes") or 0,
+        "succeeded": 0,
+        "successAgeMinutes": promo.get("doc_store_age_minutes"),
+        "lastError": None,
+    }
+
+
 def run_pipeline_alert_check() -> Dict[str, Any]:
     now = _utcnow()
     alerts = evaluate_pipeline_outcomes(now)
+    promo_alert = _outlook_promotion_alert()
+    if promo_alert:
+        alerts.append(promo_alert)
     result = notify(alerts, now=now)
     result["checkedAt"] = now.isoformat()
     result["alerts"] = alerts
