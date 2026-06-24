@@ -42,6 +42,7 @@ import {
   subcontractorSidebarGroup,
   companyWideHeaderTools,
   companyWideToolSections,
+  developerCompanyAdminTools,
   buildToolUrl,
   extractProjectId,
   OWNER_EMAIL,
@@ -334,7 +335,14 @@ function ExpandedCompanyWideTools({
     const sectionToolNames = new Set(
       companyWideToolSections.flatMap((section) => section.toolNames)
     )
-    return companyWideToolSections
+    // Tools not covered by a named section (e.g. developer admin tools) render
+    // under an "Admin" section, mirroring the header Company Tools panel.
+    const extraTools = tools.filter((tool) => !sectionToolNames.has(tool.name))
+    if (extraTools.length === 0) return companyWideToolSections
+    return [
+      ...companyWideToolSections,
+      { label: "Admin", toolNames: extraTools.map((tool) => tool.name) },
+    ]
   }, [tools])
 
   return (
@@ -603,8 +611,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [filterTools, isSubcontractor, projectId])
 
   const companyWideTools = React.useMemo<NavigationTool[]>(
-    () => [...companyWideHeaderTools],
-    []
+    () => [
+      ...companyWideHeaderTools,
+      ...(isDeveloper ? developerCompanyAdminTools : []),
+    ],
+    [isDeveloper]
   )
   const visibleCompanyWideTools = React.useMemo(
     () => filterTools(companyWideTools),
