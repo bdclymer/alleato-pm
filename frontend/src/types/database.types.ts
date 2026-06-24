@@ -20542,6 +20542,7 @@ export type Database = {
           id: string
           job_title: string | null
           last_name: string
+          facebook: string | null
           linkedin: string | null
           metadata: Json | null
           notes: string | null
@@ -20552,6 +20553,7 @@ export type Database = {
           state: string | null
           status: string | null
           updated_at: string | null
+          x_handle: string | null
           zip: string | null
         }
         Insert: {
@@ -20567,6 +20569,7 @@ export type Database = {
           email?: string | null
           first_name: string
           id?: string
+          facebook?: string | null
           job_title?: string | null
           last_name: string
           linkedin?: string | null
@@ -20579,6 +20582,7 @@ export type Database = {
           state?: string | null
           status?: string | null
           updated_at?: string | null
+          x_handle?: string | null
           zip?: string | null
         }
         Update: {
@@ -20592,6 +20596,7 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           email?: string | null
+          facebook?: string | null
           first_name?: string
           id?: string
           job_title?: string | null
@@ -20606,6 +20611,7 @@ export type Database = {
           state?: string | null
           status?: string | null
           updated_at?: string | null
+          x_handle?: string | null
           zip?: string | null
         }
         Relationships: [
