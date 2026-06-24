@@ -43,6 +43,7 @@ import { SplitPage, useSplitPage } from '@/components/ui/split-page';
 import { BarChart, AreaChart, LineChart, Sparkline } from '@/components/ui/charts';
 import { Tour, TourDialog, TourDialogHeader, TourDialogBody, TourDialogFooter, TourNextButton, TourDismissButton } from '@/components/ui/tour';
 import { FiltersProvider, FiltersAddButton, ActiveFiltersList, NoFilteredResults, useFilters, type FilterDef, type ActiveFilter } from '@/components/ui/filters';
+import { StatBreakdown, StatBreakdownCard, StatBreakdownGrid } from '@/components/ui/stat-breakdown';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Upload, Navigation2, Network, Map, RefreshCcw, ScanText, LayoutList, PanelLeft, Inbox, ArrowLeft, TrendingUp, Table } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -95,6 +96,7 @@ const SECTIONS = [
   { id: 'tour', label: 'Tour', parent: true },
   { id: 'advanced-data', label: 'Advanced Data', icon: Table },
   { id: 'filters', label: 'Filters', parent: true },
+  { id: 'stat-breakdown', label: 'Stat Breakdown', parent: true },
 ];
 
 function scrollTo(id: string) {
@@ -1576,6 +1578,48 @@ export default function UILibraryPage() {
             previewClassName="items-start justify-start"
           >
             <FiltersDemo />
+          </ComponentSection>
+
+          <ComponentSection
+            id="stat-breakdown"
+            name="Stat Breakdown"
+            description="Metric card with a large total and labeled progress-bar breakdown rows. StatBreakdownCard adds a border for use in grids; StatBreakdownGrid handles responsive column layout."
+            previewClassName="items-start justify-start"
+          >
+            <StatBreakdownGrid>
+              <StatBreakdownCard
+                name="Average tokens per request"
+                total="341"
+                details={[
+                  { name: 'Completion tokens', value: '136', percentageValue: 40 },
+                  { name: 'Prompt tokens', value: '205', percentageValue: 60 },
+                ]}
+              />
+              <StatBreakdownCard
+                name="Total tokens"
+                total="4,229"
+                details={[
+                  { name: 'Completion tokens', value: '1,480', percentageValue: 35 },
+                  { name: 'Prompt tokens', value: '2,749', percentageValue: 65 },
+                ]}
+              />
+              <StatBreakdownCard
+                name="Tokens — advanced model"
+                total="1,040"
+                details={[
+                  { name: 'Completion tokens', value: '260', percentageValue: 25 },
+                  { name: 'Prompt tokens', value: '780', percentageValue: 75 },
+                ]}
+              />
+              <StatBreakdownCard
+                name="Tokens — base model"
+                total="2,920"
+                details={[
+                  { name: 'Completion tokens', value: '847', percentageValue: 29 },
+                  { name: 'Prompt tokens', value: '2,073', percentageValue: 71 },
+                ]}
+              />
+            </StatBreakdownGrid>
           </ComponentSection>
 
         </div>
