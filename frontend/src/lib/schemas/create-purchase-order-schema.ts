@@ -58,10 +58,31 @@ export const CreatePurchaseOrderSchema = z.object({
   assignedTo: z.string().optional(), // User ID
 
   // Billing & Shipping
-  billTo: z.string().optional(), // Rich text (HTML)
+  // Legacy free-text fields — retained for backward compatibility with older
+  // records; new POs populate the structured fields below.
+  billTo: z.string().optional(),
+  shipTo: z.string().optional(),
   paymentTerms: z.string().optional(),
-  shipTo: z.string().optional(), // Rich text (HTML)
   shipVia: z.string().optional(),
+
+  // Bill To (structured): company is the source of the auto-filled address;
+  // address fields remain manually editable.
+  billToCompanyId: z.string().optional(),
+  billToContactId: z.string().optional(),
+  billToAddress: z.string().optional(),
+  billToAddressLine2: z.string().optional(),
+  billToCity: z.string().optional(),
+  billToState: z.string().optional(),
+  billToZip: z.string().optional(),
+
+  // Ship To (structured): contact is an employee of the ship-to company.
+  shipToCompanyId: z.string().optional(),
+  shipToContactId: z.string().optional(),
+  shipToAddress: z.string().optional(),
+  shipToAddressLine2: z.string().optional(),
+  shipToCity: z.string().optional(),
+  shipToState: z.string().optional(),
+  shipToZip: z.string().optional(),
 
   // Description
   description: z.string().optional(),

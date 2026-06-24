@@ -55,6 +55,7 @@ import {
 import type { CompanyOption } from "@/hooks/use-companies";
 import { useContacts } from "@/hooks/use-contacts";
 import { useCompanyContacts } from "@/hooks/use-company-contacts";
+import { useEmployees } from "@/hooks/use-employees";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -71,6 +72,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { RichTextField } from "@/components/forms/RichTextField";
+import { PurchaseOrderAddressFields } from "@/components/domain/contracts/purchase-order-address-fields";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import {
   budgetCodeTextValue,
@@ -96,7 +98,6 @@ import {
   FormSection,
   FormGrid,
   FormActions,
-  RHFTextareaField,
   RHFSelectField,
   RHFNumberField,
   RHFCheckboxField,
@@ -104,13 +105,6 @@ import {
   RHFComboboxField,
 } from "@/components/forms";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { FormServerError } from "@/components/forms/FormServerError";
 import { cn } from "@/lib/utils";
 
@@ -121,6 +115,11 @@ interface CreatePurchaseOrderFormProps {
   initialData?: Partial<CreatePurchaseOrderInput> & {
     sovLines?: PurchaseOrderSovLineItem[];
     contractCompanyName?: string;
+    assignedToName?: string;
+    billToCompanyName?: string;
+    billToContactName?: string;
+    shipToCompanyName?: string;
+    shipToContactName?: string;
   };
   mode?: "create" | "edit";
 }
@@ -176,6 +175,11 @@ export function CreatePurchaseOrderForm({
   mode = "create",
 }: CreatePurchaseOrderFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  // Auto-generated PO number for new purchase orders. Computed once and used as
+  // the field default; the user can still edit it freely.
+  const generatedContractNumberRef = React.useRef(
+    `PO-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${String(Date.now()).slice(-4)}`,
+  );
   const [sovLines, setSovLines] = React.useState<PurchaseOrderSovLineItem[]>(
     initialData?.sovLines || [],
   );
@@ -250,7 +254,9 @@ export function CreatePurchaseOrderForm({
     resolver: zodResolver(CreatePurchaseOrderSchema) as Resolver<CreatePurchaseOrderInput>,
     reValidateMode: "onBlur",
     defaultValues: {
-      contractNumber: initialData?.contractNumber || "",
+      contractNumber:
+        initialData?.contractNumber ||
+        (mode === "create" ? generatedContractNumberRef.current : ""),
       status: initialData?.status || "Draft",
       executed: initialData?.executed || false,
       accountingMethod: initialData?.accountingMethod || "unit-quantity",
@@ -266,6 +272,18 @@ export function CreatePurchaseOrderForm({
       assignedTo: initialData?.assignedTo || "",
       billTo: initialData?.billTo || "",
       shipTo: initialData?.shipTo || "",
+      billToCompanyId: initialData?.billToCompanyId || "",
+      billToContactId: initialData?.billToContactId || "",
+      billToAddress: initialData?.billToAddress || "",
+      billToCity: initialData?.billToCity || "",
+      billToState: initialData?.billToState || "",
+      billToZip: initialData?.billToZip || "",
+      shipToCompanyId: initialData?.shipToCompanyId || "",
+      shipToContactId: initialData?.shipToContactId || "",
+      shipToAddress: initialData?.shipToAddress || "",
+      shipToCity: initialData?.shipToCity || "",
+      shipToState: initialData?.shipToState || "",
+      shipToZip: initialData?.shipToZip || "",
       shipVia: initialData?.shipVia || "",
       paymentTerms: initialData?.paymentTerms || "",
       dates: initialData?.dates || {},
@@ -296,18 +314,9 @@ export function CreatePurchaseOrderForm({
   }, [projectContactOptions, companyContactOptions]);
   const loadingContacts = loadingProjectContacts || loadingCompanyContacts;
 
-  const selectedVendor = React.useMemo(
-    () => vendorOptions.find((vendor) => vendor.value === contractCompanyId) ?? null,
-    [contractCompanyId, vendorOptions],
-  );
-
-  React.useEffect(() => {
-    if (!selectedVendor) return;
-    setValue("companyLicenseNumber", selectedVendor.licenseNumber ?? "", {
-      shouldDirty: false,
-      shouldValidate: false,
-    });
-  }, [selectedVendor, setValue]);
+  // "Assigned To" is the internal Alleato owner of the PO — list employees,
+  // not the project directory or vendor contacts.
+  const { options: employeeOptions, isLoading: loadingEmployees } = useEmployees();
 
   React.useEffect(() => {
     let isMounted = true;
@@ -554,44 +563,14 @@ export function CreatePurchaseOrderForm({
     <Form onSubmit={handleSubmit(handleFormSubmit)}>
 
       {/* General Information */}
-      <FormSection
-        title="General Information"
-        description="Define the purchase order identity, vendor, and commercial terms."
-      >
+      <FormSection title="General Information">
         <FormGrid columns={2}>
-          <FormField
+          <RHFTextField
             control={control}
             name="contractNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Contract #</FormLabel>
-                <div className="flex gap-2">
-                  <FormControl>
-                    <Input
-                      {...field}
-                      value={field.value ?? ""}
-                      placeholder="e.g., PO-001"
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0"
-                    disabled={isSubmitting}
-                    onClick={() =>
-                      setValue("contractNumber", `PO-${Date.now()}`, {
-                        shouldValidate: true,
-                      })
-                    }
-                  >
-                    Generate
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="Contract #"
+            placeholder="e.g., PO-001"
+            disabled={isSubmitting}
           />
 
           <RHFComboboxField
@@ -621,24 +600,9 @@ export function CreatePurchaseOrderForm({
             options={STATUS_OPTIONS}
             disabled={isSubmitting}
           />
-
-          <RHFTextField
-            control={control}
-            name="companyLicenseNumber"
-            label="License Number"
-            placeholder="e.g., CGC #1537130"
-            disabled={isSubmitting || !contractCompanyId}
-          />
         </FormGrid>
 
         <FormGrid columns={2}>
-          <RHFCheckboxField
-            control={control}
-            name="executed"
-            label="Executed"
-            disabled={isSubmitting}
-          />
-
           <RHFNumberField
             control={control}
             name="defaultRetainagePercent"
@@ -648,36 +612,61 @@ export function CreatePurchaseOrderForm({
             max={100}
             disabled={isSubmitting}
           />
+
+          <RHFComboboxField
+            control={control}
+            name="assignedTo"
+            label="Assigned To"
+            placeholder={loadingEmployees ? "Loading employees..." : "Select Alleato employee..."}
+            options={employeeOptions}
+            selectedLabel={initialData?.assignedToName}
+            disabled={isSubmitting || loadingEmployees}
+          />
         </FormGrid>
 
-        <RHFComboboxField
-          control={control}
-          name="assignedTo"
-          label="Assigned To"
-          placeholder={loadingContacts ? "Loading contacts..." : "Select assignee..."}
-          options={contactOptions}
-          disabled={isSubmitting || loadingContacts}
+        <RichTextField
+          label="Description"
+          value={descriptionValue}
+          onChange={(val) => setValue("description", val, { shouldDirty: true })}
+          disabled={isSubmitting}
+          placeholder="Purchase order description..."
         />
 
+        <RHFCheckboxField
+          control={control}
+          name="executed"
+          label="Executed"
+          disabled={isSubmitting}
+        />
+      </FormSection>
+
+      {/* Bill To / Ship To */}
+      <FormSection title="Bill To / Ship To">
         <FormGrid columns={2}>
-          <RHFTextareaField
+          <PurchaseOrderAddressFields
             control={control}
-            name="billTo"
-            label="Bill To"
-            placeholder="Billing address..."
-            rows={4}
+            prefix="billTo"
+            heading="Bill To"
+            contactLabel="Billing Contact"
+            initialCompanyName={initialData?.billToCompanyName}
+            initialContactName={initialData?.billToContactName}
             disabled={isSubmitting}
           />
-          <RHFTextareaField
+
+          <PurchaseOrderAddressFields
             control={control}
-            name="shipTo"
-            label="Ship To"
-            placeholder="Shipping address..."
-            rows={4}
+            prefix="shipTo"
+            heading="Ship To"
+            contactLabel="Receiving Contact"
+            initialCompanyName={initialData?.shipToCompanyName}
+            initialContactName={initialData?.shipToContactName}
             disabled={isSubmitting}
           />
         </FormGrid>
+      </FormSection>
 
+      {/* Payment & Shipping */}
+      <FormSection title="Payment & Shipping">
         <FormGrid columns={2}>
           <RHFTextField
             control={control}
@@ -694,21 +683,10 @@ export function CreatePurchaseOrderForm({
             disabled={isSubmitting}
           />
         </FormGrid>
-
-        <RichTextField
-          label="Description"
-          value={descriptionValue}
-          onChange={(val) => setValue("description", val, { shouldDirty: true })}
-          disabled={isSubmitting}
-          placeholder="Purchase order description..."
-        />
       </FormSection>
 
       {/* Attachments */}
-      <FormSection
-        title="Attachments"
-        description="Upload source documents, drawings, and supporting files."
-      >
+      <FormSection title="Attachments">
         <input
           ref={fileInputRef}
           type="file"
@@ -769,11 +747,196 @@ export function CreatePurchaseOrderForm({
         )}
       </FormSection>
 
+      {/* Contract Dates */}
+      <FormSection title="Contract Dates">
+        <FormGrid columns={2}>
+          <RHFDateField
+            control={control}
+            name="dates.contractDate"
+            label="Contract Date"
+            nullable
+          />
+          <RHFDateField
+            control={control}
+            name="dates.deliveryDate"
+            label="Delivery Date"
+            nullable
+          />
+          <RHFDateField
+            control={control}
+            name="dates.signedPoReceivedDate"
+            label="Signed PO Received Date"
+            nullable
+          />
+          <RHFDateField
+            control={control}
+            name="dates.issuedOnDate"
+            label="Issued On Date"
+            nullable
+          />
+        </FormGrid>
+      </FormSection>
+
+      {/* Privacy & Access */}
+      <FormSection title="Privacy & Access">
+        <FormGrid columns={2}>
+          <Controller
+            name="invoiceContactIds"
+            control={control}
+            render={({ field }) => {
+              const value: string[] = field.value ?? [];
+              const handleSelect = (optionValue: string) => {
+                field.onChange(
+                  value.includes(optionValue)
+                    ? value.filter((v) => v !== optionValue)
+                    : [...value, optionValue],
+                );
+              };
+              const selectedLabels = value
+                .map((id) => contactOptions.find((o) => o.value === id)?.label)
+                .filter(Boolean) as string[];
+              return (
+                <div className="space-y-2">
+                  <Label>Invoice Contacts</Label>
+                  {!contractCompanyId && (
+                    <p className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
+                      Select a contract company to load company contacts.
+                    </p>
+                  )}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        className="h-auto min-h-10 w-full justify-between"
+                        disabled={isSubmitting || loadingContacts}
+                      >
+                        <div className="flex flex-wrap gap-1">
+                          {value.length > 0
+                            ? selectedLabels.map((label) => (
+                                <Badge key={label} variant="secondary">{label}</Badge>
+                              ))
+                            : <span className="text-muted-foreground text-sm">
+                                {loadingContacts ? "Loading contacts..." : "Select invoice contacts..."}
+                              </span>
+                          }
+                        </div>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
+                      <Command>
+                        <CommandInput placeholder="Search contacts..." />
+                        <CommandList className="max-h-64">
+                          <CommandEmpty>No contacts found.</CommandEmpty>
+                          <CommandGroup>
+                            {contactOptions.map((option) => (
+                              <CommandItem
+                                key={option.value}
+                                value={[option.label, option.value].join(" ")}
+                                onSelect={() => handleSelect(option.value)}
+                              >
+                                <Check className={cn("mr-2 h-4 w-4", value.includes(option.value) ? "opacity-100" : "opacity-0")} />
+                                {option.label}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              );
+            }}
+          />
+
+          <div className="flex w-full flex-col gap-2">
+            <Label>Access for Non-Admin Users</Label>
+            <Controller
+              name="privacy.nonAdminUserIds"
+              control={control}
+              render={({ field }) => {
+                const value: string[] = field.value ?? [];
+                const handleSelect = (optionValue: string) => {
+                  field.onChange(
+                    value.includes(optionValue)
+                      ? value.filter((v) => v !== optionValue)
+                      : [...value, optionValue],
+                  );
+                };
+                const selectedLabels = value
+                  .map((id) => contactOptions.find((o) => o.value === id)?.label)
+                  .filter(Boolean) as string[];
+                return (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        className="h-auto min-h-10 w-full justify-between"
+                        disabled={isSubmitting || !privacyIsPrivate || loadingContacts}
+                      >
+                        <div className="flex flex-wrap gap-1">
+                          {value.length > 0
+                            ? selectedLabels.map((label) => (
+                                <Badge key={label} variant="secondary">{label}</Badge>
+                              ))
+                            : <span className="text-muted-foreground text-sm">
+                                {privacyIsPrivate
+                                  ? loadingContacts ? "Loading contacts..." : "Select contacts..."
+                                  : "Enable Private to use this field"}
+                              </span>
+                          }
+                        </div>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
+                      <Command>
+                        <CommandInput placeholder="Search contacts..." />
+                        <CommandList className="max-h-64">
+                          <CommandEmpty>No contacts found.</CommandEmpty>
+                          <CommandGroup>
+                            {contactOptions.map((option) => (
+                              <CommandItem
+                                key={option.value}
+                                value={[option.label, option.value].join(" ")}
+                                onSelect={() => handleSelect(option.value)}
+                              >
+                                <Check className={cn("mr-2 h-4 w-4", value.includes(option.value) ? "opacity-100" : "opacity-0")} />
+                                {option.label}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                );
+              }}
+            />
+          </div>
+        </FormGrid>
+
+        <RHFCheckboxField
+          control={control}
+          name="privacy.isPrivate"
+          label="Private"
+          disabled={isSubmitting}
+        />
+
+        <RHFCheckboxField
+          control={control}
+          name="privacy.allowNonAdminViewSovItems"
+          label="Allow these non-admin users to view the SOV items."
+          disabled={isSubmitting || !privacyIsPrivate}
+        />
+      </FormSection>
+
       {/* Schedule of Values */}
-      <FormSection
-        title="Schedule of Values"
-        description="Build line items and totals that define the PO financial breakdown."
-      >
+      <FormSection title="Schedule of Values">
         {/* Accounting Method */}
         <p className="text-sm text-muted-foreground">
           This purchase order&apos;s accounting method is{" "}
@@ -1020,204 +1183,6 @@ export function CreatePurchaseOrderForm({
         </InlineTable>
       </FormSection>
 
-      {/* Contract Dates */}
-      <FormSection
-        title="Contract Dates"
-        description="Capture timing milestones used for procurement and tracking."
-      >
-        <FormGrid columns={2}>
-          <RHFDateField
-            control={control}
-            name="dates.contractDate"
-            label="Contract Date"
-            nullable
-          />
-          <RHFDateField
-            control={control}
-            name="dates.deliveryDate"
-            label="Delivery Date"
-            nullable
-          />
-          <RHFDateField
-            control={control}
-            name="dates.signedPoReceivedDate"
-            label="Signed PO Received Date"
-            nullable
-          />
-          <RHFDateField
-            control={control}
-            name="dates.issuedOnDate"
-            label="Issued On Date"
-            nullable
-          />
-        </FormGrid>
-      </FormSection>
-
-      {/* Privacy & Access */}
-      <FormSection
-        title="Privacy & Access"
-        description="Control which non-admin users can access this commitment. Using the privacy setting allows only project admins and select non-admin users access."
-      >
-        <RHFCheckboxField
-          control={control}
-          name="privacy.isPrivate"
-          label="Private"
-          disabled={isSubmitting}
-        />
-
-        <div className="flex w-full flex-col gap-2">
-          <Label>Access for Non-Admin Users</Label>
-          <Controller
-            name="privacy.nonAdminUserIds"
-            control={control}
-            render={({ field }) => {
-              const value: string[] = field.value ?? [];
-              const handleSelect = (optionValue: string) => {
-                field.onChange(
-                  value.includes(optionValue)
-                    ? value.filter((v) => v !== optionValue)
-                    : [...value, optionValue],
-                );
-              };
-              const selectedLabels = value
-                .map((id) => contactOptions.find((o) => o.value === id)?.label)
-                .filter(Boolean) as string[];
-              return (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      role="combobox"
-                      className="h-auto min-h-10 w-full justify-between"
-                      disabled={isSubmitting || !privacyIsPrivate || loadingContacts}
-                    >
-                      <div className="flex flex-wrap gap-1">
-                        {value.length > 0
-                          ? selectedLabels.map((label) => (
-                              <Badge key={label} variant="secondary">{label}</Badge>
-                            ))
-                          : <span className="text-muted-foreground text-sm">
-                              {privacyIsPrivate
-                                ? loadingContacts ? "Loading contacts..." : "Select contacts..."
-                                : "Enable Private to use this field"}
-                            </span>
-                        }
-                      </div>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
-                    <Command>
-                      <CommandInput placeholder="Search contacts..." />
-                      <CommandList className="max-h-64">
-                        <CommandEmpty>No contacts found.</CommandEmpty>
-                        <CommandGroup>
-                          {contactOptions.map((option) => (
-                            <CommandItem
-                              key={option.value}
-                              value={[option.label, option.value].join(" ")}
-                              onSelect={() => handleSelect(option.value)}
-                            >
-                              <Check className={cn("mr-2 h-4 w-4", value.includes(option.value) ? "opacity-100" : "opacity-0")} />
-                              {option.label}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              );
-            }}
-          />
-        </div>
-
-        <RHFCheckboxField
-          control={control}
-          name="privacy.allowNonAdminViewSovItems"
-          label="Allow these non-admin users to view the SOV items."
-          disabled={isSubmitting || !privacyIsPrivate}
-        />
-      </FormSection>
-
-      {/* Invoice Contacts */}
-      <FormSection
-        title="Invoice Contacts"
-        description="Define who can submit and manage invoice communication."
-      >
-        <Controller
-          name="invoiceContactIds"
-          control={control}
-          render={({ field }) => {
-            const value: string[] = field.value ?? [];
-            const handleSelect = (optionValue: string) => {
-              field.onChange(
-                value.includes(optionValue)
-                  ? value.filter((v) => v !== optionValue)
-                  : [...value, optionValue],
-              );
-            };
-            const selectedLabels = value
-              .map((id) => contactOptions.find((o) => o.value === id)?.label)
-              .filter(Boolean) as string[];
-            return (
-              <div className="space-y-2">
-                <Label>Invoice Contacts</Label>
-                {!contractCompanyId && (
-                  <p className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
-                    Select a contract company to load company contacts.
-                  </p>
-                )}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      role="combobox"
-                      className="h-auto min-h-10 w-full justify-between"
-                      disabled={isSubmitting || loadingContacts}
-                    >
-                      <div className="flex flex-wrap gap-1">
-                        {value.length > 0
-                          ? selectedLabels.map((label) => (
-                              <Badge key={label} variant="secondary">{label}</Badge>
-                            ))
-                          : <span className="text-muted-foreground text-sm">
-                              {loadingContacts ? "Loading contacts..." : "Select invoice contacts..."}
-                            </span>
-                        }
-                      </div>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
-                    <Command>
-                      <CommandInput placeholder="Search contacts..." />
-                      <CommandList className="max-h-64">
-                        <CommandEmpty>No contacts found.</CommandEmpty>
-                        <CommandGroup>
-                          {contactOptions.map((option) => (
-                            <CommandItem
-                              key={option.value}
-                              value={[option.label, option.value].join(" ")}
-                              onSelect={() => handleSelect(option.value)}
-                            >
-                              <Check className={cn("mr-2 h-4 w-4", value.includes(option.value) ? "opacity-100" : "opacity-0")} />
-                              {option.label}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            );
-          }}
-        />
-      </FormSection>
-
       <FormServerError message={errors.root?.message} />
 
       <FormActions
@@ -1284,7 +1249,8 @@ export function CreatePurchaseOrderForm({
                                     : "text-foreground"
                                 }`}
                               >
-                                {costCode.division_title || costCode.id} - {costCode.title}
+                                {costCode.id}
+                                {costCode.title ? ` - ${costCode.title}` : ""}
                               </Button>
                             ))}
                           </div>
@@ -1324,9 +1290,7 @@ export function CreatePurchaseOrderForm({
                 {newBudgetCodeData.costCodeId ? (
                   <>
                     {availableCostCodes.find((code) => code.id === newBudgetCodeData.costCodeId)
-                      ?.division_title ||
-                      availableCostCodes.find((code) => code.id === newBudgetCodeData.costCodeId)
-                        ?.id}
+                      ?.id}
                     .{newBudgetCodeData.costType} -{" "}
                     {
                       availableCostCodes.find((code) => code.id === newBudgetCodeData.costCodeId)

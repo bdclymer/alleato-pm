@@ -96,6 +96,18 @@ type CommitmentDetail = Commitment & {
   assigned_to_name?: string | null;
   bill_to?: string | null;
   ship_to?: string | null;
+  bill_to_company_id?: string | null;
+  bill_to_address?: string | null;
+  bill_to_address_line2?: string | null;
+  bill_to_city?: string | null;
+  bill_to_state?: string | null;
+  bill_to_zip?: string | null;
+  ship_to_company_id?: string | null;
+  ship_to_address?: string | null;
+  ship_to_address_line2?: string | null;
+  ship_to_city?: string | null;
+  ship_to_state?: string | null;
+  ship_to_zip?: string | null;
   ship_via?: string | null;
   payment_terms?: string | null;
   change_order_totals?: {
@@ -323,11 +335,47 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
     assigned_to_name: typeof record.assigned_to_name === "string" ? record.assigned_to_name : null,
     bill_to: typeof record.bill_to === "string" ? record.bill_to : null,
     ship_to: typeof record.ship_to === "string" ? record.ship_to : null,
+    bill_to_company_id: typeof record.bill_to_company_id === "string" ? record.bill_to_company_id : null,
+    bill_to_address: typeof record.bill_to_address === "string" ? record.bill_to_address : null,
+    bill_to_address_line2: typeof record.bill_to_address_line2 === "string" ? record.bill_to_address_line2 : null,
+    bill_to_city: typeof record.bill_to_city === "string" ? record.bill_to_city : null,
+    bill_to_state: typeof record.bill_to_state === "string" ? record.bill_to_state : null,
+    bill_to_zip: typeof record.bill_to_zip === "string" ? record.bill_to_zip : null,
+    ship_to_company_id: typeof record.ship_to_company_id === "string" ? record.ship_to_company_id : null,
+    ship_to_address: typeof record.ship_to_address === "string" ? record.ship_to_address : null,
+    ship_to_address_line2: typeof record.ship_to_address_line2 === "string" ? record.ship_to_address_line2 : null,
+    ship_to_city: typeof record.ship_to_city === "string" ? record.ship_to_city : null,
+    ship_to_state: typeof record.ship_to_state === "string" ? record.ship_to_state : null,
+    ship_to_zip: typeof record.ship_to_zip === "string" ? record.ship_to_zip : null,
     ship_via: typeof record.ship_via === "string" ? record.ship_via : null,
     payment_terms: typeof record.payment_terms === "string" ? record.payment_terms : null,
     line_items,
   };
 };
+
+/**
+ * Render the structured bill-to / ship-to address as display lines.
+ * Returns null when no structured parts are present (caller falls back to the
+ * legacy free-text column).
+ */
+function formatStructuredAddress(parts: {
+  address?: string | null;
+  address2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+}): string | null {
+  const line1 = parts.address?.trim();
+  const line2 = parts.address2?.trim();
+  const cityStateZip = [
+    parts.city?.trim(),
+    [parts.state?.trim(), parts.zip?.trim()].filter(Boolean).join(" ").trim(),
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const lines = [line1, line2, cityStateZip].filter(Boolean);
+  return lines.length ? lines.join("\n") : null;
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -682,22 +730,44 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                   </LabelValueRow>
                 </dl>
                 <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                  <LabelValueRow
-                    label="Bill To"
-                    labelClassName="w-36"
-                    missing={!commitment.bill_to}
-                    valueClassName="whitespace-pre-wrap leading-relaxed text-sm"
-                  >
-                    {commitment.bill_to || "—"}
-                  </LabelValueRow>
-                  <LabelValueRow
-                    label="Ship To"
-                    labelClassName="w-36"
-                    missing={!commitment.ship_to}
-                    valueClassName="whitespace-pre-wrap leading-relaxed text-sm"
-                  >
-                    {commitment.ship_to || "—"}
-                  </LabelValueRow>
+                  {(() => {
+                    const billToDisplay =
+                      formatStructuredAddress({
+                        address: commitment.bill_to_address,
+                        address2: commitment.bill_to_address_line2,
+                        city: commitment.bill_to_city,
+                        state: commitment.bill_to_state,
+                        zip: commitment.bill_to_zip,
+                      }) ?? commitment.bill_to;
+                    const shipToDisplay =
+                      formatStructuredAddress({
+                        address: commitment.ship_to_address,
+                        address2: commitment.ship_to_address_line2,
+                        city: commitment.ship_to_city,
+                        state: commitment.ship_to_state,
+                        zip: commitment.ship_to_zip,
+                      }) ?? commitment.ship_to;
+                    return (
+                      <>
+                        <LabelValueRow
+                          label="Bill To"
+                          labelClassName="w-36"
+                          missing={!billToDisplay}
+                          valueClassName="whitespace-pre-wrap leading-relaxed text-sm"
+                        >
+                          {billToDisplay || "—"}
+                        </LabelValueRow>
+                        <LabelValueRow
+                          label="Ship To"
+                          labelClassName="w-36"
+                          missing={!shipToDisplay}
+                          valueClassName="whitespace-pre-wrap leading-relaxed text-sm"
+                        >
+                          {shipToDisplay || "—"}
+                        </LabelValueRow>
+                      </>
+                    );
+                  })()}
                 </div>
               </DetailPanel>
             )}
@@ -771,6 +841,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
           accountingMethod={commitment.accounting_method}
           summary={getCommitmentSovSummary(commitment)}
           showHeader={false}
+          status={commitment.status}
           onImportComplete={onImportComplete}
         />
       </section>
@@ -1083,6 +1154,7 @@ export default function CommitmentDetailPage() {
             accountingMethod={commitment.accounting_method}
             summary={getCommitmentSovSummary(commitment)}
             showHeader={false}
+            status={commitment.status}
             onImportComplete={() => void fetchCommitment()}
           />
         )}

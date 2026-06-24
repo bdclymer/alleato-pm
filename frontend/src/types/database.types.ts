@@ -26817,6 +26817,13 @@ export type Database = {
           allow_non_admin_view_sov_items: boolean | null
           assigned_to: string | null
           bill_to: string | null
+          bill_to_address: string | null
+          bill_to_address_line2: string | null
+          bill_to_city: string | null
+          bill_to_company_id: string | null
+          bill_to_contact_id: string | null
+          bill_to_state: string | null
+          bill_to_zip: string | null
           contract_company_id: string | null
           contract_date: string | null
           contract_number: string
@@ -26839,6 +26846,13 @@ export type Database = {
           prime_contract_id: string | null
           project_id: number
           ship_to: string | null
+          ship_to_address: string | null
+          ship_to_address_line2: string | null
+          ship_to_city: string | null
+          ship_to_company_id: string | null
+          ship_to_contact_id: string | null
+          ship_to_state: string | null
+          ship_to_zip: string | null
           ship_via: string | null
           signed_po_received_date: string | null
           start_date: string | null
@@ -26853,6 +26867,13 @@ export type Database = {
           allow_non_admin_view_sov_items?: boolean | null
           assigned_to?: string | null
           bill_to?: string | null
+          bill_to_address?: string | null
+          bill_to_address_line2?: string | null
+          bill_to_city?: string | null
+          bill_to_company_id?: string | null
+          bill_to_contact_id?: string | null
+          bill_to_state?: string | null
+          bill_to_zip?: string | null
           contract_company_id?: string | null
           contract_date?: string | null
           contract_number: string
@@ -26875,6 +26896,13 @@ export type Database = {
           prime_contract_id?: string | null
           project_id: number
           ship_to?: string | null
+          ship_to_address?: string | null
+          ship_to_address_line2?: string | null
+          ship_to_city?: string | null
+          ship_to_company_id?: string | null
+          ship_to_contact_id?: string | null
+          ship_to_state?: string | null
+          ship_to_zip?: string | null
           ship_via?: string | null
           signed_po_received_date?: string | null
           start_date?: string | null
@@ -26889,6 +26917,13 @@ export type Database = {
           allow_non_admin_view_sov_items?: boolean | null
           assigned_to?: string | null
           bill_to?: string | null
+          bill_to_address?: string | null
+          bill_to_address_line2?: string | null
+          bill_to_city?: string | null
+          bill_to_company_id?: string | null
+          bill_to_contact_id?: string | null
+          bill_to_state?: string | null
+          bill_to_zip?: string | null
           contract_company_id?: string | null
           contract_date?: string | null
           contract_number?: string
@@ -26911,6 +26946,13 @@ export type Database = {
           prime_contract_id?: string | null
           project_id?: number
           ship_to?: string | null
+          ship_to_address?: string | null
+          ship_to_address_line2?: string | null
+          ship_to_city?: string | null
+          ship_to_company_id?: string | null
+          ship_to_contact_id?: string | null
+          ship_to_state?: string | null
+          ship_to_zip?: string | null
           ship_via?: string | null
           signed_po_received_date?: string | null
           start_date?: string | null
@@ -26919,6 +26961,34 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_orders_bill_to_company_id_fkey"
+            columns: ["bill_to_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_bill_to_contact_id_fkey"
+            columns: ["bill_to_contact_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_ship_to_company_id_fkey"
+            columns: ["ship_to_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_ship_to_contact_id_fkey"
+            columns: ["ship_to_contact_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchase_orders_prime_contract_id_fkey"
             columns: ["prime_contract_id"]

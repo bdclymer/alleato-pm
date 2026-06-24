@@ -84,6 +84,45 @@ async function fetchCommitmentType(
   return normalizeCommitmentType(data.commitment_type);
 }
 
+/**
+ * Procore rule: a commitment's Schedule of Values is editable at any time
+ * UNLESS the commitment is Approved. Enforced server-side so the lock cannot be
+ * bypassed by calling the API directly.
+ */
+async function assertCommitmentEditable(
+  supabase: DbClient,
+  commitmentId: string,
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("commitments_unified")
+    .select("status")
+    .eq("id", commitmentId)
+    .single();
+
+  if (error || !data) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: `${ROUTE_WHERE}#commitment-status`,
+      message: "Commitment not found.",
+      cause: error,
+      status: 404,
+    });
+  }
+
+  if ((data.status ?? "").trim().toLowerCase() === "approved") {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: `${ROUTE_WHERE}#approved-locked`,
+      message: "This commitment is Approved — its schedule of values is locked.",
+      details: {
+        reason:
+          "Procore allows SOV edits only while a commitment is not Approved. Change the status first.",
+      },
+      status: 409,
+    });
+  }
+}
+
 async function fetchSovLineItems(
   supabase: DbClient,
   commitmentType: CommitmentType,
@@ -400,6 +439,9 @@ export const PUT = withApiGuardrails(
     const commitmentType = bodyCommitmentType
       ? normalizeCommitmentType(bodyCommitmentType, "subcontract")
       : await fetchCommitmentType(supabase, commitmentId);
+
+    // Procore: block all SOV writes when the commitment is Approved.
+    await assertCommitmentEditable(supabase, commitmentId);
 
     // Fetch existing line items (with billed_to_date + amount so we can lock invoiced lines)
     const existingItems = await fetchExistingSovItems(

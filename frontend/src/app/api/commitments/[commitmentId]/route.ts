@@ -42,6 +42,20 @@ const commitmentEditSchema = z
     accounting_method: z.string().nullable().optional(),
     bill_to: z.string().nullable().optional(),
     ship_to: z.string().nullable().optional(),
+    bill_to_company_id: z.string().nullable().optional(),
+    bill_to_contact_id: z.string().nullable().optional(),
+    bill_to_address: z.string().nullable().optional(),
+    bill_to_address_line2: z.string().nullable().optional(),
+    bill_to_city: z.string().nullable().optional(),
+    bill_to_state: z.string().nullable().optional(),
+    bill_to_zip: z.string().nullable().optional(),
+    ship_to_company_id: z.string().nullable().optional(),
+    ship_to_contact_id: z.string().nullable().optional(),
+    ship_to_address: z.string().nullable().optional(),
+    ship_to_address_line2: z.string().nullable().optional(),
+    ship_to_city: z.string().nullable().optional(),
+    ship_to_state: z.string().nullable().optional(),
+    ship_to_zip: z.string().nullable().optional(),
     ship_via: z.string().nullable().optional(),
     payment_terms: z.string().nullable().optional(),
     assigned_to: z.string().nullable().optional(),
@@ -127,7 +141,9 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
       issued_on_date, default_retainage_percent, accounting_method,
       is_private, non_admin_user_ids, allow_non_admin_view_sov_items,
       invoice_contact_ids, created_by, created_at, updated_at, deleted_at,
-      bill_to, ship_to, ship_via, payment_terms, assigned_to
+      bill_to, ship_to, ship_via, payment_terms, assigned_to,
+      bill_to_company_id, bill_to_contact_id, bill_to_address, bill_to_address_line2, bill_to_city, bill_to_state, bill_to_zip,
+      ship_to_company_id, ship_to_contact_id, ship_to_address, ship_to_address_line2, ship_to_city, ship_to_state, ship_to_zip
     `;
 
     // Performance optimization: Run all detail queries in parallel
@@ -491,6 +507,20 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
       def(validatedData.signed_po_received_date, "signed_po_received_date");
       def(validatedData.bill_to, "bill_to");
       def(validatedData.ship_to, "ship_to");
+      def(validatedData.bill_to_company_id, "bill_to_company_id");
+      def(validatedData.bill_to_contact_id, "bill_to_contact_id");
+      def(validatedData.bill_to_address, "bill_to_address");
+      def(validatedData.bill_to_address_line2, "bill_to_address_line2");
+      def(validatedData.bill_to_city, "bill_to_city");
+      def(validatedData.bill_to_state, "bill_to_state");
+      def(validatedData.bill_to_zip, "bill_to_zip");
+      def(validatedData.ship_to_company_id, "ship_to_company_id");
+      def(validatedData.ship_to_contact_id, "ship_to_contact_id");
+      def(validatedData.ship_to_address, "ship_to_address");
+      def(validatedData.ship_to_address_line2, "ship_to_address_line2");
+      def(validatedData.ship_to_city, "ship_to_city");
+      def(validatedData.ship_to_state, "ship_to_state");
+      def(validatedData.ship_to_zip, "ship_to_zip");
       def(validatedData.ship_via, "ship_via");
       def(validatedData.payment_terms, "payment_terms");
       def(validatedData.assigned_to, "assigned_to");
