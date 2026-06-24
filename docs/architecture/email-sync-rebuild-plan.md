@@ -75,7 +75,7 @@ references — `backfill_outlook_rag_metadata_to_app_documents.py`,
   but document store stale"; wired into `pipeline_alert_notifier.py` (run_pipeline_alert_check)
   (15-min cron `alleato-pipeline-alert`, confirmed live with all creds). DMs Teams +
   `/rag` banner + auto-resolve. Verified healthy, no false page.
-- [ ] **Phase 1.5 — FIX EMBEDDING AUTH (CRITICAL · IN PROGRESS).** Run ledger:
+- [x] **Phase 1.5 — FIX EMBEDDING AUTH (DONE 2026-06-24).** Run ledger:
   `microsoft_graph` is failing **~70% of runs** (464 failed / 116 ok / 87 warn over
   8 days), ALL in the **vectorization** stage. Root cause: **231 docs stuck
   `embedding_status='error'` with `401 Authentication failed … AI_GATEWAY_API_KEY`**
@@ -113,11 +113,16 @@ references — `backfill_outlook_rag_metadata_to_app_documents.py`,
   `raw_ingested`) + 234 RAG records cleared (`embedding_status`/attempts/error reset).
   First drain batch: **embedded 40 / errors 0** — pipeline confirmed working with the
   refreshed key. Draining the remaining ~190 now.
-- TODO (still open before Phase 1.5 is "done"): (a) confirm queue → 0 / error rate
-  collapses; (b) add an **embedding-freshness guardrail** — today's outage failed ~70%
-  of runs but did NOT page, because interleaved partial-success ("warning") runs kept
-  `pipeline_alert_notifier.py`'s "nothing-through" gate from firing. The promotion guardrail
-  watches promotion, not embedding, so neither alarm caught this. Needs its own check.
+- 2026-06-24 10:30 — Embedding **guardrail (b) DONE + DEPLOYED LIVE** (commit
+  `26f874987`, cron `alleato-pipeline-alert` running it). `embedding_freshness.py`
+  flags ≥40 recent embedding errors / 180 min; verified healthy. Recovery (a) ~95%:
+  backlog drained from 234 → ~33 (drain still finishing); error rate collapsed. Both
+  the promotion + embedding guardrails are now live on the 15-min alert cron.
+- 2026-06-24 10:40 — **Phase 1.5 DONE.** Drain complete: 407 docs re-embedded, **0
+  errors**. `embedding_status='error'` count **234 → 0**. Residual 15 `NULL` are
+  intentionally-excluded (`skipped_disabled`) + normal new arrivals, not stuck. Both
+  guardrails live. NEXT: verify a clean graph-sync cron run (the 70% failure was
+  entirely this embedding 401), which unblocks **Phase 3**.
 
 ## Hard rules for this rebuild
 
