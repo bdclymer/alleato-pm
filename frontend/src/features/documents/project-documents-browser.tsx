@@ -1,7 +1,16 @@
 "use client";
 
 import * as React from "react";
-import { GripVertical, MoreVertical } from "lucide-react";
+import {
+  Calendar,
+  FileSpreadsheet,
+  FileText,
+  GripVertical,
+  Image as ImageIcon,
+  Mail,
+  MoreVertical,
+  type LucideIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { PageShell } from "@/components/layout";
@@ -14,12 +23,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { apiFetch } from "@/lib/api-client";
+import { formatDate } from "@/lib/format";
 import { DocumentsTablePage } from "@/features/documents/documents-table-page";
 import { createDocumentsTableDefinition } from "@/features/documents/documents-table-definition";
-import {
-  type PipelineDoc,
-  renderDocumentCard,
-} from "@/features/documents/documents-table-config";
+import type { PipelineDoc } from "@/features/documents/documents-table-config";
 import { SmartGroupRail } from "@/features/documents/smart-group-rail";
 import { PreviewPane } from "@/features/documents/preview-pane";
 import { useResizableSplit } from "@/features/documents/use-resizable-split";
@@ -35,6 +42,30 @@ const MOVE_TARGETS = SMART_GROUPS.filter((g) => g.reclassifyTo).map((g) => ({
   category: g.reclassifyTo as string,
 }));
 
+const SPREADSHEET_EXT = new Set(["xls", "xlsx", "csv"]);
+const IMAGE_EXT = new Set(["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"]);
+
+function cardIcon(item: PipelineDoc): LucideIcon {
+  if (item.type === "email") return Mail;
+  if (item.type === "meeting") return Calendar;
+  const ext =
+    (item.title ?? item.file_path ?? "")
+      .toLowerCase()
+      .match(/\.([a-z0-9]+)(?:$|\?)/)?.[1] ?? "";
+  if (SPREADSHEET_EXT.has(ext)) return FileSpreadsheet;
+  if (IMAGE_EXT.has(ext)) return ImageIcon;
+  return FileText;
+}
+
+// Turn raw classification values into a clean, sentence-case label
+// ("teams_message" → "Teams message"); already-human values pass through.
+function humanizeCategory(value: string | null): string | null {
+  if (!value) return null;
+  const spaced = value.replace(/_/g, " ").trim();
+  if (!spaced) return null;
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
 function DocumentCardWithMenu({
   item,
   onView,
@@ -44,9 +75,34 @@ function DocumentCardWithMenu({
   onView: (item: PipelineDoc) => void;
   onMove: (item: PipelineDoc, category: string, label: string) => void;
 }) {
+  const Icon = cardIcon(item);
+  const dateValue = item.created_at ?? item.date;
+  const meta = [humanizeCategory(item.category), dateValue ? formatDate(dateValue) : null]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <div className="group relative">
-      {renderDocumentCard(item, onView)}
+      <Button
+        type="button"
+        variant="ghost"
+        data-testid="document-card"
+        onClick={() => onView(item)}
+        className="flex h-auto w-full min-w-0 items-start gap-3 rounded-lg border border-border p-3 text-left hover:bg-muted/50"
+      >
+        <Icon
+          className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"
+          aria-hidden
+        />
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="line-clamp-2 text-sm font-medium text-foreground">
+            {item.title || "Untitled document"}
+          </span>
+          {meta ? (
+            <span className="truncate text-xs text-muted-foreground">{meta}</span>
+          ) : null}
+        </span>
+      </Button>
       <div className="absolute right-2 top-2 opacity-0 transition focus-within:opacity-100 group-hover:opacity-100">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
