@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useDroppable } from "@dnd-kit/core";
 import {
   Files,
   PencilRuler,
@@ -50,18 +49,10 @@ function RailItem({
   active: boolean;
   onSelect: () => void;
 }) {
-  // Always call useDroppable unconditionally — use `disabled` to opt out non-droppable groups
-  const { setNodeRef, isOver } = useDroppable({
-    id: `group:${group.id}`,
-    disabled: !group.reclassifyTo,
-  });
-
   const Icon = ICONS[group.icon] ?? Files;
-  const dropHighlight = group.reclassifyTo && isOver;
 
   return (
     <Button
-      ref={setNodeRef}
       variant="ghost"
       size="sm"
       onClick={onSelect}
@@ -70,7 +61,6 @@ function RailItem({
         active
           ? "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
           : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
-        dropHighlight && "ring-2 ring-inset ring-primary",
       )}
     >
       <Icon className="h-4 w-4 shrink-0" />

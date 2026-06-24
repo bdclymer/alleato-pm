@@ -2,7 +2,6 @@
 
 import * as React from "react";
 
-import { useDraggable } from "@dnd-kit/core";
 import { format } from "date-fns";
 import { Loader2, Upload, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -71,7 +70,6 @@ export interface DocumentsTablePageProps {
   renderList?: (item: PipelineDoc, onView: (item: PipelineDoc) => void) => React.ReactElement;
   selectedDocId?: string;
   onSelectDoc?: (doc: PipelineDoc) => void;
-  draggableCards?: boolean;
   cardGridClassName?: string;
 }
 
@@ -344,20 +342,6 @@ function getInternalDocumentHref(doc: PipelineDoc): string | null {
   return `/${doc.project_id}/intelligence/sources/${encodeURIComponent(doc.id)}`;
 }
 
-function DraggableCard({ id, children }: { id: string; children: React.ReactNode }) {
-  const { setNodeRef, listeners, attributes, isDragging } = useDraggable({ id });
-  return (
-    <div
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      className={`h-full min-w-0 ${isDragging ? "opacity-50" : ""}`}
-    >
-      {children}
-    </div>
-  );
-}
-
 export function DocumentsTablePage({
   definition,
   title,
@@ -379,7 +363,6 @@ export function DocumentsTablePage({
   renderList: customRenderList,
   selectedDocId: _selectedDocId,
   onSelectDoc,
-  draggableCards,
   cardGridClassName,
 }: DocumentsTablePageProps) {
   const router = useRouter();
@@ -680,17 +663,11 @@ export function DocumentsTablePage({
           onSortChange: handleSortChange,
         }}
         views={{
-          card: (item) => {
-            const node = (customRenderCard ?? renderDocumentCard)(
+          card: (item) =>
+            (customRenderCard ?? renderDocumentCard)(
               item,
               onSelectDoc ?? handleView,
-            );
-            return draggableCards ? (
-              <DraggableCard id={item.id}>{node}</DraggableCard>
-            ) : (
-              node
-            );
-          },
+            ),
           list: (item) =>
             (customRenderList ?? renderDocumentList)(
               item,

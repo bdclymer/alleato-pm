@@ -147,13 +147,26 @@ export const PATCH = withApiGuardrails<{ docId: string }>(
       );
     }
 
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from("document_metadata")
       .update(updates)
-      .eq("id", docId);
+      .eq("id", docId)
+      .select("id");
 
     if (error) {
       return apiErrorResponse(error);
+    }
+
+    // Fail loudly: an RLS-blocked or non-existent row updates 0 rows WITHOUT
+    // an error, which previously returned a false success.
+    if (!updated || updated.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Document was not updated. It may not exist, or you may not have permission to change it.",
+        },
+        { status: 403 },
+      );
     }
 
     return NextResponse.json({ success: true });
