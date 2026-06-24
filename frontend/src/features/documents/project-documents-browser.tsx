@@ -81,7 +81,7 @@ export function ProjectDocumentsBrowser({
       try {
         await apiFetch(`/api/documents/${docId}/assign-project`, {
           method: "PATCH",
-          body: JSON.stringify({ document_type: group.reclassifyTo }),
+          body: JSON.stringify({ category: group.reclassifyTo }),
         });
         toast.success(`Moved to ${group.label}`);
         loadCounts();
@@ -128,6 +128,7 @@ export function ProjectDocumentsBrowser({
                 selectedDocId={selectedDoc?.id}
                 onSelectDoc={setSelectedDoc}
                 draggableCards
+                cardGridClassName="grid-cols-1 xl:grid-cols-2 gap-3"
               />
             </div>
             <div

@@ -43,6 +43,9 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         .eq("project_id", numericProjectId)
         .is("deleted_at", null);
 
+      if (group.filter.category) {
+        query = query.eq("category", String(group.filter.category));
+      }
       if (group.filter.document_type) {
         query = query.eq("document_type", String(group.filter.document_type));
       }

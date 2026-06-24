@@ -12,6 +12,7 @@ import {
   FileDiff,
   Image,
   Mail,
+  Calendar,
   type LucideIcon,
 } from "lucide-react";
 
@@ -33,6 +34,7 @@ const ICONS: Record<string, LucideIcon> = {
   "file-diff": FileDiff,
   photo: Image,
   mail: Mail,
+  calendar: Calendar,
 };
 
 function RailItem({

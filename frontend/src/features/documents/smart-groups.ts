@@ -10,14 +10,19 @@ export interface SmartGroup {
 
 export type SmartGroupCounts = Record<string, number>;
 
+// Smart groups filter on `category` (the populated human classification — e.g.
+// "Drawing", "Contract", "Specification") and `type` (email / meeting). NOTE:
+// `document_type` is intentionally NOT used — it is sparsely populated with a
+// pipeline-stage vocabulary (email_message, drawing_revision, ...) that does not
+// match these labels. `reclassifyTo` is the `category` value written on
+// drag-drop; groups that filter by `type` (Meetings, Emails) are not drop targets.
 export const SMART_GROUPS: SmartGroup[] = [
   { id: "all", label: "All", icon: "files", filter: {}, reclassifyTo: null },
-  { id: "drawings", label: "Drawings", icon: "blueprints", filter: { document_type: "drawing" }, reclassifyTo: "drawing" },
-  { id: "submittals", label: "Submittals", icon: "file-check", filter: { document_type: "submittal" }, reclassifyTo: "submittal" },
-  { id: "contracts", label: "Contracts", icon: "file-text", filter: { document_type: "contract" }, reclassifyTo: "contract" },
-  { id: "specs", label: "Specs", icon: "file-description", filter: { document_type: "specification" }, reclassifyTo: "specification" },
-  { id: "rfis", label: "RFIs", icon: "help-circle", filter: { document_type: "rfi" }, reclassifyTo: "rfi" },
-  { id: "change_orders", label: "Change Orders", icon: "file-diff", filter: { document_type: "change_order" }, reclassifyTo: "change_order" },
-  { id: "photos", label: "Photos", icon: "photo", filter: { document_type: "photo" }, reclassifyTo: "photo" },
+  { id: "drawings", label: "Drawings", icon: "blueprints", filter: { category: "Drawing" }, reclassifyTo: "Drawing" },
+  { id: "specs", label: "Specs", icon: "file-description", filter: { category: "Specification" }, reclassifyTo: "Specification" },
+  { id: "contracts", label: "Contracts", icon: "file-text", filter: { category: "Contract" }, reclassifyTo: "Contract" },
+  { id: "invoices", label: "Invoices", icon: "file-diff", filter: { category: "Invoice" }, reclassifyTo: "Invoice" },
+  { id: "proposals", label: "Proposals", icon: "file-check", filter: { category: "Proposal" }, reclassifyTo: "Proposal" },
+  { id: "meetings", label: "Meetings", icon: "calendar", filter: { type: "meeting" }, reclassifyTo: null },
   { id: "emails", label: "Emails", icon: "mail", filter: { type: "email" }, reclassifyTo: null },
 ];

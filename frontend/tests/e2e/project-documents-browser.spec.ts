@@ -79,4 +79,48 @@ test.describe("project documents browser", () => {
     // Rail must still be intact after the resize drag.
     await expect(page.getByText("Smart groups")).toBeVisible();
   });
+
+  // Regression guard: cards must NOT overlap (a min-w-0 / grid-column bug once
+  // caused content-sized cards to overflow their tracks and stack on top of
+  // each other), AND selecting a smart group must actually filter the grid (a
+  // forcedFilters bug once made every group show the same unfiltered list).
+  test("cards do not overlap and group selection filters the grid", async ({
+    page,
+  }) => {
+    await page.goto("/1009/documents");
+    await page.waitForLoadState("domcontentloaded");
+
+    const cards = page.locator('[data-testid="document-card"]');
+    await expect(cards.first()).toBeVisible({ timeout: 15_000 });
+
+    // ── No overlap: every pair of visible card rects must be disjoint ────────
+    const boxes = await cards.evaluateAll((els) =>
+      els.slice(0, 8).map((e) => {
+        const r = e.getBoundingClientRect();
+        return { x: r.x, y: r.y, w: r.width, h: r.height };
+      }),
+    );
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i];
+        const b = boxes[j];
+        const overlapX = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x));
+        const overlapY = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+        expect(overlapX * overlapY).toBeLessThanOrEqual(25);
+      }
+    }
+
+    // ── Group filter: clicking Drawings shows only Drawing-category cards ────
+    await page.getByRole("button", { name: /^Drawings/ }).click();
+    await page.waitForTimeout(1500);
+    const categories = await cards.evaluateAll((els) =>
+      els
+        .slice(0, 6)
+        .map((e) => (e.textContent || "").match(/Drawing|Contract|Specification|Invoice|Proposal/)?.[0] ?? "?"),
+    );
+    expect(categories.length).toBeGreaterThan(0);
+    for (const c of categories) {
+      expect(c).toBe("Drawing");
+    }
+  });
 });

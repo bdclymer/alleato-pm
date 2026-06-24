@@ -8,15 +8,24 @@ describe("smart-groups", () => {
     expect(all!.reclassifyTo).toBeNull();
   });
 
-  it("maps Drawings to the drawing document_type and is a drop target", () => {
+  it("maps Drawings to the Drawing category and is a drop target", () => {
     const drawings = SMART_GROUPS.find((g) => g.id === "drawings");
-    expect(drawings!.filter.document_type).toBe("drawing");
-    expect(drawings!.reclassifyTo).toBe("drawing");
+    expect(drawings!.filter.category).toBe("Drawing");
+    expect(drawings!.reclassifyTo).toBe("Drawing");
+    // document_type is intentionally unused (sparsely populated in the data).
+    expect(drawings!.filter.document_type).toBeUndefined();
   });
 
-  it("Photos group filters by document_type photo", () => {
-    const photos = SMART_GROUPS.find((g) => g.id === "photos");
-    expect(photos!.filter.document_type).toBe("photo");
+  it("Emails group filters by type=email and is not a drop target", () => {
+    const emails = SMART_GROUPS.find((g) => g.id === "emails");
+    expect(emails!.filter.type).toBe("email");
+    expect(emails!.reclassifyTo).toBeNull();
+  });
+
+  it("Meetings group filters by type=meeting and is not a drop target", () => {
+    const meetings = SMART_GROUPS.find((g) => g.id === "meetings");
+    expect(meetings!.filter.type).toBe("meeting");
+    expect(meetings!.reclassifyTo).toBeNull();
   });
 
   it("every group has a unique id", () => {

@@ -72,6 +72,7 @@ export interface DocumentsTablePageProps {
   selectedDocId?: string;
   onSelectDoc?: (doc: PipelineDoc) => void;
   draggableCards?: boolean;
+  cardGridClassName?: string;
 }
 
 function UploadDialog({
@@ -346,7 +347,12 @@ function getInternalDocumentHref(doc: PipelineDoc): string | null {
 function DraggableCard({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef, listeners, attributes, isDragging } = useDraggable({ id });
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes} className={isDragging ? "opacity-50" : ""}>
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={`h-full min-w-0 ${isDragging ? "opacity-50" : ""}`}
+    >
       {children}
     </div>
   );
@@ -374,6 +380,7 @@ export function DocumentsTablePage({
   selectedDocId: _selectedDocId,
   onSelectDoc,
   draggableCards,
+  cardGridClassName,
 }: DocumentsTablePageProps) {
   const router = useRouter();
   const pathname = usePathname()!;
@@ -605,6 +612,7 @@ export function DocumentsTablePage({
         />
       ) : null}
       <UnifiedTablePage
+        layout={cardGridClassName ? { cardGridClassName } : undefined}
         header={{
           title,
           eyebrow,
