@@ -482,6 +482,149 @@ def test_get_source_sync_health_caps_returned_sources_and_alerts():
     assert len(health["alerts"]) == health["thresholds"]["maxReturnedAlerts"]
 
 
+def test_detect_alerts_does_not_label_fresh_backlog_source_as_stale():
+    """A source synced minutes ago but warning on embedding backlog must NOT emit
+    a 'Last sync is N minutes old' stale alert (the fireflies '4 minutes old' bug)."""
+    now = datetime.now(timezone.utc)
+    sources = [
+        {
+            "source": "fireflies",
+            "resourceId": "document_metadata",
+            "resourceName": "Fireflies meetings",
+            "status": "warning",
+            "staleMinutes": 4,
+            "lastErrorMessage": None,
+            "unembeddedCount": 40,
+            "uncompiledCount": 0,
+        }
+    ]
+
+    alerts = source_sync_health_mod.detect_source_sync_alerts(sources, {}, now)
+
+    assert all(alert["code"] != "source_sync_stale" for alert in alerts)
+    assert not any("minutes old" in alert["message"] for alert in alerts)
+
+
+def test_detect_alerts_flags_genuinely_stale_source():
+    now = datetime.now(timezone.utc)
+    sources = [
+        {
+            "source": "outlook_email",
+            "resourceId": "brandon@example.com",
+            "resourceName": "Outlook: brandon",
+            "status": "critical",
+            "staleMinutes": 3000,
+            "lastErrorMessage": None,
+        }
+    ]
+
+    alerts = source_sync_health_mod.detect_source_sync_alerts(sources, {}, now)
+
+    assert any(
+        alert["code"] == "source_sync_stale" and "minutes old" in alert["message"]
+        for alert in alerts
+    )
+
+
+def test_graph_subsource_inherits_parent_microsoft_graph_run_freshness():
+    """A quiet mailbox whose own last_sync lags but whose parent microsoft_graph
+    sync ran minutes ago is healthy — not falsely stale."""
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+    stale = (datetime.now(timezone.utc) - timedelta(hours=10)).isoformat()
+    fresh = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+    supabase.tables["graph_sync_state"] = [
+        {
+            "source": "outlook_email",
+            "resource_id": "mbox@example.com",
+            "resource_name": "Mailbox",
+            "last_sync_at": stale,
+            "sync_status": "success",
+            "error_message": None,
+            "items_synced": 1,
+            "updated_at": stale,
+        }
+    ]
+    supabase.tables["source_sync_runs"] = [
+        {
+            "id": "run-graph",
+            "source": "microsoft_graph",
+            "resource_id": "graph",
+            "stage": "source_sync",
+            "status": "success",
+            "started_at": fresh,
+            "finished_at": fresh,
+        }
+    ]
+
+    health = _get_source_sync_health_with_fake_rag(supabase)
+
+    outlook = next(row for row in health["sources"] if row["source"] == "outlook_email")
+    assert outlook["status"] == "healthy"
+    assert not any(
+        alert["source"] == "outlook_email" and alert["code"] == "source_sync_stale"
+        for alert in health["alerts"]
+    )
+
+
+def test_persist_source_sync_alerts_surfaces_rls_drift_as_actionable_error():
+    class _RlsClient:
+        def __init__(self):
+            self._upsert = False
+
+        def table(self, _name):
+            return self
+
+        def select(self, *_a, **_k):
+            return self
+
+        def eq(self, *_a, **_k):
+            return self
+
+        def limit(self, *_a, **_k):
+            return self
+
+        def upsert(self, *_a, **_k):
+            self._upsert = True
+            return self
+
+        def execute(self):
+            if self._upsert:
+                raise RuntimeError(
+                    '{"message":"new row violates row-level security policy for table '
+                    '\\"system_alerts\\"","code":"42501"}'
+                )
+            return _Result([])
+
+    client = _RlsClient()
+    original = source_sync_health_mod.get_rag_write_client
+    source_sync_health_mod.get_rag_write_client = lambda: client
+    try:
+        raised = None
+        try:
+            source_sync_health_mod.persist_source_sync_alerts(
+                _RlsClient(),
+                [
+                    {
+                        "severity": "warning",
+                        "code": "embedding_backlog",
+                        "source": "vectorization",
+                        "resourceId": "document_chunks",
+                        "message": "Backlog.",
+                        "detectedAt": "2026-05-07T00:00:00+00:00",
+                    }
+                ],
+            )
+        except RuntimeError as exc:
+            raised = exc
+    finally:
+        source_sync_health_mod.get_rag_write_client = original
+
+    assert raised is not None
+    assert "service_role" in str(raised)
+    assert "RAG_SUPABASE_SERVICE_ROLE_KEY" in str(raised)
+
+
 def test_persist_source_sync_alerts_upserts_and_resolves():
     supabase = _FakeSupabase()
     _seed_empty_tables(supabase)
