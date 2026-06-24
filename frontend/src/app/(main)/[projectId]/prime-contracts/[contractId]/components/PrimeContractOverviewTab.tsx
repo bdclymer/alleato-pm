@@ -519,8 +519,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 <CollapsibleContent>
                   <div className="space-y-6 text-sm">
                     <div className="flex flex-col gap-1.5">
-                      <dt className="text-xs text-muted-foreground">Inclusions</dt>
-                      <dd className="font-normal leading-relaxed text-foreground">
+                      <p className="text-xs text-muted-foreground">Inclusions</p>
+                      <div className="font-normal leading-relaxed text-foreground">
                         <InlineEditField
                           label="Inclusions"
                           type="textarea"
@@ -529,11 +529,11 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                           display={inclusionsList.length === 0 ? undefined : inclusionsList.join("\n")}
                           onSave={(value) => onSaveContractField("inclusions", value || null)}
                         />
-                      </dd>
+                      </div>
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <dt className="text-xs text-muted-foreground">Exclusions</dt>
-                      <dd className="font-normal leading-relaxed text-foreground">
+                      <p className="text-xs text-muted-foreground">Exclusions</p>
+                      <div className="font-normal leading-relaxed text-foreground">
                         <InlineEditField
                           label="Exclusions"
                           type="textarea"
@@ -542,7 +542,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                           display={exclusionsList.length === 0 ? undefined : exclusionsList.join("\n")}
                           onSave={(value) => onSaveContractField("exclusions", value || null)}
                         />
-                      </dd>
+                      </div>
                     </div>
                   </div>
                 </CollapsibleContent>
@@ -555,9 +555,9 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
           </div>
 
           <aside>
-            <DetailPanel className="rounded-lg bg-muted p-6">
+            <DetailPanel className="rounded-lg bg-surface-soft p-6">
               <SectionRuleHeading label="Financial Summary" className="mb-6 pb-0" />
-              <dl className="space-y-3 text-sm">
+              <div className="space-y-3 text-sm">
                 <SummaryValueRow label="Original Amount" value={formatCurrency(originalContractAmount)} />
                 <SummaryValueRow label="Revised Amount" value={formatCurrency(revisedContractAmount)} />
                 <SummaryValueRow label="Pending Amount" value={formatCurrency(pendingRevisedContractAmount)} />
@@ -568,7 +568,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 <SummaryValueRow label="Payments" value={formatCurrency(paymentsReceivedTotal)} />
                 <SummaryValueRow label="Balance" value={formatCurrency(remainingBalanceTotal)} />
                 <SummaryValueRow label="Percent Paid" value={formatPercent(percentPaid, 2)} bold border />
-              </dl>
+              </div>
             </DetailPanel>
           </aside>
         </div>
