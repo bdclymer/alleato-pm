@@ -1,4 +1,5 @@
 import { generateText } from "ai";
+import { aiTelemetry } from "@/lib/ai/ai-telemetry";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { formatAIProviderFailure } from "@/lib/ai/provider-config";
 import type { BrandonDailyUpdatePacket } from "@/lib/executive/brandon-daily-update";
@@ -90,7 +91,9 @@ function buildSourceSummary(packet: BrandonDailyUpdatePacket): string {
       (item, idx) =>
         `[${idx + 1}] ${item.title} | Project: ${item.project} | Source: ${item.source} ${item.date}\n` +
         `  ${item.summary.slice(0, 400)}\n` +
-        (item.recommendedAction ? `  Action: ${item.recommendedAction}\n` : "") +
+        (item.recommendedAction
+          ? `  Action: ${item.recommendedAction}\n`
+          : "") +
         (item.whyItMatters ? `  Why: ${item.whyItMatters}\n` : "") +
         (item.tone ? `  Tone: ${item.tone}\n` : ""),
     )
@@ -186,7 +189,9 @@ Return JSON exactly like this:
 // Fallbacks
 // ---------------------------------------------------------------------------
 
-function fallbackMorningBrief(packet: BrandonDailyUpdatePacket): MorningIntelligenceBrief {
+function fallbackMorningBrief(
+  packet: BrandonDailyUpdatePacket,
+): MorningIntelligenceBrief {
   const allItems = [
     ...packet.sections.needsBrandon,
     ...packet.sections.waitingOnOthers,
@@ -207,11 +212,14 @@ function fallbackMorningBrief(packet: BrandonDailyUpdatePacket): MorningIntellig
       .slice(0, 3)
       .map((item) => item.title),
     decisionsApproaching: [],
-    forecast: "Review project intelligence pages for current status on active items.",
+    forecast:
+      "Review project intelligence pages for current status on active items.",
   };
 }
 
-function fallbackEveningBrief(packet: BrandonDailyUpdatePacket): EveningIntelligenceBrief {
+function fallbackEveningBrief(
+  packet: BrandonDailyUpdatePacket,
+): EveningIntelligenceBrief {
   const allItems = [
     ...packet.sections.needsBrandon,
     ...packet.sections.importantUpdates,
@@ -223,13 +231,19 @@ function fallbackEveningBrief(packet: BrandonDailyUpdatePacket): EveningIntellig
   return {
     portfolioName: "Portfolio Overview",
     healthStatus: hasRisk ? "critical" : hasWatch ? "watch" : "on_track",
-    whatChangedToday: allItems.slice(0, 5).map((item) => `${item.project}: ${item.title}`),
+    whatChangedToday: allItems
+      .slice(0, 5)
+      .map((item) => `${item.project}: ${item.title}`),
     decisionsMade: [],
     risksThatIncreased: "No change.",
-    ownerAttentionRequired: packet.sections.needsBrandon.length > 0
-      ? packet.sections.needsBrandon[0].recommendedAction ?? "Review critical items."
-      : "None.",
-    strategicInsight: packet.operatingBrief?.importantBusinessSignals[0] ?? "No strategic signal surfaced today.",
+    ownerAttentionRequired:
+      packet.sections.needsBrandon.length > 0
+        ? (packet.sections.needsBrandon[0].recommendedAction ??
+          "Review critical items.")
+        : "None.",
+    strategicInsight:
+      packet.operatingBrief?.importantBusinessSignals[0] ??
+      "No strategic signal surfaced today.",
   };
 }
 
@@ -247,10 +261,9 @@ export async function generateExecutiveIntelligenceBrief(
 
   const isMorning = briefType === "morning";
   const system = isMorning ? MORNING_SYSTEM : EVENING_SYSTEM;
-  const userPrompt = (isMorning ? MORNING_USER_TEMPLATE : EVENING_USER_TEMPLATE).replace(
-    "{SOURCE_SUMMARY}",
-    sourceSummary,
-  );
+  const userPrompt = (
+    isMorning ? MORNING_USER_TEMPLATE : EVENING_USER_TEMPLATE
+  ).replace("{SOURCE_SUMMARY}", sourceSummary);
 
   try {
     const result = await generateText({
@@ -258,10 +271,22 @@ export async function generateExecutiveIntelligenceBrief(
       temperature: 0.15,
       system,
       messages: [{ role: "user", content: userPrompt }],
+      experimental_telemetry: aiTelemetry({
+        functionId: "executive-daily-brief.intelligence-synthesis",
+        metadata: {
+          workflow: "executive_daily_brief",
+          briefType,
+          windowDays: packet.windowDays,
+          needsBrandonItemCount: packet.sections.needsBrandon.length,
+          waitingOnOthersItemCount: packet.sections.waitingOnOthers.length,
+          importantUpdatesItemCount: packet.sections.importantUpdates.length,
+        },
+      }),
     });
 
     const raw = result.text.trim();
-    if (!raw) throw new Error("Empty response from intelligence brief synthesis.");
+    if (!raw)
+      throw new Error("Empty response from intelligence brief synthesis.");
 
     const parsed = JSON.parse(stripJsonFence(raw));
 
@@ -285,7 +310,10 @@ export async function generateExecutiveIntelligenceBrief(
       evening,
     };
   } catch (error) {
-    const message = formatAIProviderFailure(error, "Intelligence brief synthesis");
+    const message = formatAIProviderFailure(
+      error,
+      "Intelligence brief synthesis",
+    );
     console.error(`[intelligence-brief] synthesis failed: ${message}`);
 
     return {

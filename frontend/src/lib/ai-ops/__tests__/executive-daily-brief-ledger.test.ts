@@ -8,7 +8,13 @@ jest.mock("@/lib/supabase/service", () => ({
   }),
 }));
 
+jest.mock("@/lib/executive/executive-briefing-workflow", () => ({
+  regenerateExecutiveBriefingDraft: jest.fn(),
+}));
+
 import { linkDailyRecapToCanonicalRun } from "../daily-brief-canonical-link";
+import { evidenceRefSchema } from "../contracts";
+import { evidenceRefsFromDeliveryResult } from "../executive-daily-brief-ledger";
 
 const RUN_ID = "11111111-1111-4111-8111-111111111111";
 const DAILY_RECAP_ID = "33333333-3333-4333-8333-333333333333";
@@ -41,8 +47,58 @@ describe("Executive Daily Brief ledger helpers", () => {
       error: { message: "permission denied for daily_recaps" },
     });
 
-    await expect(linkDailyRecapToCanonicalRun(canonicalLinkInput())).rejects.toThrow(
-      /Failed to link Daily Brief packet/,
-    );
+    await expect(
+      linkDailyRecapToCanonicalRun(canonicalLinkInput()),
+    ).rejects.toThrow(/Failed to link Daily Brief packet/);
+  });
+
+  it("normalizes owner briefing source timestamps before writing evidence refs", () => {
+    const refs = evidenceRefsFromDeliveryResult({
+      ok: true,
+      status: "dry_run",
+      sentAt: "2026-06-24T18:20:00.000Z",
+      recipients: [],
+      decisionsNeeded: 1,
+      actionsRequired: 0,
+      projectsShown: 1,
+      sourceSummary: {
+        generatedAt: "2026-06-24T18:20:00.000Z",
+        activeProjectCount: 1,
+        stalePacketCount: 0,
+        topProjects: [
+          {
+            targetId: "target-1",
+            projectId: 123,
+            projectName: "Test Project",
+            packetId: "packet-1",
+            packetGeneratedAt: "2026-06-24 18:15:00+00",
+            packetIsStale: false,
+            decisionsNeeded: [
+              {
+                cardId: "card-1",
+                cardType: "decision",
+                title: "Approve release path",
+                summary: "Decision summary",
+                whyItMatters: null,
+                nextAction: null,
+                confidence: "high",
+                sourceCount: 1,
+                firstSeenAt: "2026-06-24 17:00:00+00",
+                lastSeenAt: "2026-06-24 18:00:00+00",
+              },
+            ],
+            actionsRequired: [],
+          },
+        ],
+      },
+    });
+
+    expect(refs.map((ref) => ref.occurredAt)).toEqual([
+      "2026-06-24T18:15:00.000Z",
+      "2026-06-24T18:00:00.000Z",
+    ]);
+    expect(() =>
+      refs.forEach((ref) => evidenceRefSchema.parse(ref)),
+    ).not.toThrow();
   });
 });

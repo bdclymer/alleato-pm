@@ -17,6 +17,7 @@ import {
   type OwnerBriefingData,
 } from "./owner-briefing-builder";
 import { buildOwnerBriefingCard } from "./owner-briefing-card";
+import { withExecutiveDailyBriefObservation } from "@/lib/ai/executive-daily-brief-langfuse";
 import {
   OWNER_BRIEFING_RECIPIENTS,
   type OwnerBriefingRecipient,
@@ -113,7 +114,10 @@ export async function sendOwnerBriefingToTeams(input: {
   const auditClient = createRagServiceClient();
   const runStartedAt = new Date().toISOString();
   const runMetadata = {
-    recipients: recipients.map((r) => ({ id: r.supabaseUserId, email: r.email })),
+    recipients: recipients.map((r) => ({
+      id: r.supabaseUserId,
+      email: r.email,
+    })),
     dryRun: Boolean(input.dryRun),
   };
 
@@ -142,75 +146,123 @@ export async function sendOwnerBriefingToTeams(input: {
     // Single shared briefing object — same content for both recipients. We
     // only personalize the greeting via the per-recipient firstName when
     // rebuilding the card.
-    const briefing = await buildOwnerBriefingData({
-      recipientName: recipients[0].firstName,
-      now: input.now,
-    });
+    const briefing = await withExecutiveDailyBriefObservation(
+      "daily-brief.owner-briefing.build-data",
+      {
+        type: "retriever",
+        input: {
+          recipientCount: recipients.length,
+          dryRun: Boolean(input.dryRun),
+        },
+        metadata: {
+          recipientCount: recipients.length,
+          dryRun: Boolean(input.dryRun),
+        },
+      },
+      () =>
+        buildOwnerBriefingData({
+          recipientName: recipients[0].firstName,
+          now: input.now,
+        }),
+    );
 
     const sendResults = await Promise.all(
-      recipients.map(async (recipient): Promise<{
-        userId: string;
-        email: string;
-        displayName: string;
-        sent: boolean;
-        reason?: string;
-        providerMessageId?: string | null;
-        providerResponse?: Record<string, unknown> | null;
-      }> => {
-        const personalized: OwnerBriefingData = {
-          ...briefing,
-          recipientName: recipient.firstName,
-          greeting: rewriteGreeting(briefing.greeting, recipient.firstName),
-        };
-        const card = buildOwnerBriefingCard(personalized, {
-          appBaseUrl,
-          actionToken,
-        });
-
-        if (input.dryRun) {
-          return {
-            userId: recipient.supabaseUserId,
-            email: recipient.email,
-            displayName: recipient.displayName,
-            sent: false,
-            reason: "dry_run",
+      recipients.map(
+        async (
+          recipient,
+        ): Promise<{
+          userId: string;
+          email: string;
+          displayName: string;
+          sent: boolean;
+          reason?: string;
+          providerMessageId?: string | null;
+          providerResponse?: Record<string, unknown> | null;
+        }> => {
+          const personalized: OwnerBriefingData = {
+            ...briefing,
+            recipientName: recipient.firstName,
+            greeting: rewriteGreeting(briefing.greeting, recipient.firstName),
           };
-        }
-
-        try {
-          const { sendProactiveCard } = await import("@/lib/bot/teams-chat");
-          const providerResponse = await sendProactiveCard(
-            recipient.supabaseUserId,
-            card,
+          const card = await withExecutiveDailyBriefObservation(
+            "daily-brief.teams.build-card",
+            {
+              type: "chain",
+              input: {
+                userId: recipient.supabaseUserId,
+                dryRun: Boolean(input.dryRun),
+              },
+              metadata: {
+                userId: recipient.supabaseUserId,
+                dryRun: Boolean(input.dryRun),
+                decisionsNeeded: briefing.portfolio.totalDecisionsNeeded,
+                actionsRequired: briefing.portfolio.totalActionsRequired,
+                projectsShown: briefing.topProjects.length,
+              },
+            },
+            async () =>
+              buildOwnerBriefingCard(personalized, {
+                appBaseUrl,
+                actionToken,
+              }),
           );
-          const normalizedProviderResponse =
-            normalizeProviderResponse(providerResponse);
-          return {
-            userId: recipient.supabaseUserId,
-            email: recipient.email,
-            displayName: recipient.displayName,
-            sent: true,
-            providerMessageId: extractProviderMessageId(
-              normalizedProviderResponse,
-            ),
-            providerResponse: normalizedProviderResponse,
-          };
-        } catch (err) {
-          const reason = err instanceof Error ? err.message : String(err);
-          console.error("[owner-briefing] send failed", {
-            userId: recipient.supabaseUserId,
-            email: recipient.email,
-            reason,
-          });
-          return {
-            userId: recipient.supabaseUserId,
-            email: recipient.email,
-            displayName: recipient.displayName,
-            sent: false,
-            reason,
-          };
-        }
-      }),
+
+          if (input.dryRun) {
+            return {
+              userId: recipient.supabaseUserId,
+              email: recipient.email,
+              displayName: recipient.displayName,
+              sent: false,
+              reason: "dry_run",
+            };
+          }
+
+          try {
+            const { sendProactiveCard } = await import("@/lib/bot/teams-chat");
+            const providerResponse = await withExecutiveDailyBriefObservation(
+              "daily-brief.teams.send-recipient",
+              {
+                type: "tool",
+                input: {
+                  userId: recipient.supabaseUserId,
+                  displayName: recipient.displayName,
+                },
+                metadata: {
+                  userId: recipient.supabaseUserId,
+                  recipientDomain: recipient.email.split("@")[1] ?? "unknown",
+                },
+              },
+              () => sendProactiveCard(recipient.supabaseUserId, card),
+            );
+            const normalizedProviderResponse =
+              normalizeProviderResponse(providerResponse);
+            return {
+              userId: recipient.supabaseUserId,
+              email: recipient.email,
+              displayName: recipient.displayName,
+              sent: true,
+              providerMessageId: extractProviderMessageId(
+                normalizedProviderResponse,
+              ),
+              providerResponse: normalizedProviderResponse,
+            };
+          } catch (err) {
+            const reason = err instanceof Error ? err.message : String(err);
+            console.error("[owner-briefing] send failed", {
+              userId: recipient.supabaseUserId,
+              email: recipient.email,
+              reason,
+            });
+            return {
+              userId: recipient.supabaseUserId,
+              email: recipient.email,
+              displayName: recipient.displayName,
+              sent: false,
+              reason,
+            };
+          }
+        },
+      ),
     );
 
     const finishedAt = new Date().toISOString();
