@@ -1,7 +1,36 @@
 import {
   DEFAULT_APP_BASE_URL,
   resolveAppBaseUrl,
+  sanitizeFromAddress,
 } from "./client";
+
+describe("sanitizeFromAddress", () => {
+  it("strips a trailing newline that would make Resend reject every send", () => {
+    // Regression: 2026-06-24 incident — `EMAIL_FROM_ADDRESS` held a literal "\n",
+    // so Resend returned validation_error and ALL transactional email died silently.
+    expect(sanitizeFromAddress("Alleato <info@alleatogroup.com>\n")).toBe(
+      "Alleato <info@alleatogroup.com>",
+    );
+  });
+
+  it("strips carriage returns, tabs, and surrounding whitespace", () => {
+    expect(sanitizeFromAddress("  Alleato <info@alleatogroup.com>\r\n\t")).toBe(
+      "Alleato <info@alleatogroup.com>",
+    );
+  });
+
+  it("collapses internal whitespace runs to a single space", () => {
+    expect(sanitizeFromAddress("Alleato   <info@alleatogroup.com>")).toBe(
+      "Alleato <info@alleatogroup.com>",
+    );
+  });
+
+  it("leaves a clean address untouched", () => {
+    expect(sanitizeFromAddress("Alleato <info@alleatogroup.com>")).toBe(
+      "Alleato <info@alleatogroup.com>",
+    );
+  });
+});
 
 describe("resolveAppBaseUrl", () => {
   it("defaults email links to the production projects host", () => {
