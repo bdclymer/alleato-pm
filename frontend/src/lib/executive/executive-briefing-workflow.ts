@@ -125,6 +125,29 @@ function createFingerprint(item: BrandonBriefItem, section: FollowUpSection) {
 function buildRecapText(packet: BrandonDailyUpdatePacket) {
   if (packet.operatingBrief) {
     const brief = packet.operatingBrief;
+    // Each focus item shows what it is, why it matters (the owner's judgment
+    // line), and the next move. Rendering whyItMatters is what makes this a brief
+    // worth reading instead of a flat task list.
+    const focusLines = brief.topExecutiveFocus.flatMap((entry) => {
+      const why = entry.whyItMatters?.trim();
+      return [
+        `- ${entry.item.project}: ${entry.item.title}`,
+        why ? `  Why it matters: ${why}` : null,
+        `  Next: ${entry.recommendedNextMove}`,
+      ].filter((line): line is string => Boolean(line));
+    });
+
+    // Only list recommended moves that are NOT already shown as a focus item's
+    // "Next:" line — otherwise every action prints twice.
+    const focusMoves = new Set(
+      brief.topExecutiveFocus.map((entry) =>
+        entry.recommendedNextMove.trim().toLowerCase(),
+      ),
+    );
+    const extraMoves = brief.recommendedMoves.filter(
+      (move) => !focusMoves.has(move.trim().toLowerCase()),
+    );
+
     const lines = [
       "CEO OPERATING BRIEF",
       `Generated ${packet.generatedAt}`,
@@ -134,14 +157,13 @@ function buildRecapText(packet: BrandonDailyUpdatePacket) {
       ...brief.startHere.map((line) => `- ${line}`),
       "",
       "TOP EXECUTIVE FOCUS:",
-      ...brief.topExecutiveFocus.map(
-        (entry) =>
-          `- ${entry.item.project}: ${entry.item.title} | Next: ${entry.recommendedNextMove}`,
-      ),
-      "",
-      "RECOMMENDED MOVES:",
-      ...brief.recommendedMoves.map((move, index) => `${index + 1}. ${move}`),
+      ...focusLines,
     ];
+
+    if (extraMoves.length > 0) {
+      lines.push("", "OTHER MOVES:");
+      extraMoves.forEach((move, index) => lines.push(`${index + 1}. ${move}`));
+    }
 
     return lines.join("\n").trim();
   }

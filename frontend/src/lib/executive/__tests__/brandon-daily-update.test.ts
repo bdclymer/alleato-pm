@@ -1,4 +1,5 @@
 import {
+  applyProjectNumbers,
   buildExecutiveOperatingBrief,
   type BrandonBriefItem,
   bucketInsightCardBriefSections,
@@ -388,6 +389,105 @@ describe("executive operating brief priority lanes", () => {
 
     expect(brief.recommendedMoves.length).toBeGreaterThan(0);
     expect(brief.recommendedMoves[0]).toMatch(/Confirm the owner/);
+  });
+
+  // Regression: the internal scoring dimensions ("Financial impact, Schedule
+  // impact, …") are bookkeeping, not prose. They must never reach the rendered
+  // whyItMatters or START HERE lines, where they read as garbled filler.
+  it("never leaks raw materiality scoring labels into the brief text", () => {
+    const item = briefItem("Permit blocker", {
+      // No whyItMatters → previously fell back to the materiality label join.
+      whyItMatters: null,
+      summary: "City review comments are still outstanding.",
+    });
+
+    const brief = buildExecutiveOperatingBrief({
+      needsBrandon: [item],
+      waitingOnOthers: [],
+      importantUpdates: [],
+    });
+
+    const LEAK = /Financial impact|Schedule impact|Customer relationship impact|Brandon uniquely needed|Blocking other people|Material business signal/;
+    expect(brief.topExecutiveFocus[0]?.whyItMatters).not.toMatch(LEAK);
+    for (const line of brief.startHere) {
+      expect(line).not.toMatch(LEAK);
+    }
+  });
+});
+
+describe("applyProjectNumbers", () => {
+  function packetSection(item: BrandonBriefItem) {
+    return {
+      needsBrandon: [item],
+      waitingOnOthers: [],
+      importantUpdates: [],
+    };
+  }
+
+  // Regression: projectDisplayName emits a dashed number ("25-126 Vermillion
+  // Rise Warehouse"). The old /^\d+\s*/ strip kept "-126", producing the garbled
+  // "25-126 -126 Vermillion Rise Warehouse". The token strip must remove the
+  // whole dashed number before re-prefixing.
+  it("does not double-prefix a name that already carries a dashed project number", () => {
+    const sections = applyProjectNumbers(
+      packetSection(
+        briefItem("CO template issue", {
+          project: "25-126 Vermillion Rise Warehouse",
+          projectInternalId: 67,
+        }),
+      ),
+      new Map([[67, "25-126"]]),
+    );
+
+    expect(sections.needsBrandon[0]?.project).toBe(
+      "25-126 Vermillion Rise Warehouse",
+    );
+  });
+
+  it("strips a bare legacy numeric prefix before applying the project number", () => {
+    const sections = applyProjectNumbers(
+      packetSection(
+        briefItem("Legacy", {
+          project: "67 Vermillion Rise Warehouse",
+          projectInternalId: 67,
+        }),
+      ),
+      new Map([[67, "25-126"]]),
+    );
+
+    expect(sections.needsBrandon[0]?.project).toBe(
+      "25-126 Vermillion Rise Warehouse",
+    );
+  });
+
+  it("prefixes a name that has no number yet", () => {
+    const sections = applyProjectNumbers(
+      packetSection(
+        briefItem("Clean name", {
+          project: "Vermillion Rise Warehouse",
+          projectInternalId: 67,
+        }),
+      ),
+      new Map([[67, "25-126"]]),
+    );
+
+    expect(sections.needsBrandon[0]?.project).toBe(
+      "25-126 Vermillion Rise Warehouse",
+    );
+  });
+
+  it("falls back to the number alone when the value is just the number", () => {
+    const sections = applyProjectNumbers(
+      packetSection(
+        briefItem("Number only", {
+          project: "25-126",
+          projectInternalId: 67,
+        }),
+      ),
+      new Map([[67, "25-126"]]),
+    );
+
+    expect(sections.needsBrandon[0]?.project).toBe("25-126");
   });
 });
 

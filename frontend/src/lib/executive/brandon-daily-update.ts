@@ -2787,6 +2787,21 @@ function recommendedMove(item: BrandonBriefItem): string {
   return `Confirm the owner, next step, and due date${owner}.`;
 }
 
+// A plain "what this means" sentence for an item. Prefers the synthesized
+// whyItMatters; otherwise derives a clean line from the concrete impact. NEVER
+// returns the internal scoring labels ("Financial impact, Schedule impact, …"),
+// which are bookkeeping, not prose an owner should read.
+function cleanWhyItMatters(item: BrandonBriefItem): string {
+  const explicit = normalizeText(item.whyItMatters);
+  if (explicit) return explicit.endsWith(".") ? explicit : `${explicit}.`;
+  const impact = getImpactText(item);
+  const lowered = impact.toLowerCase();
+  if (impact && !lowered.startsWith("exact ") && !lowered.startsWith("relationship impact stated")) {
+    return `Concrete impact: ${impact}.`;
+  }
+  return "Confirm the owner and the next step so this does not stall.";
+}
+
 function uniqueRecommendedMoves(
   items: ExecutiveOperatingBriefShortItem[],
 ): string[] {
@@ -2847,7 +2862,7 @@ export function buildExecutiveOperatingBrief(
         materiality: entry.materiality,
         lane: entry.lane,
         whatChanged: item.summary,
-        whyItMatters: item.whyItMatters ?? entry.materiality.join(", "),
+        whyItMatters: cleanWhyItMatters(item),
         recommendedNextMove: recommendedMove(item),
         owner: item.owner,
       };
@@ -2947,7 +2962,7 @@ export function buildExecutiveOperatingBrief(
   const startHere = first
     ? [
         `Start with ${first.item.project}: ${first.item.title}.`,
-        `${first.materiality.join(", ")}. ${recommendedMove(first.item)}`,
+        `${cleanWhyItMatters(first.item)} ${recommendedMove(first.item)}`.trim(),
       ]
     : ["No material executive items surfaced from the current source window."];
 
@@ -3154,7 +3169,7 @@ async function loadProjectNumberMap(): Promise<Map<number, string>> {
   return map;
 }
 
-function applyProjectNumbers(
+export function applyProjectNumbers(
   sections: BrandonDailyUpdatePacket["sections"],
   projectNumberMap: Map<number, string>,
 ): BrandonDailyUpdatePacket["sections"] {
@@ -3163,8 +3178,13 @@ function applyProjectNumbers(
     if (!item.projectInternalId) return item;
     const projectNumber = projectNumberMap.get(item.projectInternalId);
     if (!projectNumber) return item;
-    // Replace any leading numeric-only prefix (legacy format) with the project number
-    const nameOnly = item.project.replace(/^\d+\s*/, "").trim();
+    // Strip any leading project-number token before re-prefixing. The token may
+    // be a bare number ("67 ") OR a dashed number ("25-126 ") — projectDisplayName
+    // now emits the dashed form. The old /^\d+\s*/ regex stripped only "25",
+    // leaving "-126 Vermillion Rise Warehouse", which then re-prefixed into the
+    // garbled "25-126 -126 Vermillion Rise Warehouse". Match the full token.
+    const stripped = item.project.replace(/^\d+(?:-\d+)*\s+/, "").trim();
+    const nameOnly = stripped === projectNumber ? "" : stripped;
     return {
       ...item,
       project: nameOnly ? `${projectNumber} ${nameOnly}` : projectNumber,
@@ -3332,6 +3352,14 @@ export async function generateBrandonDailyUpdate(
   const financialPulse: FinancialPulseData = financialPulseResult;
   const useOperatingRecords =
     !sourceBackedOnly && operatingRecordResult.itemCount > 0;
+
+  console.log("[brief:trace] ── INPUTS ──────────────────────────────────");
+  console.log("[brief:trace] sourceBackedOnly:", sourceBackedOnly);
+  console.log("[brief:trace] operatingRecordResult.itemCount:", operatingRecordResult.itemCount);
+  console.log("[brief:trace] useOperatingRecords:", useOperatingRecords);
+  console.log("[brief:trace] fallbackResult.rows:", fallbackResult.rows.length);
+  console.log("[brief:trace] financialPulse.warnings:", financialPulse.warnings);
+
   const preflightWarnings: string[] = [];
   // The insight-card shortcut is intentionally disabled for executive delivery.
   // Those cards are useful source candidates, but they are not a finished CEO
@@ -3346,20 +3374,27 @@ export async function generateBrandonDailyUpdate(
   let openai: ReturnType<typeof getOpenAI> | null = null;
 
   if (sourceBackedOnly) {
+    console.log("[brief:trace] PATH: source-backed fallback — skipping vector search + LLM");
     preflightWarnings.push(
       "Daily Brief manual refresh used source-backed fallback mode, so vector search and LLM enrichment were skipped to keep the foreground action bounded.",
     );
   } else if (!useOperatingRecords) {
+    console.log("[brief:trace] PATH: no operating records — attempting vector search + LLM");
     try {
       openai = getOpenAI();
+      console.log("[brief:trace] OpenAI client: OK");
     } catch (error) {
+      console.log("[brief:trace] OpenAI client: FAILED —", error instanceof Error ? error.message : String(error));
       preflightWarnings.push(
         `${formatAIProviderFailure(error, "Executive briefing provider setup")} The Daily Brief will continue with source-backed fallback retrieval.`,
       );
     }
+  } else {
+    console.log("[brief:trace] PATH: operating records available — using operating records for synthesis");
   }
 
   if (!sourceBackedOnly && !useOperatingRecords && !openai) {
+    console.log("[brief:trace] WARNING: no OpenAI client and no operating records — vector search skipped");
     preflightWarnings.push(
       "Daily Brief vector search was skipped because no OpenAI-compatible embedding client was available.",
     );
@@ -3486,6 +3521,20 @@ export async function generateBrandonDailyUpdate(
     : await enrichSectionsWithFullDocumentText(sectionsForSynthesis).catch(() => 0);
 
 
+  const candidateCount = sectionsForSynthesis.needsBrandon.length + sectionsForSynthesis.waitingOnOthers.length + sectionsForSynthesis.importantUpdates.length;
+  console.log("[brief:trace] ── SYNTHESIS ────────────────────────────────");
+  console.log("[brief:trace] candidates going into synthesis:", candidateCount);
+  console.log("[brief:trace]   needsBrandon:", sectionsForSynthesis.needsBrandon.length);
+  console.log("[brief:trace]   waitingOnOthers:", sectionsForSynthesis.waitingOnOthers.length);
+  console.log("[brief:trace]   importantUpdates:", sectionsForSynthesis.importantUpdates.length);
+  if (!sourceBackedOnly) {
+    console.log("[brief:trace] candidate titles:", [
+      ...sectionsForSynthesis.needsBrandon,
+      ...sectionsForSynthesis.waitingOnOthers,
+      ...sectionsForSynthesis.importantUpdates,
+    ].map((item, i) => `  [${i}] ${item.title} (${item.source})`).join("\n"));
+  }
+
   const synthesizedResult = sourceBackedOnly
     ? {
         sections: sectionsForSynthesis,
@@ -3498,6 +3547,16 @@ export async function generateBrandonDailyUpdate(
     : useOperatingRecords
       ? await synthesizeSections(sectionsForSynthesis, financialPulse)
       : await synthesizeSections(sectionsForSynthesis, financialPulse);
+
+  console.log("[brief:trace] synthesis model used:", synthesizedResult.modelUsed);
+  console.log("[brief:trace] synthesis degraded:", synthesizedResult.degraded);
+  console.log("[brief:trace] synthesis warnings:", synthesizedResult.warnings);
+  console.log("[brief:trace] synthesis output:", {
+    needsBrandon: synthesizedResult.sections.needsBrandon.length,
+    waitingOnOthers: synthesizedResult.sections.waitingOnOthers.length,
+    importantUpdates: synthesizedResult.sections.importantUpdates.length,
+  });
+
   const communicationSignalResult =
     await loadRecentCommunicationSignalItems(cutoffIso);
 
@@ -3511,6 +3570,12 @@ export async function generateBrandonDailyUpdate(
       financialBriefItems,
     ),
   );
+  console.log("[brief:trace] ── ENRICHMENT ───────────────────────────────");
+  console.log("[brief:trace] items after merge+filter:", {
+    needsBrandon: supportedResult.sections.needsBrandon.length,
+    waitingOnOthers: supportedResult.sections.waitingOnOthers.length,
+    importantUpdates: supportedResult.sections.importantUpdates.length,
+  });
   const enrichedResult = sourceBackedOnly
     ? {
         sections: supportedResult.sections,
@@ -3519,12 +3584,15 @@ export async function generateBrandonDailyUpdate(
         ],
       }
     : useOperatingRecords
-      ? {
-          sections: supportedResult.sections,
-          warnings: [
-            "Daily Brief evidence enrichment skipped because operating-record mode already used the single GPT synthesis call.",
-          ],
-        }
+      ? (() => {
+          console.log("[brief:trace] enrichment SKIPPED — operating-record mode (synthesis was the only LLM call)");
+          return {
+            sections: supportedResult.sections,
+            warnings: [
+              "Daily Brief evidence enrichment skipped because operating-record mode already used the single GPT synthesis call.",
+            ],
+          };
+        })()
       : synthesizedResult.degraded
         ? {
             sections: mapBriefSections(supportedResult.sections, (item) => ({
@@ -3535,7 +3603,10 @@ export async function generateBrandonDailyUpdate(
               "Daily Brief evidence enrichment skipped because synthesis already degraded to source-backed fallback mode.",
             ],
           }
-        : await enrichBriefSections(supportedResult.sections, financialPulse);
+        : (() => {
+            console.log("[brief:trace] enrichment RUNNING — second LLM call to tighten bullets + whyItMatters");
+            return enrichBriefSections(supportedResult.sections, financialPulse);
+          })();
   const projectNumberMap = await loadProjectNumberMap();
   const numberedSections = applyProjectNumbers(enrichedResult.sections, projectNumberMap);
   // Final guardrail: strip accounts-receivable/overdue/collections language from
