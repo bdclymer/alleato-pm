@@ -25,9 +25,18 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     }
 
     const numericProjectId = Number(projectId);
+    if (Number.isNaN(numericProjectId)) {
+      throw new GuardrailError({
+        code: "BAD_REQUEST",
+        where: "projects/[projectId]/documents/group-counts#GET",
+        message: "Invalid project id.",
+        status: 400,
+      });
+    }
+
     const counts: Record<string, number> = {};
 
-    for (const group of SMART_GROUPS) {
+    const queries = SMART_GROUPS.map((group) => {
       let query = supabase
         .from("document_metadata")
         .select("id", { count: "exact", head: true })
@@ -41,15 +50,21 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         query = query.eq("type", String(group.filter.type));
       }
 
-      const { count, error } = await query;
-      if (error) {
-        throw new GuardrailError({
-          code: "DB_ERROR",
-          where: "projects/[projectId]/documents/group-counts#GET",
-          message: error.message,
-        });
-      }
-      counts[group.id] = count ?? 0;
+      return query.then(({ count, error }) => {
+        if (error) {
+          throw new GuardrailError({
+            code: "DB_ERROR",
+            where: "projects/[projectId]/documents/group-counts#GET",
+            message: error.message,
+          });
+        }
+        return { groupId: group.id, count: count ?? 0 };
+      });
+    });
+
+    const results = await Promise.all(queries);
+    for (const { groupId, count } of results) {
+      counts[groupId] = count;
     }
 
     return NextResponse.json({ counts });
