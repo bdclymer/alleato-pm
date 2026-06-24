@@ -262,7 +262,7 @@ export function buildDrawingTableColumns(
         impliedSubmittalCounts?.get(item.id)?.missing ?? 0,
     },
     {
-      ...drawingColumns[9],
+      ...drawingColumns[8],
       render: (item) => (
         <span className="text-sm">{formatDate(item.drawingDate)}</span>
       ),
@@ -270,7 +270,7 @@ export function buildDrawingTableColumns(
         item.drawingDate ? new Date(item.drawingDate).getTime() : 0,
     },
     {
-      ...drawingColumns[10],
+      ...drawingColumns[9],
       render: (item) => (
         <span className="text-sm">{formatDate(item.receivedDate)}</span>
       ),
@@ -278,7 +278,7 @@ export function buildDrawingTableColumns(
         item.receivedDate ? new Date(item.receivedDate).getTime() : 0,
     },
     {
-      ...drawingColumns[11],
+      ...drawingColumns[10],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.setName || "-"}
@@ -287,7 +287,7 @@ export function buildDrawingTableColumns(
       sortValue: (item) => item.setName ?? "",
     },
     {
-      ...drawingColumns[12],
+      ...drawingColumns[11],
       render: (item) => (
         <span className="text-xs text-muted-foreground truncate max-w-32 block">
           {item.fileName || "-"}
@@ -296,7 +296,7 @@ export function buildDrawingTableColumns(
       sortValue: (item) => item.fileName ?? "",
     },
     {
-      ...drawingColumns[13],
+      ...drawingColumns[12],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.uploadedByEmail || "-"}
