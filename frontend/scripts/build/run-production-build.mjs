@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { spawn, spawnSync } from "node:child_process";
 
 const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const repoRoot = path.resolve(frontendRoot, "..");
 const disableScript = path.join(frontendRoot, "scripts/build/disable-nonprod-routes.mjs");
 const restoreScript = path.join(frontendRoot, "scripts/build/restore-nonprod-routes.mjs");
 const statePath = path.join(frontendRoot, ".next-nonprod-routes/disabled-routes.json");
@@ -48,10 +49,10 @@ async function timedStep(label, step) {
   }
 }
 
-function runNodeScript(scriptPath) {
+function runNodeScript(scriptPath, { cwd = frontendRoot } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [scriptPath], {
-      cwd: frontendRoot,
+      cwd,
       env: process.env,
       stdio: "inherit",
     });
@@ -171,6 +172,10 @@ async function main() {
   }
 
   await timedStep("Disable non-production routes", () => runNodeScript(disableScript));
+
+  await timedStep("Generate route inventory CSV", () =>
+    runNodeScript(path.join(repoRoot, "scripts/verify/route-audit.mjs"), { cwd: repoRoot }),
+  );
 
   const exitCode = await timedStep("Next production build", () => {
     if (buildEngine === "webpack") {

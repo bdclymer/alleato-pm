@@ -18,7 +18,7 @@
     "dev": "bash ../scripts/dev/start-frontend-clean.sh",
     "dev:clean": "bash ../scripts/dev/start-frontend-clean.sh",
     "ai:devtools": "devtools",
-    "build": "npm run quality:build-routes && (cd .. && node scripts/verify/route-audit.mjs) && NODE_OPTIONS='--max-old-space-size=7168' next build",
+    "build": "npm run quality:build-routes && NODE_OPTIONS='--max-old-space-size=7168' next build",
     "build:production": "node scripts/build/run-production-build.mjs",
     "start": "next start",
     "email:preview": "email dev --dir src/emails --port 3030",
