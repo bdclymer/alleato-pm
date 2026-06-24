@@ -13,6 +13,7 @@ import {
   type SourceReferenceRecord,
 } from "@/components/ai-intelligence/source-reference-button";
 import { PageShell } from "@/components/layout";
+import { DailyIngestionFeed } from "@/features/intelligence/daily-ingestion-feed";
 import { buildIntelligencePageState } from "@/lib/ai/intelligence/page-state";
 import {
   loadCurrentIntelligencePacket,
@@ -1369,6 +1370,8 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
       contentClassName="space-y-10"
     >
       {hasOperatingRecord ? <OperatingRecordSection operatingRecord={operatingRecord} projectId={numericProjectId} /> : null}
+
+      <DailyIngestionFeed projectId={numericProjectId} />
 
       {!target && !hasOperatingRecord ? (
         <IntelligenceEmptyState
