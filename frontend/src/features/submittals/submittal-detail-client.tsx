@@ -19,6 +19,7 @@ import {
   DetailPanel,
   PageShell,
   PageTabs,
+  SectionAction,
   SectionRuleHeading,
   SummaryValueRow,
 } from "@/components/layout";
@@ -31,7 +32,6 @@ import {
   InlineEditField,
   StatusBadge,
 } from "@/components/ds";
-import { Property, PropertyList } from "@/components/ui/property";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -507,6 +507,7 @@ export function SubmittalDetailClient({
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [activeTab, setActiveTab] = React.useState("details");
+  const [showAddStep, setShowAddStep] = React.useState(false);
   const { data: linkedDrawings } = useSubmittalLinkedDrawings(projectId, submittal.id);
 
   const workflowSteps = submittal.submittal_workflow_steps ?? [];
@@ -708,49 +709,38 @@ export function SubmittalDetailClient({
                   {/* Dates */}
                   <DetailPanel>
                     <SectionRuleHeading label="Dates" />
-                    <PropertyList>
+                    <div className="space-y-1">
                       {submittal.sent_date && (
-                        <Property label="Submitted" value={formatDate(submittal.sent_date)} />
+                        <DetailField label="Submitted">{formatDate(submittal.sent_date)}</DetailField>
                       )}
-                      <Property label="Final Due">
-                        <div className={cn(getDaysUntil(submittal.final_due_date) !== null && (getDaysUntil(submittal.final_due_date) ?? 0) < 0 ? "text-destructive" : "")}>
-                          <InlineEditField
-                            label="Final Due"
-                            type="date"
-                            value={submittal.final_due_date ?? ""}
-                            display={submittal.final_due_date ? formatDate(submittal.final_due_date) : undefined}
-                            emptyLabel="Set date"
-                            className="w-auto"
-                            onSave={(v) => handleSaveField("final_due_date", v || null)}
-                          />
-                        </div>
-                      </Property>
-                      <Property label="On-Site">
-                        <InlineEditField
-                          label="On-Site"
-                          type="date"
-                          value={submittal.required_on_site_date ?? ""}
-                          display={submittal.required_on_site_date ? formatDate(submittal.required_on_site_date) : undefined}
-                          emptyLabel="Set date"
-                          className="w-auto"
-                          onSave={(v) => handleSaveField("required_on_site_date", v || null)}
-                        />
-                      </Property>
-                      <Property label="Lead Time">
-                        <InlineEditField
-                          label="Lead Time"
-                          type="number"
-                          value={submittal.lead_time != null ? String(submittal.lead_time) : ""}
-                          display={submittal.lead_time != null ? `${submittal.lead_time} days` : undefined}
-                          emptyLabel="Set days"
-                          className="w-auto"
-                          onSave={(v) => handleSaveField("lead_time", v ? parseInt(v, 10) : null)}
-                        />
-                      </Property>
-                    </PropertyList>
+                      <EditableDetailField
+                        label="Final Due"
+                        type="date"
+                        value={submittal.final_due_date ?? ""}
+                        display={submittal.final_due_date ? formatDate(submittal.final_due_date) : undefined}
+                        emptyPlaceholder="Set date"
+                        onSave={(v) => handleSaveField("final_due_date", v || null)}
+                      />
+                      <EditableDetailField
+                        label="On-Site"
+                        type="date"
+                        value={submittal.required_on_site_date ?? ""}
+                        display={submittal.required_on_site_date ? formatDate(submittal.required_on_site_date) : undefined}
+                        emptyPlaceholder="Set date"
+                        onSave={(v) => handleSaveField("required_on_site_date", v || null)}
+                      />
+                      <EditableDetailField
+                        label="Lead Time"
+                        type="number"
+                        value={submittal.lead_time != null ? String(submittal.lead_time) : ""}
+                        display={submittal.lead_time != null ? `${submittal.lead_time} days` : undefined}
+                        emptyPlaceholder="Set days"
+                        onSave={(v) => handleSaveField("lead_time", v ? parseInt(v, 10) : null)}
+                      />
+                    </div>
                   </DetailPanel>
 
-                  {/* Parties — only render if at least one party can be shown */}
+                  {/* Parties */}
                   {(() => {
                     const managerName = submittal.submittal_manager_id
                       ? resolveUserName(allUsers, submittal.submittal_manager_id)
@@ -761,17 +751,17 @@ export function SubmittalDetailClient({
                     return (
                       <DetailPanel>
                         <SectionRuleHeading label="Parties" />
-                        <PropertyList>
+                        <div className="space-y-1">
                           {submittal.responsible_contractor && (
-                            <Property label="Contractor" value={submittal.responsible_contractor.name} />
+                            <DetailField label="Contractor">{submittal.responsible_contractor.name}</DetailField>
                           )}
                           {receivedFromName && (
-                            <Property label="Received From" value={receivedFromName} />
+                            <DetailField label="Received From">{receivedFromName}</DetailField>
                           )}
                           {managerName && (
-                            <Property label="Manager" value={managerName} />
+                            <DetailField label="Manager">{managerName}</DetailField>
                           )}
-                        </PropertyList>
+                        </div>
                       </DetailPanel>
                     );
                   })()}
@@ -833,16 +823,6 @@ export function SubmittalDetailClient({
                       {getPackageName(submittal) && (
                         <DetailField label="Package">{getPackageName(submittal)}</DetailField>
                       )}
-                      {staticLinkedDrawings.length > 0 && (
-                        <DetailField label="Linked Drawings">
-                          <Link
-                            href={`/${projectId}/drawings`}
-                            className="text-primary underline-offset-2 hover:underline"
-                          >
-                            {staticLinkedDrawings.length} drawing{staticLinkedDrawings.length !== 1 ? "s" : ""}
-                          </Link>
-                        </DetailField>
-                      )}
                       <EditableDetailField
                         label="Description"
                         type="textarea"
@@ -855,10 +835,17 @@ export function SubmittalDetailClient({
                   </DetailPanel>
 
                   {/* Workflow */}
-                  <section>
-                    <SectionRuleHeading label="Workflow" />
-                    {workflowSteps.length > 0 && (
-                      <div className="mt-4 space-y-1">
+                  <DetailPanel>
+                    <SectionRuleHeading
+                      label="Workflow"
+                      actions={
+                        <SectionAction onClick={() => setShowAddStep(s => !s)}>
+                          {showAddStep ? "Cancel" : "+ Add Step"}
+                        </SectionAction>
+                      }
+                    />
+                    {workflowSteps.length > 0 ? (
+                      <div className="mt-1 overflow-hidden rounded-md border border-border">
                         {workflowSteps.map((step, idx) => {
                           const state = getStepState(step);
                           const responder = step.submittal_responses?.[0]?.responder_id;
@@ -867,13 +854,13 @@ export function SubmittalDetailClient({
                           const canRespond = isActive && currentUserId && step.submittal_responses?.some(r => r.responder_id === currentUserId && r.response_status === "Pending");
                           const stepResponseEntry = step.submittal_responses?.find(r => r.responder_id === currentUserId && r.response_status === "Pending");
                           return (
-                            <div key={step.id}>
+                            <div key={step.id} className="border-b border-border last:border-b-0">
                               <div className={cn(
-                                "flex items-center gap-4 rounded-md px-3 py-3",
-                                isActive && "bg-muted/50",
+                                "flex items-center gap-4 px-4 py-3",
+                                isActive && "bg-muted/40",
                               )}>
                                 <div className={cn(
-                                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
                                   state === "done" ? "bg-primary text-primary-foreground" :
                                   state === "in-progress" ? "bg-primary/15 text-primary" :
                                   state === "rejected" ? "bg-destructive/15 text-destructive" :
@@ -882,7 +869,7 @@ export function SubmittalDetailClient({
                                   {state === "done" ? "✓" : idx + 1}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium text-foreground">{step.step_type} Review</p>
+                                  <p className="text-sm font-medium">{step.step_type} Review</p>
                                   {responderName && (
                                     <p className="text-xs text-muted-foreground">{responderName}</p>
                                   )}
@@ -894,7 +881,7 @@ export function SubmittalDetailClient({
                                 } />
                               </div>
                               {canRespond && stepResponseEntry && (
-                                <div className="mt-2 px-10 pb-3">
+                                <div className="border-t border-border px-4 pb-4 pt-3">
                                   <RespondForm
                                     projectId={projectId}
                                     submittalId={submittal.id}
@@ -909,16 +896,26 @@ export function SubmittalDetailClient({
                           );
                         })}
                       </div>
+                    ) : (
+                      !showAddStep && (
+                        <EmptyState
+                          icon={<MoreHorizontal />}
+                          title="No workflow steps"
+                          description="Add steps to define the review process."
+                        />
+                      )
                     )}
-                    <div className="mt-4" id="workflow-builder">
-                      <WorkflowBuilder
-                        projectId={projectId}
-                        submittalId={submittal.id}
-                        users={users}
-                        currentSteps={workflowSteps}
-                      />
-                    </div>
-                  </section>
+                    {showAddStep && (
+                      <div className="mt-4" id="workflow-builder">
+                        <WorkflowBuilder
+                          projectId={projectId}
+                          submittalId={submittal.id}
+                          users={users}
+                          currentSteps={workflowSteps}
+                        />
+                      </div>
+                    )}
+                  </DetailPanel>
 
                   {/* Linked Drawings */}
                   <section>
