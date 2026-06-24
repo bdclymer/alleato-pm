@@ -1169,7 +1169,6 @@ export function SubmittalDetailClient({
               <SubmittalAIReviewPanel
                 projectId={projectId}
                 submittalId={submittal.id}
-                linkedDrawingCount={linkedDrawings?.length ?? 0}
               />
             )}
           </div>

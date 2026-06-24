@@ -129,6 +129,7 @@ export interface AIReviewResult {
     discipline: string | null;
     hasVectorizedContent: boolean;
   }>;
+  drawingsWereAutoMatched: boolean;
   comparisonContext: {
     submittalText: string | null;
     drawingText: string | null;

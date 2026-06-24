@@ -1,20 +1,18 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ds";
 import { SectionRuleHeading } from "@/components/layout";
 import { useSubmittalAIReview, type AIReviewResult } from "@/hooks/use-submittals";
 import { appToast as toast } from "@/lib/toast/app-toast";
-import { Bot, AlertTriangle, CheckCircle2, Cpu } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Cpu, Sparkles } from "lucide-react";
 
 interface Props {
   projectId: number;
   submittalId: string;
-  linkedDrawingCount: number;
 }
 
 function ReviewResults({ result }: { result: AIReviewResult }) {
-  const { readiness, comparisonContext, linkedDrawings } = result;
+  const { readiness, comparisonContext, linkedDrawings, drawingsWereAutoMatched } = result;
 
   if (!readiness.canCompare) {
     return (
@@ -34,7 +32,17 @@ function ReviewResults({ result }: { result: AIReviewResult }) {
     <div className="space-y-4">
       {/* Drawing coverage */}
       <div className="space-y-1.5">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Drawings Reviewed</p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Drawings Reviewed
+          </p>
+          {drawingsWereAutoMatched && (
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <Sparkles className="h-3 w-3" />
+              AI-matched
+            </span>
+          )}
+        </div>
         <div className="flex flex-wrap gap-2">
           {linkedDrawings.map((d, i) => (
             <span
@@ -100,7 +108,7 @@ function ReviewResults({ result }: { result: AIReviewResult }) {
   );
 }
 
-export function SubmittalAIReviewPanel({ projectId, submittalId, linkedDrawingCount }: Props) {
+export function SubmittalAIReviewPanel({ projectId, submittalId }: Props) {
   const reviewMutation = useSubmittalAIReview(projectId, submittalId);
 
   async function handleRunReview() {
@@ -111,38 +119,28 @@ export function SubmittalAIReviewPanel({ projectId, submittalId, linkedDrawingCo
     }
   }
 
-  const hasNoDrawings = linkedDrawingCount === 0;
-
   return (
     <div className="space-y-4">
       <SectionRuleHeading label="AI Review" />
 
-      {hasNoDrawings ? (
-        <EmptyState
-          icon={<Bot />}
-          title="No drawings linked"
-          description="Link at least one drawing on the Linked Drawings tab to enable AI review."
-        />
-      ) : (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Compare this submittal against {linkedDrawingCount} linked drawing{linkedDrawingCount !== 1 ? "s" : ""}.
-            </p>
-            <Button
-              size="sm"
-              onClick={handleRunReview}
-              disabled={reviewMutation.isPending}
-            >
-              {reviewMutation.isPending ? "Running…" : "Run AI Review"}
-            </Button>
-          </div>
-
-          {reviewMutation.data && (
-            <ReviewResults result={reviewMutation.data} />
-          )}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Compare this submittal against relevant project drawings.
+          </p>
+          <Button
+            size="sm"
+            onClick={handleRunReview}
+            disabled={reviewMutation.isPending}
+          >
+            {reviewMutation.isPending ? "Running…" : "Run AI Review"}
+          </Button>
         </div>
-      )}
+
+        {reviewMutation.data && (
+          <ReviewResults result={reviewMutation.data} />
+        )}
+      </div>
     </div>
   );
 }

@@ -487,7 +487,8 @@ export function createDocumentIntelligenceTools(
           const submittalResp = await supabase
             .from("submittals")
             .select(
-              "id, title, submittal_number, status, description, submittal_type_id, specification_id, submission_date, required_approval_date, priority",
+              "id, title, submittal_number, status, description, submittal_type_id, specification_id, " +
+              "submission_date, required_approval_date, priority, specification_section, submittal_type",
             )
             .eq("id", resolvedSubmittalId)
             .single();
@@ -512,9 +513,91 @@ export function createDocumentIntelligenceTools(
               "discipline, document_metadata_id)",
             )
             .eq("submittal_id", resolvedSubmittalId);
-          const linkedDrawings = (linkedDrawingsResp.data ?? []).map(
+          let linkedDrawings = (linkedDrawingsResp.data ?? []).map(
             (r) => (r as unknown as { drawing_id: string; drawings: AnyRow }).drawings,
           );
+          let drawingsWereAutoMatched = false;
+
+          // ── 5b. Auto-match drawings when none are manually linked ─────────
+          // Infer relevant drawings from the submittal's spec section, division,
+          // submittal type, and title keywords — so the review works without any
+          // manual setup.
+          if (linkedDrawings.length === 0 && resolvedProjectId) {
+            const specSection = (submittal.specification_section as string | null)?.trim() ?? "";
+
+            // Map CSI division prefix → drawing discipline keyword
+            const DIVISION_TO_DISCIPLINE: Record<string, string> = {
+              "01": "general",
+              "02": "civil",
+              "03": "structural",
+              "04": "structural",
+              "05": "structural",
+              "06": "architectural",
+              "07": "architectural",
+              "08": "architectural",
+              "09": "architectural",
+              "10": "architectural",
+              "21": "fire",
+              "22": "plumbing",
+              "23": "mechanical",
+              "25": "electrical",
+              "26": "electrical",
+              "27": "electrical",
+              "28": "electrical",
+              "31": "civil",
+              "32": "civil",
+              "33": "civil",
+            };
+
+            // CSI spec section format: "03 30 00" → division prefix "03"
+            const divPrefix = specSection.replace(/\s/g, "").slice(0, 2);
+            const inferredDiscipline = DIVISION_TO_DISCIPLINE[divPrefix] ?? null;
+
+            // Pull project drawings — prefer those with OCR text, filter by discipline
+            let drawingsQuery = supabase
+              .from("drawings")
+              .select("id, title, drawing_number, drawing_type, discipline, document_metadata_id")
+              .eq("project_id", resolvedProjectId)
+              .eq("is_obsolete", false)
+              .not("document_metadata_id", "is", null);
+
+            if (inferredDiscipline) {
+              drawingsQuery = drawingsQuery.ilike("discipline", `%${inferredDiscipline}%`);
+            }
+
+            const { data: candidateDrawings } = await drawingsQuery.limit(30);
+            let candidates = candidateDrawings ?? [];
+
+            // If discipline filter returned nothing, fall back to all drawings with OCR text
+            if (candidates.length === 0) {
+              const { data: fallback } = await supabase
+                .from("drawings")
+                .select("id, title, drawing_number, drawing_type, discipline, document_metadata_id")
+                .eq("project_id", resolvedProjectId)
+                .eq("is_obsolete", false)
+                .not("document_metadata_id", "is", null)
+                .limit(30);
+              candidates = fallback ?? [];
+            }
+
+            // Score by keyword overlap between submittal title/description and drawing titles
+            const submittalWords = new Set(
+              `${submittal.title ?? ""} ${submittal.description ?? ""} ${submittal.submittal_type ?? ""}`
+                .toLowerCase()
+                .split(/\W+/)
+                .filter((w) => w.length > 3),
+            );
+
+            const scored = candidates.map((d) => {
+              const drawingWords = (d.title as string ?? "").toLowerCase().split(/\W+/);
+              const overlap = drawingWords.filter((w) => submittalWords.has(w)).length;
+              return { drawing: d, score: overlap };
+            });
+
+            scored.sort((a, b) => b.score - a.score);
+            linkedDrawings = scored.slice(0, 8).map((s) => s.drawing as AnyRow);
+            drawingsWereAutoMatched = linkedDrawings.length > 0;
+          }
 
           // ── 6. Pull vectorized content for each linked drawing ──────────────
           const drawingContents: Array<{
@@ -645,6 +728,7 @@ export function createDocumentIntelligenceTools(
               hasVectorizedContent:
                 drawingContents.some((c) => c.drawingNumber === (d.drawing_number as string)),
             })),
+            drawingsWereAutoMatched,
             submittalDocuments: submittalDocs.map((d) => ({
               name: d.document_name,
               type: d.document_type,
@@ -669,10 +753,9 @@ export function createDocumentIntelligenceTools(
                 : null,
               missingDrawingText: !hasDrawingText
                 ? linkedDrawings.length === 0
-                  ? "No drawings are linked to this submittal. Link drawings via the " +
-                    "submittal detail page before running a review."
-                  : "Linked drawings exist but have no vectorized content. Drawings may be " +
-                    "scanned PDFs — OCR runs automatically on the next sync cycle (every 30 min)."
+                  ? "No drawings with OCR text found for this project. Upload drawings to the " +
+                    "project first — OCR runs automatically within 30 minutes of upload."
+                  : "Matched drawings have no OCR text yet. OCR runs automatically within 30 minutes of upload."
                 : null,
             },
             nextStep: hasSubmittalText && hasDrawingText
