@@ -344,7 +344,7 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
     # 1. Fetch metadata
     resp = (
         client.table("document_metadata")
-        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,summary,overview,status,fireflies_id,participants,participants_array,storage_bucket,file_path,file_name,url,source_web_url,source_metadata")
+        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,summary,overview,status,fireflies_id,participants,participants_array,storage_bucket,file_path,file_name,url,source_web_url,source_metadata,content,raw_text")
         .eq("id", metadata_id)
         .single()
         .execute()
@@ -379,6 +379,18 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
             file_bytes = download_resp
         else:
             raise ValueError(f"Failed to download file: {file_path}")
+
+    # Fallback: extract storage path from public URL (e.g. drawing PDFs where file_path is null)
+    if not content and not file_bytes:
+        import re as _re
+        public_url = metadata.get("url") or metadata.get("source_web_url") or ""
+        m = _re.search(r"/storage/v1/object/public/([^/]+)/(.+)$", public_url)
+        if m:
+            bucket_name, storage_path = m.group(1), m.group(2)
+            logger.info("[DocParser] Downloading via URL-extracted path: %s / %s", bucket_name, storage_path)
+            download_resp = client.storage.from_(bucket_name).download(storage_path)
+            if download_resp:
+                file_bytes = download_resp
 
     # 3. Extract text
     extracted_text = _sanitize_text(detect_and_extract(file_bytes, content, file_name))
