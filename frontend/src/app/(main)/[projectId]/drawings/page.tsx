@@ -916,7 +916,7 @@ export default function ProjectDrawingsPage() {
               onClick={() =>
                 toast.info("Measurements report is not connected yet.", {
                   description:
-                    "This control is visible for Procore parity while the measurement report is still pending.",
+                    "This control is visible while the measurement report is still pending.",
                 })
               }
             >

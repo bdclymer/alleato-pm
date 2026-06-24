@@ -4,6 +4,7 @@ import * as React from "react";
 import { Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   BudgetPageHeader,
@@ -612,11 +613,10 @@ function BudgetPageContent() {
   }, [router, projectId]);
 
   const handleOpenErpIntegrations = React.useCallback(() => {
-    window.open(
-      "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/send-a-budget-to-erp-integrations-for-accounting-acceptance/",
-      "_blank",
-      "noopener,noreferrer",
-    );
+    toast.info("ERP accounting integration is not connected yet.", {
+      description:
+        "Sending a budget to your accounting system for acceptance will be available once the ERP integration is enabled.",
+    });
   }, []);
 
   const handleConfigureBudgetViews = React.useCallback(() => {

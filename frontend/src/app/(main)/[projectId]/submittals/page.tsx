@@ -1033,7 +1033,7 @@ function SubmittalResponsesPanel() {
   return (
     <FormSection
       title="Workflow Responses"
-      description="Configured response labels mapped to Procore default submittal response categories."
+      description="Configured response labels mapped to standard submittal response categories."
     >
       <SettingsTable>
         <InlineTable variant="read">
@@ -1185,7 +1185,7 @@ function ImportsPanel() {
                 Submittal Imports
               </InlineTableCell>
               <InlineTableCell>
-                Available via the Procore Imports desktop app on Windows 7 or
+                Available via the desktop import app on Windows 7 or
                 newer.
               </InlineTableCell>
             </InlineTableRow>
@@ -1199,7 +1199,7 @@ function ImportsPanel() {
               <InlineTableCell className="font-medium text-foreground">
                 Import Method
               </InlineTableCell>
-              <InlineTableCell>Procore Imports desktop application.</InlineTableCell>
+              <InlineTableCell>Desktop import application.</InlineTableCell>
             </InlineTableRow>
           </InlineTableBody>
         </InlineTable>
