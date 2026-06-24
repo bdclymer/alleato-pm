@@ -1,32 +1,18 @@
 "use client";
 
 import * as React from "react";
-import {
-  Calendar,
-  FileSpreadsheet,
-  FileText,
-  GripVertical,
-  Image as ImageIcon,
-  Mail,
-  MoreVertical,
-  type LucideIcon,
-} from "lucide-react";
+import { GripVertical } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageShell } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { apiFetch } from "@/lib/api-client";
-import { formatDate } from "@/lib/format";
 import { DocumentsTablePage } from "@/features/documents/documents-table-page";
 import { createDocumentsTableDefinition } from "@/features/documents/documents-table-definition";
 import type { PipelineDoc } from "@/features/documents/documents-table-config";
+import {
+  DocumentGridCard,
+  type MoveTarget,
+} from "@/features/documents/document-grid-card";
 import { SmartGroupRail } from "@/features/documents/smart-group-rail";
 import { PreviewPane } from "@/features/documents/preview-pane";
 import { useResizableSplit } from "@/features/documents/use-resizable-split";
@@ -37,107 +23,9 @@ import {
 
 // Category groups a document can be re-filed into (search/type groups like
 // Commitments, Meetings, Emails are not move targets).
-const MOVE_TARGETS = SMART_GROUPS.filter((g) => g.reclassifyTo).map((g) => ({
-  label: g.label,
-  category: g.reclassifyTo as string,
-}));
-
-const SPREADSHEET_EXT = new Set(["xls", "xlsx", "csv"]);
-const IMAGE_EXT = new Set(["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"]);
-
-function cardIcon(item: PipelineDoc): LucideIcon {
-  if (item.type === "email") return Mail;
-  if (item.type === "meeting") return Calendar;
-  const ext =
-    (item.title ?? item.file_path ?? "")
-      .toLowerCase()
-      .match(/\.([a-z0-9]+)(?:$|\?)/)?.[1] ?? "";
-  if (SPREADSHEET_EXT.has(ext)) return FileSpreadsheet;
-  if (IMAGE_EXT.has(ext)) return ImageIcon;
-  return FileText;
-}
-
-// Turn raw classification values into a clean, sentence-case label
-// ("teams_message" → "Teams message"); already-human values pass through.
-function humanizeCategory(value: string | null): string | null {
-  if (!value) return null;
-  const spaced = value.replace(/_/g, " ").trim();
-  if (!spaced) return null;
-  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
-}
-
-function DocumentCardWithMenu({
-  item,
-  onView,
-  onMove,
-}: {
-  item: PipelineDoc;
-  onView: (item: PipelineDoc) => void;
-  onMove: (item: PipelineDoc, category: string, label: string) => void;
-}) {
-  const Icon = cardIcon(item);
-  const dateValue = item.created_at ?? item.date;
-  const meta = [humanizeCategory(item.category), dateValue ? formatDate(dateValue) : null]
-    .filter(Boolean)
-    .join(" · ");
-
-  return (
-    <div className="group relative">
-      <Button
-        type="button"
-        variant="ghost"
-        data-testid="document-card"
-        onClick={() => onView(item)}
-        className="flex h-auto w-full min-w-0 items-start gap-3 rounded-lg border border-border p-3 text-left hover:bg-muted/50"
-      >
-        <Icon
-          className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"
-          aria-hidden
-        />
-        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="line-clamp-2 text-sm font-medium text-foreground">
-            {item.title || "Untitled document"}
-          </span>
-          {meta ? (
-            <span className="truncate text-xs text-muted-foreground">{meta}</span>
-          ) : null}
-        </span>
-      </Button>
-      <div className="absolute right-2 top-2 opacity-0 transition focus-within:opacity-100 group-hover:opacity-100">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Document actions"
-              className="h-7 w-7 bg-background shadow-xs"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <DropdownMenuLabel>Move to</DropdownMenuLabel>
-            {MOVE_TARGETS.map((t) => (
-              <DropdownMenuItem
-                key={t.category}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onMove(item, t.category, t.label);
-                }}
-              >
-                {t.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </div>
-  );
-}
+const MOVE_TARGETS: MoveTarget[] = SMART_GROUPS.filter((g) => g.reclassifyTo).map(
+  (g) => ({ label: g.label, category: g.reclassifyTo as string }),
+);
 
 export function ProjectDocumentsBrowser({
   projectId,
@@ -207,7 +95,12 @@ export function ProjectDocumentsBrowser({
 
   const renderCard = React.useCallback(
     (item: PipelineDoc, onView: (item: PipelineDoc) => void) => (
-      <DocumentCardWithMenu item={item} onView={onView} onMove={handleMove} />
+      <DocumentGridCard
+        item={item}
+        onView={onView}
+        onMove={handleMove}
+        moveTargets={MOVE_TARGETS}
+      />
     ),
     [handleMove],
   );
