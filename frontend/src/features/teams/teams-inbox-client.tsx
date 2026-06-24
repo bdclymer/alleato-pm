@@ -10,42 +10,31 @@ import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
   TeamsConversationThread,
-  parseTeamsConversation,
   type ParsedTeamsMessage,
 } from "@/features/documents/teams-conversation-thread";
-import type { TeamsInboxConversation } from "@/app/api/teams-inbox/route";
+import type { LiveConversationSummary } from "@/app/api/teams-live/route";
+import type { LiveChatMessage } from "@/app/api/teams-live/[chatId]/route";
 
-type Conversation = TeamsInboxConversation & {
-  messages: ParsedTeamsMessage[];
-  participants: string[];
-  preview: string;
-  lastActivity: string | null;
-};
-
-function deriveParticipants(messages: ParsedTeamsMessage[]): string[] {
-  const seen: string[] = [];
-  for (const m of messages) {
-    if (!seen.includes(m.sender)) seen.push(m.sender);
-  }
-  return seen;
+/** ISO (UTC) from Graph → local "YYYY-MM-DD HH:MM:SS" (the thread renderer slices this). */
+function toLocalStamp(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
-function displayTitle(conversation: Conversation): string {
-  if (conversation.participants.length > 0) {
-    return conversation.participants.slice(0, 3).join(", ");
-  }
-  return conversation.title.replace(/^Teams DM Conversation:\s*/i, "Conversation ");
+function displayTitle(conversation: LiveConversationSummary): string {
+  return conversation.title || "Teams conversation";
 }
 
+// Matches the /emails list date format ("Jun 23 4:25 PM").
 function formatWhen(value: string | null): string {
   if (!value) return "";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "";
-  const today = new Date();
-  const sameDay = d.toDateString() === today.toDateString();
-  return sameDay
-    ? d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
-    : d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const dateLabel = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const timeLabel = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return `${dateLabel} ${timeLabel}`;
 }
 
 function ConversationRow({
@@ -53,7 +42,7 @@ function ConversationRow({
   isSelected,
   onClick,
 }: {
-  conversation: Conversation;
+  conversation: LiveConversationSummary;
   isSelected: boolean;
   onClick: () => void;
 }) {
@@ -63,33 +52,36 @@ function ConversationRow({
       variant="ghost"
       onClick={onClick}
       className={cn(
-        "h-auto w-full flex-col items-stretch gap-0 rounded-none border-b border-border/40 px-3 py-3 text-left hover:bg-muted/40",
+        "h-auto w-full flex-col items-stretch gap-0 rounded-none border-b border-border/40 px-3 py-2 text-left hover:bg-muted/40",
         isSelected && "border-l-2 border-l-primary bg-muted/60",
       )}
     >
       <span className="flex items-baseline justify-between gap-2">
-        <span className="truncate text-sm font-semibold text-foreground">
+        <span className="truncate text-xs font-semibold leading-4 text-foreground">
           {displayTitle(conversation)}
         </span>
-        <span className="shrink-0 text-xs font-normal text-muted-foreground">
+        <span className="shrink-0 whitespace-nowrap text-[11px] font-medium tabular-nums text-muted-foreground">
           {formatWhen(conversation.lastActivity)}
         </span>
       </span>
       {conversation.preview ? (
-        <span className="mt-1 line-clamp-2 whitespace-normal text-xs font-normal text-muted-foreground">
+        <span className="mt-0.5 line-clamp-1 whitespace-normal text-[11px] font-normal leading-4 text-muted-foreground">
           {conversation.preview}
-        </span>
-      ) : null}
-      {conversation.projectName ? (
-        <span className="mt-1 truncate text-xs font-normal text-muted-foreground/80">
-          {conversation.projectName}
         </span>
       ) : null}
     </Button>
   );
 }
 
-function ReadingPane({ conversation }: { conversation: Conversation | null }) {
+function ReadingPane({
+  conversation,
+  messages,
+  isLoading,
+}: {
+  conversation: LiveConversationSummary | null;
+  messages: ParsedTeamsMessage[];
+  isLoading: boolean;
+}) {
   if (!conversation) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -104,22 +96,15 @@ function ReadingPane({ conversation }: { conversation: Conversation | null }) {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <div className="border-b border-border/40 px-6 py-4">
+      <div className="px-6 pb-1 pt-5">
         <p className="text-base font-semibold text-foreground">{displayTitle(conversation)}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {conversation.messages.length} message{conversation.messages.length === 1 ? "" : "s"}
-          {conversation.projectName ? ` · ${conversation.projectName}` : ""}
-          {conversation.lastActivity
-            ? ` · ${new Date(conversation.lastActivity).toLocaleDateString(undefined, {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}`
-            : ""}
-        </p>
       </div>
-      <div className="flex-1 overflow-y-auto px-6 py-5">
-        <TeamsConversationThread messages={conversation.messages} />
+      <div className="flex-1 overflow-y-auto px-6 pb-6">
+        {isLoading ? (
+          <p className="pt-4 text-sm text-muted-foreground">Loading conversation…</p>
+        ) : (
+          <TeamsConversationThread messages={messages} />
+        )}
       </div>
     </div>
   );
@@ -131,39 +116,52 @@ export function TeamsInboxClient() {
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    const t = setTimeout(() => setDebouncedSearch(search), 200);
     return () => clearTimeout(t);
   }, [search]);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["teams-inbox", debouncedSearch],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (debouncedSearch) params.set("q", debouncedSearch);
-      return apiFetch<{ conversations: TeamsInboxConversation[] }>(
-        `/api/teams-inbox${params.toString() ? `?${params}` : ""}`,
-      );
-    },
+  // Conversation list — live from Microsoft Graph (every chat across mailboxes).
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["teams-live"],
+    queryFn: async () =>
+      apiFetch<{ conversations: LiveConversationSummary[] }>("/api/teams-live"),
+    staleTime: 60_000,
   });
 
-  const conversations = React.useMemo<Conversation[]>(() => {
-    const raw = data?.conversations ?? [];
-    return raw.map((c) => {
-      const messages = parseTeamsConversation(c.content);
-      const participants = deriveParticipants(messages);
-      const last = messages[messages.length - 1];
-      return {
-        ...c,
-        messages,
-        participants,
-        preview: last ? `${last.sender}: ${last.text}` : "",
-        // Display the last *message* time (meaningful), not the sync timestamp.
-        lastActivity: last ? last.timestamp : c.updatedAt,
-      };
-    });
-  }, [data]);
+  const allConversations = React.useMemo(() => data?.conversations ?? [], [data]);
+
+  const conversations = React.useMemo(() => {
+    const q = debouncedSearch.trim().toLowerCase();
+    if (!q) return allConversations;
+    return allConversations.filter(
+      (c) =>
+        c.title.toLowerCase().includes(q) ||
+        c.participants.join(" ").toLowerCase().includes(q) ||
+        c.preview.toLowerCase().includes(q),
+    );
+  }, [allConversations, debouncedSearch]);
 
   const selected = conversations.find((c) => c.id === selectedId) ?? null;
+
+  // Thread for the selected chat — fetched lazily, live from Graph.
+  const { data: threadData, isLoading: threadLoading } = useQuery({
+    queryKey: ["teams-live", selectedId],
+    queryFn: async () =>
+      apiFetch<{ messages: LiveChatMessage[] }>(`/api/teams-live/${encodeURIComponent(selectedId!)}`),
+    enabled: !!selectedId,
+    staleTime: 60_000,
+  });
+
+  const messages = React.useMemo<ParsedTeamsMessage[]>(
+    () =>
+      (threadData?.messages ?? []).map((m) => ({
+        id: m.id,
+        sender: m.sender,
+        text: m.text,
+        timestamp: toLocalStamp(m.timestamp),
+      })),
+    [threadData],
+  );
 
   React.useEffect(() => {
     if (conversations.length > 0 && (!selectedId || !conversations.find((c) => c.id === selectedId))) {
@@ -190,19 +188,16 @@ export function TeamsInboxClient() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background">
-      {/* Left: conversation list */}
       <div className="flex w-96 shrink-0 flex-col overflow-hidden border-r border-border/50">
         <div className="flex items-center justify-between gap-2 border-b border-border/40 px-4 pb-3 pt-4">
           <p className="text-lg font-semibold text-foreground">Teams Messages</p>
-          <ExpandingSearch
-            value={search}
-            onChange={setSearch}
-            placeholder="Search conversations…"
-          />
+          <ExpandingSearch value={search} onChange={setSearch} placeholder="Search conversations…" />
         </div>
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
-            <p className="px-4 py-6 text-sm text-muted-foreground">Loading conversations...</p>
+            <p className="px-4 py-6 text-sm text-muted-foreground">Loading live from Microsoft Teams…</p>
+          ) : isError ? (
+            <p className="px-4 py-6 text-sm text-destructive">Could not reach Microsoft Teams.</p>
           ) : conversations.length === 0 ? (
             <p className="px-4 py-6 text-sm text-muted-foreground">No conversations found.</p>
           ) : (
@@ -218,9 +213,8 @@ export function TeamsInboxClient() {
         </div>
       </div>
 
-      {/* Right: reading pane */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <ReadingPane conversation={selected} />
+        <ReadingPane conversation={selected} messages={messages} isLoading={threadLoading && !!selectedId} />
       </div>
     </div>
   );

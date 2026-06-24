@@ -1,5 +1,4 @@
 import * as React from "react";
-import { MessageSquare } from "lucide-react";
 
 /**
  * Renders a compiled Teams DM conversation bucket as a readable chat thread.
@@ -72,42 +71,36 @@ export function TeamsConversationThread({ messages }: { messages: ParsedTeamsMes
   let lastSender = "";
 
   return (
-    <div className="rounded-md border border-border bg-background">
-        <div className="flex items-center gap-2 border-b border-border px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          <MessageSquare className="h-3.5 w-3.5" />
-          {messages.length} message{messages.length === 1 ? "" : "s"}
-        </div>
-        <div className="space-y-1 px-4 py-4">
-          {messages.map((message) => {
-            const day = dayOf(message.timestamp);
-            const showDay = day !== lastDay;
-            const showSender = showDay || message.sender !== lastSender;
-            lastDay = day;
-            lastSender = message.sender;
-            return (
-              <React.Fragment key={message.id}>
-                {showDay ? (
-                  <div className="flex items-center gap-3 py-3">
-                    <div className="h-px flex-1 bg-border" />
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {formatDayLabel(day)}
-                    </span>
-                    <div className="h-px flex-1 bg-border" />
-                  </div>
-                ) : null}
-                <div className={showSender ? "pt-2" : ""}>
-                  {showSender ? (
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-sm font-semibold text-foreground">{message.sender}</span>
-                      <span className="text-xs text-muted-foreground">{timeOf(message.timestamp)}</span>
-                    </div>
-                  ) : null}
-                  <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">{message.text}</p>
+    <div className="space-y-1.5">
+      {messages.map((message) => {
+        const day = dayOf(message.timestamp);
+        const showDay = day !== lastDay;
+        const showSender = showDay || message.sender !== lastSender;
+        lastDay = day;
+        lastSender = message.sender;
+        return (
+          <React.Fragment key={message.id}>
+            {showDay ? (
+              <div className="flex items-center gap-3 py-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs font-medium text-muted-foreground">
+                  {formatDayLabel(day)}
+                </span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+            ) : null}
+            <div className={showSender ? "pt-2" : ""}>
+              {showSender ? (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm font-semibold text-foreground">{message.sender}</span>
+                  <span className="text-xs text-muted-foreground">{timeOf(message.timestamp)}</span>
                 </div>
-              </React.Fragment>
-            );
-          })}
-        </div>
+              ) : null}
+              <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">{message.text}</p>
+            </div>
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 }

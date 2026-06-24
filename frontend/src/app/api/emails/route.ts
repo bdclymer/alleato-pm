@@ -1,41 +1,45 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { buildOwnEmailsFilter } from "@/lib/emails/access";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import {
+  createOutlookIntakeServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
-interface EmailProjectRow {
-  id: number;
-  name: string | null;
-  project_number: string | null;
-}
+/**
+ * Global Emails feed.
+ *
+ * Reads the LIVE inbox (`outlook_email_intake`, AI Database) — current to today.
+ * The old PM-APP `project_emails` projection this used to read was abandoned
+ * when the Outlook sync moved to the AI DB (it silently stopped ~2026-06-16),
+ * leaving the page stale. The Triage inbox already reads this same live source.
+ * App-composed drafts (a handful) are not surfaced in this list; they're
+ * authored from the project email composer.
+ *
+ * The response shape mirrors the previous project_emails contract so the Emails
+ * UI is unchanged.
+ */
 
-interface EmailRow {
+const MAX_EMAILS = 1000;
+
+interface IntakeRow {
   id: number;
-  project_id: number;
-  subject: string;
+  project_id: number | null;
+  subject: string | null;
   body: string | null;
   body_html: string | null;
+  body_text: string | null;
   from_name: string | null;
   from_email: string | null;
   to_list: string[] | null;
   cc_list: string[] | null;
-  bcc_list: string[] | null;
-  status: "Draft" | "Sent" | "Received" | "Failed";
-  sent_at: string | null;
   received_at: string | null;
-  is_private: boolean | null;
-  is_starred: boolean | null;
   has_attachments: boolean | null;
-  related_tool: string | null;
-  related_id: string | null;
-  distribution_group: string | null;
-  thread_id: string | null;
-  created_by: string | null;
+  graph_message_id: string | null;
+  mailbox_user_id: string | null;
+  conversation_id: string | null;
   created_at: string | null;
-  updated_at: string | null;
-  deleted_at: string | null;
-  projects: EmailProjectRow | null;
 }
 
 export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
@@ -59,52 +63,24 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
   const isAdmin = profile?.is_admin === true;
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
-  // Match the project email API: no source parameter means app-composed and
-  // Outlook-synced email are both included. Explicit app/outlook filters narrow.
-  const source = searchParams.get("source") ?? "all";
 
-  let query = supabase
-    .from("project_emails")
+  const intake = createOutlookIntakeServiceClient();
+  let query = intake
+    .from("outlook_email_intake")
     .select(
-      `
-        *,
-        projects!project_emails_project_id_fkey (
-          id,
-          name,
-          project_number
-        )
-      `,
+      "id,project_id,subject,body,body_html,body_text,from_name,from_email,to_list,cc_list,received_at,has_attachments,graph_message_id,mailbox_user_id,conversation_id,created_at",
     )
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+    .order("received_at", { ascending: false, nullsFirst: false })
+    .limit(MAX_EMAILS);
 
-  if (status) {
-    query = query.eq("status", status);
-  }
-
-  if (source === "outlook") {
-    query = query.or(
-      "graph_message_id.not.is.null,mailbox_user_id.not.is.null,conversation_id.not.is.null",
-    );
-  } else if (source === "app") {
-    query = query
-      .is("graph_message_id", null)
-      .is("mailbox_user_id", null)
-      .is("conversation_id", null);
-  }
-
-  // Non-admins see only their own emails (sender, recipient, or app-created by them).
-  if (!isAdmin) {
-    const filter = buildOwnEmailsFilter({ authUserId: user.id, email: user.email });
-    if (!filter) {
-      // No identifiable user email — return empty rather than leak data.
-      return NextResponse.json([]);
-    }
-    query = query.or(filter);
+  // Non-admins only see mail they sent or received.
+  if (!isAdmin && user.email) {
+    query = query.or(`from_email.eq.${user.email},to_list.cs.{${user.email}}`);
+  } else if (!isAdmin) {
+    return NextResponse.json([]);
   }
 
   const { data, error } = await query;
-
   if (error) {
     throw new GuardrailError({
       code: "INTERNAL_ERROR",
@@ -113,16 +89,75 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
     });
   }
 
-  const emails = ((data ?? []) as unknown as EmailRow[]).map((email) => ({
-    ...email,
-    project: email.projects
-      ? {
-          id: email.projects.id,
-          name: email.projects.name,
-          project_number: email.projects.project_number,
-        }
-      : null,
-  }));
+  const rows = (data ?? []) as unknown as IntakeRow[];
+
+  // Real (non-inline) attachments only. Outlook/Graph's has_attachments flag is
+  // true for inline images (signature logos), which falsely shows a paperclip on
+  // emails with no actual file. Drive the icon off real attachment rows instead.
+  const emailIds = rows.map((r) => r.id);
+  const emailsWithRealAttachments = new Set<number>();
+  if (emailIds.length > 0) {
+    const { data: attachmentRows } = await intake
+      .from("outlook_email_intake_attachments")
+      .select("intake_email_id")
+      .in("intake_email_id", emailIds)
+      .or("is_inline.is.null,is_inline.eq.false");
+    for (const a of attachmentRows ?? []) {
+      if (typeof a.intake_email_id === "number") emailsWithRealAttachments.add(a.intake_email_id);
+    }
+  }
+
+  // Resolve project names from the PM APP in one batch.
+  const projectIds = Array.from(
+    new Set(rows.map((r) => r.project_id).filter((id): id is number => typeof id === "number")),
+  );
+  const projects = new Map<number, { id: number; name: string | null; project_number: string | null }>();
+  if (projectIds.length > 0) {
+    const { data: projectRows } = await createServiceClient()
+      .from("projects")
+      .select("id,name,project_number")
+      .in("id", projectIds);
+    for (const p of projectRows ?? []) {
+      projects.set(p.id as number, {
+        id: p.id as number,
+        name: (p.name as string | null) ?? null,
+        project_number: (p.project_number as string | null) ?? null,
+      });
+    }
+  }
+
+  const emails = rows
+    .filter((r) => (status ? "Received" === status : true))
+    .map((r) => ({
+      id: r.id,
+      project_id: r.project_id,
+      subject: r.subject || "(no subject)",
+      body: r.body_text || r.body,
+      body_html: r.body_html,
+      from_name: r.from_name,
+      from_email: r.from_email,
+      to_list: r.to_list,
+      cc_list: r.cc_list,
+      bcc_list: null,
+      status: "Received" as const,
+      sent_at: null,
+      received_at: r.received_at,
+      is_private: null,
+      is_starred: null,
+      has_attachments: emailsWithRealAttachments.has(r.id),
+      related_tool: null,
+      related_id: null,
+      distribution_group: null,
+      thread_id: r.conversation_id,
+      graph_message_id: r.graph_message_id,
+      mailbox_user_id: r.mailbox_user_id,
+      conversation_id: r.conversation_id,
+      created_by: null,
+      created_at: r.created_at ?? r.received_at,
+      updated_at: r.created_at ?? r.received_at,
+      deleted_at: null,
+      project: typeof r.project_id === "number" ? (projects.get(r.project_id) ?? null) : null,
+    }));
 
   return NextResponse.json(emails);
 });

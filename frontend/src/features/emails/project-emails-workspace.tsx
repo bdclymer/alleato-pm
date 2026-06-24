@@ -446,11 +446,11 @@ function InboxRow({
                 <PaperPlaneIcon className="h-3.5 w-3.5" />
               )}
             </span>
-            <div className="truncate text-[13px] font-semibold leading-5 text-foreground">
+            <div className="truncate text-xs font-semibold leading-4 text-foreground">
               {email.from_name || email.from_email || "Unknown sender"}
             </div>
           </div>
-          <p className="mt-0.5 truncate pr-2 text-[13px] font-medium leading-5 text-foreground">
+          <p className="mt-0.5 truncate pr-2 text-xs font-medium leading-4 text-foreground">
             {email.subject || "Untitled email"}
           </p>
           <p className="mt-0.5 truncate pr-2 text-[11px] leading-4 text-muted-foreground">
