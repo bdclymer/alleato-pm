@@ -95,18 +95,6 @@ function toItem(row: DocRow): IngestionItem {
   };
 }
 
-type Filter = (q: ReturnType<ReturnType<typeof createServiceClient>["from"]>) => unknown;
-
-const CATEGORY_FILTERS: Record<IngestionCategory, Filter> = {
-  meetings: (q) => (q as { eq: (c: string, v: string) => unknown }).eq("type", "meeting"),
-  emails: (q) => (q as { in: (c: string, v: string[]) => unknown }).in("type", ["email", "email_attachment"]),
-  teams: (q) => (q as { ilike: (c: string, v: string) => unknown }).ilike("type", "teams%"),
-  documents: (q) =>
-    (q as { or: (f: string) => unknown }).or(
-      "source_system.ilike.%sharepoint%,source_system.ilike.%onedrive%,type.eq.document",
-    ),
-};
-
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/ingestion-feed#GET",
   async ({ request, params }): Promise<NextResponse> => {
