@@ -54,6 +54,9 @@ type DocumentsTableDefinitionOptions = {
    *  undefined.  Smart-group selection uses this to guarantee the group's
    *  document_type / type constraint reaches the API regardless of URL state. */
   forcedFilters?: Partial<DocumentFilterState>;
+  /** Free-text search that ALWAYS wins (overrides the user's search input) —
+   *  used by search-based smart groups (e.g. Commitments). */
+  forcedSearch?: string;
   searchPlaceholder?: string;
   defaultSortBy?: string;
   defaultSortDirection?: "asc" | "desc";
@@ -158,6 +161,9 @@ export function createDocumentsTableDefinition(
             params.set(k, v);
           }
         }
+      }
+      if (options.forcedSearch && options.forcedSearch.trim()) {
+        params.set("search", options.forcedSearch.trim());
       }
 
       params.set("page", String(query.page));

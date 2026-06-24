@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { SMART_GROUPS } from "@/features/documents/smart-groups";
+import { DEFAULT_EXCLUDED_TYPES } from "@/app/api/documents/status/route";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,25 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       }
       if (group.filter.type) {
         query = query.eq("type", String(group.filter.type));
+      } else {
+        // Match the grid's default population: hide communication/transcript
+        // types unless a group explicitly selects them via a `type` filter.
+        for (const excluded of DEFAULT_EXCLUDED_TYPES) {
+          query = query.neq("type", excluded);
+        }
+      }
+      if (group.search) {
+        // Mirror the /api/documents/status search predicate so the rail count
+        // matches the filtered grid exactly.
+        const escaped = group.search.replace(/[%_,]/g, (c) => `\\${c}`);
+        query = query.or(
+          [
+            `title.ilike.%${escaped}%`,
+            `summary.ilike.%${escaped}%`,
+            `overview.ilike.%${escaped}%`,
+            `participants.ilike.%${escaped}%`,
+          ].join(","),
+        );
       }
 
       return query.then(({ count, error }) => {

@@ -64,6 +64,7 @@ export function ProjectDocumentsBrowser({
         entityKey: "project-documents-unified",
         forcedProjectId: projectId,
         forcedFilters: activeGroup.filter,
+        forcedSearch: activeGroup.search,
         defaultView: "card",
       }),
     [projectId, activeGroup],

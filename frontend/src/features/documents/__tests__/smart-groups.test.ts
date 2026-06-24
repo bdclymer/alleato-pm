@@ -16,6 +16,13 @@ describe("smart-groups", () => {
     expect(drawings!.filter.document_type).toBeUndefined();
   });
 
+  it("Commitments is a search-based group (no category) and not a drop target", () => {
+    const commitments = SMART_GROUPS.find((g) => g.id === "commitments");
+    expect(commitments!.search).toBe("commitment");
+    expect(commitments!.filter).toEqual({});
+    expect(commitments!.reclassifyTo).toBeNull();
+  });
+
   it("Emails group filters by type=email and is not a drop target", () => {
     const emails = SMART_GROUPS.find((g) => g.id === "emails");
     expect(emails!.filter.type).toBe("email");
