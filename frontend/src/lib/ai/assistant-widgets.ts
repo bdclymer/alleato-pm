@@ -205,6 +205,10 @@ export type OutlookInboxSummaryWidgetItem = {
   recommendedAction: string;
   replyPrompt: string;
   draftPrompt: string;
+  /** True only when a real Outlook draft reply already exists for this thread. */
+  draftReady?: boolean;
+  /** Short preview of the prepared draft reply, shown when draftReady is true. */
+  draftPreview?: string | null;
 };
 
 export type OutlookInboxSummaryWidgetPayload = {
@@ -635,6 +639,7 @@ export const ASSISTANT_WIDGET_TYPES = [
   "project_action_preview",
   "decision_packet",
   "feature_request_packet",
+  "executive_daily_brief",
 ] as const satisfies readonly AssistantWidgetKind[];
 
 function normalizePrompt(prompt: string): string {
