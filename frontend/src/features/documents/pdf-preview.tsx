@@ -21,7 +21,6 @@ const PdfDocument = dynamic(
 const PdfPage = dynamic(
   async () => {
     const mod = await import("react-pdf");
-    mod.pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
     return mod.Page;
   },
   { ssr: false },

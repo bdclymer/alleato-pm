@@ -171,7 +171,7 @@ export function PreviewPane({
           <div className="flex h-full items-center justify-center p-8">
             <EmptyState
               icon={<FileText />}
-              title={officeError ? "Preview unavailable" : "Preparing preview…"}
+              title={officeError || !pipelineDocIsGraphSourced(doc) ? "Preview unavailable" : "Preparing preview…"}
               description="Download the file to view it."
               action={
                 <Button asChild size="sm" variant="outline">
