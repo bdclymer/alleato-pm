@@ -99,6 +99,7 @@ export function ProjectDocumentsBrowser({
       variant="table"
       title="Documents"
       eyebrow={projectName}
+      showHeader={false}
       contentClassName="p-0"
     >
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
