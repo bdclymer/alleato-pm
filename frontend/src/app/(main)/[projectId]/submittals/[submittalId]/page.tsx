@@ -24,6 +24,12 @@ export default async function SubmittalDetailPage({ params }: Props) {
   const { projectId, submittalId } = await params;
   const supabase = createServiceClient();
 
+  const { data: project } = await supabase
+    .from("projects")
+    .select("name")
+    .eq("id", parseInt(projectId, 10))
+    .single();
+
   const { data: submittal, error } = await supabase
     .from("submittals")
     .select(
@@ -102,6 +108,7 @@ export default async function SubmittalDetailPage({ params }: Props) {
     <SubmittalDetailClient
       submittal={submittalDetail}
       projectId={parseInt(projectId, 10)}
+      projectName={project?.name ?? null}
     />
   );
 }

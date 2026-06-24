@@ -63,14 +63,20 @@ export const PATCH = withApiGuardrails<{ docId: string }>(
       });
     }
 
+    // Category-only update via SECURITY DEFINER RPC. The RPC applies the
+    // sanctioned transaction-local bypass for the Outlook incident guard
+    // (block_outlook_ingestion_during_incident) so re-filing works for
+    // Outlook-sourced docs, while still blocking every other unsanctioned write.
+    // It returns the number of rows updated; 0 means the doc isn't in this project.
     const service = createServiceClient();
-    const { data: updated, error } = await service
-      .from("document_metadata")
-      .update({ category: category || null })
-      .eq("id", docId)
-      .eq("project_id", body.projectId)
-      .is("deleted_at", null)
-      .select("id");
+    const { data: rowsUpdated, error } = await service.rpc(
+      "reclassify_document_category",
+      {
+        p_doc_id: docId,
+        p_project_id: body.projectId,
+        p_category: category || null,
+      },
+    );
 
     if (error) {
       throw new GuardrailError({
@@ -80,7 +86,7 @@ export const PATCH = withApiGuardrails<{ docId: string }>(
       });
     }
 
-    if (!updated || updated.length === 0) {
+    if (typeof rowsUpdated !== "number" || rowsUpdated === 0) {
       throw new GuardrailError({
         code: "NOT_FOUND",
         where: "documents/[docId]/reclassify#PATCH",

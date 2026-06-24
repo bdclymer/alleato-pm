@@ -142,6 +142,13 @@ export interface AIReviewResult {
     missingDrawingText?: string;
   };
   nextStep: string;
+  findings: {
+    summary: string;
+    compliant: Array<{ item: string; drawingRef: string | null; detail: string }>;
+    conflicts: Array<{ item: string; drawingRef: string | null; detail: string }>;
+    missing: Array<{ item: string; drawingRef: string | null; detail: string }>;
+    recommendation: string;
+  } | null;
 }
 
 export async function uploadSubmittalAttachments(

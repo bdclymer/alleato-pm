@@ -530,6 +530,7 @@ function getPackageName(submittal: SubmittalDetail): string | null {
 interface SubmittalDetailClientProps {
   submittal: SubmittalDetail;
   projectId: number;
+  projectName: string | null;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -537,6 +538,7 @@ interface SubmittalDetailClientProps {
 export function SubmittalDetailClient({
   submittal,
   projectId,
+  projectName,
 }: SubmittalDetailClientProps) {
   const router = useRouter();
   const supabase = createClient();
@@ -631,14 +633,12 @@ export function SubmittalDetailClient({
     .filter((e) => !!e.date)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  const eyebrow = [
-    submittal.submittal_number,
-    submittal.revision != null ? `Rev ${submittal.revision}` : null,
-    submittal.specification_section ? `Spec §${submittal.specification_section}` : null,
-    submittal.division ?? null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const eyebrow = projectName ?? undefined;
+
+  const numberPrefix = submittal.submittal_number
+    ? `${String(submittal.submittal_number).padStart(2, "0")}: `
+    : "";
+  const pageTitle = `${numberPrefix}${submittal.title}`;
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -654,8 +654,7 @@ export function SubmittalDetailClient({
       <PageShell
         variant="detailXWide"
         eyebrow={eyebrow}
-        title={submittal.title}
-        statusBadge={<StatusBadge status={submittal.status} />}
+        title={pageTitle}
         onBack={() => router.push(`/${projectId}/submittals`)}
         actions={
           <div className="flex items-center gap-2">
