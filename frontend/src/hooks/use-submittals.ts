@@ -681,10 +681,25 @@ export function useRemoveLinkedDrawing(projectId: number, submittalId: string) {
   });
 }
 
+/** Auto-fetches the last saved AI review result from the database. */
 export function useSubmittalAIReview(projectId: number, submittalId: string) {
   return useQuery({
     queryKey: ["submittal-ai-review", projectId, submittalId],
     queryFn: () =>
+      apiFetch<AIReviewResult | null>(
+        `/api/projects/${projectId}/submittals/${submittalId}/ai-review`,
+      ),
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
+    retry: false,
+  });
+}
+
+/** Runs a new AI review, saves it to DB, and updates the cached result. */
+export function useRunSubmittalAIReview(projectId: number, submittalId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
       apiFetch<AIReviewResult>(
         `/api/projects/${projectId}/submittals/${submittalId}/ai-review`,
         {
@@ -693,9 +708,8 @@ export function useSubmittalAIReview(projectId: number, submittalId: string) {
           body: JSON.stringify({}),
         },
       ),
-    enabled: false,
-    staleTime: 1000 * 60 * 10,
-    gcTime: 1000 * 60 * 30,
-    retry: false,
+    onSuccess: (data) => {
+      queryClient.setQueryData(["submittal-ai-review", projectId, submittalId], data);
+    },
   });
 }

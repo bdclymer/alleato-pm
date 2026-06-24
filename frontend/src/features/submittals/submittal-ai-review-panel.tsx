@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { SectionRuleHeading } from "@/components/layout";
 import { InfoAlert } from "@/components/ds/InfoAlert";
-import { useSubmittalAIReview, type AIReviewResult } from "@/hooks/use-submittals";
+import { useSubmittalAIReview, useRunSubmittalAIReview, type AIReviewResult } from "@/hooks/use-submittals";
 import { AlertTriangle, CheckCircle2, CircleHelp, Cpu, Sparkles, XCircle } from "lucide-react";
 
 interface Props {
@@ -163,11 +163,8 @@ function ReviewFindings({ result }: { result: AIReviewResult }) {
 }
 
 export function SubmittalAIReviewPanel({ projectId, submittalId }: Props) {
-  const { data, isFetching, error, refetch } = useSubmittalAIReview(projectId, submittalId);
-
-  async function handleRunReview() {
-    await refetch();
-  }
+  const { data, isLoading } = useSubmittalAIReview(projectId, submittalId);
+  const { mutate: runReview, isPending, error } = useRunSubmittalAIReview(projectId, submittalId);
 
   return (
     <div className="space-y-4">
@@ -182,14 +179,14 @@ export function SubmittalAIReviewPanel({ projectId, submittalId }: Props) {
           </p>
           <Button
             size="sm"
-            onClick={handleRunReview}
-            disabled={isFetching}
+            onClick={() => runReview()}
+            disabled={isPending || isLoading}
           >
-            {isFetching ? "Running…" : data ? "Re-run Review" : "Run AI Review"}
+            {isPending ? "Running…" : data ? "Re-run Review" : "Run AI Review"}
           </Button>
         </div>
 
-        {error && !isFetching && (
+        {error && !isPending && (
           <InfoAlert variant="error">
             Review failed. Check that drawings and submittal documents are uploaded, then try again.
           </InfoAlert>

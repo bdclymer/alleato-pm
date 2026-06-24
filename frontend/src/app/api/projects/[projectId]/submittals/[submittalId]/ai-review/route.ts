@@ -5,6 +5,49 @@ import { createDocumentIntelligenceTools } from "@/lib/ai/tools/document-intelli
 import { getOpenAI } from "@/lib/ai/tools/tool-utils";
 import { z } from "zod";
 
+/**
+ * GET /api/projects/[projectId]/submittals/[submittalId]/ai-review
+ *
+ * Returns the last saved AI review result from the database, or null if never run.
+ */
+export const GET = withApiGuardrails<{
+  projectId: string;
+  submittalId: string;
+}>(
+  "projects/[projectId]/submittals/[submittalId]/ai-review#GET",
+  async ({ params }) => {
+    const { submittalId } = params;
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new GuardrailError({
+        code: "UNAUTHORIZED",
+        where: "projects/[projectId]/submittals/[submittalId]/ai-review#GET",
+        message: "Not authenticated",
+      });
+    }
+
+    const { data } = await supabase
+      .from("submittals")
+      .select("ai_review_result, ai_review_ran_at")
+      .eq("id", submittalId)
+      .single();
+
+    if (!data?.ai_review_result) {
+      return Response.json(null);
+    }
+
+    return Response.json({
+      ...(data.ai_review_result as Record<string, unknown>),
+      _ranAt: data.ai_review_ran_at,
+    });
+  },
+);
+
 const PostBody = z.object({
   focusArea: z.string().optional(),
 });
@@ -139,6 +182,17 @@ export const POST = withApiGuardrails<{
       console.error("[ai-review] GPT-4o analysis failed:", err);
     }
 
-    return Response.json({ ...context, findings });
+    const result = { ...context, findings };
+
+    // Persist so results survive page refresh
+    await supabase
+      .from("submittals")
+      .update({
+        ai_review_result: result as unknown as Record<string, unknown>,
+        ai_review_ran_at: new Date().toISOString(),
+      })
+      .eq("id", submittalId);
+
+    return Response.json(result);
   },
 );
