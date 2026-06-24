@@ -51,6 +51,21 @@ export function DetailPanel({ children, className }: DetailPanelProps) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// SummaryPanel — the tinted "summary" container for detail-page sidebars
+// (financial summary, totals, rollups). Owns the very-light-gray surface
+// (#FBFBFB via --surface-summary), rounding, and padding so the background is
+// defined in ONE place and can never drift. Use this instead of
+// `<DetailPanel className="rounded-lg bg-muted p-6">` for any summary block.
+// ---------------------------------------------------------------------------
+export function SummaryPanel({ children, className }: DetailPanelProps) {
+  return (
+    <div className={cn("rounded-lg bg-surface-summary p-6", className)}>
+      {children}
+    </div>
+  );
+}
+
 export interface SectionRuleHeadingProps {
   label: React.ReactNode;
   className?: string;

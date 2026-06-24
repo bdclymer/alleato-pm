@@ -9,7 +9,6 @@ import {
   ExternalLink,
   Mail,
   MoreHorizontal,
-  SquarePen,
   Trash2,
 } from "lucide-react";
 
@@ -21,6 +20,7 @@ import {
   PageTabs,
   SectionAction,
   SectionRuleHeading,
+  SummaryPanel,
   SummaryValueRow,
 } from "@/components/layout";
 import {
@@ -29,7 +29,6 @@ import {
   EditableDetailField,
   EmptyState,
   EntityAttachments,
-  InlineEditField,
   StatusBadge,
 } from "@/components/ds";
 import { Button } from "@/components/ui/button";
@@ -52,9 +51,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthUsers, type AuthUser } from "@/hooks/use-auth-users";
 import { useProjectCompanies } from "@/hooks/use-project-companies";
+import { useCompanyContacts } from "@/hooks/use-company-contacts";
 import { createClient } from "@/lib/supabase/client";
 import {
   useAddWorkflowStep,
@@ -63,6 +63,7 @@ import {
   useDuplicateSubmittal,
   useRespondToWorkflowStep,
   useWorkflowTemplates,
+  submittalKeys,
   type SubmittalDetail,
   type WorkflowTemplateStep,
 } from "@/hooks/use-submittals";
@@ -70,7 +71,6 @@ import { apiFetch } from "@/lib/api-client";
 import { formatDate } from "@/lib/format";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { useConfirm } from "@/hooks/use-confirm";
-import { SubmittalFormPage } from "./submittal-form-page";
 import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
 import { SubmittalAIReviewPanel } from "./submittal-ai-review-panel";
 import { SubmittalLinkedDrawingsPanel } from "./submittal-linked-drawings-panel";
@@ -487,16 +487,51 @@ export function SubmittalDetailClient({
   projectName,
 }: SubmittalDetailClientProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const supabase = createClient();
   const { confirm, ConfirmDialog } = useConfirm();
   const deleteMutation = useDeleteSubmittal(projectId);
   const duplicateMutation = useDuplicateSubmittal(projectId);
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [distributeOpen, setDistributeOpen] = React.useState(false);
-  const [isEditing, setIsEditing] = React.useState(false);
 
   const { users, allUsers } = useAuthUsers(String(projectId));
   const { companies } = useProjectCompanies(String(projectId), { per_page: 200 });
+  const { contacts: contractorContacts } = useCompanyContacts({
+    companyId: submittal.responsible_contractor_id ?? undefined,
+    enabled: Boolean(submittal.responsible_contractor_id),
+  });
+
+  // Company options for the Contractor select. companies dropdown returns
+  // companies.id which is exactly what responsible_contractor_id (FK → companies.id)
+  // expects — no resolution needed. Inject the saved contractor so it pre-fills
+  // even if it isn't in the project-companies page.
+  const companyOptions = React.useMemo(() => {
+    const opts = companies
+      .filter((c) => c.company_id)
+      .map((c) => ({ value: c.company_id, label: c.company?.name ?? c.company_id }));
+    const saved = submittal.responsible_contractor;
+    if (saved?.id && !opts.some((o) => o.value === saved.id)) {
+      opts.unshift({ value: saved.id, label: saved.name });
+    }
+    return [{ value: "", label: "None" }, ...opts];
+  }, [companies, submittal.responsible_contractor]);
+
+  // Contact options for the Submitted By select, scoped to the selected
+  // contractor. Inject the saved contact (received_from name) so it pre-fills.
+  const receivedFromOptions = React.useMemo(() => {
+    const opts = contractorContacts
+      .filter((c) => c.id)
+      .map((c) => ({
+        value: c.id,
+        label: `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim() || c.email || c.id,
+      }));
+    const savedId = submittal.received_from_id;
+    if (savedId && !opts.some((o) => o.value === savedId)) {
+      opts.unshift({ value: savedId, label: submittal.received_from ?? savedId });
+    }
+    return [{ value: "", label: "None" }, ...opts];
+  }, [contractorContacts, submittal.received_from_id, submittal.received_from]);
   const { data: submittalTypes = [] } = useQuery<{ id: string; name: string }[]>({
     queryKey: ["submittal-types", projectId],
     queryFn: ({ signal }) => apiFetch(`/api/projects/${projectId}/submittal-types`, { signal }),
@@ -511,6 +546,9 @@ export function SubmittalDetailClient({
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ [field]: value }),
+    });
+    await queryClient.invalidateQueries({
+      queryKey: submittalKeys.detail(projectId, submittal.id),
     });
     router.refresh();
   }
@@ -629,10 +667,6 @@ export function SubmittalDetailClient({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                  <SquarePen className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleDuplicate}
                   disabled={duplicateMutation.isPending}
@@ -654,19 +688,7 @@ export function SubmittalDetailClient({
           </div>
         }
       >
-        {isEditing ? (
-          <SubmittalFormPage
-            projectId={projectId}
-            submittal={submittal}
-            mode="inline"
-            onCancel={() => setIsEditing(false)}
-            onSaved={() => {
-              setIsEditing(false);
-              router.refresh();
-            }}
-          />
-        ) : (
-          <div>
+        <div>
             <PageTabs
               variant="inline"
               tabs={[
@@ -690,9 +712,9 @@ export function SubmittalDetailClient({
                   {workflowSteps.length > 0 && (() => {
                     const completed = workflowSteps.filter(s => getStepState(s) === "done").length;
                     return (
-                      <DetailPanel>
+                      <SummaryPanel>
                         <SectionRuleHeading label="Workflow Progress" />
-                        <div className="space-y-2 pt-1">
+                        <div className="space-y-3 text-sm">
                           {workflowSteps.map((step, i) => {
                             const state = getStepState(step);
                             return (
@@ -710,14 +732,14 @@ export function SubmittalDetailClient({
                             border
                           />
                         </div>
-                      </DetailPanel>
+                      </SummaryPanel>
                     );
                   })()}
 
                   {/* Dates */}
                   <DetailPanel>
                     <SectionRuleHeading label="Dates" />
-                    <div className="space-y-1">
+                    <div className="space-y-3 text-sm">
                       {submittal.sent_date && (
                         <DetailField label="Submitted">{formatDate(submittal.sent_date)}</DetailField>
                       )}
@@ -751,15 +773,34 @@ export function SubmittalDetailClient({
                   {/* Parties */}
                   <DetailPanel>
                     <SectionRuleHeading label="Parties" />
-                    <div className="space-y-1">
-                      {submittal.responsible_contractor && (
-                        <DetailField label="Contractor">{submittal.responsible_contractor.name}</DetailField>
-                      )}
-                      {(submittal.received_from || submittal.received_from_id) && (
-                        <DetailField label="Submitted By">
-                          {submittal.received_from ?? resolveUserName(allUsers, submittal.received_from_id ?? "")}
-                        </DetailField>
-                      )}
+                    <div className="space-y-3 text-sm">
+                      <EditableDetailField
+                        label="Contractor"
+                        type="select"
+                        value={submittal.responsible_contractor_id ?? ""}
+                        display={submittal.responsible_contractor?.name ?? undefined}
+                        emptyPlaceholder="Select contractor"
+                        options={companyOptions}
+                        onSave={(v) => handleSaveField("responsible_contractor_id", v || null)}
+                      />
+                      <EditableDetailField
+                        label="Submitted By"
+                        type="select"
+                        value={submittal.received_from_id ?? ""}
+                        display={
+                          submittal.received_from ??
+                          (submittal.received_from_id
+                            ? resolveUserName(allUsers, submittal.received_from_id)
+                            : undefined)
+                        }
+                        emptyPlaceholder={
+                          submittal.responsible_contractor_id
+                            ? "Select contact"
+                            : "Select contractor first"
+                        }
+                        options={receivedFromOptions}
+                        onSave={(v) => handleSaveField("received_from_id", v || null)}
+                      />
                       <EditableDetailField
                         label="Ball In Court"
                         type="select"
@@ -1129,8 +1170,7 @@ export function SubmittalDetailClient({
                 submittalId={submittal.id}
               />
             )}
-          </div>
-        )}
+        </div>
       </PageShell>
     </>
   );

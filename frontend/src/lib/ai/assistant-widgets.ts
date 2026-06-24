@@ -20,7 +20,8 @@ export type AssistantWidgetKind =
   | "create_event"
   | "project_action_preview"
   | "decision_packet"
-  | "feature_request_packet";
+  | "feature_request_packet"
+  | "executive_daily_brief";
 
 export type AssistantWidgetField = {
   label: string;

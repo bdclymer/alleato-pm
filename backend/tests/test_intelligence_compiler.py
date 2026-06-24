@@ -22,6 +22,16 @@ from src.services.ops.db_pressure_guard import AppDbProjectionError
 _ACTIVE_FAKE_SUPABASE = None
 
 
+@pytest.fixture(autouse=True)
+def _disable_operating_synthesis_by_default(monkeypatch):
+    """Operating-read LLM synthesis is default-ON in production but must never
+    fire a live model call from a test. Default it OFF here; the synthesis-
+    specific tests re-enable it with a patched extract_with_retry."""
+    monkeypatch.setattr(
+        compiler_module, "INTELLIGENCE_OPERATING_SYNTHESIS_ENABLED", False
+    )
+
+
 class _Result:
     def __init__(self, data):
         self.data = data
@@ -213,6 +223,139 @@ def test_classify_basic_signal_prefers_task_for_follow_up_language():
 
     assert signal["signal_type"] == "task"
     assert "Westfield Owner Meeting" in signal["title"]
+
+
+_RAW_EMAIL = (
+    "Subject: Re: Vermillion Rise Date: 2026-06-23T11:14:35Z From: Brandon Clymer "
+    "<bclymer@alleatogroup.com> To: Megan Harrison <megan@megankharrison.com> &nbsp; "
+    "Thanks,&nbsp;Brandon Alleato Group | 123 Main St"
+)
+
+
+_SYNTH_INPUTS = [
+    {
+        "source": "outlook_email",
+        "title": "Re: Vermillion Rise",
+        "occurred_at": "2026-06-23T11:14:35Z",
+        "executive_summary": "",
+        "excerpt": "Owner approved the CO #4 for $42k; steel delivery now slips to July 8.",
+    }
+]
+
+
+def _patch_extract(monkeypatch, payload):
+    """Force compiler's lazily-imported extract_with_retry to return payload."""
+    import src.services.intelligence.client as client_mod
+
+    monkeypatch.setattr(client_mod, "extract_with_retry", lambda *a, **k: payload)
+    monkeypatch.setattr(
+        compiler_module, "INTELLIGENCE_OPERATING_SYNTHESIS_ENABLED", True
+    )
+
+
+def test_synthesize_operating_read_returns_guarded_prose(monkeypatch):
+    _patch_extract(
+        monkeypatch,
+        {
+            "current_summary": "Owner approved CO #4 ($42k); steel delivery slipped to July 8.",
+            "financial_read": "CO #4 approved at $42,000.",
+            "schedule_read": "Steel delivery moved to July 8 — two-week slip.",
+            "field_read": None,
+            "_extraction_failed": False,
+        },
+    )
+    read = compiler_module.synthesize_operating_read(
+        project_id=67, project_label="Vermillion Rise", inputs=_SYNTH_INPUTS
+    )
+    assert read is not None
+    assert "CO #4" in read["current_summary"]
+    assert read["financial_read"] == "CO #4 approved at $42,000."
+    assert read["field_read"] is None
+    # Even synthesized output is guarded.
+    assert not compiler_module._looks_like_raw_source(read["current_summary"])
+
+
+def test_synthesize_operating_read_guards_model_that_echoes_raw_email(monkeypatch):
+    _patch_extract(
+        monkeypatch,
+        {"current_summary": _RAW_EMAIL, "financial_read": None, "schedule_read": None, "field_read": None},
+    )
+    # The only field is a raw email -> _safe_summary nulls it -> nothing usable -> None.
+    read = compiler_module.synthesize_operating_read(
+        project_id=67, project_label="Vermillion Rise", inputs=_SYNTH_INPUTS
+    )
+    assert read is None
+
+
+def test_synthesize_operating_read_disabled_returns_none(monkeypatch):
+    monkeypatch.setattr(compiler_module, "INTELLIGENCE_OPERATING_SYNTHESIS_ENABLED", False)
+    read = compiler_module.synthesize_operating_read(
+        project_id=67, project_label="X", inputs=_SYNTH_INPUTS
+    )
+    assert read is None
+
+
+def test_synthesize_operating_read_handles_extraction_failure(monkeypatch):
+    _patch_extract(monkeypatch, {"_extraction_failed": True})
+    read = compiler_module.synthesize_operating_read(
+        project_id=67, project_label="X", inputs=_SYNTH_INPUTS
+    )
+    assert read is None
+
+
+def test_synthesize_operating_read_empty_inputs_returns_none(monkeypatch):
+    monkeypatch.setattr(compiler_module, "INTELLIGENCE_OPERATING_SYNTHESIS_ENABLED", True)
+    assert (
+        compiler_module.synthesize_operating_read(project_id=67, project_label="X", inputs=[])
+        is None
+    )
+
+
+def test_operating_inputs_hash_is_stable_and_sensitive():
+    h1 = compiler_module._operating_inputs_hash(_SYNTH_INPUTS)
+    h2 = compiler_module._operating_inputs_hash(list(_SYNTH_INPUTS))
+    assert h1 == h2
+    changed = [{**_SYNTH_INPUTS[0], "excerpt": "different content"}]
+    assert compiler_module._operating_inputs_hash(changed) != h1
+
+
+def test_looks_like_raw_source_detects_email_dumps():
+    assert compiler_module._looks_like_raw_source(_RAW_EMAIL) is True
+    assert compiler_module._looks_like_raw_source("Subject: anything at all") is True
+    assert (
+        compiler_module._looks_like_raw_source("foo &nbsp; bar &nbsp; baz") is True
+    )
+    assert compiler_module._looks_like_raw_source("Schedule slipped two weeks.") is False
+    assert compiler_module._looks_like_raw_source("") is False
+    assert compiler_module._looks_like_raw_source(None) is False
+
+
+def test_safe_summary_rejects_raw_source_returns_none():
+    assert compiler_module._safe_summary(_RAW_EMAIL) is None
+    assert compiler_module._safe_summary("Subject: weekly update") is None
+    # Clean prose with a single decoded entity survives.
+    assert compiler_module._safe_summary("Owner approved CO&nbsp;#4.") == "Owner approved CO #4."
+    assert compiler_module._safe_summary("   ") is None
+
+
+def test_classify_basic_signal_never_emits_raw_email_as_summary():
+    signal = classify_basic_signal(
+        {
+            "title": "Vermillion Rise update",
+            "content": _RAW_EMAIL,
+        }
+    )
+    assert not compiler_module._looks_like_raw_source(signal["summary"])
+    # Falls back to the clean title rather than projecting the raw email.
+    assert signal["summary"] == "Vermillion Rise update"
+
+
+def test_safe_suggestion_payload_strips_raw_summary():
+    cleaned = compiler_module._safe_suggestion_payload(
+        {"date": "2026-06-23", "source_count": 1, "summary": _RAW_EMAIL}
+    )
+    assert cleaned["summary"] is None
+    assert cleaned["source_count"] == 1
 
 
 def test_process_source_document_stages_candidate_and_packet_refresh():

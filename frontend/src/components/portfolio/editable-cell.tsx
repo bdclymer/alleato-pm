@@ -9,8 +9,12 @@ interface EditableCellProps {
   value: string | number | null | undefined;
   onSave: (value: string) => Promise<void>;
   className?: string;
-  type?: "text" | "number" | "date";
+  type?: "text" | "number" | "date" | "select";
   placeholder?: string;
+  /** Options for `type="select"` — value is what gets saved, label is shown. */
+  options?: Array<{ value: string; label: string }>;
+  /** Optional formatter for the read-only display (e.g. currency). */
+  formatDisplay?: (value: string | number | null | undefined) => string;
 }
 
 export function EditableCell({
@@ -19,18 +23,30 @@ export function EditableCell({
   className,
   type = "text",
   placeholder = "Click to edit",
+  options,
+  formatDisplay,
 }: EditableCellProps) {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editValue, setEditValue] = React.useState(value?.toString() || "");
   const [isSaving, setIsSaving] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const selectRef = React.useRef<HTMLSelectElement>(null);
 
-  const displayValue = value?.toString() || "-";
+  const displayValue = formatDisplay
+    ? formatDisplay(value)
+    : value?.toString() || "-";
+
+  React.useEffect(() => {
+    setEditValue(value?.toString() || "");
+  }, [value]);
 
   React.useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
       inputRef.current.select();
+    }
+    if (isEditing && selectRef.current) {
+      selectRef.current.focus();
     }
   }, [isEditing]);
 
@@ -71,22 +87,46 @@ export function EditableCell({
         className="flex items-center gap-1"
         onClick={(e) => e.stopPropagation()}
       >
-        <input
-          ref={inputRef}
-          type={type}
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={handleSave}
-          disabled={isSaving}
-          className={cn(
-            "flex-1 px-2 py-1 text-sm border border-border rounded",
-            "focus:outline-none focus:ring-1 focus:ring-ring",
-            "disabled:opacity-50",
-            className,
-          )}
-          placeholder={placeholder}
-        />
+        {type === "select" ? (
+          <select
+            ref={selectRef}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleSave}
+            disabled={isSaving}
+            className={cn(
+              "flex-1 px-2 py-1 text-sm border border-border rounded bg-background",
+              "focus:outline-none focus:ring-1 focus:ring-ring",
+              "disabled:opacity-50",
+              className,
+            )}
+          >
+            <option value="">{placeholder}</option>
+            {(options ?? []).map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            ref={inputRef}
+            type={type}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleSave}
+            disabled={isSaving}
+            className={cn(
+              "flex-1 px-2 py-1 text-sm border border-border rounded",
+              "focus:outline-none focus:ring-1 focus:ring-ring",
+              "disabled:opacity-50",
+              className,
+            )}
+            placeholder={placeholder}
+          />
+        )}
         <Button
           type="button"
           variant="ghost"

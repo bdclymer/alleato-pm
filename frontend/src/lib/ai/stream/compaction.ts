@@ -5,13 +5,52 @@ export const CONTEXT_COMPACTION_SUMMARY_PREFIX =
 export const CONTEXT_COMPACTION_END_MARKER =
   "--- END OF CONTEXT SUMMARY - respond to the latest user message below, not this summary ---";
 
-const DEFAULT_THRESHOLD_TOKENS = 90_000;
-const DEFAULT_HARD_LIMIT_TOKENS = 120_000;
+export const DEFAULT_THRESHOLD_TOKENS = 90_000;
+export const DEFAULT_HARD_LIMIT_TOKENS = 120_000;
 const DEFAULT_HEAD_MESSAGES = 4;
 const DEFAULT_TAIL_MESSAGES = 12;
 const DEFAULT_MAX_TOOL_RESULT_CHARS = 700;
 const DEFAULT_SUMMARY_MODEL = "openai/gpt-4.1-mini";
-const CHARS_PER_TOKEN = 4;
+export const CHARS_PER_TOKEN = 4;
+
+/**
+ * Why compaction failed. The two cases need different remedies and different
+ * user-facing copy:
+ *  - `conversation_over_limit` — the chat history is what pushed the request
+ *    over the limit. Compacting / starting a fresh chat is the right fix.
+ *  - `system_prompt_over_limit` — the INJECTED system context (intelligence
+ *    packet, retrieval results, snapshot) alone is at/over the limit. Message
+ *    compaction cannot help and a fresh chat re-injects the same giant prompt.
+ *    This is a server-side context-assembly problem, not a long conversation.
+ */
+export type ContextCompactionFailureReason =
+  | "conversation_over_limit"
+  | "system_prompt_over_limit";
+
+/**
+ * Resolve the effective threshold / hard-limit token counts, treating any
+ * non-finite or non-positive input as unset (so a stray `Number("")` === 0 or
+ * NaN from an unset env var falls back to the real default instead of making
+ * every chat look over-limit). Shared by the compactor and its callers so the
+ * system-prompt budget can be derived from the SAME hard limit the compactor
+ * enforces — they can never drift apart.
+ */
+export function resolveContextLimits(options: {
+  thresholdTokens?: number;
+  hardLimitTokens?: number;
+}): { thresholdTokens: number; hardLimitTokens: number } {
+  const thresholdTokens =
+    Number.isFinite(options.thresholdTokens) &&
+    (options.thresholdTokens as number) > 0
+      ? (options.thresholdTokens as number)
+      : DEFAULT_THRESHOLD_TOKENS;
+  const hardLimitTokens =
+    Number.isFinite(options.hardLimitTokens) &&
+    (options.hardLimitTokens as number) > 0
+      ? (options.hardLimitTokens as number)
+      : DEFAULT_HARD_LIMIT_TOKENS;
+  return { thresholdTokens, hardLimitTokens };
+}
 
 type SummarizeCompactionInput = {
   previousSummary: string | null;
@@ -48,11 +87,54 @@ export type ContextCompactionResult = {
 
 export class ContextCompactionError extends Error {
   readonly code = "AI_CONTEXT_COMPACTION_FAILED";
+  readonly reason: ContextCompactionFailureReason;
 
-  constructor(message: string) {
+  constructor(
+    message: string,
+    reason: ContextCompactionFailureReason = "conversation_over_limit",
+  ) {
     super(message);
     this.name = "ContextCompactionError";
+    this.reason = reason;
   }
+}
+
+/**
+ * Build the over-hard-limit error, choosing the reason from WHERE the tokens
+ * actually live. If the injected system context alone is already at/over the
+ * limit, the conversation is irrelevant — say so, instead of blaming the chat.
+ */
+function buildOverLimitError(args: {
+  systemPromptTokens: number;
+  messageTokens: number;
+  hardLimitTokens: number;
+  compactionEnabled: boolean;
+  summarizerError?: string;
+}): ContextCompactionError {
+  const tokenEstimateBefore = args.systemPromptTokens + args.messageTokens;
+  const suffix = args.summarizerError
+    ? ` Summarizer error: ${args.summarizerError}`
+    : "";
+
+  if (args.systemPromptTokens >= args.hardLimitTokens) {
+    return new ContextCompactionError(
+      `Injected system context alone is ${args.systemPromptTokens} tokens, at/over the ` +
+        `hard token limit (${args.hardLimitTokens}); the conversation contributes only ` +
+        `${args.messageTokens} tokens. Message compaction cannot reduce the system prompt — ` +
+        `this is an over-large retrieval/context-assembly payload, not a long conversation.${suffix}`,
+      "system_prompt_over_limit",
+    );
+  }
+
+  return new ContextCompactionError(
+    `Request is over the hard token limit (${tokenEstimateBefore} >= ${args.hardLimitTokens}; ` +
+      `system=${args.systemPromptTokens}, messages=${args.messageTokens})` +
+      (args.compactionEnabled
+        ? ` and compaction could not reduce it further.`
+        : ` and compaction is disabled.`) +
+      suffix,
+    "conversation_over_limit",
+  );
 }
 
 export type ContextCompactionOptions = {
@@ -264,19 +346,102 @@ function createSummaryMessage(summary: string): ModelMessage {
   };
 }
 
+/**
+ * The message-index span [start, end] over which a single tool call's parts
+ * appear — a `tool-call` (and any `tool-approval-*`) in one message and its
+ * matching `tool-result` in a later message. A slice boundary that lands
+ * strictly inside this span would orphan one half: summarizing the `tool-call`
+ * to prose while keeping the `tool-result` (or vice-versa) makes the provider
+ * reject the request with a hard 400 for an unmatched tool_use/tool_result.
+ */
+type ToolPairSpan = { start: number; end: number };
+
+function toolCallIdOfPart(part: { type: string }): string | undefined {
+  if (
+    part.type === "tool-call" ||
+    part.type === "tool-result" ||
+    part.type === "tool-approval-request"
+  ) {
+    return (part as { toolCallId?: string }).toolCallId;
+  }
+  return undefined;
+}
+
+function collectToolPairSpans(messages: ModelMessage[]): ToolPairSpan[] {
+  const idToRange = new Map<string, ToolPairSpan>();
+  messages.forEach((message, index) => {
+    const content = message.content;
+    if (!Array.isArray(content)) return;
+    for (const part of content) {
+      const toolCallId = toolCallIdOfPart(part);
+      if (!toolCallId) continue;
+      const existing = idToRange.get(toolCallId);
+      if (existing) {
+        existing.start = Math.min(existing.start, index);
+        existing.end = Math.max(existing.end, index);
+      } else {
+        idToRange.set(toolCallId, { start: index, end: index });
+      }
+    }
+  });
+  // Only spans that cross a message boundary can be split; a call+result in the
+  // same message can never be orphaned by a slice.
+  return [...idToRange.values()].filter((span) => span.end > span.start);
+}
+
+/**
+ * `boundary` = the number of messages kept before the split point. A tool pair
+ * straddles the boundary when `span.start < boundary <= span.end`. A boundary
+ * of 0 or `messages.length` is always safe (one side is empty).
+ */
+function isSafeBoundary(boundary: number, spans: ToolPairSpan[]): boolean {
+  return spans.every((span) => boundary <= span.start || boundary > span.end);
+}
+
+// Snap the head/middle boundary earlier (toward 0) until no pair straddles it.
+// Moving it backward pushes a straddling pair fully into the summarized middle.
+function snapHeadBoundary(desired: number, spans: ToolPairSpan[]): number {
+  let boundary = desired;
+  while (boundary > 0 && !isSafeBoundary(boundary, spans)) {
+    boundary -= 1;
+  }
+  return boundary;
+}
+
+// Snap the middle/tail boundary later (toward the end) until no pair straddles
+// it. Moving it forward pushes a straddling pair fully into the middle.
+function snapTailBoundary(
+  desired: number,
+  total: number,
+  spans: ToolPairSpan[],
+): number {
+  let boundary = desired;
+  while (boundary < total && !isSafeBoundary(boundary, spans)) {
+    boundary += 1;
+  }
+  return boundary;
+}
+
 export async function maybeCompactModelMessages(
   messages: ModelMessage[],
   options: ContextCompactionOptions,
 ): Promise<ContextCompactionResult> {
-  const thresholdTokens = options.thresholdTokens ?? DEFAULT_THRESHOLD_TOKENS;
-  const hardLimitTokens = options.hardLimitTokens ?? DEFAULT_HARD_LIMIT_TOKENS;
+  // Defense-in-depth: a non-positive or non-finite limit is a misconfiguration,
+  // not "the limit is zero". Treat it as unset and fall back to the default, so
+  // a stray 0 (e.g. Number("") from an unset env var) can never make every chat
+  // look "over the hard limit" and get rejected.
+  const { thresholdTokens, hardLimitTokens } = resolveContextLimits(options);
   const headMessages = options.headMessages ?? DEFAULT_HEAD_MESSAGES;
   const tailMessages = options.tailMessages ?? DEFAULT_TAIL_MESSAGES;
   const maxToolResultChars =
     options.maxToolResultChars ?? DEFAULT_MAX_TOOL_RESULT_CHARS;
   const maxSummaryTokens = options.maxSummaryTokens ?? 1_500;
-  const tokenEstimateBefore =
-    estimateTokensFromText(options.systemPrompt) + estimateModelMessagesTokens(messages);
+  // Keep the two budgets separate: compaction can only ever shrink the
+  // conversation, never the injected system prompt. Tracking them apart lets us
+  // attribute an over-limit request to the right cause (see buildOverLimitError).
+  const systemPromptTokens = estimateTokensFromText(options.systemPrompt);
+  const messageTokens = estimateModelMessagesTokens(messages);
+  const tokenEstimateBefore = systemPromptTokens + messageTokens;
 
   const baseMetadata = {
     enabled: options.enabled,
@@ -294,6 +459,17 @@ export async function maybeCompactModelMessages(
   };
 
   if (!options.enabled) {
+    if (tokenEstimateBefore >= hardLimitTokens) {
+      // Compaction is the only thing that could bring this request under the
+      // provider's limit. Forwarding it would earn a raw 400/413 — fail loudly
+      // with a typed error instead of leaking a provider error to the user.
+      throw buildOverLimitError({
+        systemPromptTokens,
+        messageTokens,
+        hardLimitTokens,
+        compactionEnabled: false,
+      });
+    }
     return { messages, metadata: { ...baseMetadata, status: "disabled" } };
   }
 
@@ -315,9 +491,18 @@ export async function maybeCompactModelMessages(
     return { messages, metadata: { ...baseMetadata, status: "under_threshold" } };
   }
 
-  const head = withoutExistingSummary.slice(0, headMessages);
-  const tail = withoutExistingSummary.slice(-tailMessages);
-  const middle = withoutExistingSummary.slice(headMessages, -tailMessages);
+  // Snap both slice boundaries so no tool-call/tool-result pair straddles them.
+  // Both boundaries only ever move toward the middle, so the middle can only
+  // grow — it can never become empty (the length guard above already proved at
+  // least one middle message exists) and head/tail can never cross.
+  const total = withoutExistingSummary.length;
+  const toolPairSpans = collectToolPairSpans(withoutExistingSummary);
+  const headBoundary = snapHeadBoundary(headMessages, toolPairSpans);
+  const tailBoundary = snapTailBoundary(total - tailMessages, total, toolPairSpans);
+
+  const head = withoutExistingSummary.slice(0, headBoundary);
+  const tail = withoutExistingSummary.slice(tailBoundary);
+  const middle = withoutExistingSummary.slice(headBoundary, tailBoundary);
   const serialized = serializeForSummary(middle, maxToolResultChars);
 
   try {
@@ -352,9 +537,13 @@ export async function maybeCompactModelMessages(
     const failureReason =
       error instanceof Error ? error.message : "Unknown context compaction failure";
     if (tokenEstimateBefore >= hardLimitTokens) {
-      throw new ContextCompactionError(
-        `Context compaction failed above hard token limit: ${failureReason}`,
-      );
+      throw buildOverLimitError({
+        systemPromptTokens,
+        messageTokens,
+        hardLimitTokens,
+        compactionEnabled: true,
+        summarizerError: failureReason,
+      });
     }
 
     return {

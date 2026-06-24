@@ -78,10 +78,40 @@ class MicrosoftAssistantTraceItem(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class MicrosoftAssistantEmailItem(BaseModel):
+    """One inbox email shaped for the frontend outlook_inbox_summary card.
+
+    Field aliases are camelCase so the JSON maps onto the frontend
+    OutlookInboxSummaryWidgetItem when the response is serialized by alias.
+    """
+
+    id: str
+    graph_message_id: Optional[str] = Field(default=None, alias="graphMessageId")
+    conversation_id: Optional[str] = Field(default=None, alias="conversationId")
+    subject: str
+    from_name: Optional[str] = Field(default=None, alias="fromName")
+    from_email: Optional[str] = Field(default=None, alias="fromEmail")
+    received_at: Optional[str] = Field(default=None, alias="receivedAt")
+    has_attachments: bool = Field(default=False, alias="hasAttachments")
+    preview: Optional[str] = None
+    body_text: Optional[str] = Field(default=None, alias="bodyText")
+    web_link: Optional[str] = Field(default=None, alias="webLink")
+    recommended_action: str = Field(default="", alias="recommendedAction")
+    reply_prompt: str = Field(default="", alias="replyPrompt")
+    draft_prompt: str = Field(default="", alias="draftPrompt")
+    # True only when a real Outlook draft reply already exists for this thread.
+    draft_ready: bool = Field(default=False, alias="draftReady")
+
+    model_config = {"populate_by_name": True}
+
+
 class MicrosoftExecutiveAssistantResponse(BaseModel):
     answer: str
     mode: MicrosoftAssistantMode
     actions: List[MicrosoftAssistantAction] = Field(default_factory=list)
+    # Structured inbox emails for date-based inbox questions; empty for other
+    # request kinds (the frontend renders the card only when this is non-empty).
+    emails: List[MicrosoftAssistantEmailItem] = Field(default_factory=list)
     tool_trace: List[MicrosoftAssistantTraceItem] = Field(..., alias="toolTrace")
     skills_loaded: List[str] = Field(default_factory=list, alias="skillsLoaded")
     approved_skill_context: Optional[str] = Field(default=None, alias="approvedSkillContext")

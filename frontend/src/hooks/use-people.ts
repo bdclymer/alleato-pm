@@ -9,13 +9,14 @@ interface Person {
   last_name: string;
   email: string | null;
   job_title: string | null;
-  person_type: "user" | "contact";
+  person_type: "user" | "contact" | "employee";
   company: { id: string; name: string } | null;
 }
 
 interface UsePeopleOptions {
   search?: string;
-  type?: "user" | "contact" | "all";
+  /** "employee" resolves to person_type IN ('employee','user') in /api/people. */
+  type?: "user" | "contact" | "employee" | "all";
 }
 
 export function usePeople(options: UsePeopleOptions = {}) {

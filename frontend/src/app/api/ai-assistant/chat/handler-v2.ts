@@ -48,11 +48,16 @@ import { createStrategistTools } from "@/lib/ai/orchestrator";
 import { fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { scoreResponseQuality } from "@/lib/ai/score-response-quality";
-import type { TaskSummaryWidgetPayload } from "@/lib/ai/assistant-widgets";
+import type {
+  OutlookInboxSummaryWidgetPayload,
+  TaskSummaryWidgetPayload,
+} from "@/lib/ai/assistant-widgets";
 import { loadAssistantSourceHealthContext } from "@/lib/ai/source-health";
 import {
+  CHARS_PER_TOKEN,
   ContextCompactionError,
   maybeCompactModelMessages,
+  resolveContextLimits,
   type ContextCompactionMetadata,
 } from "@/lib/ai/stream/compaction";
 import {
@@ -101,11 +106,15 @@ const AI_EVAL_DOCUMENT_INTELLIGENCE_RESPONSE =
   process.env.AI_EVAL_DOCUMENT_INTELLIGENCE_RESPONSE === "true";
 const AI_ASSISTANT_CONTEXT_COMPACTION_ENABLED =
   process.env.AI_ASSISTANT_CONTEXT_COMPACTION_ENABLED === "true";
+// NOTE: do NOT coerce an unset var to "" — Number("") is 0 (a finite value),
+// which would pass `0` through as the limit instead of letting compaction.ts
+// fall back to its real defaults. Number(undefined) is NaN, so the
+// Number.isFinite guard at the call site correctly yields `undefined`.
 const AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS = Number(
-  process.env.AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS ?? "",
+  process.env.AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS,
 );
 const AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS = Number(
-  process.env.AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS ?? "",
+  process.env.AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS,
 );
 
 function microsoftAssistantBackendUrl(): string {
@@ -729,6 +738,84 @@ async function fetchMicrosoftExecutiveAssistant(params: {
     throw new Error(detail);
   }
   return body as Record<string, unknown>;
+}
+
+// Builds the outlook_inbox_summary card payload from the Microsoft specialist's
+// structured `emails` array. Reads fields tolerantly (camelCase from by_alias
+// serialization, snake_case fallback) and fills frontend-only fields with safe
+// defaults. Returns null when there are no usable emails so the caller falls
+// back to the plain text answer.
+function buildMicrosoftInboxWidget(
+  emails: unknown,
+  mailbox: string | null,
+): OutlookInboxSummaryWidgetPayload | null {
+  if (!Array.isArray(emails) || emails.length === 0) return null;
+
+  const pick = (row: Record<string, unknown>, camel: string, snake: string): string | null => {
+    const value = row[camel] ?? row[snake];
+    return typeof value === "string" && value.trim().length > 0 ? value : null;
+  };
+
+  const items = emails
+    .filter((row): row is Record<string, unknown> => !!row && typeof row === "object")
+    .map((row, index) => {
+      const subject = pick(row, "subject", "subject") ?? "(no subject)";
+      const fromName = pick(row, "fromName", "from_name");
+      const fromEmail = pick(row, "fromEmail", "from_email");
+      const recommendedAction = pick(row, "recommendedAction", "recommended_action") ?? "Review message.";
+      return {
+        id: pick(row, "id", "id") ?? `inbox-${index}`,
+        graphMessageId: pick(row, "graphMessageId", "graph_message_id"),
+        conversationId: pick(row, "conversationId", "conversation_id"),
+        subject,
+        fromName,
+        fromEmail,
+        senders: fromEmail ? [fromEmail] : [],
+        recipients: [],
+        receivedAt: pick(row, "receivedAt", "received_at"),
+        messageCount: 1,
+        hasAttachments: (row.hasAttachments ?? row.has_attachments) === true,
+        attentionScore: 0,
+        preview: pick(row, "preview", "preview"),
+        bodyText: pick(row, "bodyText", "body_text"),
+        webLink: pick(row, "webLink", "web_link"),
+        projectIds: [],
+        recommendedAction,
+        replyPrompt:
+          pick(row, "replyPrompt", "reply_prompt") ?? `Draft a reply to the email "${subject}".`,
+        draftPrompt:
+          pick(row, "draftPrompt", "draft_prompt") ?? `Draft a follow-up email regarding "${subject}".`,
+        draftReady: (row.draftReady ?? row.draft_ready) === true,
+        draftPreview: pick(row, "draftPreview", "draft_preview"),
+      };
+    });
+
+  if (items.length === 0) return null;
+
+  const draftCount = items.filter((item) => item.draftReady).length;
+  const summary =
+    `You have ${items.length} email${items.length === 1 ? "" : "s"} requiring attention today.` +
+    (draftCount > 0
+      ? ` A draft reply has been prepared for ${draftCount} of them.`
+      : "");
+
+  return {
+    type: "outlook_inbox_summary",
+    id: "microsoft-inbox-summary",
+    title: "Inbox summary",
+    subtitle: mailbox ?? "Your Outlook inbox",
+    dateLabel: new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    }),
+    summary,
+    mailbox,
+    totalCount: items.length,
+    actionSummary: `${items.length} email${items.length === 1 ? "" : "s"} shown`,
+    items,
+    emptyState: "No emails found for this date range.",
+  };
 }
 
 // Maps a raw downstream failure detail to a clean, honest, user-facing message.
@@ -2322,17 +2409,44 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             toolTrace,
           });
 
-          writeTextResponse(writer, "strategist-microsoft-executive-assistant", content);
+          // When the specialist returns structured inbox emails, render the
+          // outlook_inbox_summary card (links + local time + draft signal)
+          // instead of the plain text blob. Falls back to text otherwise.
+          const inboxWidget = buildMicrosoftInboxWidget(
+            response.emails,
+            defaultMicrosoftMailbox() ?? null,
+          );
+          const inboxWidgetDataPart = inboxWidget
+            ? {
+                type: "data-assistant-widget",
+                id: "assistant-widget-microsoft-inbox-summary",
+                data: { widget: inboxWidget },
+              }
+            : null;
+
+          if (inboxWidgetDataPart) {
+            writer.write(inboxWidgetDataPart as never);
+            writeTextResponse(
+              writer,
+              "strategist-microsoft-executive-assistant",
+              inboxWidget!.summary,
+            );
+          } else {
+            writeTextResponse(writer, "strategist-microsoft-executive-assistant", content);
+          }
 
           await args.supabase.from("chat_history").insert({
             session_id: args.sessionId,
             user_id: args.user.id,
             role: "assistant",
-            content,
+            content: inboxWidget ? inboxWidget.summary : content,
             metadata: {
               architecture: "retrieval-planner-v2",
               delegated_orchestrator: "microsoft-executive-assistant",
               tool_trace: toolTrace,
+              ...(inboxWidgetDataPart
+                ? { data_parts: [inboxWidgetDataPart], answer_full: content }
+                : {}),
               response_quality: buildResponseQualityMetadata({
                 toolTrace,
                 content,
@@ -2953,10 +3067,23 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         return;
       }
 
+      // Bound the injected retrieval/context so the system prompt can never
+      // exceed the context hard limit on its own. The budget is derived from the
+      // SAME resolved hard limit the compaction guard enforces (~60% of it), so a
+      // one-line chat can never be rejected as "over the limit" because of an
+      // over-large packet. See compaction.ts buildOverLimitError.
+      const { hardLimitTokens: resolvedHardLimitTokens } = resolveContextLimits({
+        thresholdTokens: AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS,
+        hardLimitTokens: AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS,
+      });
+      const systemPromptMaxChars = Math.floor(
+        resolvedHardLimitTokens * CHARS_PER_TOKEN * 0.6,
+      );
       const assembledSystemPrompt = assembleSystemPromptFromContext(
         plan,
         retrievalCtx,
         baseSystemPrompt,
+        { maxContextChars: systemPromptMaxChars },
       );
       // When the user attached a file the text model can't read (xlsx/pdf/etc.),
       // tell the model to ask for a readable export rather than fabricate or
@@ -3059,7 +3186,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             bulkyToolResultsPruned: 0,
             binaryReferencesReplaced: 0,
             droppedMessages: 0,
-            failureReason: error.message,
+            failureReason: `[${error.reason}] ${error.message}`,
           };
           writer.write({
             type: "data-status",
@@ -3071,11 +3198,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               timestamp: new Date().toISOString(),
             },
           } as never);
-          writeTextResponse(
-            writer,
-            "context-compaction-failed",
-            "I could not safely compact this long chat, and the conversation is over the hard context limit. Start a fresh chat or ask me to continue from a shorter summary of the current thread.",
-          );
+          // Pick honest copy from the actual cause. A huge injected packet is
+          // NOT a long conversation — telling the user to start a fresh chat
+          // would be wrong (the fresh chat re-injects the same giant context).
+          // The full diagnostic is preserved in metadata.context_compaction.
+          const userFacingMessage =
+            error.reason === "system_prompt_over_limit"
+              ? "I pulled in more background context for this question than I can fit in one request, so I held off rather than send a broken request. Try narrowing the question (e.g. ask about one project, source, or time window) and I'll answer."
+              : "This conversation has grown past what I can fit in one request and I couldn't safely shorten it. Start a fresh chat, or ask me to continue from a short summary of this thread.";
+          writeTextResponse(writer, "context-compaction-failed", userFacingMessage);
           return;
         }
         throw error;

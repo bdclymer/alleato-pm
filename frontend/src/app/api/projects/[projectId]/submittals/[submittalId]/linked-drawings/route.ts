@@ -119,6 +119,8 @@ export const GET = withApiGuardrails<{
         drawing_number: d?.drawing_number ?? "",
         title: d?.title ?? "",
         discipline: d?.discipline ?? null,
+        // `drawings` has no `revision` column — revisions live in drawing_revisions.
+        revision: null as string | null,
         has_vectorized_content: vectorized.has(r.drawing_id),
       };
     });

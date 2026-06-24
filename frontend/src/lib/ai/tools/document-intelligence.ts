@@ -487,8 +487,7 @@ export function createDocumentIntelligenceTools(
           const submittalResp = await supabase
             .from("submittals")
             .select(
-              "id, title, submittal_number, status, description, submittal_type_id, specification_id, " +
-              "submission_date, required_approval_date, priority, specification_section, submittal_type",
+              "id, title, submittal_number, status, description, submittal_type_id, specification_id, submission_date, required_approval_date, priority, specification_section, submittal_type",
             )
             .eq("id", resolvedSubmittalId)
             .single();
@@ -511,6 +510,8 @@ export function createDocumentIntelligenceTools(
           let submittalDocs: Array<{
             document_name: string;
             extracted_text: string | null;
+            document_type?: string | null;
+            page_count?: number | null;
           }> = [];
 
           if (docLinkMetaIds.length > 0) {
@@ -577,6 +578,8 @@ export function createDocumentIntelligenceTools(
             submittalDocs = (submittalDocsResp.data ?? []).map((d) => ({
               document_name: d.document_name as string,
               extracted_text: d.extracted_text as string | null,
+              document_type: d.document_type as string | null,
+              page_count: d.page_count as number | null,
             }));
           }
 

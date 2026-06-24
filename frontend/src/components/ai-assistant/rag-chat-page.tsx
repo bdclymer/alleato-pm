@@ -25,6 +25,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { MessageSquareIcon } from "lucide-react";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ChatArea, type ResponseQuality } from "./chat-area";
+import { shouldSyncInitialMessages } from "./chat-message-sync";
 import type { MemoryUsage } from "./memory-usage-disclosure";
 import type { SkillUsage } from "./skill-usage-disclosure";
 import type { AssistantTraceDiagnostics, ToolTraceItem } from "./trace-panel";
@@ -56,6 +57,7 @@ function stripStatusParts(messages: UIMessage[]): UIMessage[] {
     parts: message.parts.filter((part) => !part.type.startsWith("data-")),
   }));
 }
+
 
 export function ChatWithSession({
   sessionId,
@@ -174,16 +176,30 @@ export function ChatWithSession({
     }
   }, [pendingFirstFiles, pendingFirstMessage, sendMessage]);
 
+  // Track the live message list so the sync effect can tell whether it is about
+  // to clobber an in-flight conversation (see guard below). A ref avoids adding
+  // `messages` to the effect deps, which would re-run the sync on every token.
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+
   // Sync initial messages when they change (conversation switch).
   // Skip when skipNextMessagesSync is set — see ref declaration above.
   const prevInitialRef = useRef(initialMessages);
   useEffect(() => {
-    if (prevInitialRef.current !== initialMessages) {
-      prevInitialRef.current = initialMessages;
-      if (!skipNextMessagesSync.current) {
-        setMessages(initialMessages);
-      }
-      skipNextMessagesSync.current = false;
+    if (prevInitialRef.current === initialMessages) return;
+    prevInitialRef.current = initialMessages;
+
+    const wasPostFinishReload = skipNextMessagesSync.current;
+    skipNextMessagesSync.current = false;
+
+    if (
+      shouldSyncInitialMessages({
+        skipPostFinishReload: wasPostFinishReload,
+        initialCount: initialMessages.length,
+        liveCount: messagesRef.current.length,
+      })
+    ) {
+      setMessages(initialMessages);
     }
   }, [initialMessages, setMessages]);
 

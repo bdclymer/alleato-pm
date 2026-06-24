@@ -44,8 +44,48 @@ import { BarChart, AreaChart, LineChart, Sparkline } from '@/components/ui/chart
 import { Tour, TourDialog, TourDialogHeader, TourDialogBody, TourDialogFooter, TourNextButton, TourDismissButton } from '@/components/ui/tour';
 import { FiltersProvider, FiltersAddButton, ActiveFiltersList, NoFilteredResults, useFilters, type FilterDef, type ActiveFilter } from '@/components/ui/filters';
 import { StatBreakdown, StatBreakdownCard, StatBreakdownGrid } from '@/components/ui/stat-breakdown';
+import { ChannelDistribution } from '@/components/ui/channel-distribution';
+import { TextEffect } from '@/components/motion/text-effect';
+import { Marquee } from '@/components/motion/marquee';
+import { TabsTransitionPanel } from '@/components/motion/motion-tabs';
+import { MorphingDialogBasicOne } from '@/components/motion/morphing-dialog-basic-one';
+import { MorphingDialogBasicImage } from '@/components/motion/morphing-image';
+import {
+  MorphingDialog,
+  MorphingDialogTrigger,
+  MorphingDialogContent,
+  MorphingDialogTitle,
+  MorphingDialogImage,
+  MorphingDialogSubtitle,
+  MorphingDialogClose,
+  MorphingDialogContainer,
+  MorphingDialogDescription,
+} from '@/components/motion/morphing-dialog';
+import { AdaptiveCardRenderer } from '@/components/motion/adaptive-card-renderer';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import executiveDailyBriefCard from '@/data/adaptive-card-samples/executive-daily-brief.json';
+import taskListCard from '@/data/adaptive-card-samples/task-list.json';
+import meetingRecapCard from '@/data/adaptive-card-samples/meeting-recap.json';
+import surveyPulseCard from '@/data/adaptive-card-samples/survey-pulse.json';
+import accountCard from '@/data/adaptive-card-samples/account.json';
+import authorVideoCard from '@/data/adaptive-card-samples/author-highlight-video.json';
+import bookARoomCard from '@/data/adaptive-card-samples/book-a-room.json';
+import cafeMenuCard from '@/data/adaptive-card-samples/cafe-menu.json';
+import communicationCard from '@/data/adaptive-card-samples/communication.json';
+import courseVideoCard from '@/data/adaptive-card-samples/course-video.json';
+import editorialCard from '@/data/adaptive-card-samples/editorial.json';
+import expenseReportCard from '@/data/adaptive-card-samples/expense-report.json';
+import insightsCard from '@/data/adaptive-card-samples/insights.json';
+import issueCard from '@/data/adaptive-card-samples/issue.json';
+import listCard from '@/data/adaptive-card-samples/list.json';
+import recipeCard from '@/data/adaptive-card-samples/recipe.json';
+import simpleEventCard from '@/data/adaptive-card-samples/simple-event.json';
+import simpleTimeOffCard from '@/data/adaptive-card-samples/simple-time-off-request.json';
+import standardVideoCard from '@/data/adaptive-card-samples/standard-video.json';
+import timeOffCard from '@/data/adaptive-card-samples/time-off-request.json';
+import workItemCard from '@/data/adaptive-card-samples/work_item.json';
 import { Button } from '@/components/ui/button';
-import { CreditCard, Upload, Navigation2, Network, Map, RefreshCcw, ScanText, LayoutList, PanelLeft, Inbox, ArrowLeft, TrendingUp, Table } from 'lucide-react';
+import { CreditCard, Upload, Navigation2, Network, Map, RefreshCcw, ScanText, LayoutList, PanelLeft, Inbox, ArrowLeft, TrendingUp, Table, Check, Copy, ExternalLink, Type, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // ─── Sidebar nav ─────────────────────────────────────────────────────────────
@@ -72,6 +112,10 @@ const SECTIONS = [
   { id: 'transition-panel', label: 'Transition Panel', parent: true },
   { id: 'text-3d-flip', label: 'Text 3D Flip', parent: true },
   { id: 'animated-modal', label: 'Animated Modal', parent: true },
+  { id: 'text-effect', label: 'Text Effect', parent: true },
+  { id: 'marquee', label: 'Marquee', parent: true },
+  { id: 'motion-tabs', label: 'Motion Tabs', parent: true },
+  { id: 'morphing-dialog', label: 'Morphing Dialog', parent: true },
   { id: 'navigation', label: 'Navigation', icon: Navigation2 },
   { id: 'floating-navbar', label: 'Floating Navbar', parent: true },
   { id: 'notch', label: 'Notch', parent: true },
@@ -92,11 +136,15 @@ const SECTIONS = [
   { id: 'area-chart', label: 'Area Chart', parent: true },
   { id: 'line-chart', label: 'Line Chart', parent: true },
   { id: 'sparkline', label: 'Sparkline', parent: true },
+  { id: 'channel-distribution', label: 'Channel Distribution', parent: true },
   { id: 'engagement', label: 'Engagement', icon: Users },
   { id: 'tour', label: 'Tour', parent: true },
   { id: 'advanced-data', label: 'Advanced Data', icon: Table },
   { id: 'filters', label: 'Filters', parent: true },
   { id: 'stat-breakdown', label: 'Stat Breakdown', parent: true },
+  { id: 'teams-cards', label: 'Teams Cards', icon: LayoutGrid },
+  { id: 'alleato-cards', label: 'Alleato Cards', parent: true },
+  { id: 'adaptive-cards', label: 'Adaptive Card Samples', parent: true },
 ];
 
 function scrollTo(id: string) {
@@ -695,13 +743,13 @@ function PropertyDemo() {
         <PropertyList>
           <Property>
             <PropertyLabel width="20px">
-              <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>
+              <svg aria-hidden="true" className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>
             </PropertyLabel>
             <PropertyValue>brandon@alleatogroup.com</PropertyValue>
           </Property>
           <Property>
             <PropertyLabel width="20px">
-              <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 6z" /></svg>
+              <svg aria-hidden="true" className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 6z" /></svg>
             </PropertyLabel>
             <PropertyValue>(919) 555-0142</PropertyValue>
           </Property>
@@ -1025,6 +1073,26 @@ function SparklineDemo() {
   );
 }
 
+const CHANNEL_ITEMS = [
+  { channel: 'Direct sales', share: 34.4, value: '$100.5K', href: '#' },
+  { channel: 'Retail stores', share: 30.6, value: '$89.5K', href: '#' },
+  { channel: 'E-commerce', share: 20.9, value: '$61.2K', href: '#' },
+  { channel: 'Wholesale', share: 14.1, value: '$41.2K', href: '#' },
+];
+
+function ChannelDistributionDemo() {
+  return (
+    <div className="w-full max-w-xl p-6">
+      <ChannelDistribution
+        title="Total sales"
+        total="$292,400"
+        breakdownLabel="Sales channel distribution"
+        items={CHANNEL_ITEMS}
+      />
+    </div>
+  );
+}
+
 // ─── Engagement demos ─────────────────────────────────────────────────────────
 
 function TourDemo() {
@@ -1209,6 +1277,314 @@ function FiltersDemo() {
         </div>
       </div>
     </FiltersProvider>
+  );
+}
+
+// ─── Motion: Text Effect ──────────────────────────────────────────────────────
+
+const TEXT_EFFECT_PRESETS: { preset: 'blur' | 'fade-in-blur' | 'scale' | 'slide'; label: string; text: string }[] = [
+  { preset: 'blur', label: 'Blur', text: 'Welcome to Motion Components' },
+  { preset: 'fade-in-blur', label: 'Fade in blur', text: 'Smooth Animations' },
+  { preset: 'scale', label: 'Scale', text: 'Beautiful Design' },
+  { preset: 'slide', label: 'Slide', text: 'Interactive Experience' },
+];
+
+function TextEffectDemo() {
+  return (
+    <div className="grid w-full max-w-md gap-3 p-6">
+      {TEXT_EFFECT_PRESETS.map((p) => (
+        <div key={p.preset} className="rounded-lg border border-border p-5">
+          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">{p.label}</p>
+          <TextEffect preset={p.preset} per={p.preset === 'fade-in-blur' ? 'char' : 'word'} className="text-xl font-bold text-foreground">
+            {p.text}
+          </TextEffect>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Motion: Marquee ──────────────────────────────────────────────────────────
+
+function MarqueeDemo() {
+  return (
+    <div className="w-full p-6">
+      <Marquee pauseOnHover className="[--duration:20s]">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <div
+            key={n}
+            className="flex h-24 w-64 items-center justify-center rounded-lg border border-border bg-muted/50 px-6"
+          >
+            <span className="text-lg font-semibold text-foreground">Component {n}</span>
+          </div>
+        ))}
+      </Marquee>
+    </div>
+  );
+}
+
+// ─── Motion: Motion Tabs ──────────────────────────────────────────────────────
+
+function MotionTabsDemo() {
+  return (
+    <div className="w-full max-w-md p-6">
+      <TabsTransitionPanel />
+    </div>
+  );
+}
+
+// ─── Motion: Morphing Dialog ──────────────────────────────────────────────────
+
+function MorphingDialogDemo() {
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-8 p-10">
+      <MorphingDialogBasicOne />
+      <MorphingDialogBasicTwo />
+      <MorphingDialogBasicThree />
+      <MorphingDialogBasicImage />
+    </div>
+  );
+}
+
+function MorphingDialogBasicTwo() {
+  return (
+    <MorphingDialog transition={{ type: 'spring', stiffness: 200, damping: 24 }}>
+      <MorphingDialogTrigger
+        style={{ borderRadius: '4px' }}
+        className="border border-border/60 bg-background"
+      >
+        <div className="flex items-center space-x-4 p-4">
+          <MorphingDialogImage
+            src="https://m.media-amazon.com/images/I/71skAxiMC2L._AC_UF1000,1000_QL80_.jpg"
+            alt="What I Talk About When I Talk About Running - book cover"
+            className="h-8 w-8 object-cover object-top"
+            style={{ borderRadius: '4px' }}
+          />
+          <div className="flex flex-col items-start justify-center space-y-0">
+            <MorphingDialogTitle className="text-2xs font-medium text-foreground sm:text-xs">
+              What I Talk About When I Talk About Running
+            </MorphingDialogTitle>
+            <MorphingDialogSubtitle className="text-2xs text-muted-foreground sm:text-xs">
+              Haruki Murakami
+            </MorphingDialogSubtitle>
+          </div>
+        </div>
+      </MorphingDialogTrigger>
+      <MorphingDialogContainer>
+        <MorphingDialogContent
+          style={{ borderRadius: '12px' }}
+          className="relative h-auto w-[500px] border border-border bg-background"
+        >
+          <ScrollArea className="h-[90vh]" type="scroll">
+            <div className="relative p-6">
+              <div className="flex justify-center py-10">
+                <MorphingDialogImage
+                  src="https://m.media-amazon.com/images/I/71skAxiMC2L._AC_UF1000,1000_QL80_.jpg"
+                  alt="What I Talk About When I Talk About Running - book cover"
+                  className="h-auto w-[200px]"
+                />
+              </div>
+              <div>
+                <MorphingDialogTitle className="text-foreground">
+                  What I Talk About When I Talk About Running
+                </MorphingDialogTitle>
+                <MorphingDialogSubtitle className="font-light text-muted-foreground">
+                  Haruki Murakami
+                </MorphingDialogSubtitle>
+                <div className="mt-4 text-sm text-foreground">
+                  <p>
+                    In 1982, having sold his jazz bar to devote himself to writing, Murakami began
+                    running to keep fit. A year later, he&apos;d completed a solo course from Athens to
+                    Marathon, and now, after dozens of such races, he reflects upon the influence the
+                    sport has had on his life and—even more important—on his writing.
+                  </p>
+                  <p className="mt-4">
+                    Equal parts training log, travelogue, and reminiscence, this revealing memoir
+                    covers his four-month preparation for the 2005 New York City Marathon.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
+          <MorphingDialogClose className="text-muted-foreground" />
+        </MorphingDialogContent>
+      </MorphingDialogContainer>
+    </MorphingDialog>
+  );
+}
+
+function MorphingDialogBasicThree() {
+  return (
+    <MorphingDialog transition={{ type: 'spring', stiffness: 200, damping: 24 }}>
+      <MorphingDialogTrigger
+        style={{ borderRadius: '12px' }}
+        className="border border-border/60 bg-background shadow-sm"
+      >
+        <div className="flex flex-col items-center space-y-4 p-4">
+          <MorphingDialogImage
+            src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&auto=format&fit=crop"
+            alt="Mountain landscape"
+            className="h-24 w-32 object-cover"
+            style={{ borderRadius: '8px' }}
+          />
+          <div className="flex flex-col items-center justify-center space-y-1">
+            <MorphingDialogTitle className="text-sm font-semibold text-foreground">
+              Mountain Adventures
+            </MorphingDialogTitle>
+            <MorphingDialogSubtitle className="text-xs text-muted-foreground">
+              Explore the peaks
+            </MorphingDialogSubtitle>
+          </div>
+        </div>
+      </MorphingDialogTrigger>
+      <MorphingDialogContainer>
+        <MorphingDialogContent
+          style={{ borderRadius: '24px' }}
+          className="relative h-auto w-[600px] border border-border bg-background shadow-sm"
+        >
+          <div className="relative p-8">
+            <div className="mb-6">
+              <MorphingDialogImage
+                src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&auto=format&fit=crop"
+                alt="Mountain landscape"
+                className="h-64 w-full object-cover"
+                style={{ borderRadius: '16px' }}
+              />
+            </div>
+            <div className="space-y-4">
+              <MorphingDialogTitle className="text-3xl font-bold text-foreground">
+                Mountain Adventures
+              </MorphingDialogTitle>
+              <MorphingDialogSubtitle className="text-lg font-medium text-muted-foreground">
+                Explore the peaks
+              </MorphingDialogSubtitle>
+              <MorphingDialogDescription
+                className="text-foreground"
+                variants={{
+                  initial: { opacity: 0, y: 20 },
+                  animate: { opacity: 1, y: 0 },
+                  exit: { opacity: 0, y: 20 },
+                }}
+              >
+                <p className="mb-4">
+                  Discover breathtaking mountain landscapes and embark on unforgettable adventures.
+                  From towering peaks to serene valleys, experience nature at its finest.
+                </p>
+                <div className="mt-6 flex gap-4">
+                  <Button className="rounded-lg px-6 py-2 text-sm font-medium">Book Now</Button>
+                  <Button variant="outline" className="rounded-lg px-6 py-2 text-sm font-medium">
+                    Learn More
+                  </Button>
+                </div>
+              </MorphingDialogDescription>
+            </div>
+          </div>
+          <MorphingDialogClose
+            className="text-muted-foreground hover:text-foreground"
+            variants={{ initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }}
+          />
+        </MorphingDialogContent>
+      </MorphingDialogContainer>
+    </MorphingDialog>
+  );
+}
+
+// ─── Teams Cards: Adaptive Card samples ───────────────────────────────────────
+
+const ALLEATO_CARD_SAMPLES = [
+  { name: 'Executive Daily Brief', slug: 'executive-daily-brief', card: executiveDailyBriefCard, tags: ['ToggleVisibility', 'RichTextBlock', 'Icon', 'collapsible'] },
+  { name: 'Task List', slug: 'task-list', card: taskListCard, tags: ['grouped', 'priority colors', 'due dates'] },
+  { name: 'Meeting Recap', slug: 'meeting-recap', card: meetingRecapCard, tags: ['FactSet', 'ToggleVisibility', 'action items'] },
+  { name: 'Weekly Pulse Survey', slug: 'survey-pulse', card: surveyPulseCard, tags: ['Input.ChoiceSet', 'Input.Text', 'Action.Submit'] },
+];
+
+const ADAPTIVE_CARD_SAMPLES = [
+  { name: 'Account / Project Summary', slug: 'account', card: accountCard, tags: ['Badge', 'targetWidth', 'responsive'] },
+  { name: 'Expense Report', slug: 'expense-report', card: expenseReportCard, tags: ['ToggleVisibility', 'Icon', 'RichTextBlock'] },
+  { name: 'Insights + Chart', slug: 'insights', card: insightsCard, tags: ['Badge', 'Chart.Donut', 'ShowCard'] },
+  { name: 'Issue Tracker', slug: 'issue', card: issueCard, tags: ['Table', 'Icon', 'responsive'] },
+  { name: 'Work Item', slug: 'work-item', card: workItemCard, tags: ['Icon', 'status dot', 'responsive'] },
+  { name: 'Communication', slug: 'communication', card: communicationCard, tags: ['Icon', 'ToggleVisibility'] },
+  { name: 'Book a Room', slug: 'book-a-room', card: bookARoomCard, tags: ['Input', 'backgroundImage', 'roundedCorners'] },
+  { name: 'Simple Event', slug: 'simple-event', card: simpleEventCard, tags: ['backgroundImage', 'hero'] },
+  { name: 'Time Off Request', slug: 'time-off-request', card: timeOffCard, tags: ['Input.Date', 'hero', 'responsive'] },
+  { name: 'Simple Time Off', slug: 'simple-time-off', card: simpleTimeOffCard, tags: ['Input.Date', 'ChoiceSet'] },
+  { name: 'Course Video', slug: 'course-video', card: courseVideoCard, tags: ['Rating', 'RoundedCorners'] },
+  { name: 'Author Video', slug: 'author-video', card: authorVideoCard, tags: ['RoundedCorners', 'person avatar'] },
+  { name: 'Standard Video', slug: 'standard-video', card: standardVideoCard, tags: ['logo', 'metadata row'] },
+  { name: 'Editorial', slug: 'editorial', card: editorialCard, tags: ['backgroundImage', 'bleed'] },
+  { name: 'Café Menu', slug: 'cafe-menu', card: cafeMenuCard, tags: ['backgroundImage', 'tabs', 'ShowCard'] },
+  { name: 'Content List', slug: 'list', card: listCard, tags: ['Layout.Flow', 'thumbnails', 'ToggleVisibility'] },
+  { name: 'Recipe', slug: 'recipe', card: recipeCard, tags: ['Image stretch', 'FactSet'] },
+];
+
+interface AdaptiveCardSampleEntry {
+  name: string;
+  slug: string;
+  card: object;
+  tags: string[];
+}
+
+function AdaptiveCardSample({ sample }: { sample: AdaptiveCardSampleEntry }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(JSON.stringify(sample.card, null, 2));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="flex flex-col overflow-hidden rounded-xl bg-background shadow-sm ring-1 ring-border">
+      <div className="flex items-center justify-between gap-2 px-4 py-2.5">
+        <div className="min-w-0">
+          <p className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">{sample.name}</p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {sample.tags.map((tag) => (
+              <span key={tag} className="inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="flex shrink-0 gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 text-muted-foreground hover:text-foreground"
+            onClick={handleCopy}
+            title="Copy JSON"
+          >
+            {copied ? <Check className="size-3.5 text-primary" /> : <Copy className="size-3.5" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 text-muted-foreground hover:text-foreground"
+            onClick={() => window.open('https://adaptivecards.io/designer/', '_blank')}
+            title="Open in Designer"
+          >
+            <ExternalLink className="size-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Teams-style chat message wrapper */}
+      <div className="border-t border-border bg-muted px-4 py-5">
+        <div className="mx-auto max-w-md">
+          <div className="mb-2 flex items-center gap-2">
+            <div className="flex size-7 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
+              A
+            </div>
+            <span className="text-xs font-semibold text-foreground">Alleato</span>
+            <span className="text-[11px] text-muted-foreground">9:00 AM</span>
+          </div>
+          <div className="ml-9 overflow-hidden rounded border border-border bg-background shadow-sm">
+            <AdaptiveCardRenderer card={sample.card} />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1411,6 +1787,40 @@ export default function UILibraryPage() {
             <AnimatedModalDemo />
           </ComponentSection>
 
+          <ComponentSection
+            id="text-effect"
+            name="Text Effect"
+            description="Per-character or per-word animated text with presets — blur, fade-in-blur, scale, and slide. Built on motion/react AnimatePresence."
+            previewClassName="items-start justify-start"
+          >
+            <TextEffectDemo />
+          </ComponentSection>
+
+          <ComponentSection
+            id="marquee"
+            name="Marquee"
+            description="Infinite horizontal (or vertical) scrolling strip. Pauses on hover. Duration is controlled via the [--duration] CSS variable."
+            previewClassName="p-0"
+          >
+            <MarqueeDemo />
+          </ComponentSection>
+
+          <ComponentSection
+            id="motion-tabs"
+            name="Motion Tabs"
+            description="Tab bar with an animated active-tab indicator and a transition panel that slides between content. Self-contained example component."
+          >
+            <MotionTabsDemo />
+          </ComponentSection>
+
+          <ComponentSection
+            id="morphing-dialog"
+            name="Morphing Dialog"
+            description="A trigger card that morphs into a full dialog via a shared layout animation (motion/react layoutId). Click any card to expand; click outside or × to close."
+          >
+            <MorphingDialogDemo />
+          </ComponentSection>
+
           {/* ── Navigation ── */}
           <SectionHeading id="navigation" label="Navigation" icon={Navigation2} />
 
@@ -1556,6 +1966,15 @@ export default function UILibraryPage() {
             <SparklineDemo />
           </ComponentSection>
 
+          <ComponentSection
+            id="channel-distribution"
+            name="Channel Distribution"
+            description="A total metric, a proportional multi-segment category bar, and a grid of segment cards with colored dots, share %, and value. Segment colors use the chart design tokens (theme-aware). Pass an href per item to make each card a clickable link with a hover arrow."
+            previewClassName="items-start justify-start"
+          >
+            <ChannelDistributionDemo />
+          </ComponentSection>
+
           {/* ── Engagement ── */}
           <SectionHeading id="engagement" label="Engagement" icon={Users} />
 
@@ -1620,6 +2039,35 @@ export default function UILibraryPage() {
                 ]}
               />
             </StatBreakdownGrid>
+          </ComponentSection>
+
+          {/* ── Teams Cards ── */}
+          <SectionHeading id="teams-cards" label="Teams Cards" icon={LayoutGrid} />
+
+          <ComponentSection
+            id="alleato-cards"
+            name="Alleato Cards"
+            description="Teams + AI chat cards for the daily brief, task list, meeting recap, and weekly pulse survey. Rendered with AdaptiveCardRenderer. Copy the JSON or open it in the Adaptive Cards designer."
+            previewClassName="items-start justify-start p-6"
+          >
+            <div className="grid w-full grid-cols-1 gap-8 lg:grid-cols-2">
+              {ALLEATO_CARD_SAMPLES.map((sample) => (
+                <AdaptiveCardSample key={sample.slug} sample={sample} />
+              ))}
+            </div>
+          </ComponentSection>
+
+          <ComponentSection
+            id="adaptive-cards"
+            name="Adaptive Card Samples"
+            description="Official Microsoft Teams card samples — 17 production-quality cards from OfficeDev/Microsoft-Teams-Adaptive-Card-Samples."
+            previewClassName="items-start justify-start p-6"
+          >
+            <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {ADAPTIVE_CARD_SAMPLES.map((sample) => (
+                <AdaptiveCardSample key={sample.slug} sample={sample} />
+              ))}
+            </div>
           </ComponentSection>
 
         </div>

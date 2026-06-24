@@ -117,10 +117,10 @@ import {
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { WelcomeScreen } from "./welcome-screen";
 import {
-  TracePanel,
   type AssistantTraceDiagnostics,
   type ToolTraceItem,
 } from "./trace-panel";
+import { TraceMenu } from "./trace-menu";
 import { CrossSourceTimeline } from "./cross-source-timeline";
 import { formatStructuredMeetingList, stripMarkdownForSpeech } from "./chat-formatting";
 import { AudioWaveform } from "./audio-waveform";
@@ -2159,13 +2159,9 @@ export function ChatArea({
                             </div>
                           )}
 
-                          {/* Persisted tool traces (historical messages) */}
-                          {toolParts.length === 0 && (
-                            <TracePanel
-                              traces={persistedTraces}
-                              diagnostics={traceDiagnostics}
-                            />
-                          )}
+                          {/* Execution trace is no longer dumped inline — it is
+                              tucked behind the Trace icon in the message actions
+                              row below (see TraceMenu). */}
 
                           {/* Source citations — disabled in chat UI per 2026-05-19. */}
                           {false && persistedSources.length > 0 && (
@@ -2217,6 +2213,12 @@ export function ChatArea({
                             >
                               <CopyIcon className="h-3.5 w-3.5" />
                             </MessageAction>
+                            {(persistedTraces.length > 0 || traceDiagnostics) && (
+                              <TraceMenu
+                                traces={persistedTraces}
+                                diagnostics={traceDiagnostics}
+                              />
+                            )}
                             <AiResponseFeedback
                               className="ml-1"
                               subject={{

@@ -161,6 +161,147 @@ describe("context compaction", () => {
     expect(result.metadata.binaryReferencesReplaced).toBe(2);
   });
 
+  it("never orphans a tool-call/tool-result pair that lands on a slice boundary", async () => {
+    // A tool-call (msg 1) and its matching tool-result (msg 2) sit exactly on
+    // the head boundary for headMessages=2. A naive slice(0, 2) would keep the
+    // tool-call in `head` and summarize the tool-result into the middle (or
+    // vice-versa), orphaning one half — which OpenAI/Anthropic reject with a
+    // hard 400. The boundary must snap so the pair stays atomic.
+    const messages: ModelMessage[] = [
+      user("u0 head"),
+      assistant([
+        {
+          type: "tool-call",
+          toolCallId: "call-straddle",
+          toolName: "searchEmails",
+          input: { query: "status" },
+        },
+      ]),
+      {
+        role: "tool",
+        content: [
+          {
+            type: "tool-result",
+            toolCallId: "call-straddle",
+            toolName: "searchEmails",
+            output: { type: "text", value: "r".repeat(80) },
+          },
+        ],
+      },
+      user("u3 middle " + "m".repeat(500)),
+      assistant("a4 middle " + "n".repeat(500)),
+      user("u5 tail"),
+      assistant("a6 tail"),
+    ];
+
+    const result = await maybeCompactModelMessages(messages, {
+      enabled: true,
+      systemPrompt: "system",
+      thresholdTokens: 10,
+      hardLimitTokens: 10_000,
+      headMessages: 2,
+      tailMessages: 2,
+      summarize: async () => "middle summary",
+    });
+
+    expect(result.metadata.status).toBe("compacted");
+
+    // Collect every tool-call id and tool-result id surviving in the output.
+    const callIds = new Set<string>();
+    const resultIds = new Set<string>();
+    for (const message of result.messages) {
+      if (!Array.isArray(message.content)) continue;
+      for (const part of message.content) {
+        if (part.type === "tool-call") callIds.add(part.toolCallId);
+        if (part.type === "tool-result") resultIds.add(part.toolCallId);
+      }
+    }
+
+    // No orphans: every surviving tool-result has its tool-call and vice-versa.
+    for (const id of resultIds) {
+      expect(callIds.has(id)).toBe(true);
+    }
+    for (const id of callIds) {
+      expect(resultIds.has(id)).toBe(true);
+    }
+    // The straddling pair was pushed wholly into the summarized middle.
+    expect(callIds.has("call-straddle")).toBe(false);
+    expect(resultIds.has("call-straddle")).toBe(false);
+  });
+
+  it("does not reject a disabled chat when the hard limit is a misconfigured 0", async () => {
+    // Regression: an unset env var parsed via Number("") yields 0, which is
+    // finite. A naive `>= hardLimitTokens` check would treat every disabled
+    // chat as over-limit and throw. A non-positive limit must fall back to the
+    // real default, so a normal-sized chat passes straight through.
+    const messages = [user("hello"), assistant("hi there")];
+    const result = await maybeCompactModelMessages(messages, {
+      enabled: false,
+      systemPrompt: "system",
+      thresholdTokens: 0,
+      hardLimitTokens: 0,
+    });
+
+    expect(result.messages).toBe(messages);
+    expect(result.metadata.status).toBe("disabled");
+  });
+
+  it("throws a specific compaction error when compaction is disabled but the request is over the hard limit", async () => {
+    await expect(
+      maybeCompactModelMessages([user("x".repeat(2_000))], {
+        enabled: false,
+        systemPrompt: "system",
+        thresholdTokens: 10,
+        hardLimitTokens: 20,
+      }),
+    ).rejects.toThrow(ContextCompactionError);
+  });
+
+  it("blames the system prompt — not the chat — when a 1-message chat is over the limit because of an oversized injected context", async () => {
+    // Regression: a brand-new conversation with a single short user message
+    // returned "I could not safely compact this long chat" because the injected
+    // intelligence/retrieval context (counted in the system prompt) alone blew
+    // past the hard limit. Compaction cannot shrink the system prompt, so the
+    // failure must be attributed to the system prompt, never the conversation.
+    const hugeSystemPrompt = "S".repeat(200_000); // ~50k tokens
+    expect.assertions(3);
+    try {
+      await maybeCompactModelMessages([user("Reply with exactly the word: WOMBAT")], {
+        enabled: false,
+        systemPrompt: hugeSystemPrompt,
+        thresholdTokens: 40_000,
+        hardLimitTokens: 45_000,
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ContextCompactionError);
+      expect((error as ContextCompactionError).reason).toBe(
+        "system_prompt_over_limit",
+      );
+      // The honest message attributes the failure to the system prompt, and
+      // explicitly states compaction cannot help.
+      expect((error as ContextCompactionError).message).toMatch(
+        /system prompt|system context/i,
+      );
+    }
+  });
+
+  it("attributes an over-limit error to the conversation when the messages are what overflow", async () => {
+    expect.assertions(2);
+    try {
+      await maybeCompactModelMessages([user("x".repeat(200_000))], {
+        enabled: false,
+        systemPrompt: "small system prompt",
+        thresholdTokens: 40_000,
+        hardLimitTokens: 45_000,
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ContextCompactionError);
+      expect((error as ContextCompactionError).reason).toBe(
+        "conversation_over_limit",
+      );
+    }
+  });
+
   it("throws a specific compaction error when summarization fails over the hard limit", async () => {
     await expect(
       maybeCompactModelMessages(

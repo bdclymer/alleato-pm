@@ -14,6 +14,8 @@ import {
   type SourceReferenceRecord,
 } from "@/components/ai-intelligence/source-reference-button";
 import { PageShell } from "@/components/layout";
+import { AnimatedList } from "@/components/ui/animated-list";
+import { ChangeCard } from "@/features/intelligence/change-card";
 import { DailyIngestionFeed } from "@/features/intelligence/daily-ingestion-feed";
 import { buildIntelligencePageState } from "@/lib/ai/intelligence/page-state";
 import {
@@ -853,23 +855,22 @@ function SnapshotSection({
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             What changed since the last update
           </p>
-          <div className="space-y-3">
-            {whatChanged.map((item) => (
-              <div key={item.title} className="flex gap-3">
-                <GitCommitHorizontal className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 space-y-1">
-                  <p className="text-sm font-medium text-foreground">{item.title}</p>
-                  {item.detail ? (
-                    <p className="text-sm leading-6 text-muted-foreground">{safeNarrative(item.detail, 200)}</p>
-                  ) : null}
+          <AnimatedList delay={550} className="items-stretch gap-2">
+            {[...whatChanged].reverse().map((item) => (
+              <ChangeCard
+                key={item.title}
+                title={item.title}
+                preview={item.detail ? safeNarrative(item.detail, 120) : undefined}
+                detail={item.detail ? safeNarrative(item.detail, 600) : undefined}
+                sources={
                   <SourceLinkRow
                     projectId={projectId}
                     sources={supportingSourcesForIds(packet, item.sourceIds, sourceDocumentMap)}
                   />
-                </div>
-              </div>
+                }
+              />
             ))}
-          </div>
+          </AnimatedList>
         </div>
       ) : null}
     </section>

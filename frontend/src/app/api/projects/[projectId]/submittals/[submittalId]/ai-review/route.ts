@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { createDocumentIntelligenceTools } from "@/lib/ai/tools/document-intelligence";
 import { getOpenAI } from "@/lib/ai/tools/tool-utils";
+import type { Json } from "@/types/database.types";
 import { z } from "zod";
 
 /**
@@ -16,7 +17,7 @@ export const GET = withApiGuardrails<{
 }>(
   "projects/[projectId]/submittals/[submittalId]/ai-review#GET",
   async ({ params }) => {
-    const { submittalId } = params;
+    const { submittalId } = await params;
     const supabase = await createClient();
 
     const {
@@ -86,7 +87,7 @@ export const POST = withApiGuardrails<{
 }>(
   "projects/[projectId]/submittals/[submittalId]/ai-review#POST",
   async ({ request, params }) => {
-    const { projectId, submittalId } = params;
+    const { projectId, submittalId } = await params;
     const supabase = await createClient();
 
     const {
@@ -138,9 +139,19 @@ export const POST = withApiGuardrails<{
       },
     );
 
-    // If context isn't ready (no submittal text or drawing text), return early
-    if (!context.readiness?.canCompare) {
-      return Response.json({ ...context, findings: null });
+    // The tool returns either an error object or the assembled comparison
+    // context. Narrow to the success shape before reading its fields.
+    const isReadyContext = (
+      value: unknown,
+    ): value is {
+      submittal: { title: string | null };
+      comparisonContext: { submittalText: string | null; drawingText: string | null };
+      readiness: { canCompare: boolean };
+    } => typeof value === "object" && value !== null && "readiness" in value;
+
+    // If context isn't ready (error result, or no submittal/drawing text), return early
+    if (!isReadyContext(context) || !context.readiness?.canCompare) {
+      return Response.json({ ...(context as object), findings: null });
     }
 
     // Run GPT-4o analysis on the assembled context
@@ -188,7 +199,7 @@ export const POST = withApiGuardrails<{
     await supabase
       .from("submittals")
       .update({
-        ai_review_result: result as unknown as Record<string, unknown>,
+        ai_review_result: result as unknown as Json,
         ai_review_ran_at: new Date().toISOString(),
       })
       .eq("id", submittalId);

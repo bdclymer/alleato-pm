@@ -724,7 +724,12 @@ export function createActionTools(
         "confirmation before writing. If projectId is unknown, call getPortfolioOverview first.",
       inputSchema: z.object({
         projectId: z.number().describe("Project ID — required"),
-        contractId: z.number().optional().describe("Prime contract ID if known"),
+        contractId: z
+          .string()
+          .optional()
+          .describe(
+            "Prime contract ID (uuid) if known — prime_contract_change_orders.contract_id is a uuid FK, never a number",
+          ),
         title: z.string().describe("Change order title"),
         totalAmount: z.number().optional().describe("Dollar amount — can be 0 if TBD"),
         status: z
@@ -774,7 +779,7 @@ export function createActionTools(
           .from("prime_contract_change_orders")
           .insert({
             project_id: projectId,
-            contract_id: contractId != null ? String(contractId) : null,
+            contract_id: contractId ?? null,
             title,
             total_amount: totalAmount ?? 0,
             status,

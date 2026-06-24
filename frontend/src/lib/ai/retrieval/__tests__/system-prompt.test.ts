@@ -81,6 +81,87 @@ describe("assembleSystemPromptFromContext", () => {
     expect(prompt).not.toContain("Vector Search Results");
   });
 
+  it("truncates an oversized top-priority block to the budget and flags it to the model", () => {
+    // Regression: an over-large injected context (intelligence packet + vector
+    // results) bloated the system prompt past the context hard limit, so even a
+    // one-line chat was rejected by the compaction guard. The injected context
+    // must be bounded so a short chat can never trip the limit.
+    const plan: RetrievalPlan = {
+      intent: "source_lookup",
+      responseFormat: "source_lookup",
+      sources: { semanticVectorSearch: { query: "spec evidence" } },
+      reason: "test",
+    };
+    const ctx: RetrievalContext = {
+      semanticVectorResults: {
+        results: [
+          { content: "Z".repeat(1000), sourceTable: "document_chunks", recordId: 1 },
+        ],
+      } as never,
+      warnings: [],
+      durationsMs: {},
+    };
+    const onContextTrimmed = jest.fn();
+    const budget = 500;
+    const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE", {
+      maxContextChars: budget,
+      onContextTrimmed,
+    });
+
+    expect(prompt).toContain("BASE");
+    expect(prompt).toContain("Context Truncated");
+    expect(onContextTrimmed).toHaveBeenCalledTimes(1);
+    expect(onContextTrimmed.mock.calls[0][0]).toMatchObject({ truncatedBlock: true });
+    // basePrompt is exempt; injected context respects the budget (+small notice).
+    expect(prompt.length).toBeLessThanOrEqual(budget + "BASE".length + 400);
+  });
+
+  it("drops lower-priority blocks that do not fit while keeping the ones that do", () => {
+    const plan: RetrievalPlan = {
+      intent: "source_lookup",
+      responseFormat: "source_lookup",
+      sources: { semanticVectorSearch: { query: "evidence" } },
+      reason: "test",
+    };
+    const ctx: RetrievalContext = {
+      semanticVectorResults: {
+        results: [
+          { content: "Z".repeat(1000), sourceTable: "document_chunks", recordId: 1 },
+        ],
+      } as never,
+      executiveBriefingRetrieval: { summary: "B".repeat(1000) } as never,
+      warnings: [],
+      durationsMs: {},
+    };
+    const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE", {
+      maxContextChars: 1400,
+    });
+
+    // Higher-priority vector block survives; lower-priority briefing is dropped.
+    expect(prompt).toContain("Vector Search Results");
+    expect(prompt).not.toContain("Recent Communication Signals");
+    expect(prompt).toContain("Context Truncated");
+  });
+
+  it("leaves a normal-sized injected context untouched (no truncation notice)", () => {
+    const plan: RetrievalPlan = {
+      intent: "source_lookup",
+      responseFormat: "source_lookup",
+      sources: { semanticVectorSearch: { query: "evidence" } },
+      reason: "test",
+    };
+    const ctx: RetrievalContext = {
+      semanticVectorResults: {
+        results: [{ content: "short passage", sourceTable: "document_chunks", recordId: 1 }],
+      } as never,
+      warnings: [],
+      durationsMs: {},
+    };
+    const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE_PROMPT");
+    expect(prompt).toContain("Vector Search Results");
+    expect(prompt).not.toContain("Context Truncated");
+  });
+
   it("frames preloaded packet and snapshot as project operating context with RAG as drilldown", () => {
     const plan: RetrievalPlan = {
       intent: "source_lookup",

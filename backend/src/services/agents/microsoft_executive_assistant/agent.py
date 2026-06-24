@@ -16,6 +16,7 @@ from src.services.agents.runtime_common import (
 )
 from src.services.agents.microsoft_executive_assistant.contracts import (
     MicrosoftAssistantAction,
+    MicrosoftAssistantEmailItem,
     MicrosoftAssistantTraceItem,
     MicrosoftExecutiveAssistantRequest,
     MicrosoftExecutiveAssistantResponse,
@@ -799,6 +800,71 @@ def _deterministic_inbox_answer(
     return None
 
 
+def _structured_inbox_emails(
+    request: MicrosoftExecutiveAssistantRequest,
+    result: Any,
+) -> list[MicrosoftAssistantEmailItem]:
+    """Shape the same live-inbox rows used for the text answer into structured
+    email items the frontend renders as the outlook_inbox_summary card.
+
+    Returns [] for non-inbox requests or when no live inbox read succeeded, so
+    the frontend falls back to the text answer unchanged.
+    """
+    if not _inbox_request_kind(request.prompt):
+        return []
+    messages = _extract_live_inbox_messages(result)
+    if not messages:
+        return []
+
+    items: list[MicrosoftAssistantEmailItem] = []
+    for index, message in enumerate(messages[: request.max_messages]):
+        subject = str(message.get("subject") or "(no subject)").strip() or "(no subject)"
+        body_text = str(message.get("body_text") or "").strip() or None
+        preview = re.sub(r"\s+", " ", body_text).strip()[:200] if body_text else None
+        graph_id = str(message.get("graph_message_id") or message.get("id") or "").strip() or None
+        conversation_id = str(message.get("conversation_id") or "").strip() or None
+        item_id = graph_id or conversation_id or f"inbox-{index}"
+        bucket = _action_bucket(message)
+        reply_prompt = "\n".join(
+            [
+                "OUTLOOK_INBOX_CARD_ACTION",
+                "Mode: reply",
+                "Draft a short Outlook reply to this email thread.",
+                f"Subject: {subject}",
+                *([f"Graph message ID: {graph_id}"] if graph_id else []),
+            ]
+        )
+        draft_prompt = "\n".join(
+            [
+                "OUTLOOK_INBOX_CARD_ACTION",
+                "Mode: new",
+                "Draft a short Outlook email about this inbox item.",
+                f"Subject: {subject}",
+            ]
+        )
+        items.append(
+            MicrosoftAssistantEmailItem(
+                id=item_id,
+                graphMessageId=graph_id,
+                conversationId=conversation_id,
+                subject=subject,
+                fromName=str(message.get("from_name") or "").strip() or None,
+                fromEmail=str(message.get("from_email") or "").strip() or None,
+                receivedAt=str(message.get("received_at") or "").strip() or None,
+                hasAttachments=bool(message.get("has_attachments")),
+                preview=preview,
+                bodyText=body_text,
+                webLink=str(message.get("web_link") or "").strip() or None,
+                recommendedAction=_message_reason(message, bucket),
+                replyPrompt=reply_prompt,
+                draftPrompt=draft_prompt,
+                # v1: no real Outlook draft lookup yet — pencil renders muted.
+                draftReady=False,
+            )
+        )
+    return items
+
+
 def _tool_trace_from_result(result: Any, *, runtime_trace: MicrosoftAssistantTraceItem) -> list[MicrosoftAssistantTraceItem]:
     traces: list[MicrosoftAssistantTraceItem] = []
     known_tools = {
@@ -821,6 +887,19 @@ def _tool_trace_from_result(result: Any, *, runtime_trace: MicrosoftAssistantTra
         ok = parsed.get("ok") if isinstance(parsed.get("ok"), bool) else None
         if ok is False and not error:
             error = content[:500] if content else f"{tool_name} failed"
+        # The corpus-search tools return markdown (not JSON), so failures were
+        # invisible in the trace — a degraded backend looked like a clean success.
+        # Surface known failure markers so the trace and persisted metadata are honest.
+        if not error and isinstance(content, str):
+            stripped = content.lstrip()
+            if (
+                "SEARCH_BACKEND_DEGRADED" in content
+                or stripped.startswith("Error searching")
+                or stripped.startswith("Error executing retrieval")
+                or "_SEARCH_FAILED" in content
+                or "FILE_SEARCH_FAILED" in content
+            ):
+                error = content[:500]
         traces.append(
             MicrosoftAssistantTraceItem(
                 agent=ORCHESTRATOR_NAME,
@@ -881,8 +960,11 @@ def run_microsoft_executive_assistant(
                 "Your domain is Outlook, Teams, Microsoft calendar, and Microsoft files. Use Deep Agents planning and "
                 "specialized skills for inbox triage, drafting, urgent escalation, calendar review, and Microsoft file context. "
                 "Fail loudly for missing provider keys, Microsoft Graph credentials, Graph HTTP failures, stale source context, "
-                "or empty results. Never silently skip a tool failure. Never send email, post Teams messages, or mutate calendar "
-                "events unless an explicit approved action path exists."
+                "or empty results. Never silently skip a tool failure. "
+                "If any search tool returns a result beginning with SEARCH_BACKEND_DEGRADED (or *_SEARCH_FAILED), the search "
+                "subsystem is broken — do NOT report 'no matching passages' or conclude that evidence is absent. Say plainly that "
+                "search was unavailable, state which corpora could not be searched, and do not present a confident negative. "
+                "Never send email, post Teams messages, or mutate calendar events unless an explicit approved action path exists."
             ),
         }
         skill_roots = _skill_roots()
@@ -919,6 +1001,7 @@ def run_microsoft_executive_assistant(
             answer=answer,
             mode="deep_agents",
             actions=_extract_actions(answer, result),
+            emails=_structured_inbox_emails(request, result),
             toolTrace=_tool_trace_from_result(result, runtime_trace=runtime_trace),
             skillsLoaded=loaded_skills,
             approvedSkillContext=request.approved_skill_context,

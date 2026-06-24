@@ -1,11 +1,91 @@
 // frontend/src/lib/ai/retrieval/system-prompt.ts
 import type { RetrievalPlan, RetrievalContext } from "./types";
+import {
+  CHARS_PER_TOKEN,
+  DEFAULT_HARD_LIMIT_TOKENS,
+} from "@/lib/ai/stream/compaction";
 
 const MAX_CHUNK_CHARS = 1200;
 const MAX_VECTOR_RESULTS = 8;
 const MAX_COMPACT_VALUE_CHARS = 1200;
 const MAX_PACKET_CARDS = 8;
 const MAX_PACKET_LIST_ITEMS = 5;
+
+const SYSTEM_PROMPT_SEPARATOR = "\n\n---\n\n";
+
+// The injected retrieval/context blocks must never grow large enough to push a
+// request over the context hard limit on their own — otherwise even a one-line
+// chat gets rejected by the compaction guard (which can only shrink the
+// conversation, not the system prompt). Default to ~60% of the hard limit's
+// char-equivalent so there is always room left for the conversation + response.
+// Derived from the SAME hard-limit constant the compactor uses so the two can
+// never disagree about what "over the limit" means.
+export const DEFAULT_SYSTEM_PROMPT_MAX_CHARS = Math.floor(
+  DEFAULT_HARD_LIMIT_TOKENS * CHARS_PER_TOKEN * 0.6,
+);
+
+export type AssembleSystemPromptOptions = {
+  /** Hard cap on the assembled prompt length in characters. */
+  maxContextChars?: number;
+  /** Optional sink for "context was trimmed" telemetry. */
+  onContextTrimmed?: (info: {
+    maxContextChars: number;
+    totalBlocks: number;
+    keptBlocks: number;
+    omittedBlocks: number;
+    truncatedBlock: boolean;
+  }) => void;
+};
+
+/**
+ * Keep the highest-priority injected-context blocks that fit under the budget,
+ * drop the rest, and (if even the first block overflows) truncate it so at least
+ * the top-priority context survives. `basePrompt` (the operating instructions)
+ * is never subject to the budget — it is always appended in full by the caller.
+ */
+function enforceContextBudget(
+  parts: string[],
+  basePrompt: string,
+  maxContextChars: number,
+): { parts: string[]; omittedBlocks: number; truncatedBlock: boolean } {
+  const reserved = basePrompt.length + SYSTEM_PROMPT_SEPARATOR.length;
+  const available = Math.max(0, maxContextChars - reserved);
+
+  const kept: string[] = [];
+  let used = 0;
+  let omittedBlocks = 0;
+  let truncatedBlock = false;
+
+  for (const part of parts) {
+    // Once we start dropping, drop everything after it (lower priority).
+    if (omittedBlocks > 0) {
+      omittedBlocks += 1;
+      continue;
+    }
+    const cost =
+      (kept.length > 0 ? SYSTEM_PROMPT_SEPARATOR.length : 0) + part.length;
+    if (used + cost <= available) {
+      kept.push(part);
+      used += cost;
+      continue;
+    }
+    // Doesn't fit. If nothing has been kept yet, truncate this top-priority
+    // block so it survives partially rather than being dropped wholesale.
+    if (kept.length === 0) {
+      const marker = "\n\n[context truncated to fit the model window]";
+      const room = available - marker.length;
+      if (room > 0) {
+        kept.push(`${part.slice(0, room)}${marker}`);
+        used = available;
+        truncatedBlock = true;
+        continue;
+      }
+    }
+    omittedBlocks += 1;
+  }
+
+  return { parts: kept, omittedBlocks, truncatedBlock };
+}
 
 type SemanticResult = {
   content?: string;
@@ -524,7 +604,13 @@ export function assembleSystemPromptFromContext(
   plan: RetrievalPlan,
   ctx: RetrievalContext,
   basePrompt: string,
+  options: AssembleSystemPromptOptions = {},
 ): string {
+  const maxContextChars =
+    Number.isFinite(options.maxContextChars) &&
+    (options.maxContextChars as number) > 0
+      ? (options.maxContextChars as number)
+      : DEFAULT_SYSTEM_PROMPT_MAX_CHARS;
   const parts: string[] = [];
 
   const operatingContextContract = renderProjectOperatingContextContract(ctx);
@@ -661,5 +747,30 @@ export function assembleSystemPromptFromContext(
     return `${noDataBlock}\n\n---\n\n${basePrompt}`;
   }
 
-  return `${parts.join("\n\n---\n\n")}\n\n---\n\n${basePrompt}`;
+  const budgeted = enforceContextBudget(parts, basePrompt, maxContextChars);
+  if (budgeted.omittedBlocks > 0 || budgeted.truncatedBlock) {
+    const info = {
+      maxContextChars,
+      totalBlocks: parts.length,
+      keptBlocks: budgeted.parts.length,
+      omittedBlocks: budgeted.omittedBlocks,
+      truncatedBlock: budgeted.truncatedBlock,
+    };
+    // Fail loudly (telemetry) AND visibly (to the model) — never silently drop
+    // context and let the model claim full coverage of evidence it never saw.
+    console.warn("[system-prompt] injected context exceeded budget", info);
+    options.onContextTrimmed?.(info);
+    budgeted.parts.push(
+      [
+        "# Context Truncated",
+        "",
+        `Some retrieved context was omitted to fit the model context window ` +
+          `(${budgeted.omittedBlocks} block(s) dropped` +
+          `${budgeted.truncatedBlock ? ", 1 block truncated" : ""}).`,
+        "If the answer needs the missing detail, say so explicitly and use your tools to fetch it. Do not claim to have reviewed evidence that is not present above.",
+      ].join("\n"),
+    );
+  }
+
+  return `${budgeted.parts.join(SYSTEM_PROMPT_SEPARATOR)}${SYSTEM_PROMPT_SEPARATOR}${basePrompt}`;
 }

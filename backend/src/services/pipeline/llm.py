@@ -11,7 +11,13 @@ from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
-from ..ai_transport import retry_ai_call
+from ..ai_transport import (
+    alternate_provider_path,
+    get_ai_provider_path,
+    get_openai_client,
+    is_auth_or_credit_error,
+    retry_ai_call,
+)
 from .config import EMBEDDING_MODEL, MODEL_SIGNAL_EXTRACTION
 from .model_usage import ModelUsageContext, assert_background_model_budget_available, record_model_usage
 from .models import (
@@ -82,15 +88,39 @@ def batch_embed(
         operation=context.operation,
         model=model,
     )
-    response = retry_ai_call(
-        lambda: _client().embeddings.create(
-            model=model,
-            input=truncated,
-            dimensions=dimensions,
-        ),
-        provider_name="OpenAI",
-        operation="embedding batch",
-    )
+    def _create(force_path: Optional[str] = None):
+        client = get_openai_client(force_path=force_path) if force_path else _client()
+        return retry_ai_call(
+            lambda: client.embeddings.create(
+                model=model,
+                input=truncated,
+                dimensions=dimensions,
+            ),
+            provider_name="OpenAI" if force_path == "openai" else "AI provider",
+            operation="embedding batch",
+        )
+
+    # Fail over between the AI Gateway and direct OpenAI on a provider-level
+    # auth/credit wall (e.g. gateway spend-cap 401) — the historical root cause
+    # of silent embedding outages. Without this the meeting/document embed path
+    # dies on a gateway cap-out while the graph path (which already has failover)
+    # survives. Keeps reliability a property of the transport, not one function.
+    primary_path = get_ai_provider_path()
+    try:
+        response = _create()
+    except Exception as exc:
+        alt_path = alternate_provider_path(primary_path)
+        if alt_path is not None and is_auth_or_credit_error(exc):
+            logger.warning(
+                "[LLM] Primary provider '%s' hit an auth/credit wall (%s); "
+                "failing over to '%s' for this embedding batch.",
+                primary_path,
+                exc,
+                alt_path,
+            )
+            response = _create(force_path=alt_path)
+        else:
+            raise
     record_model_usage(
         context,
         model=model,

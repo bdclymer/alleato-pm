@@ -161,6 +161,55 @@ const GENERAL_MEETING_PHRASES = [
   "meeting recaps",
 ];
 
+// A cross-source investigation ("research through the teams, emails, and meetings
+// and see where this started") must NOT be hijacked by the single-source Outlook
+// inbox fast-path or the recent-meetings fast-path. Those paths each see only one
+// corpus; an investigative question that spans corpora has to reach the semantic
+// vector search, which is the only retrieval that searches emails + Teams +
+// meetings + files together. Missing this routed a "where did this resignation
+// initiate?" question to a live-inbox read of the 25 newest messages and returned
+// a false "I found nothing" even though the resignation thread was embedded.
+const INVESTIGATION_VERBS =
+  /\b(research|investigat\w+|dig (in|into|through)|look (through|into)|trace|tracing|get to the bottom|root cause|figure out|find out|piece together|reconstruct)\b/i;
+const ORIGIN_PHRASES =
+  /\b(where (this|it|that|things?|everything)\b.{0,30}\b(initiat\w*|start\w*|began|begun|originat\w*|stem\w*|came from|come from)|how (this|it|that)\b.{0,30}\b(start\w*|began|happen\w*|came about|unfold\w*)|what (led|leads) (to|up to)|leading up to (the|his|her|their|this))\b/i;
+// Distinct communication corpora. Two or more present ⇒ inherently cross-source.
+const CORPUS_GROUPS: RegExp[] = [
+  /\b(e-?mails?|outlook)\b/i,
+  /\bteams\b/i,
+  /\b(meetings?|transcripts?|fireflies)\b/i,
+  /\b(onedrive|one drive|sharepoint)\b/i,
+];
+
+export type CrossSourceInvestigationRequest = {
+  reason: "cross_source_investigation";
+};
+
+/**
+ * Detects an investigative question that must be answered by searching across the
+ * whole embedded corpus rather than a single source. Fires when the user uses an
+ * investigative/origin phrasing AND references at least one communication corpus,
+ * OR when the message references two or more distinct corpora at once.
+ *
+ * Returns null for ordinary single-source triage ("anything urgent in my inbox?",
+ * "review recent meetings") so those keep their tuned fast-paths.
+ */
+export function detectCrossSourceInvestigationRequest(
+  message: string,
+): CrossSourceInvestigationRequest | null {
+  const corpusCount = CORPUS_GROUPS.reduce(
+    (count, re) => count + (re.test(message) ? 1 : 0),
+    0,
+  );
+  const investigative =
+    INVESTIGATION_VERBS.test(message) || ORIGIN_PHRASES.test(message);
+
+  if ((investigative && corpusCount >= 1) || corpusCount >= 2) {
+    return { reason: "cross_source_investigation" };
+  }
+  return null;
+}
+
 export function detectRecentEmailInboxRequest(message: string): RecentEmailInboxRequest | null {
   const hasEmailWord = EMAIL_INBOX_WORDS.test(message);
   const hasMessageWord = MESSAGE_INBOX_WORDS.test(message);

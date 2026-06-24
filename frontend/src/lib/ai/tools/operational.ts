@@ -2317,11 +2317,30 @@ export function createOperationalTools(
                     ? { p_project_id: resolvedProjectId }
                     : {}),
                 });
-              } catch {
-                return { data: [], error: null };
+              } catch (err) {
+                // Do NOT swallow into a clean empty result — a failed query
+                // embedding or RPC (e.g. the recurring provider auth/credit
+                // wall) would otherwise look identical to "no semantic
+                // matches", silently degrading to keyword-only with no trace.
+                console.error(
+                  "[searchMeetingsByTopic] semantic search failed:",
+                  err,
+                );
+                return { data: [], error: err as Error };
               }
             })(),
           ]);
+
+          // Both halves run best-effort; if the semantic half errored we still
+          // return keyword results but flag the degradation so the model (and
+          // logs) know coverage was reduced rather than empty.
+          const semanticSearchDegraded = Boolean(semanticRes.error);
+          if (semanticSearchDegraded) {
+            console.error(
+              "[searchMeetingsByTopic] returning keyword-only results; semantic branch degraded:",
+              semanticRes.error,
+            );
+          }
 
           // Collect unique meeting IDs from both searches
           const meetingIds = new Set<string>();
@@ -2338,7 +2357,10 @@ export function createOperationalTools(
           if (meetingIds.size === 0) {
             return {
               results: [],
-              message: `No meetings found discussing "${topic}". Try broader terms.`,
+              ...(semanticSearchDegraded ? { semanticSearchDegraded } : {}),
+              message: semanticSearchDegraded
+                ? `No meetings matched "${topic}" by keyword, and semantic search was unavailable (degraded), so coverage may be incomplete. Try broader terms or retry.`
+                : `No meetings found discussing "${topic}". Try broader terms.`,
             };
           }
 
@@ -2369,6 +2391,7 @@ export function createOperationalTools(
               ? `Filtered to project ${resolvedProjectId}`
               : "All projects",
             topic,
+            ...(semanticSearchDegraded ? { semanticSearchDegraded } : {}),
             totalResults: meetings.length,
             results: meetings.map((m) => ({
               sourceRef: `[Source: Meeting - "${m.title}" - ${m.date}]`,

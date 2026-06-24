@@ -12,15 +12,9 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
-import { sendEmail } from "@/lib/email/send";
-import { APP_BASE_URL } from "@/lib/email/client";
-import RFIClosedNotification from "@/emails/rfi/RFIClosedNotification";
+import { notifyRfiClosed, notifyRfiOpened } from "@/lib/rfi/rfi-notify";
 import { rfiEditSchema } from "@/lib/schemas/rfi-schema";
-import {
-  RFI_RECIPIENT_UUID_PATTERN as UUID_PATTERN,
-  classifyRfiRecipientEntries,
-  personFullNameKey,
-} from "@/lib/rfi/rfi-recipients";
+import { RFI_RECIPIENT_UUID_PATTERN as UUID_PATTERN } from "@/lib/rfi/rfi-recipients";
 import { ZodError } from "zod";
 import { logger } from "@/lib/logger";
 

@@ -43,6 +43,17 @@ export const GET = withApiGuardrails(
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "200");
 
+    // Column filters (Procore parity). Each maps to a rfis column; person fields
+    // store display names, so exact-match by name except ball_in_court which is a
+    // comma-joined string (substring match).
+    const rfiManager = searchParams.get("rfi_manager");
+    const assignee = searchParams.get("assignee");
+    const receivedFrom = searchParams.get("received_from");
+    const responsibleContractor = searchParams.get("responsible_contractor");
+    const ballInCourt = searchParams.get("ball_in_court");
+    const rfiStage = searchParams.get("rfi_stage");
+    const overdue = searchParams.get("overdue");
+
     let query = supabase
       .from("rfis")
       .select("*", { count: "exact" })
@@ -56,6 +67,20 @@ export const GET = withApiGuardrails(
       } else if (statuses.length > 1) {
         query = query.in("status", statuses);
       }
+    }
+
+    if (rfiManager) query = query.eq("rfi_manager", rfiManager);
+    if (assignee) query = query.contains("assignees", [assignee]);
+    if (receivedFrom) query = query.eq("received_from", receivedFrom);
+    if (responsibleContractor)
+      query = query.eq("responsible_contractor", responsibleContractor);
+    if (ballInCourt) query = query.ilike("ball_in_court", `%${ballInCourt}%`);
+    if (rfiStage) query = query.eq("rfi_stage", rfiStage);
+    if (overdue === "true") {
+      const today = new Date().toISOString().slice(0, 10);
+      query = query
+        .lt("due_date", today)
+        .in("status", ["draft", "open", "answered"]);
     }
 
     if (search) {

@@ -42,7 +42,7 @@ function isBeforeCurrentApplication(
   return new Date(candidate.created_at).getTime() < new Date(current.created_at).getTime();
 }
 
-export async function fetchPaymentApplicationPdfData(
+async function fetchPaymentApplicationPdfData(
   supabase: Awaited<ReturnType<typeof createClient>>,
   projectId: number,
   contractId: string,

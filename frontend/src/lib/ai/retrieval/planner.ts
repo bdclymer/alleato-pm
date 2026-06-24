@@ -5,6 +5,7 @@ import {
   shouldUsePacketFirstIntent,
 } from "@/lib/ai/intent-router";
 import {
+  detectCrossSourceInvestigationRequest,
   detectRecentEmailInboxRequest,
   detectSourceSpecificRagRequest,
 } from "@/lib/ai/detect-rag-request";
@@ -230,6 +231,29 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
       sources: {},
       selectedProjectId,
       reason: "executive_deep_agent_broad_operator_question",
+    };
+  }
+
+  // Cross-source investigations ("research the teams, emails, and meetings and see
+  // where this started") MUST reach the semantic vector search, which is the only
+  // retrieval that spans emails + Teams + meetings + files. This is evaluated
+  // BEFORE the single-source Outlook-inbox and recent-meetings fast-paths below,
+  // which would otherwise hijack the question into one corpus and return a false
+  // "found nothing" (e.g. a sudden-resignation question answered by reading only
+  // the 25 newest inbox messages). The embedded resignation thread/meeting only
+  // surface through semanticVectorSearch.
+  if (detectCrossSourceInvestigationRequest(message)) {
+    return {
+      intent: "source_lookup",
+      responseFormat: "source_lookup",
+      sources: {
+        ...projectOperatingContextSources(selectedProjectId),
+        semanticVectorSearch: { query: message },
+      },
+      selectedProjectId,
+      reason: selectedProjectId
+        ? "project_context_cross_source_investigation_semantic_vector_search"
+        : "cross_source_investigation_semantic_vector_search",
     };
   }
 
