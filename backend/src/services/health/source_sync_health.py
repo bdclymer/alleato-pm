@@ -32,6 +32,7 @@ MAX_RECOMPUTE_SNAPSHOT_WRITES = 25
 MAX_RECOMPUTE_ALERT_WRITES = 25
 ALERT_TEXT_LIMIT = 1200
 ALERT_RESOURCE_ID_LIMIT = 500
+FRESHNESS_RUN_LIMIT = 500
 
 GRAPH_SOURCE_LABELS = {
     "outlook_email": "Outlook email",
@@ -980,6 +981,64 @@ def _stuck_item_rows(
     return stuck[:25]
 
 
+def _build_run_freshness_by_source(
+    sync_runs: Sequence[Dict[str, Any]],
+) -> Dict[str, datetime]:
+    """Return the most-recent non-error run start time per source from the run ledger.
+
+    The run ledger (source_sync_runs) is written on every sync cycle, so it
+    reflects true recency even when graph_sync_state.last_sync_at or
+    document_metadata timestamps are stale. We ignore error/failed runs so a
+    broken source doesn't appear fresh.
+    """
+    freshness: Dict[str, datetime] = {}
+    for run in sync_runs:
+        if str(run.get("status") or "") in {"error", "failed"}:
+            continue
+        source = str(run.get("source") or "")
+        if not source:
+            continue
+        ts = _parse_datetime(run.get("started_at"))
+        if ts and (source not in freshness or ts > freshness[source]):
+            freshness[source] = ts
+    return freshness
+
+
+def _apply_run_ledger_freshness(
+    sources: List[Dict[str, Any]],
+    run_freshness_by_source: Dict[str, datetime],
+    now: datetime,
+) -> None:
+    """Override staleness for any source where the run ledger is more recent.
+
+    Mutates each source dict in-place. This is the canonical fix for false
+    'source stale' alerts caused by snapshot fields (graph_sync_state.last_sync_at,
+    document_metadata timestamps) that lag behind the actual sync cadence.
+    """
+    for source in sources:
+        source_key = str(source.get("source") or "")
+        run_fresh = run_freshness_by_source.get(source_key)
+        if not run_fresh:
+            continue
+        current_sync = _parse_datetime(source.get("lastSyncAt"))
+        if current_sync and run_fresh <= current_sync:
+            continue
+        # Run ledger is more recent — override the staleness fields
+        stale_threshold = STALE_FIREFLIES_MINUTES if source_key == "fireflies" else STALE_SYNC_MINUTES
+        stale = _age_minutes(run_fresh, now)
+        source["lastSyncAt"] = _iso(run_fresh)
+        if not source.get("lastErrorMessage"):
+            source["lastSuccessAt"] = _iso(run_fresh)
+        source["staleMinutes"] = stale
+        source["status"] = _health_status(
+            stale_minutes=stale,
+            stale_threshold=stale_threshold,
+            last_error=source.get("lastErrorMessage"),
+            unembedded=source.get("unembeddedCount", 0),
+            uncompiled=source.get("uncompiledCount", 0),
+        )
+
+
 def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
     now = _utcnow()
 
@@ -1048,6 +1107,15 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         "source_sync_runs",
         "id,source,resource_id,resource_name,stage,status,started_at,finished_at,items_seen,items_synced,items_failed,error_code,error_message,metadata",
         limit=50,
+        order_by="started_at",
+        desc=True,
+    )
+    # Broader fetch for freshness derivation — used to override stale snapshot fields
+    sync_runs_freshness = _table_rows(
+        get_rag_read_client(),
+        "source_sync_runs",
+        "source,resource_id,started_at,status",
+        limit=FRESHNESS_RUN_LIMIT,
         order_by="started_at",
         desc=True,
     )
@@ -1216,6 +1284,12 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
                 metadata=snapshot.get("metadata") or {},
             )
         )
+
+    # Override staleness for any source where source_sync_runs is more recent
+    # than the snapshot field. This prevents false 'stale' alerts when
+    # graph_sync_state.last_sync_at or document timestamps lag the real cadence.
+    run_freshness_by_source = _build_run_freshness_by_source(sync_runs_freshness)
+    _apply_run_ledger_freshness(sources, run_freshness_by_source, now)
 
     pipeline = {
         "documentMetadataBySource": _counter(documents, "source_system"),
