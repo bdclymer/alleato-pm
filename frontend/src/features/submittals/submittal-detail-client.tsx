@@ -454,12 +454,8 @@ function MetaField({ label, value }: { label: string; value?: React.ReactNode })
   return (
     <div className="min-w-0">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <div className="mt-1 min-h-5 truncate text-sm font-medium text-foreground">
-        {value === null || value === undefined || value === "" ? (
-          <span className="text-muted-foreground/40">—</span>
-        ) : (
-          value
-        )}
+      <div className="mt-1 min-h-5 text-sm font-medium text-foreground">
+        {value !== null && value !== undefined && value !== "" ? value : null}
       </div>
     </div>
   );
@@ -731,7 +727,7 @@ export function SubmittalDetailClient({
                     <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
                     <div className="space-y-10">
               <section className="space-y-6">
-                <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-2">
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">Spec Section</p>
                     <div className="mt-1">
@@ -768,7 +764,7 @@ export function SubmittalDetailClient({
                   <MetaField label="Package" value={getPackageName(submittal)} />
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-2">
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">Status</p>
                     <div className="mt-1">
@@ -846,11 +842,11 @@ export function SubmittalDetailClient({
                   entityType="submittal"
                   entityId={String(submittal.id)}
                   projectId={projectId}
+                  showLabel={false}
                 />
               </section>
 
               <section className="space-y-3">
-                <SectionHeader title="Linked Drawings" />
                 <SubmittalLinkedDrawingsPanel
                   projectId={projectId}
                   submittalId={submittal.id}
@@ -1055,14 +1051,6 @@ export function SubmittalDetailClient({
                 )}
               </section>
 
-              <section className="space-y-3">
-                <SectionHeader title="Related Items" />
-                <RelatedItemsPanel
-                  entityType="submittal"
-                  entityId={submittal.id}
-                  projectId={projectId}
-                />
-              </section>
                     </div>
                   </DetailPanel>
                 </div>
@@ -1089,40 +1077,43 @@ export function SubmittalDetailClient({
                     <SidebarRow label="Submitted" value={formatDate(submittal.sent_date)} />
                   )}
                   <div className="flex items-center justify-between gap-4 py-2.5">
-                    <span className="text-xs text-muted-foreground">Final Due Date</span>
-                    <div className={cn("text-right text-sm font-medium", getDaysUntil(submittal.final_due_date) !== null && (getDaysUntil(submittal.final_due_date) ?? 0) < 0 ? "text-destructive" : "text-foreground")}>
+                    <span className="shrink-0 text-xs text-muted-foreground">Final Due Date</span>
+                    <div className={cn("shrink-0 whitespace-nowrap text-right text-sm font-medium", getDaysUntil(submittal.final_due_date) !== null && (getDaysUntil(submittal.final_due_date) ?? 0) < 0 ? "text-destructive" : "text-foreground")}>
                       <InlineEditField
                         label="Final Due Date"
                         type="date"
                         value={submittal.final_due_date ?? ""}
                         display={submittal.final_due_date ? formatDate(submittal.final_due_date) : undefined}
                         emptyLabel="Set date"
+                        className="w-auto"
                         onSave={(v) => handleSaveField("final_due_date", v || null)}
                       />
                     </div>
                   </div>
                   <div className="flex items-center justify-between gap-4 py-2.5">
-                    <span className="text-xs text-muted-foreground">Required On-Site</span>
-                    <div className="text-right text-sm font-medium text-foreground">
+                    <span className="shrink-0 text-xs text-muted-foreground">Required On-Site</span>
+                    <div className="shrink-0 whitespace-nowrap text-right text-sm font-medium text-foreground">
                       <InlineEditField
                         label="Required On-Site"
                         type="date"
                         value={submittal.required_on_site_date ?? ""}
                         display={submittal.required_on_site_date ? formatDate(submittal.required_on_site_date) : undefined}
                         emptyLabel="Set date"
+                        className="w-auto"
                         onSave={(v) => handleSaveField("required_on_site_date", v || null)}
                       />
                     </div>
                   </div>
                   <div className="flex items-center justify-between gap-4 py-2.5">
-                    <span className="text-xs text-muted-foreground">Lead Time</span>
-                    <div className="text-right text-sm font-medium text-foreground">
+                    <span className="shrink-0 text-xs text-muted-foreground">Lead Time</span>
+                    <div className="shrink-0 whitespace-nowrap text-right text-sm font-medium text-foreground">
                       <InlineEditField
                         label="Lead Time"
                         type="number"
                         value={submittal.lead_time != null ? String(submittal.lead_time) : ""}
                         display={submittal.lead_time != null ? `${submittal.lead_time} days` : undefined}
                         emptyLabel="Set days"
+                        className="w-auto"
                         onSave={(v) => handleSaveField("lead_time", v ? parseInt(v, 10) : null)}
                       />
                     </div>
