@@ -117,7 +117,7 @@ export function DetailFieldGrid({
   return (
     <div
       className={cn(
-        "grid grid-cols-1 gap-x-8 gap-y-4",
+        "grid grid-cols-1 gap-x-8 gap-y-6",
         colClass[resolvedColumns],
         className,
       )}

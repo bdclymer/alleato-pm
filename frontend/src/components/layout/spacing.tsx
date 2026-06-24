@@ -45,7 +45,7 @@ export interface DetailPanelProps {
 
 export function DetailPanel({ children, className }: DetailPanelProps) {
   return (
-    <div className={cn("rounded-md bg-muted/30 p-6 shadow-panel", className)}>
+    <div className={cn("rounded-md", className)}>
       {children}
     </div>
   );
@@ -67,7 +67,7 @@ export function SectionRuleHeading({
   return (
     <div className={cn("flex items-center gap-3 pb-1 mb-4", className)}>
       {icon ? <span className="flex h-4 w-4 items-center justify-center text-muted-foreground">{icon}</span> : null}
-      <Eyebrow>{label}</Eyebrow>
+      <Eyebrow className="text-primary">{label}</Eyebrow>
       {actions && <div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div>}
     </div>
   );

@@ -270,18 +270,28 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     billedToDate: invoicesTotal,
   });
   const addSovAction = (
-    <>
-      {onImportEstimateToSov ? (
-        <SectionAction onClick={onImportEstimateToSov}>
-          <Upload className="h-4 w-4" />
-          Import workbook
-        </SectionAction>
-      ) : null}
-      <SectionAction onClick={() => { onStartSovEdit(); onAddSovLine(); }}>
-        <Plus className="h-4 w-4" />
+    <div className="flex items-center gap-3">
+      <Button
+        variant="link"
+        size="sm"
+        className="h-auto gap-1 px-0 py-0 text-xs font-semibold text-primary no-underline hover:no-underline hover:text-primary/80 transition-transform active:scale-95"
+        onClick={() => { onStartSovEdit(); onAddSovLine(); }}
+      >
+        <Plus className="h-3 w-3 text-primary" />
         Add Line Item
-      </SectionAction>
-    </>
+      </Button>
+      {onImportEstimateToSov ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-auto p-0 text-muted-foreground hover:bg-transparent hover:text-primary transition-transform active:scale-95"
+          onClick={onImportEstimateToSov}
+          title="Import Workbook"
+        >
+          <Upload className="h-3.5 w-3.5" />
+        </Button>
+      ) : null}
+    </div>
   );
 
   const [collapsedDivisions, setCollapsedDivisions] = useState<Set<string>>(new Set());
@@ -357,10 +367,10 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
   ];
 
   return (
-    <ContentSectionStack className="space-y-8 pb-20">
+    <ContentSectionStack className="space-y-16 pb-20">
       <section>
-        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 gap-16 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
+          <div className="space-y-10">
             <DetailPanel>
               <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
               <DetailFieldGrid columns={2}>
@@ -478,16 +488,20 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 <EditableDetailField
                   label="Description"
                   span={2}
+                  type="textarea"
                   value={descriptionValue.isMissing ? "" : descriptionValue.text}
-                  display={descriptionValue.isMissing ? undefined : descriptionValue.text}
+                  display={descriptionValue.isMissing ? undefined : <span className="whitespace-pre-wrap text-sm leading-relaxed">{descriptionValue.text}</span>}
                   onSave={(value) => onSaveContractField("description", value || null)}
                 />
                 <DetailField label="Attachments" span={2}>
-                  <EntityAttachments
-                    entityType="prime_contract"
-                    entityId={String(contract.id)}
-                    projectId={projectId}
-                  />
+                  <div className="max-w-sm">
+                    <EntityAttachments
+                      entityType="prime_contract"
+                      entityId={String(contract.id)}
+                      projectId={projectId}
+                      showLabel={false}
+                    />
+                  </div>
                 </DetailField>
               </DetailFieldGrid>
             </DetailPanel>
@@ -495,9 +509,9 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
             <DetailPanel>
               <Collapsible defaultOpen>
                 <div className="mb-6 flex items-center justify-between">
-                  <SectionRuleHeading label="Inclusions + Exclusions" className="pb-0" />
+                  <SectionRuleHeading label="Inclusions + Exclusions" className="pb-0 mb-0" />
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground">
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary">
                       <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=closed]_&]:rotate-[-90deg]" />
                     </Button>
                   </CollapsibleTrigger>
@@ -541,7 +555,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
           </div>
 
           <aside>
-            <DetailPanel>
+            <DetailPanel className="rounded-lg bg-muted p-6">
               <SectionRuleHeading label="Financial Summary" className="mb-6 pb-0" />
               <dl className="space-y-3 text-sm">
                 <SummaryValueRow label="Original Amount" value={formatCurrency(originalContractAmount)} />
@@ -583,7 +597,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
 
         <div className="space-y-4">
           {isSovEditing && (
-            <div className="rounded-md border-l-4 border-primary bg-muted p-4 text-sm">
+            <div className="rounded-md border border-border bg-muted/60 p-4 text-sm">
               <p className="font-semibold">Any changes will only apply to future invoices</p>
               <p className="text-muted-foreground">Existing invoices will not be affected.</p>
             </div>
@@ -1090,18 +1104,6 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               </InlineTable>
           )}
 
-          {!lineItemsLoading && displayedSovItems.length > 0 ? (
-            <div className="flex justify-end pt-2">
-              <div className="text-right">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Total Contract Value
-                </p>
-                <p className="mt-0.5 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
-                  {formatCurrency(displayedSovTotal)}
-                </p>
-              </div>
-            </div>
-          ) : null}
         </div>
       </section>
     </ContentSectionStack>
