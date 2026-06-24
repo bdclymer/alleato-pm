@@ -154,6 +154,22 @@ import { SectionAction, SectionRuleHeading } from "@/components/layout";
 <SectionRuleHeading label="Contacts" actions={<Button variant="ghost" size="sm">Add contact</Button>} />
 ```
 
+**Detail page two-column layout** — Any detail page content area with a sidebar MUST use `<DetailLayout sidebar={...}>` from `@/components/layout`. Never hand-roll `grid-cols-1 xl:grid-cols-[...]`. ESLint rule `no-raw-detail-grid` enforces this. Single-column detail pages (no sidebar) use `<DetailLayout>` without the `sidebar` prop, or just `<ContentSectionStack>` directly.
+
+```tsx
+// Correct
+import { DetailLayout } from "@/components/layout";
+<DetailLayout sidebar={<MyFinancialSidebar />}>
+  <DetailPanel>...</DetailPanel>
+</DetailLayout>
+
+// Wrong — raw grid
+<div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px]">
+  <div>...</div>
+  <aside>...</aside>
+</div>
+```
+
 ### Cache Clearing
 Before debugging any 404 or routing issue with new files:
 ```bash
