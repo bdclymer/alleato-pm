@@ -60,13 +60,17 @@ import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 export type InventoryCategory =
   | "Project Management"
   | "Financials"
+  | "Accounting"
   | "Documents"
   | "Team / Directory"
   | "Admin"
   | "AI Intelligence"
+  | "RAG"
   | "Emails"
   | "Design"
   | "Testing / QA"
+  | "Development"
+  | "Procore"
   | "System";
 
 export type InventoryType =
@@ -144,13 +148,17 @@ const OVERLAY_STORAGE_KEY = "sitemap-inventory-overrides";
 const CATEGORIES: InventoryCategory[] = [
   "Project Management",
   "Financials",
+  "Accounting",
   "Documents",
   "Team / Directory",
   "Admin",
   "AI Intelligence",
+  "RAG",
   "Emails",
   "Design",
   "Testing / QA",
+  "Development",
+  "Procore",
   "System",
 ];
 

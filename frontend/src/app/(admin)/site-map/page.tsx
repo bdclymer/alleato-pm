@@ -145,17 +145,30 @@ function inferCategory(route: string, file: string): InventoryRoute["category"] 
   const routeLower = route.toLowerCase();
   const fileLower = file.toLowerCase();
 
+  // More-specific checks first so they don't fall into broader buckets.
+  if (routeLower.includes("procore")) {
+    return "Procore";
+  }
+  if (routeLower.includes("rag") || routeLower.includes("embedding") || routeLower.includes("chunk") || routeLower.includes("vector")) {
+    return "RAG";
+  }
+  if (routeLower.includes("acumatica") || routeLower.includes("accounting") || routeLower.includes("ap-bill") || routeLower.includes("job-planner")) {
+    return "Accounting";
+  }
+  if (routeLower.includes("dev-tools") || routeLower.includes("debug") || routeLower.includes("style-guide") || routeLower.includes("tokens") || routeLower.includes("design-system") || fileLower.includes("/(dev)/")) {
+    return "Development";
+  }
   // Check Emails before AI — "email" contains the substring "ai".
   if (routeLower.includes("email") || routeLower.includes("outlook") || routeLower.includes("inbox")) {
     return "Emails";
   }
-  if (routeLower.includes("ai") || routeLower.includes("rag") || routeLower.includes("intelligence")) {
+  if (routeLower.includes("ai") || routeLower.includes("intelligence")) {
     return "AI Intelligence";
   }
   if (routeLower.includes("admin") || fileLower.includes("/(admin)/")) {
     return "Admin";
   }
-  if (routeLower.includes("budget") || routeLower.includes("invoice") || routeLower.includes("contract") || routeLower.includes("change-order") || routeLower.includes("commitment") || routeLower.includes("direct-cost") || routeLower.includes("accounting")) {
+  if (routeLower.includes("budget") || routeLower.includes("invoice") || routeLower.includes("contract") || routeLower.includes("change-order") || routeLower.includes("commitment") || routeLower.includes("direct-cost")) {
     return "Financials";
   }
   if (routeLower.includes("document") || routeLower.includes("drawing") || routeLower.includes("specification") || routeLower.includes("photo") || routeLower.includes("file")) {
@@ -167,7 +180,7 @@ function inferCategory(route: string, file: string): InventoryRoute["category"] 
   if (routeLower.includes("test") || routeLower.includes("qa") || routeLower.includes("errors")) {
     return "Testing / QA";
   }
-  if (routeLower.includes("design") || routeLower.includes("style-guide") || routeLower.includes("tokens")) {
+  if (routeLower.includes("design") || routeLower.includes("style-guide")) {
     return "Design";
   }
   if (routeLower.includes("settings") || routeLower.includes("auth") || routeLower.includes("api-docs") || routeLower.includes("table-pages")) {
