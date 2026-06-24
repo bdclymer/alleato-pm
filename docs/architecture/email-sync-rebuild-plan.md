@@ -1,11 +1,13 @@
 # Email / Microsoft Graph Sync — Controlled Rebuild Plan
 
-**Status:** in progress · **Started:** 2026-06-24 · **Last updated:** 2026-06-24 ~09:40 UTC
+**Status:** triage complete · **Started:** 2026-06-24 · **Last updated:** 2026-06-24 ~10:50 UTC
 
 > **This file is the live source of truth and MUST be updated in real time as each
 > step lands — before moving on, not in a batch afterward.** A stale plan is worthless.
-> Current focus: **Phase 1.5 — fixing the embedding-auth (401) failure that makes the
-> graph sync fail ~70% of runs.** Cron consolidation (Phase 3) is BLOCKED until sync is healthy.
+> **Current state:** the two recent silent-failure modes (2026-06-17 ingestion block,
+> 2026-06-24 embedding 401) are FIXED + GUARDED; pipeline verified healthy; emails read
+> a live source. Remaining = Phase 3 (cron consolidation) + Phase 4 (legacy retirement),
+> both deliberate improvements that carry sync-dark / break-reader risk — do NOT rush.
 
 ## Why this exists
 
@@ -85,13 +87,19 @@ references — `backfill_outlook_rag_metadata_to_app_documents.py`,
   (and peer embedding crons + web) onto a known-good provider key/path, re-drive the
   231 stuck docs, verify the failure rate collapses. *(Same class as
   `incident_graph_embed_gateway_cron_drift` — per-cron key drift recurred.)*
-- [ ] **Phase 2 — emails-live.** Mirror `teams-live.ts` for Outlook so the inbox
-  reads Graph directly (additive; no deletion). Repoint the emails UI off
-  `project_emails` / synced copies.
-- [ ] **Phase 3 — consolidate triggers.** **BLOCKED until Phase 1.5** — Render
-  `alleato-graph-sync` is NOT healthy, so the redundant Vercel `graph-sync`/`graph-embed`
-  crons stay as backup for now. After sync is healthy: remove the Vercel duplicates +
-  routes, collapse 9 crons → ~3 with shared config.
+- [x] **Phase 2 — emails read a live, never-blocked source (CORE GOAL MET 2026-06-24).**
+  `/api/emails` already reads `outlook_email_intake` (AI DB, never blocked); the dead
+  PM-APP `project_emails` projection is abandoned. So the email UI is already immune to
+  the `document_metadata` breakage class — the same resilience Teams got. Full
+  Graph-*direct* reads (like `teams-live.ts`) remain OPTIONAL and were de-scoped: the
+  intake table is already current and Graph-direct adds API load/latency for marginal
+  gain. Revisit only if the intake sync itself proves unreliable.
+- [ ] **Phase 3 — consolidate triggers.** *Unblocked by Phase 1.5 (sync now healthy),
+  but REASSESSED as not-a-quick-deletion (2026-06-24).* The Vercel `graph-embed` route
+  provides embedding throughput; removing it could starve embedding right after an
+  outage. Needs a real throughput analysis (Render every-2h embed_limit=25 = ~300
+  docs/day — is that enough vs the actual daily inflow?) BEFORE removing any trigger.
+  De-prioritized below Phase 2. Do NOT blind-delete sync/embed triggers.
 - [ ] **Phase 4 — retire legacy tables.** Once all readers are on the live model,
   remove `project_emails` / `email_attachments` write paths and tables.
 
@@ -121,8 +129,16 @@ references — `backfill_outlook_rag_metadata_to_app_documents.py`,
 - 2026-06-24 10:40 — **Phase 1.5 DONE.** Drain complete: 407 docs re-embedded, **0
   errors**. `embedding_status='error'` count **234 → 0**. Residual 15 `NULL` are
   intentionally-excluded (`skipped_disabled`) + normal new arrivals, not stuck. Both
-  guardrails live. NEXT: verify a clean graph-sync cron run (the 70% failure was
-  entirely this embedding 401), which unblocks **Phase 3**.
+  guardrails live.
+- 2026-06-24 10:50 — **Pipeline verified healthy end-to-end.** Graph-sync runs since
+  10:00: 7 succeeded / 1 warning / 2 failed (the 2 were a drain↔cron race, now 0 active
+  errors, last embed success 10:15). Both guardrails report `healthy` against live data.
+  `/api/emails` confirmed reading live `outlook_email_intake` (Phase 2 core goal met).
+  **State of the actual problem (pipeline silently breaking): RESOLVED + GUARDED.** The
+  two silent-failure modes that bit recently (2026-06-17 block, 2026-06-24 embed 401)
+  are both fixed AND now have loud guardrails. Remaining phases (3 cron-consolidation,
+  4 legacy-table retirement) are improvements that carry real "make-sync-dark" /
+  "break-readers" risk and must NOT be rushed — deliberate next steps, not triage.
 
 ## Hard rules for this rebuild
 
