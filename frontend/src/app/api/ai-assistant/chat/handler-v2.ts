@@ -731,6 +731,32 @@ async function fetchMicrosoftExecutiveAssistant(params: {
   return body as Record<string, unknown>;
 }
 
+// Maps a raw downstream failure detail to a clean, honest, user-facing message.
+// The full engineering diagnostic (detection gap / prevention step / raw detail)
+// is persisted to chat_history.metadata + logs — it must never be shown to the user.
+function describeMicrosoftAssistantFailure(detail: string): string {
+  const normalized = detail.toLowerCase();
+  if (normalized.includes("disabled")) {
+    return "I couldn't reach the Microsoft inbox assistant — it's currently turned off on the backend. This has been logged for the team; please try again shortly.";
+  }
+  if (
+    normalized.includes("did not complete within retry policy") ||
+    normalized.includes("timeout") ||
+    normalized.includes("timed out") ||
+    normalized.includes("etimedout")
+  ) {
+    return "I couldn't reach the Microsoft inbox assistant in time — the backend didn't respond. Please try again in a moment.";
+  }
+  if (
+    normalized.includes("insufficient_funds") ||
+    normalized.includes("credit balance") ||
+    normalized.includes("402")
+  ) {
+    return "I couldn't reach the Microsoft inbox assistant — the AI provider account needs attention. This has been logged for the team.";
+  }
+  return "I couldn't complete the live Microsoft inbox check right now — the backend assistant returned an error. Please try again, and if it keeps happening it's been logged for the team to investigate.";
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -2340,13 +2366,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           } as never);
         } catch (error) {
           const detail = error instanceof Error ? error.message : String(error);
-          const content = [
-            "I could not complete the live Microsoft inbox check.",
-            `Failed capability: consultMicrosoftExecutiveAssistant.`,
+          // Loud, diagnosable record for logs + metadata — never shown to the user.
+          const failureDiagnostic = [
+            "Failed capability: consultMicrosoftExecutiveAssistant.",
             `Cause: ${detail}`,
             "Detection gap: this request reached the Microsoft delegation path, but the specialist failure was previously collapsing into a generic provider fallback with no tool evidence.",
             "Prevention step: persist the Microsoft tool failure explicitly so Outlook/Brandon assistant regressions fail loudly and stay diagnosable.",
           ].join(" ");
+          // Clean, honest message for the chat bubble.
+          const content = describeMicrosoftAssistantFailure(detail);
           const toolTrace = [
             {
               tool: "consultMicrosoftExecutiveAssistant",
@@ -2395,6 +2423,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             metadata: {
               architecture: "retrieval-planner-v2",
               delegated_orchestrator: "microsoft-executive-assistant",
+              failure_diagnostic: failureDiagnostic,
+              error_detail: detail,
               tool_trace: toolTrace,
               response_quality: buildResponseQualityMetadata({
                 toolTrace,
