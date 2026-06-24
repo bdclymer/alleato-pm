@@ -106,7 +106,7 @@ def run_vision_analyzer(metadata_id: str, pm_client: Any) -> Dict[str, Any]:
     # ── 1. Load document metadata ──────────────────────────────────────────
     resp = (
         pm_client.table("document_metadata")
-        .select("id, title, file_path, file_name, storage_bucket")
+        .select("id, title, file_path, file_name, storage_bucket, url, source_web_url")
         .eq("id", metadata_id)
         .maybe_single()
         .execute()
@@ -123,12 +123,34 @@ def run_vision_analyzer(metadata_id: str, pm_client: Any) -> Dict[str, Any]:
         return {"pages_analyzed": 0, "skipped_reason": "not a PDF"}
 
     # ── 2. Download PDF from Supabase Storage ─────────────────────────────
-    bucket = metadata.get("storage_bucket") or "project-files"
-    try:
-        pdf_bytes = pm_client.storage.from_(bucket).download(file_path)
-    except Exception as exc:
-        logger.error("[VisionAnalyzer] Storage download failed for %s: %s", file_path, exc)
-        return {"pages_analyzed": 0, "skipped_reason": f"storage download failed: {exc}"}
+    # Drawings store the PDF in project-files bucket with path embedded in `url`;
+    # submittals/other docs use file_path + storage_bucket.
+    pdf_bytes: Optional[bytes] = None
+
+    if file_path:
+        bucket = metadata.get("storage_bucket") or "documents"
+        try:
+            pdf_bytes = pm_client.storage.from_(bucket).download(file_path)
+        except Exception as exc:
+            logger.warning("[VisionAnalyzer] Storage download via file_path failed for %s: %s", file_path, exc)
+
+    if not pdf_bytes:
+        # Fallback: extract storage path from public URL
+        # URL pattern: .../storage/v1/object/public/<bucket>/<path>
+        public_url = metadata.get("url") or metadata.get("source_web_url") or ""
+        import re as _re
+        m = _re.search(r"/storage/v1/object/public/([^/]+)/(.+)$", public_url)
+        if m:
+            bucket, storage_path = m.group(1), m.group(2)
+            try:
+                pdf_bytes = pm_client.storage.from_(bucket).download(storage_path)
+                logger.info("[VisionAnalyzer] Downloaded via URL-extracted path: %s / %s", bucket, storage_path)
+            except Exception as exc:
+                logger.error("[VisionAnalyzer] URL-path download failed for %s: %s", storage_path, exc)
+                return {"pages_analyzed": 0, "skipped_reason": f"storage download failed: {exc}"}
+        else:
+            logger.error("[VisionAnalyzer] No downloadable path for %s (file_path=%r, url=%r)", metadata_id, file_path, public_url)
+            return {"pages_analyzed": 0, "skipped_reason": "no storage path available"}
 
     if not pdf_bytes:
         return {"pages_analyzed": 0, "skipped_reason": "empty file"}
