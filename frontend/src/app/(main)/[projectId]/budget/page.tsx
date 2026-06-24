@@ -4,7 +4,6 @@ import * as React from "react";
 import { Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import { toast } from "sonner";
 
 import {
   BudgetPageHeader,
