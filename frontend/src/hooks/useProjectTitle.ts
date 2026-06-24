@@ -49,7 +49,7 @@ export function useProjectTitle(pageTitle?: string, includeProject = true) {
 
     // Cleanup function to restore default title on unmount
     return () => {
-      document.title = "Alleato OS - Procore Alternative";
+      document.title = "Alleato OS";
     };
   }, [selectedProject, pageTitle, pathname, includeProject]);
 }
