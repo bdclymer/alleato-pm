@@ -30,18 +30,14 @@ test.describe("project documents browser", () => {
     await expect(page.getByText("Smart groups")).toBeVisible();
 
     // "All" group button (RailItem renders a <Button> whose visible text is the label).
-    await expect(
-      page.getByRole("button", { name: /^All/ }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /^All/ })).toBeVisible();
 
     // ── 2. At least one document card is visible ─────────────────────────────
     // Cards are <Button type="button" variant="ghost"> with a title <span> inside.
     // The card grid is inside the DocumentsTablePage component. We locate the first
     // ghost button that has a visible title span — this is the card's clickable area.
     // We wait up to 15 s because cards load from the API after mount.
-    const firstCard = page
-      .locator('[data-testid="document-card"]')
-      .first();
+    const firstCard = page.locator('[data-testid="document-card"]').first();
 
     await expect(firstCard).toBeVisible({ timeout: 15_000 });
 
@@ -104,8 +100,14 @@ test.describe("project documents browser", () => {
       for (let j = i + 1; j < boxes.length; j++) {
         const a = boxes[i];
         const b = boxes[j];
-        const overlapX = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x));
-        const overlapY = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+        const overlapX = Math.max(
+          0,
+          Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x),
+        );
+        const overlapY = Math.max(
+          0,
+          Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y),
+        );
         expect(overlapX * overlapY).toBeLessThanOrEqual(25);
       }
     }
@@ -116,11 +118,43 @@ test.describe("project documents browser", () => {
     const categories = await cards.evaluateAll((els) =>
       els
         .slice(0, 6)
-        .map((e) => (e.textContent || "").match(/Drawing|Contract|Specification|Invoice|Proposal/)?.[0] ?? "?"),
+        .map(
+          (e) =>
+            (e.textContent || "").match(
+              /Drawing|Contract|Specification|Invoice|Proposal/,
+            )?.[0] ?? "?",
+        ),
     );
     expect(categories.length).toBeGreaterThan(0);
     for (const c of categories) {
       expect(c).toBe("Drawing");
     }
+  });
+
+  test("desktop grid view shows four files per row in the documents panel", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1600, height: 1000 });
+    await page.goto("/876/documents");
+    await page.waitForLoadState("domcontentloaded");
+
+    const cards = page.locator('[data-testid="document-card"]');
+    await expect(cards.nth(3)).toBeVisible({ timeout: 15_000 });
+
+    const firstRowTop = await cards
+      .first()
+      .evaluate((element) => Math.round(element.getBoundingClientRect().top));
+    const firstRowCount = await cards.evaluateAll(
+      (elements, rowTop) =>
+        elements
+          .slice(0, 8)
+          .filter(
+            (element) =>
+              Math.round(element.getBoundingClientRect().top) === rowTop,
+          ).length,
+      firstRowTop,
+    );
+
+    expect(firstRowCount).toBe(4);
   });
 });

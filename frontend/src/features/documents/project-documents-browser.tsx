@@ -23,9 +23,9 @@ import {
 
 // Category groups a document can be re-filed into (search/type groups like
 // Commitments, Meetings, Emails are not move targets).
-const MOVE_TARGETS: MoveTarget[] = SMART_GROUPS.filter((g) => g.reclassifyTo).map(
-  (g) => ({ label: g.label, category: g.reclassifyTo as string }),
-);
+const MOVE_TARGETS: MoveTarget[] = SMART_GROUPS.filter(
+  (g) => g.reclassifyTo,
+).map((g) => ({ label: g.label, category: g.reclassifyTo as string }));
 
 export function ProjectDocumentsBrowser({
   projectId,
@@ -35,7 +35,9 @@ export function ProjectDocumentsBrowser({
   projectName?: string;
 }): React.ReactElement {
   const [activeGroupId, setActiveGroupId] = React.useState("all");
-  const [selectedDoc, setSelectedDoc] = React.useState<PipelineDoc | null>(null);
+  const [selectedDoc, setSelectedDoc] = React.useState<PipelineDoc | null>(
+    null,
+  );
   const [counts, setCounts] = React.useState<SmartGroupCounts>({});
   const [refreshNonce, setRefreshNonce] = React.useState(0);
   const { ratio, onHandleDown, containerRef } = useResizableSplit(
@@ -78,9 +80,7 @@ export function ProjectDocumentsBrowser({
           body: JSON.stringify({ category, projectId }),
         });
         toast.success(`Moved to ${label}`);
-        setSelectedDoc((current) =>
-          current?.id === doc.id ? null : current,
-        );
+        setSelectedDoc((current) => (current?.id === doc.id ? null : current));
         loadCounts();
         setRefreshNonce((n) => n + 1);
       } catch (error) {
@@ -140,7 +140,7 @@ export function ProjectDocumentsBrowser({
               selectedDocId={selectedDoc?.id}
               onSelectDoc={setSelectedDoc}
               renderCard={renderCard}
-              cardGridClassName="grid-cols-1 xl:grid-cols-2 gap-3"
+              cardGridClassName="grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3"
             />
           </div>
           <div
