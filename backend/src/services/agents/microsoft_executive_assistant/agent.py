@@ -30,6 +30,54 @@ ORCHESTRATOR_NAME = "microsoft-executive-assistant"
 RUNTIME_DIR = Path(__file__).resolve().parent / "runtime"
 
 
+def _voice_prompt() -> str:
+    """Identity + soul shared with the main Alleato AI so the specialist answers
+    in the same voice rather than a separate compliance tone. Falls back to a
+    concise inline voice if the shared prompt files can't be loaded."""
+    try:
+        from src.services.agents.alleato_ai_tools.prompts import (
+            IDENTITY_PROMPT,
+            SOUL_PROMPT,
+        )
+
+        return f"{IDENTITY_PROMPT}\n\n{SOUL_PROMPT}\n\n"
+    except Exception:
+        return (
+            "You are Alleato AI: a direct, grounded, useful advisor. Bottom line "
+            "first, no filler, no corporate polish. Say what you found and the next move.\n\n"
+        )
+
+
+_MICROSOFT_OPERATOR_ADDENDUM = (
+    "# Your post right now\n"
+    "You are Alleato AI working as Brandon's Microsoft Executive Assistant — the same advisor described "
+    "above, focused on his Outlook, Teams, calendar, and Microsoft files. The Chief Strategist delegates "
+    "Microsoft work to you; you answer in that same voice, not as a separate tool.\n\n"
+    "# How you work this post\n"
+    "- Lead with the read, not the process. Bottom line first: what matters in the inbox/calendar and the "
+    "next move. Do not narrate which tools you called.\n"
+    "- Use live Outlook inbox reads for date-based inbox questions when a mailbox is available.\n"
+    "- Treat emails as evidence: sender, local time, and a link — never a wall of prose or raw UTC.\n"
+    "- Drop the compliance scaffolding. No 'What I can and cannot support', no 'Approvals needed: none'. "
+    "Say what you found and what you would do.\n\n"
+    "# Hard guardrails (these never bend)\n"
+    "- Fail loudly for missing provider keys, Microsoft Graph credentials, Graph HTTP failures, stale "
+    "context, or empty results. Never silently skip a tool failure.\n"
+    "- If any search tool returns a result beginning with SEARCH_BACKEND_DEGRADED (or *_SEARCH_FAILED), the "
+    "search subsystem is broken — do NOT report 'no matching passages' or conclude evidence is absent. Say "
+    "plainly that search was unavailable, state which corpora could not be searched, and never present a "
+    "confident negative.\n"
+    "- Never send email, post Teams messages, or mutate calendar events unless an explicit approved action "
+    "path exists. Draft for review only."
+)
+
+
+def _microsoft_system_prompt() -> str:
+    """The specialist's system prompt: shared identity + soul, then a focused
+    Microsoft-operator addendum that keeps the hard guardrails but leads with voice."""
+    return _voice_prompt() + _MICROSOFT_OPERATOR_ADDENDUM
+
+
 def _repo_root() -> Path:
     current = Path(__file__).resolve()
     for parent in current.parents:
@@ -800,6 +848,23 @@ def _deterministic_inbox_answer(
     return None
 
 
+def _wants_inbox_card(prompt: str) -> bool:
+    """True when an inbox-listing/triage answer should render as the card.
+
+    Broader than `_inbox_request_kind` (which only catches a few exact phrasings):
+    any inbox-noun request that ISN'T a pure single-thread drafting action. Pure
+    "draft a reply to X" requests read the inbox to find a thread but want a draft,
+    not an inbox listing, so they're excluded.
+    """
+    normalized = " ".join(prompt.lower().split())
+    if any(
+        token in normalized
+        for token in ("draft ", "reply to ", "respond to ", "write back", "compose ", "send a ")
+    ):
+        return False
+    return any(token in normalized for token in ("email", "emails", "inbox", "mail", "message"))
+
+
 def _structured_inbox_emails(
     request: MicrosoftExecutiveAssistantRequest,
     result: Any,
@@ -807,13 +872,15 @@ def _structured_inbox_emails(
     """Shape the same live-inbox rows used for the text answer into structured
     email items the frontend renders as the outlook_inbox_summary card.
 
-    Returns [] for non-inbox requests or when no live inbox read succeeded, so
-    the frontend falls back to the text answer unchanged.
+    Triggers whenever the agent actually performed a successful live inbox read
+    (so the data exists) AND the request is an inbox listing/triage — NOT gated on
+    the narrow `_inbox_request_kind` phrasings. Returns [] otherwise so the
+    frontend falls back to the text answer unchanged.
     """
-    if not _inbox_request_kind(request.prompt):
-        return []
     messages = _extract_live_inbox_messages(result)
     if not messages:
+        return []
+    if not _wants_inbox_card(request.prompt):
         return []
 
     items: list[MicrosoftAssistantEmailItem] = []
@@ -955,17 +1022,7 @@ def run_microsoft_executive_assistant(
             "model": model,
             "tools": microsoft_executive_assistant_tools(),
             "backend": _microsoft_backend(allow_fallback=create_agent is not None),
-            "system_prompt": (
-                "You are Alleato's Microsoft Executive Assistant, a specialist delegated to by the Chief Strategist. "
-                "Your domain is Outlook, Teams, Microsoft calendar, and Microsoft files. Use Deep Agents planning and "
-                "specialized skills for inbox triage, drafting, urgent escalation, calendar review, and Microsoft file context. "
-                "Fail loudly for missing provider keys, Microsoft Graph credentials, Graph HTTP failures, stale source context, "
-                "or empty results. Never silently skip a tool failure. "
-                "If any search tool returns a result beginning with SEARCH_BACKEND_DEGRADED (or *_SEARCH_FAILED), the search "
-                "subsystem is broken — do NOT report 'no matching passages' or conclude that evidence is absent. Say plainly that "
-                "search was unavailable, state which corpora could not be searched, and do not present a confident negative. "
-                "Never send email, post Teams messages, or mutate calendar events unless an explicit approved action path exists."
-            ),
+            "system_prompt": _microsoft_system_prompt(),
         }
         skill_roots = _skill_roots()
         if skill_roots:
