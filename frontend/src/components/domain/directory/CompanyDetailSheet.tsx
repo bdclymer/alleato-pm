@@ -16,7 +16,18 @@ import {
   SectionHeader as DsSectionHeader,
   Skeleton,
   InlineEditField,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
 } from "@/components/ds";
+import { createClient } from "@/lib/supabase/client";
+import { updateContact } from "@/app/(main)/actions/table-actions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,25 +70,11 @@ interface InvoiceItem {
   updated_at: string;
 }
 
-interface MeetingItem {
-  id: string;
-  title: string | null;
-  date: string | null;
-  status: string | null;
-  category: string | null;
-  participants: string | null;
-  project_id: number | null;
-  project_name: string | null;
-  project_number: string | null;
-  created_at: string | null;
-}
-
 interface CompanyDetailsResponse {
   company: Company;
   contacts: Contact[];
   projects: CompanyProjectItem[];
   invoices: InvoiceItem[];
-  meetings: MeetingItem[];
 }
 
 function statusVariant(
@@ -116,6 +113,11 @@ export function CompanyDetailSheet({
   const [error, setError] = React.useState<string | null>(null);
   const [settingPrimaryContactId, setSettingPrimaryContactId] = React.useState<string | null>(null);
   const [addContactOpen, setAddContactOpen] = React.useState(false);
+  const [addContactPopoverOpen, setAddContactPopoverOpen] = React.useState(false);
+  const [existingPeople, setExistingPeople] = React.useState<
+    Array<{ id: string; first_name: string | null; last_name: string | null; email: string | null }>
+  >([]);
+  const [loadingPeople, setLoadingPeople] = React.useState(false);
 
   const loadDetails = React.useCallback(async (cancelledRef?: { current: boolean }) => {
     if (!companyId) return;
@@ -185,11 +187,53 @@ export function CompanyDetailSheet({
     }
   }
 
+  React.useEffect(() => {
+    if (!addContactPopoverOpen || !companyId) return;
+    setLoadingPeople(true);
+    const supabase = createClient();
+    supabase
+      .from("people")
+      .select("id, first_name, last_name, email")
+      .or(`company_id.is.null,company_id.neq.${companyId}`)
+      .order("first_name")
+      .limit(200)
+      .then(({ data: rows }) => {
+        setExistingPeople(
+          (rows ?? []).map((p) => ({
+            id: p.id,
+            first_name: p.first_name ?? null,
+            last_name: p.last_name ?? null,
+            email: p.email ?? null,
+          })),
+        );
+        setLoadingPeople(false);
+      });
+  }, [addContactPopoverOpen, companyId]);
+
+  const handleAddExistingContact = async (person: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    email: string | null;
+  }) => {
+    setAddContactPopoverOpen(false);
+    try {
+      await updateContact(person.id, { company_id: companyId! });
+      const name =
+        [person.first_name, person.last_name].filter(Boolean).join(" ") ||
+        person.email ||
+        "Contact";
+      toast.success(`${name} added to company`);
+      await loadDetails();
+    } catch {
+      toast.error("Failed to add contact");
+    }
+  };
+
   const company = data?.company ?? null;
   const contacts = data?.contacts ?? [];
   const projects = data?.projects ?? [];
   const invoices = data?.invoices ?? [];
-  const meetings = data?.meetings ?? [];
   const effectivePrimaryContactId = company?.primary_contact_id ?? contacts[0]?.id ?? null;
   const websiteUrl = company?.website
     ? company.website.startsWith("http")
@@ -224,7 +268,7 @@ export function CompanyDetailSheet({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onSelect={() => setAddContactOpen(true)}>
+                  <DropdownMenuItem onSelect={() => setAddContactPopoverOpen(true)}>
                     <UserPlus className="mr-2 h-3.5 w-3.5" />
                     Add contact
                   </DropdownMenuItem>
@@ -465,15 +509,76 @@ export function CompanyDetailSheet({
                 <DsSectionHeader
                   title={`Contacts (${contacts.length})`}
                   action={
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={() => setAddContactOpen(true)}
+                    <Popover
+                      open={addContactPopoverOpen}
+                      onOpenChange={setAddContactPopoverOpen}
                     >
-                      <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-                      Add contact
-                    </Button>
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs">
+                          <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                          Add contact
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-72 p-0" align="end">
+                        <Command>
+                          <CommandInput placeholder="Search existing contacts..." />
+                          <CommandList className="max-h-56">
+                            <CommandEmpty>
+                              {loadingPeople
+                                ? "Loading..."
+                                : "No existing contacts found."}
+                            </CommandEmpty>
+                            {existingPeople.length > 0 && (
+                              <CommandGroup heading="Add existing contact">
+                                {existingPeople.map((person) => {
+                                  const name =
+                                    [person.first_name, person.last_name]
+                                      .filter(Boolean)
+                                      .join(" ") ||
+                                    person.email ||
+                                    "Unnamed";
+                                  return (
+                                    <CommandItem
+                                      key={person.id}
+                                      value={`${person.first_name ?? ""} ${person.last_name ?? ""} ${person.email ?? ""}`}
+                                      onSelect={() =>
+                                        void handleAddExistingContact(person)
+                                      }
+                                    >
+                                      <div className="flex min-w-0 flex-col">
+                                        <span className="truncate text-sm">
+                                          {name}
+                                        </span>
+                                        {person.email && (
+                                          <span className="truncate text-xs text-muted-foreground">
+                                            {person.email}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </CommandItem>
+                                  );
+                                })}
+                              </CommandGroup>
+                            )}
+                          </CommandList>
+                        </Command>
+                        <div className="border-t border-border/60 p-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-sm"
+                            onClick={() => {
+                              setAddContactPopoverOpen(false);
+                              setAddContactOpen(true);
+                            }}
+                          >
+                            <UserPlus className="mr-2 h-4 w-4 shrink-0" />
+                            Create new contact
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   }
                 />
                 {contacts.length === 0 ? (
@@ -484,7 +589,7 @@ export function CompanyDetailSheet({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setAddContactOpen(true)}
+                        onClick={() => setAddContactPopoverOpen(true)}
                       >
                         <UserPlus className="mr-1.5 h-3.5 w-3.5" />
                         Add contact
@@ -633,45 +738,6 @@ export function CompanyDetailSheet({
                 )}
               </section>
 
-              <section className="space-y-3">
-                <DsSectionHeader title={`Meetings (${meetings.length})`} />
-                {meetings.length === 0 ? (
-                  <DsEmptyState
-                    title="No meetings"
-                    description="No meetings recorded for this company's projects."
-                  />
-                ) : (
-                  <DsDataTable<MeetingItem>
-                    rows={meetings.slice(0, 10)}
-                    columns={[
-                      {
-                        key: "meeting",
-                        header: "Meeting",
-                        primary: true,
-                        render: (meeting) => (
-                          <Link
-                            href={`/${meeting.project_id}/meetings/${meeting.id}`}
-                            className="font-medium text-foreground underline-offset-4 hover:underline"
-                          >
-                            {meeting.title || "Untitled meeting"}
-                          </Link>
-                        ),
-                      },
-                      {
-                        key: "project",
-                        header: "Project",
-                        render: (meeting) => meeting.project_name || "—",
-                      },
-                      {
-                        key: "date",
-                        header: "Date",
-                        align: "right",
-                        render: (meeting) => formatDate(meeting.date),
-                      },
-                    ]}
-                  />
-                )}
-              </section>
             </>
           )}
         </div>

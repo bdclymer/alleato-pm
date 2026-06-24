@@ -11,6 +11,8 @@ import {
   type FabricObject,
   type TPointerEventInfo,
 } from "fabric";
+
+type FabricEventHandler = (e: unknown) => void;
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ds";
 import { cn } from "@/lib/utils";
@@ -326,8 +328,8 @@ export function DrawingViewerFabric({
       fc.renderAll();
     };
 
-    fc.on("path:created", onPathCreated as Parameters<typeof fc.on>[1]);
-    return () => fc.off("path:created", onPathCreated as Parameters<typeof fc.on>[1]);
+    fc.on("path:created", onPathCreated as FabricEventHandler);
+    return () => fc.off("path:created", onPathCreated as FabricEventHandler);
   }, [resolvedTool]);
 
   // ── Mouse event handlers ──────────────────────────────────────────────────
@@ -339,7 +341,7 @@ export function DrawingViewerFabric({
     const onMouseDown = (
       e: TPointerEventInfo & { target?: FabricObject }
     ) => {
-      const { x, y } = e.pointer;
+      const { x, y } = e.scenePoint;
 
       // comment / link tools — forward click as percentage coords
       if (resolvedTool === "comment" || resolvedTool === "link") {
@@ -410,7 +412,7 @@ export function DrawingViewerFabric({
     };
 
     const onMouseMove = (e: TPointerEventInfo) => {
-      const { x, y } = e.pointer;
+      const { x, y } = e.scenePoint;
       const start = drawStartRef.current;
       if (!start) return;
 
@@ -463,14 +465,14 @@ export function DrawingViewerFabric({
       inProgressObjRef.current = null;
     };
 
-    fc.on("mouse:down", onMouseDown as Parameters<typeof fc.on>[1]);
-    fc.on("mouse:move", onMouseMove as Parameters<typeof fc.on>[1]);
-    fc.on("mouse:up", onMouseUp);
+    fc.on("mouse:down", onMouseDown as FabricEventHandler);
+    fc.on("mouse:move", onMouseMove as FabricEventHandler);
+    fc.on("mouse:up", onMouseUp as FabricEventHandler);
 
     return () => {
-      fc.off("mouse:down", onMouseDown as Parameters<typeof fc.on>[1]);
-      fc.off("mouse:move", onMouseMove as Parameters<typeof fc.on>[1]);
-      fc.off("mouse:up", onMouseUp);
+      fc.off("mouse:down", onMouseDown as FabricEventHandler);
+      fc.off("mouse:move", onMouseMove as FabricEventHandler);
+      fc.off("mouse:up", onMouseUp as FabricEventHandler);
     };
   }, [
     resolvedTool,

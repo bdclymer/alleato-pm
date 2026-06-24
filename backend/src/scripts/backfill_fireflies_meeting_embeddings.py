@@ -20,6 +20,9 @@ import sys
 import time
 from typing import Any, Dict, List, Optional
 
+from src.services.ai_transport import get_openai_client, retry_ai_call
+from src.services.env_loader import load_env
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -63,20 +66,20 @@ def _content_hash(text: str) -> str:
 
 
 def _get_embedding_client():
-    from openai import OpenAI
-    openai_key = os.getenv("OPENAI_API_KEY")
-    if not openai_key:
-        raise RuntimeError("OPENAI_API_KEY is required")
-    return OpenAI(api_key=openai_key), EMBEDDING_MODEL
+    return get_openai_client(), EMBEDDING_MODEL
 
 
 def _embed_batch(texts: List[str]) -> List[List[float]]:
     client, model = _get_embedding_client()
     truncated = [t[:8000] for t in texts]
-    response = client.embeddings.create(
-        model=model,
-        input=truncated,
-        dimensions=EMBEDDING_DIMENSIONS,
+    response = retry_ai_call(
+        lambda: client.embeddings.create(
+            model=model,
+            input=truncated,
+            dimensions=EMBEDDING_DIMENSIONS,
+        ),
+        provider_name="configured AI embedding provider",
+        operation="fireflies meeting embedding batch",
     )
     return [item.embedding for item in response.data]
 
@@ -153,6 +156,8 @@ def embed_meeting(doc: Dict[str, Any], rag_client, pm_client, dry_run: bool) -> 
 
 
 def main():
+    load_env()
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=10)
     parser.add_argument("--dry-run", action="store_true")

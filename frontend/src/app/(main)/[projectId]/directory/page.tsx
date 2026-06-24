@@ -2036,133 +2036,141 @@ function CompanyContactCard({
 
   return (
     <>
-      <div>
-        <div className="flex items-center justify-between gap-3 border-b border-border/50 py-2.5">
-          <div className="flex min-w-0 items-baseline gap-2.5">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onCompanyClick(companyId)}
-              className="h-auto -ml-2 truncate px-2 py-1 text-sm font-medium text-foreground hover:bg-transparent hover:underline"
-            >
-              {companyName}
-            </Button>
-            {typeLabel && (
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {typeLabel}
-              </span>
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-0.5">
-            <Popover open={addPopoverOpen} onOpenChange={setAddPopoverOpen}>
-              <PopoverTrigger asChild>
+      <tbody>
+        {/* Company section row — spans all columns */}
+        <tr>
+          <td colSpan={5} className="pt-4 pb-0">
+            <div className="flex items-center justify-between gap-3 border-b border-border/40 pb-1.5">
+              <div className="flex min-w-0 items-baseline gap-2.5">
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-muted-foreground"
-                  aria-label={`Add contact to ${companyName}`}
+                  onClick={() => onCompanyClick(companyId)}
+                  className="h-auto -ml-2 truncate px-2 py-0.5 text-sm font-semibold text-primary hover:bg-transparent hover:underline"
                 >
-                  <Plus className="h-4 w-4" />
+                  {companyName}
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72 p-0" align="end">
-                <Command>
-                  <CommandInput placeholder="Search existing contacts..." />
-                  <CommandList className="max-h-64">
-                    <CommandEmpty>
-                      {loadingPeople ? "Loading..." : "No contacts found."}
-                    </CommandEmpty>
-                    {existingPeople.length > 0 && (
-                      <CommandGroup heading="Add existing contact">
-                        {existingPeople.map((person) => (
-                          <CommandItem
-                            key={person.id}
-                            value={`${person.first_name ?? ""} ${person.last_name ?? ""} ${person.email ?? ""}`}
-                            onSelect={() => void handleAddExisting(person)}
-                          >
-                            <div className="flex min-w-0 flex-col">
-                              <span className="truncate text-sm">
-                                {contactName(person)}
-                              </span>
-                              {(person.email || person.company_name) && (
-                                <span className="truncate text-xs text-muted-foreground">
-                                  {[person.email, person.company_name]
-                                    .filter(Boolean)
-                                    .join(" · ")}
-                                </span>
-                              )}
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                    <CommandGroup>
-                      <CommandItem
-                        value="__create_new_contact__"
-                        onSelect={() => {
+                {typeLabel && (
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {typeLabel}
+                  </span>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center gap-0.5">
+                <Popover open={addPopoverOpen} onOpenChange={setAddPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground"
+                      aria-label={`Add contact to ${companyName}`}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 p-0" align="end">
+                    <Command>
+                      <CommandInput placeholder="Search existing contacts..." />
+                      <CommandList className="max-h-56">
+                        <CommandEmpty>
+                          {loadingPeople ? "Loading..." : "No existing contacts found."}
+                        </CommandEmpty>
+                        {existingPeople.length > 0 && (
+                          <CommandGroup heading="Add existing contact">
+                            {existingPeople.map((person) => (
+                              <CommandItem
+                                key={person.id}
+                                value={`${person.first_name ?? ""} ${person.last_name ?? ""} ${person.email ?? ""}`}
+                                onSelect={() => void handleAddExisting(person)}
+                              >
+                                <div className="flex min-w-0 flex-col">
+                                  <span className="truncate text-sm">
+                                    {contactName(person)}
+                                  </span>
+                                  {(person.email || person.company_name) && (
+                                    <span className="truncate text-xs text-muted-foreground">
+                                      {[person.email, person.company_name]
+                                        .filter(Boolean)
+                                        .join(" · ")}
+                                    </span>
+                                  )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        )}
+                      </CommandList>
+                    </Command>
+                    <div className="border-t border-border/60 p-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-sm"
+                        onClick={() => {
                           setAddPopoverOpen(false);
                           setCreateOpen(true);
                         }}
                       >
                         <UserPlus className="mr-2 h-4 w-4 shrink-0" />
                         Create new contact
-                      </CommandItem>
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-muted-foreground"
-                  aria-label="Company actions"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href={`/directory/companies/${companyId}?edit=1`}>
-                    <Pencil className="mr-2 h-3.5 w-3.5" />
-                    Edit
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive"
-                  disabled={removing}
-                  onClick={() => onRemoveCompany(projectCompanyId, companyName)}
-                >
-                  <Trash2 className="mr-2 h-3.5 w-3.5" />
-                  {removing ? "Removing..." : "Remove"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {contacts.length === 0 ? (
-          <p className="py-4 text-sm text-muted-foreground">No contacts yet.</p>
-        ) : (
-          <div>
-            <div className="grid grid-cols-[1.3fr_1fr_1.4fr_1fr_2rem] gap-3 py-2 text-[11px] uppercase tracking-wide text-muted-foreground">
-              <span>Name</span>
-              <span>Title</span>
-              <span>Email</span>
-              <span>Phone</span>
-              <span />
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground"
+                      aria-label="Company actions"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href={`/directory/companies/${companyId}?edit=1`}>
+                        <Pencil className="mr-2 h-3.5 w-3.5" />
+                        Edit
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      disabled={removing}
+                      onClick={() =>
+                        onRemoveCompany(projectCompanyId, companyName)
+                      }
+                    >
+                      <Trash2 className="mr-2 h-3.5 w-3.5" />
+                      {removing ? "Removing..." : "Remove"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
-            {contacts.map((contact) => {
-              const isPrimary = contact.id === effectivePrimaryId;
-              const phone = contact.phone_business || contact.phone_mobile;
-              return (
-                <div
-                  key={contact.id}
-                  className="group grid grid-cols-[1.3fr_1fr_1.4fr_1fr_2rem] items-center gap-3 border-t border-border/60 py-2.5"
-                >
+          </td>
+        </tr>
+
+        {/* Contact rows */}
+        {contacts.length === 0 ? (
+          <tr>
+            <td
+              colSpan={5}
+              className="py-2.5 pb-3 text-sm text-muted-foreground"
+            >
+              No contacts yet.
+            </td>
+          </tr>
+        ) : (
+          contacts.map((contact) => {
+            const isPrimary = contact.id === effectivePrimaryId;
+            const phone = contact.phone_business || contact.phone_mobile;
+            return (
+              <tr key={contact.id} className="group border-t border-border/40">
+                <td className="py-2.5 pr-4">
                   <div className="flex min-w-0 items-baseline gap-2">
                     <Link
                       href={`/directory/contacts/${contact.id}`}
@@ -2176,9 +2184,13 @@ function CompanyContactCard({
                       </span>
                     )}
                   </div>
+                </td>
+                <td className="py-2.5 pr-4">
                   <span className="truncate text-sm text-muted-foreground">
                     {contact.job_title}
                   </span>
+                </td>
+                <td className="py-2.5 pr-4">
                   {contact.email ? (
                     <a
                       href={`mailto:${contact.email}`}
@@ -2186,12 +2198,14 @@ function CompanyContactCard({
                     >
                       {contact.email}
                     </a>
-                  ) : (
-                    <span />
-                  )}
+                  ) : null}
+                </td>
+                <td className="py-2.5">
                   <span className="truncate text-sm text-muted-foreground">
                     {phone}
                   </span>
+                </td>
+                <td className="py-2.5 text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -2228,12 +2242,12 @@ function CompanyContactCard({
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </div>
-              );
-            })}
-          </div>
+                </td>
+              </tr>
+            );
+          })
         )}
-      </div>
+      </tbody>
 
       <ContactFormSheet
         open={createOpen}
@@ -2418,7 +2432,24 @@ function CompaniesSection({
               : "No subcontractors yet."}
           </p>
         ) : (
-          <div className="flex flex-col gap-4">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-border/60">
+                <th className="pb-2 pt-1 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground pr-4">
+                  Name
+                </th>
+                <th className="pb-2 pt-1 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground pr-4 w-40">
+                  Title
+                </th>
+                <th className="pb-2 pt-1 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground pr-4">
+                  Email
+                </th>
+                <th className="pb-2 pt-1 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground w-36">
+                  Phone
+                </th>
+                <th className="w-8" />
+              </tr>
+            </thead>
             {companyCards.map((card) => (
               <CompanyContactCard
                 key={card.projectCompanyId}
@@ -2438,7 +2469,7 @@ function CompaniesSection({
                 }}
               />
             ))}
-          </div>
+          </table>
         )}
       </div>
       {CompanyConfirmDialog}

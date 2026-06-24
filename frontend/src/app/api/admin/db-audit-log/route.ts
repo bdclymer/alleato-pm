@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 const WHERE = "api.admin.db-audit-log#GET";
 const MAX_PER_PAGE = 200;
 
-export const GET = withApiGuardrails({ where: WHERE }, async ({ request }) => {
+export const GET = withApiGuardrails(WHERE, async ({ request }) => {
   await requireAdmin(WHERE);
 
   const supabase = createServiceClient();

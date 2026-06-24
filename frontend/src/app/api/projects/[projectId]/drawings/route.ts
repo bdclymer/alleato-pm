@@ -55,7 +55,7 @@ function normalizeOcrConfidenceSource(value: FormDataEntryValue | string | undef
 function normalizeOcrConfidenceScore(
   value: FormDataEntryValue | number | null | undefined,
 ): number | null {
-  if (value === null || value === undefined || value === "") {
+  if (value === null || value === undefined || value === "" || value instanceof File) {
     return null;
   }
   const score = typeof value === "string" ? Number.parseFloat(value) : value;

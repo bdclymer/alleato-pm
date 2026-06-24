@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import {
   Modal,
   ModalContent,
@@ -34,6 +33,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -41,6 +41,7 @@ import {
   MoreHorizontalIcon,
   PencilIcon,
   Trash2Icon,
+  PinIcon,
 } from "lucide-react";
 import type { RagConversation } from "@/hooks/use-rag-conversations";
 
@@ -78,27 +79,22 @@ function getConversationGroupLabel(dateStr: string | null): string {
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 7);
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(today.getDate() - 30);
 
   if (isSameLocalDay(date, today)) return "Today";
   if (isSameLocalDay(date, yesterday)) return "Yesterday";
+  if (date > sevenDaysAgo) return "Previous 7 days";
+  if (date > thirtyDaysAgo) return "Previous 30 days";
   return "Older";
-}
-
-function formatRelativeTime(dateStr: string | null): string {
-  if (!dateStr) return "";
-
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return "";
-
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
 }
 
 function groupConversations(
   conversations: RagConversation[],
 ): ConversationGroup[] {
+  const ORDER = ["Today", "Yesterday", "Previous 7 days", "Previous 30 days", "Older"];
   const groups = new Map<string, RagConversation[]>();
 
   conversations.forEach((conversation) => {
@@ -110,60 +106,12 @@ function groupConversations(
     groups.set(label, existing);
   });
 
-  return ["Today", "Yesterday", "Older"]
+  return ORDER
     .map((label) => ({
       label,
       conversations: groups.get(label) ?? [],
     }))
     .filter((group) => group.conversations.length > 0);
-}
-
-function ConversationActions({
-  conversation,
-  onRename,
-  onDelete,
-}: {
-  conversation: RagConversation;
-  onRename: (conversation: RagConversation) => void;
-  onDelete: (conversation: RagConversation) => void;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className="h-7 w-7 rounded-md text-sidebar-foreground/40 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <MoreHorizontalIcon />
-          <span className="sr-only">Conversation actions</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          onClick={(event) => {
-            event.stopPropagation();
-            onRename(conversation);
-          }}
-        >
-          <PencilIcon className="h-4 w-4" />
-          Rename
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          variant="destructive"
-          onClick={(event) => {
-            event.stopPropagation();
-            onDelete(conversation);
-          }}
-        >
-          <Trash2Icon className="h-4 w-4" />
-          Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
 }
 
 function ConversationRow({
@@ -191,26 +139,78 @@ function ConversationRow({
         }
       }}
       className={cn(
-        "group flex min-w-0 cursor-pointer items-center gap-1.5 rounded-md px-2 py-2 text-left transition-colors",
+        "group relative flex cursor-pointer items-center overflow-hidden rounded-lg px-2 py-[5px] text-left transition-colors",
         isActive
           ? "bg-sidebar-accent text-sidebar-accent-foreground"
           : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
       )}
     >
-      <div className="min-w-0 flex-1 overflow-hidden">
-        <p className="truncate text-[13px] leading-5">
-          {conversation.title || "New conversation"}
-        </p>
-        <p className="truncate text-[11px] leading-4 text-sidebar-foreground/45 mt-0.5">
-          {formatRelativeTime(conversation.last_message_at || conversation.created_at)}
-        </p>
-      </div>
-      <div className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100">
-        <ConversationActions
-          conversation={conversation}
-          onRename={onRename}
-          onDelete={onDelete}
+      <span className="block w-full truncate text-[13px] leading-5">
+        {conversation.title || "New conversation"}
+      </span>
+
+      {/* Absolute-positioned hover actions — overlays end of text, matching ChatGPT pattern */}
+      <div className="absolute right-0 flex items-center opacity-0 transition-opacity group-hover:opacity-100">
+        {/* Gradient fade so text doesn't hard-clip under buttons */}
+        <div
+          className={cn(
+            "pointer-events-none absolute right-full h-full w-8",
+            isActive
+              ? "bg-gradient-to-r from-transparent to-sidebar-accent"
+              : "bg-gradient-to-r from-transparent to-sidebar-accent/50",
+          )}
         />
+        <div className={cn(
+          "flex items-center pr-1",
+          isActive ? "bg-sidebar-accent" : "bg-sidebar-accent/50",
+        )}>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="h-6 w-6 rounded-md text-sidebar-foreground/50 hover:bg-transparent hover:text-sidebar-foreground"
+            onClick={(e) => e.stopPropagation()}
+            title="Pin conversation"
+          >
+            <PinIcon className="h-3.5 w-3.5" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6 rounded-md text-sidebar-foreground/50 hover:bg-transparent hover:text-sidebar-foreground"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontalIcon className="h-3.5 w-3.5" />
+                <span className="sr-only">More options</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRename(conversation);
+                }}
+              >
+                <PencilIcon className="h-4 w-4" />
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(conversation);
+                }}
+              >
+                <Trash2Icon className="h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );
@@ -257,10 +257,10 @@ export function ConversationSidebar({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side="left"
-          className="h-dvh max-h-dvh w-80 overflow-hidden rounded-none p-0 [&>button]:hidden sm:w-96"
+          className="h-dvh max-h-dvh w-72 overflow-hidden rounded-none p-0 [&>button]:hidden sm:w-80"
         >
           <div className="flex h-full flex-col overflow-hidden bg-sidebar text-sidebar-foreground">
-            <SheetHeader className="px-5 py-4 text-left">
+            <SheetHeader className="px-4 pt-4 pb-2 text-left">
               <div className="flex items-center justify-between gap-2">
                 <SheetTitle className="text-sm font-semibold text-sidebar-foreground">
                   Chat history
@@ -269,41 +269,37 @@ export function ConversationSidebar({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  className="h-7 w-7 rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                   onClick={() => {
                     onOpenChange(false);
                     onNewChat();
                   }}
+                  title="New chat"
                 >
-                  <PlusIcon />
+                  <PlusIcon className="h-4 w-4" />
                   <span className="sr-only">New chat</span>
                 </Button>
               </div>
             </SheetHeader>
 
             <ScrollArea className="flex-1">
-              <div className="px-2 py-2">
+              <div className="px-2 pb-4">
                 {isLoading ? (
-                  <div className="space-y-2 px-2">
-                    {Array.from({ length: 8 }).map((_, index) => (
+                  <div className="space-y-0.5 px-2 pt-1">
+                    {Array.from({ length: 12 }).map((_, index) => (
                       <div
                         key={index}
-                        className="h-7 animate-pulse rounded-md bg-sidebar-accent/40"
+                        className="h-7 animate-pulse rounded-lg bg-sidebar-accent/40"
                       />
                     ))}
                   </div>
                 ) : groupedConversations.length > 0 ? (
-                  groupedConversations.map((group, index) => (
-                    <div key={group.label} className="pb-4">
-                      {index > 0 ? (
-                        <Separator className="mb-3 bg-sidebar-border/70" />
-                      ) : null}
-                      <div className="px-2 pb-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/45">
-                          {group.label}
-                        </p>
-                      </div>
-                      <div className="space-y-0.5">
+                  groupedConversations.map((group) => (
+                    <div key={group.label} className="pt-4">
+                      <p className="px-2 pb-1 text-[11px] font-semibold text-sidebar-foreground/40">
+                        {group.label}
+                      </p>
+                      <div>
                         {group.conversations.map((conversation) => (
                           <ConversationRow
                             key={conversation.session_id}
@@ -321,8 +317,8 @@ export function ConversationSidebar({
                     </div>
                   ))
                 ) : (
-                  <div className="px-4 py-6">
-                    <p className="text-sm text-sidebar-foreground/65">
+                  <div className="px-2 py-6">
+                    <p className="text-sm text-sidebar-foreground/50">
                       No conversations yet.
                     </p>
                   </div>
@@ -330,8 +326,8 @@ export function ConversationSidebar({
               </div>
             </ScrollArea>
           </div>
-          </SheetContent>
-        </Sheet>
+        </SheetContent>
+      </Sheet>
 
       <Modal
         open={!!conversationToRename}

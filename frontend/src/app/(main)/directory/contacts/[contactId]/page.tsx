@@ -1,5 +1,5 @@
 "use client";
-import { PageShell } from "@/components/layout";
+import { ContentSectionStack, PageShell, PageTabs, SectionRuleHeading } from "@/components/layout";
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -31,16 +31,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  Pencil,
   Mail,
   Building2,
   ExternalLink,
-  MapPin,
   Check,
   ChevronsUpDown,
-  Layers,
-  User,
-  FileText,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -54,6 +50,8 @@ type Membership = Database["public"]["Tables"]["project_directory_memberships"][
 type PermissionTemplate = Database["public"]["Tables"]["permission_templates"]["Row"];
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 type ContactUpdateData = Database["public"]["Tables"]["people"]["Update"];
+
+type ContactTab = "details" | "projects";
 
 interface ContactWithRelations extends Omit<Contact, 'company'> {
   company?: Company | null;
@@ -141,9 +139,7 @@ function InlineTextField({ label, value, onSave, type = "text", placeholder, hre
           ) : (
             <p className="text-sm text-foreground truncate">{value}</p>
           )
-        ) : (
-          <p className="text-sm text-muted-foreground/30">—</p>
-        )}
+        ) : null}
         <Button
           variant="ghost"
           size="icon"
@@ -218,9 +214,7 @@ function InlineTextareaField({ label, value, onSave, placeholder }: InlineTextar
       <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
         {value ? (
           <p className="text-sm text-foreground whitespace-pre-wrap">{value}</p>
-        ) : (
-          <p className="text-sm text-muted-foreground/30">—</p>
-        )}
+        ) : null}
         <Button
           variant="ghost"
           size="icon"
@@ -292,9 +286,7 @@ function InlineSelectField({ label, value, onSave, options, placeholder }: Inlin
       <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
         {(displayLabel ?? value) ? (
           <p className="text-sm text-foreground capitalize">{displayLabel ?? value}</p>
-        ) : (
-          <p className="text-sm text-muted-foreground/30">—</p>
-        )}
+        ) : null}
         <Button
           variant="ghost"
           size="icon"
@@ -399,9 +391,7 @@ function InlineCompanyField({ label, company, onSave }: InlineCompanyProps) {
           >
             {company.name}
           </Link>
-        ) : (
-          <p className="text-sm text-muted-foreground/30">—</p>
-        )}
+        ) : null}
         <Button
           variant="ghost"
           size="icon"
@@ -412,28 +402,6 @@ function InlineCompanyField({ label, company, onSave }: InlineCompanyProps) {
           <Pencil className="h-2.5 w-2.5" />
         </Button>
       </div>
-    </div>
-  );
-}
-
-// ─── Section wrapper ───────────────────────────────────────────────────────
-
-function FieldSection({
-  title,
-  icon: Icon,
-  children,
-}: {
-  title: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <div className="flex items-center gap-1.5 mb-1">
-        {Icon && <Icon className="h-3 w-3 text-muted-foreground" />}
-        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{title}</p>
-      </div>
-      <div>{children}</div>
     </div>
   );
 }
@@ -449,6 +417,7 @@ export default function ContactDetailsPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
   const [editSheetOpen, setEditSheetOpen] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState<ContactTab>("details");
 
   const load = React.useCallback(async () => {
     try {
@@ -497,10 +466,10 @@ export default function ContactDetailsPage() {
 
   if (isLoading) {
     return (
-      <PageShell variant="content" title="Contact">
+      <PageShell variant="content" title="Contact" onBack={() => router.push("/directory/contacts")}>
         <div className="space-y-10 pt-4">
           <div className="flex gap-5">
-            <Skeleton className="h-16 w-16 rounded-full flex-shrink-0" />
+            <Skeleton className="h-14 w-14 rounded-full flex-shrink-0" />
             <div className="space-y-2 pt-1 flex-1">
               <Skeleton className="h-5 w-36" />
               <Skeleton className="h-4 w-24" />
@@ -522,7 +491,7 @@ export default function ContactDetailsPage() {
 
   if (error || !contact) {
     return (
-      <PageShell variant="detail" onBack={() => router.back()} title="Contact Not Found">
+      <PageShell variant="content" onBack={() => router.push("/directory/contacts")} title="Contact Not Found">
         <div className="text-center py-16">
           <p className="text-sm text-muted-foreground mb-4">{error?.message ?? "Contact not found"}</p>
           <Button variant="outline" size="sm" onClick={() => router.push("/directory/contacts")}>
@@ -538,244 +507,254 @@ export default function ContactDetailsPage() {
   const activeCount = contact.memberships?.filter(m => m.status === "active").length ?? 0;
 
   return (
-    <PageShell variant="content" title={fullName}>
-      <div className="space-y-10 pb-16">
-
-        {/* ── Identity header ─────────────────────────────────── */}
-        <div className="flex items-start gap-5 pt-1">
-          <div className="flex-shrink-0">
-            {contact.profile_photo_url ? (
-              <img
-                src={contact.profile_photo_url}
-                alt={fullName}
-                className="h-16 w-16 rounded-full object-cover bg-muted"
-              />
-            ) : (
-              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
-                <span className="text-lg font-medium text-muted-foreground">{initials}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex-1 min-w-0 pt-0.5 space-y-0.5">
-            <p className="text-lg font-semibold text-foreground truncate">{fullName}</p>
-            {contact.job_title && (
-              <p className="text-sm text-muted-foreground">{contact.job_title}</p>
-            )}
-            {contact.company && (
-              <Link
-                href={`/directory/companies/${contact.company.id}`}
-                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Building2 className="h-3.5 w-3.5" />
-                {contact.company.name}
-              </Link>
-            )}
-          </div>
-
-          <div className="flex items-center gap-0.5 flex-shrink-0 pt-0.5">
+    <PageShell
+      variant="content"
+      eyebrow={contact.person_type ?? undefined}
+      title={fullName}
+      onBack={() => router.push("/directory/contacts")}
+      actions={
+        <div className="flex items-center gap-2">
+          {contact.email && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-muted-foreground hover:bg-transparent hover:text-foreground"
-              onClick={() => setEditSheetOpen(true)}
-              aria-label="Edit contact"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              asChild
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <a href={`mailto:${contact.email}`} aria-label="Send email">
+                <Mail className="h-4 w-4" />
+              </a>
             </Button>
-            {contact.email && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-muted-foreground hover:bg-transparent hover:text-foreground"
-                asChild
-              >
-                <a href={`mailto:${contact.email}`} aria-label="Send email">
-                  <Mail className="h-3.5 w-3.5" />
-                </a>
-              </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setEditSheetOpen(true)}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit
+          </Button>
+        </div>
+      }
+    >
+      <PageTabs
+        variant="inline"
+        tabs={[
+          { label: "Details", href: "details", isActive: activeTab === "details" },
+          { label: "Projects", href: "projects", isActive: activeTab === "projects", count: contact.memberships?.length || undefined },
+        ]}
+        onTabClick={(href) => setActiveTab(href as ContactTab)}
+      />
+
+      <ContentSectionStack className="pt-3">
+        {activeTab === "details" && (
+          <>
+            {/* ── Identity card ───────────────────────────────────── */}
+            <div className="flex items-center gap-4">
+              {contact.profile_photo_url ? (
+                <img
+                  src={contact.profile_photo_url}
+                  alt={fullName}
+                  className="h-14 w-14 rounded-full object-cover bg-muted flex-shrink-0"
+                />
+              ) : (
+                <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                  <span className="text-base font-medium text-muted-foreground">{initials}</span>
+                </div>
+              )}
+              <div className="min-w-0 space-y-0.5">
+                {contact.job_title && (
+                  <p className="text-sm text-muted-foreground">{contact.job_title}</p>
+                )}
+                {contact.company && (
+                  <Link
+                    href={`/directory/companies/${contact.company.id}`}
+                    className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Building2 className="h-3.5 w-3.5" />
+                    {contact.company.name}
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* ── Contact + Address ───────────────────────────────── */}
+            <div>
+              <SectionRuleHeading label="Contact" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12">
+                <div>
+                  <InlineTextField
+                    label="Email"
+                    value={contact.email}
+                    type="email"
+                    href={contact.email ? `mailto:${contact.email}` : undefined}
+                    placeholder="email@example.com"
+                    onSave={val => save({ email: val })}
+                  />
+                  <InlineTextField
+                    label="Mobile"
+                    value={contact.phone_mobile}
+                    type="tel"
+                    href={contact.phone_mobile ? `tel:${contact.phone_mobile}` : undefined}
+                    placeholder="(555) 123-4567"
+                    onSave={val => save({ phone_mobile: val })}
+                  />
+                  <InlineTextField
+                    label="Business Phone"
+                    value={contact.phone_business}
+                    type="tel"
+                    href={contact.phone_business ? `tel:${contact.phone_business}` : undefined}
+                    placeholder="(555) 987-6543"
+                    onSave={val => save({ phone_business: val })}
+                  />
+                  <InlineTextField
+                    label="LinkedIn"
+                    value={contact.linkedin}
+                    type="url"
+                    href={contact.linkedin ?? undefined}
+                    placeholder="https://linkedin.com/in/…"
+                    onSave={val => save({ linkedin: val })}
+                  />
+                </div>
+                <div>
+                  <InlineTextField
+                    label="Street"
+                    value={contact.address_line1}
+                    placeholder="123 Main St"
+                    onSave={val => save({ address_line1: val })}
+                  />
+                  <InlineTextField
+                    label="Suite / Unit"
+                    value={contact.address_line2}
+                    placeholder="Suite 100"
+                    onSave={val => save({ address_line2: val })}
+                  />
+                  <InlineTextField
+                    label="City"
+                    value={contact.city}
+                    placeholder="City"
+                    onSave={val => save({ city: val })}
+                  />
+                  <InlineSelectField
+                    label="State"
+                    value={contact.state}
+                    options={US_STATES.map(s => ({ value: s, label: s }))}
+                    placeholder="Select state"
+                    onSave={val => save({ state: val })}
+                  />
+                  <InlineTextField
+                    label="ZIP"
+                    value={contact.zip}
+                    placeholder="12345"
+                    onSave={val => save({ zip: val })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ── Profile + Notes ─────────────────────────────────── */}
+            <div>
+              <SectionRuleHeading label="Profile" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12">
+                <div>
+                  <InlineTextField
+                    label="First Name"
+                    value={contact.first_name}
+                    placeholder="First name"
+                    onSave={val => save({ first_name: val ?? "" })}
+                  />
+                  <InlineTextField
+                    label="Last Name"
+                    value={contact.last_name}
+                    placeholder="Last name"
+                    onSave={val => save({ last_name: val ?? "" })}
+                  />
+                  <InlineCompanyField
+                    label="Company"
+                    company={contact.company}
+                    onSave={val => save({ company_id: val })}
+                  />
+                  <InlineTextField
+                    label="Job Title"
+                    value={contact.job_title}
+                    placeholder="Project Manager"
+                    onSave={val => save({ job_title: val })}
+                  />
+                  <InlineSelectField
+                    label="Person Type"
+                    value={contact.person_type}
+                    options={[
+                      { value: "contact", label: "Contact" },
+                      { value: "employee", label: "Employee" },
+                      { value: "user", label: "User" },
+                    ]}
+                    placeholder="Select type"
+                    onSave={val => save({ person_type: val as "contact" | "employee" | "user" | undefined })}
+                  />
+                  <InlineTextField
+                    label="Business Unit"
+                    value={contact.business_unit}
+                    placeholder="e.g. Operations"
+                    onSave={val => save({ business_unit: val })}
+                  />
+                </div>
+                <div>
+                  <InlineTextareaField
+                    label="Notes"
+                    value={contact.notes}
+                    placeholder="Add notes about this contact…"
+                    onSave={val => save({ notes: val })}
+                  />
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {activeTab === "projects" && (
+          <div>
+            <SectionRuleHeading label={`Project Access${activeCount > 0 ? ` · ${activeCount} active` : ""}`} />
+            {contact.memberships && contact.memberships.length > 0 ? (
+              <div className="divide-y divide-border/20">
+                {contact.memberships.map(m => (
+                  <div key={m.id} className="py-3 flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {m.project?.name ?? "Unknown Project"}
+                      </p>
+                      {m.permission_template && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {m.permission_template.name}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {m.role && (
+                        <span className="text-xs text-muted-foreground">{m.role}</span>
+                      )}
+                      <span
+                        className={cn(
+                          "text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full",
+                          m.status === "active"
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {m.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="No project access"
+                description="This contact has not been assigned to any projects yet."
+              />
             )}
           </div>
-        </div>
-
-        <div className="border-t border-border/30" />
-
-        {/* ── Contact + Address ───────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-          <FieldSection title="Contact" icon={User}>
-            <InlineTextField
-              label="Email"
-              value={contact.email}
-              type="email"
-              href={contact.email ? `mailto:${contact.email}` : undefined}
-              placeholder="email@example.com"
-              onSave={val => save({ email: val })}
-            />
-            <InlineTextField
-              label="Mobile"
-              value={contact.phone_mobile}
-              type="tel"
-              href={contact.phone_mobile ? `tel:${contact.phone_mobile}` : undefined}
-              placeholder="(555) 123-4567"
-              onSave={val => save({ phone_mobile: val })}
-            />
-            <InlineTextField
-              label="Business Phone"
-              value={contact.phone_business}
-              type="tel"
-              href={contact.phone_business ? `tel:${contact.phone_business}` : undefined}
-              placeholder="(555) 987-6543"
-              onSave={val => save({ phone_business: val })}
-            />
-            <InlineTextField
-              label="LinkedIn"
-              value={contact.linkedin}
-              type="url"
-              href={contact.linkedin ?? undefined}
-              placeholder="https://linkedin.com/in/…"
-              onSave={val => save({ linkedin: val })}
-            />
-          </FieldSection>
-
-          <FieldSection title="Address" icon={MapPin}>
-            <InlineTextField
-              label="Street"
-              value={contact.address_line1}
-              placeholder="123 Main St"
-              onSave={val => save({ address_line1: val })}
-            />
-            <InlineTextField
-              label="Suite / Unit"
-              value={contact.address_line2}
-              placeholder="Suite 100"
-              onSave={val => save({ address_line2: val })}
-            />
-            <InlineTextField
-              label="City"
-              value={contact.city}
-              placeholder="City"
-              onSave={val => save({ city: val })}
-            />
-            <InlineSelectField
-              label="State"
-              value={contact.state}
-              options={US_STATES.map(s => ({ value: s, label: s }))}
-              placeholder="Select state"
-              onSave={val => save({ state: val })}
-            />
-            <InlineTextField
-              label="ZIP"
-              value={contact.zip}
-              placeholder="12345"
-              onSave={val => save({ zip: val })}
-            />
-          </FieldSection>
-        </div>
-
-        {/* ── Profile + Notes ─────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-          <FieldSection title="Profile" icon={FileText}>
-            <InlineTextField
-              label="First Name"
-              value={contact.first_name}
-              placeholder="First name"
-              onSave={val => save({ first_name: val ?? "" })}
-            />
-            <InlineTextField
-              label="Last Name"
-              value={contact.last_name}
-              placeholder="Last name"
-              onSave={val => save({ last_name: val ?? "" })}
-            />
-            <InlineCompanyField
-              label="Company"
-              company={contact.company}
-              onSave={val => save({ company_id: val })}
-            />
-            <InlineTextField
-              label="Job Title"
-              value={contact.job_title}
-              placeholder="Project Manager"
-              onSave={val => save({ job_title: val })}
-            />
-            <InlineSelectField
-              label="Person Type"
-              value={contact.person_type}
-              options={[
-                { value: "contact", label: "Contact" },
-                { value: "employee", label: "Employee" },
-                { value: "user", label: "User" },
-              ]}
-              placeholder="Select type"
-              onSave={val => save({ person_type: val as "contact" | "employee" | "user" | undefined })}
-            />
-            <InlineTextField
-              label="Business Unit"
-              value={contact.business_unit}
-              placeholder="e.g. Operations"
-              onSave={val => save({ business_unit: val })}
-            />
-          </FieldSection>
-
-          <FieldSection title="Notes" icon={FileText}>
-            <InlineTextareaField
-              label="Notes"
-              value={contact.notes}
-              placeholder="Add notes about this contact…"
-              onSave={val => save({ notes: val })}
-            />
-          </FieldSection>
-        </div>
-
-        {/* ── Project Access ───────────────────────────────────── */}
-        <div className="border-t border-border/30 pt-8">
-          <div className="flex items-center gap-1.5 mb-4">
-            <Layers className="h-3 w-3 text-muted-foreground" />
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-              Project Access{activeCount > 0 ? ` · ${activeCount} active` : ""}
-            </p>
-          </div>
-
-          {contact.memberships && contact.memberships.length > 0 ? (
-            <div className="divide-y divide-border/20">
-              {contact.memberships.map(m => (
-                <div key={m.id} className="py-3 flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {m.project?.name ?? "Unknown Project"}
-                    </p>
-                    {m.permission_template && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {m.permission_template.name}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {m.role && (
-                      <span className="text-xs text-muted-foreground">{m.role}</span>
-                    )}
-                    <span
-                      className={cn(
-                        "text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full",
-                        m.status === "active"
-                          ? "bg-primary/10 text-primary"
-                          : "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      {m.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              title="No project access"
-              description="This contact has not been assigned to any projects yet."
-            />
-          )}
-        </div>
-      </div>
+        )}
+      </ContentSectionStack>
 
       <ContactFormSheet
         open={editSheetOpen}

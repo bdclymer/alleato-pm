@@ -124,6 +124,28 @@ export const GET = withApiGuardrails(
       }
     }
 
+    // Batch-resolve ball_in_court UUIDs to display names from user_profiles
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const bicIds = [
+      ...new Set(
+        (data ?? [])
+          .map((s: Record<string, unknown>) => s.ball_in_court as string | null)
+          .filter((v): v is string => Boolean(v) && UUID_RE.test(v ?? "")),
+      ),
+    ];
+    let bicMap: Record<string, string> = {};
+    if (bicIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("user_profiles")
+        .select("id, full_name")
+        .in("id", bicIds);
+      if (profiles) {
+        bicMap = Object.fromEntries(
+          profiles.map((p: { id: string; full_name: string | null }) => [p.id, p.full_name ?? p.id]),
+        );
+      }
+    }
+
     // Batch-resolve received_from names from the people table
     const receivedFromIds = [
       ...new Set(
@@ -157,6 +179,9 @@ export const GET = withApiGuardrails(
       received_from: s.received_from_id
         ? receivedFromMap[String(s.received_from_id)] ?? null
         : null,
+      ball_in_court: s.ball_in_court && UUID_RE.test(s.ball_in_court as string)
+        ? (bicMap[s.ball_in_court as string] ?? s.ball_in_court)
+        : s.ball_in_court,
     }));
 
     return NextResponse.json(enriched);

@@ -18,7 +18,6 @@ import {
   List,
   MessageSquare,
   Phone,
-  SlidersHorizontal,
   Users,
 } from "lucide-react"
 
@@ -43,7 +42,6 @@ import {
   subcontractorSidebarGroup,
   companyWideHeaderTools,
   companyWideToolSections,
-  developerCompanyAdminTools,
   buildToolUrl,
   extractProjectId,
   OWNER_EMAIL,
@@ -189,7 +187,6 @@ function CollapsedGroupIcon({
     operations: List,
     documents: FolderOpen,
     development: FlaskConical,
-    admin: SlidersHorizontal,
   }
   const Icon = minimalIconByGroup[group.id] ?? List
 
@@ -337,13 +334,7 @@ function ExpandedCompanyWideTools({
     const sectionToolNames = new Set(
       companyWideToolSections.flatMap((section) => section.toolNames)
     )
-    const extraToolNames = tools
-      .filter((tool) => !sectionToolNames.has(tool.name))
-      .map((tool) => tool.name)
-
-    return extraToolNames.length > 0
-      ? [...companyWideToolSections, { label: "Admin", toolNames: extraToolNames }]
-      : companyWideToolSections
+    return companyWideToolSections
   }, [tools])
 
   return (
@@ -608,28 +599,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }))
       .filter((group) => group.tools.length > 0)
 
-    if (!isDeveloper) return projectGroups
-
-    const adminGroupTools = filterTools(developerCompanyAdminTools)
-    if (adminGroupTools.length === 0) return projectGroups
-
-    return [
-      ...projectGroups,
-      {
-        id: "admin",
-        label: "Admin",
-        icon: SlidersHorizontal,
-        tools: adminGroupTools,
-      },
-    ]
-  }, [filterTools, isDeveloper, isSubcontractor, projectId])
+    return projectGroups
+  }, [filterTools, isSubcontractor, projectId])
 
   const companyWideTools = React.useMemo<NavigationTool[]>(
-    () => [
-      ...companyWideHeaderTools,
-      ...(isDeveloper ? developerCompanyAdminTools : []),
-    ],
-    [isDeveloper]
+    () => [...companyWideHeaderTools],
+    []
   )
   const visibleCompanyWideTools = React.useMemo(
     () => filterTools(companyWideTools),
