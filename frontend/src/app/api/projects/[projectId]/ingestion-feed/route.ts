@@ -64,6 +64,33 @@ type DocRow = {
   meeting_link: string | null;
 };
 
+// `system_alerts` lives in the RAG DB but is not in the generated RagDatabase
+// types yet, so read it through a narrowly-typed view of the client (no `any`).
+type SystemAlertRow = {
+  severity: string | null;
+  source: string | null;
+  title: string | null;
+  message: string | null;
+  last_seen_at: string | null;
+};
+
+type SystemAlertReader = {
+  from: (table: "system_alerts") => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        order: (
+          column: string,
+          opts: { ascending: boolean },
+        ) => {
+          limit: (
+            count: number,
+          ) => PromiseLike<{ data: SystemAlertRow[] | null; error: { message: string } | null }>;
+        };
+      };
+    };
+  };
+};
+
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -156,7 +183,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     // and /rag banner read. Best-effort: a broken alert feed must not break the page.
     let errors: IngestionFeedError[] = [];
     try {
-      const rag = createRagServiceClient();
+      const rag = createRagServiceClient() as unknown as SystemAlertReader;
       const { data: alertRows } = await rag
         .from("system_alerts")
         .select("severity, source, title, message, last_seen_at")
