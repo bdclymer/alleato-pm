@@ -23,6 +23,9 @@ import {
   SummaryValueRow,
 } from "@/components/layout";
 import {
+  DetailField,
+  DetailFieldGrid,
+  EditableDetailField,
   EmptyState,
   EntityAttachments,
   InlineEditField,
@@ -776,10 +779,11 @@ export function SubmittalDetailClient({
               }
             >
 
-                  {/* Metadata */}
-                  <PropertyList>
-                    <Property label="Status">
-                      <InlineEditField
+                  {/* General Information */}
+                  <DetailPanel>
+                    <SectionRuleHeading label="General Information" />
+                    <DetailFieldGrid columns={2}>
+                      <EditableDetailField
                         label="Status"
                         type="select"
                         value={submittal.status}
@@ -792,80 +796,63 @@ export function SubmittalDetailClient({
                         ]}
                         onSave={(v) => handleSaveField("status", v)}
                       />
-                    </Property>
-                    <Property label="Spec Section">
-                      <InlineEditField
-                        label="Spec Section"
-                        value={submittal.specification_section ?? ""}
-                        placeholder="e.g. 03 30 00"
-                        onSave={(v) => handleSaveField("specification_section", v || null)}
-                      />
-                    </Property>
-                    <Property label="Number">
-                      <InlineEditField
+                      <EditableDetailField
                         label="Number"
                         value={submittal.submittal_number ?? ""}
                         onSave={(v) => handleSaveField("submittal_number", v)}
                       />
-                    </Property>
-                    <Property label="Revision">
-                      <InlineEditField
+                      <EditableDetailField
+                        label="Spec Section"
+                        value={submittal.specification_section ?? ""}
+                        emptyPlaceholder="e.g. 03 30 00"
+                        onSave={(v) => handleSaveField("specification_section", v || null)}
+                      />
+                      <EditableDetailField
+                        label="Division"
+                        value={submittal.division ?? ""}
+                        emptyPlaceholder="e.g. Division 03"
+                        onSave={(v) => handleSaveField("division", v || null)}
+                      />
+                      <EditableDetailField
                         label="Revision"
                         type="number"
                         value={submittal.revision != null ? String(submittal.revision) : ""}
                         display={submittal.revision != null ? `Rev ${submittal.revision}` : undefined}
                         onSave={(v) => handleSaveField("revision", v ? parseInt(v, 10) : 0)}
                       />
-                    </Property>
-                    <Property label="Division">
-                      <InlineEditField
-                        label="Division"
-                        value={submittal.division ?? ""}
-                        placeholder="e.g. Division 03"
-                        onSave={(v) => handleSaveField("division", v || null)}
-                      />
-                    </Property>
-                    {getSubmittalTypeName(submittal) && (
-                      <Property label="Type" value={getSubmittalTypeName(submittal)} />
-                    )}
-                    {getPackageName(submittal) && (
-                      <Property label="Package" value={getPackageName(submittal)} />
-                    )}
-                    <Property label="Private">
-                      <InlineEditField
+                      <EditableDetailField
                         label="Private"
                         type="boolean"
                         value={String(submittal.is_private)}
                         display={submittal.is_private ? "Yes" : "No"}
                         onSave={(v) => handleSaveField("is_private", v === "true")}
                       />
-                    </Property>
-                    {staticLinkedDrawings.length > 0 && (
-                      <Property label="Linked Drawings">
-                        <Link
-                          href={`/${projectId}/drawings`}
-                          className="text-primary underline-offset-2 hover:underline"
-                        >
-                          {staticLinkedDrawings.length} drawing{staticLinkedDrawings.length !== 1 ? "s" : ""}
-                        </Link>
-                      </Property>
-                    )}
-                  </PropertyList>
-
-                  {/* Description */}
-                  <section>
-                    <SectionRuleHeading label="Description" />
-                    <div className="mt-3">
-                      <InlineEditField
+                      {getSubmittalTypeName(submittal) && (
+                        <DetailField label="Type">{getSubmittalTypeName(submittal)}</DetailField>
+                      )}
+                      {getPackageName(submittal) && (
+                        <DetailField label="Package">{getPackageName(submittal)}</DetailField>
+                      )}
+                      {staticLinkedDrawings.length > 0 && (
+                        <DetailField label="Linked Drawings">
+                          <Link
+                            href={`/${projectId}/drawings`}
+                            className="text-primary underline-offset-2 hover:underline"
+                          >
+                            {staticLinkedDrawings.length} drawing{staticLinkedDrawings.length !== 1 ? "s" : ""}
+                          </Link>
+                        </DetailField>
+                      )}
+                      <EditableDetailField
                         label="Description"
                         type="textarea"
                         value={submittal.description ?? ""}
-                        placeholder="Add a description…"
-                        emptyLabel="Add a description"
+                        emptyPlaceholder="Add a description"
+                        span={2}
                         onSave={(v) => handleSaveField("description", v || null)}
                       />
-                    </div>
-                  </section>
+                    </DetailFieldGrid>
+                  </DetailPanel>
 
                   {/* Workflow */}
                   <section>
