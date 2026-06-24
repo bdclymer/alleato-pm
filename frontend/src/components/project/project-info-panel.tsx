@@ -5,20 +5,15 @@ import { useRouter } from "next/navigation";
 
 import { EditableDetailField } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { useCompanies } from "@/hooks/use-companies";
 import type { Database } from "@/types/database.types";
 import {
   STAGE_OPTIONS,
-  PHASE_OPTIONS,
   WORK_SCOPE_OPTIONS,
   PROJECT_SECTOR_OPTIONS,
   DELIVERY_METHOD_OPTIONS,
   PROJECT_TYPE_OPTIONS,
-  TIMEZONE_OPTIONS,
-  COUNTRY_OPTIONS,
-  REGION_OPTIONS,
-  OFFICE_OPTIONS,
   US_STATE_OPTIONS,
 } from "@/lib/create-project/form";
 
@@ -114,14 +109,6 @@ export function ProjectInfoPanel({ project }: ProjectInfoPanelProps) {
         onSave={(v) => patchColumns({ stage: blankToNull(v) })}
       />
       <EditableDetailField
-        label="Phase"
-        type="select"
-        value={str(local.phase)}
-        options={stringOptions(PHASE_OPTIONS)}
-        emptyPlaceholder="Set phase"
-        onSave={(v) => patchColumns({ phase: blankToNull(v) })}
-      />
-      <EditableDetailField
         label="Client"
         type="select"
         value={str(local.company_id)}
@@ -164,68 +151,8 @@ export function ProjectInfoPanel({ project }: ProjectInfoPanelProps) {
         emptyPlaceholder="Set method"
         onSave={(v) => patchColumns({ delivery_method: blankToNull(v) })}
       />
-      <EditableDetailField
-        label="Description"
-        type="textarea"
-        value={str(local.summary)}
-        emptyPlaceholder="Add description"
-        onSave={(v) => patchColumns({ summary: blankToNull(v) })}
-      />
-
-      {/* ── Metrics ── */}
-      <EditableDetailField
-        label="Square Footage"
-        type="number"
-        value={str(meta.square_footage)}
-        emptyPlaceholder="Set sq ft"
-        onSave={(v) =>
-          patchMeta(
-            "square_footage",
-            v.trim() === "" ? null : Number(v.replace(/[$,]/g, "")),
-          )
-        }
-      />
-      <EditableDetailField
-        label="Total Value"
-        type="number"
-        value={str(record["est revenue"])}
-        display={
-          record["est revenue"] != null
-            ? formatCurrency(Number(record["est revenue"]))
-            : undefined
-        }
-        emptyPlaceholder="Set value"
-        onSave={(v) =>
-          patchColumns({
-            "est revenue":
-              v.trim() === "" ? null : Number(v.replace(/[$,]/g, "")),
-          })
-        }
-      />
 
       {/* ── Location ── */}
-      <EditableDetailField
-        label="Office"
-        type="select"
-        value={str(meta.office)}
-        options={OFFICE_OPTIONS}
-        emptyPlaceholder="Set office"
-        onSave={(v) => patchMeta("office", blankToNull(v))}
-      />
-      <EditableDetailField
-        label="Country"
-        type="select"
-        value={str(meta.country)}
-        options={COUNTRY_OPTIONS}
-        emptyPlaceholder="Set country"
-        onSave={(v) => patchMeta("country", blankToNull(v))}
-      />
-      <EditableDetailField
-        label="Street Address"
-        value={str(local.address)}
-        emptyPlaceholder="Set address"
-        onSave={(v) => patchColumns({ address: blankToNull(v) })}
-      />
       <EditableDetailField
         label="City"
         value={str(meta.city)}
@@ -243,38 +170,6 @@ export function ProjectInfoPanel({ project }: ProjectInfoPanelProps) {
         options={US_STATE_OPTIONS}
         emptyPlaceholder="Set state"
         onSave={(v) => patchColumns({ state: blankToNull(v) })}
-      />
-      <EditableDetailField
-        label="Zip Code"
-        value={str(meta.postal_code)}
-        emptyPlaceholder="Set zip"
-        onSave={(v) => patchMeta("postal_code", blankToNull(v))}
-      />
-      <EditableDetailField
-        label="Timezone"
-        type="select"
-        value={str(meta.timezone)}
-        display={
-          TIMEZONE_OPTIONS.find((o) => o.value === meta.timezone)?.label ??
-          undefined
-        }
-        options={TIMEZONE_OPTIONS}
-        emptyPlaceholder="Set timezone"
-        onSave={(v) => patchMeta("timezone", blankToNull(v))}
-      />
-      <EditableDetailField
-        label="Phone"
-        value={str(meta.phone)}
-        emptyPlaceholder="Set phone"
-        onSave={(v) => patchMeta("phone", blankToNull(v))}
-      />
-      <EditableDetailField
-        label="Region"
-        type="select"
-        value={str(meta.region)}
-        options={REGION_OPTIONS}
-        emptyPlaceholder="Set region"
-        onSave={(v) => patchMeta("region", blankToNull(v))}
       />
 
       {/* ── Dates ── */}
@@ -301,29 +196,6 @@ export function ProjectInfoPanel({ project }: ProjectInfoPanelProps) {
         }
         emptyPlaceholder="Set date"
         onSave={(v) => patchColumns({ "est completion": blankToNull(v) })}
-      />
-
-      {/* ── Status & Flags ── */}
-      <EditableDetailField
-        label="Active"
-        type="boolean"
-        value={local.archived ? "false" : "true"}
-        display={local.archived ? "No" : "Yes"}
-        onSave={(v) => patchColumns({ archived: v !== "true" })}
-      />
-      <EditableDetailField
-        label="ERP Sync"
-        type="boolean"
-        value={meta.erp_sync === false ? "false" : "true"}
-        display={meta.erp_sync === false ? "No" : "Yes"}
-        onSave={(v) => patchMeta("erp_sync", v === "true")}
-      />
-      <EditableDetailField
-        label="Test Project"
-        type="boolean"
-        value={meta.test_project === true ? "true" : "false"}
-        display={meta.test_project === true ? "Yes" : "No"}
-        onSave={(v) => patchMeta("test_project", v === "true")}
       />
     </div>
   );
