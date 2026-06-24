@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -51,7 +52,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthUsers, type AuthUser } from "@/hooks/use-auth-users";
+import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { createClient } from "@/lib/supabase/client";
 import {
   useAddWorkflowStep,
@@ -70,6 +73,8 @@ import { useConfirm } from "@/hooks/use-confirm";
 import { SubmittalFormPage } from "./submittal-form-page";
 import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
 import { SubmittalAIReviewPanel } from "./submittal-ai-review-panel";
+import { SubmittalLinkedDrawingsPanel } from "./submittal-linked-drawings-panel";
+import { DrawingPickerDialog } from "./drawing-picker-dialog";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -491,6 +496,15 @@ export function SubmittalDetailClient({
   const [isEditing, setIsEditing] = React.useState(false);
 
   const { users, allUsers } = useAuthUsers(String(projectId));
+  const { companies } = useProjectCompanies(String(projectId), { per_page: 200 });
+  const { data: submittalTypes = [] } = useQuery<{ id: string; name: string }[]>({
+    queryKey: ["submittal-types", projectId],
+    queryFn: ({ signal }) => apiFetch(`/api/projects/${projectId}/submittal-types`, { signal }),
+  });
+  const { data: submittalPackages = [] } = useQuery<{ id: string; name: string }[]>({
+    queryKey: ["submittal-packages", projectId],
+    queryFn: () => apiFetch(`/api/projects/${projectId}/submittals/packages`),
+  });
 
   async function handleSaveField(field: string, value: string | number | boolean | null) {
     await apiFetch(`/api/projects/${projectId}/submittals/${submittal.id}`, {
@@ -503,6 +517,7 @@ export function SubmittalDetailClient({
 
   const [activeTab, setActiveTab] = React.useState("details");
   const [showAddStep, setShowAddStep] = React.useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const workflowSteps = submittal.submittal_workflow_steps ?? [];
   const distributions = submittal.submittal_distributions ?? [];
@@ -734,30 +749,49 @@ export function SubmittalDetailClient({
                   </DetailPanel>
 
                   {/* Parties */}
-                  {(() => {
-                    const managerName = submittal.submittal_manager_id
-                      ? resolveUserName(allUsers, submittal.submittal_manager_id)
-                      : "";
-                    const receivedFromName = submittal.received_from ?? (submittal.received_from_id ? resolveUserName(allUsers, submittal.received_from_id) : "");
-                    const hasAnyParty = submittal.responsible_contractor || receivedFromName || managerName;
-                    if (!hasAnyParty) return null;
-                    return (
-                      <DetailPanel>
-                        <SectionRuleHeading label="Parties" />
-                        <div className="space-y-1">
-                          {submittal.responsible_contractor && (
-                            <DetailField label="Contractor">{submittal.responsible_contractor.name}</DetailField>
-                          )}
-                          {receivedFromName && (
-                            <DetailField label="Received From">{receivedFromName}</DetailField>
-                          )}
-                          {managerName && (
-                            <DetailField label="Manager">{managerName}</DetailField>
-                          )}
-                        </div>
-                      </DetailPanel>
-                    );
-                  })()}
+                  <DetailPanel>
+                    <SectionRuleHeading label="Parties" />
+                    <div className="space-y-1">
+                      {submittal.responsible_contractor && (
+                        <DetailField label="Contractor">{submittal.responsible_contractor.name}</DetailField>
+                      )}
+                      {(submittal.received_from || submittal.received_from_id) && (
+                        <DetailField label="Submitted By">
+                          {submittal.received_from ?? resolveUserName(allUsers, submittal.received_from_id ?? "")}
+                        </DetailField>
+                      )}
+                      <EditableDetailField
+                        label="Ball In Court"
+                        type="select"
+                        value={submittal.ball_in_court ?? ""}
+                        display={submittal.ball_in_court ? resolveUserName(allUsers, submittal.ball_in_court) ?? "" : ""}
+                        emptyPlaceholder="Assign person"
+                        options={[
+                          { value: "", label: "None" },
+                          ...users.map((u) => ({
+                            value: u.id,
+                            label: `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || u.email,
+                          })),
+                        ]}
+                        onSave={(v) => handleSaveField("ball_in_court", v || null)}
+                      />
+                      <EditableDetailField
+                        label="Manager"
+                        type="select"
+                        value={submittal.submittal_manager_id ?? ""}
+                        display={submittal.submittal_manager_id ? resolveUserName(allUsers, submittal.submittal_manager_id) ?? "" : ""}
+                        emptyPlaceholder="Assign manager"
+                        options={[
+                          { value: "", label: "None" },
+                          ...users.map((u) => ({
+                            value: u.id,
+                            label: `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || u.email,
+                          })),
+                        ]}
+                        onSave={(v) => handleSaveField("submittal_manager_id", v || null)}
+                      />
+                    </div>
+                  </DetailPanel>
                 </>
               }
             >
@@ -766,6 +800,12 @@ export function SubmittalDetailClient({
                   <DetailPanel>
                     <SectionRuleHeading label="General Information" />
                     <DetailFieldGrid columns={2}>
+                      <EditableDetailField
+                        label="Title"
+                        value={submittal.title ?? ""}
+                        span={2}
+                        onSave={(v) => handleSaveField("title", v)}
+                      />
                       <EditableDetailField
                         label="Status"
                         type="select"
@@ -787,14 +827,42 @@ export function SubmittalDetailClient({
                       <EditableDetailField
                         label="Spec Section"
                         value={submittal.specification_section ?? ""}
-                        emptyPlaceholder="e.g. 03 30 00"
+                        emptyPlaceholder="e.g. 08-1113"
                         onSave={(v) => handleSaveField("specification_section", v || null)}
                       />
                       <EditableDetailField
                         label="Division"
                         value={submittal.division ?? ""}
-                        emptyPlaceholder="e.g. Division 03"
+                        emptyPlaceholder="e.g. Division 8"
                         onSave={(v) => handleSaveField("division", v || null)}
+                      />
+                      <EditableDetailField
+                        label="Type"
+                        type="select"
+                        value={
+                          typeof submittal.submittal_type === "object"
+                            ? (submittal.submittal_type?.id ?? "")
+                            : ""
+                        }
+                        display={getSubmittalTypeName(submittal) ?? undefined}
+                        emptyPlaceholder="Select type"
+                        options={[
+                          { value: "", label: "None" },
+                          ...submittalTypes.map((t) => ({ value: t.id, label: t.name })),
+                        ]}
+                        onSave={(v) => handleSaveField("submittal_type_id", v || null)}
+                      />
+                      <EditableDetailField
+                        label="Package"
+                        type="select"
+                        value={submittal.submittal_package?.id ?? ""}
+                        display={getPackageName(submittal) ?? undefined}
+                        emptyPlaceholder="Select package"
+                        options={[
+                          { value: "", label: "None" },
+                          ...submittalPackages.map((p) => ({ value: p.id, label: p.name })),
+                        ]}
+                        onSave={(v) => handleSaveField("submittal_package_id", v || null)}
                       />
                       <EditableDetailField
                         label="Revision"
@@ -810,12 +878,6 @@ export function SubmittalDetailClient({
                         display={submittal.is_private ? "Yes" : "No"}
                         onSave={(v) => handleSaveField("is_private", v === "true")}
                       />
-                      {getSubmittalTypeName(submittal) && (
-                        <DetailField label="Type">{getSubmittalTypeName(submittal)}</DetailField>
-                      )}
-                      {getPackageName(submittal) && (
-                        <DetailField label="Package">{getPackageName(submittal)}</DetailField>
-                      )}
                       <EditableDetailField
                         label="Description"
                         type="textarea"
@@ -909,6 +971,29 @@ export function SubmittalDetailClient({
                       </div>
                     )}
                   </DetailPanel>
+
+                  {/* Linked Drawings */}
+                  <section>
+                    <SectionRuleHeading
+                      label="Linked Drawings"
+                      actions={
+                        <SectionAction onClick={() => setPickerOpen(true)}>
+                          + Link Drawing
+                        </SectionAction>
+                      }
+                    />
+                    <SubmittalLinkedDrawingsPanel
+                      submittalId={submittal.id}
+                      projectId={projectId}
+                      onAddClick={() => setPickerOpen(true)}
+                    />
+                    <DrawingPickerDialog
+                      open={pickerOpen}
+                      onOpenChange={setPickerOpen}
+                      projectId={projectId}
+                      submittalId={submittal.id}
+                    />
+                  </section>
 
                   {/* Attachments */}
                   <section>
