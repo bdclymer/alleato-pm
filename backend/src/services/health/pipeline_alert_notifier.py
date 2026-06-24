@@ -297,12 +297,37 @@ def _outlook_promotion_alert() -> Optional[Dict[str, Any]]:
     }
 
 
+def _embedding_alert() -> Optional[Dict[str, Any]]:
+    """Page-worthy descriptor when the graph embedding stage is failing in a burst
+    (the 2026-06-24 auth-wall signature). Independent of the run-ledger "nothing
+    through" gate, which interleaved partial-success runs can hold shut. Best-effort."""
+    try:
+        from .embedding_freshness import check_embedding_freshness
+
+        emb = check_embedding_freshness()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[PipelineAlert] embedding-freshness check failed: %s", exc)
+        return None
+    if emb.get("status") != "blocked":
+        return None
+    errs = emb.get("recent_embedding_errors") or 0
+    return {
+        "source": "graph_embedding",
+        "label": "Graph embedding (vectorization)",
+        "reason": emb.get("detail") or "Embedding is failing in a burst.",
+        "failed": errs,
+        "succeeded": 0,
+        "successAgeMinutes": None,
+        "lastError": None,
+    }
+
+
 def run_pipeline_alert_check() -> Dict[str, Any]:
     now = _utcnow()
     alerts = evaluate_pipeline_outcomes(now)
-    promo_alert = _outlook_promotion_alert()
-    if promo_alert:
-        alerts.append(promo_alert)
+    for extra in (_outlook_promotion_alert(), _embedding_alert()):
+        if extra:
+            alerts.append(extra)
     result = notify(alerts, now=now)
     result["checkedAt"] = now.isoformat()
     result["alerts"] = alerts
