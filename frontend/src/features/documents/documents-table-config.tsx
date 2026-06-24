@@ -486,6 +486,7 @@ export function renderDocumentCard(
     <Button
       type="button"
       variant="ghost"
+      data-testid="document-card"
       className="h-auto flex flex-col gap-2 rounded-lg border border-border p-4 text-left hover:bg-muted/50"
       onClick={() => onView(item)}
     >

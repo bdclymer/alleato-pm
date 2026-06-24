@@ -40,9 +40,7 @@ test.describe("project documents browser", () => {
     // ghost button that has a visible title span — this is the card's clickable area.
     // We wait up to 15 s because cards load from the API after mount.
     const firstCard = page
-      .locator(
-        'button[type="button"].h-auto.flex.flex-col',
-      )
+      .locator('[data-testid="document-card"]')
       .first();
 
     await expect(firstCard).toBeVisible({ timeout: 15_000 });

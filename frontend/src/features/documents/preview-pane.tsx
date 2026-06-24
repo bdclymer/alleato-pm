@@ -118,14 +118,16 @@ export function PreviewPane({
               {documentTypeLabel(doc.document_type)}
             </span>
           </div>
-          <div className="flex items-center gap-4 py-1">
-            <span className="w-24 shrink-0 text-xs uppercase tracking-wide text-muted-foreground">
-              Source
-            </span>
-            <span className="text-foreground">
-              {doc.source ?? doc.source_system ?? "—"}
-            </span>
-          </div>
+          {(doc.source ?? doc.source_system) && (
+            <div className="flex items-center gap-4 py-1">
+              <span className="w-24 shrink-0 text-xs uppercase tracking-wide text-muted-foreground">
+                Source
+              </span>
+              <span className="text-foreground">
+                {doc.source ?? doc.source_system}
+              </span>
+            </div>
+          )}
           <div className="flex items-center gap-4 py-1">
             <span className="w-24 shrink-0 text-xs uppercase tracking-wide text-muted-foreground">
               Added
