@@ -2,18 +2,9 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  AlertTriangle,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
-  FileText,
-  Mail,
-  MessageSquare,
-} from "lucide-react";
+import { AlertTriangle, Calendar, ExternalLink, FileText, Mail, MessageSquare } from "lucide-react";
 
-import { Button, EmptyState, InfoAlert } from "@/components/ds";
+import { EmptyState, InfoAlert } from "@/components/ds";
 import {
   InlineTable,
   InlineTableBody,
@@ -30,35 +21,16 @@ import type {
   IngestionItem,
 } from "@/app/api/projects/[projectId]/ingestion-feed/route";
 
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function shiftDay(date: string, days: number): string {
-  const next = new Date(`${date}T00:00:00.000Z`);
-  next.setUTCDate(next.getUTCDate() + days);
-  return next.toISOString().slice(0, 10);
-}
-
-function formatDayLabel(date: string): string {
-  const d = new Date(`${date}T00:00:00.000Z`);
-  const today = todayUtc();
-  if (date === today) return "Today";
-  if (date === shiftDay(today, -1)) return "Yesterday";
-  return d.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-}
-
-function formatTime(iso: string | null): string {
+function formatItemDate(iso: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const currentYear = new Date().getUTCFullYear();
+  const opts: Intl.DateTimeFormatOptions =
+    d.getUTCFullYear() === currentYear
+      ? { month: "short", day: "numeric", timeZone: "UTC" }
+      : { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" };
+  return d.toLocaleDateString("en-US", opts);
 }
 
 const worstSeverity = (errors: IngestionFeedError[]): "critical" | "warning" | "info" =>
@@ -73,12 +45,14 @@ function CategoryTable({
   emptyNoun,
   icon,
   items,
+  capped,
   showSource = false,
 }: {
   label: string;
   emptyNoun: string;
   icon: React.ReactNode;
   items: IngestionItem[];
+  capped: boolean;
   showSource?: boolean;
 }) {
   return (
@@ -86,18 +60,21 @@ function CategoryTable({
       <div className="flex items-center gap-2">
         <span className="text-muted-foreground">{icon}</span>
         <p className="text-sm font-semibold text-foreground">{label}</p>
-        <span className="text-xs tabular-nums text-muted-foreground">{items.length}</span>
+        <span className="text-xs tabular-nums text-muted-foreground">
+          {items.length}
+          {capped ? "+" : ""}
+        </span>
       </div>
 
       {items.length === 0 ? (
-        <p className="px-3 py-2 text-xs text-muted-foreground">No {emptyNoun} ingested on this day.</p>
+        <p className="px-3 py-2 text-xs text-muted-foreground">No {emptyNoun} for this project yet.</p>
       ) : (
         <InlineTable variant="read">
           <InlineTableHeader>
             <InlineTableHeaderRow>
               <InlineTableHeaderCell>Title</InlineTableHeaderCell>
               {showSource ? <InlineTableHeaderCell>Source</InlineTableHeaderCell> : null}
-              <InlineTableHeaderCell align="right">Ingested</InlineTableHeaderCell>
+              <InlineTableHeaderCell align="right">Date</InlineTableHeaderCell>
             </InlineTableHeaderRow>
           </InlineTableHeader>
           <InlineTableBody>
@@ -119,12 +96,10 @@ function CategoryTable({
                   )}
                 </InlineTableCell>
                 {showSource ? (
-                  <InlineTableCell className="text-muted-foreground">
-                    {item.sourceSystem ?? "—"}
-                  </InlineTableCell>
+                  <InlineTableCell className="text-muted-foreground">{item.sourceSystem ?? "—"}</InlineTableCell>
                 ) : null}
                 <InlineTableCell align="right" numeric className="text-muted-foreground">
-                  {formatTime(item.ingestedAt)}
+                  {formatItemDate(item.date)}
                 </InlineTableCell>
               </InlineTableRow>
             ))}
@@ -136,56 +111,31 @@ function CategoryTable({
 }
 
 export function DailyIngestionFeed({ projectId }: { projectId: number }) {
-  const [date, setDate] = React.useState<string>(todayUtc());
-  const isToday = date === todayUtc();
-
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["ingestion-feed", projectId, date],
-    queryFn: () =>
-      apiFetch<IngestionFeedResponse>(`/api/projects/${projectId}/ingestion-feed?date=${date}`),
+    queryKey: ["ingestion-feed", projectId],
+    queryFn: () => apiFetch<IngestionFeedResponse>(`/api/projects/${projectId}/ingestion-feed`),
     staleTime: 60_000,
   });
 
   const errors = data?.errors ?? [];
+  const limit = data?.perCategoryLimit ?? 25;
   const total =
     (data?.counts.meetings ?? 0) +
     (data?.counts.documents ?? 0) +
     (data?.counts.emails ?? 0) +
     (data?.counts.teams ?? 0);
+  const capped = (c?: number) => (c ?? 0) >= limit;
 
   return (
     <section className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Source ingestion
-          </p>
-          <p className="text-lg font-semibold text-foreground">
-            {formatDayLabel(date)}
-            <span className="ml-2 text-sm font-normal text-muted-foreground">
-              {isLoading ? "" : `${total} item${total === 1 ? "" : "s"}`}
-            </span>
-          </p>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button variant="outline" size="sm" onClick={() => setDate((d) => shiftDay(d, -1))} aria-label="Previous day">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          {!isToday ? (
-            <Button variant="outline" size="sm" onClick={() => setDate(todayUtc())}>
-              Today
-            </Button>
-          ) : null}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setDate((d) => shiftDay(d, 1))}
-            disabled={isToday}
-            aria-label="Next day"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+      <div className="space-y-1">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Source ingestion</p>
+        <p className="text-lg font-semibold text-foreground">
+          Recent activity
+          <span className="ml-2 text-sm font-normal text-muted-foreground">
+            {isLoading ? "" : `${total}${total >= limit ? "+" : ""} item${total === 1 ? "" : "s"}`}
+          </span>
+        </p>
       </div>
 
       {errors.length > 0 ? (
@@ -209,15 +159,15 @@ export function DailyIngestionFeed({ projectId }: { projectId: number }) {
 
       {isError ? (
         <InfoAlert variant="error" role="alert">
-          Could not load the ingestion feed for this day.
+          Could not load source ingestion for this project.
         </InfoAlert>
       ) : isLoading ? (
         <p className="py-6 text-sm text-muted-foreground">Loading ingested items…</p>
-      ) : total === 0 && errors.length === 0 ? (
+      ) : total === 0 ? (
         <EmptyState
           icon={<Calendar className="h-6 w-6" />}
-          title="Nothing ingested on this day"
-          description="Meetings, documents, emails, and Teams messages synced for this project on the selected day will appear here."
+          title="Nothing ingested for this project yet"
+          description="Meetings, documents, emails, and Teams messages synced for this project will appear here."
         />
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
@@ -226,12 +176,14 @@ export function DailyIngestionFeed({ projectId }: { projectId: number }) {
             emptyNoun="meetings"
             icon={<Calendar className="h-4 w-4" />}
             items={data?.meetings ?? []}
+            capped={capped(data?.counts.meetings)}
           />
           <CategoryTable
             label="SharePoint documents"
             emptyNoun="SharePoint documents"
             icon={<FileText className="h-4 w-4" />}
             items={data?.documents ?? []}
+            capped={capped(data?.counts.documents)}
             showSource
           />
           <CategoryTable
@@ -239,12 +191,14 @@ export function DailyIngestionFeed({ projectId }: { projectId: number }) {
             emptyNoun="emails"
             icon={<Mail className="h-4 w-4" />}
             items={data?.emails ?? []}
+            capped={capped(data?.counts.emails)}
           />
           <CategoryTable
             label="Teams messages"
             emptyNoun="Teams messages"
             icon={<MessageSquare className="h-4 w-4" />}
             items={data?.teams ?? []}
+            capped={capped(data?.counts.teams)}
           />
         </div>
       )}
