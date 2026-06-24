@@ -42,6 +42,7 @@ export type EmailTemplate =
   | "change-order-signature"
   | "daily-digest"
   | "rfi-notification"
+  | "rfi-updated"
   | "rfi-closed"
   | "submittal-notification"
   | "mention-notification"

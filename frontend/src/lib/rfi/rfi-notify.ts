@@ -21,6 +21,7 @@ import { sendEmail } from "@/lib/email/send";
 import { APP_BASE_URL } from "@/lib/email/client";
 import RFIClosedNotification from "@/emails/rfi/RFIClosedNotification";
 import RFINotification from "@/emails/rfi/RFINotification";
+import RFIUpdateNotification from "@/emails/rfi/RFIUpdateNotification";
 import { classifyRfiRecipientEntries, personFullNameKey } from "./rfi-recipients";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
@@ -196,6 +197,98 @@ export async function notifyRfiOpened(args: {
     .map(({ email, result }) => ({
       email,
       error: result.error?.message ?? "Failed to send RFI notification.",
+    }));
+
+  return { sent: results.length - failed.length, failed };
+}
+
+// ── RFI updated notification ─────────────────────────────────────────────────
+
+export async function notifyRfiUpdated(args: {
+  projectId: number;
+  rfiId: string;
+  actorUserId: string;
+  /** Human-readable summary of what changed. */
+  changeSummary: string[];
+}): Promise<RfiNotifyResult> {
+  const { projectId, rfiId, actorUserId, changeSummary } = args;
+  if (changeSummary.length === 0) {
+    return { sent: 0, failed: [] };
+  }
+  const supabase = createServiceClient();
+
+  const { data: rfi } = await supabase
+    .from("rfis")
+    .select(
+      "id, number, subject, created_by, received_from, assignees, distribution_list, rfi_manager, ball_in_court, due_date",
+    )
+    .eq("id", rfiId)
+    .maybeSingle();
+  if (!rfi) {
+    return { sent: 0, failed: [{ error: "RFI not found for update notification." }] };
+  }
+
+  // Update audience = everyone involved: submitter (creator + received_from),
+  // reviewers (assignees + RFI manager), and the distribution list.
+  const { recipients, error } = await resolveRfiRecipientEmails(supabase, [
+    rfi.created_by,
+    rfi.received_from,
+    rfi.rfi_manager,
+    ...(rfi.assignees || []),
+    ...(rfi.distribution_list || []),
+  ]);
+
+  if (error) {
+    return { sent: 0, failed: [{ error }] };
+  }
+  if (recipients.length === 0) {
+    return {
+      sent: 0,
+      failed: [{ error: "No RFI recipients with valid email addresses to notify." }],
+    };
+  }
+
+  const [{ data: project }, updatedBy] = await Promise.all([
+    supabase.from("projects").select("name").eq("id", projectId).maybeSingle(),
+    resolveActorName(supabase, actorUserId),
+  ]);
+
+  const projectName = project?.name || `Project #${projectId}`;
+  const viewUrl = `${APP_BASE_URL}/${projectId}/rfis/${rfiId}`;
+  const subject = `RFI #${rfi.number} updated — ${rfi.subject}`;
+
+  const results = await Promise.all(
+    recipients.map(async (r) => {
+      const result = await sendEmail({
+        template: "rfi-updated",
+        to: r.email,
+        subject,
+        react: RFIUpdateNotification({
+          recipientName: r.name,
+          projectName,
+          rfiNumber: rfi.number,
+          rfiSubject: rfi.subject,
+          updatedBy,
+          changeSummary,
+          ballInCourt: rfi.ball_in_court,
+          dueDate: rfi.due_date,
+          viewUrl,
+        }),
+        entity: { type: "rfi", id: rfiId },
+        // Key includes the change set so distinct updates aren't de-duped, but a
+        // retry of the same update is.
+        idempotencyKey: `rfi-updated/${rfiId}/${r.email}/${changeSummary.join("|").slice(0, 120)}`,
+        metadata: { project_id: projectId, rfi_id: rfiId, recipient_email: r.email },
+      });
+      return { email: r.email, result };
+    }),
+  );
+
+  const failed = results
+    .filter(({ result }) => result.error)
+    .map(({ email, result }) => ({
+      email,
+      error: result.error?.message ?? "Failed to send RFI update notification.",
     }));
 
   return { sent: results.length - failed.length, failed };

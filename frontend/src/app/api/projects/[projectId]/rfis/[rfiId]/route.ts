@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
-import { notifyRfiClosed, notifyRfiOpened } from "@/lib/rfi/rfi-notify";
+import { notifyRfiClosed, notifyRfiOpened, notifyRfiUpdated } from "@/lib/rfi/rfi-notify";
 import { rfiEditSchema } from "@/lib/schemas/rfi-schema";
 import { RFI_RECIPIENT_UUID_PATTERN as UUID_PATTERN } from "@/lib/rfi/rfi-recipients";
 import { ZodError } from "zod";
@@ -195,6 +195,14 @@ export const PATCH = withApiGuardrails(
       updateData.status = newStatus;
     }
 
+    // Snapshot the pre-update state so we can describe what changed for the
+    // RFI-updated notification (submitter + reviewers).
+    const { data: beforeRfi } = await supabase
+      .from("rfis")
+      .select("status, assignees, due_date, question")
+      .eq("id", rfiId)
+      .maybeSingle();
+
     const { data, error } = await supabase
       .from("rfis")
       .update(updateData)
@@ -257,6 +265,81 @@ export const PATCH = withApiGuardrails(
           _emailWarning:
             "RFI opened, but one or more distribution emails could not be sent.",
         });
+      }
+    }
+
+    // Updating a live RFI (status change, reassignment, due-date or question
+    // edit) notifies everyone involved — submitter + reviewers. The open/close
+    // transitions above own their own emails, so they're excluded here. Drafts
+    // are not yet distributed, so they're silent.
+    const STATUS_LABELS: Record<string, string> = {
+      open: "Open",
+      answered: "Answered",
+      closed: "Closed",
+      "closed-draft": "Closed",
+      draft: "Draft",
+    };
+    const finalStatus = (updateData.status as string | undefined) ?? beforeRfi?.status ?? "";
+    const isClosingTransition = newStatus === "closed" || newStatus === "closed-draft";
+    const isLiveRfi = finalStatus === "open" || finalStatus === "answered";
+
+    if (!openedFromDraft && !isClosingTransition && isLiveRfi) {
+      const changeSummary: string[] = [];
+
+      if (
+        updateData.status !== undefined &&
+        updateData.status !== beforeRfi?.status
+      ) {
+        changeSummary.push(
+          `Status changed to ${STATUS_LABELS[updateData.status as string] ?? updateData.status}`,
+        );
+      }
+      if (
+        validatedData.assignees !== undefined &&
+        (validatedData.assignees ?? []).join("|") !==
+          (beforeRfi?.assignees ?? []).join("|")
+      ) {
+        const list = (validatedData.assignees ?? []).join(", ");
+        changeSummary.push(list ? `Reassigned to ${list}` : "Assignees cleared");
+      }
+      if (
+        validatedData.due_date !== undefined &&
+        (validatedData.due_date ?? null) !== (beforeRfi?.due_date ?? null)
+      ) {
+        changeSummary.push(
+          validatedData.due_date
+            ? `Due date set to ${validatedData.due_date}`
+            : "Due date cleared",
+        );
+      }
+      if (
+        validatedData.question !== undefined &&
+        (validatedData.question ?? "") !== (beforeRfi?.question ?? "")
+      ) {
+        changeSummary.push("Question updated");
+      }
+
+      if (changeSummary.length > 0) {
+        const { projectId } = await params;
+        const notificationResult = await notifyRfiUpdated({
+          projectId: parseInt(projectId, 10),
+          rfiId,
+          actorUserId: user.id,
+          changeSummary,
+        });
+
+        if (notificationResult.failed.length > 0) {
+          logger.warn({
+            msg: "RFI updated but update-notification email(s) failed",
+            rfiId,
+            failed: notificationResult.failed,
+          });
+          return NextResponse.json({
+            ...data,
+            _emailWarning:
+              "RFI updated, but one or more notification emails could not be sent.",
+          });
+        }
       }
     }
 
