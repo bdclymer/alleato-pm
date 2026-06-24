@@ -608,6 +608,7 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     icon: Briefcase,
     tools: [
       { name: "Home", path: "home", icon: Home, requiresProject: true },
+      { name: "Alleato AI", path: "ai", icon: Bot, requiresProject: false },
       { name: "Project Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" as PermissionModule },
       { name: "Project Tasks", path: "tasks", icon: CheckCircle, requiresProject: true },
       { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" as PermissionModule },
@@ -868,6 +869,13 @@ export const headerNavGroups: HeaderNavGroup[] = [
     id: "company",
     label: "Project",
     tools: [
+      {
+        name: "Alleato AI",
+        path: "ai",
+        requiresProject: false,
+        icon: Bot,
+        description: "AI-powered project guidance",
+      },
       {
         name: "Project Directory",
         path: "directory",
