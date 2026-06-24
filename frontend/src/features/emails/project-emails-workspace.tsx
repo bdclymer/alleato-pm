@@ -22,7 +22,7 @@ import {
   StarFilledIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
-import { Check, Download, FolderOpen, ImageIcon, ListTodo, Loader2, Paperclip, Plus, Sparkles, Star, StarOff } from "lucide-react";
+import { ArrowUpDown, Check, Download, FolderOpen, ImageIcon, ListTodo, Loader2, Paperclip, Plus, Search, Sparkles, Star, StarOff } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -183,6 +183,53 @@ function sortSelectionValue(sortBy?: string, direction?: "asc" | "desc"): string
     (option) => option.sortBy === sortBy && option.direction === direction,
   );
   return match?.value ?? "date_desc";
+}
+
+function SortPopover({
+  sortBy,
+  sortDirection,
+  onSortChange,
+}: {
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
+  onSortChange: (sortBy: string, direction: "asc" | "desc") => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const current = sortSelectionValue(sortBy, sortDirection);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Sort emails"
+          className="h-8 w-8 rounded-full text-muted-foreground shadow-none"
+        >
+          <ArrowUpDown className="h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-44 p-1">
+        {EMAIL_SORT_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => {
+              onSortChange(option.sortBy, option.direction);
+              setOpen(false);
+            }}
+            className={cn(
+              "flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-sm transition-colors hover:bg-muted",
+              current === option.value ? "font-medium text-foreground" : "text-muted-foreground",
+            )}
+          >
+            {current === option.value && <CheckIcon className="h-3.5 w-3.5 shrink-0" />}
+            <span className={cn(current !== option.value && "pl-[1.375rem]")}>{option.label}</span>
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 function formatPaneTimestamp(value: string | null | undefined): string {
@@ -1591,8 +1638,15 @@ export function ProjectEmailsWorkspace({
                   aria-label="Search email"
                   className="h-8 w-8 rounded-full text-muted-foreground shadow-none"
                 >
-                  <MagnifyingGlassIcon className="h-4 w-4" />
+                  <Search className="h-4 w-4" />
                 </Button>
+                {onSortChange ? (
+                  <SortPopover
+                    sortBy={sortBy}
+                    sortDirection={sortDirection}
+                    onSortChange={onSortChange}
+                  />
+                ) : null}
                 {canCompose ? (
                   <Button
                     variant="ghost"
@@ -1608,51 +1662,33 @@ export function ProjectEmailsWorkspace({
               </div>
             </div>
 
-            <div className="mt-3 flex items-center gap-5 text-sm text-muted-foreground">
+            <nav className="flex items-center">
               {tabs.map((tab) => (
                 <Link
                   key={tab.href}
                   href={tab.href}
                   className={cn(
-                    "border-b pb-2 transition-colors",
+                    "relative px-3 py-3 text-sm font-medium transition-colors",
                     tab.isActive
-                      ? "border-primary text-foreground"
-                      : "border-transparent hover:text-foreground",
+                      ? "text-primary"
+                      : "text-foreground/70 hover:text-foreground/90",
                   )}
                 >
                   {tab.label}
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "pointer-events-none absolute bottom-0 left-0 right-0 h-0.5 rounded-full transition-colors",
+                      tab.isActive ? "bg-primary" : "bg-transparent",
+                    )}
+                  />
                 </Link>
               ))}
-            </div>
+            </nav>
 
-            {viewSwitcher || onSortChange ? (
-              <div className="mt-3 flex items-center justify-between gap-2">
-                {viewSwitcher ?? <span />}
-                {onSortChange ? (
-                  <Select
-                    value={sortSelectionValue(sortBy, sortDirection)}
-                    onValueChange={(value) => {
-                      const option = EMAIL_SORT_OPTIONS.find(
-                        (candidate) => candidate.value === value,
-                      );
-                      if (option) onSortChange(option.sortBy, option.direction);
-                    }}
-                  >
-                    <SelectTrigger
-                      aria-label="Sort emails"
-                      className="h-8 w-auto gap-1.5 rounded-full border-border bg-muted/40 px-3 text-xs font-medium shadow-none"
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent align="end">
-                      {EMAIL_SORT_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : null}
+            {viewSwitcher ? (
+              <div className="mt-3 flex items-center gap-2">
+                {viewSwitcher}
               </div>
             ) : null}
 

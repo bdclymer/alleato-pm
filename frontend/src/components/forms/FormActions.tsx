@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 interface FormActionsProps {
   submitLabel: string;
   cancelLabel?: string;
+  /** Visual style for the cancel button. Defaults to "outline". Use "ghost" for a borderless tertiary action. */
+  cancelVariant?: "outline" | "ghost" | "secondary";
   onCancel?: () => void;
   isSubmitting?: boolean;
   submitDisabled?: boolean;
@@ -21,6 +23,7 @@ interface FormActionsProps {
 export function FormActions({
   submitLabel,
   cancelLabel = "Cancel",
+  cancelVariant = "outline",
   onCancel,
   isSubmitting = false,
   submitDisabled = false,
@@ -61,7 +64,7 @@ export function FormActions({
         {onCancel ? (
           <Button
             type="button"
-            variant="outline"
+            variant={cancelVariant}
             onClick={onCancel}
             disabled={cancelDisabled || isSubmitting}
             className="w-full sm:w-auto"

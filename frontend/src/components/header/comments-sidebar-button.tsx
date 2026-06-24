@@ -1,13 +1,8 @@
 "use client";
 
 import * as React from "react";
-import {
-  Eye,
-  EyeOff,
-  MessageSquare,
-  MessageSquarePlus,
-  MessagesSquare,
-} from "lucide-react";
+import Link from "next/link";
+import { MessageSquare, MessageSquarePlus, PanelRight } from "lucide-react";
 import {
   VeltCommentTool,
   VeltSidebarButton,
@@ -19,16 +14,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useCommentsVisibilityStore } from "@/lib/stores/comments-visibility-store";
+
+const rowClass =
+  "flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-sm font-normal text-foreground transition-colors hover:bg-accent hover:text-foreground";
 
 export function CommentsSidebarButton() {
   const [open, setOpen] = React.useState(false);
   const commentModeActive = useCommentModeState();
   const commentsVisible = useCommentsVisibilityStore((state) => state.visible);
-  const toggleCommentsVisible = useCommentsVisibilityStore(
-    (state) => state.toggle,
-  );
   const setCommentsVisible = useCommentsVisibilityStore(
     (state) => state.setVisible,
   );
@@ -57,11 +53,8 @@ export function CommentsSidebarButton() {
           <MessageSquare className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={6}
-        className="w-52 p-1 shadow-sm"
-      >
+      <PopoverContent align="end" sideOffset={6} className="w-64 p-1 shadow-sm">
+        {/* Primary action — drop a comment pin on the current page */}
         <VeltCommentTool
           sourceId="site-header-comment-mode"
           targetElementId="app-main-content"
@@ -70,13 +63,7 @@ export function CommentsSidebarButton() {
           {/* Leaving a comment requires the layer to be visible */}
           <span
             onClick={() => setCommentsVisible(true)}
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "sm" }),
-              "w-full cursor-pointer justify-start gap-2.5 px-2.5 font-normal",
-              commentModeActive
-                ? "text-primary"
-                : "text-foreground",
-            )}
+            className={cn(rowClass, commentModeActive && "text-primary")}
             aria-label="Leave a comment"
           >
             <MessageSquarePlus className="h-4 w-4 shrink-0" />
@@ -84,41 +71,51 @@ export function CommentsSidebarButton() {
           </span>
         </VeltCommentTool>
 
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => toggleCommentsVisible()}
-          className="w-full justify-start gap-2.5 px-2.5 font-normal text-foreground"
-          aria-pressed={commentsVisible ? "true" : "false"}
-          aria-label={
-            commentsVisible ? "Hide comments on page" : "Show comments on page"
-          }
+        {/* Show/hide the comment layer — a real on/off toggle, not a relabeling row */}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setCommentsVisible(!commentsVisible)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              setCommentsVisible(!commentsVisible);
+            }
+          }}
+          className={cn(rowClass, "justify-between")}
+          aria-label="Show comments on this page"
         >
-          {commentsVisible ? (
-            <EyeOff className="h-4 w-4 shrink-0" />
-          ) : (
-            <Eye className="h-4 w-4 shrink-0" />
-          )}
-          {commentsVisible ? "Hide comments on page" : "Show comments on page"}
-        </Button>
+          <span className="whitespace-nowrap">Comments on this page</span>
+          <Switch
+            checked={commentsVisible}
+            className="pointer-events-none"
+            tabIndex={-1}
+            aria-hidden
+          />
+        </div>
 
         <div className="my-1 h-px bg-border/50" />
 
+        {/* View comments for THIS page in the slide-in sidebar */}
         <div onClick={() => setOpen(false)}>
           <VeltSidebarButton shadowDom={false}>
-            <span
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "sm" }),
-                "w-full cursor-pointer justify-start gap-2.5 px-2.5 font-normal text-foreground",
-              )}
-              aria-label="All comments"
-            >
-              <MessagesSquare className="h-4 w-4 shrink-0" />
-              All comments
+            <span className={rowClass} aria-label="View page comments">
+              <PanelRight className="h-4 w-4 shrink-0" />
+              View page comments
             </span>
           </VeltSidebarButton>
         </div>
+
+        {/* Go to the dedicated page listing every comment across the whole app */}
+        <Link
+          href="/comments"
+          onClick={() => setOpen(false)}
+          className={cn(buttonVariants({ variant: "ghost" }), rowClass)}
+          aria-label="All comments"
+        >
+          <MessageSquare className="h-4 w-4 shrink-0" />
+          All comments
+        </Link>
       </PopoverContent>
     </Popover>
   );

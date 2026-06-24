@@ -40,6 +40,7 @@ export {
   LabelValueRow,
   SectionAction,
   SectionRuleHeading,
+  SummaryPanel,
   SummaryValueRow,
 } from "./spacing";
 

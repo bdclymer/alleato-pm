@@ -489,13 +489,6 @@ const sections: AdminMenuSection[] = [
         icon: Sparkles,
       },
       {
-        label: "Motion",
-        href: "/motion",
-        route: "/motion",
-        description: "Animation and transition examples.",
-        icon: Activity,
-      },
-      {
         label: "Docs",
         href: "/docs",
         route: "/docs",

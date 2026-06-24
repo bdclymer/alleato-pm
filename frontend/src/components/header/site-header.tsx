@@ -249,6 +249,7 @@ export function SiteHeader() {
   return (
     <header
       className="relative z-40 flex h-12 shrink-0 items-center text-foreground"
+      style={{ boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05)" }}
       {...feedbackTargetProps("app.site-header")}
     >
       <div className="flex w-full items-center justify-between px-3 sm:px-5 lg:px-7 min-w-0">

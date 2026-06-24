@@ -68,7 +68,15 @@ export const PATCH = withApiGuardrails<{ docId: string }>(
     // (block_outlook_ingestion_during_incident) so re-filing works for
     // Outlook-sourced docs, while still blocking every other unsanctioned write.
     // It returns the number of rows updated; 0 means the doc isn't in this project.
-    const service = createServiceClient();
+    // `reclassify_document_category` is a SECURITY DEFINER RPC applied directly
+    // to the DB (incident remediation) and not yet in the generated types, so
+    // call it through a narrowly-typed view of the client (no `any`).
+    const service = createServiceClient() as unknown as {
+      rpc: (
+        fn: "reclassify_document_category",
+        args: { p_doc_id: string; p_project_id: number; p_category: string | null },
+      ) => PromiseLike<{ data: number | null; error: { message: string } | null }>;
+    };
     const { data: rowsUpdated, error } = await service.rpc(
       "reclassify_document_category",
       {

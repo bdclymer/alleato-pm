@@ -50,6 +50,17 @@ import { EditableCell } from "../../../components/portfolio/editable-cell";
 import { EditProjectDialog } from "../../../components/portfolio/edit-project-dialog";
 import { toast } from "sonner";
 import Link from "next/link";
+import { apiFetch } from "@/lib/api-client";
+
+// Canonical phase options — must match EditProjectDialog / DB phase values.
+const PHASE_OPTIONS = [
+  "Planning",
+  "Estimating",
+  "Current",
+  "Complete",
+  "Loss",
+  "Archive",
+];
 
 interface ProjectsTableProps {
   data: Project[];
@@ -112,22 +123,24 @@ export function ProjectsTable({
         state: "state",
         phase: "phase",
         category: "category",
+        budget: "budget",
       };
 
-      const dbField = fieldMap[field] || field;
-      const dbValue: string | number | null = value;
+      // Fields stored as numbers — send a number or null, never a string.
+      const numericFields = new Set(["budget"]);
 
-      const response = await fetch(`/api/projects/${projectId}`, {
+      const dbField = fieldMap[field] || field;
+      const trimmed = value.trim();
+      const dbValue: string | number | null = numericFields.has(field)
+        ? trimmed === ""
+          ? null
+          : Number(trimmed.replace(/[$,]/g, ""))
+        : value;
+
+      await apiFetch(`/api/projects/${projectId}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ [dbField]: dbValue }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to update project");
-      }
 
       toast.success(`Updated ${field}`);
 
@@ -203,9 +216,10 @@ export function ProjectsTable({
         </Button>
       ),
       cell: ({ row }) => (
-        <span className="text-foreground">
-          {(row.getValue("client") as string | null) || "-"}
-        </span>
+        <EditableCell
+          value={row.getValue("client")}
+          onSave={(value) => updateProject(row.original.id, "client", value)}
+        />
       ),
       size: 180,
     },
@@ -222,9 +236,15 @@ export function ProjectsTable({
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="text-right font-medium tabular-nums text-foreground">
-          {formatCurrency(row.original.budget)}
-        </div>
+        <EditableCell
+          value={row.original.budget}
+          type="number"
+          className="text-right tabular-nums"
+          formatDisplay={(value) =>
+            formatCurrency(typeof value === "number" ? value : row.original.budget)
+          }
+          onSave={(value) => updateProject(row.original.id, "budget", value)}
+        />
       ),
       size: 130,
     },
@@ -294,27 +314,15 @@ export function ProjectsTable({
         const cellValue = row.getValue(id) as string;
         return cellValue?.toLowerCase().includes(value.toLowerCase());
       },
-      cell: ({ row }) => {
-        const phase = row.getValue("phase") as string;
-        const phaseColors: Record<string, string> = {
-          current: "bg-blue-50 text-blue-700 border border-blue-200",
-          bid: "bg-purple-50 text-purple-700 border border-purple-200",
-          preconstruction: "bg-amber-50 text-amber-700 border border-amber-200",
-          complete: "bg-green-50 text-green-700 border border-green-200",
-        };
-        return phase ? (
-          <span
-            className={cn(
-              "px-2.5 py-1 text-xs font-medium rounded-full transition-colors duration-200",
-              phaseColors[phase.toLowerCase()] || "border border-border",
-            )}
-          >
-            {phase}
-          </span>
-        ) : (
-          "-"
-        );
-      },
+      cell: ({ row }) => (
+        <EditableCell
+          value={row.getValue("phase")}
+          type="select"
+          placeholder="Select phase"
+          options={PHASE_OPTIONS.map((value) => ({ value, label: value }))}
+          onSave={(value) => updateProject(row.original.id, "phase", value)}
+        />
+      ),
       size: 120,
     },
     {

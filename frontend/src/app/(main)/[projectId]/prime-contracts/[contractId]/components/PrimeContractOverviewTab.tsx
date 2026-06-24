@@ -33,6 +33,7 @@ import {
   LabelValueRow,
   SectionAction,
   SectionRuleHeading,
+  SummaryPanel,
   SummaryValueRow,
 } from "@/components/layout";
 import {
@@ -557,7 +558,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
           </div>
 
           <aside>
-            <DetailPanel className="rounded-lg bg-surface-soft p-6">
+            <SummaryPanel>
               <SectionRuleHeading label="Financial Summary" />
               <div className="space-y-3 text-sm">
                 <SummaryValueRow label="Original Amount" value={formatCurrency(originalContractAmount)} />
@@ -571,7 +572,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 <SummaryValueRow label="Balance" value={formatCurrency(remainingBalanceTotal)} />
                 <SummaryValueRow label="Percent Paid" value={formatPercent(percentPaid, 2)} bold border />
               </div>
-            </DetailPanel>
+            </SummaryPanel>
           </aside>
         </div>
       </section>

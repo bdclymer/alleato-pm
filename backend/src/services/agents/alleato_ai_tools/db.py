@@ -184,7 +184,11 @@ def describe_schema(table_name: str | None = None) -> str:
 
 _SELECT_RE = re.compile(r"^\s*(select|with)\b", re.IGNORECASE)
 _FORBIDDEN_RE = re.compile(
-    r"\b(insert|update|delete|drop|truncate|alter|create|grant|revoke|comment|vacuum|copy|call|do|merge|reindex|cluster|refresh)\b",
+    # `into` blocks `SELECT … INTO newtable` (creates a table) — it slips past the
+    # other keywords because the statement still starts with SELECT. `INSERT INTO`
+    # is already caught by `insert`, and a read-only top-level SELECT never needs
+    # a bare INTO, so blocking it has no legitimate-query cost.
+    r"\b(insert|update|delete|drop|truncate|alter|create|grant|revoke|comment|vacuum|copy|call|do|merge|reindex|cluster|refresh|into)\b",
     re.IGNORECASE,
 )
 _HAS_LIMIT_RE = re.compile(r"\blimit\s+\d+\s*(;)?\s*$", re.IGNORECASE)

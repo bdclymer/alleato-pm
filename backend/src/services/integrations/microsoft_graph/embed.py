@@ -591,6 +591,54 @@ def _record_embed_failure(
         logger.warning("[GraphEmbed] Could not record source processing status for %s: %s", metadata_id, rec_exc)
 
 
+def _record_fireflies_embed_failure(rag_client, doc_id: str, exc: Exception) -> None:
+    """Persist a real Fireflies-meeting embedding failure with a bounded counter.
+
+    The meeting path has no app `document_metadata` row to park, so the antidote
+    to the poison-pill is lighter than `_record_embed_failure`: write
+    ``embedding_status='error'`` so the doc (a) leaves the NULL-only candidate
+    query, (b) becomes visible to the embedding-freshness health guard (which
+    counts ``'error'`` rows), and (c) is re-pulled by the error-under-cap branch
+    of the candidate query until ``EMBED_MAX_ATTEMPTS``, after which it parks for
+    good instead of re-failing and re-billing every sync forever.
+    """
+    error_text = str(exc)[:1000]
+    attempts = 1
+    try:
+        rows = (
+            rag_client.from_("rag_document_metadata")
+            .select("embedding_attempts")
+            .eq("id", doc_id)
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        attempts = int((rows[0] if rows else {}).get("embedding_attempts") or 0) + 1
+    except Exception as read_exc:  # noqa: BLE001 - best-effort counter
+        logger.warning("[FirefliesEmbed] Could not read embedding_attempts for %s: %s", doc_id, read_exc)
+
+    try:
+        rag_client.from_("rag_document_metadata").update(
+            {
+                "embedding_status": "error",
+                "embedding_error": error_text,
+                "embedding_attempts": attempts,
+                "embedding_last_attempt_at": datetime.now(timezone.utc).isoformat(),
+            }
+        ).eq("id", doc_id).execute()
+    except Exception as write_exc:  # noqa: BLE001
+        logger.warning("[FirefliesEmbed] Could not persist embed failure for %s: %s", doc_id, write_exc)
+
+    if attempts >= EMBED_MAX_ATTEMPTS:
+        logger.error(
+            "[FirefliesEmbed] %s parked at embedding_status='error' after %d attempts: %s",
+            doc_id,
+            attempts,
+            error_text,
+        )
+
+
 def embed_graph_document(supabase_client, metadata_id: str) -> int:
     """
     Chunk and embed a single document_metadata row into document_chunks.
@@ -1427,8 +1475,15 @@ def embed_pending_fireflies_meetings(limit: int = 25) -> Dict[str, Any]:
             rag_client.from_("rag_document_metadata")
             .select("id,title,content,raw_text,content_length")
             .eq("type", "meeting")
-            .is_("embedding_status", "null")
             .gt("content_length", 200)
+            # Pull never-attempted docs (NULL) plus prior failures still under the
+            # retry cap, so a transient/provider failure self-heals on the next
+            # run instead of being stranded — but a doc that has failed
+            # EMBED_MAX_ATTEMPTS times stays parked and stops re-billing.
+            .or_(
+                f"embedding_status.is.null,"
+                f"and(embedding_status.eq.error,embedding_attempts.lt.{EMBED_MAX_ATTEMPTS})"
+            )
             .limit(limit)
             .execute()
         )
@@ -1495,6 +1550,7 @@ def embed_pending_fireflies_meetings(limit: int = 25) -> Dict[str, Any]:
             total_chunks += len(rows)
         except Exception as exc:
             logger.error("[FirefliesEmbed] Error embedding %s: %s", doc_id, exc)
+            _record_fireflies_embed_failure(rag_client, doc_id, exc)
             errors += 1
 
         time.sleep(0.1)

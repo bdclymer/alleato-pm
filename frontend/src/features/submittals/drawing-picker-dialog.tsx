@@ -7,6 +7,13 @@ import {
   ModalTitle,
 } from "@/components/ui/unified-modal";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ExpandingSearch } from "@/components/ds";
 import { EmptyState } from "@/components/ds";
 import { useAddLinkedDrawing } from "@/hooks/use-submittals";
@@ -37,13 +44,15 @@ interface Props {
 
 export function DrawingPickerDialog({ projectId, submittalId, open, onOpenChange }: Props) {
   const [search, setSearch] = useState("");
+  const [discipline, setDiscipline] = useState<string>("all");
   const [drawings, setDrawings] = useState<Drawing[]>([]);
+  const [disciplines, setDisciplines] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [linkingId, setLinkingId] = useState<string | null>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const addMutation = useAddLinkedDrawing(projectId, submittalId);
 
-  const fetchDrawings = useCallback(async (q: string) => {
+  const fetchDrawings = useCallback(async (q: string, disc: string) => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
@@ -52,7 +61,11 @@ export function DrawingPickerDialog({ projectId, submittalId, open, onOpenChange
       const res = await apiFetch<DrawingsListResponse>(
         `/api/projects/${projectId}/drawings?${params.toString()}`
       );
-      setDrawings(res.drawings ?? []);
+      const all = res.drawings ?? [];
+      // Collect unique disciplines for the filter
+      const unique = Array.from(new Set(all.map((d) => d.discipline).filter(Boolean) as string[])).sort();
+      setDisciplines(unique);
+      setDrawings(disc && disc !== "all" ? all.filter((d) => d.discipline === disc) : all);
     } catch {
       setDrawings([]);
     } finally {
@@ -64,7 +77,8 @@ export function DrawingPickerDialog({ projectId, submittalId, open, onOpenChange
   useEffect(() => {
     if (open) {
       setSearch("");
-      fetchDrawings("");
+      setDiscipline("all");
+      fetchDrawings("", "all");
     }
   }, [open, fetchDrawings]);
 
@@ -79,8 +93,13 @@ export function DrawingPickerDialog({ projectId, submittalId, open, onOpenChange
     setSearch(value);
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
-      fetchDrawings(value);
+      fetchDrawings(value, discipline);
     }, 300);
+  }
+
+  function handleDisciplineChange(value: string) {
+    setDiscipline(value);
+    fetchDrawings(search, value);
   }
 
   async function handleLink(drawing: Drawing) {
@@ -108,12 +127,27 @@ export function DrawingPickerDialog({ projectId, submittalId, open, onOpenChange
         </ModalHeader>
 
         <div className="space-y-4">
-          <ExpandingSearch
-            value={search}
-            onChange={handleSearchChange}
-            placeholder="Search drawings..."
-            defaultExpanded
-          />
+          <div className="flex items-center gap-2">
+            <ExpandingSearch
+              value={search}
+              onChange={handleSearchChange}
+              placeholder="Search drawings..."
+              defaultExpanded
+            />
+            {disciplines.length > 0 && (
+              <Select value={discipline} onValueChange={handleDisciplineChange}>
+                <SelectTrigger className="h-8 w-40 shrink-0 text-xs">
+                  <SelectValue placeholder="Discipline" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">All disciplines</SelectItem>
+                  {disciplines.map((d) => (
+                    <SelectItem key={d} value={d} className="text-xs">{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
 
           <div className="max-h-80 overflow-y-auto space-y-1">
             {isLoading ? (

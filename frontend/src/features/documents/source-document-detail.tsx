@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, ExternalLink, MailOpen } from "lucide-react";
 
-import { Badge, Button, StatusBadge } from "@/components/ds";
+import { Badge, Button, DetailField, DetailFieldGrid, StatusBadge } from "@/components/ds";
 import { PageShell, SectionRuleHeading } from "@/components/layout";
 import {
   Accordion,
@@ -313,38 +313,18 @@ export function SourceDocumentDetailPage({
           {source.status ? <StatusBadge status={source.status} /> : null}
         </div>
 
-        <dl className="grid grid-cols-1 gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              Source date
-            </dt>
-            <dd className="mt-1 text-foreground">{formatDateTime(source.date)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              Captured
-            </dt>
-            <dd className="mt-1 text-foreground">
-              {formatDateTime(source.captured_at ?? source.created_at)}
-            </dd>
-          </div>
+        <DetailFieldGrid columns={2}>
+          <DetailField label="Source date">{formatDateTime(source.date)}</DetailField>
+          <DetailField label="Captured">
+            {formatDateTime(source.captured_at ?? source.created_at)}
+          </DetailField>
           {source.project ? (
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                Project
-              </dt>
-              <dd className="mt-1 text-foreground">{source.project}</dd>
-            </div>
+            <DetailField label="Project">{source.project}</DetailField>
           ) : null}
           {participants.length > 0 ? (
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                Participants
-              </dt>
-              <dd className="mt-1 text-foreground">{participants.slice(0, 8).join(", ")}</dd>
-            </div>
+            <DetailField label="Participants">{participants.slice(0, 8).join(", ")}</DetailField>
           ) : null}
-        </dl>
+        </DetailFieldGrid>
       </section>
 
       {source.summary || source.overview ? (
@@ -414,32 +394,20 @@ export function SourceDocumentDetailPage({
                     </span>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <dl className="grid gap-4 pb-4 text-sm sm:grid-cols-2">
+                    <DetailFieldGrid columns={2} className="pb-4">
                       {message.from ? (
-                        <div>
-                          <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">From</dt>
-                          <dd className="mt-1 break-words text-foreground">{message.from}</dd>
-                        </div>
+                        <DetailField label="From">{message.from}</DetailField>
                       ) : null}
                       {message.to ? (
-                        <div>
-                          <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">To</dt>
-                          <dd className="mt-1 break-words text-foreground">{message.to}</dd>
-                        </div>
+                        <DetailField label="To">{message.to}</DetailField>
                       ) : null}
                       {message.cc ? (
-                        <div>
-                          <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Cc</dt>
-                          <dd className="mt-1 break-words text-foreground">{message.cc}</dd>
-                        </div>
+                        <DetailField label="Cc">{message.cc}</DetailField>
                       ) : null}
                       {message.date ? (
-                        <div>
-                          <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Date</dt>
-                          <dd className="mt-1 text-foreground">{formatDateTime(message.date)}</dd>
-                        </div>
+                        <DetailField label="Date">{formatDateTime(message.date)}</DetailField>
                       ) : null}
-                    </dl>
+                    </DetailFieldGrid>
                     {message.body ? (
                       <div className="max-w-none whitespace-pre-wrap text-sm leading-7 text-foreground">
                         {message.body}

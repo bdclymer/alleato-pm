@@ -159,7 +159,7 @@ export function PageHeader({
         <div className="py-4">
           <div className="flex items-center justify-between">
             <Inline gap="md" align="center">
-              {titleContent || <Heading level={5} as="h2">{title}</Heading>}
+              {titleContent || <Eyebrow className="text-primary">{title}</Eyebrow>}
               {statusBadge}
             </Inline>
             {actions && <Inline gap="sm">{actions}</Inline>}

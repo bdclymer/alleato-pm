@@ -154,7 +154,7 @@ export function ScanDrawingsSheet({ projectId, open, onOpenChange }: Props) {
                                   #{item.existingSubmittal.number} {item.existingSubmittal.title}
                                 </Link>
                                 {item.existingSubmittal.status && (
-                                  <StatusBadge status={item.existingSubmittal.status} size="xs" />
+                                  <StatusBadge status={item.existingSubmittal.status} />
                                 )}
                               </div>
                             )}

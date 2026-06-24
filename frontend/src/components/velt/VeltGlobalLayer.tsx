@@ -14,6 +14,18 @@ import {
   useVeltClient,
 } from "@veltdev/react";
 
+interface VeltFormatConfig {
+  bold?: boolean;
+  italic?: boolean;
+  strikethrough?: boolean;
+  link?: boolean;
+  blockquote?: boolean;
+  codeBlock?: boolean;
+  heading?: boolean;
+  list?: boolean;
+  orderedList?: boolean;
+}
+
 interface VeltCommentElement {
   enableAttachments?: () => void;
   enableScreenshot?: () => void;
@@ -21,7 +33,9 @@ interface VeltCommentElement {
   enableRecordingCountdown?: () => void;
   enablePersistentCommentMode?: () => void;
   enableCommentPinHighlighter?: () => void;
-  enableSidebarButtonOnCommentDialog?: () => void;
+  enableFormatOptions?: () => void;
+  setFormatConfig?: (config: VeltFormatConfig) => void;
+  enableEnterKeyToSubmit?: () => void;
 }
 
 function VeltCommentConfiguration() {
@@ -36,7 +50,30 @@ function VeltCommentConfiguration() {
     commentElement.enableRecordingCountdown?.();
     commentElement.enablePersistentCommentMode?.();
     commentElement.enableCommentPinHighlighter?.();
-    commentElement.enableSidebarButtonOnCommentDialog?.();
+    // NOTE: enableSidebarButtonOnCommentDialog() intentionally removed — it
+    // rendered the full-width "All comments" footer band that duplicated
+    // all-comments access (still reachable via the global Comments button) and
+    // ate ~half the dialog height (noise-gate rule #8).
+
+    // Rich-text composer: show the formatting toolbar so users can bold/italic,
+    // link, quote, and make lists. Headings are disabled — comment bodies should
+    // never render as oversized page headings (noise-gate rule #8).
+    commentElement.enableFormatOptions?.();
+    commentElement.setFormatConfig?.({
+      bold: true,
+      italic: true,
+      strikethrough: true,
+      link: true,
+      blockquote: true,
+      codeBlock: true,
+      list: true,
+      orderedList: true,
+      heading: false,
+    });
+
+    // Enter submits the comment; Shift+Enter inserts a newline (paragraph break),
+    // matching every other text input in the app.
+    commentElement.enableEnterKeyToSubmit?.();
   }, [client]);
 
   return null;

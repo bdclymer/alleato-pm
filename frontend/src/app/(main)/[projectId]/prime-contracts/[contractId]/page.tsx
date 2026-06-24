@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   ArrowLeft,
+  ChevronDown,
   CreditCard,
   DollarSign,
   Download,
@@ -1066,7 +1067,7 @@ export default function ProjectContractDetailPage() {
 
   return (
     <PageShell
-      variant="detailXWide"
+      variant="dashboard"
       eyebrow={
         <span className="inline-flex items-center gap-2">
           {contract.contract_number ? `#${contract.contract_number}` : `#${contract.id.slice(0, 8)}`}
@@ -1086,7 +1087,7 @@ export default function ProjectContractDetailPage() {
         <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="default" size="sm"><Plus />Create</Button>
+                <Button variant="default" size="sm">Create<ChevronDown className="h-3.5 w-3.5" /></Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-events/new?contractId=${contractId}`)}><GitBranch className="h-4 w-4 mr-2" />Create Change Event</DropdownMenuItem>

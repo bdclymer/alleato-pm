@@ -11,6 +11,7 @@
  */
 
 import {
+  detectCrossSourceInvestigationRequest,
   detectRecentEmailInboxRequest,
   detectSourceLookupRecentTeamsRequest,
   detectSourceSpecificRagRequest,
@@ -209,6 +210,33 @@ describe("detectRecentEmailInboxRequest — Outlook inbox routing", () => {
     const result = detectRecentEmailInboxRequest("What Teams messages came in today?");
 
     expect(result).toBeNull();
+  });
+});
+
+describe("detectCrossSourceInvestigationRequest — multi-source investigation routing", () => {
+  it.each([
+    // The incident: a sudden-resignation question spanning teams + emails + meetings.
+    "We had an employee quit this week suddenly saying he didn't feel like he fit in and put his resignation in effective immediately — can you research through the teams messages, emails, and meetings and see where this might have initiated?",
+    "Dig through the emails and Teams to trace where this dispute started.",
+    "Investigate the meetings and emails and figure out how this issue came about.",
+    // Two corpora named at once, even without an explicit investigative verb.
+    "Pull together what the emails and meetings say about the budget overrun.",
+  ])("routes investigative cross-source wording to semantic vector search: %s", (message) => {
+    expect(detectCrossSourceInvestigationRequest(message)).toEqual({
+      reason: "cross_source_investigation",
+    });
+  });
+
+  it.each([
+    // Single-source triage must keep its tuned fast-path — not hijacked here.
+    "What important emails have I received this morning?",
+    "Is there anything urgent in my inbox?",
+    "Review recent meetings.",
+    "What Teams messages came in today?",
+    // Diagnosis phrasing that the Teams-recency path owns ("where do you think").
+    "Based on all the employees' messages and teams, where do you think is the biggest source of confusion?",
+  ])("leaves single-source / non-investigative wording alone: %s", (message) => {
+    expect(detectCrossSourceInvestigationRequest(message)).toBeNull();
   });
 });
 

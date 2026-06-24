@@ -2,7 +2,6 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { Save } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -62,7 +61,6 @@ export default function NewRfiPage() {
     <PageShell
       variant="form"
       title="New RFI"
-      description="Create a new Request for Information"
       onBack={() => router.push(`/${projectId}/rfis`)}
       backLabel="Back to RFIs"
     >
@@ -76,7 +74,8 @@ export default function NewRfiPage() {
         <RfiFormFields form={form} projectId={projectId} />
 
         <FormActions
-          submitLabel="Create Open"
+          submitLabel="Create as Open"
+          cancelVariant="ghost"
           onCancel={() => router.push(`/${projectId}/rfis`)}
           isSubmitting={createRfi.isPending}
           align="between"
@@ -87,7 +86,6 @@ export default function NewRfiPage() {
             onClick={() => submitRfi("draft")}
             disabled={createRfi.isPending}
           >
-            <Save />
             Save as Draft
           </Button>
         </FormActions>

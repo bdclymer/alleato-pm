@@ -335,19 +335,25 @@ export function RelatedItemsPanel({
             Failed to load related items. Please refresh.
           </p>
         ) : groups.length === 0 ? (
-          <EmptyState
-            icon={<LinkIcon />}
-            title="No related items"
-            description="Link RFIs, drawings, submittals, and other items to track connections."
-            action={
-              hasLinkableTargets ? (
-                <Button size="sm" variant="outline" onClick={() => setDialogOpen(true)}>
-                  <LinkIcon className="mr-1.5 h-4 w-4" />
-                  Add First Link
-                </Button>
-              ) : undefined
-            }
-          />
+          // Embedded (flat) usage: render nothing when empty — the section
+          // collapses to just its label + "Add Link" selector, so it reads as a
+          // compact field rather than a large empty block. The standalone card
+          // variant keeps the full EmptyState.
+          flat ? null : (
+            <EmptyState
+              icon={<LinkIcon />}
+              title="No related items"
+              description="Link RFIs, drawings, submittals, and other items to track connections."
+              action={
+                hasLinkableTargets ? (
+                  <Button size="sm" variant="outline" onClick={() => setDialogOpen(true)}>
+                    <LinkIcon className="mr-1.5 h-4 w-4" />
+                    Add First Link
+                  </Button>
+                ) : undefined
+              }
+            />
+          )
         ) : (
           <div className="space-y-4">
             {groups.map((group) => (
@@ -442,7 +448,9 @@ export function RelatedItemsPanel({
             </p>
             {addLinkButton}
           </div>
-          <div className="mt-3">{body}</div>
+          {(isLoading || error || totalCount > 0) && (
+            <div className="mt-3">{body}</div>
+          )}
         </div>
       ) : (
         <SectionCard

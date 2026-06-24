@@ -11,6 +11,8 @@ import { apiFetch } from "@/lib/api-client";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
+  type FilterConfig,
+  type FilterValue,
   type TableColumn,
 } from "@/components/tables/unified";
 import {
@@ -18,7 +20,18 @@ import {
   CellStatus,
   CellText,
 } from "@/components/tables/unified/table-primitives";
+import { useRfiPeopleOptions } from "@/components/rfis/rfi-form-fields";
 import type { RFI } from "@/types/database-extensions";
+
+/** URL params that drive server-side column filters (Procore parity). */
+const RFI_FILTER_KEYS = [
+  "rfi_manager",
+  "assignee",
+  "received_from",
+  "ball_in_court",
+  "overdue",
+] as const;
+type RfiFilterKey = (typeof RFI_FILTER_KEYS)[number];
 
 interface RfisTableProps {
   projectId: number;
@@ -85,6 +98,7 @@ async function fetchRfis(
     sort: string | null;
     status: string | null;
     search: string | null;
+    filters: Partial<Record<RfiFilterKey, string>>;
   },
 ): Promise<RfiListResponse> {
   const apiParams = new URLSearchParams();
@@ -92,6 +106,10 @@ async function fetchRfis(
   apiParams.set("limit", String(params.perPage));
   if (params.status) apiParams.set("status", params.status);
   if (params.search) apiParams.set("search", params.search);
+  for (const key of RFI_FILTER_KEYS) {
+    const value = params.filters[key];
+    if (value) apiParams.set(key, value);
+  }
 
   return apiFetch<RfiListResponse>(
     `/api/projects/${projectId}/rfis?${apiParams.toString()}`,
@@ -112,6 +130,42 @@ export function RfisTable({ projectId }: RfisTableProps) {
 
   const sort = searchParams.get("sort");
   const status = TAB_STATUS_MAP[activeTab];
+
+  // Person/role filter options come from the project directory (RFI rows store
+  // display names, so the filter value matches the stored name).
+  const { userOptions, directoryOptions } = useRfiPeopleOptions();
+
+  const filters = React.useMemo<FilterConfig[]>(() => {
+    const toOpts = (opts: { value: string; label: string }[]) =>
+      opts.map((o) => ({ value: o.value, label: o.label }));
+    return [
+      { id: "rfi_manager", label: "RFI Manager", type: "select", options: toOpts(userOptions) },
+      { id: "assignee", label: "Assignee", type: "select", options: toOpts(userOptions) },
+      { id: "received_from", label: "Received From", type: "select", options: toOpts(directoryOptions) },
+      { id: "ball_in_court", label: "Ball In Court", type: "select", options: toOpts(directoryOptions) },
+      { id: "overdue", label: "Overdue only", type: "boolean" },
+    ];
+  }, [userOptions, directoryOptions]);
+
+  const activeFilters = React.useMemo<Record<string, FilterValue>>(() => {
+    const result: Record<string, FilterValue> = {};
+    for (const key of RFI_FILTER_KEYS) {
+      const value = searchParams.get(key);
+      if (value) result[key] = key === "overdue" ? value === "true" : value;
+    }
+    return result;
+  }, [searchParams]);
+
+  const filterValues = React.useMemo(() => {
+    const result: Partial<Record<RfiFilterKey, string>> = {};
+    for (const key of RFI_FILTER_KEYS) {
+      const value = searchParams.get(key);
+      if (value) result[key] = value;
+    }
+    return result;
+  }, [searchParams]);
+
+  const hasActiveFilters = Object.keys(activeFilters).length > 0;
 
   const tableState = useUnifiedTableState({
     entityKey: `rfis-${projectId}`,
@@ -135,9 +189,25 @@ export function RfisTable({ projectId }: RfisTableProps) {
   const perPage = tableState.perPage;
   const search = tableState.debouncedSearch.trim() || null;
 
+  const handleFilterChange = React.useCallback(
+    (next: Record<string, FilterValue>) => {
+      const updates: Record<string, string | null> = { page: "1" };
+      for (const key of RFI_FILTER_KEYS) {
+        const value = next[key];
+        updates[key] =
+          value === undefined || value === false || value === ""
+            ? null
+            : String(value);
+      }
+      tableState.setPage(1);
+      tableState.setSearchParams(updates);
+    },
+    [tableState],
+  );
+
   const queryParams = React.useMemo(
-    () => ({ page, perPage, sort, status, search }),
-    [page, perPage, sort, status, search],
+    () => ({ page, perPage, sort, status, search, filters: filterValues }),
+    [page, perPage, sort, status, search, filterValues],
   );
 
   const { data, isLoading } = useQuery({
@@ -404,6 +474,10 @@ export function RfisTable({ projectId }: RfisTableProps) {
         columns: rfiColumnConfig,
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
+        filters,
+        activeFilters,
+        onFilterChange: handleFilterChange,
+        onClearFilters: () => handleFilterChange({}),
       }}
       data={{ items: rfis, isLoading, isFetching: false, error: null }}
       table={{
@@ -438,8 +512,11 @@ export function RfisTable({ projectId }: RfisTableProps) {
         title: "No RFIs found",
         description:
           "Create your first RFI to start tracking project questions.",
-        filteredDescription: "No RFIs match your current search or tab.",
-        isFiltered: Boolean(tableState.searchInput) || activeTab !== "all",
+        filteredDescription: "No RFIs match your current search or filters.",
+        isFiltered:
+          Boolean(tableState.searchInput) ||
+          activeTab !== "all" ||
+          hasActiveFilters,
         action: (
           <Button
             size="sm"

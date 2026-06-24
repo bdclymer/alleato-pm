@@ -63,11 +63,19 @@ async function fetchPendingPrimeChangeOrderLines(
     )
     .eq("project_id", projectId);
 
-  const errStr = JSON.stringify(result.error);
+  // Only treat a PostgREST "relation does not exist" (PGRST205) as the legacy
+  // table being absent. Matching on the table NAME would misclassify a genuine
+  // RLS/permission/timeout error (whose message often includes the table name)
+  // as "missing" and silently zero out change-order financials.
+  const e = (result.error ?? {}) as {
+    code?: string;
+    message?: string;
+    hint?: string;
+  };
   const isMissingTable =
-    errStr.includes(PRIME_CHANGE_ORDER_LINES_TABLE) ||
-    errStr.includes("PGRST205") ||
-    errStr.includes("schema cache");
+    e.code === "PGRST205" ||
+    (e.message ?? "").includes("schema cache") ||
+    (e.hint ?? "").includes("schema cache");
 
   if (result.error && isMissingTable) {
     return { data: [], error: null };

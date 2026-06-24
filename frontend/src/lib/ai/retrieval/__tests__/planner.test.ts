@@ -158,6 +158,17 @@ describe("planRetrieval", () => {
     expect(plan.sources.recentEmails).toBeUndefined();
   });
 
+  it("cross-source investigation → semantic vector search, not inbox delegation", () => {
+    const message =
+      "We had an employee quit this week suddenly saying he didn't feel like he fit in and put his resignation in effective immediately — can you research through the teams messages, emails, and meetings and see where this might have initiated?";
+    const plan = planRetrieval({ message, messages: [userMsg(message)] });
+    expect(plan.intent).toBe("source_lookup");
+    expect(plan.responseFormat).toBe("source_lookup");
+    expect(plan.sources.semanticVectorSearch).toEqual({ query: message });
+    expect(plan.reason).toContain("cross_source_investigation");
+    expect(plan.reason).not.toContain("microsoft_specialist_delegation");
+  });
+
   it("financial question → preconsult includes CFO", () => {
     const message = "What's our exposure on pending change orders across all projects?";
     const plan = planRetrieval({ message, messages: [userMsg(message)] });

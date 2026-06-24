@@ -110,11 +110,13 @@ function chatTitle(names: string[], topic: string | null | undefined, id: string
   return names.length > 4 ? `${names.slice(0, 4).join(", ")} +${names.length - 4}` : names.join(", ");
 }
 
-export async function listLiveTeamsConversations(): Promise<{
+type ConversationListResult = {
   conversations: LiveConversationSummary[];
   checkedMailboxes: string[];
   warning?: string;
-}> {
+};
+
+export async function listLiveTeamsConversations(): Promise<ConversationListResult> {
   const env = graphEnv();
   if (!env.ok) {
     return { conversations: [], checkedMailboxes: [], warning: `Microsoft Graph not configured: ${env.missing.join(", ")}` };

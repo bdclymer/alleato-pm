@@ -37,12 +37,44 @@ export type ActiveAlertsResponse = {
 
 const SEVERITY_RANK: Record<string, number> = { critical: 0, warning: 1, info: 2 };
 
+// `system_alerts` lives in the RAG DB but is not in the generated RagDatabase
+// types yet, so read it through a narrowly-typed view of the client (no `any`).
+type SystemAlertRow = {
+  alert_key: string | null;
+  category: string | null;
+  code: string | null;
+  severity: string | null;
+  source: string | null;
+  title: string | null;
+  message: string | null;
+  first_seen_at: string | null;
+  last_seen_at: string | null;
+  notified_at: string | null;
+};
+
+type SystemAlertReader = {
+  from: (table: "system_alerts") => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        order: (
+          column: string,
+          opts: { ascending: boolean },
+        ) => {
+          limit: (
+            count: number,
+          ) => PromiseLike<{ data: SystemAlertRow[] | null; error: { message: string } | null }>;
+        };
+      };
+    };
+  };
+};
+
 export const GET = withApiGuardrails(
   "admin/source-sync/active-alerts#GET",
   async (): Promise<NextResponse> => {
     await requireAdmin("admin/source-sync/active-alerts#GET");
 
-    const rag = createRagServiceClient();
+    const rag = createRagServiceClient() as unknown as SystemAlertReader;
     const { data, error } = await rag
       .from("system_alerts")
       .select(
