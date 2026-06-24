@@ -15,6 +15,10 @@ import {
   type ReadableEmailMessage,
 } from "@/lib/email/readable-email";
 import {
+  TeamsConversationThread,
+  parseTeamsConversation,
+} from "@/features/documents/teams-conversation-thread";
+import {
   createOutlookIntakeServiceClient,
   createRagServiceClient,
   createServiceClient,
@@ -245,6 +249,12 @@ export function SourceDocumentDetailPage({
     source.type === "email" || source.category === "email"
       ? parseReadableEmailThread(readableContent)
       : [];
+  const teamsMessages =
+    source.type === "teams_dm_conversation" ||
+    source.type === "teams_dm" ||
+    source.category === "teams_message"
+      ? parseTeamsConversation(source.content ?? readableContent)
+      : [];
   const externalHref = getExternalSourceHref(source);
   const sourceContextHref =
     typeof source.project_id === "number"
@@ -444,6 +454,8 @@ export function SourceDocumentDetailPage({
               ))}
             </Accordion>
           </div>
+        ) : teamsMessages.length > 0 ? (
+          <TeamsConversationThread messages={teamsMessages} />
         ) : readableContent ? (
           <div className="max-w-none whitespace-pre-wrap text-sm leading-7 text-foreground">
             {readableContent}
