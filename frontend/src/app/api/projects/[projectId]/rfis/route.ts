@@ -10,6 +10,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { notifyRfiOpened } from "@/lib/rfi/rfi-notify";
 import { rfiDraftSchema, rfiOpenSchema } from "@/lib/schemas/rfi-schema";
 import { ZodError } from "zod";
 import { logger } from "@/lib/logger";
@@ -222,6 +223,33 @@ export const POST = withApiGuardrails(
     if (error) {
       logger.error({ msg: "RFI create error:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
+    }
+
+    // An RFI created directly as "open" is distributed immediately. The row is
+    // already saved, so a notification failure surfaces as a non-blocking
+    // warning rather than failing the create (which succeeded).
+    if (targetStatus === "open") {
+      const notificationResult = await notifyRfiOpened({
+        projectId: numericProjectId,
+        rfiId: String(data.id),
+        actorUserId: user.id,
+      });
+
+      if (notificationResult.failed.length > 0) {
+        logger.warn({
+          msg: "RFI created (open) but distribution email(s) failed",
+          rfiId: data.id,
+          failed: notificationResult.failed,
+        });
+        return NextResponse.json(
+          {
+            ...data,
+            _emailWarning:
+              "RFI created, but one or more distribution emails could not be sent.",
+          },
+          { status: 201 },
+        );
+      }
     }
 
     return NextResponse.json(data, { status: 201 });

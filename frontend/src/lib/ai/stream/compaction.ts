@@ -7,6 +7,13 @@ export const CONTEXT_COMPACTION_END_MARKER =
 
 export const DEFAULT_THRESHOLD_TOKENS = 90_000;
 export const DEFAULT_HARD_LIMIT_TOKENS = 120_000;
+// Floor for the resolved hard limit. The `> 0` fallback already catches an
+// unset / zero / NaN limit, but a fat-fingered *positive-but-tiny* value
+// (e.g. AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS=5000) would slip
+// through and reject every normal short chat — the original WOMBAT incident
+// was exactly this class (resolved limit of 0). Any model in use comfortably
+// handles 48k tokens, so we never let the rejection threshold drop below it.
+export const MIN_HARD_LIMIT_TOKENS = 48_000;
 const DEFAULT_HEAD_MESSAGES = 4;
 const DEFAULT_TAIL_MESSAGES = 12;
 const DEFAULT_MAX_TOOL_RESULT_CHARS = 700;
@@ -44,12 +51,21 @@ export function resolveContextLimits(options: {
     (options.thresholdTokens as number) > 0
       ? (options.thresholdTokens as number)
       : DEFAULT_THRESHOLD_TOKENS;
-  const hardLimitTokens =
+  const configuredHardLimit =
     Number.isFinite(options.hardLimitTokens) &&
     (options.hardLimitTokens as number) > 0
       ? (options.hardLimitTokens as number)
       : DEFAULT_HARD_LIMIT_TOKENS;
-  return { thresholdTokens, hardLimitTokens };
+  // Never let a misconfigured (positive but too-small) hard limit reject normal
+  // short chats. Floor it so the rejection threshold can't drop into the range
+  // of an ordinary system-prompt-sized request.
+  const hardLimitTokens = Math.max(configuredHardLimit, MIN_HARD_LIMIT_TOKENS);
+  // Keep the compaction threshold at or below the hard limit so a small custom
+  // hard limit doesn't invert the two.
+  return {
+    thresholdTokens: Math.min(thresholdTokens, hardLimitTokens),
+    hardLimitTokens,
+  };
 }
 
 type SummarizeCompactionInput = {

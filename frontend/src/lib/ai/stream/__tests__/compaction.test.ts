@@ -2,7 +2,10 @@ import type { ModelMessage } from "ai";
 import {
   CONTEXT_COMPACTION_SUMMARY_PREFIX,
   ContextCompactionError,
+  DEFAULT_HARD_LIMIT_TOKENS,
+  MIN_HARD_LIMIT_TOKENS,
   maybeCompactModelMessages,
+  resolveContextLimits,
 } from "../compaction";
 
 function user(content: string): ModelMessage {
@@ -16,6 +19,41 @@ function assistant(content: ModelMessage["content"]): ModelMessage {
 function system(content: string): ModelMessage {
   return { role: "system", content };
 }
+
+describe("resolveContextLimits", () => {
+  it("falls back to defaults when the limit is unset / NaN / zero / negative", () => {
+    expect(resolveContextLimits({}).hardLimitTokens).toBe(DEFAULT_HARD_LIMIT_TOKENS);
+    expect(resolveContextLimits({ hardLimitTokens: NaN }).hardLimitTokens).toBe(
+      DEFAULT_HARD_LIMIT_TOKENS,
+    );
+    expect(resolveContextLimits({ hardLimitTokens: 0 }).hardLimitTokens).toBe(
+      DEFAULT_HARD_LIMIT_TOKENS,
+    );
+    expect(resolveContextLimits({ hardLimitTokens: -5 }).hardLimitTokens).toBe(
+      DEFAULT_HARD_LIMIT_TOKENS,
+    );
+  });
+
+  it("floors a positive-but-too-small configured hard limit", () => {
+    expect(resolveContextLimits({ hardLimitTokens: 5_000 }).hardLimitTokens).toBe(
+      MIN_HARD_LIMIT_TOKENS,
+    );
+  });
+
+  it("respects a sane custom hard limit above the floor", () => {
+    expect(resolveContextLimits({ hardLimitTokens: 64_000 }).hardLimitTokens).toBe(
+      64_000,
+    );
+  });
+
+  it("never lets the threshold exceed the hard limit", () => {
+    const { thresholdTokens, hardLimitTokens } = resolveContextLimits({
+      thresholdTokens: 90_000,
+      hardLimitTokens: 50_000,
+    });
+    expect(thresholdTokens).toBeLessThanOrEqual(hardLimitTokens);
+  });
+});
 
 describe("context compaction", () => {
   it("returns an under-threshold no-op without calling the summarizer", async () => {
@@ -247,14 +285,33 @@ describe("context compaction", () => {
   });
 
   it("throws a specific compaction error when compaction is disabled but the request is over the hard limit", async () => {
+    // 200k chars ≈ 50k tokens — over the floored hard limit even with a tiny
+    // configured limit (the floor protects normal chats, not genuinely huge ones).
     await expect(
-      maybeCompactModelMessages([user("x".repeat(2_000))], {
+      maybeCompactModelMessages([user("x".repeat(200_000))], {
         enabled: false,
         systemPrompt: "system",
         thresholdTokens: 10,
         hardLimitTokens: 20,
       }),
     ).rejects.toThrow(ContextCompactionError);
+  });
+
+  it("does NOT reject a normal short chat even when the configured hard limit is a too-small positive number", async () => {
+    // Regression guardrail: a fat-fingered positive-but-tiny hard limit
+    // (e.g. env set to 5000) must not reject an ordinary short chat. The floor
+    // keeps the rejection threshold above normal system-prompt-sized requests.
+    const result = await maybeCompactModelMessages(
+      [user("Reply with exactly the word: WOMBAT")],
+      {
+        enabled: false,
+        systemPrompt: "S".repeat(30_000), // ~7.5k tokens, the real WOMBAT size
+        thresholdTokens: 4_000,
+        hardLimitTokens: 5_000,
+      },
+    );
+    expect(result.metadata.status).toBe("disabled");
+    expect(result.metadata.hardLimitTokens).toBeGreaterThanOrEqual(48_000);
   });
 
   it("blames the system prompt — not the chat — when a 1-message chat is over the limit because of an oversized injected context", async () => {
@@ -307,7 +364,7 @@ describe("context compaction", () => {
       maybeCompactModelMessages(
         [
           user("head"),
-          assistant("middle " + "x".repeat(2_000)),
+          assistant("middle " + "x".repeat(200_000)),
           user("tail"),
         ],
         {

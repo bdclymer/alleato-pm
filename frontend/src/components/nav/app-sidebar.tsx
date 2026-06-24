@@ -336,12 +336,12 @@ function ExpandedCompanyWideTools({
       companyWideToolSections.flatMap((section) => section.toolNames)
     )
     // Tools not covered by a named section (e.g. developer admin tools) render
-    // under an "Admin" section, mirroring the header Company Tools panel.
+    // under an "AI" section, mirroring the header Company Tools panel.
     const extraTools = tools.filter((tool) => !sectionToolNames.has(tool.name))
     if (extraTools.length === 0) return companyWideToolSections
     return [
       ...companyWideToolSections,
-      { label: "Admin", toolNames: extraTools.map((tool) => tool.name) },
+      { label: "AI", toolNames: extraTools.map((tool) => tool.name) },
     ]
   }, [tools])
 

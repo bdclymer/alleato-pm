@@ -101,7 +101,7 @@ export interface HeaderNavGroup {
 
 export const companyWideHeaderTools: HeaderNavigationTool[] = [
   {
-    name: "AI",
+    name: "Alleato AI",
     path: "ai",
     requiresProject: false,
     icon: Bot,
@@ -425,7 +425,7 @@ export const companyWideToolSections: CompanyWideToolSection[] = [
   },
   {
     label: "AI",
-    toolNames: ["AI"],
+    toolNames: ["Alleato AI"],
   },
   {
     label: "Work",
