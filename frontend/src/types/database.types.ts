@@ -31408,6 +31408,8 @@ export type Database = {
           total_versions: number | null
           updated_at: string | null
           updated_by: string | null
+          ai_review_result: Json | null
+          ai_review_ran_at: string | null
         }
         Insert: {
           ball_in_court?: string | null
@@ -31486,6 +31488,8 @@ export type Database = {
           total_versions?: number | null
           updated_at?: string | null
           updated_by?: string | null
+          ai_review_result?: Json | null
+          ai_review_ran_at?: string | null
         }
         Relationships: [
           {

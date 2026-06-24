@@ -90,6 +90,7 @@ import {
   type PermissionLevel,
 } from "@/hooks/use-directory-permissions";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScanDrawingsSheet } from "@/features/submittals/scan-drawings-sheet";
 
 type SubmittalFilterState = Record<string, FilterValue>;
 
@@ -1572,6 +1573,7 @@ export default function SubmittalsPage(): ReactElement {
   const { confirm, ConfirmDialog } = useConfirm();
   const [packagePickerOpen, setPackagePickerOpen] = React.useState(false);
   const [specPickerOpen, setSpecPickerOpen] = React.useState(false);
+  const [scanDrawingsOpen, setScanDrawingsOpen] = React.useState(false);
   const deleteSubmittal = useDeleteSubmittal(projectId);
   const [packageManageOpen, setPackageManageOpen] = React.useState(false);
   const [editingPackage, setEditingPackage] = React.useState<PackageRow | null>(
@@ -2020,6 +2022,11 @@ export default function SubmittalsPage(): ReactElement {
 
   return (
     <>
+      <ScanDrawingsSheet
+        projectId={projectId}
+        open={scanDrawingsOpen}
+        onOpenChange={setScanDrawingsOpen}
+      />
       <PackagePickerDialog
         projectId={projectId}
         open={packagePickerOpen}
@@ -2097,6 +2104,13 @@ export default function SubmittalsPage(): ReactElement {
                   New Package
                 </Button>
               )}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setScanDrawingsOpen(true)}
+              >
+                Scan drawings
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" data-testid="submittals-create-button">

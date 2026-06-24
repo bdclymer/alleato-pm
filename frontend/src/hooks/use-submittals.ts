@@ -713,3 +713,37 @@ export function useRunSubmittalAIReview(projectId: number, submittalId: string) 
     },
   });
 }
+
+// ─── Required Submittals (from drawing vision analysis) ────────────────────────
+
+export interface RequiredSubmittalItem {
+  drawingId: string;
+  drawingNumber: string;
+  drawingTitle: string;
+  discipline: string | null;
+  impliedSubmittal: string;
+  existingSubmittal: {
+    id: string;
+    number: string;
+    title: string;
+    status: string | null;
+  } | null;
+}
+
+export interface RequiredSubmittalsResponse {
+  items: RequiredSubmittalItem[];
+  summary: { totalImplied: number; covered: number; missing: number };
+}
+
+/** Fetches submittals implied by drawing vision analysis, cross-referenced against existing submittals. */
+export function useRequiredSubmittals(projectId: number) {
+  return useQuery({
+    queryKey: ["required-submittals", projectId],
+    queryFn: () =>
+      apiFetch<RequiredSubmittalsResponse>(
+        `/api/projects/${projectId}/submittals/required`,
+      ),
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 15,
+  });
+}

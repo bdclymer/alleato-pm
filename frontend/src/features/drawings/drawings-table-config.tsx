@@ -48,6 +48,7 @@ export const drawingColumns: ColumnConfig[] = [
   { id: "drawingType", label: "Type", defaultVisible: true },
   { id: "status", label: "Review Status", defaultVisible: false },
   { id: "publishState", label: "Status", defaultVisible: true },
+  { id: "impliedSubmittals", label: "Req. Submittals", defaultVisible: true },
   { id: "drawingDate", label: "Drawing Date", defaultVisible: true },
   { id: "receivedDate", label: "Received", defaultVisible: true },
   { id: "setName", label: "Set", defaultVisible: false },
@@ -130,8 +131,18 @@ export interface DrawingInlineEditHandlers {
   ) => Promise<void>;
 }
 
+/**
+ * drawingId → { total, missing } counts derived from the required-submittals scan.
+ * Pass this when the page already has scan data loaded; omit to hide the column entirely.
+ */
+export type ImpliedSubmittalCounts = Map<
+  string,
+  { total: number; missing: number }
+>;
+
 export function buildDrawingTableColumns(
   inlineEdit?: DrawingInlineEditHandlers,
+  impliedSubmittalCounts?: ImpliedSubmittalCounts,
 ): TableColumn<DrawingLogTableRow>[] {
   const disciplineOptions = (
     inlineEdit?.disciplines ?? DRAWING_DISCIPLINES
@@ -227,8 +238,31 @@ export function buildDrawingTableColumns(
       },
       sortValue: (item) => getDrawingPublishState(item),
     },
+    // Implied submittals column — only rendered when scan data is available
     {
       ...drawingColumns[7],
+      render: (item) => {
+        if (!impliedSubmittalCounts) return null;
+        const counts = impliedSubmittalCounts.get(item.id);
+        if (!counts || counts.total === 0) {
+          return <span className="text-xs text-muted-foreground">—</span>;
+        }
+        return (
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-foreground">{counts.total}</span>
+            {counts.missing > 0 && (
+              <span className="inline-flex items-center rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
+                {counts.missing} missing
+              </span>
+            )}
+          </div>
+        );
+      },
+      sortValue: (item) =>
+        impliedSubmittalCounts?.get(item.id)?.missing ?? 0,
+    },
+    {
+      ...drawingColumns[9],
       render: (item) => (
         <span className="text-sm">{formatDate(item.drawingDate)}</span>
       ),
@@ -236,7 +270,7 @@ export function buildDrawingTableColumns(
         item.drawingDate ? new Date(item.drawingDate).getTime() : 0,
     },
     {
-      ...drawingColumns[8],
+      ...drawingColumns[10],
       render: (item) => (
         <span className="text-sm">{formatDate(item.receivedDate)}</span>
       ),
@@ -244,7 +278,7 @@ export function buildDrawingTableColumns(
         item.receivedDate ? new Date(item.receivedDate).getTime() : 0,
     },
     {
-      ...drawingColumns[9],
+      ...drawingColumns[11],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.setName || "-"}
@@ -253,7 +287,7 @@ export function buildDrawingTableColumns(
       sortValue: (item) => item.setName ?? "",
     },
     {
-      ...drawingColumns[10],
+      ...drawingColumns[12],
       render: (item) => (
         <span className="text-xs text-muted-foreground truncate max-w-32 block">
           {item.fileName || "-"}
@@ -262,7 +296,7 @@ export function buildDrawingTableColumns(
       sortValue: (item) => item.fileName ?? "",
     },
     {
-      ...drawingColumns[11],
+      ...drawingColumns[13],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.uploadedByEmail || "-"}
