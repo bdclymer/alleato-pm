@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { SectionRuleHeading } from "@/components/layout";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { useSubmittalAIReview, type AIReviewResult } from "@/hooks/use-submittals";
-import { appToast as toast } from "@/lib/toast/app-toast";
 import { AlertTriangle, CheckCircle2, CircleHelp, Cpu, Sparkles, XCircle } from "lucide-react";
 
 interface Props {
@@ -163,14 +163,10 @@ function ReviewFindings({ result }: { result: AIReviewResult }) {
 }
 
 export function SubmittalAIReviewPanel({ projectId, submittalId }: Props) {
-  const reviewMutation = useSubmittalAIReview(projectId, submittalId);
+  const { data, isFetching, error, refetch } = useSubmittalAIReview(projectId, submittalId);
 
   async function handleRunReview() {
-    try {
-      await reviewMutation.mutateAsync({});
-    } catch {
-      toast.error("AI review failed — please try again");
-    }
+    await refetch();
   }
 
   return (
@@ -180,19 +176,27 @@ export function SubmittalAIReviewPanel({ projectId, submittalId }: Props) {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Compare this submittal against linked project drawings.
+            {data
+              ? "Review complete. Run again after uploading a revised submittal."
+              : "Compare this submittal against linked project drawings."}
           </p>
           <Button
             size="sm"
             onClick={handleRunReview}
-            disabled={reviewMutation.isPending}
+            disabled={isFetching}
           >
-            {reviewMutation.isPending ? "Running…" : "Run AI Review"}
+            {isFetching ? "Running…" : data ? "Re-run Review" : "Run AI Review"}
           </Button>
         </div>
 
-        {reviewMutation.data && (
-          <ReviewFindings result={reviewMutation.data} />
+        {error && !isFetching && (
+          <InfoAlert variant="error">
+            Review failed. Check that drawings and submittal documents are uploaded, then try again.
+          </InfoAlert>
+        )}
+
+        {data && (
+          <ReviewFindings result={data} />
         )}
       </div>
     </div>

@@ -682,16 +682,20 @@ export function useRemoveLinkedDrawing(projectId: number, submittalId: string) {
 }
 
 export function useSubmittalAIReview(projectId: number, submittalId: string) {
-  return useMutation({
-    mutationFn: async ({ focusArea }: { focusArea?: string } = {}) => {
-      return apiFetch<AIReviewResult>(
+  return useQuery({
+    queryKey: ["submittal-ai-review", projectId, submittalId],
+    queryFn: () =>
+      apiFetch<AIReviewResult>(
         `/api/projects/${projectId}/submittals/${submittalId}/ai-review`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ focusArea }),
-        }
-      );
-    },
+          body: JSON.stringify({}),
+        },
+      ),
+    enabled: false,
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
+    retry: false,
   });
 }
