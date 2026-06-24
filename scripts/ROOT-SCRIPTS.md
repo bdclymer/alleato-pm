@@ -143,32 +143,10 @@ Deleted unsafe/stale migration helpers:
 - `create-drawing-tables.js`
 - `fix-mcp-and-create-tables.js`
 
-## Archived Root Helpers
+## Deleted Root Helpers
 
-The following former root helpers were moved to
-`scripts/archive/2026-06-22-root-helpers/` after reference checks showed no
-package-script ownership and no active docs/task references outside their own
-file comments:
-
-- `backfill-fireflies-meeting-durations.mjs`
-- `backfill-insights-embeddings.mjs`
-- `backfill-meeting-summary-embeddings.mjs`
-- `backfill-summary-embeddings.mjs`
-- `backfill-task-assignees.mjs`
-- `backfill-task-project-ids.js`
-- `backfill_outlook_document_metadata.py`
-- `backfill_outlook_intake_from_metadata.py`
-- `delete-noblesville-commitments.mjs`
-- `import-allisonville-commitments.cjs`
-- `import-noblesville-change-workflow.mjs`
-- `import-noblesville-submittals.cjs`
-- `import_legacy_budget.py`
-- `patch-noblesville-sov.py`
-- `send-owner-brief-test.mts`
-- `test-ai-tool-queries.mjs`
-- `test-ai-tools.mjs`
-- `test-pipeline-sections.py`
-- `test-rag-terminal.mjs`
-- `test_csv_export.sh`
-- `test_direct_costs.py`
-- `update-noblesville-company-ids.py`
+One-off root helpers (backfills, imports, ad-hoc tests) were **deleted** on
+2026-06-23 — git history is the archive. Recover any of them with
+`git log --all --diff-filter=D -- scripts/archive/2026-06-22-root-helpers/`.
+A pre-commit guard now blocks re-introducing `archive/` folders or
+`.bak/.old/.orig` files under `scripts/` and `backend/`.
