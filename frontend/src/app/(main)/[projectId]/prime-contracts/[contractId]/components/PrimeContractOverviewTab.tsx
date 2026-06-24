@@ -357,7 +357,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
   }, [displayedSovItems, budgetCodes]);
 
   const renderDateOrDash = (value: string | null | undefined) =>
-    value ? formatDate(value) : <span className="text-muted-foreground/40">—</span>;
+    value ? formatDate(value) : null;
   const descriptionValue = getTextValue(contract.description);
   const saveNullableDate = (field: string) => (value: string) =>
     onSaveContractField(field, value || null);
@@ -372,7 +372,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
         <div className="grid grid-cols-1 gap-16 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
           <div className="space-y-10">
             <DetailPanel>
-              <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
+              <SectionRuleHeading label="General Information" />
               <DetailFieldGrid columns={2}>
                 <EditableDetailField
                   label="Contract #"
@@ -413,7 +413,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                   label="Contractor"
                   type="select"
                   value={contract.contractor_id || EMPTY_RELATION_VALUE}
-                  display={contract.contractor?.name || <span className="text-muted-foreground/40">—</span>}
+                  display={contract.contractor?.name || undefined}
                   options={relationshipOptions}
                   onSave={(value) =>
                     onSaveContractField(
@@ -426,7 +426,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                   label="Architect"
                   type="select"
                   value={contract.architect_engineer_id || EMPTY_RELATION_VALUE}
-                  display={contract.architect_engineer?.name || <span className="text-muted-foreground/40">—</span>}
+                  display={contract.architect_engineer?.name || undefined}
                   options={relationshipOptions}
                   onSave={(value) =>
                     onSaveContractField(
@@ -508,14 +508,16 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
 
             <DetailPanel>
               <Collapsible defaultOpen>
-                <div className="mb-6 flex items-center justify-between">
-                  <SectionRuleHeading label="Inclusions + Exclusions" className="pb-0 mb-0" />
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary">
-                      <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=closed]_&]:rotate-[-90deg]" />
-                    </Button>
-                  </CollapsibleTrigger>
-                </div>
+                <SectionRuleHeading
+                  label="Inclusions + Exclusions"
+                  actions={
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary">
+                        <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=closed]_&]:rotate-[-90deg]" />
+                      </Button>
+                    </CollapsibleTrigger>
+                  }
+                />
                 <CollapsibleContent>
                   <div className="space-y-6 text-sm">
                     <div className="flex flex-col gap-1.5">
@@ -556,7 +558,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
 
           <aside>
             <DetailPanel className="rounded-lg bg-surface-soft p-6">
-              <SectionRuleHeading label="Financial Summary" className="mb-6 pb-0" />
+              <SectionRuleHeading label="Financial Summary" />
               <div className="space-y-3 text-sm">
                 <SummaryValueRow label="Original Amount" value={formatCurrency(originalContractAmount)} />
                 <SummaryValueRow label="Revised Amount" value={formatCurrency(revisedContractAmount)} />
@@ -914,7 +916,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               </SortableContext>
             </DndContext>
           ) : (
-              <InlineTable variant="edit">
+              <InlineTable>
                 <InlineTableHeader>
                   <InlineTableHeaderRow>
                     <InlineTableHeaderCell className="w-10" />
