@@ -15,7 +15,6 @@ import {
 
 import {
   ContentSectionStack,
-  DetailPanel,
   PageShell,
   PageTabs,
   SectionRuleHeading,
@@ -25,7 +24,8 @@ import {
   InlineEditField,
   StatusBadge,
 } from "@/components/ds";
-import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItemsPanel";
+import { Property, PropertyList } from "@/components/ui/property";
+import { StatBreakdownCard } from "@/components/ui/stat-breakdown";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -719,13 +719,11 @@ export function SubmittalDetailClient({
             />
 
             {activeTab === "details" && (
-          <ContentSectionStack className="pt-3">
+          <ContentSectionStack className="pt-6">
             <section>
-              <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
-                <div className="space-y-6">
-                  <DetailPanel>
-                    <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
-                    <div className="space-y-10">
+              <div className="grid grid-cols-1 gap-12 xl:grid-cols-[minmax(0,1fr)_300px]">
+                <div className="space-y-10">
+                  <div className="space-y-10">
               <section className="space-y-6">
                 <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-2">
                   <div className="min-w-0">
@@ -1052,11 +1050,10 @@ export function SubmittalDetailClient({
               </section>
 
                     </div>
-                  </DetailPanel>
                 </div>
 
                 <aside>
-                  <DetailPanel>
+                  <div className="rounded-md">
                     <SectionRuleHeading label="Submittal Summary" className="mb-6 pb-0" />
                     <div className="space-y-8">
               {submittal.ball_in_court && (
@@ -1148,7 +1145,7 @@ export function SubmittalDetailClient({
                 </div>
               )}
                     </div>
-                  </DetailPanel>
+                  </div>
                 </aside>
               </div>
             </section>
