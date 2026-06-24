@@ -125,6 +125,84 @@ function PdfThumb({ src, fallback }: { src: string; fallback: React.ReactNode })
   );
 }
 
+/** Lazily render a docx (docx-preview) or xlsx (SheetJS) preview once in view. */
+function OfficeThumb({
+  src,
+  kind,
+  fallback,
+}: {
+  src: string;
+  kind: "docx" | "xlsx";
+  fallback: React.ReactNode;
+}) {
+  const boxRef = React.useRef<HTMLDivElement | null>(null);
+  const innerRef = React.useRef<HTMLDivElement | null>(null);
+  const [inView, setInView] = React.useState(false);
+  const [status, setStatus] = React.useState<"idle" | "ready" | "failed">("idle");
+
+  React.useEffect(() => {
+    const node = boxRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  React.useEffect(() => {
+    if (!inView || status !== "idle" || !innerRef.current) return;
+    let cancelled = false;
+    const target = innerRef.current;
+    (async () => {
+      try {
+        const res = await fetch(src);
+        if (!res.ok) throw new Error(`fetch ${res.status}`);
+        const buf = await res.arrayBuffer();
+        if (cancelled) return;
+        if (kind === "docx") {
+          const { renderAsync } = await import("docx-preview");
+          target.innerHTML = "";
+          await renderAsync(buf, target, undefined, {
+            inWrapper: false,
+            ignoreLastRenderedPageBreak: true,
+          });
+        } else {
+          const XLSX = await import("xlsx");
+          const wb = XLSX.read(buf, { type: "array" });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          target.innerHTML = ws ? XLSX.utils.sheet_to_html(ws) : "";
+        }
+        if (!cancelled) setStatus("ready");
+      } catch {
+        if (!cancelled) setStatus("failed");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [inView, status, src, kind]);
+
+  return (
+    <div ref={boxRef} className="relative h-full w-full overflow-hidden bg-background">
+      <div
+        ref={innerRef}
+        className="pointer-events-none absolute left-1 top-1 origin-top-left [&_*]:!text-[11px] [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-1"
+        style={{ transform: "scale(0.34)" }}
+      />
+      {status !== "ready" ? (
+        <div className="absolute inset-0">{fallback}</div>
+      ) : null}
+    </div>
+  );
+}
+
 function Thumbnail({ item }: { item: PipelineDoc }) {
   const Icon = typeIcon(item);
   const iconTile = (
@@ -154,6 +232,15 @@ function Thumbnail({ item }: { item: PipelineDoc }) {
   }
   if (kind === "pdf") {
     return <PdfThumb src={src} fallback={iconTile} />;
+  }
+  if (kind === "office") {
+    const ext = extensionOf(item);
+    if (ext === "docx" || ext === "doc") {
+      return <OfficeThumb src={src} kind="docx" fallback={iconTile} />;
+    }
+    if (ext === "xlsx" || ext === "xls" || ext === "csv") {
+      return <OfficeThumb src={src} kind="xlsx" fallback={iconTile} />;
+    }
   }
   return iconTile;
 }
