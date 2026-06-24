@@ -27926,6 +27926,114 @@ export type Database = {
           },
         ]
       }
+      rfi_response_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          project_id: number
+          recipient_email: string
+          recipient_name: string | null
+          recipient_person_id: string | null
+          revoked_at: string | null
+          rfi_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          project_id: number
+          recipient_email: string
+          recipient_name?: string | null
+          recipient_person_id?: string | null
+          revoked_at?: string | null
+          rfi_id: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          project_id?: number
+          recipient_email?: string
+          recipient_name?: string | null
+          recipient_person_id?: string | null
+          revoked_at?: string | null
+          rfi_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rfi_response_tokens_recipient_person_id_fkey"
+            columns: ["recipient_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfi_response_tokens_rfi_id_fkey"
+            columns: ["rfi_id"]
+            isOneToOne: false
+            referencedRelation: "rfis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rfi_responses: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_official: boolean
+          project_id: number
+          responder_email: string | null
+          responder_name: string | null
+          responder_person_id: string | null
+          rfi_id: string
+          source: string
+          source_message_id: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          is_official?: boolean
+          project_id: number
+          responder_email?: string | null
+          responder_name?: string | null
+          responder_person_id?: string | null
+          rfi_id: string
+          source?: string
+          source_message_id?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_official?: boolean
+          project_id?: number
+          responder_email?: string | null
+          responder_name?: string | null
+          responder_person_id?: string | null
+          rfi_id?: string
+          source?: string
+          source_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rfi_responses_responder_person_id_fkey"
+            columns: ["responder_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfi_responses_rfi_id_fkey"
+            columns: ["rfi_id"]
+            isOneToOne: false
+            referencedRelation: "rfis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rfis: {
         Row: {
           assignees: string[] | null

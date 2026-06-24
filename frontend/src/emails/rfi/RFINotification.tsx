@@ -11,6 +11,14 @@ export interface RFINotificationProps {
   createdBy: string;
   ballInCourt?: string | null;
   viewUrl: string;
+  /**
+   * No-login response link for assignees. When present, the primary button
+   * sends the recipient straight to a public response page (no account needed)
+   * and the app link becomes a secondary option.
+   */
+  respondUrl?: string | null;
+  /** When true, replies to this email are ingested as the RFI response. */
+  canReplyByEmail?: boolean;
 }
 
 /**
@@ -27,14 +35,16 @@ export default function RFINotification({
   createdBy,
   ballInCourt,
   viewUrl,
+  respondUrl,
+  canReplyByEmail,
 }: RFINotificationProps) {
   return (
     <EmailShell
       previewText={`RFI #${rfiNumber} — ${rfiSubject}`}
       eyebrow="New RFI"
       heading={`RFI #${rfiNumber} — ${rfiSubject}`}
-      ctaLabel="Respond to RFI"
-      ctaUrl={viewUrl}
+      ctaLabel={respondUrl ? "Respond to RFI" : "View RFI"}
+      ctaUrl={respondUrl ?? viewUrl}
     >
       <p style={{ margin: "0 0 12px" }}>Hi {recipientName},</p>
       <p style={{ margin: "0 0 12px" }}>
@@ -78,6 +88,18 @@ export default function RFINotification({
           </p>
           <p style={{ margin: "0 0 12px", whiteSpace: "pre-wrap" }}>{question}</p>
         </>
+      ) : null}
+
+      {respondUrl ? (
+        <p style={{ margin: "16px 0 0", fontSize: 13, color: "#64748b" }}>
+          No account or login needed — just click <strong>Respond to RFI</strong>{" "}
+          above to answer
+          {canReplyByEmail ? ", or simply reply to this email" : ""}.{" "}
+          <a href={viewUrl} style={{ color: "#64748b", textDecoration: "underline" }}>
+            Or open it in the app
+          </a>
+          .
+        </p>
       ) : null}
     </EmailShell>
   );

@@ -44,6 +44,7 @@ export type EmailTemplate =
   | "rfi-notification"
   | "rfi-updated"
   | "rfi-closed"
+  | "rfi-response-received"
   | "submittal-notification"
   | "mention-notification"
   | "owner-invoice-issued"

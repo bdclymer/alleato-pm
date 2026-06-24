@@ -23,6 +23,9 @@ import RFIClosedNotification from "@/emails/rfi/RFIClosedNotification";
 import RFINotification from "@/emails/rfi/RFINotification";
 import RFIUpdateNotification from "@/emails/rfi/RFIUpdateNotification";
 import { classifyRfiRecipientEntries, personFullNameKey } from "./rfi-recipients";
+import { createRfiResponseToken } from "./response-tokens";
+import { parseReplyMailbox, buildRfiReplyAddress } from "./email-reply";
+import RFIResponseReceivedNotification from "@/emails/rfi/RFIResponseReceivedNotification";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
@@ -167,12 +170,40 @@ export async function notifyRfiOpened(args: {
   const viewUrl = `${APP_BASE_URL}/${projectId}/rfis/${rfiId}`;
   const subject = `New RFI #${rfi.number} — ${rfi.subject}`;
 
+  // Assignees are the people asked to answer — they get a no-login response link
+  // (web) and a tokenized Reply-To (email). The distribution list / RFI manager
+  // are informational (plain notification).
+  const { recipients: assigneeRecipients } = await resolveRfiRecipientEmails(
+    supabase,
+    rfi.assignees || [],
+  );
+  const assigneeEmails = new Set(assigneeRecipients.map((a) => a.email));
+  const replyMailbox = parseReplyMailbox(process.env.RFI_REPLY_MAILBOX);
+
   const results = await Promise.all(
     recipients.map(async (r) => {
+      let respondUrl: string | null = null;
+      let replyTo: string | undefined;
+      if (assigneeEmails.has(r.email)) {
+        const token = await createRfiResponseToken(supabase, {
+          rfiId,
+          projectId,
+          recipientEmail: r.email,
+          recipientName: r.name,
+        });
+        if (token) {
+          respondUrl = `${APP_BASE_URL}/respond/rfi/${token}`;
+          // When the reply mailbox is configured, replies to this email are
+          // tokenized and ingested back as RFI responses (see the reply cron).
+          if (replyMailbox) replyTo = buildRfiReplyAddress(replyMailbox, token);
+        }
+      }
+
       const result = await sendEmail({
         template: "rfi-notification",
         to: r.email,
         subject,
+        replyTo,
         react: RFINotification({
           recipientName: r.name,
           projectName,
@@ -183,6 +214,8 @@ export async function notifyRfiOpened(args: {
           createdBy,
           ballInCourt: rfi.ball_in_court,
           viewUrl,
+          respondUrl,
+          canReplyByEmail: Boolean(replyTo),
         }),
         entity: { type: "rfi", id: rfiId },
         idempotencyKey: `rfi-opened/${rfiId}/${r.email}`,
@@ -367,6 +400,79 @@ export async function notifyRfiClosed(args: {
     .map(({ email, result }) => ({
       email,
       error: result.error?.message ?? "Failed to send RFI close notification.",
+    }));
+
+  return { sent: results.length - failed.length, failed };
+}
+
+// ── RFI response received notification ───────────────────────────────────────
+
+/**
+ * Notify the internal team (RFI manager + creator) that a subcontractor
+ * submitted a response via the no-login channel. Best-effort: the response is
+ * already persisted, so a notification failure must never surface to the
+ * responder. The service client is passed in by the public response endpoint
+ * (which has no Supabase session of its own).
+ */
+export async function notifyRfiResponseReceived(
+  supabase: ServiceClient,
+  args: { rfiId: string; responderName: string; body: string },
+): Promise<RfiNotifyResult> {
+  const { rfiId, responderName, body } = args;
+
+  const { data: rfi } = await supabase
+    .from("rfis")
+    .select("id, number, subject, project_id, rfi_manager, created_by")
+    .eq("id", rfiId)
+    .maybeSingle();
+  if (!rfi) {
+    return { sent: 0, failed: [{ error: "RFI not found for response notification." }] };
+  }
+
+  const { recipients, error } = await resolveRfiRecipientEmails(supabase, [
+    rfi.rfi_manager,
+    rfi.created_by,
+  ]);
+  if (error) return { sent: 0, failed: [{ error }] };
+  if (recipients.length === 0) return { sent: 0, failed: [] };
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("name")
+    .eq("id", rfi.project_id)
+    .maybeSingle();
+
+  const projectName = project?.name || `Project #${rfi.project_id}`;
+  const viewUrl = `${APP_BASE_URL}/${rfi.project_id}/rfis/${rfiId}`;
+  const subject = `New response on RFI #${rfi.number} — ${rfi.subject}`;
+
+  const results = await Promise.all(
+    recipients.map(async (r) => {
+      const result = await sendEmail({
+        template: "rfi-response-received",
+        to: r.email,
+        subject,
+        react: RFIResponseReceivedNotification({
+          recipientName: r.name,
+          projectName,
+          rfiNumber: rfi.number,
+          rfiSubject: rfi.subject,
+          responderName,
+          responseExcerpt: body.length > 600 ? `${body.slice(0, 600)}…` : body,
+          viewUrl,
+        }),
+        entity: { type: "rfi", id: rfiId },
+        metadata: { project_id: rfi.project_id, rfi_id: rfiId, recipient_email: r.email },
+      });
+      return { email: r.email, result };
+    }),
+  );
+
+  const failed = results
+    .filter(({ result }) => result.error)
+    .map(({ email, result }) => ({
+      email,
+      error: result.error?.message ?? "Failed to send RFI response notification.",
     }));
 
   return { sent: results.length - failed.length, failed };
