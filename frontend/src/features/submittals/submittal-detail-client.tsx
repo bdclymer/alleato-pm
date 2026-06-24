@@ -747,29 +747,31 @@ export function SubmittalDetailClient({
                     </PropertyList>
                   </DetailPanel>
 
-                  {/* Parties */}
-                  {(submittal.responsible_contractor || submittal.received_from || submittal.received_from_id || submittal.submittal_manager_id) && (
-                    <DetailPanel>
-                      <SectionRuleHeading label="Parties" />
-                      <PropertyList>
-                        {submittal.responsible_contractor && (
-                          <Property label="Contractor" value={submittal.responsible_contractor.name} />
-                        )}
-                        {(submittal.received_from ?? submittal.received_from_id) && (
-                          <Property
-                            label="Received From"
-                            value={submittal.received_from ?? resolveUserName(allUsers, submittal.received_from_id!)}
-                          />
-                        )}
-                        {submittal.submittal_manager_id && resolveUserName(allUsers, submittal.submittal_manager_id) && (
-                          <Property
-                            label="Manager"
-                            value={resolveUserName(allUsers, submittal.submittal_manager_id)}
-                          />
-                        )}
-                      </PropertyList>
-                    </DetailPanel>
-                  )}
+                  {/* Parties — only render if at least one party can be shown */}
+                  {(() => {
+                    const managerName = submittal.submittal_manager_id
+                      ? resolveUserName(allUsers, submittal.submittal_manager_id)
+                      : "";
+                    const receivedFromName = submittal.received_from ?? (submittal.received_from_id ? resolveUserName(allUsers, submittal.received_from_id) : "");
+                    const hasAnyParty = submittal.responsible_contractor || receivedFromName || managerName;
+                    if (!hasAnyParty) return null;
+                    return (
+                      <DetailPanel>
+                        <SectionRuleHeading label="Parties" />
+                        <PropertyList>
+                          {submittal.responsible_contractor && (
+                            <Property label="Contractor" value={submittal.responsible_contractor.name} />
+                          )}
+                          {receivedFromName && (
+                            <Property label="Received From" value={receivedFromName} />
+                          )}
+                          {managerName && (
+                            <Property label="Manager" value={managerName} />
+                          )}
+                        </PropertyList>
+                      </DetailPanel>
+                    );
+                  })()}
                 </>
               }
             >
@@ -859,7 +861,7 @@ export function SubmittalDetailClient({
                         type="textarea"
                         value={submittal.description ?? ""}
                         placeholder="Add a description…"
-                        emptyLabel=""
+                        emptyLabel="Add a description"
                         onSave={(v) => handleSaveField("description", v || null)}
                       />
                     </div>
