@@ -448,59 +448,6 @@ function WorkflowBuilder({
   );
 }
 
-// ─── MetaField ────────────────────────────────────────────────────────────────
-
-function MetaField({ label, value }: { label: string; value?: React.ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <div className="mt-1 min-h-5 text-sm font-medium text-foreground">
-        {value !== null && value !== undefined && value !== "" ? value : null}
-      </div>
-    </div>
-  );
-}
-
-function SidebarRow({
-  label,
-  value,
-  bold,
-  alert,
-}: {
-  label: string;
-  value?: string | null;
-  bold?: boolean;
-  alert?: boolean;
-}) {
-  if (!value) return null;
-  return (
-    <div className="flex items-start justify-between gap-4 py-2.5">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span
-        className={cn(
-          "text-right text-sm",
-          bold ? "font-semibold text-foreground" : "font-medium text-foreground",
-          alert && "text-destructive",
-        )}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function SectionHeader({
-  title,
-  action,
-}: {
-  title: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <SectionRuleHeading label={title} actions={action} className="mb-0 pb-0" />
-  );
-}
-
 function EmptySection({ children }: { children: React.ReactNode }) {
   return (
     <p className="py-4 text-sm text-muted-foreground">{children}</p>
@@ -722,50 +669,13 @@ export function SubmittalDetailClient({
           <ContentSectionStack className="pt-6">
             <section>
               <div className="grid grid-cols-1 gap-12 xl:grid-cols-[minmax(0,1fr)_300px]">
-                <div className="space-y-10">
-                  <div className="space-y-10">
-              <section className="space-y-6">
-                <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-2">
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">Spec Section</p>
-                    <div className="mt-1">
-                      <InlineEditField
-                        label="Spec Section"
-                        value={submittal.specification_section ?? ""}
-                        placeholder="e.g. 03 30 00"
-                        onSave={(v) => handleSaveField("specification_section", v || null)}
-                      />
-                    </div>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">Number</p>
-                    <div className="mt-1">
-                      <InlineEditField
-                        label="Number"
-                        value={submittal.submittal_number ?? ""}
-                        onSave={(v) => handleSaveField("submittal_number", v)}
-                      />
-                    </div>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">Revision</p>
-                    <div className="mt-1">
-                      <InlineEditField
-                        label="Revision"
-                        type="number"
-                        value={submittal.revision != null ? String(submittal.revision) : ""}
-                        display={submittal.revision != null ? `Rev ${submittal.revision}` : undefined}
-                        onSave={(v) => handleSaveField("revision", v ? parseInt(v, 10) : 0)}
-                      />
-                    </div>
-                  </div>
-                  <MetaField label="Package" value={getPackageName(submittal)} />
-                </div>
 
-                <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-2">
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">Status</p>
-                    <div className="mt-1">
+                {/* ── Main column ── */}
+                <div className="space-y-10">
+
+                  {/* Metadata */}
+                  <PropertyList>
+                    <Property label="Status">
                       <InlineEditField
                         label="Status"
                         type="select"
@@ -779,23 +689,46 @@ export function SubmittalDetailClient({
                         ]}
                         onSave={(v) => handleSaveField("status", v)}
                       />
-                    </div>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">Division</p>
-                    <div className="mt-1">
+                    </Property>
+                    <Property label="Spec Section">
+                      <InlineEditField
+                        label="Spec Section"
+                        value={submittal.specification_section ?? ""}
+                        placeholder="e.g. 03 30 00"
+                        onSave={(v) => handleSaveField("specification_section", v || null)}
+                      />
+                    </Property>
+                    <Property label="Number">
+                      <InlineEditField
+                        label="Number"
+                        value={submittal.submittal_number ?? ""}
+                        onSave={(v) => handleSaveField("submittal_number", v)}
+                      />
+                    </Property>
+                    <Property label="Revision">
+                      <InlineEditField
+                        label="Revision"
+                        type="number"
+                        value={submittal.revision != null ? String(submittal.revision) : ""}
+                        display={submittal.revision != null ? `Rev ${submittal.revision}` : undefined}
+                        onSave={(v) => handleSaveField("revision", v ? parseInt(v, 10) : 0)}
+                      />
+                    </Property>
+                    <Property label="Division">
                       <InlineEditField
                         label="Division"
                         value={submittal.division ?? ""}
                         placeholder="e.g. Division 03"
                         onSave={(v) => handleSaveField("division", v || null)}
                       />
-                    </div>
-                  </div>
-                  <MetaField label="Type" value={getSubmittalTypeName(submittal)} />
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">Private</p>
-                    <div className="mt-1">
+                    </Property>
+                    {getSubmittalTypeName(submittal) && (
+                      <Property label="Type" value={getSubmittalTypeName(submittal)} />
+                    )}
+                    {getPackageName(submittal) && (
+                      <Property label="Package" value={getPackageName(submittal)} />
+                    )}
+                    <Property label="Private">
                       <InlineEditField
                         label="Private"
                         type="boolean"
@@ -803,350 +736,336 @@ export function SubmittalDetailClient({
                         display={submittal.is_private ? "Yes" : "No"}
                         onSave={(v) => handleSaveField("is_private", v === "true")}
                       />
-                    </div>
-                  </div>
-                </div>
-                {staticLinkedDrawings.length > 0 && (
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-4">
-                    <MetaField
-                      label="Linked Drawings"
-                      value={
+                    </Property>
+                    {staticLinkedDrawings.length > 0 && (
+                      <Property label="Linked Drawings">
                         <Link
                           href={`/${projectId}/drawings`}
                           className="text-primary underline-offset-2 hover:underline"
                         >
                           {staticLinkedDrawings.length} drawing{staticLinkedDrawings.length !== 1 ? "s" : ""}
                         </Link>
-                      }
+                      </Property>
+                    )}
+                  </PropertyList>
+
+                  {/* Description */}
+                  <section>
+                    <SectionRuleHeading label="Description" />
+                    <div className="mt-3">
+                      <InlineEditField
+                        label="Description"
+                        type="textarea"
+                        value={submittal.description ?? ""}
+                        placeholder="Add a description…"
+                        emptyLabel=""
+                        onSave={(v) => handleSaveField("description", v || null)}
+                      />
+                    </div>
+                  </section>
+
+                  {/* Workflow */}
+                  <section>
+                    <SectionRuleHeading label="Workflow" />
+                    {workflowSteps.length > 0 && (
+                      <div className="mt-4 space-y-1">
+                        {workflowSteps.map((step, idx) => {
+                          const state = getStepState(step);
+                          const responder = step.submittal_responses?.[0]?.responder_id;
+                          const responderName = responder ? resolveUserName(allUsers, responder) : null;
+                          const isActive = state === "in-progress";
+                          const canRespond = isActive && currentUserId && step.submittal_responses?.some(r => r.responder_id === currentUserId && r.response_status === "Pending");
+                          const stepResponseEntry = step.submittal_responses?.find(r => r.responder_id === currentUserId && r.response_status === "Pending");
+                          return (
+                            <div key={step.id}>
+                              <div className={cn(
+                                "flex items-center gap-4 rounded-md px-3 py-3",
+                                isActive && "bg-muted/50",
+                              )}>
+                                <div className={cn(
+                                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                                  state === "done" ? "bg-primary text-primary-foreground" :
+                                  state === "in-progress" ? "bg-primary/15 text-primary" :
+                                  state === "rejected" ? "bg-destructive/15 text-destructive" :
+                                  "bg-muted text-muted-foreground",
+                                )}>
+                                  {state === "done" ? "✓" : idx + 1}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium text-foreground">{step.step_type} Review</p>
+                                  {responderName && (
+                                    <p className="text-xs text-muted-foreground">{responderName}</p>
+                                  )}
+                                </div>
+                                <StatusBadge status={
+                                  state === "done" ? "Completed" :
+                                  state === "in-progress" ? "In Progress" :
+                                  state === "rejected" ? "Rejected" : "Pending"
+                                } />
+                              </div>
+                              {canRespond && stepResponseEntry && (
+                                <div className="mt-2 px-10 pb-3">
+                                  <RespondForm
+                                    projectId={projectId}
+                                    submittalId={submittal.id}
+                                    stepId={step.id}
+                                    onDone={(didSubmit) => {
+                                      if (didSubmit) router.refresh();
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <div className="mt-4" id="workflow-builder">
+                      <WorkflowBuilder
+                        projectId={projectId}
+                        submittalId={submittal.id}
+                        users={users}
+                        currentSteps={workflowSteps}
+                      />
+                    </div>
+                  </section>
+
+                  {/* Linked Drawings */}
+                  <section>
+                    <SubmittalLinkedDrawingsPanel
+                      projectId={projectId}
+                      submittalId={submittal.id}
+                      onAddClick={() => setPickerOpen(true)}
                     />
-                  </div>
-                )}
-              </section>
+                  </section>
 
-              <section className="space-y-3">
-                <SectionHeader title="Description" />
-                <InlineEditField
-                  label="Description"
-                  type="textarea"
-                  value={submittal.description ?? ""}
-                  placeholder="Add a description…"
-                  onSave={(v) => handleSaveField("description", v || null)}
-                />
-              </section>
+                  {/* Attachments */}
+                  <section>
+                    <SectionRuleHeading label="Attachments" />
+                    <EntityAttachments
+                      entityType="submittal"
+                      entityId={String(submittal.id)}
+                      projectId={projectId}
+                      showLabel={false}
+                    />
+                  </section>
 
-              <section className="space-y-3">
-                <SectionHeader title="Attachments" />
-                <EntityAttachments
-                  entityType="submittal"
-                  entityId={String(submittal.id)}
-                  projectId={projectId}
-                  showLabel={false}
-                />
-              </section>
+                  {/* Activity */}
+                  <section>
+                    <SectionRuleHeading label="Activity" />
+                    <div className="mt-4">
+                      {commEvents.length > 0 ? (
+                        <ol className="space-y-0">
+                          {commEvents.map((event, i) => {
+                            const isLast = i === commEvents.length - 1;
 
-              <section className="space-y-3">
-                <SubmittalLinkedDrawingsPanel
-                  projectId={projectId}
-                  submittalId={submittal.id}
-                  onAddClick={() => setPickerOpen(true)}
-                />
-              </section>
-
-              <section className="space-y-4">
-                <SectionHeader title="Workflow" />
-
-                {workflowSteps.length > 0 && (
-                  <div className="overflow-x-auto rounded-md border border-border">
-                    <div style={{ minWidth: "715px" }}>
-                    <div className="grid grid-cols-[40px_208px_172px_192px_132px] bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
-                      <span>#</span>
-                      <span>Step</span>
-                      <span>Role</span>
-                      <span>Assignee</span>
-                      <span>Status</span>
-                    </div>
-                    {workflowSteps.map((step, idx) => {
-                      const state = getStepState(step);
-                      const responder = step.submittal_responses?.[0]?.responder_id;
-                      const responderName = responder ? resolveUserName(allUsers, responder) : null;
-                      const responderInitials = responderName ? getInitials(responderName) : null;
-                      const isActive = state === "in-progress";
-                      const canRespond = isActive && currentUserId && step.submittal_responses?.some(r => r.responder_id === currentUserId && r.response_status === "Pending");
-                      const stepResponseEntry = step.submittal_responses?.find(r => r.responder_id === currentUserId && r.response_status === "Pending");
-                      return (
-                        <div key={step.id}>
-                          <div
-                            className={cn(
-                              "relative grid grid-cols-[40px_208px_172px_192px_132px] border-t border-border px-3 py-3 text-sm",
-                              isActive && "before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary"
-                            )}
-                          >
-                            <span className="text-muted-foreground">{idx + 1}</span>
-                            <span className="font-medium text-foreground">
-                              {step.step_type} Review
-                            </span>
-                            <span className="text-muted-foreground">{step.step_type}</span>
-                            <span className="flex items-center gap-2">
-                              {responderInitials && (
-                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
-                                  {responderInitials}
-                                </span>
-                              )}
-                              <span className="truncate text-foreground">{responderName ?? "—"}</span>
-                            </span>
-                            <span>
-                              <StatusBadge status={state === "done" ? "Completed" : state === "in-progress" ? "In Progress" : state === "rejected" ? "Rejected" : "Pending"} />
-                            </span>
-                          </div>
-                          {canRespond && stepResponseEntry && (
-                            <div className="py-3">
-                              <RespondForm
-                                projectId={projectId}
-                                submittalId={submittal.id}
-                                stepId={step.id}
-                                onDone={(didSubmit) => {
-                                  if (didSubmit) router.refresh();
-                                }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    </div>
-                  </div>
-                )}
-
-                <div id="workflow-builder">
-                  <WorkflowBuilder
-                    projectId={projectId}
-                    submittalId={submittal.id}
-                    users={users}
-                    currentSteps={workflowSteps}
-                  />
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <SectionHeader
-                  title="Activity"
-                  action={
-                    submittal.submittal_number ? (
-                    <span className="text-xs text-muted-foreground">
-                      Submittal #{submittal.submittal_number}
-                    </span>
-                    ) : null
-                  }
-                />
-                {commEvents.length > 0 ? (
-                  <ol className="space-y-0">
-                    {commEvents.map((event, i) => {
-                      const isLast = i === commEvents.length - 1;
-
-                      if (event.kind === "response") {
-                        const name = resolveUserName(allUsers, event.responder);
-                        const initials = getInitials(name);
-                        return (
-                          <li key={`resp-${i}`} className="relative flex gap-5">
-                            {/* Rail */}
-                            <div className="relative flex w-6 shrink-0 flex-col items-center">
-                              <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
-                              {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
-                            </div>
-                            {/* Content */}
-                            <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-center gap-2">
-                                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
-                                    {initials}
-                                  </span>
-                                  <div>
-                                    <p className="text-sm font-medium text-foreground leading-tight">{name}</p>
-                                    <p className="text-xs text-muted-foreground">{event.stepType}</p>
+                            if (event.kind === "response") {
+                              const name = resolveUserName(allUsers, event.responder);
+                              const initials = getInitials(name);
+                              return (
+                                <li key={`resp-${i}`} className="relative flex gap-5">
+                                  <div className="relative flex w-6 shrink-0 flex-col items-center">
+                                    <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
+                                    {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
                                   </div>
-                                </div>
-                                <span className="shrink-0 text-xs text-muted-foreground">{formatDate(event.date)}</span>
-                              </div>
-                              {event.comment ? (
-                                <div className="mt-3 rounded-md border border-border bg-muted/30 px-3 py-2.5">
-                                  <p className="mb-1 text-xs font-semibold text-muted-foreground">{event.status}</p>
-                                  <p className="text-sm text-foreground leading-relaxed">{event.comment}</p>
-                                </div>
-                              ) : (
-                                <p className="mt-2 text-sm text-muted-foreground">
-                                  responded <span className="font-medium text-foreground">{event.status}</span>
-                                </p>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      }
+                                  <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div className="flex items-center gap-2">
+                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
+                                          {initials}
+                                        </span>
+                                        <div>
+                                          <p className="text-sm font-medium text-foreground leading-tight">{name}</p>
+                                          <p className="text-xs text-muted-foreground">{event.stepType}</p>
+                                        </div>
+                                      </div>
+                                      <span className="shrink-0 text-xs text-muted-foreground">{formatDate(event.date)}</span>
+                                    </div>
+                                    {event.comment ? (
+                                      <div className="mt-3 rounded-md border border-border bg-muted/30 px-3 py-2.5">
+                                        <p className="mb-1 text-xs font-semibold text-muted-foreground">{event.status}</p>
+                                        <p className="text-sm text-foreground leading-relaxed">{event.comment}</p>
+                                      </div>
+                                    ) : (
+                                      <p className="mt-2 text-sm text-muted-foreground">
+                                        responded <span className="font-medium text-foreground">{event.status}</span>
+                                      </p>
+                                    )}
+                                  </div>
+                                </li>
+                              );
+                            }
 
-                      if (event.kind === "distribution") {
-                        const name = resolveUserName(allUsers, event.fromId);
-                        const initials = getInitials(name);
-                        return (
-                          <li key={`dist-${i}`} className="relative flex gap-5">
-                            <div className="relative flex w-6 shrink-0 flex-col items-center">
-                              <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
-                              {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
-                            </div>
-                            <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-center gap-2">
-                                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
-                                    {initials}
-                                  </span>
-                                  <p className="text-sm font-medium text-foreground">{name}</p>
-                                </div>
-                                <span className="shrink-0 text-xs text-muted-foreground">{formatDate(event.date)}</span>
-                              </div>
-                              <p className="mt-2 text-sm text-muted-foreground">
-                                distributed to{" "}
-                                <span className="font-medium text-foreground">
-                                  {event.recipientCount} recipient{event.recipientCount !== 1 ? "s" : ""}
-                                </span>
-                              </p>
-                              {event.message && (
-                                <div className="mt-2 rounded-md border border-border bg-muted/30 px-3 py-2">
-                                  <p className="text-sm text-muted-foreground italic">{event.message}</p>
-                                </div>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      }
+                            if (event.kind === "distribution") {
+                              const name = resolveUserName(allUsers, event.fromId);
+                              const initials = getInitials(name);
+                              return (
+                                <li key={`dist-${i}`} className="relative flex gap-5">
+                                  <div className="relative flex w-6 shrink-0 flex-col items-center">
+                                    <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
+                                    {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
+                                  </div>
+                                  <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div className="flex items-center gap-2">
+                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
+                                          {initials}
+                                        </span>
+                                        <p className="text-sm font-medium text-foreground">{name}</p>
+                                      </div>
+                                      <span className="shrink-0 text-xs text-muted-foreground">{formatDate(event.date)}</span>
+                                    </div>
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                      distributed to{" "}
+                                      <span className="font-medium text-foreground">
+                                        {event.recipientCount} recipient{event.recipientCount !== 1 ? "s" : ""}
+                                      </span>
+                                    </p>
+                                    {event.message && (
+                                      <div className="mt-2 rounded-md border border-border bg-muted/30 px-3 py-2">
+                                        <p className="text-sm text-muted-foreground italic">{event.message}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </li>
+                              );
+                            }
 
-                      if (event.kind === "rfi") {
-                        const rfi = event.rfi;
-                        return (
-                          <li key={`rfi-${rfi.link_id}`} className="relative flex gap-5">
-                            <div className="relative flex w-6 shrink-0 flex-col items-center">
-                              <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
-                              {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
-                            </div>
-                            <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
-                              <div className="flex items-start justify-between gap-4">
-                                <p className="text-sm font-medium text-foreground">{rfi.subject}</p>
-                                <div className="flex shrink-0 items-center gap-2">
-                                  <span className="text-xs text-muted-foreground">{formatDate(event.date)}</span>
-                                  <Link href={`/${projectId}/rfis/${rfi.id}`} className="text-xs text-muted-foreground hover:text-foreground">
-                                    <ExternalLink className="h-3 w-3" />
-                                  </Link>
-                                </div>
-                              </div>
-                              <p className="mt-1 text-xs text-muted-foreground">RFI #{rfi.number} · {rfi.status}</p>
-                            </div>
-                          </li>
-                        );
-                      }
+                            if (event.kind === "rfi") {
+                              const rfi = event.rfi;
+                              return (
+                                <li key={`rfi-${rfi.link_id}`} className="relative flex gap-5">
+                                  <div className="relative flex w-6 shrink-0 flex-col items-center">
+                                    <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
+                                    {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
+                                  </div>
+                                  <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
+                                    <div className="flex items-start justify-between gap-4">
+                                      <p className="text-sm font-medium text-foreground">{rfi.subject}</p>
+                                      <div className="flex shrink-0 items-center gap-2">
+                                        <span className="text-xs text-muted-foreground">{formatDate(event.date)}</span>
+                                        <Link href={`/${projectId}/rfis/${rfi.id}`} className="text-xs text-muted-foreground hover:text-foreground">
+                                          <ExternalLink className="h-3 w-3" />
+                                        </Link>
+                                      </div>
+                                    </div>
+                                    <p className="mt-1 text-xs text-muted-foreground">RFI #{rfi.number} · {rfi.status}</p>
+                                  </div>
+                                </li>
+                              );
+                            }
 
-                      return null;
-                    })}
-                  </ol>
-                ) : (
-                  <EmptySection>No workflow responses, distributions, or linked RFIs have been recorded.</EmptySection>
-                )}
-              </section>
-
+                            return null;
+                          })}
+                        </ol>
+                      ) : (
+                        <EmptySection>No workflow responses, distributions, or linked RFIs have been recorded.</EmptySection>
+                      )}
                     </div>
+                  </section>
                 </div>
 
-                <aside>
-                  <div className="rounded-md">
-                    <SectionRuleHeading label="Submittal Summary" className="mb-6 pb-0" />
-                    <div className="space-y-8">
-              {submittal.ball_in_court && (
-                <div>
-                  <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Ball In Court
-                  </p>
-                  <BallInCourtChip userId={submittal.ball_in_court} users={allUsers} />
-                </div>
-              )}
+                {/* ── Sidebar ── */}
+                <aside className="space-y-8">
 
-              <div>
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Dates &amp; Timeline
-                </p>
-                <div className="divide-y divide-border">
-                  {submittal.sent_date && (
-                    <SidebarRow label="Submitted" value={formatDate(submittal.sent_date)} />
+                  {/* Ball in Court */}
+                  {submittal.ball_in_court && (
+                    <BallInCourtChip userId={submittal.ball_in_court} users={allUsers} />
                   )}
-                  <div className="flex items-center justify-between gap-4 py-2.5">
-                    <span className="shrink-0 text-xs text-muted-foreground">Final Due Date</span>
-                    <div className={cn("shrink-0 whitespace-nowrap text-right text-sm font-medium", getDaysUntil(submittal.final_due_date) !== null && (getDaysUntil(submittal.final_due_date) ?? 0) < 0 ? "text-destructive" : "text-foreground")}>
-                      <InlineEditField
-                        label="Final Due Date"
-                        type="date"
-                        value={submittal.final_due_date ?? ""}
-                        display={submittal.final_due_date ? formatDate(submittal.final_due_date) : undefined}
-                        emptyLabel="Set date"
-                        className="w-auto"
-                        onSave={(v) => handleSaveField("final_due_date", v || null)}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between gap-4 py-2.5">
-                    <span className="shrink-0 text-xs text-muted-foreground">Required On-Site</span>
-                    <div className="shrink-0 whitespace-nowrap text-right text-sm font-medium text-foreground">
-                      <InlineEditField
-                        label="Required On-Site"
-                        type="date"
-                        value={submittal.required_on_site_date ?? ""}
-                        display={submittal.required_on_site_date ? formatDate(submittal.required_on_site_date) : undefined}
-                        emptyLabel="Set date"
-                        className="w-auto"
-                        onSave={(v) => handleSaveField("required_on_site_date", v || null)}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between gap-4 py-2.5">
-                    <span className="shrink-0 text-xs text-muted-foreground">Lead Time</span>
-                    <div className="shrink-0 whitespace-nowrap text-right text-sm font-medium text-foreground">
-                      <InlineEditField
-                        label="Lead Time"
-                        type="number"
-                        value={submittal.lead_time != null ? String(submittal.lead_time) : ""}
-                        display={submittal.lead_time != null ? `${submittal.lead_time} days` : undefined}
-                        emptyLabel="Set days"
-                        className="w-auto"
-                        onSave={(v) => handleSaveField("lead_time", v ? parseInt(v, 10) : null)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              {(submittal.responsible_contractor || submittal.received_from || submittal.received_from_id || submittal.submittal_manager_id) && (
-                <div>
-                  <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Parties &amp; Responsibility
-                  </p>
-                  <div className="divide-y divide-border">
-                    {submittal.responsible_contractor && (
-                      <SidebarRow label="Responsible Contractor" value={submittal.responsible_contractor.name} bold />
-                    )}
-                    {(submittal.received_from ?? submittal.received_from_id) && (
-                      <SidebarRow
-                        label="Received From"
-                        value={submittal.received_from ?? resolveUserName(allUsers, submittal.received_from_id!)}
-                        bold
+                  {/* Workflow progress */}
+                  {workflowSteps.length > 0 && (() => {
+                    const completed = workflowSteps.filter(s => getStepState(s) === "done").length;
+                    return (
+                      <StatBreakdownCard
+                        name="Workflow Progress"
+                        total={`${completed} of ${workflowSteps.length} step${workflowSteps.length !== 1 ? "s" : ""} complete`}
+                        details={workflowSteps.map((step, i) => {
+                          const state = getStepState(step);
+                          return {
+                            name: `${i + 1}. ${step.step_type} Review`,
+                            value: state === "done" ? "Done" : state === "in-progress" ? "Active" : state === "rejected" ? "Rejected" : "Waiting",
+                            percentageValue: state === "done" ? 100 : state === "in-progress" ? 50 : 0,
+                          };
+                        })}
                       />
-                    )}
-                    {submittal.submittal_manager_id && (
-                      <SidebarRow
-                        label="Submittal Manager"
-                        value={resolveUserName(allUsers, submittal.submittal_manager_id)}
-                        bold
-                      />
-                    )}
+                    );
+                  })()}
+
+                  {/* Dates */}
+                  <div>
+                    <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                      Dates
+                    </p>
+                    <PropertyList>
+                      {submittal.sent_date && (
+                        <Property label="Submitted" value={formatDate(submittal.sent_date)} />
+                      )}
+                      <Property label="Final Due">
+                        <div className={cn(getDaysUntil(submittal.final_due_date) !== null && (getDaysUntil(submittal.final_due_date) ?? 0) < 0 ? "text-destructive" : "")}>
+                          <InlineEditField
+                            label="Final Due"
+                            type="date"
+                            value={submittal.final_due_date ?? ""}
+                            display={submittal.final_due_date ? formatDate(submittal.final_due_date) : undefined}
+                            emptyLabel="Set date"
+                            className="w-auto"
+                            onSave={(v) => handleSaveField("final_due_date", v || null)}
+                          />
+                        </div>
+                      </Property>
+                      <Property label="On-Site">
+                        <InlineEditField
+                          label="On-Site"
+                          type="date"
+                          value={submittal.required_on_site_date ?? ""}
+                          display={submittal.required_on_site_date ? formatDate(submittal.required_on_site_date) : undefined}
+                          emptyLabel="Set date"
+                          className="w-auto"
+                          onSave={(v) => handleSaveField("required_on_site_date", v || null)}
+                        />
+                      </Property>
+                      <Property label="Lead Time">
+                        <InlineEditField
+                          label="Lead Time"
+                          type="number"
+                          value={submittal.lead_time != null ? String(submittal.lead_time) : ""}
+                          display={submittal.lead_time != null ? `${submittal.lead_time} days` : undefined}
+                          emptyLabel="Set days"
+                          className="w-auto"
+                          onSave={(v) => handleSaveField("lead_time", v ? parseInt(v, 10) : null)}
+                        />
+                      </Property>
+                    </PropertyList>
                   </div>
-                </div>
-              )}
+
+                  {/* Parties */}
+                  {(submittal.responsible_contractor || submittal.received_from || submittal.received_from_id || submittal.submittal_manager_id) && (
+                    <div>
+                      <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        Parties
+                      </p>
+                      <PropertyList>
+                        {submittal.responsible_contractor && (
+                          <Property label="Contractor" value={submittal.responsible_contractor.name} />
+                        )}
+                        {(submittal.received_from ?? submittal.received_from_id) && (
+                          <Property
+                            label="Received From"
+                            value={submittal.received_from ?? resolveUserName(allUsers, submittal.received_from_id!)}
+                          />
+                        )}
+                        {submittal.submittal_manager_id && (
+                          <Property
+                            label="Manager"
+                            value={resolveUserName(allUsers, submittal.submittal_manager_id)}
+                          />
+                        )}
+                      </PropertyList>
                     </div>
-                  </div>
+                  )}
                 </aside>
+
               </div>
             </section>
           </ContentSectionStack>
