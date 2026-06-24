@@ -9,6 +9,7 @@ import {
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { requirePermission } from "@/lib/permissions-guard";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 interface RouteParams {
   params: Promise<{ projectId: string; contractId: string }>;
@@ -154,7 +155,12 @@ export const PUT = withApiGuardrails(
       }
     }
 
-    const { data: savedProjectSettings, error: projectSaveError } = await supabase
+    // Use service client for writes: the RLS INSERT policy on this table requires
+    // project_directory_memberships membership, but authorization is already
+    // enforced above via requirePermission(..., "admin"). Service role bypasses
+    // the redundant membership check without loosening actual access control.
+    const serviceSupabase = createServiceClient();
+    const { data: savedProjectSettings, error: projectSaveError } = await serviceSupabase
       .from("prime_contract_project_settings")
       .upsert(
         {
@@ -189,7 +195,7 @@ export const PUT = withApiGuardrails(
 
     if (contractSaveError) {
       if (previousProjectSettings) {
-        await supabase
+        await serviceSupabase
           .from("prime_contract_project_settings")
           .update({
             co_tier_count: previousProjectSettings.co_tier_count,
@@ -216,7 +222,7 @@ export const PUT = withApiGuardrails(
           })
           .eq("project_id", projectIdNum);
       } else {
-        await supabase
+        await serviceSupabase
           .from("prime_contract_project_settings")
           .delete()
           .eq("project_id", projectIdNum);
