@@ -123,7 +123,6 @@ async function verifyLiveRenderEnv() {
 
 async function main() {
   verifyManifest("render.yaml");
-  verifyManifest("backend/render.yaml");
   const live = await verifyLiveRenderEnv();
 
   for (const warning of warnings) {
@@ -139,7 +138,7 @@ async function main() {
   }
 
   console.log("Deep Agents docs/wiki Render env verification passed");
-  console.log(JSON.stringify({ manifests: ["render.yaml", "backend/render.yaml"], live }, null, 2));
+  console.log(JSON.stringify({ manifests: ["render.yaml"], live }, null, 2));
 }
 
 main().catch((error) => {

@@ -686,8 +686,8 @@ job instead of running blind.
 The guard is wired through the scheduler wrappers and direct cron scripts for
 Fireflies, Microsoft Graph, Teams channel/DM sync, source/RAG health checks,
 packet compilation, daily recap, Outlook attachment promotion, executive-assistant
-checks, task extraction, and Acumatica financial sync. `render.yaml`,
-`backend/render.yaml`, and `scripts/verify/verify-render-web-scheduler-disabled.mjs`
+checks, task extraction, and Acumatica financial sync. Root `render.yaml` (single canonical file — `backend/render.yaml` removed 2026-06-23)
+and `scripts/verify/verify-render-web-scheduler-disabled.mjs`
 are the enforcement surface: every Alleato Render cron must keep the guard envs,
 and live safe-restart checks must validate those envs before any suspended cron is
 resumed.

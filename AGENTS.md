@@ -282,7 +282,7 @@ Core workflow:
 ### Hosting Source Of Truth
 
 - **Frontend production host:** Vercel.
-- **Backend production host:** Render, configured by `backend/render.yaml`.
+- **Backend production host:** Render, configured by root `render.yaml` (single canonical file; not blueprint-linked — live config is managed via Render API).
 - **Backend service:** Render service `alleato-backend`.
 - **Do not use Railway for this repo.** Railway config, commands, and assumptions are stale/outdated for Alleato PM backend work.
 - **Do not debug or patch deployment issues against unused hosts.** For backend runtime, health, env vars, logs, and pipeline behavior, inspect Render/FastAPI first.

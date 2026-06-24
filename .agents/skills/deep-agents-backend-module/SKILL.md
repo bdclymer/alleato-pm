@@ -55,10 +55,9 @@ The response should explain the failed capability, what evidence is missing, and
 
 ## Render Checklist
 
-For each production route, update both Render blueprints when present:
+For each production route, update the single canonical Render blueprint:
 
-- `render.yaml`
-- `backend/render.yaml`
+- `render.yaml` (root — the only render.yaml; `backend/render.yaml` was removed)
 
 Add:
 

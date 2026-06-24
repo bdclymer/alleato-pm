@@ -1,3 +1,4 @@
+# NOTE: not blueprint-linked; live config is managed via Render API
 # Render deployment configuration for Alleato-Procore
 # This file should be in the repository root for Render to auto-detect
 services:
@@ -38,15 +39,7 @@ services:
     dockerContext: ./backend
     schedule: "*/30 * * * *"
     dockerCommand: >-
-      python3 -c "
-      import json, sys;
-      sys.path.insert(0, '/app');
-      from src.services.scheduler import _run_source_sync_health_recompute;
-      result = _run_source_sync_health_recompute();
-      print(json.dumps(result, indent=2));
-      health = result.get('health', {});
-      sys.exit(1 if health.get('status') == 'critical' else 0)
-      "
+      python3 -c "import asyncio; from src.services.health.source_sync_health import _run_source_sync_health_recompute; asyncio.run(_run_source_sync_health_recompute())"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -427,39 +420,6 @@ services:
       - key: RAG_SUPABASE_SERVICE_ROLE_KEY
         sync: false
 
-  # Generates AI daily project recap (saved to daily_recaps table) from
-  # meeting transcripts of the prior 24 hours. Runs daily at 09:30 UTC
-  # (~5:30 AM ET) so a fresh recap is ready before the executive daily brief
-  # cron fires at 11/12 UTC (~7 AM ET). Without this cron, the CEO Daily Brief
-  # reads stale recaps.
-  - type: cron
-    name: alleato-daily-recap
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    schedule: "30 9 * * *"
-    dockerCommand: >-
-      python3 /app/scripts/generate_daily_recap.py --days 1 --verbose
-    envVars:
-      - key: PYTHONPATH
-        value: /app:/app/src:/app/src/services:/app/src/workers
-      - key: PYTHONUNBUFFERED
-        value: 1
-      - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
-      - key: DATABASE_URL
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: AI_GATEWAY_API_KEY
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-
   # Runs RAG meeting vectorization health check daily at noon UTC.
   # Replaces the former GitHub Actions workflow — no Actions minutes consumed.
   # Posts to SLACK_WEBHOOK_URL on failure.
@@ -543,7 +503,7 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "5 */4 * * *"
+    schedule: "*/5 * * * *"
     dockerCommand: python3 -m src.services.health.source_rag_health
     envVars:
       - key: PYTHONPATH

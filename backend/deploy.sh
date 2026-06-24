@@ -23,7 +23,7 @@ case $PLATFORM in
     
   render)
     echo "Render is the production backend host for Alleato."
-    echo "Use backend/render.yaml and the Render dashboard/API for deploys, env vars, and logs."
+    echo "Use root render.yaml and the Render dashboard/API for deploys, env vars, and logs."
     ;;
     
   compose)

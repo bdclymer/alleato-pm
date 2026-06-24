@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import yaml from "js-yaml";
 
-const BLUEPRINTS = ["render.yaml", "backend/render.yaml"];
+const BLUEPRINTS = ["render.yaml"];
 const RENDER_SERVICES_URL = "https://api.render.com/v1/services?limit=100";
 const RENDER_SERVICE_URL = "https://api.render.com/v1/services";
 

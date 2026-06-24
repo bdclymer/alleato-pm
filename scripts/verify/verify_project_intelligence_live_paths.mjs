@@ -30,7 +30,6 @@ const removedFiles = [
 
 const liveFiles = [
   "render.yaml",
-  "backend/render.yaml",
   "backend/src/api/main.py",
   "backend/src/services/scheduler.py",
   "frontend/src/app/api/ai-assistant/chat/handler-v2.ts",
