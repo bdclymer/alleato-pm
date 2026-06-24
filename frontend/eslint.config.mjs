@@ -114,6 +114,10 @@ const config = [
       // Gate 23: blocks raw <Input type="date"> in form files — use <RHFDateField> instead.
       // Ratchet: warn globally (existing debt), error on changed files via lint-staged.
       "design-system/no-raw-date-input": "warn",
+      // Gate 24: blocks raw <dl>/<dt>/<dd> — use <DetailField> / <DetailFieldGrid> from @/components/ds.
+      "design-system/no-raw-detail-field": "error",
+      // Gate 25: blocks raw xl:grid-cols-[...] in detail pages — use <DetailLayout> from @/components/layout.
+      "design-system/no-raw-detail-grid": "warn",
     },
   }, // Admin pages: relax heading rule — these are internal tools used only by the Alleato team.
   // Layout consistency is nice-to-have here; focus enforcement on customer-facing pages.
