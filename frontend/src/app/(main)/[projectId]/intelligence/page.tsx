@@ -812,15 +812,17 @@ function SnapshotSection({
     { label: "Documents", value: String(counts.documents), href: `/${projectId}/documents` },
   ];
 
-  const financial = summaryText(packet, "financialPosition");
-  const schedule = summaryText(packet, "scheduleAndProcurement");
+  const financial = safeNarrative(summaryText(packet, "financialPosition"), 320);
+  const schedule = safeNarrative(summaryText(packet, "scheduleAndProcurement"), 320);
   const whatChanged = summaryItems(packet, "whatChanged", ["impact"]).slice(0, 4);
 
   return (
     <section className="space-y-6">
       <div className="space-y-3">
         <SectionHeading eyebrow="Executive snapshot" title="What is happening right now" />
-        <p className="max-w-4xl text-sm leading-7 text-muted-foreground">{executiveRead}</p>
+        {executiveRead ? (
+          <p className="max-w-4xl text-sm leading-7 text-muted-foreground">{executiveRead}</p>
+        ) : null}
       </div>
 
       <KpiRow metrics={metrics} size="small" />
@@ -832,7 +834,7 @@ function SnapshotSection({
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Financial read
               </p>
-              <p className="text-sm leading-6 text-muted-foreground">{safeNarrative(financial, 320)}</p>
+              <p className="text-sm leading-6 text-muted-foreground">{financial}</p>
             </div>
           ) : null}
           {schedule ? (
@@ -840,7 +842,7 @@ function SnapshotSection({
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Schedule &amp; procurement
               </p>
-              <p className="text-sm leading-6 text-muted-foreground">{safeNarrative(schedule, 320)}</p>
+              <p className="text-sm leading-6 text-muted-foreground">{schedule}</p>
             </div>
           ) : null}
         </div>
