@@ -181,7 +181,7 @@ export function KnowledgeBasePage() {
       <div className="space-y-6">
         <DocsTopBar isAdmin={isAdmin} search={search} onSearchChange={setSearch} />
 
-        <div className="grid gap-6 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15rem_minmax(0,48rem)_13rem] xl:gap-10">
+        <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-12 xl:grid-cols-[15rem_minmax(0,48rem)_13rem] xl:gap-16">
           <KnowledgeTopicNav
             categories={visibleCategories}
             counts={categoryCounts}
@@ -274,7 +274,7 @@ function DocsTopBar({
   onSearchChange: (value: string) => void;
 }) {
   return (
-    <header className="flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-center md:justify-between">
+    <header className="flex flex-col gap-4 pb-4 md:flex-row md:items-center md:justify-between">
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <BookOpen className="h-4 w-4 text-primary" />
