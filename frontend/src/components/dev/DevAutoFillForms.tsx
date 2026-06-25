@@ -9,7 +9,7 @@ const DISABLED_ATTR = "data-dev-autofill-disabled";
 const AUTOFILL_EVENT = "dev-autofill-form";
 const DISABLED_PATHS = new Set<string>(["/template/form-standard"]);
 const LIVEBLOCKS_FORM_SELECTOR =
-  ".lb-composer, .lb-thread-composer, .lb-floating";
+  ".lb-composer, .lb-thread-composer, .lb-floating, .global-ai-widget-panel";
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;

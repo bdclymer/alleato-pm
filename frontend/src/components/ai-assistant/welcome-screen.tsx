@@ -31,7 +31,7 @@ export function WelcomeScreen({
 
   if (variant === "widget") {
     return (
-      <div className="flex min-h-0 flex-1 items-end overflow-y-auto px-4 pb-4 pt-3">
+      <div className="flex min-h-0 flex-1 items-end overflow-y-auto px-4 pb-3 pt-3">
         <div className="w-full space-y-3">
           {error}
           {beforeComposer}

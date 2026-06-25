@@ -2,7 +2,14 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { ChevronDown, ChevronLeft, Ellipsis, Sparkles, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  Maximize2,
+  Minimize2,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCollaborationNotifications } from "@/hooks/use-collaboration-notifications";
 import {
@@ -275,7 +282,7 @@ export function GlobalAiWidget() {
               : "pointer-events-none translate-y-5 opacity-0",
           )}
         >
-          <div className="flex shrink-0 items-center justify-between border-b border-border/70 px-3 py-2.5">
+          <div className="flex shrink-0 items-center justify-between px-3.5 py-3">
             <div className="flex min-w-0 flex-1 items-center gap-2">
               {view === "chat" ? (
                 <Button
@@ -294,12 +301,12 @@ export function GlobalAiWidget() {
 
               <div className="flex min-w-0 items-center gap-2">
                 {view === "chat" && (
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10">
-                    <Sparkles
-                      className="size-4 text-primary"
-                      strokeWidth={1.8}
-                    />
-                  </div>
+                  <img
+                    src="/alleato-favicon.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="h-6 w-6 shrink-0 rounded-sm"
+                  />
                 )}
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-foreground">
@@ -320,7 +327,11 @@ export function GlobalAiWidget() {
                 aria-pressed={expanded}
                 className="h-8 w-8 text-muted-foreground hover:text-foreground"
               >
-                <Ellipsis className="h-4 w-4" />
+                {expanded ? (
+                  <Minimize2 className="h-4 w-4" />
+                ) : (
+                  <Maximize2 className="h-4 w-4" />
+                )}
               </Button>
               <Button
                 type="button"

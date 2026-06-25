@@ -1679,8 +1679,15 @@ export function ChatArea({
     <PromptInput
       multiple
       onSubmit={handleSubmit}
+      data-1p-ignore={welcomeHideOrb ? "true" : undefined}
+      data-dev-autofill-disabled={welcomeHideOrb ? "true" : undefined}
+      data-form-type={welcomeHideOrb ? "other" : undefined}
+      data-lpignore={welcomeHideOrb ? "true" : undefined}
       className={cn(
-        "overflow-hidden rounded-2xl border-0 bg-transparent shadow-[0_10px_40px_-28px_rgb(15_23_42/0.45)] ring-1 ring-border/70 transition-all focus-within:ring-2 focus-within:ring-border",
+        "overflow-hidden rounded-2xl border-0 transition-all",
+        welcomeHideOrb
+          ? "bg-background shadow-none ring-1 ring-border/35 focus-within:ring-border/60"
+          : "bg-transparent shadow-[0_10px_40px_-28px_rgb(15_23_42/0.45)] ring-1 ring-border/70 focus-within:ring-2 focus-within:ring-border",
         hasMessages ? "px-3 py-2 sm:px-4" : "px-4 py-4 sm:px-5",
       )}
     >
@@ -1688,6 +1695,10 @@ export function ChatArea({
       <PromptInputTextarea
         value={input}
         onChange={(event) => onInputChange(event.currentTarget.value)}
+        autoComplete={welcomeHideOrb ? "off" : undefined}
+        data-1p-ignore={welcomeHideOrb ? "true" : undefined}
+        data-form-type={welcomeHideOrb ? "other" : undefined}
+        data-lpignore={welcomeHideOrb ? "true" : undefined}
         placeholder={
           isRecording
             ? "Listening..."
@@ -1918,7 +1929,12 @@ export function ChatArea({
   return (
     <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       {showWelcome ? (
-        <div className="flex min-h-0 flex-1 pb-6 md:pb-8">
+        <div
+          className={cn(
+            "flex min-h-0 flex-1",
+            welcomeHideOrb ? "pb-0" : "pb-6 md:pb-8",
+          )}
+        >
           <WelcomeScreen
             hideOrb={welcomeHideOrb}
             variant={welcomeHideOrb ? "widget" : "full"}

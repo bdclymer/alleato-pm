@@ -37,4 +37,22 @@ describe("WelcomeScreen", () => {
     );
     expect(screen.queryByTestId("animated-orb")).not.toBeInTheDocument();
   });
+
+  it("keeps the widget variant quiet and bottom aligned", () => {
+    const { container } = render(
+      <WelcomeScreen
+        hideOrb
+        variant="widget"
+        beforeComposer={<Button type="button">Draft a change event</Button>}
+        composer={<Textarea aria-label="Ask anything" />}
+      />,
+    );
+
+    expect(screen.queryByText("Hello, Test")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("animated-orb")).not.toBeInTheDocument();
+    expect(container.firstElementChild).toHaveClass("items-end", "pb-3");
+    expect(
+      screen.getByRole("button", { name: "Draft a change event" }),
+    ).toBeInTheDocument();
+  });
 });
