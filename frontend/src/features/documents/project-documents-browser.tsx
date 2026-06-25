@@ -112,8 +112,12 @@ export function ProjectDocumentsBrowser({
       eyebrow={projectName}
       showHeader={false}
       contentClassName="p-0"
+      fillHeight
     >
-      <div className="flex h-[calc(100vh-9rem)] w-full overflow-hidden rounded-lg border border-border">
+      <div
+        data-testid="documents-browser-shell"
+        className="flex h-[calc(100vh-9rem)] w-full overflow-hidden"
+      >
         <div className="w-44 shrink-0">
           <SmartGroupRail
             counts={counts}
@@ -145,13 +149,16 @@ export function ProjectDocumentsBrowser({
           </div>
           <div
             onPointerDown={onHandleDown}
-            className="flex w-2 shrink-0 cursor-col-resize items-center justify-center border-x border-border bg-muted/40 text-muted-foreground"
+            className="flex w-2 shrink-0 cursor-col-resize items-center justify-center bg-muted/40 text-muted-foreground"
             role="separator"
             aria-label="Resize preview"
           >
             <GripVertical className="h-3.5 w-3.5" />
           </div>
-          <div className="min-w-0 flex-1 overflow-hidden">
+          <div
+            data-testid="document-preview-pane"
+            className="min-w-0 flex-1 overflow-hidden"
+          >
             <PreviewPane doc={selectedDoc} />
           </div>
         </div>

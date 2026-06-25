@@ -727,4 +727,137 @@ def test_patch_outlook_email_categories_clears_when_explicitly_empty(monkeypatch
 
     assert result["ok"] is True
     assert result["categories"] == []
+
+
+# ---------------------------------------------------------------------------
+# Real draft lookup — _fetch_draft_conversation_ids + draftReady on card items
+# ---------------------------------------------------------------------------
+
+
+def test_fetch_draft_conversation_ids_returns_set_from_graph(monkeypatch):
+    """_fetch_draft_conversation_ids should query the drafts folder and return
+    a set of conversationId strings."""
+    from src.services.agents.microsoft_executive_assistant.agent import (
+        _fetch_draft_conversation_ids,
+    )
+
+    class _FakeDraftGraph:
+        GRAPH_BASE = "https://graph.microsoft.com/v1.0"
+
+        def is_configured(self):
+            return True
+
+        def _get_with_retry(self, url, **_kwargs):
+            assert "/mailFolders/drafts/messages" in url
+            assert "bclymer%40alleatogroup.com" in url or "bclymer@alleatogroup.com" in url
+            return {
+                "value": [
+                    {"id": "draft-1", "conversationId": "conv-AAA"},
+                    {"id": "draft-2", "conversationId": "conv-BBB"},
+                    {"id": "draft-3", "conversationId": None},
+                ]
+            }
+
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.agent._fetch_draft_conversation_ids",
+        lambda mailbox: {"conv-AAA", "conv-BBB"} if mailbox == "bclymer@alleatogroup.com" else set(),
+    )
+
+    result = _fetch_draft_conversation_ids("bclymer@alleatogroup.com")
+    assert isinstance(result, set)
+
+
+def test_fetch_draft_conversation_ids_returns_empty_set_on_graph_error(monkeypatch):
+    """Any Graph failure must return an empty set — not raise — so the card still
+    renders with all pencils muted rather than crashing the whole response."""
+    from src.services.agents.microsoft_executive_assistant.agent import (
+        _fetch_draft_conversation_ids,
+    )
+
+    class _ErrorGraph:
+        GRAPH_BASE = "https://graph.microsoft.com/v1.0"
+
+        def is_configured(self):
+            return True
+
+        def _get_with_retry(self, *_args, **_kwargs):
+            raise RuntimeError("Graph 503 transient error")
+
+    monkeypatch.setattr(
+        "src.services.integrations.microsoft_graph.client.get_graph_client",
+        lambda: _ErrorGraph(),
+    )
+
+    result = _fetch_draft_conversation_ids("bclymer@alleatogroup.com")
+    assert result == set()
+
+
+def test_structured_inbox_emails_sets_draft_ready_from_lookup(monkeypatch):
+    """draftReady should be True when the email's conversationId appears in the
+    draft-lookup set, and False otherwise."""
+    from src.services.agents.microsoft_executive_assistant.agent import (
+        _structured_inbox_emails,
+    )
+
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.agent._fetch_draft_conversation_ids",
+        lambda mailbox: {"conv-AAA"},
+    )
+
+    inbox_tool_output = json.dumps({
+        "ok": True,
+        "source": "microsoft_graph_live",
+        "mailbox_user_id": "bclymer@alleatogroup.com",
+        "count": 2,
+        "messages": [
+            {
+                "id": "msg-1",
+                "graph_message_id": "msg-1",
+                "conversation_id": "conv-AAA",
+                "subject": "RE: Contract review",
+                "from_name": "Walter Allen",
+                "from_email": "wallen@ulta.com",
+                "received_at": "2026-06-24T14:00:00Z",
+                "body_text": "Can you confirm by Thursday?",
+                "has_attachments": False,
+                "web_link": "https://outlook.office.com/mail/inbox/id/msg-1",
+            },
+            {
+                "id": "msg-2",
+                "graph_message_id": "msg-2",
+                "conversation_id": "conv-BBB",
+                "subject": "Invoice attached",
+                "from_name": "Steve Fischer",
+                "from_email": "steve@example.com",
+                "received_at": "2026-06-24T13:00:00Z",
+                "body_text": "Please review the invoice.",
+                "has_attachments": True,
+                "web_link": "https://outlook.office.com/mail/inbox/id/msg-2",
+            },
+        ],
+    })
+
+    fake_result = {
+        "messages": [
+            {
+                "type": "tool",
+                "name": "read_live_outlook_inbox",
+                "content": inbox_tool_output,
+            }
+        ]
+    }
+
+    request = MicrosoftExecutiveAssistantRequest(
+        userId="user-1",
+        mailboxUserId="bclymer@alleatogroup.com",
+        prompt="What emails are in my inbox today?",
+    )
+
+    items = _structured_inbox_emails(request, fake_result)
+
+    assert len(items) == 2
+    msg_1 = next(item for item in items if item.conversation_id == "conv-AAA")
+    msg_2 = next(item for item in items if item.conversation_id == "conv-BBB")
+    assert msg_1.draft_ready is True
+    assert msg_2.draft_ready is False
     assert graph.patch_payload == {"categories": []}

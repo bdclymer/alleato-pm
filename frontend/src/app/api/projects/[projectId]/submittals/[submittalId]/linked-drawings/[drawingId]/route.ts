@@ -1,5 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { createSubmittalAIReviewService } from "@/lib/submittals/ai-review/review-run-service";
 import { createClient } from "@/lib/supabase/server";
 
 const ROUTE_BASE =
@@ -15,37 +16,39 @@ export const DELETE = withApiGuardrails<{
   projectId: string;
   submittalId: string;
   drawingId: string;
-}>(
-  `${ROUTE_BASE}#DELETE`,
-  async ({ params }) => {
-    const { submittalId, drawingId } = await params;
-    const supabase = await createClient();
+}>(`${ROUTE_BASE}#DELETE`, async ({ params }) => {
+  const { projectId, submittalId, drawingId } = await params;
+  const supabase = await createClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      throw new GuardrailError({
-        code: "UNAUTHORIZED",
-        where: `${ROUTE_BASE}#DELETE`,
-        message: "Not authenticated",
-      });
-    }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    throw new GuardrailError({
+      code: "UNAUTHORIZED",
+      where: `${ROUTE_BASE}#DELETE`,
+      message: "Not authenticated",
+    });
+  }
 
-    const { error } = await supabase
-      .from("submittal_linked_drawings")
-      .delete()
-      .eq("submittal_id", submittalId)
-      .eq("drawing_id", drawingId);
+  const reviewService = createSubmittalAIReviewService(user.id);
+  const projectIdNumber = reviewService.parseProjectId(projectId);
+  await reviewService.getScopedSubmittal(projectIdNumber, submittalId);
+  await reviewService.getDrawingByScope(projectIdNumber, drawingId);
 
-    if (error) {
-      throw new GuardrailError({
-        code: "DB_ERROR",
-        where: `${ROUTE_BASE}#DELETE`,
-        message: error.message,
-      });
-    }
+  const { error } = await supabase
+    .from("submittal_linked_drawings")
+    .delete()
+    .eq("submittal_id", submittalId)
+    .eq("drawing_id", drawingId);
 
-    return Response.json({ success: true });
-  },
-);
+  if (error) {
+    throw new GuardrailError({
+      code: "DB_ERROR",
+      where: `${ROUTE_BASE}#DELETE`,
+      message: error.message,
+    });
+  }
+
+  return Response.json({ success: true });
+});

@@ -21,7 +21,10 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider defaultOpen={false}>
       <AppSidebar />
       <SidebarInset className="h-svh overflow-hidden">
-        <div className="flex min-h-0 flex-1 flex-col overflow-auto scrollbar-hide">
+        <div
+          className="flex min-h-0 flex-1 flex-col overflow-auto scrollbar-hide transition-[padding] duration-200 ease-out"
+          style={{ paddingRight: "var(--admin-feedback-sheet-offset, 0px)" }}
+        >
           <SiteHeader />
           <main
             id="app-main-content"

@@ -5,6 +5,10 @@ export const ADMIN_FEEDBACK_FALLBACK_ATTRIBUTE = "data-ai-target";
 export const ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE = "data-admin-feedback-root";
 export const OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT =
   "admin-feedback:open-composer";
+export const ADMIN_FEEDBACK_SHEET_OPEN_ATTRIBUTE =
+  "data-admin-feedback-sheet-open";
+export const ADMIN_FEEDBACK_SHEET_OFFSET_CSS_VAR =
+  "--admin-feedback-sheet-offset";
 export const FEEDBACK_LAUNCHER_POSITION_CLASS = "feedback-launcher-position";
 
 export const ADMIN_FEEDBACK_REQUEST_TYPES = [

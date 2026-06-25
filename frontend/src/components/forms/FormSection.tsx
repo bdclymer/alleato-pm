@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 interface FormSectionProps {
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   children: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
@@ -35,7 +35,7 @@ export function FormSection({
             {title}
           </h2>
           {description ? (
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <div className="text-sm text-muted-foreground">{description}</div>
           ) : null}
         </div>
         {actions ? <div className="shrink-0">{actions}</div> : null}

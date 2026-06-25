@@ -4,7 +4,7 @@ import * as React from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { isPast } from "date-fns";
-import { ArrowRight, FileText, Pencil, Sparkles, Users } from "lucide-react";
+import { ArrowRight, ExternalLink, FileText, Link2, Pencil, Sparkles, Users, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { apiFetch } from "@/lib/api-client";
@@ -16,6 +16,12 @@ import {
   ReadinessIndicator,
   SidebarTeamSection,
 } from "./project-command-center";
+import {
+  getProjectHomeLinkHref,
+  getProjectHomeLinkKind,
+  getProjectHomeLinks,
+  type ProjectHomeLinkDocument,
+} from "./project-home-links";
 import type { Database } from "@/types/database.types";
 import type { BudgetGrandTotals } from "@/types/budget";
 
@@ -47,10 +53,7 @@ type DailyLog = Pick<
   Database["public"]["Tables"]["daily_logs"]["Row"],
   "id" | "log_date" | "general_notes" | "status" | "weather_conditions"
 >;
-type ProjectDocument = Pick<
-  Database["public"]["Tables"]["project_documents"]["Row"],
-  "id" | "title" | "file_name" | "category" | "created_at"
->;
+type ProjectDocument = ProjectHomeLinkDocument;
 
 interface ChangeOrder {
   id: string | number;
@@ -104,6 +107,7 @@ export interface ProjectHomeV2Props {
   };
   pendingSsovReviews?: Array<{ commitmentId: string; commitmentNumber: string; commitmentTitle: string; submittedAt: string | null }>;
   ownerInvoices?: OwnerInvoice[];
+  linkDocuments?: ProjectDocument[];
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -249,6 +253,7 @@ export function ProjectHomeCommandCenterV2({
   homeAlerts,
   pendingSsovReviews = [],
   ownerInvoices = [],
+  linkDocuments = [],
 }: ProjectHomeV2Props) {
   const projectId = String(project.id);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
@@ -454,6 +459,10 @@ export function ProjectHomeCommandCenterV2({
   const recentDocuments = React.useMemo(
     () => [...documents].sort((a, b) => getDateMs(b.created_at) - getDateMs(a.created_at)).slice(0, 6),
     [documents],
+  );
+  const projectLinks = React.useMemo(
+    () => getProjectHomeLinks(linkDocuments.length > 0 ? linkDocuments : documents).slice(0, 5),
+    [documents, linkDocuments],
   );
 
   return (
@@ -821,6 +830,50 @@ export function ProjectHomeCommandCenterV2({
             </section>
           )}
 
+          {/* Links */}
+          {projectLinks.length > 0 && (
+            <section>
+              <SectionHeading
+                title="Links"
+                count={projectLinks.length}
+                action={<ViewAllLink href={`/${projectId}/documents`} label="Manage links" />}
+              />
+              <div className="divide-y divide-border/60">
+                {projectLinks.map((doc) => {
+                  const title = doc.title || doc.file_name || "Untitled link";
+                  const href = getProjectHomeLinkHref(doc);
+                  const kind = getProjectHomeLinkKind(doc);
+                  const Icon = kind === "video" ? Video : Link2;
+
+                  return (
+                    <a
+                      key={doc.id}
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group grid gap-2 py-3.5 transition-colors sm:grid-cols-[minmax(0,1fr)_6rem] sm:items-center"
+                    >
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary">
+                            {title}
+                          </p>
+                          {doc.description ? (
+                            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{doc.description}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground transition-colors group-hover:text-primary sm:justify-self-end">
+                        Open <ExternalLink className="h-3 w-3" />
+                      </span>
+                    </a>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {/* Snapshot */}
           <div className="grid grid-cols-2 divide-x divide-y divide-border overflow-hidden rounded-lg border border-border md:grid-cols-4 md:divide-y-0">
             <div className="p-4">
@@ -866,7 +919,7 @@ export function ProjectHomeCommandCenterV2({
         </div>
 
         {/* ── RIGHT RAIL ──────────────────────────────────── */}
-        <aside className="w-full shrink-0 space-y-6 xl:w-80">
+        <aside className="w-full shrink-0 space-y-6 xl:w-96">
           {/* AI brief */}
           <div>
             <div className={cn(EYE, "mb-2 flex items-center gap-1.5")}>

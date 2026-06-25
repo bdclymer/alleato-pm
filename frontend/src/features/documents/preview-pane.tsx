@@ -144,7 +144,7 @@ export function PreviewPane({
         {kind === "pdf" && <PdfPreview src={inlineHref} scale={scale} />}
 
         {kind === "image" && (
-          <div className="flex h-full items-start justify-center overflow-auto bg-muted/40 p-4">
+          <div className="flex h-full items-start justify-center overflow-auto bg-background p-4">
             <img
               src={inlineHref}
               alt={doc.title ?? ""}
@@ -173,7 +173,11 @@ export function PreviewPane({
           <div className="flex h-full items-center justify-center p-8">
             <EmptyState
               icon={<FileText />}
-              title={officeError || !pipelineDocIsGraphSourced(doc) ? "Preview unavailable" : "Preparing preview…"}
+              title={
+                officeError || !pipelineDocIsGraphSourced(doc)
+                  ? "Preview unavailable"
+                  : "Preparing preview…"
+              }
               description="Download the file to view it."
               action={
                 <Button asChild size="sm" variant="outline">

@@ -3,6 +3,7 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { PageShell } from "@/components/layout";
 import { notFound, redirect } from "next/navigation";
 import { ProjectHomeCommandCenterV2 as ProjectHomeClient } from "./project-home-command-center-v2";
+import type { ProjectHomeLinkDocument } from "./project-home-links";
 import type { BudgetGrandTotals } from "@/types/budget";
 
 export const dynamic = "force-dynamic";
@@ -232,6 +233,7 @@ export default async function ProjectHomePage({
     pendingSsovRowsResult,
     subcontractTotalsResult,
     purchaseOrderTotalsResult,
+    linkDocumentsResult,
   ] = await Promise.all([
     // Fetch main project data
     supabase.from("projects").select("*").eq("id", numericProjectId).single(),
@@ -385,6 +387,18 @@ export default async function ProjectHomePage({
       .from("purchase_orders_with_totals")
       .select("id, total_sov_amount")
       .eq("project_id", numericProjectId),
+
+    // Fetch project-scoped external links and media references for the landing Links section.
+    supabase
+      .from("project_documents")
+      .select(
+        "id, title, file_name, category, created_at, description, document_type, content_type, file_url, source_system, source_web_url",
+      )
+      .eq("project_id", numericProjectId)
+      .is("deleted_at", null)
+      .or("source_web_url.ilike.http%,file_url.ilike.http%")
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
 
   if (projectResult.error || !projectResult.data) {
@@ -504,6 +518,12 @@ export default async function ProjectHomePage({
       teamDirectoryResult.error,
     );
   }
+  if (linkDocumentsResult.error) {
+    console.error(
+      `[project-home] project link documents query failed for project ${numericProjectId}:`,
+      linkDocumentsResult.error,
+    );
+  }
   const teamFromRpc = teamResult.data || [];
   const teamFromDirectory = mapDirectoryTeamMembers(teamDirectoryResult.data || []);
   const teamFromProject = mapProjectTeamMembers(project.team_members);
@@ -513,6 +533,9 @@ export default async function ProjectHomePage({
       : teamFromRpc.length > 0
       ? teamFromRpc
       : teamFromProject;
+  const linkDocuments: ProjectHomeLinkDocument[] = linkDocumentsResult.error
+    ? []
+    : linkDocumentsResult.data || [];
 
   return (
     <PageShell
@@ -536,6 +559,7 @@ export default async function ProjectHomePage({
         homeAlerts={homeAlerts}
         pendingSsovReviews={pendingSsovReviews}
         ownerInvoices={ownerInvoices}
+        linkDocuments={linkDocuments}
       />
     </PageShell>
   );

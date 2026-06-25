@@ -30,7 +30,7 @@ export function PdfPreview({ src, scale }: { src: string; scale: number }) {
   const [numPages, setNumPages] = React.useState(0);
 
   return (
-    <div className="flex h-full w-full justify-center overflow-auto bg-muted/40 p-4">
+    <div className="flex h-full w-full justify-center overflow-auto bg-background p-4">
       <PdfDocument
         file={src}
         onLoadSuccess={({ numPages: n }: { numPages: number }) =>
@@ -50,7 +50,7 @@ export function PdfPreview({ src, scale }: { src: string; scale: number }) {
             key={i}
             pageNumber={i + 1}
             scale={scale}
-            className="mb-4 border border-border bg-background"
+            className="mb-4 bg-background"
             renderTextLayer
             renderAnnotationLayer
           />

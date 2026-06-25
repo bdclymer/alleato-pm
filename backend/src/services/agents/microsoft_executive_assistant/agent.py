@@ -865,6 +865,35 @@ def _wants_inbox_card(prompt: str) -> bool:
     return any(token in normalized for token in ("email", "emails", "inbox", "mail", "message"))
 
 
+def _fetch_draft_conversation_ids(mailbox: str) -> set[str]:
+    """Return the set of conversationIds that already have a draft in the Drafts
+    folder for the given mailbox. One Graph call; empty set on any error so the
+    pencil simply stays muted rather than surfacing a runtime failure."""
+    if not mailbox or "@" not in mailbox:
+        return set()
+    try:
+        from urllib.parse import quote as _quote, urlencode as _urlencode
+
+        from src.services.integrations.microsoft_graph.client import get_graph_client
+
+        graph = get_graph_client()
+        if not graph.is_configured():
+            return set()
+        params = _urlencode(
+            {"$select": "id,conversationId", "$top": "100"}
+        )
+        path = f"{graph.GRAPH_BASE}/users/{_quote(mailbox)}/mailFolders/drafts/messages?{params}"
+        data = graph._get_with_retry(path, max_retries=1, base_delay=0.5)
+        items = data.get("value") if isinstance(data, dict) else []
+        return {
+            str(item["conversationId"])
+            for item in (items or [])
+            if isinstance(item, dict) and item.get("conversationId")
+        }
+    except Exception:
+        return set()
+
+
 def _structured_inbox_emails(
     request: MicrosoftExecutiveAssistantRequest,
     result: Any,
@@ -883,6 +912,9 @@ def _structured_inbox_emails(
     if not _wants_inbox_card(request.prompt):
         return []
 
+    mailbox = (request.mailbox_user_id or "").strip().lower()
+    draft_conversation_ids = _fetch_draft_conversation_ids(mailbox)
+
     items: list[MicrosoftAssistantEmailItem] = []
     for index, message in enumerate(messages[: request.max_messages]):
         subject = str(message.get("subject") or "(no subject)").strip() or "(no subject)"
@@ -892,6 +924,7 @@ def _structured_inbox_emails(
         conversation_id = str(message.get("conversation_id") or "").strip() or None
         item_id = graph_id or conversation_id or f"inbox-{index}"
         bucket = _action_bucket(message)
+        draft_ready = bool(conversation_id and conversation_id in draft_conversation_ids)
         reply_prompt = "\n".join(
             [
                 "OUTLOOK_INBOX_CARD_ACTION",
@@ -925,8 +958,7 @@ def _structured_inbox_emails(
                 recommendedAction=_message_reason(message, bucket),
                 replyPrompt=reply_prompt,
                 draftPrompt=draft_prompt,
-                # v1: no real Outlook draft lookup yet — pencil renders muted.
-                draftReady=False,
+                draftReady=draft_ready,
             )
         )
     return items

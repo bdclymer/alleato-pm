@@ -331,19 +331,10 @@ function ExpandedCompanyWideTools({
   projectSelector?: React.ReactNode
 }) {
   const visibleToolSet = React.useMemo(() => new Set(visibleTools), [visibleTools])
-  const sections = React.useMemo(() => {
-    const sectionToolNames = new Set(
-      companyWideToolSections.flatMap((section) => section.toolNames)
-    )
-    // Tools not covered by a named section (e.g. developer admin tools) render
-    // under an "AI" section, mirroring the header Company Tools panel.
-    const extraTools = tools.filter((tool) => !sectionToolNames.has(tool.name))
-    if (extraTools.length === 0) return companyWideToolSections
-    return [
-      ...companyWideToolSections,
-      { label: "AI", toolNames: extraTools.map((tool) => tool.name) },
-    ]
-  }, [tools])
+  // Only the named Company-wide sections render. The single Admin Dashboard
+  // link lives at the end of the "Company" section; other internal admin tools
+  // are reachable from the Admin Dashboard page itself.
+  const sections = companyWideToolSections
 
   return (
     <div className="flex flex-col">
@@ -613,7 +604,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const companyWideTools = React.useMemo<NavigationTool[]>(
     () => [
       ...companyWideHeaderTools,
-      ...(isDeveloper ? developerCompanyAdminTools : []),
+      // Only surface the single Admin Dashboard link (last item of the Company
+      // section). Other internal admin tools are reachable from that page.
+      ...(isDeveloper
+        ? developerCompanyAdminTools.filter((tool) => tool.name === "Admin Dashboard")
+        : []),
     ],
     [isDeveloper]
   )

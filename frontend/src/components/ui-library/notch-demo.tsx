@@ -48,7 +48,7 @@ export default function NotchDemo() {
     <div className="relative flex min-h-screen w-full translate-z-0 items-center justify-center overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-950 [&_.fixed]:absolute">
       <div
         className={cn(
-          `relative flex w-80 flex-col justify-center gap-2 overflow-hidden rounded-2xl px-1 pt-1 pb-8 text-white shadow-xl transition-colors duration-300`,
+          `relative flex w-80 flex-col justify-center gap-2 overflow-hidden rounded-2xl px-1 pt-1 pb-8 text-white shadow-sm transition-colors duration-300`,
           alignClass,
         )}
       >
@@ -61,7 +61,7 @@ export default function NotchDemo() {
         <img
           src="https://images.unsplash.com/photo-1559825481-12a05cc00344?q=80&w=1365&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="The serenity of the sea"
-          className="relative z-20 h-full w-full rounded-xl object-cover shadow-2xl"
+          className="relative z-20 h-full w-full rounded-xl object-cover shadow-sm"
         />
         <div className="px-4">
           <p className="relative mt-4 text-xl font-semibold">

@@ -60,7 +60,7 @@ export default function ExpandableCardDemo() {
                   duration: 0.05,
                 },
               }}
-              className="flex absolute top-2 right-2 lg:hidden items-center justify-center bg-white rounded-full h-6 w-6"
+              className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-background"
               onClick={() => setActive(null)}
             >
               <CloseIcon />
@@ -68,7 +68,7 @@ export default function ExpandableCardDemo() {
             <motion.div
               layoutId={`card-${active.title}-${id}`}
               ref={ref}
-              className="w-full max-w-[500px]  h-full md:h-fit md:max-h-[90%]  flex flex-col bg-white dark:bg-neutral-900 sm:rounded-3xl overflow-hidden"
+              className="flex h-full w-full max-w-lg flex-col overflow-hidden bg-card sm:rounded-3xl md:h-fit md:max-h-screen"
             >
               <motion.div layoutId={`image-${active.title}-${id}`}>
                 <img
@@ -101,7 +101,7 @@ export default function ExpandableCardDemo() {
                     layoutId={`button-${active.title}-${id}`}
                     href={active.ctaLink}
                     target="_blank"
-                    className="px-4 py-3 text-sm rounded-full font-bold bg-green-500 text-white"
+                    className="rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground"
                   >
                     {active.ctaText}
                   </motion.a>
@@ -112,7 +112,7 @@ export default function ExpandableCardDemo() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="text-neutral-600 text-xs md:text-sm lg:text-base h-40 md:h-fit pb-10 flex flex-col items-start gap-4 overflow-auto dark:text-neutral-400 [mask:linear-gradient(to_bottom,white,white,transparent)] [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch]"
+                    className="flex h-40 flex-col items-start gap-4 overflow-auto pb-10 text-xs text-muted-foreground [mask:linear-gradient(to_bottom,white,white,transparent)] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] md:h-fit md:text-sm lg:text-base"
                   >
                     {typeof active.content === "function"
                       ? active.content()
@@ -159,7 +159,7 @@ export default function ExpandableCardDemo() {
             </div>
             <motion.button
               layoutId={`button-${card.title}-${id}`}
-              className="px-4 py-2 text-sm rounded-full font-bold bg-gray-100 hover:bg-green-500 hover:text-white text-black mt-4 md:mt-0"
+              className="mt-4 rounded-full bg-muted px-4 py-2 text-sm font-bold text-foreground hover:bg-primary hover:text-primary-foreground md:mt-0"
             >
               {card.ctaText}
             </motion.button>
@@ -194,7 +194,7 @@ export const CloseIcon = () => {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="h-4 w-4 text-black"
+      className="h-4 w-4 text-foreground"
     >
       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
       <path d="M18 6l-12 12" />

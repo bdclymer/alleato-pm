@@ -62,6 +62,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { copyTextWithFallback } from "@/lib/browser/clipboard";
 import type {
   AssistantWidgetField,
   AssistantWidgetPayload,
@@ -175,8 +176,17 @@ function WidgetMeta({ children, tone = "muted" }: { children: ReactNode; tone?: 
 }
 
 async function copyToClipboard(text: string) {
-  await navigator.clipboard.writeText(text);
-  toast.success("Copied");
+  try {
+    await copyTextWithFallback(text);
+    toast.success("Copied");
+  } catch (error) {
+    toast.error("Copy failed", {
+      description:
+        error instanceof Error
+          ? error.message
+          : "The browser denied clipboard access. Select the content manually and copy it.",
+    });
+  }
 }
 
 function DraftEmailWidget({

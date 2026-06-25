@@ -108,12 +108,12 @@ export function InvoiceContactsSection({
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center gap-2">
-        <SectionRuleHeading label="Invoice Contacts" />
+      <div className="flex items-start gap-2">
+        <SectionRuleHeading label="Invoice Contacts" className="!mb-0 !pb-0 !items-start" />
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+              <HelpCircle className="mt-0.5 h-4 w-4 text-muted-foreground cursor-help" />
             </TooltipTrigger>
             <TooltipContent className="max-w-xs text-sm">
               This person will be added to the contract and will be the point of contact and signer for subcontractor invoices.

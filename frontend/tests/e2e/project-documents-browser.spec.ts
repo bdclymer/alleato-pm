@@ -157,4 +157,47 @@ test.describe("project documents browser", () => {
 
     expect(firstRowCount).toBe(4);
   });
+
+  test("split browser uses the full shell width and preview pane is unframed", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1600, height: 1000 });
+    await page.goto("/876/documents");
+    await page.waitForLoadState("domcontentloaded");
+
+    const shell = page.getByTestId("documents-browser-shell");
+    const previewPane = page.getByTestId("document-preview-pane");
+
+    await expect(shell).toBeVisible({ timeout: 15_000 });
+    await expect(previewPane).toBeVisible();
+
+    const metrics = await shell.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const styles = window.getComputedStyle(element);
+      return {
+        width: rect.width,
+        radius: styles.borderTopLeftRadius,
+        borderLeftWidth: styles.borderLeftWidth,
+        borderTopWidth: styles.borderTopWidth,
+      };
+    });
+
+    expect(metrics.width).toBeGreaterThanOrEqual(1450);
+    expect(metrics.radius).toBe("0px");
+    expect(metrics.borderLeftWidth).toBe("0px");
+    expect(metrics.borderTopWidth).toBe("0px");
+
+    const previewStyles = await previewPane.evaluate((element) => {
+      const styles = window.getComputedStyle(element);
+      return {
+        radius: styles.borderTopLeftRadius,
+        borderLeftWidth: styles.borderLeftWidth,
+        borderTopWidth: styles.borderTopWidth,
+      };
+    });
+
+    expect(previewStyles.radius).toBe("0px");
+    expect(previewStyles.borderLeftWidth).toBe("0px");
+    expect(previewStyles.borderTopWidth).toBe("0px");
+  });
 });

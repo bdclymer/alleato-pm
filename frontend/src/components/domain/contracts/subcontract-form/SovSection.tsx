@@ -18,12 +18,6 @@ import {
 } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   InlineTableHeader,
   InlineTableHeaderRow,
   InlineTableHeaderCell,
@@ -32,7 +26,7 @@ import {
   InlineTableFooterRow,
   InlineTableFooterCell,
 } from "@/components/ds/inline-table";
-import { ChevronDown } from "lucide-react";
+import { Rows3, Upload } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -187,41 +181,61 @@ export function SovSection({
     <section data-testid="sov-section">
       <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleCSVImport} />
 
-      <SectionRuleHeading label="Schedule of Values" />
-      <div className="space-y-6 pt-4">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-4">
+          <SectionRuleHeading label="Schedule of Values" />
+          <div className="flex items-center gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={addGroup}
+                    disabled={isSubmitting}
+                    aria-label="Add Group"
+                  >
+                    <Rows3 className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Add Group</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => csvInputRef.current?.click()}
+                    disabled={isSubmitting}
+                    aria-label="Import from CSV"
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Import from CSV</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
         <p className="text-sm text-muted-foreground">
-          This contract&apos;s default accounting method is{" "}
-          <strong>{accountingMethod === "amount_based" ? "amount-based" : "unit/quantity"}</strong>.{" "}
+          Accounting method is {accountingMethod === "amount_based" ? "amount based" : "unit/quantity"}.{" "}
           <Button
             type="button"
             variant="link"
-            className="underline p-0 h-auto"
+            className="underline p-0 h-auto text-sm"
             disabled={isSubmitting}
             onClick={onToggleAccountingMethod}
             data-testid="sov-accounting-toggle"
           >
-            Change to {accountingMethod === "amount_based" ? "Unit/Quantity" : "Amount-based"}
+            change to unit/quantity
           </Button>
         </p>
-
-        <div className="flex items-center justify-between">
-          <SectionRuleHeading label="Line Items" />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="h-9 gap-1.5">
-                Options
-                <ChevronDown className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={addGroup}>Add Group</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => csvInputRef.current?.click()}>
-                Import from CSV
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
+      </div>
+      <div className="space-y-6 pt-4">
         <div
           className="overflow-x-auto"
           data-testid="sov-table"
@@ -257,7 +271,7 @@ export function SovSection({
                     )}
                     <InlineTableHeaderCell className="w-48" align="right">Amount</InlineTableHeaderCell>
                     <InlineTableHeaderCell className="w-40" align="right">Billed to Date</InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="w-40" align="right">Amount Remaining</InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="w-40" align="right">Balance</InlineTableHeaderCell>
                     <InlineTableHeaderCell className="w-12" />
                   </InlineTableHeaderRow>
                 </InlineTableHeader>
@@ -299,18 +313,23 @@ export function SovSection({
                         type="button"
                         variant="link"
                         className="h-auto p-0 text-sm font-medium"
-                        onClick={addSOVLine}
-                        disabled={isSubmitting}
-                        data-testid="sov-add-line-link"
-                      >
-                        Add Line Item
-                      </Button>
-                    </InlineTableFooterCell>
+                    onClick={addSOVLine}
+                    disabled={isSubmitting}
+                    data-testid="sov-add-line-link"
+                  >
+                    + Line Item
+                  </Button>
+                </InlineTableFooterCell>
                     <InlineTableFooterCell className="pt-2 pb-1" />
                   </InlineTableFooterRow>
-                  <InlineTableFooterRow type="totals">
-                    <InlineTableFooterCell />
-                    <InlineTableFooterCell colSpan={accountingMethod === "unit_quantity" ? 5 : 2} className="py-3 text-xs">Totals</InlineTableFooterCell>
+                  <InlineTableFooterRow type="totals" className="!border-t-0">
+                    <InlineTableFooterCell
+                      colSpan={accountingMethod === "unit_quantity" ? 6 : 3}
+                      align="right"
+                      className="py-3 text-xs"
+                    >
+                      Totals
+                    </InlineTableFooterCell>
                     <InlineTableFooterCell align="right" numeric data-testid="sov-total-amount">{formatCurrency(totals.amount)}</InlineTableFooterCell>
                     <InlineTableFooterCell align="right" numeric data-testid="sov-total-billed">{formatCurrency(totals.billedToDate)}</InlineTableFooterCell>
                     <InlineTableFooterCell align="right" numeric data-testid="sov-total-remaining">{formatCurrency(totals.amountRemaining)}</InlineTableFooterCell>

@@ -15,6 +15,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { apiFetch } from '@/lib/api-client';
 import { getAttachmentSizeError } from '@/lib/documents/attachment-constraints';
 import { uploadEntityAttachment } from '@/lib/documents/upload-entity-attachment';
@@ -100,6 +108,7 @@ export interface EntityAttachmentsProps {
   className?: string;
   hideIfEmpty?: boolean;
   showLabel?: boolean;
+  displayMode?: 'list' | 'table';
 }
 
 export function EntityAttachments({
@@ -110,6 +119,7 @@ export function EntityAttachments({
   className,
   hideIfEmpty = false,
   showLabel = true,
+  displayMode = 'list',
 }: EntityAttachmentsProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState<string[]>([]);
@@ -249,6 +259,141 @@ export function EntityAttachments({
     return null;
   }
 
+  const renderDocumentTypeControl = (doc: LinkedDoc) => {
+    if (documentTypes.length === 0) return <span className="text-sm text-muted-foreground">Uncategorized</span>;
+    return (
+      <Select
+        value={doc.document_type ?? NO_DOCUMENT_TYPE}
+        disabled={
+          updateTypeMutation.isPending &&
+          updateTypeMutation.variables?.documentMetadataId ===
+            doc.document_metadata_id
+        }
+        onValueChange={(value) =>
+          updateTypeMutation.mutate({
+            documentMetadataId: doc.document_metadata_id,
+            documentType:
+              value === NO_DOCUMENT_TYPE ? null : value,
+          })
+        }
+      >
+        <SelectTrigger size="sm" className="h-8 min-w-0 w-full sm:w-44">
+          <SelectValue placeholder="Type" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={NO_DOCUMENT_TYPE}>Uncategorized</SelectItem>
+          {documentTypes.map((option) => (
+            <SelectItem key={option.type_key} value={option.type_key}>
+              {option.display_name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  };
+
+  const renderActions = (doc: LinkedDoc) => {
+    const isRemoving =
+      removeMutation.isPending &&
+      removeMutation.variables === doc.document_metadata_id;
+
+    return (
+      <div className="flex items-center justify-end gap-1">
+        {doc.download_url && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => window.open(doc.download_url ?? '', '_blank')}
+            title="Download"
+          >
+            <Download className="h-3.5 w-3.5" />
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-destructive hover:text-destructive"
+          disabled={isRemoving}
+          onClick={() => removeMutation.mutate(doc.document_metadata_id)}
+          title="Remove"
+        >
+          {isRemoving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Trash2 className="h-3.5 w-3.5" />
+          )}
+        </Button>
+      </div>
+    );
+  };
+
+  const renderTable = () => (
+    <div className="rounded-md border border-border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>File</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Attached</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={4} className="py-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading…
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : isUploadingAny && docs.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="py-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Uploading {uploading.join(', ')}…
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : docs.length === 0 && !isUploadingAny ? (
+            <TableRow>
+              <TableCell colSpan={4} className="py-8 text-sm text-muted-foreground">
+                No attachments yet.
+              </TableCell>
+            </TableRow>
+          ) : (
+            docs.map((doc) => {
+              const name = doc.title ?? doc.file_name ?? doc.document_metadata_id;
+              return (
+                <TableRow key={doc.document_metadata_id}>
+                  <TableCell className="max-w-none">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-foreground">{name}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {doc.source_size ? formatBytes(doc.source_size) : ''}
+                        </p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="max-w-none">{renderDocumentTypeControl(doc)}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {doc.attached_at ? formatDate(doc.attached_at) : '—'}
+                  </TableCell>
+                  <TableCell className="max-w-none">{renderActions(doc)}</TableCell>
+                </TableRow>
+              );
+            })
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
   const content = (
     <div className={cn('space-y-3', className)}>
       {/* Dropzone upload trigger (matches change-events form) */}
@@ -297,7 +442,7 @@ export function EntityAttachments({
       </label>
 
       {/* Document list */}
-      {isLoading ? (
+      {displayMode === 'table' ? renderTable() : isLoading ? (
         <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading…
@@ -308,16 +453,10 @@ export function EntityAttachments({
         <ul className="divide-y divide-border/50">
           {docs.map((doc) => {
             const name = doc.title ?? doc.file_name ?? doc.document_metadata_id;
-            const isRemoving =
-              removeMutation.isPending &&
-              removeMutation.variables === doc.document_metadata_id;
             return (
               <li
                 key={doc.document_metadata_id}
-                className={cn(
-                  'flex flex-col gap-3 py-2.5 first:pt-0 sm:flex-row sm:items-center',
-                  isRemoving && 'opacity-50'
-                )}
+                className="flex flex-col gap-3 py-2.5 first:pt-0 sm:flex-row sm:items-center"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -338,59 +477,11 @@ export function EntityAttachments({
                 </div>
                 <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
                   {documentTypes.length > 0 && (
-                    <Select
-                      value={doc.document_type ?? NO_DOCUMENT_TYPE}
-                      disabled={
-                        updateTypeMutation.isPending &&
-                        updateTypeMutation.variables?.documentMetadataId ===
-                          doc.document_metadata_id
-                      }
-                      onValueChange={(value) =>
-                        updateTypeMutation.mutate({
-                          documentMetadataId: doc.document_metadata_id,
-                          documentType:
-                            value === NO_DOCUMENT_TYPE ? null : value,
-                        })
-                      }
-                    >
-                      <SelectTrigger size="sm" className="h-8 min-w-0 flex-1 sm:w-44 sm:flex-none">
-                        <SelectValue placeholder="Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={NO_DOCUMENT_TYPE}>Uncategorized</SelectItem>
-                        {documentTypes.map((option) => (
-                          <SelectItem key={option.type_key} value={option.type_key}>
-                            {option.display_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex-1 sm:w-44 sm:flex-none">
+                      {renderDocumentTypeControl(doc)}
+                    </div>
                   )}
-                  {doc.download_url && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => window.open(doc.download_url ?? '', '_blank')}
-                      title="Download"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
-                    disabled={isRemoving}
-                    onClick={() => removeMutation.mutate(doc.document_metadata_id)}
-                    title="Remove"
-                  >
-                    {isRemoving ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
+                  {renderActions(doc)}
                 </div>
               </li>
             );

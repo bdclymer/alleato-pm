@@ -14,7 +14,6 @@ export interface VendorOption {
   value: string;
   label: string;
   companyId: string | null;
-  licenseNumber?: string | null;
 }
 
 export const UNIT_OF_MEASURES = [

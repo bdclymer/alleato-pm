@@ -86,7 +86,10 @@ export default function MainLayout({
       <SidebarInset key="app-shell" className="h-svh overflow-hidden">
         <CreateProjectDevConfigProvider>
           <div className="flex min-h-0 flex-1 overflow-hidden">
-            <div className="flex min-w-0 flex-1 flex-col overflow-auto scrollbar-hide">
+            <div
+              className="flex min-w-0 flex-1 flex-col overflow-auto scrollbar-hide transition-[padding] duration-200 ease-out"
+              style={{ paddingRight: "var(--admin-feedback-sheet-offset, 0px)" }}
+            >
               {!isDrawingViewer && (
                 isAiAssistant ? (
                   <div key="site-header-mobile" className="md:hidden">

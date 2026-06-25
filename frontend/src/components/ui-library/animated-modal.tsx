@@ -1,5 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import React, {
   ReactNode,
@@ -48,15 +50,17 @@ export const ModalTrigger = ({
 }) => {
   const { setOpen } = useModal();
   return (
-    <button
+    <Button
+      type="button"
+      variant="ghost"
       className={cn(
-        "px-4 py-2 rounded-md text-black dark:text-white text-center relative overflow-hidden",
+        "relative overflow-hidden px-4 py-2 text-center text-foreground",
         className
       )}
       onClick={() => setOpen(true)}
     >
       {children}
-    </button>
+    </Button>
   );
 };
 
@@ -103,7 +107,7 @@ export const ModalBody = ({
           <motion.div
             ref={modalRef}
             className={cn(
-              "min-h-[50%] max-h-[90%] md:max-w-[40%] bg-white dark:bg-neutral-950 border border-transparent dark:border-neutral-800 md:rounded-2xl relative z-50 flex flex-col flex-1 overflow-hidden",
+              "relative z-50 flex max-h-[90%] min-h-[50%] flex-1 flex-col overflow-hidden border border-transparent bg-background md:max-w-[40%] md:rounded-2xl",
               className
             )}
             initial={{
@@ -162,7 +166,7 @@ export const ModalFooter = ({
   return (
     <div
       className={cn(
-        "flex justify-end p-4 bg-gray-100 dark:bg-neutral-900",
+        "flex justify-end bg-muted p-4",
         className
       )}
     >
@@ -185,7 +189,7 @@ const Overlay = ({ className }: { className?: string }) => {
         opacity: 0,
         backdropFilter: "blur(0px)",
       }}
-      className={`fixed inset-0 h-full w-full bg-black bg-opacity-50 z-50 ${className}`}
+      className={cn("fixed inset-0 z-50 h-full w-full bg-foreground/50", className)}
     ></motion.div>
   );
 };
@@ -193,27 +197,16 @@ const Overlay = ({ className }: { className?: string }) => {
 const CloseIcon = () => {
   const { setOpen } = useModal();
   return (
-    <button
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
       onClick={() => setOpen(false)}
-      className="absolute top-4 right-4 group"
+      className="group absolute right-4 top-4 h-8 w-8"
+      aria-label="Close modal"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="text-black dark:text-white h-4 w-4 group-hover:scale-125 group-hover:rotate-3 transition duration-200"
-      >
-        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-        <path d="M18 6l-12 12" />
-        <path d="M6 6l12 12" />
-      </svg>
-    </button>
+      <X className="h-4 w-4 text-foreground transition duration-200 group-hover:rotate-3 group-hover:scale-125" />
+    </Button>
   );
 };
 
@@ -224,7 +217,7 @@ export const useOutsideClick = (
   callback: (event: MouseEvent | TouchEvent) => void
 ) => {
   useEffect(() => {
-    const listener = (event: any) => {
+    const listener = (event: MouseEvent | TouchEvent) => {
       // DO NOTHING if the element being clicked is the target element or their children
       if (!ref.current || ref.current.contains(event.target)) {
         return;

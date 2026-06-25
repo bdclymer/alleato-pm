@@ -115,6 +115,7 @@ import {
   truncateInlineText,
 } from "@/lib/chat/attachment-text";
 import { appToast as toast } from "@/lib/toast/app-toast";
+import { copyTextWithFallback } from "@/lib/browser/clipboard";
 import { WelcomeScreen } from "./welcome-screen";
 import {
   type AssistantTraceDiagnostics,
@@ -1457,41 +1458,18 @@ export function ChatArea({
 
   const handleCopy = useCallback(async (content: string) => {
     try {
-      await navigator.clipboard.writeText(content);
+      await copyTextWithFallback(content);
       toast.success("Copied to clipboard");
       return;
     } catch (error) {
-      console.warn(
-        "Clipboard write failed, falling back to selection copy",
-        error,
-      );
+      console.warn("Clipboard copy failed", error);
+      toast.error("Copy failed", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "The browser denied clipboard access. Select the response text manually and copy it.",
+      });
     }
-
-    try {
-      const textarea = document.createElement("textarea");
-      textarea.value = content;
-      textarea.setAttribute("readonly", "");
-      textarea.style.position = "fixed";
-      textarea.style.left = "-9999px";
-      textarea.style.top = "0";
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-      const copied = document.execCommand("copy");
-      document.body.removeChild(textarea);
-
-      if (copied) {
-        toast.success("Copied to clipboard");
-        return;
-      }
-    } catch (fallbackError) {
-      console.warn("Fallback clipboard copy failed", fallbackError);
-    }
-
-    toast.error("Copy failed", {
-      description:
-        "The browser denied clipboard access. Select the response text manually and copy it.",
-    });
   }, []);
 
   const handlePasteFromClipboard = useCallback(async () => {

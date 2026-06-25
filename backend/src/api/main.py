@@ -43,7 +43,7 @@ init_posthog()
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 try:
     from openai import OpenAI
@@ -53,6 +53,7 @@ except ImportError:
 from src.services.supabase_helpers import SupabaseRagStore
 from src.services.ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from src.services.pipeline import run_full_pipeline
+from src.services.url_resource_ingestion import UrlIngestionError, UrlResourceIngestionService
 from src.api.admin_endpoints import require_admin_api_key
 from src.services.agents.content_builder import ContentBuilderRequest, run_content_builder_agent
 from src.services.agents.docs_research_agent import DocsResearchRequest, run_docs_research_agent
@@ -181,6 +182,13 @@ class FirefliesRecentSyncRequest(BaseModel):
     project_id: Optional[int] = None
     dry_run: bool = False
     write_markdown_dir: Optional[str] = None
+
+
+class UrlResourceIngestRequest(BaseModel):
+    urls: List[str]
+    project_id: Optional[int] = None
+    dry_run: bool = False
+    run_pipeline: bool = True
 
 
 class GraphSyncRequest(BaseModel):
@@ -327,6 +335,10 @@ def get_ingestion_pipeline(
     store: SupabaseRagStore = Depends(get_rag_store),
 ) -> FirefliesIngestionPipeline:
     return FirefliesIngestionPipeline(store)
+
+
+def get_url_resource_ingestion_service() -> UrlResourceIngestionService:
+    return UrlResourceIngestionService()
 
 
 @app.get("/health", tags=["System"], summary="Health check")
@@ -806,6 +818,40 @@ def ingest_recent_fireflies_endpoint(
         project_id=payload.project_id,
         dry_run=payload.dry_run,
         write_markdown_dir=payload.write_markdown_dir,
+    )
+
+
+@app.post("/api/ingest/url-resources", tags=["Ingestion"], summary="Ingest web URLs into the existing RAG pipeline")
+def ingest_url_resources_endpoint(
+    payload: UrlResourceIngestRequest,
+    service: UrlResourceIngestionService = Depends(get_url_resource_ingestion_service),
+    _: None = Depends(require_admin_api_key),
+) -> JSONResponse:
+    try:
+        results = service.ingest_urls(
+            payload.urls,
+            project_id=payload.project_id,
+            dry_run=payload.dry_run,
+            run_pipeline=payload.run_pipeline,
+        )
+    except UrlIngestionError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=_public_backend_error("URL resource ingestion failed", exc),
+        ) from exc
+
+    failed = [item for item in results if item.get("status") == "failed"]
+    return JSONResponse(
+        status_code=207 if failed else 200,
+        content={
+            "results": results,
+            "ingested_count": sum(1 for item in results if item.get("status") in {"ingested", "updated"}),
+            "skipped_count": sum(1 for item in results if item.get("status") == "skipped_unchanged"),
+            "failed_count": len(failed),
+            "dry_run": payload.dry_run,
+        },
     )
 
 

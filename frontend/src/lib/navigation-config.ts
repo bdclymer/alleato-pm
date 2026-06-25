@@ -243,6 +243,14 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     developerOnly: true,
   },
   {
+    name: "AI Chat History",
+    path: "ai-chat-history",
+    requiresProject: false,
+    icon: Bot,
+    description: "Assistant turns with traces, tools, usage, and write status",
+    developerOnly: true,
+  },
+  {
     name: "Task Training",
     path: "task-training",
     requiresProject: false,
@@ -421,7 +429,7 @@ export interface CompanyWideToolSection {
 export const companyWideToolSections: CompanyWideToolSection[] = [
   {
     label: "Company",
-    toolNames: ["Projects", "Company Directory", "Alleato AI"],
+    toolNames: ["Projects", "Company Directory", "Alleato AI", "Admin Dashboard"],
   },
   {
     label: "Work",
@@ -935,6 +943,14 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Clock,
     description: "Executive Daily Brief run ledger and evidence rows",
+    adminOnly: true,
+  },
+  {
+    name: "AI Chat History",
+    path: "/ai-chat-history",
+    requiresProject: false,
+    icon: Bot,
+    description: "Assistant turns with traces and write status",
     adminOnly: true,
   },
   {

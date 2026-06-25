@@ -40,6 +40,7 @@ export function SortableSovRow({ id, className, children }: SortableSovRowProps)
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
+        borderBottomWidth: 0,
       }}
       className={`${className} ${isDragging ? "opacity-60" : ""}`}
     >
@@ -62,7 +63,7 @@ export function SovGroupRow({ index, line, accountingMethod, onUpdate, onRemove 
   return (
     <SortableSovRow
       id={`sov-line-${index}`}
-      className="border-b border-border/60 bg-muted/40"
+      className="bg-muted/40"
     >
       {({ attributes, listeners }) => (
         <>
@@ -129,20 +130,20 @@ export function SovLineItemRow({
   return (
     <SortableSovRow
       id={`sov-line-${index}`}
-      className="group border-b border-border/60 bg-background transition-colors hover:bg-muted/20"
+      className="group bg-background transition-colors hover:bg-muted/20"
     >
       {({ attributes, listeners }) => (
         <>
-          <td className="px-1 py-1.5 text-sm" data-testid={`sov-line-${index}`}>
+          <td className="w-8 py-1.5 pl-0 pr-1 text-sm align-middle" data-testid={`sov-line-${index}`}>
             <div
               {...attributes}
               {...listeners}
-              className="inline-flex cursor-grab rounded p-1 text-muted-foreground hover:bg-muted active:cursor-grabbing"
+              className="inline-flex cursor-grab rounded p-0 text-muted-foreground hover:bg-muted active:cursor-grabbing"
             >
               <GripVertical className="h-4 w-4" />
             </div>
           </td>
-          <td className="px-1 py-1.5">
+          <td className="py-1.5 pl-0 pr-1">
             <BudgetCodeSelector
               value={line.budgetCodeId || line.budgetCode || ""}
               onValueChange={(_, code) => onBudgetCodeSelect(index, code)}
@@ -150,15 +151,15 @@ export function SovLineItemRow({
               loading={loadingBudgetCodes}
               onCreateNew={onCreateBudgetCode}
               placeholder={line.budgetCode || "Select budget code..."}
-              className="h-10"
+              className="!h-10 !px-3 !py-2 text-sm"
             />
           </td>
-          <td className="px-1 py-1.5">
+          <td className="py-1.5 pl-0 pr-1">
             <Input
               value={line.description || ""}
               onChange={(e) => onUpdate(index, { description: e.target.value })}
               placeholder="Description"
-              className="h-10"
+              className="!h-10"
               data-testid="sov-line-description"
             />
           </td>
@@ -176,7 +177,7 @@ export function SovLineItemRow({
                       quantity: e.target.value === "" ? 0 : parseFloat(e.target.value) || 0,
                     })
                   }
-                  className="h-10 text-right"
+                  className="!h-10 text-right"
                   data-testid="sov-line-quantity"
                 />
               </td>
@@ -185,7 +186,7 @@ export function SovLineItemRow({
                   value={line.unitOfMeasure || undefined}
                   onValueChange={(value) => onUpdate(index, { unitOfMeasure: value })}
                 >
-                  <SelectTrigger className="h-10 w-full" data-testid="sov-line-unit-of-measure">
+                  <SelectTrigger className="!h-10 w-full" data-testid="sov-line-unit-of-measure">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
@@ -213,7 +214,7 @@ export function SovLineItemRow({
                         unitCost: e.target.value === "" ? 0 : parseFloat(e.target.value) || 0,
                       })
                     }
-                    className={cn("h-10 pl-8 text-right")}
+                    className={cn("!h-10 pl-8 text-right")}
                     data-testid="sov-line-unit-cost"
                   />
                 </div>
@@ -227,7 +228,7 @@ export function SovLineItemRow({
               value={line.amount || undefined}
               onChange={(val) => onUpdate(index, { amount: val ?? 0 })}
               showCurrency={false}
-              className="h-10"
+              className="!h-10"
               disabled={accountingMethod === "unit_quantity"}
               readOnly={accountingMethod === "unit_quantity"}
               data-testid="sov-line-amount"

@@ -1,209 +1,61 @@
-import { withApiGuardrails } from "@/lib/guardrails/api";
-import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
-import { createDocumentIntelligenceTools } from "@/lib/ai/tools/document-intelligence";
-import { getOpenAI } from "@/lib/ai/tools/tool-utils";
-import type { Json } from "@/types/database.types";
 import { z } from "zod";
 
-/**
- * GET /api/projects/[projectId]/submittals/[submittalId]/ai-review
- *
- * Returns the last saved AI review result from the database, or null if never run.
- */
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { createSubmittalAIReviewService } from "@/lib/submittals/ai-review/review-run-service";
+import { createClient } from "@/lib/supabase/server";
+
+const WHERE = "projects/[projectId]/submittals/[submittalId]/ai-review";
+
+const postBodySchema = z.object({
+  focusArea: z.string().trim().min(1).nullable().optional(),
+});
+
+async function requireUser() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new GuardrailError({
+      code: "UNAUTHORIZED",
+      where: WHERE,
+      message: "You must be signed in to review a submittal.",
+    });
+  }
+
+  return user;
+}
+
 export const GET = withApiGuardrails<{
   projectId: string;
   submittalId: string;
-}>(
-  "projects/[projectId]/submittals/[submittalId]/ai-review#GET",
-  async ({ params }) => {
-    const { submittalId } = await params;
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      throw new GuardrailError({
-        code: "UNAUTHORIZED",
-        where: "projects/[projectId]/submittals/[submittalId]/ai-review#GET",
-        message: "Not authenticated",
-      });
-    }
-
-    const { data } = await supabase
-      .from("submittals")
-      .select("ai_review_result, ai_review_ran_at")
-      .eq("id", submittalId)
-      .single();
-
-    if (!data?.ai_review_result) {
-      return Response.json(null);
-    }
-
-    return Response.json({
-      ...(data.ai_review_result as Record<string, unknown>),
-      _ranAt: data.ai_review_ran_at,
-    });
-  },
-);
-
-const PostBody = z.object({
-  focusArea: z.string().optional(),
+}>(`${WHERE}#GET`, async ({ params }) => {
+  const { projectId, submittalId } = await params;
+  const user = await requireUser();
+  const reviewService = createSubmittalAIReviewService(user.id);
+  const projectIdNumber = reviewService.parseProjectId(projectId);
+  const result = await reviewService.getLatestReview(
+    projectIdNumber,
+    submittalId,
+  );
+  return Response.json(result);
 });
 
-const ANALYSIS_PROMPT = `You are a construction submittal reviewer. Given the submittal content and relevant drawing content below, produce a structured compliance review.
-
-Return ONLY a valid JSON object with this exact shape:
-{
-  "summary": "2-3 sentence overall assessment",
-  "compliant": [
-    { "item": "what is confirmed compliant", "drawingRef": "M111 or null", "detail": "brief explanation" }
-  ],
-  "conflicts": [
-    { "item": "what conflicts or mismatches", "drawingRef": "M411 or null", "detail": "what the submittal says vs what the drawing requires" }
-  ],
-  "missing": [
-    { "item": "what is required by drawings but not addressed in submittal", "drawingRef": "M501 or null", "detail": "brief explanation" }
-  ],
-  "recommendation": "Approve / Approve with Comments / Revise and Resubmit"
-}
-
-Keep each finding concise (1-2 sentences). Focus on technical requirements, dimensions, materials, equipment specs, and installation requirements. If you cannot determine a finding, omit it.`;
-
-/**
- * POST /api/projects/[projectId]/submittals/[submittalId]/ai-review
- *
- * Runs the full AI submittal review:
- * 1. Assembles context via reviewSubmittalAgainstDrawings tool
- * 2. If context is ready, runs GPT-4o analysis to produce structured findings
- *
- * Body: { focusArea?: string }
- */
 export const POST = withApiGuardrails<{
   projectId: string;
   submittalId: string;
-}>(
-  "projects/[projectId]/submittals/[submittalId]/ai-review#POST",
-  async ({ request, params }) => {
-    const { projectId, submittalId } = await params;
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      throw new GuardrailError({
-        code: "UNAUTHORIZED",
-        where: "projects/[projectId]/submittals/[submittalId]/ai-review#POST",
-        message: "Not authenticated",
-      });
-    }
-
-    let body: z.infer<typeof PostBody> = {};
-    try {
-      body = PostBody.parse(await request.json().catch(() => ({})));
-    } catch {
-      throw new GuardrailError({
-        code: "BAD_REQUEST",
-        where: "projects/[projectId]/submittals/[submittalId]/ai-review#POST",
-        message: "Request body must be valid JSON",
-      });
-    }
-
-    const tools = createDocumentIntelligenceTools(user.id, {
-      pinnedProjectId: parseInt(projectId, 10),
-    });
-
-    const reviewTool = tools.reviewSubmittalAgainstDrawings;
-    if (!reviewTool) {
-      throw new GuardrailError({
-        code: "INTERNAL_ERROR",
-        where: "projects/[projectId]/submittals/[submittalId]/ai-review#POST",
-        message: "reviewSubmittalAgainstDrawings tool not available",
-      });
-    }
-
-    const context = await reviewTool.execute!(
-      {
-        submittalId,
-        projectId: parseInt(projectId, 10),
-        focusArea: body.focusArea,
-      },
-      {
-        toolCallId: "direct",
-        messages: [],
-        abortSignal: undefined,
-      },
-    );
-
-    // The tool returns either an error object or the assembled comparison
-    // context. Narrow to the success shape before reading its fields.
-    const isReadyContext = (
-      value: unknown,
-    ): value is {
-      submittal: { title: string | null };
-      comparisonContext: { submittalText: string | null; drawingText: string | null };
-      readiness: { canCompare: boolean };
-    } => typeof value === "object" && value !== null && "readiness" in value;
-
-    // If context isn't ready (error result, or no submittal/drawing text), return early
-    if (!isReadyContext(context) || !context.readiness?.canCompare) {
-      return Response.json({ ...(context as object), findings: null });
-    }
-
-    // Run GPT-4o analysis on the assembled context
-    let findings: {
-      summary: string;
-      compliant: Array<{ item: string; drawingRef: string | null; detail: string }>;
-      conflicts: Array<{ item: string; drawingRef: string | null; detail: string }>;
-      missing: Array<{ item: string; drawingRef: string | null; detail: string }>;
-      recommendation: string;
-    } | null = null;
-
-    try {
-      const openai = getOpenAI();
-      const userContent = [
-        `SUBMITTAL: ${context.submittal?.title ?? ""}`,
-        `SUBMITTAL CONTENT:\n${context.comparisonContext.submittalText ?? ""}`,
-        ``,
-        `DRAWING CONTENT:\n${context.comparisonContext.drawingText ?? ""}`,
-        body.focusArea ? `\nFOCUS AREA: ${body.focusArea}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n");
-
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          { role: "system", content: ANALYSIS_PROMPT },
-          { role: "user", content: userContent },
-        ],
-        max_tokens: 2000,
-        temperature: 0,
-      });
-
-      const raw = (response.choices[0]?.message?.content ?? "{}").trim();
-      const cleaned = raw.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
-      findings = JSON.parse(cleaned);
-    } catch (err) {
-      // Analysis failure is non-fatal — return context without findings
-      console.error("[ai-review] GPT-4o analysis failed:", err);
-    }
-
-    const result = { ...context, findings };
-
-    // Persist so results survive page refresh
-    await supabase
-      .from("submittals")
-      .update({
-        ai_review_result: result as unknown as Json,
-        ai_review_ran_at: new Date().toISOString(),
-      })
-      .eq("id", submittalId);
-
-    return Response.json(result);
-  },
-);
+}>(`${WHERE}#POST`, async ({ request, params }) => {
+  const { projectId, submittalId } = await params;
+  const user = await requireUser();
+  const reviewService = createSubmittalAIReviewService(user.id);
+  const projectIdNumber = reviewService.parseProjectId(projectId);
+  const body = await parseJsonBody(request, postBodySchema, `${WHERE}#POST`);
+  const result = await reviewService.runReview(
+    projectIdNumber,
+    submittalId,
+    body.focusArea ?? undefined,
+  );
+  return Response.json(result);
+});

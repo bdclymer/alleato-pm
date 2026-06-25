@@ -435,7 +435,7 @@ export function renderPrimeCard(
     <Button
       type="button"
       variant="ghost"
-      className="h-auto w-full flex-col items-stretch gap-0 whitespace-normal rounded-lg border p-4 text-left hover:bg-muted/50"
+      className="h-auto w-full max-w-sm justify-self-center flex-col items-stretch gap-0 whitespace-normal rounded-lg border p-4 text-left hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div className="flex items-start justify-between gap-3">
@@ -506,7 +506,7 @@ export function renderCommitmentCard(
     <Button
       type="button"
       variant="ghost"
-      className="h-auto w-full flex-col items-stretch gap-0 whitespace-normal rounded-lg border p-4 text-left hover:bg-muted/50"
+      className="h-auto w-full max-w-sm justify-self-center flex-col items-stretch gap-0 whitespace-normal rounded-lg border p-4 text-left hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div className="flex items-start justify-between gap-3">
