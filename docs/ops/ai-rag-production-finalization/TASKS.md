@@ -399,6 +399,16 @@ Evidence directory:
   - [pdf-backfill-manual-upload-batch-4-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-manual-upload-batch-4-aai-669.json)
   - [pdf-backfill-candidates-after-manual-batch-4-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-manual-batch-4-aai-669.json)
 
+### 2026-06-25: AAI-669 Graph Vision Path Recovered
+
+- Fixed the production vision analyzer to fall back to Microsoft Graph source downloads for OneDrive/SharePoint rows that have `source_drive_id` and `source_item_id` but only store OCR text locally.
+- Fixed Graph document embedding so `document_page_intelligence` summaries are embedded as `vision_page_summary` chunks with `metadata.chunk_type='vision_page'`.
+- OneDrive proof succeeded for `onedrive_01F674PXSIV6J6OA5TSFBYSDO6AXFJZJOF`:
+  - 25 pages analyzed from the Graph-downloaded source PDF.
+  - Graph embedder wrote 47 total chunks: 22 OneDrive text chunks and 25 vision page summary chunks.
+- Evidence:
+  - [pdf-vision-graph-download-proof-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-graph-download-proof-aai-669.json)
+
 ## Remaining Blockers
 
 - No active Fireflies meeting error backlog remains inside the two-month operational concern window.
@@ -406,5 +416,5 @@ Evidence directory:
 - SharePoint source sync/retrieval is healthy.
 - PDF/upload backfill has narrowed to:
   - 7 OneDrive PDFs with `ocr_failed` that require Graph download/OCR failure inspection before retry.
-  - 54 vision gaps across OneDrive, Outlook attachments, and drawing uploads.
+  - 53 vision gaps across OneDrive, Outlook attachments, and drawing uploads after the OneDrive Graph vision proof.
   - 5 `.txt` manual test uploads that should be marked terminal/not-vectorizable or excluded from the PDF gate.

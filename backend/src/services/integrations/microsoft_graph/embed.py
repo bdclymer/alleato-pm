@@ -408,6 +408,45 @@ def _source_type_for_document(doc: Dict[str, Any]) -> str:
     return "microsoft_graph"
 
 
+def _vision_page_chunks(supabase_client, metadata_id: str) -> List[Dict[str, Any]]:
+    try:
+        resp = (
+            supabase_client.table("document_page_intelligence")
+            .select(
+                "page_number, sheet_number, sheet_title, discipline, ai_summary,"
+                "implied_submittals, notes_and_requirements"
+            )
+            .eq("document_metadata_id", metadata_id)
+            .order("page_number")
+            .execute()
+        )
+    except Exception as exc:
+        logger.warning("[GraphEmbed] Could not load vision page intelligence for %s: %s", metadata_id, exc)
+        return []
+
+    chunks: List[Dict[str, Any]] = []
+    for page in resp.data or []:
+        summary = str(page.get("ai_summary") or "").strip()
+        if not summary:
+            continue
+        extras: List[str] = []
+        if page.get("sheet_number"):
+            extras.append(f"Sheet: {page['sheet_number']}")
+        if page.get("sheet_title"):
+            extras.append(f"Title: {page['sheet_title']}")
+        if page.get("discipline"):
+            extras.append(f"Discipline: {page['discipline']}")
+        if page.get("implied_submittals"):
+            extras.append("Implied submittals: " + ", ".join(page["implied_submittals"]))
+        if page.get("notes_and_requirements"):
+            extras.append("Key notes: " + "; ".join(page["notes_and_requirements"][:5]))
+        chunks.append({
+            "page_number": page.get("page_number") or len(chunks) + 1,
+            "text": "\n".join(extras + [summary]) if extras else summary,
+        })
+    return chunks
+
+
 def _source_processing_context(doc: Dict[str, Any]) -> SourceProcessingContext:
     metadata_id = str(doc.get("id") or "")
     source_system = str(doc.get("source_system") or doc.get("category") or "microsoft_graph")
@@ -806,6 +845,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
     # Prepend title for better retrieval context
     full_text = f"[{title}]\n\n{content}"
     chunks = _split_text(full_text)
+    vision_chunks = _vision_page_chunks(supabase_client, metadata_id)
     if not chunks:
         _update_app_document_status(supabase_client, metadata_id, "embedded", enabled=has_app_document)
         get_rag_write_client().from_("rag_document_metadata").update(
@@ -820,6 +860,8 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         )
         return 0
 
+    chunk_texts = [*chunks, *[chunk["text"] for chunk in vision_chunks]]
+
     # Embed all chunks. Do not write unembedded chunks or mark the document
     # complete if the provider path is broken.
     #
@@ -831,7 +873,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
     # doc is parked at terminal app status 'embed_failed' so it surfaces loudly
     # in health instead of looping silently.
     try:
-        embeddings = _batch_embed(chunks)
+        embeddings = _batch_embed(chunk_texts)
     except Exception as embed_exc:
         _record_embed_failure(
             supabase_client,
@@ -867,6 +909,31 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
             "metadata": {**base_metadata, "chunk_index": i, "total_chunks": len(chunks)},
             "content_hash": _content_hash(chunk_text),
             "source_type": source_type,
+        }
+        if embedding:
+            row["embedding"] = embedding
+        rows.append(row)
+
+    vision_offset = len(chunks)
+    for i, chunk in enumerate(vision_chunks):
+        chunk_index = vision_offset + i
+        chunk_text = chunk["text"]
+        embedding = embeddings[chunk_index] if chunk_index < len(embeddings) else None
+        chunk_id = f"{metadata_id}__vision_page_{chunk.get('page_number') or i + 1}"
+        row = {
+            "document_id": metadata_id,
+            "chunk_index": chunk_index,
+            "chunk_id": chunk_id,
+            "text": chunk_text,
+            "metadata": {
+                **base_metadata,
+                "chunk_index": chunk_index,
+                "total_chunks": len(chunk_texts),
+                "chunk_type": "vision_page",
+                "page_number": chunk.get("page_number"),
+            },
+            "content_hash": _content_hash(chunk_text),
+            "source_type": "vision_page_summary",
         }
         if embedding:
             row["embedding"] = embedding

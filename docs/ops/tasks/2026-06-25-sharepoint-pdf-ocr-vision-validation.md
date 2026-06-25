@@ -48,6 +48,7 @@ Validate the production SharePoint and uploaded-document/PDF processing pipeline
 - Orphan metadata guard and repair: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/rag-chunk-integrity-orphan-guard-aai-669.txt`, `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-orphan-metadata-repair-aai-669.json`, `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/rag-chunk-integrity-after-orphan-repair-aai-669.txt`
 - Manual upload batch 4: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-manual-upload-batch-4-aai-669.json`
 - Current inventory: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-manual-batch-4-aai-669.json`
+- Graph vision download proof: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-graph-download-proof-aai-669.json`
 
 Key results:
 
@@ -72,6 +73,9 @@ Key results:
   - 66 active recent PDF/document gaps remain.
   - 12 are embedding gaps: 5 `.txt` test uploads and 7 OneDrive rows already marked `ocr_failed`.
   - 54 are vision gaps: 29 OneDrive embedded drawings, 22 Outlook attachments, and 3 drawing uploads.
+- Fixed the Graph document vision path so OneDrive/SharePoint rows without stored original PDFs can download the source PDF through Microsoft Graph.
+- Fixed Graph embedding so `document_page_intelligence` summaries become `vision_page_summary` vector chunks.
+- OneDrive proof succeeded for `onedrive_01F674PXSIV6J6OA5TSFBYSDO6AXFJZJOF`: 25 pages analyzed from Graph and 25 embedded `vision_page_summary` chunks written alongside 22 OneDrive text chunks.
 
 ## Blockers
 
@@ -79,7 +83,7 @@ Key results:
   - 5 `.txt` manual test uploads are not PDF/OCR targets and should be marked terminal/not-vectorizable or excluded from this PDF gate.
   - 7 OneDrive drawing PDFs remain `ocr_failed`; they need Graph download/OCR failure inspection before reset/retry.
 - Remaining vision blockers:
-  - 29 OneDrive embedded drawing documents have embeddings but no vision/page-intelligence chunk.
+  - 28 OneDrive embedded drawing documents still need the Graph vision backfill after the proof row succeeded.
   - 22 Outlook attachments have embeddings but no vision/page-intelligence chunk.
   - 3 drawing uploads have embeddings but still lack the vision evidence required by this validation.
 - Provider JSON-mode fallback warnings still occur during parser/extractor/compiler calls. They did not block the two-document proof run, but they remain observability noise and should be tracked separately if they cause extraction quality failures.
@@ -94,6 +98,8 @@ Key results:
 `run_embedder` now selects app OCR text and storage/source fields and upserts `rag_document_metadata` with `app_document_id`, source metadata, project, locator fields, text, parsing status, and embedding status before completing the embedding stage.
 
 `verify_rag_chunk_integrity.mjs` now fails when document-like chunks exist without a `rag_document_metadata` row, preventing searchable chunks from silently losing citation metadata.
+
+`run_vision_analyzer` now falls back to Microsoft Graph source downloads for OneDrive/SharePoint rows that have `source_drive_id` and `source_item_id` but only store OCR text locally. Graph document embedding now includes `document_page_intelligence` summaries as `vision_page_summary` chunks.
 
 ## Failure-Loud Guardrail
 

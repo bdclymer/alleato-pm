@@ -106,7 +106,10 @@ def run_vision_analyzer(metadata_id: str, pm_client: Any) -> Dict[str, Any]:
     # ── 1. Load document metadata ──────────────────────────────────────────
     resp = (
         pm_client.table("document_metadata")
-        .select("id, title, file_path, file_name, storage_bucket, url, source_web_url")
+        .select(
+            "id, title, file_path, file_name, storage_bucket, url, source_web_url,"
+            "source_system,source_drive_id,source_item_id,source_site_id,source_path"
+        )
         .eq("id", metadata_id)
         .maybe_single()
         .execute()
@@ -116,10 +119,13 @@ def run_vision_analyzer(metadata_id: str, pm_client: Any) -> Dict[str, Any]:
         return {"pages_analyzed": 0, "skipped_reason": "document not found"}
 
     file_path = metadata.get("file_path") or ""
-    file_name = metadata.get("file_name") or file_path
+    file_name = metadata.get("file_name") or metadata.get("title") or file_path
+    source_path = metadata.get("source_path") or ""
+    source_url = metadata.get("source_web_url") or metadata.get("url") or ""
 
     # Only process PDFs
-    if not (file_path.lower().endswith(".pdf") or file_name.lower().endswith(".pdf")):
+    pdf_candidates = [file_path, file_name, source_path, source_url]
+    if not any(str(candidate or "").lower().endswith(".pdf") for candidate in pdf_candidates):
         return {"pages_analyzed": 0, "skipped_reason": "not a PDF"}
 
     # ── 2. Download PDF from Supabase Storage ─────────────────────────────
@@ -127,7 +133,7 @@ def run_vision_analyzer(metadata_id: str, pm_client: Any) -> Dict[str, Any]:
     # submittals/other docs use file_path + storage_bucket.
     pdf_bytes: Optional[bytes] = None
 
-    if file_path:
+    if file_path and file_path.lower().endswith(".pdf"):
         bucket = metadata.get("storage_bucket") or "documents"
         try:
             pdf_bytes = pm_client.storage.from_(bucket).download(file_path)
@@ -150,7 +156,46 @@ def run_vision_analyzer(metadata_id: str, pm_client: Any) -> Dict[str, Any]:
                 return {"pages_analyzed": 0, "skipped_reason": f"storage download failed: {exc}"}
         else:
             logger.error("[VisionAnalyzer] No downloadable path for %s (file_path=%r, url=%r)", metadata_id, file_path, public_url)
-            return {"pages_analyzed": 0, "skipped_reason": "no storage path available"}
+
+    if not pdf_bytes:
+        source_system = (metadata.get("source_system") or "").lower()
+        source_drive_id = metadata.get("source_drive_id")
+        source_item_id = metadata.get("source_item_id")
+        if source_system in {"onedrive", "sharepoint"} and source_drive_id and source_item_id:
+            try:
+                from ..integrations.microsoft_graph.client import get_graph_client
+
+                graph = get_graph_client()
+                if not graph.is_configured():
+                    return {
+                        "pages_analyzed": 0,
+                        "skipped_reason": "microsoft graph is not configured",
+                    }
+                item = graph.get(f"/drives/{source_drive_id}/items/{source_item_id}")
+                download_url = item.get("@microsoft.graph.downloadUrl") or item.get("downloadUrl")
+                if download_url:
+                    pdf_bytes = graph.download_bytes(download_url)
+                    logger.info(
+                        "[VisionAnalyzer] Downloaded Graph source PDF for %s (%s)",
+                        metadata_id,
+                        metadata.get("source_path") or file_name,
+                    )
+            except Exception as exc:
+                logger.warning(
+                    "[VisionAnalyzer] Graph source download failed for %s: %s",
+                    metadata_id,
+                    exc,
+                )
+
+    if not pdf_bytes:
+        logger.error(
+            "[VisionAnalyzer] No downloadable PDF for %s (file_path=%r, source_path=%r, url=%r)",
+            metadata_id,
+            file_path,
+            metadata.get("source_path"),
+            metadata.get("url") or metadata.get("source_web_url"),
+        )
+        return {"pages_analyzed": 0, "skipped_reason": "no downloadable PDF available"}
 
     if not pdf_bytes:
         return {"pages_analyzed": 0, "skipped_reason": "empty file"}
