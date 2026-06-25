@@ -3570,27 +3570,15 @@ export async function generateBrandonDailyUpdate(
         ]),
     );
   const financialPulse: FinancialPulseData = financialPulseResult;
-  const useOperatingRecords =
-    !sourceBackedOnly && operatingRecordResult.itemCount > 0;
 
   const preflightWarnings: string[] = [];
-  // The insight-card shortcut is intentionally disabled for executive delivery.
-  // Those cards are useful source candidates, but they are not a finished CEO
-  // brief and can carry generic headings like "Risks and exposure".
-  const insightCardFallbackSuppressed =
-    !useOperatingRecords && isInsightCardBriefEnabled() && !sourceBackedOnly;
-  if (insightCardFallbackSuppressed) {
-    preflightWarnings.push(
-      "Daily Brief insight-card shortcut was disabled for executive delivery because it can surface generic card headings without GPT synthesis.",
-    );
-  }
   let openai: ReturnType<typeof getOpenAI> | null = null;
 
   if (sourceBackedOnly) {
     preflightWarnings.push(
       "Daily Brief manual refresh used source-backed fallback mode, so vector search and LLM enrichment were skipped to keep the foreground action bounded.",
     );
-  } else if (!useOperatingRecords) {
+  } else {
     try {
       openai = getOpenAI();
     } catch (error) {
@@ -3598,17 +3586,16 @@ export async function generateBrandonDailyUpdate(
         `${formatAIProviderFailure(error, "Executive briefing provider setup")} The Daily Brief will continue with source-backed fallback retrieval.`,
       );
     }
-  } else {
   }
 
-  if (!sourceBackedOnly && !useOperatingRecords && !openai) {
+  if (!sourceBackedOnly && !openai) {
     preflightWarnings.push(
       "Daily Brief vector search was skipped because no OpenAI-compatible embedding client was available.",
     );
   }
 
   let embeddingsBySpec: Array<{ spec: QuerySpec; queryEmbedding: string }>;
-  if (openai && !useOperatingRecords) {
+  if (openai) {
     try {
       embeddingsBySpec = await withExecutiveDailyBriefObservation(
         "executive-daily-brief.embedding-queries",
@@ -3763,7 +3750,7 @@ export async function generateBrandonDailyUpdate(
         type: "chain",
         input: {
           sourceBackedOnly,
-          useOperatingRecords,
+          operatingItemCount: operatingRecordResult.itemCount,
           rawHitCount: rawHits.length,
           rankedHitCount: rankedHits.length,
           dedupedHitCount: dedupedHits.length,
@@ -3796,12 +3783,10 @@ export async function generateBrandonDailyUpdate(
         const items = fallbackResult.rows
           .map(makeFallbackItem)
           .filter((item): item is BrandonBriefItem => item !== null);
-        const seeded = useOperatingRecords
-          ? operatingRecordResult.sections
-          : mergeSeedItems(
-              assignHitsToSections(dedupedHits, items),
-              operatingRecordResult.sections,
-            );
+        const seeded = mergeSeedItems(
+          assignHitsToSections(dedupedHits, items),
+          operatingRecordResult.sections,
+        );
         const limited = sourceBackedOnly
           ? { sections: seeded, droppedCount: 0 }
           : limitSectionsForSynthesis(seeded);
@@ -3823,7 +3808,7 @@ export async function generateBrandonDailyUpdate(
   // synthesis, so both synthesis and enrichment read the complete meeting
   // instead of the lossy auto-summary the keyword-fallback path carries.
   const fullTextEnrichedCount =
-    sourceBackedOnly || useOperatingRecords
+    sourceBackedOnly
       ? 0
       : await withExecutiveDailyBriefObservation(
           "executive-daily-brief.full-text-enrichment",
@@ -3851,9 +3836,7 @@ export async function generateBrandonDailyUpdate(
         ],
         degraded: false,
       }
-    : useOperatingRecords
-      ? await synthesizeSections(sectionsForSynthesis, financialPulse)
-      : await synthesizeSections(sectionsForSynthesis, financialPulse);
+    : await synthesizeSections(sectionsForSynthesis, financialPulse);
 
   const communicationSignalResult = await withExecutiveDailyBriefObservation(
     "executive-daily-brief.communication-signals",
@@ -3917,24 +3900,17 @@ export async function generateBrandonDailyUpdate(
           "Daily Brief evidence enrichment skipped in source-backed fallback mode.",
         ],
       }
-    : useOperatingRecords
+    : synthesizedResult.degraded
       ? {
-          sections: supportedResult.sections,
+          sections: mapBriefSections(supportedResult.sections, (item) => ({
+            ...item,
+            evidenceFacts: fallbackEvidenceFacts(item),
+          })),
           warnings: [
-            "Daily Brief evidence enrichment skipped because operating-record mode already used the single GPT synthesis call.",
+            "Daily Brief evidence enrichment skipped because synthesis already degraded to source-backed fallback mode.",
           ],
         }
-      : synthesizedResult.degraded
-        ? {
-            sections: mapBriefSections(supportedResult.sections, (item) => ({
-              ...item,
-              evidenceFacts: fallbackEvidenceFacts(item),
-            })),
-            warnings: [
-              "Daily Brief evidence enrichment skipped because synthesis already degraded to source-backed fallback mode.",
-            ],
-          }
-        : await enrichBriefSections(supportedResult.sections, financialPulse);
+      : await enrichBriefSections(supportedResult.sections, financialPulse);
   const projectNumberMap = await loadProjectNumberMap();
   const numberedSections = applyProjectNumbers(
     enrichedResult.sections,
@@ -3999,24 +3975,17 @@ export async function generateBrandonDailyUpdate(
     financialPulse,
     sourceCoverage,
     retrievalNotes: [
-      ...(useOperatingRecords
+      ...(operatingRecordResult.itemCount > 0
         ? [
-            "Daily Brief source: project operating records first. No per-run query embeddings or vector chunk searches were used because source_synthesized operating records were available.",
-            `Daily Brief synthesis input: ${countBriefItems(sectionsForSynthesis)} highest-ranked item(s) were sent to GPT from ${countBriefItems(seededSections)} available operating/source candidate(s).`,
-          ]
-        : []),
-      ...(insightCardFallbackSuppressed
-        ? [
-            "Daily Brief source: insight_cards shortcut was disabled; the brief used GPT synthesis over bounded source candidates instead of verbatim cards.",
+            `Daily Brief source: merged ${operatingRecordResult.itemCount} project operating record(s) from project_intelligence_timeline_events and change_event_candidates into the RAG vector search candidate set.`,
+            `Daily Brief synthesis input: ${countBriefItems(sectionsForSynthesis)} highest-ranked item(s) were sent to GPT from ${countBriefItems(seededSections)} available candidate(s).`,
           ]
         : []),
       `Executive briefing source of truth: recap_kind=executive_briefing. Backend recap_kind=meeting_digest is the legacy meeting digest and must not be treated as the CEO operating brief.`,
       `Executive synthesis model: ${synthesizedResult.modelUsed}. Override with EXECUTIVE_BRIEFING_SYNTHESIS_MODEL only when the CEO brief intentionally needs a different model.`,
       `Project operating records: ${operatingRecordResult.itemCount} timeline/change-event candidate item(s) were added to the synthesis candidate set from project_intelligence_timeline_events and change_event_candidates.`,
       `Financial pulse: ${financialPulse.totalOutstandingAR > 0 ? `$${Math.round(financialPulse.totalOutstandingAR / 1000)}K total outstanding AR, $${Math.round(financialPulse.totalOverdueAR / 1000)}K overdue across ${financialPulse.arByProject.length} projects; ${financialPulse.pendingCOsByProject.length} projects with pending COs ($${Math.round(financialPulse.totalPendingCORevenue / 1000)}K revenue)` : "No financial data available"}.`,
-      useOperatingRecords
-        ? "Full-transcript enrichment: skipped in operating-record mode because the brief used source_synthesized operating records instead of per-run vector chunk retrieval."
-        : `Full-transcript enrichment: ${fullTextEnrichedCount} surfaced item(s) were upgraded from the lossy document_metadata auto-summary to the complete embedded transcript text from the vector store (document_chunks in the AI Database) before synthesis.`,
+      `Full-transcript enrichment: ${fullTextEnrichedCount} surfaced item(s) were upgraded from the lossy document_metadata auto-summary to the complete embedded transcript text from the vector store (document_chunks in the AI Database) before synthesis.`,
       "The briefing window covers the last 3 business days in Eastern time (weekends skipped) so a Monday brief still includes the prior Thursday and Friday without dragging in week-old noise.",
       "Financial data from Acumatica ERP (AR invoices, change orders) is treated as authoritative ground truth in the synthesis — these figures cannot be hallucinated.",
       "RAG similarity threshold is 0.35 (raised from 0.25) to reduce low-signal noise.",
