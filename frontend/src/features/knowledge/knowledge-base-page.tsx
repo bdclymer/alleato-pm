@@ -9,6 +9,7 @@ import {
   CalendarDays,
   FileText,
   HardHat,
+  List,
   Receipt,
   Settings,
   Shield,
@@ -237,7 +238,7 @@ function DocsTopBar({
           <Button asChild variant="ghost" size="sm" className="justify-start gap-1.5">
             <Link href="/knowledge/manage">
               <Settings className="h-4 w-4" />
-              Manage sources
+              Add knowledge
             </Link>
           </Button>
         )}
@@ -467,7 +468,7 @@ function OnThisPage({ isAdmin }: { isAdmin: boolean }) {
     <aside className="hidden xl:block">
       <nav aria-label="On this page" className="sticky top-6 space-y-3 text-sm">
         <div className="flex items-center gap-2 font-medium text-foreground">
-          <BookOpen className="h-4 w-4 text-muted-foreground" />
+          <List className="h-4 w-4 text-muted-foreground" />
           On this page
         </div>
         <div className="space-y-2">
@@ -482,7 +483,7 @@ function OnThisPage({ isAdmin }: { isAdmin: boolean }) {
           ))}
           {isAdmin && (
             <Link href="/knowledge/manage" className="block pt-2 text-primary">
-              Manage sources
+              Add knowledge
             </Link>
           )}
         </div>
