@@ -46,7 +46,8 @@ export type SourceSpecificRagRow = {
 
 const MEETING_SELECT =
   "id,title,source,category,type,date,created_at,content,raw_text,summary,overview,summary_bullets,decisions,action_items,key_topics,topics_discussed,project_id";
-const SOURCE_SELECT = "id,title,source,category,type,date,created_at,content,summary,overview,project_id";
+const SOURCE_SELECT =
+  "id,title,source,category,type,date,created_at,content,summary,overview,project_id";
 
 export type SourceSpecificRagAnswer = {
   content: string;
@@ -67,13 +68,22 @@ function formatSourceSpecificDate(row: SourceSpecificRagRow): string {
   return value.slice(0, 10);
 }
 
-function sourceSpecificSnippet(row: SourceSpecificRagRow, maxLength = 260): string {
-  const content = preferredSourceSpecificContent(row).replace(/\s+/g, " ").trim();
+function sourceSpecificSnippet(
+  row: SourceSpecificRagRow,
+  maxLength = 260,
+): string {
+  const content = preferredSourceSpecificContent(row)
+    .replace(/\s+/g, " ")
+    .trim();
   if (!content) return "No text excerpt stored.";
-  return content.length > maxLength ? `${content.slice(0, maxLength).trim()}...` : content;
+  return content.length > maxLength
+    ? `${content.slice(0, maxLength).trim()}...`
+    : content;
 }
 
-function needsSourceSpecificContentHydration(row: SourceSpecificRagRow): boolean {
+function needsSourceSpecificContentHydration(
+  row: SourceSpecificRagRow,
+): boolean {
   return preferredSourceSpecificContent(row).trim().length === 0;
 }
 
@@ -81,8 +91,34 @@ function sourceSpecificTitle(row: SourceSpecificRagRow): string {
   return row.title?.trim() || row.id;
 }
 
+function teamsEvidenceTitle(title: string): string {
+  const normalized = title.trim();
+  if (/^Live Teams:\s*19:/i.test(normalized)) {
+    return "Teams chat conversation";
+  }
+  if (/^Teams DM Conversation:\s*19:/i.test(normalized)) {
+    return "Teams DM conversation";
+  }
+  return normalized
+    .replace(/^Live Teams:\s*/i, "Teams conversation: ")
+    .replace(/^Teams DM Conversation:\s*/i, "Teams DM conversation: ");
+}
+
+function teamsEvidenceSourceLabel(row: SourceSpecificRagRow): string {
+  const date = formatSourceSpecificDate(row);
+  if (isLiveTeamsMessage(row)) {
+    return `Live Microsoft Graph Teams message, ${date}`;
+  }
+  if (isCanonicalTeamsConversation(row)) {
+    return `Synced Teams conversation, ${date}`;
+  }
+  return `Teams source row, ${date}`;
+}
+
 function isCanonicalTeamsConversation(row: SourceSpecificRagRow): boolean {
-  return row.category === "teams_message" && row.type === "teams_dm_conversation";
+  return (
+    row.category === "teams_message" && row.type === "teams_dm_conversation"
+  );
 }
 
 function isLiveTeamsMessage(row: SourceSpecificRagRow): boolean {
@@ -90,6 +126,13 @@ function isLiveTeamsMessage(row: SourceSpecificRagRow): boolean {
 }
 
 function preferredSourceSpecificContent(row: SourceSpecificRagRow): string {
+  if (isLiveTeamsMessage(row)) {
+    const liveMessageLine = (row.content ?? "")
+      .split("\n")
+      .map((line) => line.trim())
+      .findLast((line) => line.includes(": "));
+    return liveMessageLine ?? row.content ?? "";
+  }
   if (isCanonicalTeamsConversation(row)) {
     return row.overview ?? row.summary ?? row.content ?? row.raw_text ?? "";
   }
@@ -113,17 +156,21 @@ async function hydrateRowsFromRagMetadata(
     .in("id", ids);
 
   if (error) {
-    throw new Error(`Failed to hydrate Teams RAG metadata content: ${error.message}`);
+    throw new Error(
+      `Failed to hydrate Teams RAG metadata content: ${error.message}`,
+    );
   }
 
   const byId = new Map(
-    ((data ?? []) as Array<{
-      id: string;
-      content: string | null;
-      raw_text: string | null;
-      summary: string | null;
-      overview: string | null;
-    }>).map((row) => [row.id, row]),
+    (
+      (data ?? []) as Array<{
+        id: string;
+        content: string | null;
+        raw_text: string | null;
+        summary: string | null;
+        overview: string | null;
+      }>
+    ).map((row) => [row.id, row]),
   );
 
   return rows.map((row) => {
@@ -140,7 +187,10 @@ async function hydrateRowsFromRagMetadata(
   });
 }
 
-function compareTeamsRows(a: SourceSpecificRagRow, b: SourceSpecificRagRow): number {
+function compareTeamsRows(
+  a: SourceSpecificRagRow,
+  b: SourceSpecificRagRow,
+): number {
   const rank = (row: SourceSpecificRagRow): number => {
     if (isLiveTeamsMessage(row)) return 0;
     if (isCanonicalTeamsConversation(row)) return 1;
@@ -161,7 +211,10 @@ function groupTeamsRows(rows: SourceSpecificRagRow[]): Array<{
   date: string;
   rows: SourceSpecificRagRow[];
 }> {
-  const groups = new Map<string, { key: string; title: string; date: string; rows: SourceSpecificRagRow[] }>();
+  const groups = new Map<
+    string,
+    { key: string; title: string; date: string; rows: SourceSpecificRagRow[] }
+  >();
 
   for (const row of rows) {
     const title = sourceSpecificTitle(row);
@@ -199,18 +252,18 @@ function formatSourceSpecificRagContent(
     request.kind === "recent_emails"
       ? `Source checked: live Microsoft Graph Outlook inbox first, then Supabase document_metadata/document_chunks-backed email index.`
       : request.kind === "recent_teams_discussions"
-      ? `Source checked: live Microsoft Graph Teams messages first, then Supabase document_metadata/document_chunks-backed Teams index.`
-      : `Source checked: ${request.label} in Supabase document_metadata/document_chunks-backed RAG index.`;
+        ? `Source checked: live Microsoft Graph Teams messages first, then Supabase document_metadata/document_chunks-backed Teams index.`
+        : `Source checked: ${request.label} in Supabase document_metadata/document_chunks-backed RAG index.`;
   const liveLine =
     request.kind === "recent_emails" && liveEmails
       ? liveEmails.ok
         ? `- Live Microsoft Graph Outlook retrieval checked ${liveEmails.mailboxUserId} and returned ${liveEmails.messages.length} live row(s).`
         : `- Live Microsoft Graph Outlook retrieval failed: ${liveEmails.error}.`
       : request.kind === "recent_teams_discussions" && liveTeams
-      ? liveTeams.status === "checked"
-        ? `- Live Microsoft Graph Teams retrieval checked ${liveTeams.checkedMailboxes.length} mailbox(es) and returned ${liveTeams.rows.length} live row(s).`
-        : `- Live Microsoft Graph Teams retrieval ${liveTeams.status}: ${liveTeams.warning ?? "no detail returned"}.`
-      : null;
+        ? liveTeams.status === "checked"
+          ? `- Live Microsoft Graph Teams retrieval checked ${liveTeams.checkedMailboxes.length} mailbox(es) and returned ${liveTeams.rows.length} live row(s).`
+          : `- Live Microsoft Graph Teams retrieval ${liveTeams.status}: ${liveTeams.warning ?? "no detail returned"}.`
+        : null;
   if (rows.length === 0) {
     const windowLabel = request.date
       ? ` for ${request.date}`
@@ -235,24 +288,25 @@ function formatSourceSpecificRagContent(
   if (request.kind === "recent_teams_discussions") {
     const conversationGroups = groupTeamsRows(rows);
     return [
-      `**Main Teams Discussions (${request.startDate} to ${request.endDate})**`,
+      `## Teams Message Evidence For Synthesis (${request.startDate} to ${request.endDate})`,
+      "",
+      "Use these Teams snippets as evidence. Do not copy this section verbatim; synthesize the main operational themes, risks, decisions, and follow-ups for the user.",
+      `Freshness: ${sourceLine}`,
+      ...(liveLine ? [liveLine.replace(/^- /, "Freshness detail: ")] : []),
       "",
       ...conversationGroups.slice(0, request.limit).map((group, index) => {
         const examples = group.rows
           .slice(0, 3)
           .map((row) => sourceSpecificSnippet(row, 180))
-          .join(" ");
-        const sourceIds = group.rows.slice(0, 3).map((row) => row.id).join(", ");
-        return `${index + 1}. **${group.title}** - ${group.date}. ${examples} [Sources: ${sourceIds}]`;
+          .join(" | ");
+        const sourceLabels = group.rows
+          .slice(0, 3)
+          .map(teamsEvidenceSourceLabel)
+          .join("; ");
+        return `${index + 1}. **${teamsEvidenceTitle(group.title)}** - ${group.date}. Evidence: ${examples} Source context: ${sourceLabels}.`;
       }),
       "",
-      `**Observability**`,
-      `- ${sourceLine}`,
-      ...(liveLine ? [liveLine] : []),
-      `- Retrieved ${rows.length} Teams row(s), grouped into ${conversationGroups.length} conversation/day bucket(s), and answered from concrete Teams snippets/titles.`,
-      "",
-      "**Next Step**",
-      "- Use these grouped conversations as the audit sample and compare them against graph_sync_state errors for any inaccessible chats.",
+      `Coverage note: ${rows.length} Teams row(s) grouped into ${conversationGroups.length} conversation/day bucket(s). If the evidence is too thin for an owner-ready answer, say that directly.`,
     ].join("\n");
   }
 
@@ -296,7 +350,9 @@ function formatSourceSpecificRagContent(
   return [
     `**${heading}**`,
     "",
-    ...rows.slice(0, request.limit).map((row, index) => rowFormatter(row, index)),
+    ...rows
+      .slice(0, request.limit)
+      .map((row, index) => rowFormatter(row, index)),
     ...meetingSignalLines,
     "",
     `**Observability**`,
@@ -375,7 +431,9 @@ export async function buildSourceSpecificRagAnswer(params: {
     };
   }
 
-  const applyProjectScope = <T extends { in: (column: string, values: number[]) => T }>(
+  const applyProjectScope = <
+    T extends { in: (column: string, values: number[]) => T },
+  >(
     query: T,
   ): T => {
     if (typeof scope.pinnedProjectId === "number") {
@@ -385,17 +443,21 @@ export async function buildSourceSpecificRagAnswer(params: {
     return query.in("project_id", scope.allowedProjectIds);
   };
 
-  const applyMeetingProjectScope = <T extends {
-    in: (column: string, values: number[]) => T;
-    or: (filters: string) => T;
-  }>(
+  const applyMeetingProjectScope = <
+    T extends {
+      in: (column: string, values: number[]) => T;
+      or: (filters: string) => T;
+    },
+  >(
     query: T,
   ): T => {
     if (typeof scope.pinnedProjectId === "number") {
       return query.in("project_id", [scope.pinnedProjectId]);
     }
     if (scope.isAdmin) return query;
-    return query.or(`project_id.in.(${scope.allowedProjectIds.join(",")}),project_id.is.null`);
+    return query.or(
+      `project_id.in.(${scope.allowedProjectIds.join(",")}),project_id.is.null`,
+    );
   };
 
   if (request.kind === "meetings_on_date") {
@@ -403,7 +465,9 @@ export async function buildSourceSpecificRagAnswer(params: {
       supabase
         .from("document_metadata")
         .select(MEETING_SELECT)
-        .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
+        .or(
+          "source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting",
+        )
         .gte("date", `${request.date}T00:00:00.000Z`)
         .lte("date", `${request.date}T23:59:59.999Z`)
         .order("date", { ascending: false })
@@ -413,16 +477,19 @@ export async function buildSourceSpecificRagAnswer(params: {
     rows = (data ?? []) as SourceSpecificRagRow[];
 
     if (rows.length === 0) {
-      const { data: createdRows, error: createdError } = await applyMeetingProjectScope(
-        supabase
-          .from("document_metadata")
-          .select(MEETING_SELECT)
-          .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
-          .gte("created_at", `${request.date}T00:00:00.000Z`)
-          .lte("created_at", `${request.date}T23:59:59.999Z`)
-          .order("created_at", { ascending: false })
-          .limit(request.limit),
-      );
+      const { data: createdRows, error: createdError } =
+        await applyMeetingProjectScope(
+          supabase
+            .from("document_metadata")
+            .select(MEETING_SELECT)
+            .or(
+              "source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting",
+            )
+            .gte("created_at", `${request.date}T00:00:00.000Z`)
+            .lte("created_at", `${request.date}T23:59:59.999Z`)
+            .order("created_at", { ascending: false })
+            .limit(request.limit),
+        );
       if (createdError) throw new Error(createdError.message);
       rows = (createdRows ?? []) as SourceSpecificRagRow[];
     }
@@ -431,13 +498,17 @@ export async function buildSourceSpecificRagAnswer(params: {
   if (request.kind === "recent_meetings") {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 60);
-    const startIso = request.startDate ? `${request.startDate}T00:00:00.000Z` : cutoff.toISOString();
+    const startIso = request.startDate
+      ? `${request.startDate}T00:00:00.000Z`
+      : cutoff.toISOString();
     const endIso = request.endDate ? `${request.endDate}T23:59:59.999Z` : null;
     let query = applyMeetingProjectScope(
       supabase
         .from("document_metadata")
         .select(MEETING_SELECT)
-        .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
+        .or(
+          "source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting",
+        )
         .gte("date", startIso)
         .order("date", { ascending: false })
         .limit(request.limit),
@@ -452,7 +523,9 @@ export async function buildSourceSpecificRagAnswer(params: {
         supabase
           .from("document_metadata")
           .select(MEETING_SELECT)
-          .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
+          .or(
+            "source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting",
+          )
           .gte("created_at", startIso)
           .order("created_at", { ascending: false })
           .limit(request.limit),
@@ -512,12 +585,14 @@ export async function buildSourceSpecificRagAnswer(params: {
         }))
       : [];
     const seen = new Set<string>();
-    rows = [...liveRows, ...storedRows].filter((row) => {
-      const key = `${row.title ?? ""}:${row.date ?? ""}:${row.content?.slice(0, 180) ?? ""}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    }).slice(0, request.limit);
+    rows = [...liveRows, ...storedRows]
+      .filter((row) => {
+        const key = `${row.title ?? ""}:${row.date ?? ""}:${row.content?.slice(0, 180) ?? ""}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, request.limit);
   }
 
   if (request.kind === "recent_onedrive_documents") {
@@ -560,33 +635,41 @@ export async function buildSourceSpecificRagAnswer(params: {
       ((data ?? []) as SourceSpecificRagRow[]).sort(compareTeamsRows),
       params.ragSupabase ?? createRagServiceClient(),
     );
-    const liveRows: SourceSpecificRagRow[] = (liveTeams.rows ?? []).map((message) => ({
-      id: `live-teams:${message.mailbox}:${message.id}`,
-      title: `Live Teams: ${message.chatLabel}`,
-      source: "microsoft_graph_live",
-      category: "teams_message",
-      type: "teams_live_message",
-      date: message.createdDateTime,
-      created_at: message.lastModifiedDateTime ?? message.createdDateTime,
-      content: [
-        `[Live Microsoft Graph Teams message]`,
-        `Mailbox: ${message.mailbox}`,
-        `Chat: ${message.chatLabel}`,
-        `Participants: ${message.participants.join(", ") || "unknown"}`,
-        `${message.senderName ?? "Unknown"}: ${message.content}`,
-      ].join("\n"),
-      project_id: null,
-    }));
+    const liveRows: SourceSpecificRagRow[] = (liveTeams.rows ?? []).map(
+      (message) => ({
+        id: `live-teams:${message.mailbox}:${message.id}`,
+        title: `Live Teams: ${message.chatLabel}`,
+        source: "microsoft_graph_live",
+        category: "teams_message",
+        type: "teams_live_message",
+        date: message.createdDateTime,
+        created_at: message.lastModifiedDateTime ?? message.createdDateTime,
+        content: [
+          `[Live Microsoft Graph Teams message]`,
+          `Mailbox: ${message.mailbox}`,
+          `Chat: ${message.chatLabel}`,
+          `Participants: ${message.participants.join(", ") || "unknown"}`,
+          `${message.senderName ?? "Unknown"}: ${message.content}`,
+        ].join("\n"),
+        project_id: null,
+      }),
+    );
     const seen = new Set<string>();
-    rows = [...liveRows, ...storedRows].sort(compareTeamsRows).filter((row) => {
-      const key = `${row.title ?? ""}:${row.date ?? ""}:${row.content?.slice(0, 180) ?? ""}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    }).slice(0, request.limit);
+    rows = [...liveRows, ...storedRows]
+      .sort(compareTeamsRows)
+      .filter((row) => {
+        const key = `${row.title ?? ""}:${row.date ?? ""}:${row.content?.slice(0, 180) ?? ""}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, request.limit);
   }
 
-  const content = formatSourceSpecificRagContent(request, rows, { liveTeams, liveEmails });
+  const content = formatSourceSpecificRagContent(request, rows, {
+    liveTeams,
+    liveEmails,
+  });
   return {
     content,
     rows,
