@@ -23,7 +23,6 @@ import {
   FolderOpen,
   Hammer,
   Home,
-  Inbox,
   Kanban,
   LayoutDashboard,
   Lock,
@@ -163,20 +162,6 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: FolderOpen,
     description: "Company files and documents",
-  },
-  {
-    name: "Teams Conversations",
-    path: "teams-conversations",
-    requiresProject: false,
-    icon: MessageCircle,
-    description: "Compiled Microsoft Teams conversation threads",
-  },
-  {
-    name: "Assignment Inbox",
-    path: "assignment-inbox",
-    requiresProject: false,
-    icon: Inbox,
-    description: "Unassigned meetings, emails, Teams messages, and documents",
   },
   {
     name: "Estimates",
@@ -434,14 +419,12 @@ export const companyWideToolSections: CompanyWideToolSection[] = [
   {
     label: "Work",
     toolNames: [
-      "Assignment Inbox",
       "Meetings",
       "Tasks",
       "Manpower",
       "Knowledge Base",
       "Documentation",
       "Documents",
-      "Teams Conversations",
     ],
   },
   {
