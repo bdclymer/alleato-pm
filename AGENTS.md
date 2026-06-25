@@ -288,6 +288,8 @@ Core workflow:
 - **Do not debug or patch deployment issues against unused hosts.** For backend runtime, health, env vars, logs, and pipeline behavior, inspect Render/FastAPI first.
 - **Required backend AI env:** `AI_GATEWAY_API_KEY` must be configured on Render and is the primary provider path for ingestion/vectorization. Direct `OPENAI_API_KEY` is fallback only and currently may be quota-limited.
 - **Pipeline source of truth:** Fireflies and Microsoft Graph ingestion/vectorization run through the native FastAPI backend under `backend/src/services/**` and `/api/pipeline/process`, not retired worker or Railway paths.
+- **Drawing OCR source of truth:** Azure Document Intelligence is live on Render. Drawing uploads create `document_metadata` rows with `status='no_text'`, `source_system='drawing_upload'`, and text is written to `document_metadata.content` (not `raw_text`) by `backend/src/services/integrations/microsoft_graph/ocr_worker.py`.
+- **Render env var safety:** Never use Render API `PUT /env-vars`; it replaces the entire environment set. Use individual create/update env-var operations and verify by reading service env/deploy status back.
 
 ### Directory Structure
 
@@ -545,6 +547,13 @@ Decision rule:
 # From repo root
 npm run dev                    # frontend + backend concurrently
 npm run dev:frontend           # Next.js only (port 3000)
+npm run db:types               # regenerate Supabase types + schema FK map
+npm run db:types:check         # verify generated Supabase types are current
+npm run db:migrations:verify-clean # verify local/remote Supabase migration ledger
+npm run validate:runtime-config # validate required runtime configuration
+npm run quality:predeploy      # full predeploy quality gate
+npm run verify:postdeploy      # post-deploy verification checks
+npm run worker-status -- <YYYY-MM-DD> # summarize orchestration handoff status
 
 # From frontend/ directory
 npm run build                  # production build
@@ -553,6 +562,18 @@ npm run quality:fix            # typecheck + lint with auto-fix
 npm run db:types               # generate Supabase types
 npm run check:routes           # verify no dynamic route conflicts
 ```
+
+## Drawing OCR Commands
+
+```bash
+# Manual OCR backfill; use a real admin key from secure env, never commit it
+curl -X POST "https://alleato-backend-rbnj.onrender.com/api/admin/documents/ocr-backfill" \
+  -H "Authorization: Bearer <ADMIN_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{"batch_size": 30, "page_cap": 20}'
+```
+
+OCR status lives on `document_metadata.status`: `no_text` -> `raw_ingested` for full OCR, `ocr_partial` when the page cap is hit but text is still embedded, and `ocr_failed` for failures that require a manual reset to `no_text` before retry. Reference: `docs/architecture/OCR-PIPELINE.md`.
 
 ## Testing Commands
 
