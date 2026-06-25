@@ -975,6 +975,7 @@ const structuredOutputAssistantTools = factoryToolEntries({
 
 const featureRequestWriteTools = new Set([
   "captureFeatureRequestPacket",
+  "captureIdeaItem",
   "updateFeatureRequestPacket",
   "generateImplementationPlan",
   "generateClaudeCodeHandoff",
@@ -989,6 +990,7 @@ const featureRequestAssistantTools = factoryToolEntries({
   names: [
     "findRelatedFeatureRequests",
     "captureFeatureRequestPacket",
+    "captureIdeaItem",
     "updateFeatureRequestPacket",
     "scoreFeatureRequestReadiness",
     "generateImplementationPlan",

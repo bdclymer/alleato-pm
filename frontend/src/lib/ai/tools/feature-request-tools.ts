@@ -16,6 +16,8 @@ import {
 } from "@/lib/feature-requests/server";
 import { scoreFeatureRequestReadiness } from "@/lib/feature-requests/readiness";
 import type { FeatureRequestType } from "@/lib/feature-requests/types";
+import { createIdea } from "@/lib/ideas/server";
+import { IDEA_PRIORITIES, IDEA_ROUTE_TYPES, IDEA_SOURCES, IDEA_STATUSES } from "@/lib/ideas/types";
 
 export type FeatureRequestToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -124,6 +126,52 @@ export function createFeatureRequestTools(
           widget,
         };
         return output;
+      },
+    }),
+
+    captureIdeaItem: defineWriteTool("captureIdeaItem", options, {
+      description:
+        "Capture a lightweight idea in the editable Ideas table. Use this when the user wants to quickly dump an idea, add something to the ideas list, remember an idea for later routing, or avoid hunting through prior conversations. Do not use this for implementation-ready feature packets unless the user asks for planning/handoff work.",
+      inputSchema: z.object({
+        body: z.string().min(5).describe("The idea text to preserve in the editable ideas table."),
+        title: z.string().min(2).max(160).optional(),
+        priority: z.enum(IDEA_PRIORITIES).default("medium"),
+        status: z.enum(IDEA_STATUSES).default("captured"),
+        routeType: z.enum(IDEA_ROUTE_TYPES).default("unrouted"),
+        routeTarget: z.string().max(240).optional(),
+        aiSummary: z.string().max(1000).optional(),
+        aiNextAction: z.string().max(1000).optional(),
+        source: z.enum(IDEA_SOURCES).default("ai_assistant"),
+        sourceContext: z.string().max(4000).optional(),
+        sourceUrl: z.string().url().optional(),
+        projectId: projectIdSchema.optional(),
+      }),
+      execute: async (input) => {
+        const idea = await createIdea(
+          {
+            ...input,
+            projectId: input.projectId ?? options.pinnedProjectId ?? null,
+            routeTarget: input.routeTarget ?? null,
+            aiSummary: input.aiSummary ?? null,
+            aiNextAction: input.aiNextAction ?? null,
+            sourceContext: input.sourceContext ?? null,
+            sourceUrl: input.sourceUrl ?? null,
+            metadata: {
+              capture_surface: "ai_assistant",
+            },
+          },
+          userId,
+        );
+
+        return {
+          success: true,
+          ideaId: idea.id,
+          title: idea.title,
+          status: idea.status,
+          priority: idea.priority,
+          routeType: idea.route_type,
+          detailHref: "/ideas",
+        };
       },
     }),
 

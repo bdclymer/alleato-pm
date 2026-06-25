@@ -3755,7 +3755,6 @@ export async function generateBrandonDailyUpdate(
           rankedHitCount: rankedHits.length,
           dedupedHitCount: dedupedHits.length,
           fallbackRowCount: fallbackResult.rows.length,
-          operatingItemCount: operatingRecordResult.itemCount,
         },
         metadata: { stage: "source_candidate_selection" },
         output: (result) => {

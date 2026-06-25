@@ -15559,6 +15559,115 @@ export type Database = {
         }
         Relationships: []
       }
+      idea_items: {
+        Row: {
+          ai_next_action: string | null
+          ai_summary: string | null
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          linked_linear_issue_id: string | null
+          linked_linear_issue_url: string | null
+          metadata: Json
+          priority: string
+          project_id: number | null
+          route_target: string | null
+          route_type: string
+          source: string
+          source_context: string | null
+          source_url: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ai_next_action?: string | null
+          ai_summary?: string | null
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          linked_linear_issue_id?: string | null
+          linked_linear_issue_url?: string | null
+          metadata?: Json
+          priority?: string
+          project_id?: number | null
+          route_target?: string | null
+          route_type?: string
+          source?: string
+          source_context?: string | null
+          source_url?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          ai_next_action?: string | null
+          ai_summary?: string | null
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          linked_linear_issue_id?: string | null
+          linked_linear_issue_url?: string | null
+          metadata?: Json
+          priority?: string
+          project_id?: number | null
+          route_target?: string | null
+          route_type?: string
+          source?: string
+          source_context?: string | null
+          source_url?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_items_created_by_fkey"
+            columns: ["created_by"]
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_items_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "idea_items_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_items_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "idea_items_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_items_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_items_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       implementation_plans: {
         Row: {
           acceptance_criteria: Json

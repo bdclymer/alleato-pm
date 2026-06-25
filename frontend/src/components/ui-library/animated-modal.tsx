@@ -219,7 +219,7 @@ export const useOutsideClick = (
   useEffect(() => {
     const listener = (event: MouseEvent | TouchEvent) => {
       // DO NOTHING if the element being clicked is the target element or their children
-      if (!ref.current || ref.current.contains(event.target)) {
+      if (!ref.current || (event.target instanceof Node && ref.current.contains(event.target))) {
         return;
       }
       callback(event);
