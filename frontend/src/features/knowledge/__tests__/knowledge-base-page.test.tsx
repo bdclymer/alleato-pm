@@ -84,10 +84,16 @@ describe("KnowledgeBasePage", () => {
     expect(screen.getByPlaceholderText("Search knowledge...")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /Field Operations/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("button", { name: /Contracts/ }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: /Safety orientation/ })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Manage sources" })[0]).toHaveAttribute(
       "href",
       "/knowledge/manage",
     );
+    expect(screen.queryByRole("heading", { name: "Browse by topic" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Topics follow the same source taxonomy used by the knowledge pipeline."),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Source documents" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Source confidence" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Safety orientation/ })).not.toBeInTheDocument();
   });
 });

@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  ArrowUpRight,
   BookOpen,
   Briefcase,
   Building2,
@@ -11,7 +10,6 @@ import {
   FileText,
   HardHat,
   Receipt,
-  Search,
   Settings,
   Shield,
   Users,
@@ -24,9 +22,7 @@ import {
   type KnowledgeDocument,
 } from "@/hooks/use-knowledge-documents";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
-import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 const CATEGORY_ORDER = [
   "Company Policies",
@@ -71,9 +67,7 @@ const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
 
 const PAGE_SECTIONS = [
   { id: "overview", label: "Overview" },
-  { id: "topics", label: "Browse by topic" },
-  { id: "sources", label: "Source documents" },
-  { id: "trust", label: "Source confidence" },
+  { id: "topics", label: "Topics" },
 ] as const;
 
 function deriveCategory(doc: KnowledgeDocument): Category {
@@ -84,22 +78,11 @@ function deriveCategory(doc: KnowledgeDocument): Category {
     : "Other";
 }
 
-function getDisplayDate(doc: KnowledgeDocument): string {
-  const value = doc.date ?? doc.created_at;
-  if (!value) return "No date";
-  return new Date(value).toLocaleDateString();
-}
-
-function getDocumentTitle(doc: KnowledgeDocument): string {
-  return doc.title ?? doc.file_name ?? "Untitled source";
-}
-
 export function KnowledgeBasePage() {
   const { data: documents = [], isLoading } = useKnowledgeDocuments();
   const { profile } = useCurrentUserProfile();
   const [search, setSearch] = React.useState("");
   const [activeCategory, setActiveCategory] = React.useState<Category | null>(null);
-  const [openingDocumentId, setOpeningDocumentId] = React.useState<string | null>(null);
 
   const isAdmin = profile?.isAdmin === true;
   const searchTerm = search.trim().toLowerCase();
@@ -118,13 +101,19 @@ export function KnowledgeBasePage() {
     [categoryCounts],
   );
 
-  const filteredDocuments = React.useMemo(() => {
-    let docs = documents;
-    if (activeCategory) {
-      docs = docs.filter((doc) => deriveCategory(doc) === activeCategory);
-    }
-    if (searchTerm) {
-      docs = docs.filter((doc) => {
+  const displayCategories = React.useMemo(() => {
+    if (!searchTerm) return visibleCategories;
+
+    return visibleCategories.filter((category) => {
+      if (
+        category.toLowerCase().includes(searchTerm) ||
+        CATEGORY_DESCRIPTIONS[category].toLowerCase().includes(searchTerm)
+      ) {
+        return true;
+      }
+
+      return documents.some((doc) => {
+        if (deriveCategory(doc) !== category) return false;
         const haystack = [
           doc.title ?? "",
           doc.file_name ?? "",
@@ -136,40 +125,8 @@ export function KnowledgeBasePage() {
           .toLowerCase();
         return haystack.includes(searchTerm);
       });
-    }
-    return docs;
-  }, [documents, activeCategory, searchTerm]);
-
-  const recentDocuments = React.useMemo(
-    () =>
-      [...documents]
-        .sort((a, b) => {
-          const aTime = new Date(a.date ?? a.created_at ?? 0).getTime();
-          const bTime = new Date(b.date ?? b.created_at ?? 0).getTime();
-          return bTime - aTime;
-        })
-        .slice(0, 5),
-    [documents],
-  );
-
-  async function handleOpenDocument(document: KnowledgeDocument) {
-    if (!document.file_path) {
-      toast.error("This source does not have an attached file.");
-      return;
-    }
-
-    setOpeningDocumentId(document.id);
-    try {
-      const { url } = await apiFetch<{ url: string }>(
-        `/api/knowledge/signed-url?id=${encodeURIComponent(document.id)}`,
-      );
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      toast.error("Could not load the source file. Ask an admin to verify the upload.");
-    } finally {
-      setOpeningDocumentId(null);
-    }
-  }
+    });
+  }, [documents, searchTerm, visibleCategories]);
 
   return (
     <PageShell
@@ -222,37 +179,17 @@ export function KnowledgeBasePage() {
               />
             ) : (
               <>
-                <TopicGuide
-                  categories={visibleCategories}
+                <TopicCards
+                  categories={displayCategories}
                   counts={categoryCounts}
                   activeCategory={activeCategory}
                   onSelect={setActiveCategory}
-                />
-
-                <SourceDocuments
-                  documents={filteredDocuments}
-                  recentDocuments={recentDocuments}
-                  searchTerm={searchTerm}
-                  activeCategory={activeCategory}
                   onClearFilters={() => {
                     setSearch("");
                     setActiveCategory(null);
                   }}
-                  onOpenDocument={handleOpenDocument}
-                  openingDocumentId={openingDocumentId}
+                  hasFilter={Boolean(searchTerm || activeCategory)}
                 />
-
-                <section id="trust" className="scroll-mt-24 space-y-3 border-t border-border pt-8">
-                  {/* eslint-disable-next-line design-system/no-raw-heading */}
-                  <h2 className="text-xl font-semibold tracking-normal text-foreground">
-                    Source confidence
-                  </h2>
-                  <p className="max-w-2xl text-base leading-7 text-muted-foreground">
-                    Entries here come from managed knowledge uploads and synced sources.
-                    If a source file cannot open, the page fails loudly with a specific
-                    upload-verification message instead of pretending the document is available.
-                  </p>
-                </section>
               </>
             )}
           </main>
@@ -446,115 +383,27 @@ function TopicPill({
   );
 }
 
-function TopicGuide({
+function TopicCards({
   categories,
   counts,
   activeCategory,
   onSelect,
+  onClearFilters,
+  hasFilter,
 }: {
   categories: readonly Category[];
   counts: Partial<Record<Category, number>>;
   activeCategory: Category | null;
   onSelect: (category: Category) => void;
+  onClearFilters: () => void;
+  hasFilter: boolean;
 }) {
   return (
     <section id="topics" className="scroll-mt-24 space-y-4">
-      <div className="space-y-2">
-        {/* eslint-disable-next-line design-system/no-raw-heading */}
-        <h2 className="text-xl font-semibold tracking-normal text-foreground">
-          Browse by topic
-        </h2>
-        <p className="max-w-2xl text-base leading-7 text-muted-foreground">
-          Topics follow the same source taxonomy used by the knowledge pipeline.
-        </p>
-      </div>
-      <div className="divide-y divide-border border-y border-border">
-        {categories.map((category) => (
-          <Button
-            key={category}
-            type="button"
-            variant="ghost"
-            onClick={() => onSelect(category)}
-            className="group flex h-auto min-h-16 w-full items-start justify-between gap-4 whitespace-normal rounded-none px-0 py-4 text-left hover:bg-transparent"
-          >
-            <span className="flex min-w-0 gap-3">
-              <span
-                className={cn(
-                  "mt-0.5 text-muted-foreground group-hover:text-primary",
-                  activeCategory === category && "text-primary",
-                )}
-              >
-                {CATEGORY_ICONS[category]}
-              </span>
-              <span className="space-y-1">
-                <span
-                  className={cn(
-                    "block text-base font-medium text-foreground group-hover:text-primary",
-                    activeCategory === category && "text-primary",
-                  )}
-                >
-                  {category}
-                </span>
-                <span className="block max-w-2xl text-sm leading-6 text-muted-foreground">
-                  {CATEGORY_DESCRIPTIONS[category]}
-                </span>
-              </span>
-            </span>
-            <span className="shrink-0 text-sm text-muted-foreground">
-              {counts[category] ?? 0}
-            </span>
-          </Button>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function SourceDocuments({
-  documents,
-  recentDocuments,
-  searchTerm,
-  activeCategory,
-  onClearFilters,
-  onOpenDocument,
-  openingDocumentId,
-}: {
-  documents: KnowledgeDocument[];
-  recentDocuments: KnowledgeDocument[];
-  searchTerm: string;
-  activeCategory: Category | null;
-  onClearFilters: () => void;
-  onOpenDocument: (document: KnowledgeDocument) => void;
-  openingDocumentId: string | null;
-}) {
-  const hasFilter = Boolean(searchTerm || activeCategory);
-  const sourceDocuments = hasFilter ? documents : recentDocuments;
-
-  return (
-    <section id="sources" className="scroll-mt-24 space-y-4">
-      <div className="flex flex-col gap-3 border-t border-border pt-8 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
-          {/* eslint-disable-next-line design-system/no-raw-heading */}
-          <h2 className="text-xl font-semibold tracking-normal text-foreground">
-            {activeCategory ?? (searchTerm ? "Search results" : "Source documents")}
-          </h2>
-          <p className="max-w-2xl text-base leading-7 text-muted-foreground">
-            {hasFilter
-              ? `${documents.length} ${documents.length === 1 ? "source" : "sources"} match the current filter.`
-              : "Open the most recent knowledge sources or choose a topic to narrow the list."}
-          </p>
-        </div>
-        {hasFilter && (
-          <Button type="button" variant="ghost" size="sm" onClick={onClearFilters}>
-            Clear filters
-          </Button>
-        )}
-      </div>
-
-      {sourceDocuments.length === 0 ? (
+      {categories.length === 0 ? (
         <EmptyState
-          icon={<FileText className="h-5 w-5" />}
-          title="No entries found"
+          icon={<BookOpen className="h-5 w-5" />}
+          title="No matching topics"
           description="Try a broader phrase or clear the current filter."
           action={
             hasFilter ? (
@@ -565,59 +414,51 @@ function SourceDocuments({
           }
         />
       ) : (
-        <DocumentRows
-          documents={sourceDocuments}
-          onOpenDocument={onOpenDocument}
-          openingDocumentId={openingDocumentId}
-        />
-      )}
-    </section>
-  );
-}
-
-function DocumentRows({
-  documents,
-  onOpenDocument,
-  openingDocumentId,
-}: {
-  documents: KnowledgeDocument[];
-  onOpenDocument: (document: KnowledgeDocument) => void;
-  openingDocumentId: string | null;
-}) {
-  return (
-    <div className="divide-y divide-border border-y border-border">
-      {documents.map((doc) => {
-        const title = getDocumentTitle(doc);
-        const category = deriveCategory(doc);
-        return (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {categories.map((category) => (
           <Button
-            key={doc.id}
+            key={category}
             type="button"
             variant="ghost"
-            aria-busy={openingDocumentId === doc.id}
-            onClick={() => onOpenDocument(doc)}
-            className="group flex h-auto min-h-16 w-full items-start justify-between gap-4 whitespace-normal rounded-none px-0 py-4 text-left hover:bg-transparent"
+            onClick={() => onSelect(category)}
+            className={cn(
+              "group flex h-auto min-h-36 w-full items-start justify-between gap-5 whitespace-normal rounded-lg px-5 py-5 text-left transition-colors",
+              activeCategory === category
+                ? "bg-primary/10 text-primary hover:bg-primary/10"
+                : "bg-muted/45 text-foreground hover:bg-muted/70",
+            )}
           >
-            <span className="min-w-0 space-y-1">
-              <span className="block text-base font-medium text-foreground group-hover:text-primary">
-                {title}
-              </span>
-              <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                <span>{category}</span>
-                <span>{getDisplayDate(doc)}</span>
-                {doc.file_name && doc.file_name !== title && (
-                  <span className="max-w-full truncate">{doc.file_name}</span>
+            <span className="flex min-w-0 gap-3">
+              <span
+                className={cn(
+                  "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-background/80 text-muted-foreground group-hover:text-primary",
+                  activeCategory === category && "text-primary",
                 )}
+              >
+                {CATEGORY_ICONS[category]}
+              </span>
+              <span className="space-y-1">
+                <span
+                  className={cn(
+                    "block text-base font-semibold text-foreground group-hover:text-primary",
+                    activeCategory === category && "text-primary",
+                  )}
+                >
+                  {category}
+                </span>
+                <span className="block max-w-2xl text-sm leading-6 text-muted-foreground">
+                  {CATEGORY_DESCRIPTIONS[category]}
+                </span>
               </span>
             </span>
-            <span className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-muted-foreground group-hover:text-primary">
-              {openingDocumentId === doc.id ? "Opening" : "Open"}
-              <ArrowUpRight className="h-4 w-4" />
+            <span className="shrink-0 rounded-md bg-background/80 px-2 py-1 text-sm tabular-nums text-muted-foreground">
+              {counts[category] ?? 0}
             </span>
           </Button>
-        );
-      })}
-    </div>
+        ))}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -653,15 +494,15 @@ function OnThisPage({ isAdmin }: { isAdmin: boolean }) {
 function KnowledgeDocsSkeleton() {
   return (
     <div className="space-y-8" aria-label="Loading knowledge">
-      <div className="space-y-3">
-        <div className="h-6 w-40 animate-pulse rounded-md bg-muted" />
-        <div className="h-4 w-full max-w-xl animate-pulse rounded-md bg-muted" />
-      </div>
-      <div className="divide-y divide-border border-y border-border">
-        {[1, 2, 3].map((item) => (
-          <div key={item} className="space-y-2 py-4">
-            <div className="h-5 w-2/3 animate-pulse rounded-md bg-muted" />
-            <div className="h-4 w-1/2 animate-pulse rounded-md bg-muted" />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {[1, 2, 3, 4].map((item) => (
+          <div key={item} className="min-h-36 space-y-4 rounded-lg bg-muted/45 p-5">
+            <div className="h-9 w-9 animate-pulse rounded-md bg-background/80" />
+            <div className="space-y-2">
+              <div className="h-5 w-2/3 animate-pulse rounded-md bg-background/80" />
+              <div className="h-4 w-full animate-pulse rounded-md bg-background/80" />
+              <div className="h-4 w-3/4 animate-pulse rounded-md bg-background/80" />
+            </div>
           </div>
         ))}
       </div>
