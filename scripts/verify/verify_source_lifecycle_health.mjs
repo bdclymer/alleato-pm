@@ -393,11 +393,11 @@ try {
       Number(chunkByDocumentId.get(String(row.id))?.embedded_chunks ?? 0) > 0,
     ).length;
     const withLifecycle = rows.filter((row) => (lifecycleByDocumentId.get(String(row.id)) ?? []).length > 0).length;
-    const withProjectAssignmentLifecycle = rows.filter((row) =>
+    const hasProjectAssignmentLifecycle = (row) =>
       (lifecycleByDocumentId.get(String(row.id)) ?? []).some((job) =>
         ["project_assigned", "project_assignment_review", "indexed_for_rag", "signals_extracted", "project_intelligence_updated", "complete"].includes(job.status),
-      ),
-    ).length;
+      );
+    const withProjectAssignmentLifecycle = rows.filter(hasProjectAssignmentLifecycle).length;
     const withProjectIntelligenceLifecycle = rows.filter((row) =>
       (lifecycleByDocumentId.get(String(row.id)) ?? []).some((job) =>
         ["project_intelligence_updated", "complete"].includes(job.status),
@@ -408,6 +408,13 @@ try {
       counts[key] = (counts[key] ?? 0) + 1;
       return counts;
     }, {});
+    const withProjectDisposition = projectRequiredRows.filter((row) =>
+      (row.project_id !== null && row.project_id !== undefined) ||
+      (
+        row.project_applicability.project_applicability === "project_assignment_review" &&
+        hasProjectAssignmentLifecycle(row)
+      ),
+    ).length;
 
     return {
       family,
@@ -417,6 +424,8 @@ try {
       project_applicability: applicabilityCounts,
       with_project: withProject,
       project_assigned_ratio: ratio(withProject, projectRequiredRows.length),
+      with_project_disposition: withProjectDisposition,
+      project_disposition_ratio: ratio(withProjectDisposition, projectRequiredRows.length),
       embedding_required_sources: embeddingRequiredRows.length,
       terminal_embedding_failures: terminalEmbeddingFailures.length,
       with_chunks: withChunks,
@@ -544,8 +553,8 @@ try {
 
   for (const summary of sourceFamilySummary) {
     if (summary.recent_sources === 0) continue;
-    if (summary.project_assigned_ratio < minProjectAssignedRatio) {
-      pushFailure(failures, `${summary.family} project-assignment coverage is below threshold.`, {
+    if (summary.project_disposition_ratio < minProjectAssignedRatio) {
+      pushFailure(failures, `${summary.family} project-disposition coverage is below threshold.`, {
         threshold: minProjectAssignedRatio,
         ...summary,
       });

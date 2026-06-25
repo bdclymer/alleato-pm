@@ -89,6 +89,7 @@ export function classifyProjectApplicability(row = {}) {
   const category = String(row.category ?? "");
   const type = String(row.type ?? "");
   const family = String(row.source_family ?? "");
+  const status = String(row.status ?? "");
   const textSample = String(row.text_sample ?? row.textSample ?? "");
   const haystack = [title, category, type, family, textSample].join("\n");
 
@@ -109,6 +110,14 @@ export function classifyProjectApplicability(row = {}) {
       project_applicability: "not_project_applicable",
       project_required: false,
       project_applicability_reason: "teams_anonymized_thread_has_no_extractable_text",
+    };
+  }
+
+  if (status === "skipped_low_content") {
+    return {
+      project_applicability: "not_project_applicable",
+      project_required: false,
+      project_applicability_reason: "terminal_status_skipped_low_content",
     };
   }
 

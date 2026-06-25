@@ -122,96 +122,155 @@ try {
       )).rows
     : [];
 
-  if (!dryRun && docs.length > 0) {
+  const taskLinkRows = (await appClient.query(
+    `
+      select t.id, t.title, t.source_system, t.metadata_id,
+        t.project_id as task_project_id,
+        coalesce(t.project_ids, '{}'::bigint[]) as task_project_ids,
+        d.project_id as document_project_id,
+        d.title as document_title
+      from public.tasks t
+      join public.document_metadata d on d.id::text = t.metadata_id::text
+      where t.created_at >= now() - ($1::text || ' days')::interval
+        and t.source_system in ('fireflies', 'meeting', 'email', 'teams_dm_conversation', 'microsoft_graph')
+        and d.project_id is not null
+        and (
+          t.project_id is distinct from d.project_id
+          or t.project_ids is null
+          or not (d.project_id = any(t.project_ids))
+        )
+      order by t.created_at desc
+      limit $2
+    `,
+    [lookbackDays, limit],
+  )).rows;
+
+  if (!dryRun && (docs.length > 0 || taskLinkRows.length > 0)) {
     await appClient.query("begin");
     try {
-      await appClient.query(
-        `
-          update public.document_metadata d
-          set project_id = v.project_id,
-            project = v.project_name,
-            source_metadata = jsonb_set(
-              coalesce(d.source_metadata, '{}'::jsonb),
-              '{project_assignment_backfill}',
-              jsonb_build_object(
-                'status', 'assigned',
-                'source', 'source_intelligence_jobs.output_summary',
-                'confidence_score', v.confidence_score,
-                'assigned_at', now()
-              ),
-              true
-            )
-          from (
-            select *
-            from jsonb_to_recordset($1::jsonb) as x(
-              source_document_id text,
-              project_id bigint,
-              project_name text,
-              confidence_score numeric
-            )
-          ) v
-          where d.id = v.source_document_id
-            and d.project_id is null
-            and d.deleted_at is null
-        `,
-        [JSON.stringify(docs.map((row) => ({
-          source_document_id: String(row.id),
-          project_id: Number(row.inferred_project_id),
-          project_name: row.inferred_project_name,
-          confidence_score: Number(row.confidence_score),
-        })))],
-      );
+      if (docs.length > 0) {
+        await appClient.query(
+          `
+            update public.document_metadata d
+            set project_id = v.project_id,
+              project = v.project_name,
+              source_metadata = jsonb_set(
+                coalesce(d.source_metadata, '{}'::jsonb),
+                '{project_assignment_backfill}',
+                jsonb_build_object(
+                  'status', 'assigned',
+                  'source', 'source_intelligence_jobs.output_summary',
+                  'confidence_score', v.confidence_score,
+                  'assigned_at', now()
+                ),
+                true
+              )
+            from (
+              select *
+              from jsonb_to_recordset($1::jsonb) as x(
+                source_document_id text,
+                project_id bigint,
+                project_name text,
+                confidence_score numeric
+              )
+            ) v
+            where d.id = v.source_document_id
+              and d.project_id is null
+              and d.deleted_at is null
+          `,
+          [JSON.stringify(docs.map((row) => ({
+            source_document_id: String(row.id),
+            project_id: Number(row.inferred_project_id),
+            project_name: row.inferred_project_name,
+            confidence_score: Number(row.confidence_score),
+          })))],
+        );
 
-      await appClient.query(
-        `
-          update public.tasks t
-          set project_id = v.project_id,
-            project_ids = array[v.project_id]::bigint[],
-            updated_at = now()
-          from (
-            select *
-            from jsonb_to_recordset($1::jsonb) as x(source_document_id text, project_id bigint)
-          ) v
-          where t.metadata_id = v.source_document_id
-            and t.project_id is null
-        `,
-        [JSON.stringify(docs.map((row) => ({
-          source_document_id: String(row.id),
-          project_id: Number(row.inferred_project_id),
-        })))],
-      );
+        await appClient.query(
+          `
+            update public.tasks t
+            set project_id = v.project_id,
+              project_ids = array[v.project_id]::bigint[],
+              updated_at = now()
+            from (
+              select *
+              from jsonb_to_recordset($1::jsonb) as x(source_document_id text, project_id bigint)
+            ) v
+            where t.metadata_id = v.source_document_id
+              and t.project_id is null
+          `,
+          [JSON.stringify(docs.map((row) => ({
+            source_document_id: String(row.id),
+            project_id: Number(row.inferred_project_id),
+          })))],
+        );
+      }
+
+      if (taskLinkRows.length > 0) {
+        await appClient.query(
+          `
+            update public.tasks t
+            set project_id = v.project_id,
+              project_ids = case
+                when t.project_ids is null then array[v.project_id]::bigint[]
+                when v.project_id = any(t.project_ids) then t.project_ids
+                else array_append(t.project_ids, v.project_id)
+              end,
+              extraction_metadata = coalesce(t.extraction_metadata, '{}'::jsonb) || jsonb_build_object(
+                'project_assignment_backfill',
+                jsonb_build_object(
+                  'status', 'assigned_from_source_document',
+                  'source', 'document_metadata.project_id',
+                  'assigned_at', now()
+                )
+              ),
+              updated_at = now()
+            from (
+              select *
+              from jsonb_to_recordset($1::jsonb) as x(task_id uuid, project_id bigint)
+            ) v
+            where t.id = v.task_id
+          `,
+          [JSON.stringify(taskLinkRows.map((row) => ({
+            task_id: String(row.id),
+            project_id: Number(row.document_project_id),
+          })))],
+        );
+      }
 
       await appClient.query("commit");
 
-      await ragClient.query(
-        `
-          update public.source_processing_jobs j
-          set project_id = v.project_id,
-            status = case
-              when j.status = 'project_assignment_review' then 'project_assigned'
-              else j.status
-            end,
-            updated_at = now(),
-            metadata = coalesce(j.metadata, '{}'::jsonb) || jsonb_build_object(
-              'project_assignment_backfill',
-              jsonb_build_object(
-                'status', 'assigned',
-                'source', 'source_intelligence_jobs.output_summary',
-                'assigned_at', now()
+      if (docs.length > 0) {
+        await ragClient.query(
+          `
+            update public.source_processing_jobs j
+            set project_id = v.project_id,
+              status = case
+                when j.status = 'project_assignment_review' then 'project_assigned'
+                else j.status
+              end,
+              updated_at = now(),
+              metadata = coalesce(j.metadata, '{}'::jsonb) || jsonb_build_object(
+                'project_assignment_backfill',
+                jsonb_build_object(
+                  'status', 'assigned',
+                  'source', 'source_intelligence_jobs.output_summary',
+                  'assigned_at', now()
+                )
               )
-            )
-          from (
-            select *
-            from jsonb_to_recordset($1::jsonb) as x(source_document_id text, project_id bigint)
-          ) v
-          where j.source_document_id = v.source_document_id
-            and j.project_id is null
-        `,
-        [JSON.stringify(docs.map((row) => ({
-          source_document_id: String(row.id),
-          project_id: Number(row.inferred_project_id),
-        })))],
-      );
+            from (
+              select *
+              from jsonb_to_recordset($1::jsonb) as x(source_document_id text, project_id bigint)
+            ) v
+            where j.source_document_id = v.source_document_id
+              and j.project_id is null
+          `,
+          [JSON.stringify(docs.map((row) => ({
+            source_document_id: String(row.id),
+            project_id: Number(row.inferred_project_id),
+          })))],
+        );
+      }
     } catch (error) {
       await appClient.query("rollback");
       throw error;
@@ -238,6 +297,8 @@ try {
     compilerJobsConsidered: jobRows.length,
     documentsEligible: docs.length,
     documentsUpdated: dryRun ? 0 : docs.length,
+    taskLinksEligible: taskLinkRows.length,
+    taskLinksUpdated: dryRun ? 0 : taskLinkRows.length,
     bySource: Object.values(bySource),
     samples: docs.slice(0, 10).map((row) => ({
       id: row.id,
@@ -248,6 +309,16 @@ try {
       project_id: Number(row.inferred_project_id),
       project: row.inferred_project_name,
       confidence_score: Number(row.confidence_score),
+    })),
+    taskLinkSamples: taskLinkRows.slice(0, 10).map((row) => ({
+      id: row.id,
+      title: row.title,
+      source_system: row.source_system,
+      metadata_id: row.metadata_id,
+      document_title: row.document_title,
+      project_id: Number(row.document_project_id),
+      previous_project_id: row.task_project_id === null ? null : Number(row.task_project_id),
+      previous_project_ids: row.task_project_ids,
     })),
   }, null, 2));
 } finally {
