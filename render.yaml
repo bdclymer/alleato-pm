@@ -420,6 +420,35 @@ services:
       - key: RAG_SUPABASE_SERVICE_ROLE_KEY
         sync: false
 
+  # Reads the shared RFI reply mailbox every 15 minutes and writes
+  # rfi_responses rows for any subcontractor email replies (email channel).
+  # Idempotent: keyed on Graph message id so re-reads never double-insert.
+  - type: cron
+    name: alleato-rfi-email-ingest
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "*/15 * * * *"
+    dockerCommand: >-
+      timeout 5m python3 -m src.services.rfis.email_ingestion
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: MICROSOFT_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_TENANT_ID
+        sync: false
+      - key: RFI_REPLY_MAILBOX
+        sync: false
+
   # Runs RAG meeting vectorization health check daily at noon UTC.
   # Replaces the former GitHub Actions workflow — no Actions minutes consumed.
   # Posts to SLACK_WEBHOOK_URL on failure.

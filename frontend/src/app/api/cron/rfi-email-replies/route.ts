@@ -8,8 +8,11 @@
  * as the no-login web channel.
  *
  * Idempotent: rows are keyed by the Graph message id (unique), so re-reading the
- * same window never double-inserts. Trigger on a schedule (Vercel cron) with the
- * CRON_SECRET bearer token, or manually with ?secret=.
+ * same window never double-inserts.
+ *
+ * Scheduling: the Render cron `alleato-rfi-email-ingest` (every 15 min) runs the
+ * Python equivalent at backend/src/services/rfis/email_ingestion.py. This route
+ * is kept for manual testing via ?secret=CRON_SECRET.
  */
 
 import { withApiGuardrails } from "@/lib/guardrails/api";

@@ -9,7 +9,6 @@
     { "path": "/api/cron/progress-reports", "schedule": "0 8 * * *" },
     { "path": "/api/cron/graph-sync", "schedule": "0 6 * * *" },
     { "path": "/api/cron/graph-embed", "schedule": "0 7 * * *" },
-    { "path": "/api/cron/attribution-rules", "schedule": "0 8 * * 1" },
-    { "path": "/api/cron/rfi-email-replies", "schedule": "*/15 * * * *" }
+    { "path": "/api/cron/attribution-rules", "schedule": "0 8 * * 1" }
   ]
 }
