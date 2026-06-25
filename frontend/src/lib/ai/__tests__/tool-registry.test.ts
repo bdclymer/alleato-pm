@@ -168,6 +168,61 @@ describe("global AI assistant tool registry", () => {
     });
   });
 
+  it("documents routing policy for key assistant source families", () => {
+    const tools = assistantToolsForWorkflow({
+      workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+    }).filter((tool) => tool.evidencePolicy.sourceBearing);
+
+    const requiredFamilies = [
+      "teams",
+      "outlook",
+      "email",
+      "meeting",
+      "fireflies",
+      "document",
+      "rag",
+      "acumatica",
+      "procore",
+      "project_intelligence",
+    ] as const;
+
+    const missing = requiredFamilies.filter(
+      (sourceFamily) =>
+        !tools.some(
+          (tool) =>
+            tool.sourceFamilies?.includes(sourceFamily) &&
+            tool.routingPolicy &&
+            tool.routingPolicy.useWhen.length > 0 &&
+            tool.routingPolicy.doNotUseWhen.length > 0 &&
+            tool.routingPolicy.regressionPrompts.length > 0,
+        ),
+    );
+
+    expect(missing).toEqual([]);
+  });
+
+  it("projects routing policy into AI Ops tool definition metadata", () => {
+    const [definition] = toolDefinitionsForWorkflow({
+      workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+      allowedToolNames: ["searchTeamsMessages"],
+    });
+
+    expect(definition?.metadata.routingPolicy).toMatchObject({
+      useWhen: expect.arrayContaining([
+        expect.stringContaining("Teams messages"),
+      ]),
+      doNotUseWhen: expect.arrayContaining([
+        expect.stringContaining("Fireflies meetings"),
+      ]),
+      emptyResultBehavior: expect.stringContaining(
+        "do not substitute meetings",
+      ),
+      regressionPrompts: expect.arrayContaining([
+        "what insights can be found in the teams messages today?",
+      ]),
+    });
+  });
+
   it("filters runtime tool sets through registered factory metadata", () => {
     const registry = [
       registryEntry({
