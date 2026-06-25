@@ -67,8 +67,10 @@ This task is not done until every checklist item below is checked, with evidence
 | Patch hygiene         | `git diff --check -- frontend/src/components/ai-assistant/global-ai-widget.tsx frontend/src/components/ai-assistant/widget-ai-chat.tsx frontend/src/components/ai-assistant/chat-area.tsx frontend/src/components/ai-assistant/welcome-screen.tsx frontend/src/components/ai-assistant/__tests__/welcome-screen.test.tsx docs/ops/tasks/2026-06-25-ai-widget-welcome-mvp.md docs/ops/tasks/2026-06-25-ai-widget-mvp-handoff.md docs/ops/handoffs/2026-06-25-S92-ai-widget-mvp-handoff.md docs/ops/evidence/2026-06-25-ai-widget-mvp/open-widget-welcome-action-seeded.png` | Pass | No whitespace issues. |
 | Targeted tests        | `cd frontend && npx jest --runInBand --runTestsByPath src/components/ai-assistant/__tests__/welcome-screen.test.tsx` | Pass | 1 test passed. |
 | Browser/user-flow     | `agent-browser open http://localhost:3001/25125/home`; reset localStorage key; opened widget through DOM fallback due dev overlay; clicked `Create an RFI`; read composer value | Pass | Composer value became `Help me create a new RFI for this project.` |
+| Current browser recheck | `agent-browser open http://localhost:3001/25125/home`; reset `alleato-ai-widget-welcome-seen-v1`; waited for delayed widget mount; clicked launcher and `Create an RFI`; read composer value | Pass | Rechecked 2026-06-25. Browser redirected to `/knowledge`, where the authenticated app shell rendered the widget; composer value became `Help me create a new RFI for this project.` |
 | DB/provider read-back | Not applicable | Pass | No database/provider changes. |
 | End-to-end proof      | `docs/ops/evidence/2026-06-25-ai-widget-mvp/open-widget-welcome-action-seeded.png` | Pass | Screenshot captured after action seeded the prompt. |
+| Current proof artifacts | `docs/ops/evidence/2026-06-25-ai-widget-mvp/current-check/closed-launcher-current.png`; `docs/ops/evidence/2026-06-25-ai-widget-mvp/current-check/open-welcome-current.png`; `docs/ops/evidence/2026-06-25-ai-widget-mvp/current-check/action-chip-seeded-current.png` | Pass | Fresh screenshots captured after current-state recheck. |
 | Known unrelated issue | Existing dev server console output reports `frontend/src/app/(main)/knowledge/page.tsx` cannot resolve `@/features/knowledge/knowledge-base-page` | Unrelated | Existing route/module issue, not caused by this task. |
 
 ## Files Changed
@@ -80,6 +82,9 @@ This task is not done until every checklist item below is checked, with evidence
 - `frontend/src/components/ai-assistant/__tests__/welcome-screen.test.tsx` - Guard the opt-in welcome action slot.
 - `docs/ops/tasks/2026-06-25-ai-widget-welcome-mvp.md` - Task definition and evidence.
 - `docs/ops/evidence/2026-06-25-ai-widget-mvp/open-widget-welcome-action-seeded.png` - Browser proof screenshot.
+- `docs/ops/evidence/2026-06-25-ai-widget-mvp/current-check/closed-launcher-current.png` - Current recheck screenshot for closed launcher.
+- `docs/ops/evidence/2026-06-25-ai-widget-mvp/current-check/open-welcome-current.png` - Current recheck screenshot for open welcome actions.
+- `docs/ops/evidence/2026-06-25-ai-widget-mvp/current-check/action-chip-seeded-current.png` - Current recheck screenshot for seeded action prompt.
 
 ## Risks / Gaps
 
