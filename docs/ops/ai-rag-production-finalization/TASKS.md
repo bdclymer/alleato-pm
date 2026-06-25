@@ -114,7 +114,7 @@ Evidence directory:
 ### Phase 12: Cleanup And Deletion
 
 - [ ] For each deletion candidate, prove inactive status through imports, route references, provider schedules, database writes, and verifier output.
-- [ ] Delete obsolete Vercel Graph/Graph-embed/Acumatica cron routes only after replacement ownership is proven.
+- [x] Delete obsolete Vercel Graph/Graph-embed/Acumatica cron routes only after replacement ownership is proven.
 - [ ] Remove archived, duplicate, experimental, deprecated, dead, or unused implementations.
 - [ ] Remove unused environment variables and orphaned database code where safe.
 - [ ] Confirm the codebase has one production implementation for every major workflow.
@@ -263,9 +263,31 @@ Evidence directory:
   - [acumatica-manual-sync-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-manual-sync-aai-653.txt)
   - [acumatica-sync-health-after-manual-sync-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-after-manual-sync-aai-653.txt)
 
+### 2026-06-25: AAI-660 Disabled Vercel Cron Leftovers Deleted
+
+- Proved `/api/cron/graph-sync`, `/api/cron/graph-embed`, and `/api/cron/acumatica-sync` were disabled Vercel cron leftovers with no source callers outside `frontend/vercel.json` and their own route files.
+- Proved replacement ownership:
+  - Render `alleato-graph-sync` owns Graph sync and embedding with `run_embedding=True`.
+  - Render `alleato-acumatica-financial-sync` owns Acumatica on the twice-daily schedule.
+- Deleted:
+  - `frontend/src/app/api/cron/graph-sync/route.ts`
+  - `frontend/src/app/api/cron/graph-embed/route.ts`
+  - `frontend/src/app/api/cron/acumatica-sync/route.ts`
+  - the three matching entries in `frontend/vercel.json`
+- Kept admin/manual source-sync routes intact.
+- Verification passed after deletion: no source references remain, `frontend/vercel.json` parses, `npm run check:routes`, `npm run rag:verify:graph-embedding`, `npm run verify:acumatica-sync-health`, `npm run rag:verify:source-lifecycle`, and `npm run rag:verify:meetings`.
+- Evidence:
+  - [vercel-crons-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/vercel-crons-aai-660.txt)
+  - [vercel-cron-deletion-proof-aai-660.md](../evidence/2026-06-25-ai-rag-production-finalization/vercel-cron-deletion-proof-aai-660.md)
+  - [vercel-cron-reference-check-after-delete-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/vercel-cron-reference-check-after-delete-aai-660.txt)
+  - [route-check-after-vercel-cron-delete-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/route-check-after-vercel-cron-delete-aai-660.txt)
+  - [graph-embedding-after-vercel-cron-delete-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/graph-embedding-after-vercel-cron-delete-aai-660.txt)
+  - [acumatica-sync-health-after-vercel-cron-delete-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-after-vercel-cron-delete-aai-660.txt)
+  - [source-lifecycle-after-vercel-cron-delete-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-vercel-cron-delete-aai-660.txt)
+  - [meetings-after-vercel-cron-delete-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-after-vercel-cron-delete-aai-660.txt)
+
 ## Remaining Blockers
 
 - Historical Fireflies error backlog remains large and must be drained or classified.
 - Provider JSON-mode fallback/non-JSON extraction noise still occurs during canonical Fireflies processing.
 - Archived audit doc still needs to identify the current live AI SDK MCP implementation.
-- Disabled Vercel cron routes remain deletion candidates, but deletion is blocked until replacement proof is complete for each route.
