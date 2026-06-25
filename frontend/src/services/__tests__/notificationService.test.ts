@@ -10,8 +10,10 @@ import { createServiceClient } from "@/lib/supabase/service";
 import {
   buildAiWidgetNotificationMetadata,
   buildChangeRequestReviewPrompt,
+  buildRfiReviewPrompt,
   notifyAiWidgetNotification,
   notifyChangeRequestReviewNeeded,
+  notifyRfiReviewNeeded,
 } from "../notificationService";
 
 const mockedCreateServiceClient = jest.mocked(createServiceClient);
@@ -219,6 +221,40 @@ describe("AI widget notification producer", () => {
     );
   });
 
+  it("builds RFI review notifications for the widget composer", async () => {
+    const client = createNotificationClientMock();
+
+    await expect(
+      notifyRfiReviewNeeded("user-1", {
+        projectId: 25125,
+        subject: "RFI - Delayed Electrical Rough-in",
+        question: "Please clarify delayed electrical rough-in.",
+        costImpact: "tbd",
+        scheduleImpact: "tbd",
+        eventKey: "rfi-preview-1",
+      }),
+    ).resolves.toEqual({ created: 1, skipped: 0 });
+
+    expect(client.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: "user-1",
+        project_id: 25125,
+        entity_type: "rfis",
+        kind: "rfi_attention",
+        title: "RFI ready for review",
+        body: "RFI - Delayed Electrical Rough-in",
+        metadata: expect.objectContaining({
+          actionLabel: "Review RFI",
+          source: "createRFI.preview",
+          eventKey: "rfi-preview-1",
+          prompt: expect.stringContaining(
+            "RFI - Delayed Electrical Rough-in",
+          ),
+        }),
+      }),
+    );
+  });
+
   it("renders change request review prompts with required draft fields", () => {
     expect(
       buildChangeRequestReviewPrompt({
@@ -227,5 +263,15 @@ describe("AI widget notification producer", () => {
         description: null,
       }),
     ).toContain("Project ID: 25125");
+  });
+
+  it("renders RFI review prompts with required draft fields", () => {
+    expect(
+      buildRfiReviewPrompt({
+        projectId: 25125,
+        subject: "RFI - Delayed Electrical Rough-in",
+        question: "Please clarify delayed electrical rough-in.",
+      }),
+    ).toContain("Question: Please clarify delayed electrical rough-in.");
   });
 });

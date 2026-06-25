@@ -20,10 +20,14 @@ jest.mock("@/lib/microsoft-graph/mail", () => ({
 
 jest.mock("@/services/notificationService", () => ({
   notifyChangeRequestReviewNeeded: jest.fn(),
+  notifyRfiReviewNeeded: jest.fn(),
 }));
 
 import { createServiceClient } from "@/lib/supabase/service";
-import { notifyChangeRequestReviewNeeded } from "@/services/notificationService";
+import {
+  notifyChangeRequestReviewNeeded,
+  notifyRfiReviewNeeded,
+} from "@/services/notificationService";
 import { createToolGuardrails } from "../guardrails";
 import {
   buildCommitmentDraftWidget,
@@ -40,11 +44,16 @@ const mockedCreateServiceClient = jest.mocked(createServiceClient);
 const mockedNotifyChangeRequestReviewNeeded = jest.mocked(
   notifyChangeRequestReviewNeeded,
 );
+const mockedNotifyRfiReviewNeeded = jest.mocked(notifyRfiReviewNeeded);
 
 describe("previewCreateRFI", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedNotifyChangeRequestReviewNeeded.mockResolvedValue({
+      created: 1,
+      skipped: 0,
+    });
+    mockedNotifyRfiReviewNeeded.mockResolvedValue({
       created: 1,
       skipped: 0,
     });
@@ -86,6 +95,17 @@ describe("previewCreateRFI", () => {
         },
       },
     });
+    expect(mockedNotifyRfiReviewNeeded).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({
+        projectId: 43,
+        subject: "RFI - Delayed Electrical Rough-in",
+        question: "Please clarify delayed electrical rough-in.",
+        costImpact: "tbd",
+        scheduleImpact: "tbd",
+        eventKey: expect.stringMatching(/^[a-f0-9]{64}$/),
+      }),
+    );
     expect(onTrace).toHaveBeenCalledWith(
       expect.objectContaining({
         tool: "createRFI",
@@ -126,6 +146,7 @@ describe("previewCreateRFI", () => {
       success: false,
       error: "You do not have access to that project.",
     });
+    expect(mockedNotifyRfiReviewNeeded).not.toHaveBeenCalled();
     expect(onTrace).toHaveBeenCalledWith(
       expect.objectContaining({
         tool: "createRFI",

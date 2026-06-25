@@ -39,7 +39,10 @@ import {
   resolveOutlookMailboxUserId,
 } from "@/lib/microsoft-graph/mail";
 import { renderChangeRequestToolDescription } from "@/lib/ai/change-request-field-guide";
-import { notifyChangeRequestReviewNeeded } from "@/services/notificationService";
+import {
+  notifyChangeRequestReviewNeeded,
+  notifyRfiReviewNeeded,
+} from "@/services/notificationService";
 
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -292,6 +295,15 @@ export function buildCommitmentDraftWidget(
   };
 }
 
+function resolvePreviewEventKey(
+  toolName: string,
+  input: Record<string, unknown>,
+): string {
+  return createHash("sha256")
+    .update(`${toolName}:preview:${JSON.stringify(input)}`)
+    .digest("hex");
+}
+
 export async function previewCreateRFI(
   userId: string,
   options: ActionToolsOptions,
@@ -317,22 +329,35 @@ export async function previewCreateRFI(
     return output;
   }
 
+  const fields = {
+    project_id: input.projectId,
+    subject: input.subject,
+    question: input.question,
+    ball_in_court: input.ballInCourt,
+    due_date: input.dueDate,
+    cost_impact: input.costImpact ?? "tbd",
+    schedule_impact: input.scheduleImpact ?? "tbd",
+    status: "open",
+    is_private: false,
+  };
+
+  await notifyRfiReviewNeeded(userId, {
+    projectId: input.projectId,
+    subject: input.subject,
+    question: input.question,
+    ballInCourt: input.ballInCourt,
+    dueDate: input.dueDate,
+    costImpact: input.costImpact ?? "tbd",
+    scheduleImpact: input.scheduleImpact ?? "tbd",
+    eventKey: resolvePreviewEventKey("createRFI", fields),
+  });
+
   const output = {
     action: "preview",
     message: "Here's the RFI I'll create. Reply **confirm** to proceed.",
     preview: {
       table: "rfis",
-      fields: {
-        project_id: input.projectId,
-        subject: input.subject,
-        question: input.question,
-        ball_in_court: input.ballInCourt,
-        due_date: input.dueDate,
-        cost_impact: input.costImpact ?? "tbd",
-        schedule_impact: input.scheduleImpact ?? "tbd",
-        status: "open",
-        is_private: false,
-      },
+      fields,
     },
   };
 
@@ -444,15 +469,6 @@ export function createActionTools(
     delete clone.idempotencyKey;
     return createHash("sha256")
       .update(`${toolName}:${JSON.stringify(clone)}`)
-      .digest("hex");
-  }
-
-  function resolvePreviewEventKey(
-    toolName: string,
-    input: Record<string, unknown>,
-  ): string {
-    return createHash("sha256")
-      .update(`${toolName}:preview:${JSON.stringify(input)}`)
       .digest("hex");
   }
 

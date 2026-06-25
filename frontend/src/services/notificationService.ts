@@ -71,6 +71,16 @@ export type ChangeRequestReviewNeededData = BasePayload & {
   eventKey?: string | null;
 };
 
+export type RfiReviewNeededData = BasePayload & {
+  subject: string;
+  question: string;
+  ballInCourt?: string | null;
+  dueDate?: string | null;
+  costImpact?: string | null;
+  scheduleImpact?: string | null;
+  eventKey?: string | null;
+};
+
 export type NotificationKind =
   | "$criticalIssue"
   | "$deadline"
@@ -166,6 +176,24 @@ export function buildChangeRequestReviewPrompt(
   return lines.join("\n");
 }
 
+export function buildRfiReviewPrompt(data: RfiReviewNeededData): string {
+  const lines = [
+    "Review this RFI draft and help me revise it or confirm it before creating it.",
+    "",
+    `Project ID: ${data.projectId ?? "not selected"}`,
+    `Subject: ${data.subject}`,
+    `Question: ${data.question}`,
+    `Ball in court: ${data.ballInCourt?.trim() || "Not provided"}`,
+    `Due date: ${data.dueDate?.trim() || "Not provided"}`,
+    `Cost impact: ${data.costImpact?.trim() || "tbd"}`,
+    `Schedule impact: ${data.scheduleImpact?.trim() || "tbd"}`,
+    "",
+    "If anything is missing, ask for it. If it is ready, show the preview and wait for my explicit confirmation before creating it.",
+  ];
+
+  return lines.join("\n");
+}
+
 export async function notifyAiWidgetNotification(
   userId: UserTarget,
   data: AiWidgetNotificationData,
@@ -245,6 +273,23 @@ export async function notifyChangeRequestReviewNeeded(
     prompt: buildChangeRequestReviewPrompt(data),
     actionLabel: "Review change request",
     source: "createChangeEvent.preview",
+    eventKey: data.eventKey,
+  });
+}
+
+export async function notifyRfiReviewNeeded(
+  userId: UserTarget,
+  data: RfiReviewNeededData,
+): Promise<{ created: number; skipped: number }> {
+  return notifyAiWidgetNotification(userId, {
+    kind: "rfi_attention",
+    title: "RFI ready for review",
+    body: data.subject,
+    projectId: data.projectId,
+    entityType: "rfis",
+    prompt: buildRfiReviewPrompt(data),
+    actionLabel: "Review RFI",
+    source: "createRFI.preview",
     eventKey: data.eventKey,
   });
 }
