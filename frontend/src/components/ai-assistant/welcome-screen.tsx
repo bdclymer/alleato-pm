@@ -29,7 +29,7 @@ export function WelcomeScreen({
 
   return (
     <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 pb-40 pt-16 sm:px-6">
-      <div className="w-full max-w-xl">
+      <div className="w-full max-w-5xl">
         <div className="space-y-3 text-center">
           {!hideOrb && (
             <div className="orb-intro mx-auto flex h-24 w-24 items-center justify-center">
@@ -57,9 +57,9 @@ export function WelcomeScreen({
                 Teach Alleato
               </Link>
             </div>
-            {children}
           </div>
         )}
+        {children ? <div className="mx-auto max-w-5xl">{children}</div> : null}
       </div>
     </div>
   );

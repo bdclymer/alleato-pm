@@ -144,7 +144,6 @@ import {
   scoreResponseQuality,
   type ResponseQuality as ScoredResponseQuality,
 } from "@/lib/ai/score-response-quality";
-import { ASSISTANT_ACTION_CAPABILITIES } from "@/lib/ai/action-capabilities";
 import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
 import { AiResponseFeedback } from "@/components/ai/AiResponseFeedback";
 import {
@@ -152,6 +151,7 @@ import {
   type MemoryUsage,
 } from "./memory-usage-disclosure";
 import { AssistantSkillTrace, type SkillUsage } from "./skill-usage-disclosure";
+import { AssistantActionCatalog } from "./assistant-action-catalog";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -815,44 +815,6 @@ function AssistantPromptSubmit({
         <ArrowUpIcon className="h-3.5 w-3.5" strokeWidth={2.25} />
       )}
     </PromptInputSubmit>
-  );
-}
-
-function AssistantActionList() {
-  return (
-    <section
-      aria-label="Assistant actions"
-      className="border-y border-border/70 py-5 text-left"
-    >
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <SectionRuleHeading label="Actions wired up" className="mb-0" />
-          <p className="mt-1 text-xs text-muted-foreground">
-            These make changes in Alleato after approval.
-          </p>
-        </div>
-      </div>
-      <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
-        {ASSISTANT_ACTION_CAPABILITIES.map((group) => (
-          <div key={group.title} className="min-w-0">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              {group.title}
-            </div>
-            <ul className="space-y-1.5">
-              {group.actions.map((action) => (
-                <li
-                  key={action}
-                  className="flex min-w-0 items-start gap-2 text-sm text-foreground"
-                >
-                  <CheckIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                  <span className="min-w-0">{action}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -1646,6 +1608,14 @@ export function ChatArea({
     [isStreaming, onInputChange, onWidgetWelcomeDismiss],
   );
 
+  const handleCatalogAction = useCallback(
+    (prompt: string) => {
+      if (isStreaming) return;
+      onInputChange(prompt);
+    },
+    [isStreaming, onInputChange],
+  );
+
   const hasMessages = messages.length > 0;
   const showWelcome = !hasMessages && !isLoadingMessages;
 
@@ -1931,7 +1901,14 @@ export function ChatArea({
                 </InfoAlert>
               ) : null
             }
-          />
+          >
+            {!welcomeHideOrb ? (
+              <AssistantActionCatalog
+                disabled={isStreaming}
+                onSelectPrompt={handleCatalogAction}
+              />
+            ) : null}
+          </WelcomeScreen>
         </div>
       ) : (
         <>
