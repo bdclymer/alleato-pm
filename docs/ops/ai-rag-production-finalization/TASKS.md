@@ -286,8 +286,15 @@ Evidence directory:
   - [source-lifecycle-after-vercel-cron-delete-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-vercel-cron-delete-aai-660.txt)
   - [meetings-after-vercel-cron-delete-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-after-vercel-cron-delete-aai-660.txt)
 
+### 2026-06-25: AAI-662 Chat Architecture Source Of Truth Recovered
+
+- Documented the live AI SDK MCP implementation in the authoritative production architecture document.
+- Updated `npm run rag:verify:chat-architecture` to check that architecture document instead of a missing archived audit doc.
+- Verification now passes with no failures and no warnings.
+- Evidence:
+  - [chat-architecture-after-source-of-truth-aai-662.txt](../evidence/2026-06-25-ai-rag-production-finalization/chat-architecture-after-source-of-truth-aai-662.txt)
+
 ## Remaining Blockers
 
 - Historical Fireflies error backlog remains large and must be drained or classified.
 - Provider JSON-mode fallback/non-JSON extraction noise still occurs during canonical Fireflies processing.
-- Archived audit doc still needs to identify the current live AI SDK MCP implementation.
