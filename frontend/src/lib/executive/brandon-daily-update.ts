@@ -11,6 +11,7 @@ import {
   generateEmbedding,
   getOpenAI,
 } from "@/lib/ai/tools/tool-utils";
+import { withExecutiveDailyBriefObservation } from "@/lib/ai/executive-daily-brief-langfuse";
 import { getExecutiveBriefBullets } from "@/lib/executive/executive-brief-bullets";
 import {
   type FinancialPulseData,
@@ -348,6 +349,12 @@ type RankedHit = {
   date: Date | null;
   similarity: number;
   text: string;
+};
+
+type RawHit = {
+  spec: QuerySpec;
+  sourceGroup: SourceGroup;
+  row: RagRow;
 };
 
 type SynthesizedBriefItem = {
@@ -1947,6 +1954,86 @@ function countBriefItems(
   );
 }
 
+export function executiveBriefSectionCounts(
+  sections: BrandonDailyUpdatePacket["sections"],
+) {
+  return {
+    needsBrandon: sections.needsBrandon.length,
+    waitingOnOthers: sections.waitingOnOthers.length,
+    importantUpdates: sections.importantUpdates.length,
+    total: countBriefItems(sections),
+  };
+}
+
+export function executiveBriefSourceDescriptors(
+  sections: BrandonDailyUpdatePacket["sections"],
+  limit = 20,
+) {
+  return [
+    ...sections.needsBrandon.map((item) => ({
+      section: "needsBrandon" as const,
+      item,
+    })),
+    ...sections.waitingOnOthers.map((item) => ({
+      section: "waitingOnOthers" as const,
+      item,
+    })),
+    ...sections.importantUpdates.map((item) => ({
+      section: "importantUpdates" as const,
+      item,
+    })),
+  ]
+    .slice(0, limit)
+    .map(({ section, item }) => ({
+      section,
+      title: compactText(item.title, 120),
+      project: compactText(item.project, 120),
+      source: item.source,
+      sourceDetail: compactText(item.sourceDetail, 120),
+      sourceId: item.sourceId ?? null,
+      date: item.date,
+      retrieval: item.retrieval ?? null,
+      citationCount: item.citations.length,
+    }));
+}
+
+export function executiveBriefSourceSelectionSummary(
+  sections: BrandonDailyUpdatePacket["sections"],
+  warnings: string[] = [],
+) {
+  return {
+    sectionCounts: executiveBriefSectionCounts(sections),
+    selectedSources: executiveBriefSourceDescriptors(sections),
+    warningCount: warnings.length,
+    warnings: warnings.slice(0, 12),
+  };
+}
+
+function rawHitGroupsSummary(groups: RawHit[][]) {
+  const bySource: Record<string, number> = {};
+  const byQuery: Record<string, number> = {};
+  let totalRows = 0;
+  let maxSimilarity = 0;
+
+  for (const group of groups) {
+    for (const hit of group) {
+      totalRows += 1;
+      bySource[hit.sourceGroup.label] =
+        (bySource[hit.sourceGroup.label] ?? 0) + 1;
+      byQuery[hit.spec.title] = (byQuery[hit.spec.title] ?? 0) + 1;
+      maxSimilarity = Math.max(maxSimilarity, hit.row.similarity ?? 0);
+    }
+  }
+
+  return {
+    totalRows,
+    groupCount: groups.length,
+    bySource,
+    byQuery,
+    maxSimilarity: Number(maxSimilarity.toFixed(3)),
+  };
+}
+
 function limitSectionsForSynthesis(
   sections: BrandonDailyUpdatePacket["sections"],
 ): { sections: BrandonDailyUpdatePacket["sections"]; droppedCount: number } {
@@ -3437,22 +3524,51 @@ export async function generateBrandonDailyUpdate(
   const cutoff = new Date(`${windowStartDateKey}T00:00:00-04:00`);
   const cutoffIso = cutoff.toISOString();
   const [fallbackResult, financialPulseResult, operatingRecordResult] =
-    await Promise.all([
-      loadFallbackMetadata(cutoff),
-      loadFinancialPulse().catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : String(err);
-        return {
-          generatedAt: new Date().toISOString(),
-          totalOutstandingAR: 0,
-          totalOverdueAR: 0,
-          arByProject: [],
-          totalPendingCORevenue: 0,
-          pendingCOsByProject: [],
-          warnings: [`Financial pulse load failed: ${msg}`],
-        } satisfies FinancialPulseData;
-      }),
-      loadOperatingRecordBriefItems(cutoffIso),
-    ]);
+    await withExecutiveDailyBriefObservation(
+      "executive-daily-brief.source-preflight",
+      {
+        type: "retriever",
+        input: { windowDays, windowStartDateKey, cutoffIso, sourceBackedOnly },
+        metadata: { stage: "source_preflight" },
+        output: (result) => {
+          const [fallback, financial, operating] = result as [
+            FallbackMetadataResult,
+            FinancialPulseData,
+            OperatingRecordBriefResult,
+          ];
+          return {
+            fallbackRows: fallback.rows.length,
+            fallbackWarningCount: fallback.warnings.length,
+            financialProjectCount: financial.arByProject.length,
+            financialPendingCOProjectCount:
+              financial.pendingCOsByProject.length,
+            financialWarningCount: financial.warnings.length,
+            operatingItemCount: operating.itemCount,
+            operatingSectionCounts: executiveBriefSectionCounts(
+              operating.sections,
+            ),
+            operatingWarningCount: operating.warnings.length,
+          };
+        },
+      },
+      async () =>
+        Promise.all([
+          loadFallbackMetadata(cutoff),
+          loadFinancialPulse().catch((err: unknown) => {
+            const msg = err instanceof Error ? err.message : String(err);
+            return {
+              generatedAt: new Date().toISOString(),
+              totalOutstandingAR: 0,
+              totalOverdueAR: 0,
+              arByProject: [],
+              totalPendingCORevenue: 0,
+              pendingCOsByProject: [],
+              warnings: [`Financial pulse load failed: ${msg}`],
+            } satisfies FinancialPulseData;
+          }),
+          loadOperatingRecordBriefItems(cutoffIso),
+        ]),
+    );
   const financialPulse: FinancialPulseData = financialPulseResult;
   const useOperatingRecords =
     !sourceBackedOnly && operatingRecordResult.itemCount > 0;
@@ -3494,15 +3610,33 @@ export async function generateBrandonDailyUpdate(
   let embeddingsBySpec: Array<{ spec: QuerySpec; queryEmbedding: string }>;
   if (openai && !useOperatingRecords) {
     try {
-      embeddingsBySpec = await Promise.all(
-        QUERY_SPECS.map(async (spec) => ({
-          spec,
-          queryEmbedding: await withBriefingTimeout(
-            generateEmbedding(openai, spec.query, EMBEDDING.LARGE),
-            EXECUTIVE_BRIEFING_EMBEDDING_TIMEOUT_MS,
-            `Daily Brief embedding query "${spec.title}"`,
+      embeddingsBySpec = await withExecutiveDailyBriefObservation(
+        "executive-daily-brief.embedding-queries",
+        {
+          type: "embedding",
+          input: {
+            queryCount: QUERY_SPECS.length,
+            embeddingModel: EMBEDDING.LARGE,
+            queryTitles: QUERY_SPECS.map((spec) => spec.title),
+          },
+          metadata: { stage: "embedding_queries" },
+          output: (result) => ({
+            embeddingCount: (
+              result as Array<{ spec: QuerySpec; queryEmbedding: string }>
+            ).length,
+          }),
+        },
+        async () =>
+          Promise.all(
+            QUERY_SPECS.map(async (spec) => ({
+              spec,
+              queryEmbedding: await withBriefingTimeout(
+                generateEmbedding(openai, spec.query, EMBEDDING.LARGE),
+                EXECUTIVE_BRIEFING_EMBEDDING_TIMEOUT_MS,
+                `Daily Brief embedding query "${spec.title}"`,
+              ),
+            })),
           ),
-        })),
       );
     } catch (error) {
       preflightWarnings.push(
@@ -3516,31 +3650,54 @@ export async function generateBrandonDailyUpdate(
 
   const chunkSearchWarnings: string[] = [];
   const rawHitGroups = embeddingsBySpec.length
-    ? (
-        await Promise.allSettled(
-          embeddingsBySpec.flatMap(({ spec, queryEmbedding }) =>
-            SOURCE_GROUPS.map(async (sourceGroup) => {
-              const rows = await withBriefingTimeout(
-                runChunkSearch(queryEmbedding, sourceGroup),
-                EXECUTIVE_BRIEFING_RAG_SEARCH_TIMEOUT_MS,
-                `Daily Brief chunk search for ${spec.title} (${sourceGroup.label})`,
-              );
-              return rows.map((row) => ({ spec, sourceGroup, row }));
-            }),
-          ),
-        )
-      ).flatMap((result) => {
-        if (result.status === "fulfilled") {
-          return [result.value];
-        }
-        chunkSearchWarnings.push(
-          `Daily Brief chunk search degraded: ${formatAIProviderFailure(
-            result.reason,
-            "Executive briefing RAG search",
-          )}`,
-        );
-        return [];
-      })
+    ? await withExecutiveDailyBriefObservation(
+        "executive-daily-brief.vector-chunk-search",
+        {
+          type: "retriever",
+          input: {
+            queryCount: embeddingsBySpec.length,
+            sourceGroups: SOURCE_GROUPS.map((group) => ({
+              label: group.label,
+              sourceTypes: group.sourceTypes,
+            })),
+            matchCount: 10,
+            matchThreshold: 0.08,
+            timeoutMs: EXECUTIVE_BRIEFING_RAG_SEARCH_TIMEOUT_MS,
+          },
+          metadata: { stage: "vector_chunk_search" },
+          output: (result) => ({
+            ...rawHitGroupsSummary(result as RawHit[][]),
+            warningCount: chunkSearchWarnings.length,
+            warnings: chunkSearchWarnings.slice(0, 8),
+          }),
+        },
+        async () =>
+          (
+            await Promise.allSettled(
+              embeddingsBySpec.flatMap(({ spec, queryEmbedding }) =>
+                SOURCE_GROUPS.map(async (sourceGroup) => {
+                  const rows = await withBriefingTimeout(
+                    runChunkSearch(queryEmbedding, sourceGroup),
+                    EXECUTIVE_BRIEFING_RAG_SEARCH_TIMEOUT_MS,
+                    `Daily Brief chunk search for ${spec.title} (${sourceGroup.label})`,
+                  );
+                  return rows.map((row) => ({ spec, sourceGroup, row }));
+                }),
+              ),
+            )
+          ).flatMap((result) => {
+            if (result.status === "fulfilled") {
+              return [result.value];
+            }
+            chunkSearchWarnings.push(
+              `Daily Brief chunk search degraded: ${formatAIProviderFailure(
+                result.reason,
+                "Executive briefing RAG search",
+              )}`,
+            );
+            return [];
+          }),
+      )
     : [];
   const rawHits = rawHitGroups.flat();
 
@@ -3549,7 +3706,21 @@ export async function generateBrandonDailyUpdate(
       rawHits.map((hit) => hit.row.document_id).filter(Boolean) as string[],
     ),
   ];
-  const metadata = await loadMetadata(documentIds);
+  const metadata = await withExecutiveDailyBriefObservation(
+    "executive-daily-brief.source-metadata-lookup",
+    {
+      type: "retriever",
+      input: {
+        documentIdCount: documentIds.length,
+        documentIds: documentIds.slice(0, 30),
+      },
+      metadata: { stage: "source_metadata_lookup" },
+      output: (result) => ({
+        metadataRows: (result as Map<string, DocumentMetaRow>).size,
+      }),
+    },
+    async () => loadMetadata(documentIds),
+  );
 
   const rankedHits = rawHits
     .map((hit): RankedHit => {
@@ -3585,18 +3756,62 @@ export async function generateBrandonDailyUpdate(
 
   const dedupedHits = dedupeHits(rankedHits);
 
-  const fallbackItems = fallbackResult.rows
-    .map(makeFallbackItem)
-    .filter((item): item is BrandonBriefItem => item !== null);
-  const seededSections = useOperatingRecords
-    ? operatingRecordResult.sections
-    : mergeSeedItems(
-        assignHitsToSections(dedupedHits, fallbackItems),
-        operatingRecordResult.sections,
-      );
-  const synthesisInput = sourceBackedOnly
-    ? { sections: seededSections, droppedCount: 0 }
-    : limitSectionsForSynthesis(seededSections);
+  const { seededSections, synthesisInput } =
+    await withExecutiveDailyBriefObservation(
+      "executive-daily-brief.source-candidate-selection",
+      {
+        type: "chain",
+        input: {
+          sourceBackedOnly,
+          useOperatingRecords,
+          rawHitCount: rawHits.length,
+          rankedHitCount: rankedHits.length,
+          dedupedHitCount: dedupedHits.length,
+          fallbackRowCount: fallbackResult.rows.length,
+          operatingItemCount: operatingRecordResult.itemCount,
+        },
+        metadata: { stage: "source_candidate_selection" },
+        output: (result) => {
+          const selected = result as {
+            fallbackItems: BrandonBriefItem[];
+            seededSections: BrandonDailyUpdatePacket["sections"];
+            synthesisInput: {
+              sections: BrandonDailyUpdatePacket["sections"];
+              droppedCount: number;
+            };
+          };
+          return {
+            fallbackItemCount: selected.fallbackItems.length,
+            seeded: executiveBriefSourceSelectionSummary(
+              selected.seededSections,
+            ),
+            synthesisInput: executiveBriefSourceSelectionSummary(
+              selected.synthesisInput.sections,
+            ),
+            droppedBeforeSynthesis: selected.synthesisInput.droppedCount,
+          };
+        },
+      },
+      async () => {
+        const items = fallbackResult.rows
+          .map(makeFallbackItem)
+          .filter((item): item is BrandonBriefItem => item !== null);
+        const seeded = useOperatingRecords
+          ? operatingRecordResult.sections
+          : mergeSeedItems(
+              assignHitsToSections(dedupedHits, items),
+              operatingRecordResult.sections,
+            );
+        const limited = sourceBackedOnly
+          ? { sections: seeded, droppedCount: 0 }
+          : limitSectionsForSynthesis(seeded);
+        return {
+          fallbackItems: items,
+          seededSections: seeded,
+          synthesisInput: limited,
+        };
+      },
+    );
   const sectionsForSynthesis = synthesisInput.sections;
   if (synthesisInput.droppedCount > 0) {
     preflightWarnings.push(
@@ -3610,8 +3825,21 @@ export async function generateBrandonDailyUpdate(
   const fullTextEnrichedCount =
     sourceBackedOnly || useOperatingRecords
       ? 0
-      : await enrichSectionsWithFullDocumentText(sectionsForSynthesis).catch(
-          () => 0,
+      : await withExecutiveDailyBriefObservation(
+          "executive-daily-brief.full-text-enrichment",
+          {
+            type: "retriever",
+            input: executiveBriefSourceSelectionSummary(sectionsForSynthesis),
+            metadata: { stage: "full_text_enrichment" },
+            output: (result) => ({
+              enrichedItemCount: result as number,
+              candidateCount: countBriefItems(sectionsForSynthesis),
+            }),
+          },
+          async () =>
+            enrichSectionsWithFullDocumentText(sectionsForSynthesis).catch(
+              () => 0,
+            ),
         );
 
   const synthesizedResult = sourceBackedOnly
@@ -3627,21 +3855,60 @@ export async function generateBrandonDailyUpdate(
       ? await synthesizeSections(sectionsForSynthesis, financialPulse)
       : await synthesizeSections(sectionsForSynthesis, financialPulse);
 
-  const communicationSignalResult =
-    await loadRecentCommunicationSignalItems(cutoffIso);
+  const communicationSignalResult = await withExecutiveDailyBriefObservation(
+    "executive-daily-brief.communication-signals",
+    {
+      type: "retriever",
+      input: {
+        cutoffIso,
+        signalSpecCount: COMMUNICATION_SIGNAL_SPECS.length,
+      },
+      metadata: { stage: "communication_signals" },
+      output: (result) => {
+        const signals = result as RecentCommunicationSignalResult;
+        return executiveBriefSourceSelectionSummary(
+          signals.sections,
+          signals.warnings,
+        );
+      },
+    },
+    async () => loadRecentCommunicationSignalItems(cutoffIso),
+  );
 
   // Build deterministic financial brief items — always included regardless of LLM behavior.
   const financialBriefItems = buildFinancialBriefItems(financialPulse);
 
   // Merge order: financial items first (highest priority), then communication signals, then LLM synthesis.
-  const supportedResult = filterSupportedSections(
-    mergeSeedItems(
-      mergeSeedItems(
-        synthesizedResult.sections,
-        communicationSignalResult.sections,
+  const supportedResult = await withExecutiveDailyBriefObservation(
+    "executive-daily-brief.supported-source-filter",
+    {
+      type: "chain",
+      input: {
+        synthesized: executiveBriefSectionCounts(synthesizedResult.sections),
+        communicationSignals: executiveBriefSectionCounts(
+          communicationSignalResult.sections,
+        ),
+        financial: executiveBriefSectionCounts(financialBriefItems),
+      },
+      metadata: { stage: "supported_source_filter" },
+      output: (result) => {
+        const supported = result as SupportedSectionsResult;
+        return executiveBriefSourceSelectionSummary(
+          supported.sections,
+          supported.warnings,
+        );
+      },
+    },
+    async () =>
+      filterSupportedSections(
+        mergeSeedItems(
+          mergeSeedItems(
+            synthesizedResult.sections,
+            communicationSignalResult.sections,
+          ),
+          financialBriefItems,
+        ),
       ),
-      financialBriefItems,
-    ),
   );
   const enrichedResult = sourceBackedOnly
     ? {
@@ -3681,7 +3948,24 @@ export async function generateBrandonDailyUpdate(
     sanitizeAccountingSections(enforceExecutiveBriefBullets(numberedSections)),
   );
   const operatingBrief = buildExecutiveOperatingBrief(sections);
-  const sourceCoverage = await loadRecentSourceCoverage(cutoffIso);
+  const sourceCoverage = await withExecutiveDailyBriefObservation(
+    "executive-daily-brief.source-coverage",
+    {
+      type: "retriever",
+      input: { cutoffIso, sourceGroups: SOURCE_GROUPS.map((g) => g.label) },
+      metadata: { stage: "source_coverage" },
+      output: (result) => ({
+        sources: (result as BrandonBriefSourceCoverage[]).map((source) => ({
+          label: source.label,
+          count: source.count,
+          latest: source.latest,
+          status: source.status,
+          hasWarning: Boolean(source.warning),
+        })),
+      }),
+    },
+    async () => loadRecentSourceCoverage(cutoffIso),
+  );
   const sourceCoverageWarnings = sourceCoverage
     .map((source) => source.warning)
     .filter((warning): warning is string => Boolean(warning));

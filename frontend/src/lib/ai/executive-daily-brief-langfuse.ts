@@ -31,6 +31,7 @@ type ObservationOptions = {
   type?: ActiveObservationType;
   input?: unknown;
   metadata?: Metadata;
+  output?: (result: unknown) => unknown;
 };
 
 const MAX_PROPAGATED_VALUE_LENGTH = 200;
@@ -198,7 +199,7 @@ export async function withExecutiveDailyBriefObservation<T>(
       try {
         const result = await fn();
         observation.update({
-          output: { ok: true },
+          output: options.output ? options.output(result) : { ok: true },
           metadata,
         });
         return result;

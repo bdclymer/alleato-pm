@@ -3,6 +3,8 @@ import {
   buildExecutiveOperatingBrief,
   type BrandonBriefItem,
   bucketInsightCardBriefSections,
+  executiveBriefSourceDescriptors,
+  executiveBriefSourceSelectionSummary,
   getHitDateAnchor,
   getRecencyAnchor,
   loadLiveBrandonSourceCoverage,
@@ -30,6 +32,96 @@ jest.mock("@/lib/ai/tools/tool-utils", () => ({
   generateEmbedding: jest.fn(),
   getOpenAI: jest.fn(),
 }));
+
+function traceBriefItem(
+  overrides: Partial<BrandonBriefItem> = {},
+): BrandonBriefItem {
+  return {
+    title: "Permit setback decision",
+    summary: "The project needs a permit setback decision.",
+    bullets: ["Duke needs to confirm the setback."],
+    source: "Meeting",
+    sourceDetail: "Owner coordination meeting",
+    sourceId: "source-1",
+    evidence:
+      "Long source evidence that should not be copied into source-selection trace summaries.",
+    date: "2026-06-24",
+    citations: [
+      {
+        source: "Meeting",
+        sourceDetail: "Owner coordination meeting",
+        sourceId: "source-1",
+        evidence:
+          "Long citation evidence that should not be copied into source-selection trace summaries.",
+        date: "2026-06-24",
+      },
+    ],
+    project: "25-126 Vermillion Rise Warehouse",
+    retrieval: "RAG: search_document_chunks(meeting_transcript), sim 0.612",
+    ...overrides,
+  };
+}
+
+describe("executive brief source-selection trace summaries", () => {
+  it("summarizes selected sources without copying source evidence", () => {
+    const summary = executiveBriefSourceSelectionSummary(
+      {
+        needsBrandon: [traceBriefItem()],
+        waitingOnOthers: [],
+        importantUpdates: [
+          traceBriefItem({
+            title: "Pricing quote is waiting on vendor",
+            source: "Email",
+            sourceDetail: "Vendor quote email",
+            sourceId: "source-2",
+            retrieval: "Recent communication signal: pricing_wait",
+          }),
+        ],
+      },
+      ["Suppressed one unsupported item."],
+    );
+
+    expect(summary.sectionCounts).toEqual({
+      needsBrandon: 1,
+      waitingOnOthers: 0,
+      importantUpdates: 1,
+      total: 2,
+    });
+    expect(summary.warningCount).toBe(1);
+    expect(summary.selectedSources).toEqual([
+      expect.objectContaining({
+        section: "needsBrandon",
+        title: "Permit setback decision",
+        source: "Meeting",
+        sourceId: "source-1",
+        citationCount: 1,
+      }),
+      expect.objectContaining({
+        section: "importantUpdates",
+        title: "Pricing quote is waiting on vendor",
+        source: "Email",
+        sourceId: "source-2",
+      }),
+    ]);
+    expect(JSON.stringify(summary)).not.toContain("Long source evidence");
+    expect(JSON.stringify(summary)).not.toContain("Long citation evidence");
+  });
+
+  it("caps selected source descriptors to keep Langfuse payloads readable", () => {
+    const descriptors = executiveBriefSourceDescriptors(
+      {
+        needsBrandon: Array.from({ length: 25 }, (_, index) =>
+          traceBriefItem({ title: `Item ${index}` }),
+        ),
+        waitingOnOthers: [],
+        importantUpdates: [],
+      },
+      3,
+    );
+
+    expect(descriptors).toHaveLength(3);
+  });
+});
 
 describe("teams recency anchoring", () => {
   beforeEach(() => {
@@ -348,7 +440,9 @@ describe("executive operating brief priority lanes", () => {
       "Critical cash approval",
     );
     expect(
-      brief.additionalMaterialItems.scheduleField.map((entry) => entry.item.title),
+      brief.additionalMaterialItems.scheduleField.map(
+        (entry) => entry.item.title,
+      ),
     ).toContain("Customer approval schedule risk");
   });
 
@@ -407,7 +501,8 @@ describe("executive operating brief priority lanes", () => {
       importantUpdates: [],
     });
 
-    const LEAK = /Financial impact|Schedule impact|Customer relationship impact|Brandon uniquely needed|Blocking other people|Material business signal/;
+    const LEAK =
+      /Financial impact|Schedule impact|Customer relationship impact|Brandon uniquely needed|Blocking other people|Material business signal/;
     expect(brief.topExecutiveFocus[0]?.whyItMatters).not.toMatch(LEAK);
     for (const line of brief.startHere) {
       expect(line).not.toMatch(LEAK);
@@ -516,7 +611,9 @@ describe("bucketInsightCardBriefSections (Phase 3 insight-cards source)", () => 
     };
   }
 
-  function makeProject(over: Partial<OwnerBriefingProject>): OwnerBriefingProject {
+  function makeProject(
+    over: Partial<OwnerBriefingProject>,
+  ): OwnerBriefingProject {
     return {
       targetId: "target-1",
       projectId: 42,
@@ -555,7 +652,11 @@ describe("bucketInsightCardBriefSections (Phase 3 insight-cards source)", () => 
     const sections = bucketInsightCardBriefSections([project]);
 
     // Decisions + unowned action go to needsBrandon; owned action waits on others.
-    expect(sections.needsBrandon.map((i) => i.sourceId)).toEqual(["c1", "c2", "c4"]);
+    expect(sections.needsBrandon.map((i) => i.sourceId)).toEqual([
+      "c1",
+      "c2",
+      "c4",
+    ]);
     expect(sections.waitingOnOthers.map((i) => i.sourceId)).toEqual(["c3"]);
     expect(sections.importantUpdates).toHaveLength(0);
 
@@ -570,7 +671,9 @@ describe("bucketInsightCardBriefSections (Phase 3 insight-cards source)", () => 
     expect(risk?.owner).toBeUndefined();
 
     expect(sections.waitingOnOthers[0]?.owner).toBe("Andrew");
-    expect(sections.waitingOnOthers[0]?.recommendedAction).toBe("Send CAD files");
+    expect(sections.waitingOnOthers[0]?.recommendedAction).toBe(
+      "Send CAD files",
+    );
   });
 
   it("returns empty sections when there are no projects", () => {
@@ -583,19 +686,28 @@ describe("bucketInsightCardBriefSections (Phase 3 insight-cards source)", () => 
   it("annotates recurring cards (source_count > 1) with a cross-time recurrence fact", () => {
     const project = makeProject({
       decisionsNeeded: [
-        makeCard("recurring", "schedule_risk", "Hy-Tek submittal still outstanding", {
-          sourceCount: 3,
-          firstSeenAt: "2026-06-02T00:00:00.000Z",
-        }),
+        makeCard(
+          "recurring",
+          "schedule_risk",
+          "Hy-Tek submittal still outstanding",
+          {
+            sourceCount: 3,
+            firstSeenAt: "2026-06-02T00:00:00.000Z",
+          },
+        ),
         makeCard("one-off", "risk", "New scope question", { sourceCount: 1 }),
       ],
     });
 
     const sections = bucketInsightCardBriefSections([project]);
-    const recurring = sections.needsBrandon.find((i) => i.sourceId === "recurring");
+    const recurring = sections.needsBrandon.find(
+      (i) => i.sourceId === "recurring",
+    );
     const oneOff = sections.needsBrandon.find((i) => i.sourceId === "one-off");
 
-    expect(recurring?.evidenceFacts?.[0]).toMatch(/Recurring: surfaced in 3 updates since/);
+    expect(recurring?.evidenceFacts?.[0]).toMatch(
+      /Recurring: surfaced in 3 updates since/,
+    );
     // A single-source card carries no recurrence note.
     expect(oneOff?.evidenceFacts).toBeUndefined();
   });
