@@ -23,6 +23,7 @@ from ..supabase_helpers import (
     update_ingestion_job_state,
 )
 from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
+from ..ops.db_pressure_guard import AppDbProjectionError
 from ..task_assignees import TaskAssigneeResolver
 from .models import DecisionItem, OpportunityItem, RiskItem, StructuredData, TaskItem
 from . import llm
@@ -693,7 +694,7 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
     # compiler uses. Replaces the deprecated no-op _upsert_insight writer so
     # full-transcript meeting intelligence becomes durable, deduped cards.
     signal_result = (
-        _promote_meeting_signals(client, metadata_id, doc_project_id, started_at, structured)
+        _safe_promote_meeting_signals(client, metadata_id, doc_project_id, started_at, structured)
         if is_meeting
         else {"signals_written": 0, "signals_promoted": 0}
     )
@@ -721,6 +722,8 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         "tasksSkipped": max(len(tasks_to_persist) - persisted_task_count, 0),
         "signalsWritten": signal_result.get("signals_written", 0),
         "signalsPromoted": signal_result.get("signals_promoted", 0),
+        "signalProjectionStatus": signal_result.get("projection_status"),
+        "signalProjectionError": signal_result.get("projection_error"),
     }
 
 
@@ -986,6 +989,39 @@ def _promote_meeting_signals(
         metadata_id,
     )
     return result
+
+
+def _safe_promote_meeting_signals(
+    client,
+    metadata_id: str,
+    project_id: int | None,
+    source_occurred_at: str | None,
+    structured: "StructuredData",
+) -> Dict[str, Any]:
+    """Keep extraction terminal when only final PM projection is disabled."""
+    try:
+        return _promote_meeting_signals(
+            client,
+            metadata_id,
+            project_id,
+            source_occurred_at,
+            structured,
+        )
+    except AppDbProjectionError as exc:
+        logger.warning(
+            "[Extractor] Meeting signal projection blocked after extraction; "
+            "continuing vectorization metadata_id=%s project_id=%s: %s",
+            metadata_id,
+            project_id,
+            exc,
+        )
+        return {
+            "signals_written": 0,
+            "signals_promoted": 0,
+            "target_id": None,
+            "projection_status": "blocked",
+            "projection_error": str(exc),
+        }
 
 
 _TITLE_CLAUSE_RE = re.compile(
