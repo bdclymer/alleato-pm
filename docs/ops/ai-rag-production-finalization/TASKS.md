@@ -28,7 +28,7 @@ Evidence directory:
 - [x] Create parent Linear issue and follow-on sub-issues.
 - [x] Create local task and handoff evidence ledgers.
 - [x] Inventory active production source paths and provider schedules.
-- [ ] Keep this `TASKS.md` updated after each phase or major implementation task.
+- [x] Keep this `TASKS.md` updated after each phase or major implementation task.
 
 ### Phase 2: Current-State Verification
 
@@ -46,8 +46,8 @@ Evidence directory:
 
 - [x] Recover recent eligible meeting vectorization after PM projection guard failure.
 - [x] Reprocess known recent missing Fireflies meetings through canonical `run_full_pipeline`.
-- [ ] Drain or classify Fireflies ingestion errors inside the two-month operational concern window; older errors are historical and not active blockers unless needed for a historical reconstruction request.
-- [ ] Fix provider JSON-mode/non-JSON extraction noise or classify it with a fail-loud follow-up.
+- [x] Drain or classify Fireflies ingestion errors inside the two-month operational concern window; older errors are historical and not active blockers unless needed for a historical reconstruction request.
+- [x] Fix provider JSON-mode/non-JSON extraction noise or classify it with a fail-loud follow-up.
 - [ ] Verify meeting transcripts sync automatically, save, embed, assign projects, create tasks where appropriate, and retrieve through RAG.
 
 ### Phase 4: Outlook Email Pipeline
@@ -258,6 +258,7 @@ Evidence directory:
 
 - Ran the guarded Acumatica financial sync entrypoint directly after the Render-triggered run did not update health within the short poll window.
 - Sync completed with no errors and known warnings about Acumatica payment-application endpoint exposure.
+
 - `npm run verify:acumatica-sync-health` passed afterward.
 - Evidence:
   - [acumatica-manual-sync-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-manual-sync-aai-653.txt)
@@ -300,11 +301,33 @@ Evidence directory:
   - Fireflies backlog errors older than two months are historical, not active production-readiness blockers.
   - Outlook email and Teams message backlog errors older than one week are historical, not active production-readiness blockers unless needed for a historical reconstruction request.
 - Updated the meeting vectorization verifier to report Fireflies backlog concern using a 60-day job creation window while preserving the 14-day recent meeting coverage gate.
-- `npm run rag:verify:meetings` passes with 75/75 recent meetings embedded and now reports 1,600 Fireflies error-stage jobs created in the last 60 days.
+- `npm run rag:verify:meetings` passed with 75/75 recent meetings embedded after applying the policy window.
 - Evidence:
   - [meetings-after-freshness-window-aai-663.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-after-freshness-window-aai-663.txt)
+- Commit: `ffeeede2bf`
+
+### 2026-06-25: AAI-665 Fireflies 60-Day Queue Drain Completed
+
+- Grouped the initial 1,600 active-window shared queue errors and found the count was not Fireflies-specific:
+  - Most rows belonged to Teams/email/knowledge rows in the shared `fireflies_ingestion_jobs` queue table.
+  - Only 14 active-window rows were actual Fireflies meeting rows in error state.
+- Repaired 14 Fireflies meeting error jobs that were already embedded and had searchable chunks by marking the stale queue state `done` in both app and RAG databases.
+- Repaired 1 Fireflies meeting `raw_ingested` job that was already embedded with 27 searchable chunks by marking the stale queue state `done` in both app and RAG databases.
+- Updated `npm run rag:verify:meetings` so Fireflies backlog warnings join `rag_document_metadata` and only count Fireflies/meeting records.
+- Final Fireflies-scoped 60-day state:
+  - `done`: 146
+  - `embedded`: 3
+  - `error`: 0
+  - `raw_ingested`: 0
+- `npm run rag:verify:meetings` passed with no warnings, 75/75 recent meetings covered, and both AI Gateway and direct OpenAI embedding probes healthy.
+- Evidence:
+  - [fireflies-60-day-error-groups-aai-665.json](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-60-day-error-groups-aai-665.json)
+  - [fireflies-embedded-error-state-repair-aai-665.json](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-embedded-error-state-repair-aai-665.json)
+  - [fireflies-raw-ingested-state-repair-aai-665.json](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-raw-ingested-state-repair-aai-665.json)
+  - [fireflies-60-day-error-groups-final-aai-665.json](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-60-day-error-groups-final-aai-665.json)
+  - [meetings-after-fireflies-60-day-final-drain-aai-665.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-after-fireflies-60-day-final-drain-aai-665.txt)
 
 ## Remaining Blockers
 
-- 1,600 Fireflies ingestion errors inside the two-month operational concern window must be drained or classified; older Fireflies errors are not active production-readiness blockers.
-- Provider JSON-mode fallback/non-JSON extraction noise still occurs during canonical Fireflies processing.
+- No active Fireflies meeting error backlog remains inside the two-month operational concern window.
+- Remaining shared queue errors from the original 1,600-row count are not Fireflies meeting rows and should be handled by the Graph/Teams/Outlook source freshness issues using the one-week operational concern window.

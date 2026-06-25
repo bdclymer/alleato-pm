@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-06-25T21:54:59.207Z",
+  "policy": {
+    "firefliesBacklogConcernWindowDays": 60,
+    "scope": "Fireflies/meeting rows only"
+  },
+  "candidate_count": 1,
+  "rag_updated_count": 1,
+  "app_updated_count": 1,
+  "candidates": [
+    {
+      "id": "a1575876-9670-4f3b-9f2b-03b679dd2383",
+      "metadata_id": "01KQYS0S95N8FJQQD1C00V1F4M",
+      "stage": "raw_ingested",
+      "created_at": "2026-05-13T22:01:01.491Z",
+      "updated_at": "2026-05-13T22:01:01.491Z",
+      "title": "Uniqlo+Alleato Group",
+      "source": "fireflies",
+      "type": "meeting",
+      "category": null,
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 27
+    }
+  ],
+  "rag_updated": [
+    {
+      "id": "a1575876-9670-4f3b-9f2b-03b679dd2383",
+      "metadata_id": "01KQYS0S95N8FJQQD1C00V1F4M",
+      "stage": "done",
+      "updated_at": "2026-06-25T21:54:58.909Z"
+    }
+  ],
+  "app_updated": [
+    {
+      "id": "a1575876-9670-4f3b-9f2b-03b679dd2383",
+      "metadata_id": "01KQYS0S95N8FJQQD1C00V1F4M",
+      "stage": "done",
+      "updated_at": "2026-06-25T21:54:59.009Z"
+    }
+  ]
+}

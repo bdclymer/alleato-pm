@@ -1,0 +1,665 @@
+{
+  "checked_at": "2026-06-25T21:49:19.019Z",
+  "policy": {
+    "source": "fireflies_ingestion_jobs",
+    "active_window_days": 60,
+    "older_than_window": "historical_not_active_blocker"
+  },
+  "total_active_errors": 1600,
+  "retryable_candidate_count": 110,
+  "deterministic_non_actionable_candidate_count": 34,
+  "groups": [
+    {
+      "category": "historical_manual_pause",
+      "count": 1095,
+      "oldest_created_at": "2026-04-30T13:22:14.257Z",
+      "newest_created_at": "2026-04-30T14:38:29.225Z",
+      "newest_updated_at": "2026-05-13T11:54:49.351Z",
+      "sample_messages": [
+        "manually paused to stop DB overload 2026-05-13 — reset to raw_ingested to resume"
+      ],
+      "sample_jobs": [
+        {
+          "id": "a4b9ad67-8162-4d41-a2a4-94dba0815fdb",
+          "fireflies_id": "teamsdm_84fef93c54c5f4cc_2025-10-20",
+          "metadata_id": "teamsdm_84fef93c54c5f4cc_2025-10-20",
+          "created_at": "2026-04-30T14:38:29.225Z",
+          "updated_at": "2026-05-13T11:54:49.351Z",
+          "attempt_count": 0,
+          "error_message": "manually paused to stop DB overload 2026-05-13 — reset to raw_ingested to resume"
+        },
+        {
+          "id": "7f7a1e5a-6fdd-4583-8e96-241a911611d6",
+          "fireflies_id": "teamsdm_84fef93c54c5f4cc_2025-10-21",
+          "metadata_id": "teamsdm_84fef93c54c5f4cc_2025-10-21",
+          "created_at": "2026-04-30T14:38:25.040Z",
+          "updated_at": "2026-05-13T11:54:49.351Z",
+          "attempt_count": 0,
+          "error_message": "manually paused to stop DB overload 2026-05-13 — reset to raw_ingested to resume"
+        },
+        {
+          "id": "f8776946-7173-4354-b7ff-b5a4dbddeb2b",
+          "fireflies_id": "teamsdm_84fef93c54c5f4cc_2025-10-27",
+          "metadata_id": "teamsdm_84fef93c54c5f4cc_2025-10-27",
+          "created_at": "2026-04-30T14:38:21.970Z",
+          "updated_at": "2026-05-13T11:54:49.351Z",
+          "attempt_count": 0,
+          "error_message": "manually paused to stop DB overload 2026-05-13 — reset to raw_ingested to resume"
+        },
+        {
+          "id": "fbd9ed0d-2849-4f20-b7af-d79e2ed45daf",
+          "fireflies_id": "teamsdm_84fef93c54c5f4cc_2025-10-28",
+          "metadata_id": "teamsdm_84fef93c54c5f4cc_2025-10-28",
+          "created_at": "2026-04-30T14:38:18.078Z",
+          "updated_at": "2026-05-13T11:54:49.351Z",
+          "attempt_count": 0,
+          "error_message": "manually paused to stop DB overload 2026-05-13 — reset to raw_ingested to resume"
+        },
+        {
+          "id": "1418f2b3-c003-4b2c-bec3-73a943a35a92",
+          "fireflies_id": "teamsdm_84fef93c54c5f4cc_2025-10-30",
+          "metadata_id": "teamsdm_84fef93c54c5f4cc_2025-10-30",
+          "created_at": "2026-04-30T14:38:16.634Z",
+          "updated_at": "2026-05-13T11:54:49.351Z",
+          "attempt_count": 0,
+          "error_message": "manually paused to stop DB overload 2026-05-13 — reset to raw_ingested to resume"
+        },
+        {
+          "id": "c22b987e-a34c-43ae-9e27-7cb2812a25b1",
+          "fireflies_id": "teamsdm_84fef93c54c5f4cc_2025-10-31",
+          "metadata_id": "teamsdm_84fef93c54c5f4cc_2025-10-31",
+          "created_at": "2026-04-30T14:38:15.653Z",
+          "updated_at": "2026-05-13T11:54:49.351Z",
+          "attempt_count": 0,
+          "error_message": "manually paused to stop DB overload 2026-05-13 — reset to raw_ingested to resume"
+        },
+        {
+          "id": "8f1be523-3dbc-4db3-9c67-3404f3e27efe",
+          "fireflies_id": "teamsdm_84fef93c54c5f4cc_2025-11-03",
+          "metadata_id": "teamsdm_84fef93c54c5f4cc_2025-11-03",
+          "created_at": "2026-04-30T14:38:13.955Z",
+          "updated_at": "2026-05-13T11:54:49.351Z",
+          "attempt_count": 0,
+          "error_message": "manually paused to stop DB overload 2026-05-13 — reset to raw_ingested to resume"
+        },
+        {
+          "id": "c043b413-bcf9-48e1-9e68-3f28bff140d5",
+          "fireflies_id": "teamsdm_84fef93c54c5f4cc_2025-11-04",
+          "metadata_id": "teamsdm_84fef93c54c5f4cc_2025-11-04",
+          "created_at": "2026-04-30T14:38:06.290Z",
+          "updated_at": "2026-05-13T11:54:49.351Z",
+          "attempt_count": 0,
+          "error_message": "manually paused to stop DB overload 2026-05-13 — reset to raw_ingested to resume"
+        },
+        {
+          "id": "ec9d992c-39af-4fac-8afd-3a47a8300c67",
+          "fireflies_id": "teamsdm_84fef93c54c5f4cc_2025-11-06",
+          "metadata_id": "teamsdm_84fef93c54c5f4cc_2025-11-06",
+          "created_at": "2026-04-30T14:38:05.884Z",
+          "updated_at": "2026-05-13T11:54:49.351Z",
+          "attempt_count": 0,
+          "error_message": "manually paused to stop DB overload 2026-05-13 — reset to raw_ingested to resume"
+        },
+        {
+          "id": "5e924129-f678-49e6-96d9-622755d79cd6",
+          "fireflies_id": "teamsdm_84fef93c54c5f4cc_2025-11-10",
+          "metadata_id": "teamsdm_84fef93c54c5f4cc_2025-11-10",
+          "created_at": "2026-04-30T14:38:02.724Z",
+          "updated_at": "2026-05-13T11:54:49.351Z",
+          "attempt_count": 0,
+          "error_message": "manually paused to stop DB overload 2026-05-13 — reset to raw_ingested to resume"
+        }
+      ]
+    },
+    {
+      "category": "non_json_provider_response",
+      "count": 340,
+      "oldest_created_at": "2026-04-27T13:56:13.181Z",
+      "newest_created_at": "2026-04-29T09:32:13.426Z",
+      "newest_updated_at": "2026-05-03T19:51:39.814Z",
+      "sample_messages": [
+        "Expecting value: line 1 column 1 (char 0)"
+      ],
+      "sample_jobs": [
+        {
+          "id": "162bbe83-fc17-4ffe-8d0e-cc50305403b4",
+          "fireflies_id": "2c771b27-b62f-4ec8-8df9-3df31e37d0ef",
+          "metadata_id": null,
+          "created_at": "2026-04-29T09:32:13.426Z",
+          "updated_at": "2026-04-29T09:33:11.653Z",
+          "attempt_count": 0,
+          "error_message": "Expecting value: line 1 column 1 (char 0)"
+        },
+        {
+          "id": "2dda0031-0c79-479f-a396-539c6c7bc42c",
+          "fireflies_id": "teamsdm_7f3a5302296abb94_2025-05-09",
+          "metadata_id": "teamsdm_7f3a5302296abb94_2025-05-09",
+          "created_at": "2026-04-29T04:37:05.116Z",
+          "updated_at": "2026-04-29T04:47:25.876Z",
+          "attempt_count": 0,
+          "error_message": "Expecting value: line 1 column 1 (char 0)"
+        },
+        {
+          "id": "e460143a-75b4-4db1-b607-a3ccbafd7754",
+          "fireflies_id": "teamsdm_7f3a5302296abb94_2025-05-12",
+          "metadata_id": "teamsdm_7f3a5302296abb94_2025-05-12",
+          "created_at": "2026-04-29T04:37:04.708Z",
+          "updated_at": "2026-04-29T04:47:24.527Z",
+          "attempt_count": 0,
+          "error_message": "Expecting value: line 1 column 1 (char 0)"
+        },
+        {
+          "id": "61048383-4512-4791-981e-c025071242e4",
+          "fireflies_id": "teamsdm_7f3a5302296abb94_2025-05-14",
+          "metadata_id": "teamsdm_7f3a5302296abb94_2025-05-14",
+          "created_at": "2026-04-29T04:37:02.328Z",
+          "updated_at": "2026-04-29T04:47:09.585Z",
+          "attempt_count": 0,
+          "error_message": "Expecting value: line 1 column 1 (char 0)"
+        },
+        {
+          "id": "6d5068bf-c327-4502-b6f4-75655fd68c78",
+          "fireflies_id": "teamsdm_7f3a5302296abb94_2025-05-16",
+          "metadata_id": "teamsdm_7f3a5302296abb94_2025-05-16",
+          "created_at": "2026-04-29T04:37:00.463Z",
+          "updated_at": "2026-04-29T04:47:03.082Z",
+          "attempt_count": 0,
+          "error_message": "Expecting value: line 1 column 1 (char 0)"
+        },
+        {
+          "id": "a7f9915d-9d55-4f5e-bfbc-388acd1aa934",
+          "fireflies_id": "teamsdm_7f3a5302296abb94_2025-05-20",
+          "metadata_id": "teamsdm_7f3a5302296abb94_2025-05-20",
+          "created_at": "2026-04-29T04:36:59.614Z",
+          "updated_at": "2026-04-29T04:46:45.432Z",
+          "attempt_count": 0,
+          "error_message": "Expecting value: line 1 column 1 (char 0)"
+        },
+        {
+          "id": "1497cae9-f9af-468a-a1ac-4530cf72f66b",
+          "fireflies_id": "teamsdm_7f3a5302296abb94_2025-05-23",
+          "metadata_id": "teamsdm_7f3a5302296abb94_2025-05-23",
+          "created_at": "2026-04-29T04:36:59.214Z",
+          "updated_at": "2026-04-29T04:46:47.553Z",
+          "attempt_count": 0,
+          "error_message": "Expecting value: line 1 column 1 (char 0)"
+        },
+        {
+          "id": "b9fa074e-d15e-4955-8938-946223c19403",
+          "fireflies_id": "teamsdm_7f3a5302296abb94_2025-06-17",
+          "metadata_id": "teamsdm_7f3a5302296abb94_2025-06-17",
+          "created_at": "2026-04-29T04:36:58.822Z",
+          "updated_at": "2026-04-29T04:46:26.003Z",
+          "attempt_count": 0,
+          "error_message": "Expecting value: line 1 column 1 (char 0)"
+        },
+        {
+          "id": "354200bd-16db-4b14-ac1c-4d2894d583d3",
+          "fireflies_id": "teamsdm_7f3a5302296abb94_2025-07-18",
+          "metadata_id": "teamsdm_7f3a5302296abb94_2025-07-18",
+          "created_at": "2026-04-29T04:36:57.202Z",
+          "updated_at": "2026-04-29T04:46:49.357Z",
+          "attempt_count": 0,
+          "error_message": "Expecting value: line 1 column 1 (char 0)"
+        },
+        {
+          "id": "46b086f2-984f-4e4a-8e64-c3d381a9cd06",
+          "fireflies_id": "teamsdm_7f3a5302296abb94_2025-10-01",
+          "metadata_id": "teamsdm_7f3a5302296abb94_2025-10-01",
+          "created_at": "2026-04-29T04:36:54.791Z",
+          "updated_at": "2026-04-29T04:46:26.941Z",
+          "attempt_count": 0,
+          "error_message": "Expecting value: line 1 column 1 (char 0)"
+        }
+      ]
+    },
+    {
+      "category": "transient_network_or_db",
+      "count": 110,
+      "oldest_created_at": "2026-04-29T04:32:29.247Z",
+      "newest_created_at": "2026-06-24T20:26:23.284Z",
+      "newest_updated_at": "2026-06-24T20:26:23.284Z",
+      "sample_messages": [
+        "connection to server at \"db.fqcvmfqldlewvbsuxdvz.supabase.co\" (2600:1f18:16e0:2805:d014:c9ce:573a:11a4), port 5432 failed: Network is unreachable\n\tIs the server running on that host and accepting TCP/IP connections?\n",
+        "Server disconnected",
+        "<ConnectionTerminated error_code:1, last_stream_id:571, additional_data:None>",
+        "<ConnectionTerminated error_code:1, last_stream_id:1509, additional_data:None>",
+        "<ConnectionTerminated error_code:1, last_stream_id:715, additional_data:None>"
+      ],
+      "sample_jobs": [
+        {
+          "id": "65fd13d1-dd7f-4ad2-b8b2-414dbafb8ec6",
+          "fireflies_id": "9bce4ae4-c0e3-4763-a72d-561c06a4aabc",
+          "metadata_id": "9bce4ae4-c0e3-4763-a72d-561c06a4aabc",
+          "created_at": "2026-06-24T20:26:23.284Z",
+          "updated_at": "2026-06-24T20:26:23.284Z",
+          "attempt_count": 0,
+          "error_message": "connection to server at \"db.fqcvmfqldlewvbsuxdvz.supabase.co\" (2600:1f18:16e0:2805:d014:c9ce:573a:11a4), port 5432 failed: Network is unreachable\n\tIs the server running on that host and accepting TCP/IP connections?\n"
+        },
+        {
+          "id": "7fe73d80-4c3a-429b-8353-279b48c595f4",
+          "fireflies_id": "9cbc34c0-e4d9-4672-820d-e7a2028a9894",
+          "metadata_id": "9cbc34c0-e4d9-4672-820d-e7a2028a9894",
+          "created_at": "2026-06-24T20:26:23.280Z",
+          "updated_at": "2026-06-24T20:26:23.280Z",
+          "attempt_count": 0,
+          "error_message": "connection to server at \"db.fqcvmfqldlewvbsuxdvz.supabase.co\" (2600:1f18:16e0:2805:d014:c9ce:573a:11a4), port 5432 failed: Network is unreachable\n\tIs the server running on that host and accepting TCP/IP connections?\n"
+        },
+        {
+          "id": "4c5bb135-fa39-4a00-8574-34c7136c2640",
+          "fireflies_id": "6a9ea3c2-bd06-4812-9ead-77d7a3163fe8",
+          "metadata_id": "6a9ea3c2-bd06-4812-9ead-77d7a3163fe8",
+          "created_at": "2026-06-24T04:46:43.123Z",
+          "updated_at": "2026-06-24T04:46:43.123Z",
+          "attempt_count": 0,
+          "error_message": "connection to server at \"db.fqcvmfqldlewvbsuxdvz.supabase.co\" (2600:1f18:16e0:2805:d014:c9ce:573a:11a4), port 5432 failed: Network is unreachable\n\tIs the server running on that host and accepting TCP/IP connections?\n"
+        },
+        {
+          "id": "af524810-dbdb-4711-8020-761548575b0a",
+          "fireflies_id": "623ce74a-e1e6-4240-8f5e-4df25f7571a8",
+          "metadata_id": "623ce74a-e1e6-4240-8f5e-4df25f7571a8",
+          "created_at": "2026-06-24T04:46:42.409Z",
+          "updated_at": "2026-06-24T04:46:42.409Z",
+          "attempt_count": 0,
+          "error_message": "connection to server at \"db.fqcvmfqldlewvbsuxdvz.supabase.co\" (2600:1f18:16e0:2805:d014:c9ce:573a:11a4), port 5432 failed: Network is unreachable\n\tIs the server running on that host and accepting TCP/IP connections?\n"
+        },
+        {
+          "id": "c2be5a8e-e737-4643-8976-43b314f5e122",
+          "fireflies_id": "55abad56-4c24-408e-8fce-b4f1aef63fd1",
+          "metadata_id": "55abad56-4c24-408e-8fce-b4f1aef63fd1",
+          "created_at": "2026-06-24T04:46:41.242Z",
+          "updated_at": "2026-06-24T04:46:41.242Z",
+          "attempt_count": 0,
+          "error_message": "connection to server at \"db.fqcvmfqldlewvbsuxdvz.supabase.co\" (2600:1f18:16e0:2805:d014:c9ce:573a:11a4), port 5432 failed: Network is unreachable\n\tIs the server running on that host and accepting TCP/IP connections?\n"
+        },
+        {
+          "id": "4f0b4c45-55a8-4fae-adfd-5096989732f1",
+          "fireflies_id": "52ed86c2-13da-4e39-af89-5f425f1e2ae5",
+          "metadata_id": "52ed86c2-13da-4e39-af89-5f425f1e2ae5",
+          "created_at": "2026-06-24T04:46:40.460Z",
+          "updated_at": "2026-06-24T04:46:40.460Z",
+          "attempt_count": 0,
+          "error_message": "connection to server at \"db.fqcvmfqldlewvbsuxdvz.supabase.co\" (2600:1f18:16e0:2805:d014:c9ce:573a:11a4), port 5432 failed: Network is unreachable\n\tIs the server running on that host and accepting TCP/IP connections?\n"
+        },
+        {
+          "id": "1e933305-a877-4e19-94cc-8cc23ef240fc",
+          "fireflies_id": "4f1d136d-c016-42f6-a7e1-2a889a61285f",
+          "metadata_id": "4f1d136d-c016-42f6-a7e1-2a889a61285f",
+          "created_at": "2026-06-24T04:46:40.397Z",
+          "updated_at": "2026-06-24T04:46:40.397Z",
+          "attempt_count": 0,
+          "error_message": "connection to server at \"db.fqcvmfqldlewvbsuxdvz.supabase.co\" (2600:1f18:16e0:2805:d014:c9ce:573a:11a4), port 5432 failed: Network is unreachable\n\tIs the server running on that host and accepting TCP/IP connections?\n"
+        },
+        {
+          "id": "665a7a84-e748-4f25-959e-3afc7183a1b2",
+          "fireflies_id": "44968194-e480-46db-a0dc-63df99633c4a",
+          "metadata_id": "44968194-e480-46db-a0dc-63df99633c4a",
+          "created_at": "2026-06-24T04:46:39.758Z",
+          "updated_at": "2026-06-24T04:46:39.758Z",
+          "attempt_count": 0,
+          "error_message": "connection to server at \"db.fqcvmfqldlewvbsuxdvz.supabase.co\" (2600:1f18:16e0:2805:d014:c9ce:573a:11a4), port 5432 failed: Network is unreachable\n\tIs the server running on that host and accepting TCP/IP connections?\n"
+        },
+        {
+          "id": "8ff08a5b-fd0b-4671-9373-522159bc25d1",
+          "fireflies_id": "429e9eaf-7235-4f0a-ac72-50cde1ef5739",
+          "metadata_id": "429e9eaf-7235-4f0a-ac72-50cde1ef5739",
+          "created_at": "2026-06-24T04:46:39.259Z",
+          "updated_at": "2026-06-24T04:46:39.259Z",
+          "attempt_count": 0,
+          "error_message": "connection to server at \"db.fqcvmfqldlewvbsuxdvz.supabase.co\" (2600:1f18:16e0:2805:d014:c9ce:573a:11a4), port 5432 failed: Network is unreachable\n\tIs the server running on that host and accepting TCP/IP connections?\n"
+        },
+        {
+          "id": "08a6cb87-f3c0-45ed-9959-db138e30a78a",
+          "fireflies_id": "3a7cfa94-846d-459d-8fad-ae22c07c4fd4",
+          "metadata_id": "3a7cfa94-846d-459d-8fad-ae22c07c4fd4",
+          "created_at": "2026-06-24T04:46:38.750Z",
+          "updated_at": "2026-06-24T04:46:38.750Z",
+          "attempt_count": 0,
+          "error_message": "connection to server at \"db.fqcvmfqldlewvbsuxdvz.supabase.co\" (2600:1f18:16e0:2805:d014:c9ce:573a:11a4), port 5432 failed: Network is unreachable\n\tIs the server running on that host and accepting TCP/IP connections?\n"
+        }
+      ]
+    },
+    {
+      "category": "missing_storage_object",
+      "count": 31,
+      "oldest_created_at": "2026-05-05T18:21:03.054Z",
+      "newest_created_at": "2026-05-05T18:21:15.295Z",
+      "newest_updated_at": "2026-05-05T18:21:21.107Z",
+      "sample_messages": [
+        "{'statusCode': 404, 'error': not_found, 'message': Object not found}"
+      ],
+      "sample_jobs": [
+        {
+          "id": "dcf57d8b-c8ae-4acc-b124-a51a7214afdd",
+          "fireflies_id": "8f00f666-72c9-5268-98c7-168b308d3a80",
+          "metadata_id": "8f00f666-72c9-5268-98c7-168b308d3a80",
+          "created_at": "2026-05-05T18:21:15.295Z",
+          "updated_at": "2026-05-05T18:21:21.101Z",
+          "attempt_count": 0,
+          "error_message": "{'statusCode': 404, 'error': not_found, 'message': Object not found}"
+        },
+        {
+          "id": "d489d300-8d34-4dfd-97e9-d2c5150fe105",
+          "fireflies_id": "3a4de825-102b-5ad5-b8e6-9895137440d8",
+          "metadata_id": "3a4de825-102b-5ad5-b8e6-9895137440d8",
+          "created_at": "2026-05-05T18:21:14.950Z",
+          "updated_at": "2026-05-05T18:21:21.107Z",
+          "attempt_count": 0,
+          "error_message": "{'statusCode': 404, 'error': not_found, 'message': Object not found}"
+        },
+        {
+          "id": "da217745-322b-4f79-a21d-88c3bbf2f2a5",
+          "fireflies_id": "c4f9d5c5-1b41-5afd-b6d2-23d1cc55a511",
+          "metadata_id": "c4f9d5c5-1b41-5afd-b6d2-23d1cc55a511",
+          "created_at": "2026-05-05T18:21:14.748Z",
+          "updated_at": "2026-05-05T18:21:20.135Z",
+          "attempt_count": 0,
+          "error_message": "{'statusCode': 404, 'error': not_found, 'message': Object not found}"
+        },
+        {
+          "id": "0e6cc06f-455e-4d57-9174-8b257cb09cdb",
+          "fireflies_id": "34772ea7-a51d-5774-abd2-f1783385bcf9",
+          "metadata_id": "34772ea7-a51d-5774-abd2-f1783385bcf9",
+          "created_at": "2026-05-05T18:21:14.551Z",
+          "updated_at": "2026-05-05T18:21:21.101Z",
+          "attempt_count": 0,
+          "error_message": "{'statusCode': 404, 'error': not_found, 'message': Object not found}"
+        },
+        {
+          "id": "2c747af7-f15e-431c-b13f-8414e603e7f4",
+          "fireflies_id": "6c385cbe-6e4a-5b31-9259-f012a9f012f6",
+          "metadata_id": "6c385cbe-6e4a-5b31-9259-f012a9f012f6",
+          "created_at": "2026-05-05T18:21:13.093Z",
+          "updated_at": "2026-05-05T18:21:19.199Z",
+          "attempt_count": 0,
+          "error_message": "{'statusCode': 404, 'error': not_found, 'message': Object not found}"
+        },
+        {
+          "id": "904caf43-5c16-4e91-8fb1-2bdb311e38dd",
+          "fireflies_id": "f548acb2-4ff9-5b95-bfa8-ae1a525cff09",
+          "metadata_id": "f548acb2-4ff9-5b95-bfa8-ae1a525cff09",
+          "created_at": "2026-05-05T18:21:12.893Z",
+          "updated_at": "2026-05-05T18:21:17.877Z",
+          "attempt_count": 0,
+          "error_message": "{'statusCode': 404, 'error': not_found, 'message': Object not found}"
+        },
+        {
+          "id": "9d1776b7-a2c9-42bb-89ae-c92089e500ff",
+          "fireflies_id": "24db3368-db3e-5f84-bcb3-01fe350550e1",
+          "metadata_id": "24db3368-db3e-5f84-bcb3-01fe350550e1",
+          "created_at": "2026-05-05T18:21:12.694Z",
+          "updated_at": "2026-05-05T18:21:17.884Z",
+          "attempt_count": 0,
+          "error_message": "{'statusCode': 404, 'error': not_found, 'message': Object not found}"
+        },
+        {
+          "id": "88d6170f-2c43-41a8-bae2-057aaa012915",
+          "fireflies_id": "426dbde9-1255-5f0b-86e8-32cbd2881a1a",
+          "metadata_id": "426dbde9-1255-5f0b-86e8-32cbd2881a1a",
+          "created_at": "2026-05-05T18:21:12.477Z",
+          "updated_at": "2026-05-05T18:21:17.877Z",
+          "attempt_count": 0,
+          "error_message": "{'statusCode': 404, 'error': not_found, 'message': Object not found}"
+        },
+        {
+          "id": "08a7f054-d23c-41d8-a153-e9ea56f542f9",
+          "fireflies_id": "6fc22a51-3a5f-5130-97f5-54b85d48007f",
+          "metadata_id": "6fc22a51-3a5f-5130-97f5-54b85d48007f",
+          "created_at": "2026-05-05T18:21:11.523Z",
+          "updated_at": "2026-05-05T18:21:16.028Z",
+          "attempt_count": 0,
+          "error_message": "{'statusCode': 404, 'error': not_found, 'message': Object not found}"
+        },
+        {
+          "id": "dcc8fe78-ed67-49a1-8d33-1a97564ad98d",
+          "fireflies_id": "6de9ae3a-a64e-5ee4-bdf3-8823a3e549d7",
+          "metadata_id": "6de9ae3a-a64e-5ee4-bdf3-8823a3e549d7",
+          "created_at": "2026-05-05T18:21:11.316Z",
+          "updated_at": "2026-05-05T18:21:16.032Z",
+          "attempt_count": 0,
+          "error_message": "{'statusCode': 404, 'error': not_found, 'message': Object not found}"
+        }
+      ]
+    },
+    {
+      "category": "provider_auth_or_quota",
+      "count": 13,
+      "oldest_created_at": "2026-06-22T19:00:44.888Z",
+      "newest_created_at": "2026-06-23T18:59:14.509Z",
+      "newest_updated_at": "2026-06-23T18:59:14.509Z",
+      "sample_messages": [
+        "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+      ],
+      "sample_jobs": [
+        {
+          "id": "99d94b6d-b24e-47d2-8f4d-aa225e6eaab6",
+          "fireflies_id": "01KVTVW5CFFVVH4B3H6RKAN0JC",
+          "metadata_id": "01KVTVW5CFFVVH4B3H6RKAN0JC",
+          "created_at": "2026-06-23T18:59:14.509Z",
+          "updated_at": "2026-06-23T18:59:14.509Z",
+          "attempt_count": 0,
+          "error_message": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+        },
+        {
+          "id": "a290f6c4-a29c-4f74-8e9a-5627a0b3cec8",
+          "fireflies_id": "01KVNFA50Y9PY4SK48WVYSZG29",
+          "metadata_id": "01KVNFA50Y9PY4SK48WVYSZG29",
+          "created_at": "2026-06-23T17:44:27.045Z",
+          "updated_at": "2026-06-23T17:44:27.045Z",
+          "attempt_count": 0,
+          "error_message": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+        },
+        {
+          "id": "411802e2-3579-40ce-81e3-d5cc6e8fd49a",
+          "fireflies_id": "01KVNXSD8TKFYNAR0SZ60NMJGS",
+          "metadata_id": "01KVNXSD8TKFYNAR0SZ60NMJGS",
+          "created_at": "2026-06-23T17:44:21.997Z",
+          "updated_at": "2026-06-23T17:44:21.997Z",
+          "attempt_count": 0,
+          "error_message": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+        },
+        {
+          "id": "d36434c0-fac2-4c7c-a1ae-36d02124d14b",
+          "fireflies_id": "01KV757XCNQN0TK8MWR90XAN4F",
+          "metadata_id": "01KV757XCNQN0TK8MWR90XAN4F",
+          "created_at": "2026-06-23T14:07:07.318Z",
+          "updated_at": "2026-06-23T14:07:07.318Z",
+          "attempt_count": 0,
+          "error_message": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+        },
+        {
+          "id": "12590996-a9c2-4623-93ce-322ac28b7886",
+          "fireflies_id": "01KVT7AZHZJS7HJFRFQ1T5QA83",
+          "metadata_id": "01KVT7AZHZJS7HJFRFQ1T5QA83",
+          "created_at": "2026-06-23T14:07:07.072Z",
+          "updated_at": "2026-06-23T14:07:07.072Z",
+          "attempt_count": 0,
+          "error_message": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+        },
+        {
+          "id": "0cb34f26-1f08-48c5-8646-111a1531505b",
+          "fireflies_id": "01KV757XCHKF1TFGGEGAM33CK1",
+          "metadata_id": "01KV757XCHKF1TFGGEGAM33CK1",
+          "created_at": "2026-06-23T14:07:06.797Z",
+          "updated_at": "2026-06-23T14:07:06.797Z",
+          "attempt_count": 0,
+          "error_message": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+        },
+        {
+          "id": "6688d106-fabb-4fc4-941f-4b256cf42856",
+          "fireflies_id": "01KV8BCC0BP38QYC3A69TXJKF3",
+          "metadata_id": "01KV8BCC0BP38QYC3A69TXJKF3",
+          "created_at": "2026-06-23T14:07:06.406Z",
+          "updated_at": "2026-06-23T14:07:06.406Z",
+          "attempt_count": 0,
+          "error_message": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+        },
+        {
+          "id": "499f02e0-b393-4943-a4fc-47b1fb0f2215",
+          "fireflies_id": "01KV8CKZZZE682V1PHGV8E93QA",
+          "metadata_id": "01KV8CKZZZE682V1PHGV8E93QA",
+          "created_at": "2026-06-22T22:16:26.029Z",
+          "updated_at": "2026-06-22T22:16:26.029Z",
+          "attempt_count": 0,
+          "error_message": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+        },
+        {
+          "id": "85c578f6-fdc5-477b-a97f-eb7e8e1868e9",
+          "fireflies_id": "01KVQP3E6AGV75ZHETYPY56DZT",
+          "metadata_id": "01KVQP3E6AGV75ZHETYPY56DZT",
+          "created_at": "2026-06-22T20:57:23.962Z",
+          "updated_at": "2026-06-22T20:57:23.962Z",
+          "attempt_count": 0,
+          "error_message": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+        },
+        {
+          "id": "71147f82-90f4-4613-8f35-549866bb7d3f",
+          "fireflies_id": "01KV8VH4Z228ZBQ7RA2WJA80PZ",
+          "metadata_id": "01KV8VH4Z228ZBQ7RA2WJA80PZ",
+          "created_at": "2026-06-22T19:42:44.916Z",
+          "updated_at": "2026-06-22T19:42:44.916Z",
+          "attempt_count": 0,
+          "error_message": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+        }
+      ]
+    },
+    {
+      "category": "other",
+      "count": 7,
+      "oldest_created_at": "2026-05-11T17:53:30.833Z",
+      "newest_created_at": "2026-06-25T19:52:32.383Z",
+      "newest_updated_at": "2026-06-25T19:52:32.383Z",
+      "sample_messages": [
+        "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+        "Blocked intelligence_promote_signal_candidate: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: insight_card_evidence=1, insight_card_targets=1, insight_cards=1.",
+        "Invalid input ConnectionInputs.RECV_DATA in state ConnectionState.CLOSED",
+        "303"
+      ],
+      "sample_jobs": [
+        {
+          "id": "1369d2da-f102-4b9a-8c48-c50b1329365b",
+          "fireflies_id": "sa-f104a74a-857e-4f5d-99d8-5f0adb254746",
+          "metadata_id": "sa-f104a74a-857e-4f5d-99d8-5f0adb254746",
+          "created_at": "2026-06-25T19:52:32.383Z",
+          "updated_at": "2026-06-25T19:52:32.383Z",
+          "attempt_count": 0,
+          "error_message": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1."
+        },
+        {
+          "id": "8eed0751-49b1-4490-bdef-029aadabb00a",
+          "fireflies_id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+          "metadata_id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+          "created_at": "2026-06-25T19:32:22.640Z",
+          "updated_at": "2026-06-25T19:32:22.640Z",
+          "attempt_count": 0,
+          "error_message": "Blocked intelligence_promote_signal_candidate: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: insight_card_evidence=1, insight_card_targets=1, insight_cards=1."
+        },
+        {
+          "id": "6f4081d4-d9cc-46e8-92e1-170cb2b8b74f",
+          "fireflies_id": "f05c3845-f291-464b-a471-da050ad2b15f",
+          "metadata_id": "f05c3845-f291-464b-a471-da050ad2b15f",
+          "created_at": "2026-06-24T11:30:31.240Z",
+          "updated_at": "2026-06-24T11:30:31.240Z",
+          "attempt_count": 0,
+          "error_message": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1."
+        },
+        {
+          "id": "54cc773c-e08f-4273-a65a-d385833be348",
+          "fireflies_id": "2b2761d6-dd8e-4393-b4b7-2f6fbb15c63e",
+          "metadata_id": "2b2761d6-dd8e-4393-b4b7-2f6fbb15c63e",
+          "created_at": "2026-06-23T17:53:45.546Z",
+          "updated_at": "2026-06-23T17:53:45.546Z",
+          "attempt_count": 0,
+          "error_message": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1."
+        },
+        {
+          "id": "81f50d98-7ed0-4782-9ba3-73eb4a412fa9",
+          "fireflies_id": "de9dff2d-22a0-45ca-ba12-1cd8c6ca2409",
+          "metadata_id": "de9dff2d-22a0-45ca-ba12-1cd8c6ca2409",
+          "created_at": "2026-06-23T17:52:20.466Z",
+          "updated_at": "2026-06-23T17:52:20.466Z",
+          "attempt_count": 0,
+          "error_message": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1."
+        },
+        {
+          "id": "4aca7c7f-1699-4ce8-ae8e-2cb5c86302cf",
+          "fireflies_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQk4X_zAAA=",
+          "metadata_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQk4X_zAAA=",
+          "created_at": "2026-05-11T17:53:35.999Z",
+          "updated_at": "2026-05-11T17:55:09.496Z",
+          "attempt_count": 0,
+          "error_message": "Invalid input ConnectionInputs.RECV_DATA in state ConnectionState.CLOSED"
+        },
+        {
+          "id": "07759181-3fac-46e1-8157-5a1507d4688d",
+          "fireflies_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQk4X_0AAA=",
+          "metadata_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQk4X_0AAA=",
+          "created_at": "2026-05-11T17:53:30.833Z",
+          "updated_at": "2026-05-11T17:55:10.543Z",
+          "attempt_count": 0,
+          "error_message": "303"
+        }
+      ]
+    },
+    {
+      "category": "non_vectorizable_or_empty_content",
+      "count": 3,
+      "oldest_created_at": "2026-06-24T04:46:34.468Z",
+      "newest_created_at": "2026-06-24T04:46:42.396Z",
+      "newest_updated_at": "2026-06-24T04:46:42.396Z",
+      "sample_messages": [
+        "No file bytes or content provided"
+      ],
+      "sample_jobs": [
+        {
+          "id": "32aabd56-d746-4ff2-b1d2-fa71e09fff0b",
+          "fireflies_id": "6869ca41-4323-4ad7-8610-3cc45861a252",
+          "metadata_id": "6869ca41-4323-4ad7-8610-3cc45861a252",
+          "created_at": "2026-06-24T04:46:42.396Z",
+          "updated_at": "2026-06-24T04:46:42.396Z",
+          "attempt_count": 0,
+          "error_message": "No file bytes or content provided"
+        },
+        {
+          "id": "71cacbf2-577d-4cf3-9a81-6d66fe712137",
+          "fireflies_id": "5d57c258-7de6-44ec-a85e-30969ffd3f46",
+          "metadata_id": "5d57c258-7de6-44ec-a85e-30969ffd3f46",
+          "created_at": "2026-06-24T04:46:41.261Z",
+          "updated_at": "2026-06-24T04:46:41.261Z",
+          "attempt_count": 0,
+          "error_message": "No file bytes or content provided"
+        },
+        {
+          "id": "4468cad5-e2ef-44c9-9180-b2a90b8be3c0",
+          "fireflies_id": "26397e0b-ce80-4442-8fe2-8e89176c3446",
+          "metadata_id": "26397e0b-ce80-4442-8fe2-8e89176c3446",
+          "created_at": "2026-06-24T04:46:34.468Z",
+          "updated_at": "2026-06-24T04:46:34.468Z",
+          "attempt_count": 0,
+          "error_message": "No file bytes or content provided"
+        }
+      ]
+    },
+    {
+      "category": "wrong_parser_or_file_metadata",
+      "count": 1,
+      "oldest_created_at": "2026-04-27T18:46:00.542Z",
+      "newest_created_at": "2026-04-27T18:46:00.542Z",
+      "newest_updated_at": "2026-04-27T18:46:05.180Z",
+      "sample_messages": [
+        "Financial parser requires document_metadata.file_path"
+      ],
+      "sample_jobs": [
+        {
+          "id": "827d515b-0f26-4e76-a93f-747bb0bb3ee0",
+          "fireflies_id": "9ede22a2-4a3e-477a-a50a-5b5cc411d8ea",
+          "metadata_id": null,
+          "created_at": "2026-04-27T18:46:00.542Z",
+          "updated_at": "2026-04-27T18:46:05.180Z",
+          "attempt_count": 0,
+          "error_message": "Financial parser requires document_metadata.file_path"
+        }
+      ]
+    }
+  ]
+}
