@@ -232,9 +232,9 @@ describe("navigation config", () => {
     }
   });
 
-  it("keeps assignment and Teams inbox surfaces out of company navigation", () => {
+  it("keeps removed company-wide surfaces out of company navigation", () => {
     const removedToolNames = ["Assignment Inbox", "Teams Conversations", "Teams Messages"];
-    const removedPaths = ["assignment-inbox", "teams-conversations"];
+    const removedPaths = ["assignment-inbox", "teams-conversations", "files"];
     const visibleCompanyToolNames = companyWideHeaderTools.map((tool) => tool.name);
     const visibleCompanyToolPaths = companyWideHeaderTools.map((tool) => tool.path);
     const groupedCompanyToolNames = companyWideToolSections.flatMap(
@@ -249,5 +249,14 @@ describe("navigation config", () => {
     for (const removedPath of removedPaths) {
       expect(visibleCompanyToolPaths).not.toContain(removedPath);
     }
+
+    expect(groupedCompanyToolNames).not.toContain("Documents");
+    expect(coreTools).toContainEqual(
+      expect.objectContaining({
+        name: "Documents",
+        path: "documents",
+        requiresProject: true,
+      }),
+    );
   });
 });

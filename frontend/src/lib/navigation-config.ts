@@ -157,13 +157,6 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     description: "Alleato OS documentation site",
   },
   {
-    name: "Documents",
-    path: "files",
-    requiresProject: false,
-    icon: FolderOpen,
-    description: "Company files and documents",
-  },
-  {
     name: "Estimates",
     path: "estimates",
     requiresProject: false,
@@ -424,7 +417,6 @@ export const companyWideToolSections: CompanyWideToolSection[] = [
       "Manpower",
       "Knowledge Base",
       "Documentation",
-      "Documents",
     ],
   },
   {
