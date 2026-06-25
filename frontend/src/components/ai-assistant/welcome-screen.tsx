@@ -49,7 +49,13 @@ export function WelcomeScreen({
             {error && <div className="mb-2">{error}</div>}
             {beforeComposer}
             {composer}
-            <div className="mt-3 text-center">
+            <div className="mt-3 flex items-center justify-center gap-4 text-center">
+              <Link
+                href="/ai/profile"
+                className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                AI Profile
+              </Link>
               <Link
                 href="/ai/teach"
                 className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
