@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ds";
 import { cn } from "@/lib/utils";
+import type { AiWidgetNotificationDraft } from "@/lib/collaboration/ai-widget-notifications";
 import { ChatArea } from "./chat-area";
 import { ChatWithSession } from "./rag-chat-page";
 
@@ -36,6 +37,7 @@ export function WidgetAiChat({
   onAssistantActivity,
   showWelcomePrompt = false,
   onWelcomePromptDismiss,
+  notificationDraft,
 }: {
   /** Reserved for parity with the launcher; focus is handled by GlobalAiWidget. */
   autoFocusComposer?: boolean;
@@ -44,6 +46,7 @@ export function WidgetAiChat({
   onAssistantActivity?: () => void;
   showWelcomePrompt?: boolean;
   onWelcomePromptDismiss?: () => void;
+  notificationDraft?: AiWidgetNotificationDraft | null;
 }) {
   const queryClient = useQueryClient();
   const { data: conversations = [], isLoading: isLoadingConvos } =
@@ -85,8 +88,24 @@ export function WidgetAiChat({
     DEFAULT_AI_ASSISTANT_MODEL,
   );
   const [councilMode, setCouncilMode] = useState(false);
+  const consumedNotificationDraftIdRef = useRef<string | null>(null);
 
   const effectiveSessionId = activeSessionId ?? pendingSessionId;
+
+  useEffect(() => {
+    if (!notificationDraft?.prompt) return;
+    if (consumedNotificationDraftIdRef.current === notificationDraft.id) return;
+
+    consumedNotificationDraftIdRef.current = notificationDraft.id;
+    setPendingSessionId(null);
+    setPendingFirstMessage(null);
+    setPendingFirstFiles(undefined);
+    setOptimisticUserMessage(null);
+    resetSessionMessages();
+    setActiveSessionId(null);
+    setNoSessionInput(notificationDraft.prompt);
+    onViewChange?.("chat");
+  }, [notificationDraft, onViewChange, resetSessionMessages]);
 
   // Load history when an existing conversation is opened. Skip a session we just
   // created and haven't sent to yet — fetching would return [] and wipe the live

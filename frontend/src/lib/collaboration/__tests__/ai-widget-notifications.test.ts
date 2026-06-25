@@ -1,0 +1,125 @@
+import {
+  getFirstUnreadAiWidgetNotificationDraft,
+  getAiWidgetNotificationMetadata,
+  getUnreadAiWidgetNotifications,
+  isAiWidgetNotificationKind,
+} from "../ai-widget-notifications";
+
+describe("ai widget collaboration notifications", () => {
+  it("accepts only durable AI widget notification kinds", () => {
+    expect(isAiWidgetNotificationKind("ai_assistant_welcome")).toBe(true);
+    expect(isAiWidgetNotificationKind("ai_action_ready")).toBe(true);
+    expect(isAiWidgetNotificationKind("rfi_attention")).toBe(true);
+    expect(isAiWidgetNotificationKind("change_request_review_needed")).toBe(
+      true,
+    );
+
+    expect(isAiWidgetNotificationKind("comment")).toBe(false);
+    expect(isAiWidgetNotificationKind("ai_assistant")).toBe(false);
+    expect(isAiWidgetNotificationKind("")).toBe(false);
+  });
+
+  it("filters unread AI widget notifications without matching read or unrelated rows", () => {
+    const notifications = [
+      { id: "1", kind: "comment", readAt: null },
+      { id: "2", kind: "ai_action_ready", readAt: "2026-06-25T00:00:00Z" },
+      { id: "3", kind: "ai_action_ready", readAt: null },
+      { id: "4", kind: "rfi_attention", readAt: null },
+    ];
+
+    expect(getUnreadAiWidgetNotifications(notifications)).toEqual([
+      notifications[2],
+      notifications[3],
+    ]);
+  });
+
+  it("normalizes optional metadata and drops invalid values", () => {
+    expect(
+      getAiWidgetNotificationMetadata({
+        prompt: "  Draft a change event. ",
+        actionLabel: " Open assistant ",
+        source: " collaboration_notifications ",
+        ignored: "value",
+      }),
+    ).toEqual({
+      prompt: "Draft a change event.",
+      actionLabel: "Open assistant",
+      source: "collaboration_notifications",
+    });
+
+    expect(
+      getAiWidgetNotificationMetadata({
+        prompt: " ",
+        actionLabel: 42,
+        source: null,
+      }),
+    ).toEqual({});
+    expect(getAiWidgetNotificationMetadata(null)).toEqual({});
+    expect(getAiWidgetNotificationMetadata(["not", "object"])).toEqual({});
+  });
+
+  it("selects the first unread AI widget draft with a valid prompt", () => {
+    const notifications = [
+      {
+        id: "1",
+        kind: "ai_action_ready",
+        readAt: null,
+        metadata: { prompt: " " },
+      },
+      {
+        id: "2",
+        kind: "comment",
+        readAt: null,
+        metadata: { prompt: "Ignore unrelated notifications." },
+      },
+      {
+        id: "3",
+        kind: "change_request_review_needed",
+        readAt: null,
+        metadata: {
+          prompt: " Review this change request draft. ",
+          actionLabel: " Review draft ",
+          source: " collaboration_notifications ",
+        },
+      },
+      {
+        id: "4",
+        kind: "ai_action_ready",
+        readAt: null,
+        metadata: { prompt: "Second valid prompt." },
+      },
+    ];
+
+    expect(getFirstUnreadAiWidgetNotificationDraft(notifications)).toEqual({
+      id: "3",
+      prompt: "Review this change request draft.",
+      actionLabel: "Review draft",
+      source: "collaboration_notifications",
+    });
+  });
+
+  it("does not create a draft from read, unrelated, or malformed notifications", () => {
+    expect(
+      getFirstUnreadAiWidgetNotificationDraft([
+        {
+          id: "1",
+          kind: "ai_action_ready",
+          readAt: "2026-06-25T00:00:00Z",
+          metadata: { prompt: "Already read." },
+        },
+        {
+          id: "2",
+          kind: "comment",
+          readAt: null,
+          metadata: { prompt: "Wrong channel." },
+        },
+        {
+          id: "3",
+          kind: "ai_action_ready",
+          readAt: null,
+          metadata: { prompt: 42 },
+        },
+      ]),
+    ).toBeNull();
+  });
+});

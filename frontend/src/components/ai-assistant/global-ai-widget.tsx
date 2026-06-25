@@ -4,6 +4,13 @@ import * as React from "react";
 import { usePathname } from "next/navigation";
 import { ChevronDown, ChevronLeft, Ellipsis, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCollaborationNotifications } from "@/hooks/use-collaboration-notifications";
+import {
+  getFirstUnreadAiWidgetNotificationDraft,
+  getUnreadAiWidgetNotifications,
+  isAiWidgetNotificationKind,
+  type AiWidgetNotificationDraft,
+} from "@/lib/collaboration/ai-widget-notifications";
 import { cn } from "@/lib/utils";
 import { WidgetAiChat, type WidgetAiChatView } from "./widget-ai-chat";
 
@@ -38,23 +45,54 @@ function reportWelcomeStorageError(error: unknown) {
   console.error("[ai-widget] Welcome notification storage failed", error);
 }
 
+function reportNotificationError(error: unknown) {
+  console.error("[ai-widget] Collaboration notification sync failed", error);
+}
+
 export function GlobalAiWidget() {
   const [open, setOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [view, setView] = React.useState<WidgetAiChatView>("chat");
   const [expanded, setExpanded] = React.useState(false);
-  const [hasUnread, setHasUnread] = React.useState(false);
+  const [hasAssistantActivityUnread, setHasAssistantActivityUnread] =
+    React.useState(false);
   const [showWelcomePrompt, setShowWelcomePrompt] = React.useState(false);
+  const [notificationDraft, setNotificationDraft] =
+    React.useState<AiWidgetNotificationDraft | null>(null);
   const launcherRef = React.useRef<HTMLButtonElement>(null);
   const panelRef = React.useRef<HTMLDivElement>(null);
   const openRef = React.useRef(open);
   const pathname = usePathname() ?? "/";
   const hidden = shouldHideForRoute(pathname);
+  const {
+    notifications,
+    error: notificationError,
+    markAsRead,
+  } = useCollaborationNotifications({ enabled: !hidden });
+  const unreadAiNotifications = React.useMemo(
+    () => getUnreadAiWidgetNotifications(notifications),
+    [notifications],
+  );
+  const hasUnreadAiWelcomeNotification = unreadAiNotifications.some(
+    (notification) => notification.kind === "ai_assistant_welcome",
+  );
+  const unreadNotificationDraft = React.useMemo(
+    () => getFirstUnreadAiWidgetNotificationDraft(notifications),
+    [notifications],
+  );
+  const hasUnread =
+    hasAssistantActivityUnread ||
+    showWelcomePrompt ||
+    unreadAiNotifications.length > 0;
 
   React.useEffect(() => {
     openRef.current = open;
-    if (open) setHasUnread(false);
+    if (open) setHasAssistantActivityUnread(false);
   }, [open]);
+
+  React.useEffect(() => {
+    if (notificationError) reportNotificationError(notificationError);
+  }, [notificationError]);
 
   // Collapse the panel when navigating to a route the widget hides on.
   React.useEffect(() => {
@@ -70,13 +108,14 @@ export function GlobalAiWidget() {
     try {
       const hasSeenWelcome =
         window.localStorage.getItem(AI_WIDGET_WELCOME_STORAGE_KEY) === "seen";
-      setShowWelcomePrompt(!hasSeenWelcome);
-      if (!hasSeenWelcome && !openRef.current) setHasUnread(true);
+      const shouldShowWelcome =
+        !hasSeenWelcome || hasUnreadAiWelcomeNotification;
+      setShowWelcomePrompt(shouldShowWelcome);
     } catch (error) {
       reportWelcomeStorageError(error);
       setShowWelcomePrompt(false);
     }
-  }, [hidden]);
+  }, [hasUnreadAiWelcomeNotification, hidden]);
 
   const markWelcomeSeen = React.useCallback(() => {
     try {
@@ -88,7 +127,6 @@ export function GlobalAiWidget() {
 
   const dismissWelcomePrompt = React.useCallback(() => {
     markWelcomeSeen();
-    setHasUnread(false);
     setShowWelcomePrompt(false);
   }, [markWelcomeSeen]);
 
@@ -112,12 +150,30 @@ export function GlobalAiWidget() {
 
   const openPanel = React.useCallback(() => {
     setOpen(true);
-    setHasUnread(false);
+    setHasAssistantActivityUnread(false);
     if (showWelcomePrompt) markWelcomeSeen();
-  }, [markWelcomeSeen, showWelcomePrompt]);
+    setNotificationDraft(unreadNotificationDraft);
+
+    const markableNotifications = unreadAiNotifications.filter(
+      (notification) => isAiWidgetNotificationKind(notification.kind),
+    );
+    if (markableNotifications.length > 0) {
+      void Promise.all(
+        markableNotifications.map((notification) =>
+          markAsRead(notification.id),
+        ),
+      ).catch(reportNotificationError);
+    }
+  }, [
+    markAsRead,
+    markWelcomeSeen,
+    showWelcomePrompt,
+    unreadAiNotifications,
+    unreadNotificationDraft,
+  ]);
 
   const handleAssistantActivity = React.useCallback(() => {
-    if (!openRef.current) setHasUnread(true);
+    if (!openRef.current) setHasAssistantActivityUnread(true);
   }, []);
 
   React.useEffect(() => {
@@ -263,6 +319,7 @@ export function GlobalAiWidget() {
               onAssistantActivity={handleAssistantActivity}
               showWelcomePrompt={showWelcomePrompt}
               onWelcomePromptDismiss={dismissWelcomePrompt}
+              notificationDraft={notificationDraft}
             />
           </div>
         </div>

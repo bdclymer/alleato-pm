@@ -47,7 +47,7 @@ export const GET = withApiGuardrails(
     let query = supabase
       .from("collaboration_notifications")
       .select(
-        "id, kind, title, body, created_at, read_at, entity_type, entity_id, project_id",
+        "id, kind, title, body, metadata, created_at, read_at, entity_type, entity_id, project_id",
       )
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
@@ -92,6 +92,7 @@ export const GET = withApiGuardrails(
         kind: row.kind,
         title: row.title,
         body: row.body,
+        metadata: row.metadata,
         createdAt: row.created_at,
         readAt: row.read_at,
         entityType: row.entity_type,
