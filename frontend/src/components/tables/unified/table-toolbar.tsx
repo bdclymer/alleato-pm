@@ -1798,7 +1798,7 @@ export function TableToolbar({
   }
 
   return (
-    <div className={cn("py-2", className)}>
+    <div className={cn("py-0", className)}>
       <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {leftContent ? (
           <div className="shrink-0 pr-2">{leftContent}</div>
@@ -1924,9 +1924,7 @@ export function TableToolbar({
         </div>
 
         <span className="ml-auto shrink-0 pl-3 text-xs tabular-nums text-muted-foreground">
-          {filteredItems === totalItems
-            ? `${totalItems} ${totalItems === 1 ? "row" : "rows"}`
-            : `${filteredItems} of ${totalItems} rows`}
+          {totalItems} {totalItems === 1 ? "row" : "rows"}
         </span>
       </div>
     </div>
