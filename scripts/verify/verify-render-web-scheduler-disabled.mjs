@@ -49,7 +49,7 @@ const SAFE_RESTART_CRON_SCHEDULES = new Map([
 
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-executive-daily-brief-evening", "30 22,23 * * 1-5");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-executive-daily-brief-morning", "0 11,12 * * 1-5");
-SAFE_RESTART_CRON_SCHEDULES.set("alleato-acumatica-financial-sync", "0 */2 * * *");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-acumatica-financial-sync", "0 0,12 * * *");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-outlook-attachment-promotion", "*/30 * * * *");
 
 const SAFE_RESTART_REQUIRED_ENV = new Map([

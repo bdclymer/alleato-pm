@@ -7,7 +7,7 @@ import pg from "pg";
 const RENDER_SERVICES_URL = "https://api.render.com/v1/services?limit=100";
 const RENDER_SERVICE_URL = "https://api.render.com/v1/services";
 const SERVICE_NAME = "alleato-acumatica-financial-sync";
-const EXPECTED_SCHEDULE = process.env.ACUMATICA_SYNC_EXPECTED_SCHEDULE || "0 */2 * * *";
+const EXPECTED_SCHEDULE = process.env.ACUMATICA_SYNC_EXPECTED_SCHEDULE || "0 0,12 * * *";
 const MAX_STALE_MINUTES = Number(process.env.ACUMATICA_SYNC_MAX_STALE_MINUTES || "180");
 const REQUIRED_SUCCESS_ENTITIES = [
   "projects",
