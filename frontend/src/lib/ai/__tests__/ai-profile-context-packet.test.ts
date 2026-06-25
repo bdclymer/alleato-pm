@@ -1,5 +1,6 @@
 import {
   buildAiProfileContextPacket,
+  renderAiProfileContextPacketBlock,
   type AiProfileContextUser,
 } from "@/lib/ai/ai-profile-context-packet";
 import type { AiProfileMemory } from "@/lib/ai/ai-profile-summary";
@@ -129,6 +130,27 @@ describe("ai profile context packet", () => {
     });
     expect(packet.warnings).toContain(
       "Leadership coaching context has no durable source or visibility policy yet.",
+    );
+  });
+
+  it("renders a compact prompt block without implying hidden leadership context", () => {
+    const packet = buildAiProfileContextPacket({
+      user,
+      memories: [memory({ id: "mem_prompt" })],
+      maxMemories: 1,
+    });
+
+    const block = renderAiProfileContextPacketBlock(packet);
+
+    expect(block).toContain("## AI Profile Context");
+    expect(block).toContain("User: Test User <test@example.com>");
+    expect(block).toContain("Default write mode: preview_only");
+    expect(block).toContain("Selected memories:");
+    expect(block).toContain(
+      "Leadership context: not_configured (Leadership coaching context has no durable source or visibility policy yet.)",
+    );
+    expect(block).toContain(
+      "Do not imply unavailable leadership context was used.",
     );
   });
 });

@@ -228,3 +228,70 @@ export function buildAiProfileContextPacket({
     warnings,
   };
 }
+
+export function renderAiProfileContextPacketBlock(
+  packet: AiProfileContextPacket,
+): string {
+  const lines = [
+    "## AI Profile Context",
+    `Status: ${packet.status}`,
+    `User: ${packet.identity.displayName}${
+      packet.identity.email ? ` <${packet.identity.email}>` : ""
+    }`,
+    `Role: ${packet.identity.role ?? "unknown"}`,
+    `Title: ${packet.identity.title ?? "unknown"}`,
+    `Approval authority: ${packet.approvalPolicy.authority}`,
+    `Default write mode: ${packet.approvalPolicy.defaultWriteMode}`,
+    `Approval rule: ${packet.approvalPolicy.reason}`,
+    `Notification routing: ${packet.notificationPreferences.defaultRouting} (${packet.notificationPreferences.reason})`,
+  ];
+
+  if (packet.blockedCapabilities.length > 0) {
+    lines.push(
+      `Blocked capabilities: ${packet.blockedCapabilities.join(", ")}`,
+    );
+  }
+
+  if (packet.memoryContext.included.length > 0) {
+    lines.push(
+      `Memory selection: ${packet.memoryContext.selectionReason} Omitted ${packet.memoryContext.omittedCount}.`,
+      "Selected memories:",
+      ...packet.memoryContext.included.map(
+        (memory) =>
+          `- ${memory.type} (${memory.visibility ?? "private"}, source: ${
+            memory.source
+          }, confidence: ${Math.round(memory.confidence * 100)}%): ${
+            memory.content
+          }`,
+      ),
+    );
+  } else {
+    lines.push("Selected memories: none");
+  }
+
+  if (packet.leadershipContext.state === "available") {
+    lines.push(
+      `Leadership context: available from ${packet.leadershipContext.source}`,
+      ...packet.leadershipContext.items.map(
+        (item) => `- ${item.label} (source: ${item.source}): ${item.content}`,
+      ),
+    );
+  } else {
+    lines.push(
+      `Leadership context: ${packet.leadershipContext.state} (${packet.leadershipContext.reason})`,
+    );
+  }
+
+  if (packet.warnings.length > 0) {
+    lines.push(
+      "Profile context warnings:",
+      ...packet.warnings.map((warning) => `- ${warning}`),
+    );
+  }
+
+  lines.push(
+    "Use this profile context only when it is relevant. Do not imply unavailable leadership context was used. For write, delivery, financial, or client-facing actions, follow the default write mode and preview-first approval rule.",
+  );
+
+  return lines.join("\n");
+}

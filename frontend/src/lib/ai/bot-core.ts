@@ -28,7 +28,12 @@ import {
 import {
   getMemoriesForSession,
   buildMemoryContextPayload,
+  type AiMemory,
 } from "@/lib/ai/services/ai-memory-service";
+import {
+  buildAiProfileContextPacket,
+  renderAiProfileContextPacketBlock,
+} from "@/lib/ai/ai-profile-context-packet";
 import { extractAndStoreMemories } from "@/lib/ai/services/memory-extraction";
 import { proposeHumanGatedLearningCandidates } from "@/lib/ai/learning-proposals/human-gated-learning";
 import {
@@ -51,6 +56,7 @@ import {
 } from "@/lib/ai/services/workspace-artifact-service";
 import { createServiceClient } from "@/lib/supabase/service";
 import { toSessionUuid } from "@/lib/ai/session-id";
+import { loadCurrentUserProfilePayload } from "@/lib/users/current-user-profile-server";
 import type { Json } from "@/types/database.types";
 
 // ---------------------------------------------------------------------------
@@ -141,6 +147,22 @@ Teams collapses single newlines into spaces. A wall of text is unreadable. ALWAY
 - Bold the project name or key term at the start of each bullet.
 `;
 
+function toProfilePacketMemory(memory: AiMemory) {
+  return {
+    id: memory.id,
+    type: memory.type,
+    content: memory.content,
+    confidence: memory.confidence,
+    importance: memory.importance,
+    project_id: memory.project_id,
+    source: memory.source,
+    visibility: memory.visibility ?? "private",
+    created_at: memory.created_at,
+    last_accessed_at: memory.last_accessed_at ?? null,
+    access_count: memory.access_count ?? null,
+  };
+}
+
 export async function assembleSystemPrompt(options: {
   userId: string;
   messageText: string;
@@ -180,6 +202,7 @@ export async function assembleSystemPrompt(options: {
         { preferences, relevant, team, errors: memoryErrors },
         recentSummaries,
         activeArtifacts,
+        currentUserProfile,
       ] = await Promise.all([
         getMemoriesForSession({
           userId,
@@ -197,6 +220,18 @@ export async function assembleSystemPrompt(options: {
               limit: 5,
             }).catch(() => [])
           : Promise.resolve([]),
+        loadCurrentUserProfilePayload({
+          serviceClient: createServiceClient(),
+          user: { id: userId },
+          where: "bot-core/assembleSystemPrompt#ai-profile-context",
+        }).catch((error) => {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Unknown AI profile context error";
+          contextHealth.push(`AI profile context could not be loaded: ${message}`);
+          return null;
+        }),
       ]);
       if (memoryErrors.length > 0) {
         contextHealth.push(
@@ -283,9 +318,18 @@ export async function assembleSystemPrompt(options: {
       const recentBlock = buildRecentConversationsBlock(recentSummaries);
 
       const workspaceBlock = buildWorkspaceContextBlock(activeArtifacts);
+      const aiProfileBlock = renderAiProfileContextPacketBlock(
+        buildAiProfileContextPacket({
+          user: currentUserProfile,
+          memories: selectedMemories.map(toProfilePacketMemory),
+          activeProjectId: selectedProjectId ?? null,
+          maxMemories: 5,
+        }),
+      );
       // Append after the static strategist prompt — static content first is
       // required for OpenAI's prefix-based automatic prompt caching.
       const contextParts = [
+        aiProfileBlock,
         recentBlock,
         memoryBlock,
         learningBlock,

@@ -9,9 +9,146 @@ jest.mock("@/lib/ai/providers", () => ({
   getLanguageModel: jest.fn(),
 }));
 
+jest.mock("@/lib/ai/services/ai-memory-service", () => ({
+  getMemoriesForSession: jest.fn(),
+  buildMemoryContextPayload: jest.fn(),
+}));
+
+jest.mock("@/lib/ai/services/conversation-memory", () => ({
+  generateConversationMemory: jest.fn(),
+  getRecentConversationSummaries: jest.fn(),
+  buildRecentConversationsBlock: jest.fn(),
+}));
+
+jest.mock("@/lib/ai/services/workspace-artifact-service", () => ({
+  listArtifacts: jest.fn(),
+  buildWorkspaceContextBlock: jest.fn(),
+}));
+
+jest.mock("@/lib/ai/services/agent-learning-service", () => ({
+  getRelevantAgentLearnings: jest.fn(),
+  buildAgentLearningContextBlock: jest.fn(),
+}));
+
+jest.mock("@/lib/ai/services/skill-injection-service", () => ({
+  buildSkillInjectionContext: jest.fn(),
+}));
+
+jest.mock("@/lib/ai/services/task-training-service", () => ({
+  buildTaskGenerationTrainingBlock: jest.fn(),
+  shouldLoadTaskTrainingContext: jest.fn(),
+}));
+
+jest.mock("@/lib/users/current-user-profile-server", () => ({
+  loadCurrentUserProfilePayload: jest.fn(),
+}));
+
+jest.mock("@/lib/supabase/service", () => ({
+  createServiceClient: jest.fn(() => ({})),
+}));
+
+import {
+  buildMemoryContextPayload,
+  getMemoriesForSession,
+} from "@/lib/ai/services/ai-memory-service";
+import {
+  buildRecentConversationsBlock,
+  getRecentConversationSummaries,
+} from "@/lib/ai/services/conversation-memory";
+import {
+  buildAgentLearningContextBlock,
+  getRelevantAgentLearnings,
+} from "@/lib/ai/services/agent-learning-service";
+import { buildSkillInjectionContext } from "@/lib/ai/services/skill-injection-service";
+import { shouldLoadTaskTrainingContext } from "@/lib/ai/services/task-training-service";
+import {
+  buildWorkspaceContextBlock,
+  listArtifacts,
+} from "@/lib/ai/services/workspace-artifact-service";
+import { loadCurrentUserProfilePayload } from "@/lib/users/current-user-profile-server";
 import { assembleSystemPrompt } from "../bot-core";
 
+const mockGetMemoriesForSession = getMemoriesForSession as jest.MockedFunction<
+  typeof getMemoriesForSession
+>;
+const mockBuildMemoryContextPayload =
+  buildMemoryContextPayload as jest.MockedFunction<
+    typeof buildMemoryContextPayload
+  >;
+const mockGetRecentConversationSummaries =
+  getRecentConversationSummaries as jest.MockedFunction<
+    typeof getRecentConversationSummaries
+  >;
+const mockBuildRecentConversationsBlock =
+  buildRecentConversationsBlock as jest.MockedFunction<
+    typeof buildRecentConversationsBlock
+  >;
+const mockGetRelevantAgentLearnings =
+  getRelevantAgentLearnings as jest.MockedFunction<
+    typeof getRelevantAgentLearnings
+  >;
+const mockBuildAgentLearningContextBlock =
+  buildAgentLearningContextBlock as jest.MockedFunction<
+    typeof buildAgentLearningContextBlock
+  >;
+const mockBuildSkillInjectionContext =
+  buildSkillInjectionContext as jest.MockedFunction<
+    typeof buildSkillInjectionContext
+  >;
+const mockShouldLoadTaskTrainingContext =
+  shouldLoadTaskTrainingContext as jest.MockedFunction<
+    typeof shouldLoadTaskTrainingContext
+  >;
+const mockListArtifacts = listArtifacts as jest.MockedFunction<
+  typeof listArtifacts
+>;
+const mockBuildWorkspaceContextBlock =
+  buildWorkspaceContextBlock as jest.MockedFunction<
+    typeof buildWorkspaceContextBlock
+  >;
+const mockLoadCurrentUserProfilePayload =
+  loadCurrentUserProfilePayload as jest.MockedFunction<
+    typeof loadCurrentUserProfilePayload
+  >;
+
 describe("bot-core prompt assembly", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetMemoriesForSession.mockResolvedValue({
+      preferences: [],
+      relevant: [],
+      team: [],
+      errors: [],
+    });
+    mockBuildMemoryContextPayload.mockReturnValue({
+      block: "",
+      selected: [],
+    });
+    mockGetRecentConversationSummaries.mockResolvedValue([]);
+    mockBuildRecentConversationsBlock.mockReturnValue("");
+    mockGetRelevantAgentLearnings.mockResolvedValue([]);
+    mockBuildAgentLearningContextBlock.mockReturnValue({
+      block: "",
+      selected: [],
+    });
+    mockBuildSkillInjectionContext.mockResolvedValue({
+      block: "",
+      usage: null,
+    });
+    mockShouldLoadTaskTrainingContext.mockReturnValue(false);
+    mockListArtifacts.mockResolvedValue([]);
+    mockBuildWorkspaceContextBlock.mockReturnValue("");
+    mockLoadCurrentUserProfilePayload.mockResolvedValue({
+      id: "user-1",
+      fullName: "Test User",
+      email: "-",
+      profileCompleteness: 65,
+      isAdmin: false,
+      isDeveloper: false,
+      onboardingCompletedAt: null,
+    });
+  });
+
   it("injects registry-owned tool routing guidance into the runtime prompt", async () => {
     const prompt = await assembleSystemPrompt({
       userId: "user-1",
@@ -22,5 +159,74 @@ describe("bot-core prompt assembly", () => {
     expect(prompt).toContain("## Tool Routing Policy");
     expect(prompt).toContain("searchTeamsMessages (teams)");
     expect(prompt).toContain("do not substitute meetings");
+  });
+
+  it("injects bounded AI profile context from selected memories", async () => {
+    mockBuildMemoryContextPayload.mockReturnValue({
+      block: "## Memory Context\nMemory content",
+      selected: [
+        {
+          id: "mem_project",
+          type: "preference",
+          content: "Prefers concise project risk summaries.",
+          confidence: 0.9,
+          importance: 0.8,
+          project_id: 25125,
+          meeting_id: null,
+          source: "manual",
+          visibility: "private",
+          created_at: "2026-06-01T12:00:00.000Z",
+        },
+      ],
+    });
+    mockLoadCurrentUserProfilePayload.mockResolvedValue({
+      id: "user-1",
+      fullName: "Test User",
+      email: "test@example.com",
+      title: "Project Manager",
+      role: "pm",
+      profileCompleteness: 80,
+      isAdmin: false,
+      isDeveloper: false,
+      onboardingCompletedAt: null,
+    });
+
+    const prompt = await assembleSystemPrompt({
+      userId: "user-1",
+      messageText: "What should I focus on today?",
+      selectedProjectId: 25125,
+    });
+
+    expect(prompt).toContain("## AI Profile Context");
+    expect(prompt).toContain("User: Test User <test@example.com>");
+    expect(prompt).toContain("Role: pm");
+    expect(prompt).toContain("Default write mode: preview_only");
+    expect(prompt).toContain("Prefers concise project risk summaries.");
+    expect(prompt).toContain(
+      "Leadership context: not_configured (Leadership coaching context has no durable source or visibility policy yet.)",
+    );
+    expect(prompt).toContain(
+      "Do not imply unavailable leadership context was used.",
+    );
+  });
+
+  it("degrades explicitly when AI profile context cannot load", async () => {
+    mockLoadCurrentUserProfilePayload.mockRejectedValue(
+      new Error("profile lookup failed"),
+    );
+
+    const prompt = await assembleSystemPrompt({
+      userId: "user-1",
+      messageText: "Draft an RFI",
+    });
+
+    expect(prompt).toContain("## AI Profile Context");
+    expect(prompt).toContain("Status: degraded");
+    expect(prompt).toContain("User: Unknown user");
+    expect(prompt).toContain("Default write mode: preview_only");
+    expect(prompt).toContain("Blocked capabilities: write_actions, delivery_actions");
+    expect(prompt).toContain(
+      "AI profile context could not be loaded: profile lookup failed",
+    );
   });
 });
