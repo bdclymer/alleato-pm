@@ -72,9 +72,10 @@ function sourceSpecificSnippet(
   row: SourceSpecificRagRow,
   maxLength = 260,
 ): string {
-  const content = preferredSourceSpecificContent(row)
-    .replace(/\s+/g, " ")
-    .trim();
+  const content = sanitizeSourceSpecificSnippetText(
+    row,
+    preferredSourceSpecificContent(row),
+  );
   if (!content) return "No text excerpt stored.";
   return content.length > maxLength
     ? `${content.slice(0, maxLength).trim()}...`
@@ -94,10 +95,10 @@ function sourceSpecificTitle(row: SourceSpecificRagRow): string {
 function teamsEvidenceTitle(title: string): string {
   const normalized = title.trim();
   if (/^Live Teams:\s*19:/i.test(normalized)) {
-    return "Teams chat conversation";
+    return "Teams conversation";
   }
   if (/^Teams DM Conversation:\s*19:/i.test(normalized)) {
-    return "Teams DM conversation";
+    return "Teams conversation";
   }
   return normalized
     .replace(/^Live Teams:\s*/i, "Teams conversation: ")
@@ -123,6 +124,31 @@ function isCanonicalTeamsConversation(row: SourceSpecificRagRow): boolean {
 
 function isLiveTeamsMessage(row: SourceSpecificRagRow): boolean {
   return row.type === "teams_live_message";
+}
+
+function sanitizeSourceSpecificSnippetText(
+  row: SourceSpecificRagRow,
+  value: string,
+): string {
+  let text = value
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/gi, '"');
+
+  if (isCanonicalTeamsConversation(row) || isLiveTeamsMessage(row)) {
+    text = text
+      .replace(/\[Teams Direct Message Conversation:[^\]]+\]\s*/gi, "")
+      .replace(/\[message:[^\]]+\]\s*/gi, "")
+      .replace(/\b19:[A-Za-z0-9._-]+/g, "Teams conversation")
+      .replace(/\bChat:\s*Teams conversation\b/gi, "")
+      .replace(/\bMailbox:\s*\S+/gi, "")
+      .replace(/\bParticipants:\s*/gi, "Participants: ");
+  }
+
+  return text.replace(/\s+/g, " ").trim();
 }
 
 function preferredSourceSpecificContent(row: SourceSpecificRagRow): string {
