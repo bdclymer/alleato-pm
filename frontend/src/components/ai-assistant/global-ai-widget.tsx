@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { WidgetAiChat, type WidgetAiChatView } from "./widget-ai-chat";
 
+const AI_WIDGET_WELCOME_STORAGE_KEY = "alleato-ai-widget-welcome-seen-v1";
+
 /**
  * Routes where the floating widget is hidden: auth screens, and surfaces that
  * already host the full assistant or need the whole viewport.
@@ -32,12 +34,17 @@ function focusFirstPanelElement(panel: HTMLDivElement) {
   focusable?.focus();
 }
 
+function reportWelcomeStorageError(error: unknown) {
+  console.error("[ai-widget] Welcome notification storage failed", error);
+}
+
 export function GlobalAiWidget() {
   const [open, setOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [view, setView] = React.useState<WidgetAiChatView>("chat");
   const [expanded, setExpanded] = React.useState(false);
   const [hasUnread, setHasUnread] = React.useState(false);
+  const [showWelcomePrompt, setShowWelcomePrompt] = React.useState(false);
   const launcherRef = React.useRef<HTMLButtonElement>(null);
   const panelRef = React.useRef<HTMLDivElement>(null);
   const openRef = React.useRef(open);
@@ -55,6 +62,37 @@ export function GlobalAiWidget() {
   }, [hidden]);
 
   React.useEffect(() => {
+    if (hidden) {
+      setShowWelcomePrompt(false);
+      return;
+    }
+
+    try {
+      const hasSeenWelcome =
+        window.localStorage.getItem(AI_WIDGET_WELCOME_STORAGE_KEY) === "seen";
+      setShowWelcomePrompt(!hasSeenWelcome);
+      if (!hasSeenWelcome && !openRef.current) setHasUnread(true);
+    } catch (error) {
+      reportWelcomeStorageError(error);
+      setShowWelcomePrompt(false);
+    }
+  }, [hidden]);
+
+  const markWelcomeSeen = React.useCallback(() => {
+    try {
+      window.localStorage.setItem(AI_WIDGET_WELCOME_STORAGE_KEY, "seen");
+    } catch (error) {
+      reportWelcomeStorageError(error);
+    }
+  }, []);
+
+  const dismissWelcomePrompt = React.useCallback(() => {
+    markWelcomeSeen();
+    setHasUnread(false);
+    setShowWelcomePrompt(false);
+  }, [markWelcomeSeen]);
+
+  React.useEffect(() => {
     if (open) {
       setMounted(true);
       return;
@@ -66,15 +104,17 @@ export function GlobalAiWidget() {
 
   const closePanel = React.useCallback(() => {
     setOpen(false);
+    if (showWelcomePrompt) setShowWelcomePrompt(false);
     window.requestAnimationFrame(() => {
       launcherRef.current?.focus();
     });
-  }, []);
+  }, [showWelcomePrompt]);
 
   const openPanel = React.useCallback(() => {
     setOpen(true);
     setHasUnread(false);
-  }, []);
+    if (showWelcomePrompt) markWelcomeSeen();
+  }, [markWelcomeSeen, showWelcomePrompt]);
 
   const handleAssistantActivity = React.useCallback(() => {
     if (!openRef.current) setHasUnread(true);
@@ -221,6 +261,8 @@ export function GlobalAiWidget() {
               view={view}
               onViewChange={setView}
               onAssistantActivity={handleAssistantActivity}
+              showWelcomePrompt={showWelcomePrompt}
+              onWelcomePromptDismiss={dismissWelcomePrompt}
             />
           </div>
         </div>

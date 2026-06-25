@@ -261,6 +261,25 @@ type SpeechRecognitionLike = {
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
+const WIDGET_WELCOME_ACTIONS = [
+  {
+    label: "Create an RFI",
+    prompt: "Help me create a new RFI for this project.",
+  },
+  {
+    label: "Create a change event",
+    prompt: "Help me draft a change event for this project.",
+  },
+  {
+    label: "Generate a progress report",
+    prompt: "Generate a progress report for this project.",
+  },
+  {
+    label: "Find project evidence",
+    prompt: "Find source evidence for the current project status.",
+  },
+] as const;
+
 export type ResponseQuality = Omit<
   ScoredResponseQuality,
   "hasMetaCommentary"
@@ -1211,6 +1230,8 @@ interface ChatAreaProps {
   onStop: () => void;
   /** Omit the decorative orb on the welcome screen (compact floating widget). */
   welcomeHideOrb?: boolean;
+  showWidgetWelcomePrompt?: boolean;
+  onWidgetWelcomeDismiss?: () => void;
 }
 
 export function ChatArea({
@@ -1239,6 +1260,8 @@ export function ChatArea({
   onToolApprovalResponse,
   onStop,
   welcomeHideOrb = false,
+  showWidgetWelcomePrompt = false,
+  onWidgetWelcomeDismiss,
 }: ChatAreaProps) {
   // Council mode can be controlled externally (via prop) or internally
   const [councilModeInternal, setCouncilModeInternal] = useState(false);
@@ -1591,6 +1614,15 @@ export function ChatArea({
     [onSubmit],
   );
 
+  const handleWidgetWelcomeAction = useCallback(
+    (prompt: string) => {
+      if (isStreaming) return;
+      onWidgetWelcomeDismiss?.();
+      onInputChange(prompt);
+    },
+    [isStreaming, onInputChange, onWidgetWelcomeDismiss],
+  );
+
   const hasMessages = messages.length > 0;
   const showWelcome = !hasMessages && !isLoadingMessages;
 
@@ -1860,6 +1892,15 @@ export function ChatArea({
           <WelcomeScreen
             hideOrb={welcomeHideOrb}
             composer={promptInputEl}
+            beforeComposer={
+              showWidgetWelcomePrompt ? (
+                <WidgetWelcomePrompt
+                  disabled={isStreaming}
+                  onAction={handleWidgetWelcomeAction}
+                  onDismiss={onWidgetWelcomeDismiss}
+                />
+              ) : null
+            }
             error={
               chatError ? (
                 <InfoAlert variant="error" className="py-2">
@@ -2381,6 +2422,57 @@ export function ChatArea({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function WidgetWelcomePrompt({
+  disabled,
+  onAction,
+  onDismiss,
+}: {
+  disabled: boolean;
+  onAction: (prompt: string) => void;
+  onDismiss?: () => void;
+}) {
+  return (
+    <div className="mb-4 rounded-lg bg-muted/45 px-3 py-3 text-left">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-medium text-foreground">Welcome back.</p>
+          <p className="text-xs leading-5 text-muted-foreground">
+            I can help create RFIs, draft change events, generate progress
+            reports, or find project evidence.
+          </p>
+        </div>
+        {onDismiss && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={onDismiss}
+            aria-label="Dismiss AI welcome message"
+            className="-mr-1 -mt-1 h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+          >
+            <XIcon className="h-3.5 w-3.5" />
+          </Button>
+        )}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {WIDGET_WELCOME_ACTIONS.map((action) => (
+          <Button
+            key={action.label}
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={disabled}
+            onClick={() => onAction(action.prompt)}
+            className="h-8 rounded-full px-3 text-xs font-medium"
+          >
+            {action.label}
+          </Button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -34,12 +34,16 @@ export function WidgetAiChat({
   view = "chat",
   onViewChange,
   onAssistantActivity,
+  showWelcomePrompt = false,
+  onWelcomePromptDismiss,
 }: {
   /** Reserved for parity with the launcher; focus is handled by GlobalAiWidget. */
   autoFocusComposer?: boolean;
   view?: WidgetAiChatView;
   onViewChange?: (view: WidgetAiChatView) => void;
   onAssistantActivity?: () => void;
+  showWelcomePrompt?: boolean;
+  onWelcomePromptDismiss?: () => void;
 }) {
   const queryClient = useQueryClient();
   const { data: conversations = [], isLoading: isLoadingConvos } =
@@ -260,6 +264,8 @@ export function WidgetAiChat({
       }}
       onStop={() => {}}
       welcomeHideOrb
+      showWidgetWelcomePrompt={showWelcomePrompt}
+      onWidgetWelcomeDismiss={onWelcomePromptDismiss}
     />
   );
 }
