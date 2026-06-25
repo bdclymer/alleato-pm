@@ -55,6 +55,7 @@ export function WidgetAiChat({
     skillUsageByMessageId,
     responseQualityByMessageId,
     traceDiagnosticsByMessageId,
+    langfuseTraceIdByMessageId,
     isLoadingMessages,
     loadMessagesError,
     loadSessionMessages,
@@ -73,7 +74,9 @@ export function WidgetAiChat({
     string | null
   >(null);
   const [noSessionInput, setNoSessionInput] = useState("");
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+    null,
+  );
   const [selectedModel, setSelectedModel] = useState<AiAssistantModelId>(
     DEFAULT_AI_ASSISTANT_MODEL,
   );
@@ -204,6 +207,7 @@ export function WidgetAiChat({
         skillUsageByMessageId={skillUsageByMessageId}
         responseQualityByMessageId={responseQualityByMessageId}
         traceDiagnosticsByMessageId={traceDiagnosticsByMessageId}
+        langfuseTraceIdByMessageId={langfuseTraceIdByMessageId}
         isLoadingMessages={isLoadingMessages}
         loadMessagesError={loadMessagesError}
         pendingFirstMessage={pendingFirstMessage}
@@ -237,6 +241,7 @@ export function WidgetAiChat({
       responseQualityByMessageId={{}}
       skillUsageByMessageId={{}}
       traceDiagnosticsByMessageId={{}}
+      langfuseTraceIdByMessageId={{}}
       liveStatus={null}
       chatError={loadMessagesError}
       isLoadingMessages={false}

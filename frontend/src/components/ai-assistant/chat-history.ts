@@ -1,4 +1,8 @@
 import type { UIMessage } from "@ai-sdk/react";
+import {
+  extractLangfuseTraceIdFromMetadata,
+  metadataMessageIds,
+} from "@/lib/ai/langfuse-feedback";
 import type { ResponseQuality } from "./chat-area";
 import type { MemoryUsage } from "./memory-usage-disclosure";
 import type { SkillUsage } from "./skill-usage-disclosure";
@@ -33,11 +37,14 @@ export interface ChatHistoryMessage {
     memory_usage?: MemoryUsage;
     skill_usage?: SkillUsage;
     response_message_id?: unknown;
+    langfuse_trace_id?: unknown;
   } | null;
   created_at: string | null;
 }
 
-function normalizePersistedDataParts(message: ChatHistoryMessage): PersistedDataPart[] {
+function normalizePersistedDataParts(
+  message: ChatHistoryMessage,
+): PersistedDataPart[] {
   const parts = message.metadata?.data_parts;
   if (!Array.isArray(parts)) return [];
 
@@ -119,6 +126,20 @@ export function extractTraceDiagnostics(
       diagnostics.loopDiagnostic
     ) {
       byMessageId[msg.id] = diagnostics;
+    }
+  });
+  return byMessageId;
+}
+
+export function extractLangfuseTraceIds(
+  messages: ChatHistoryMessage[],
+): Record<string, string> {
+  const byMessageId: Record<string, string> = {};
+  messages.forEach((msg) => {
+    const traceId = extractLangfuseTraceIdFromMetadata(msg.metadata);
+    if (!traceId) return;
+    for (const messageId of metadataMessageIds(msg)) {
+      byMessageId[messageId] = traceId;
     }
   });
   return byMessageId;
