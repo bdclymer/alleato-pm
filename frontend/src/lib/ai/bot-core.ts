@@ -6,7 +6,13 @@
  * tool creation, memory injection) so it can be called from any channel.
  */
 
-import { generateText, streamText, stepCountIs, type ModelMessage, type ToolSet } from "ai";
+import {
+  generateText,
+  streamText,
+  stepCountIs,
+  type ModelMessage,
+  type ToolSet,
+} from "ai";
 import { getLanguageModel } from "@/lib/ai/providers";
 import {
   buildCouncilModePromptInjection,
@@ -34,6 +40,7 @@ import {
   buildTaskGenerationTrainingBlock,
   shouldLoadTaskTrainingContext,
 } from "@/lib/ai/services/task-training-service";
+import { renderAssistantToolRoutingGuide } from "@/lib/ai/tool-registry";
 import {
   buildSkillInjectionContext,
   type SkillInjectionUsageSummary,
@@ -161,29 +168,36 @@ export async function assembleSystemPrompt(options: {
 
   let systemPrompt = getStrategistSystemPrompt();
   const contextHealth: string[] = [];
+  const toolRoutingGuide = renderAssistantToolRoutingGuide();
+  if (toolRoutingGuide) {
+    systemPrompt = systemPrompt + "\n\n---\n\n" + toolRoutingGuide;
+  }
 
   // Inject user memories
   if (messageText) {
     try {
-      const [{ preferences, relevant, team, errors: memoryErrors }, recentSummaries, activeArtifacts] =
-        await Promise.all([
-          getMemoriesForSession({
-            userId,
-            firstMessage: messageText,
-            projectId: selectedProjectId,
-          }),
-          isFirstTurn && sessionId
-            ? getRecentConversationSummaries(userId, sessionId, 3)
-            : Promise.resolve([]),
-          isFirstTurn
-            ? listArtifacts({
-                userId,
-                projectId: selectedProjectId ?? null,
-                status: "draft",
-                limit: 5,
-              }).catch(() => [])
-            : Promise.resolve([]),
-        ]);
+      const [
+        { preferences, relevant, team, errors: memoryErrors },
+        recentSummaries,
+        activeArtifacts,
+      ] = await Promise.all([
+        getMemoriesForSession({
+          userId,
+          firstMessage: messageText,
+          projectId: selectedProjectId,
+        }),
+        isFirstTurn && sessionId
+          ? getRecentConversationSummaries(userId, sessionId, 3)
+          : Promise.resolve([]),
+        isFirstTurn
+          ? listArtifacts({
+              userId,
+              projectId: selectedProjectId ?? null,
+              status: "draft",
+              limit: 5,
+            }).catch(() => [])
+          : Promise.resolve([]),
+      ]);
       if (memoryErrors.length > 0) {
         contextHealth.push(
           `Memory context partially unavailable: ${memoryErrors.join("; ")}`,
@@ -208,7 +222,9 @@ export async function assembleSystemPrompt(options: {
         skillUsage = skillContext.usage;
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown skill context error";
+          error instanceof Error
+            ? error.message
+            : "Unknown skill context error";
         contextHealth.push(
           `Skill Library context could not be loaded: ${message}`,
         );
@@ -218,24 +234,22 @@ export async function assembleSystemPrompt(options: {
         buildMemoryContextPayload(preferences, relevant, team, {
           projectId: selectedProjectId,
         });
-      const {
-        block: learningBlock,
-        selected: selectedLearnings,
-      } = buildAgentLearningContextBlock(relevantLearnings);
-      const usedMemories = selectedMemories
-        .slice(0, 12)
-        .map((memory) => ({
-          id: memory.id,
-          type: memory.type,
-          content: memory.content,
-          projectId: memory.project_id,
-          visibility: memory.visibility,
-          similarity: memory.similarity,
-          rankingScore: memory.ranking_score,
-          rankingReason: memory.ranking_reason,
-        }));
+      const { block: learningBlock, selected: selectedLearnings } =
+        buildAgentLearningContextBlock(relevantLearnings);
+      const usedMemories = selectedMemories.slice(0, 12).map((memory) => ({
+        id: memory.id,
+        type: memory.type,
+        content: memory.content,
+        projectId: memory.project_id,
+        visibility: memory.visibility,
+        similarity: memory.similarity,
+        rankingScore: memory.ranking_score,
+        rankingReason: memory.ranking_reason,
+      }));
       const usedPreferenceIds = new Set(
-        selectedMemories.filter((memory) => memory.type === "preference").map((memory) => memory.id),
+        selectedMemories
+          .filter((memory) => memory.type === "preference")
+          .map((memory) => memory.id),
       );
       const usedTeamIds = new Set(
         selectedMemories
@@ -245,7 +259,8 @@ export async function assembleSystemPrompt(options: {
       onMemoryUsage?.({
         totalUsed: usedMemories.length,
         preferencesUsed: usedPreferenceIds.size,
-        relevantUsed: selectedMemories.length - usedPreferenceIds.size - usedTeamIds.size,
+        relevantUsed:
+          selectedMemories.length - usedPreferenceIds.size - usedTeamIds.size,
         teamUsed: usedTeamIds.size,
         recentConversationsUsed: recentSummaries.length,
         retrieved: {
@@ -348,7 +363,9 @@ export async function assembleSystemPrompt(options: {
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unknown project context error";
+        error instanceof Error
+          ? error.message
+          : "Unknown project context error";
       contextHealth.push(
         `Pinned project context could not be loaded: ${message}`,
       );
@@ -407,10 +424,7 @@ export async function assembleLeanAdvisorSystemPrompt(options: {
       "For owner-style portfolio/status/risk questions, identify the 2-3 items that matter most, why they matter, and the first action to take.",
       "Do not narrate tool usage. Do not end with generic optional offers.",
     ].join("\n"),
-    [
-      "## User Request",
-      messageText.slice(0, 1200),
-    ].join("\n"),
+    ["## User Request", messageText.slice(0, 1200)].join("\n"),
   ];
 
   if (selectedProjectId) {
@@ -442,8 +456,12 @@ export async function assembleLeanAdvisorSystemPrompt(options: {
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unknown project context error";
-      contextHealth.push(`Pinned project context could not be loaded: ${message}`);
+        error instanceof Error
+          ? error.message
+          : "Unknown project context error";
+      contextHealth.push(
+        `Pinned project context could not be loaded: ${message}`,
+      );
     }
   }
 
@@ -512,8 +530,12 @@ export async function assembleTaskWriteSystemPrompt(options: {
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unknown project context error";
-      contextHealth.push(`Pinned project context could not be loaded: ${message}`);
+        error instanceof Error
+          ? error.message
+          : "Unknown project context error";
+      contextHealth.push(
+        `Pinned project context could not be loaded: ${message}`,
+      );
     }
   }
 
@@ -526,7 +548,9 @@ export async function assembleTaskWriteSystemPrompt(options: {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unknown task training error";
-      contextHealth.push(`Task generation feedback context could not be loaded: ${message}`);
+      contextHealth.push(
+        `Task generation feedback context could not be loaded: ${message}`,
+      );
     }
   }
 
@@ -584,7 +608,10 @@ export async function generateBotResponse(
   });
 
   const messages: ModelMessage[] = options.conversationHistory?.length
-    ? [...options.conversationHistory, { role: "user" as const, content: options.messageText }]
+    ? [
+        ...options.conversationHistory,
+        { role: "user" as const, content: options.messageText },
+      ]
     : [{ role: "user" as const, content: options.messageText }];
 
   const result = await generateText({
@@ -604,8 +631,7 @@ export async function generateBotResponse(
       ? {
           inputTokens: usage.inputTokens ?? 0,
           outputTokens: usage.outputTokens ?? 0,
-          totalTokens:
-            (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0),
+          totalTokens: (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0),
         }
       : undefined,
   };
@@ -647,7 +673,10 @@ export async function streamBotResponse(options: BotCoreOptions) {
   });
 
   const messages: ModelMessage[] = options.conversationHistory?.length
-    ? [...options.conversationHistory, { role: "user" as const, content: options.messageText }]
+    ? [
+        ...options.conversationHistory,
+        { role: "user" as const, content: options.messageText },
+      ]
     : [{ role: "user" as const, content: options.messageText }];
 
   const result = streamText({

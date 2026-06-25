@@ -4,6 +4,7 @@ import {
   assertUniqueAssistantToolNames,
   filterRegisteredToolSet,
   GLOBAL_ASSISTANT_TOOL_REGISTRY,
+  renderAssistantToolRoutingGuide,
   toolDefinitionsForWorkflow,
   validateAssistantToolRegistry,
   type AssistantToolRegistryEntry,
@@ -221,6 +222,20 @@ describe("global AI assistant tool registry", () => {
         "what insights can be found in the teams messages today?",
       ]),
     });
+  });
+
+  it("renders compact runtime routing guidance from registry policy metadata", () => {
+    const guide = renderAssistantToolRoutingGuide({
+      allowedToolNames: ["searchTeamsMessages", "getMeetingIntelligence"],
+    });
+
+    expect(guide).toContain("## Tool Routing Policy");
+    expect(guide).toContain("searchTeamsMessages (teams)");
+    expect(guide).toContain(
+      "what insights can be found in the teams messages today",
+    );
+    expect(guide).toContain("do not substitute meetings");
+    expect(guide).toContain("getMeetingIntelligence (meeting, fireflies)");
   });
 
   it("filters runtime tool sets through registered factory metadata", () => {

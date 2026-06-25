@@ -190,6 +190,72 @@ export function toolDefinitionsForWorkflow(input: {
   return assistantToolsForWorkflow(input).map(toToolDefinition);
 }
 
+export function renderAssistantToolRoutingGuide(
+  input: {
+    registry?: AssistantToolRegistryEntry[];
+    workflowId?: string;
+    allowedToolNames?: readonly string[];
+    maxPolicies?: number;
+  } = {},
+): string {
+  const priority = new Map(
+    [
+      "searchTeamsMessages",
+      "getRecentEmails",
+      "searchEmails",
+      "getMeetingsByDate",
+      "getMeetingIntelligence",
+      "searchMeetingsByTopic",
+      "getMeetingDetails",
+      "semanticSearch",
+      "searchExternalDocuments",
+      "searchDocuments",
+      "findProjectDocuments",
+      "getAcumaticaProjectBudget",
+      "getAPAgingReport",
+      "getProjectBriefingSnapshot",
+      "getCommitmentsOverview",
+    ].map((name, index) => [name, index]),
+  );
+  const tools = assistantToolsForWorkflow({
+    registry: input.registry,
+    workflowId: input.workflowId ?? AI_ASSISTANT_CHAT_WORKFLOW_ID,
+    allowedToolNames: input.allowedToolNames,
+  })
+    .filter((entry) => entry.routingPolicy)
+    .sort(
+      (a, b) =>
+        (priority.get(a.name) ?? Number.MAX_SAFE_INTEGER) -
+        (priority.get(b.name) ?? Number.MAX_SAFE_INTEGER),
+    )
+    .slice(0, input.maxPolicies ?? 12);
+
+  if (tools.length === 0) return "";
+
+  const lines = [
+    "## Tool Routing Policy",
+    "Use these registry-owned rules before choosing tools. Prefer the narrowest source-specific tool when the user names a communication/data source; use broad RAG only for cross-source or document searches.",
+    ...tools.map((entry) => {
+      const policy = entry.routingPolicy;
+      if (!policy) return "";
+      const sourceFamilies = (entry.sourceFamilies ?? []).join(", ");
+      const useWhen = policy.useWhen.join(" ");
+      const doNotUseWhen = policy.doNotUseWhen.join(" ");
+      return [
+        `- ${entry.name}${sourceFamilies ? ` (${sourceFamilies})` : ""}:`,
+        `Use when: ${useWhen}`,
+        `Do not use when: ${doNotUseWhen}`,
+        `Freshness: ${policy.preferredFreshness}`,
+        `Empty result: ${policy.emptyResultBehavior}`,
+        `Cite: ${policy.citationRule}`,
+        `Regression prompts: ${policy.regressionPrompts.join("; ")}`,
+      ].join(" ");
+    }),
+  ];
+
+  return lines.filter(Boolean).join("\n");
+}
+
 export function filterRegisteredToolSet(
   input: RegisteredToolSetInput,
 ): ToolSet {
