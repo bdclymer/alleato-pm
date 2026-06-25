@@ -92,7 +92,7 @@ export const GET = withApiGuardrails(
 
     const { data: people, error: peopleError } = await supabase
       .from("people")
-      .select("id, first_name, last_name, email, auth_user_id, profile_photo_url")
+      .select("id, first_name, last_name, email, auth_user_id, profile_photo_url, person_type")
       .not("auth_user_id", "is", null)
       .order("last_name", { ascending: true });
 
@@ -306,6 +306,7 @@ export const GET = withApiGuardrails(
         firstName: p.first_name ?? "",
         lastName: p.last_name ?? "",
         email: p.email ?? "",
+        personType: p.person_type ?? "",
         profilePhotoUrl: p.profile_photo_url ?? authAvatarMap.get(p.auth_user_id ?? "") ?? null,
         isAdmin: p.auth_user_id ? profileMap.get(p.auth_user_id) === true : false,
         companyTemplateId: companyTemplate?.id ?? null,

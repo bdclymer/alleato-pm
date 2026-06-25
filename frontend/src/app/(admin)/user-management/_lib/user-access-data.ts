@@ -14,6 +14,7 @@ export type PermissionUser = {
   firstName: string;
   lastName: string;
   email: string;
+  personType: string;
   profilePhotoUrl: string | null;
   isAdmin: boolean;
   companyTemplateId: string | null;
@@ -63,6 +64,7 @@ export type UserAccessSummary = {
   fullName: string;
   initials: string;
   email: string;
+  personType: string;
   profilePhotoUrl: string | null;
   isAdmin: boolean;
   companyTemplateId: string | null;
@@ -144,6 +146,7 @@ export function toAccessSummary(user: PermissionUser): UserAccessSummary {
     fullName,
     initials: getInitials(user.firstName, user.lastName, user.email),
     email: user.email,
+    personType: user.personType,
     profilePhotoUrl: user.profilePhotoUrl,
     isAdmin: user.isAdmin,
     companyTemplateId: user.companyTemplateId,

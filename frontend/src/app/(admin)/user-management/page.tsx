@@ -167,6 +167,8 @@ function getUserSortValue(user: UserAccessSummary, sortBy: string) {
       return user.primaryTemplateName;
     case "email":
       return user.email;
+    case "personType":
+      return user.personType;
     case "teams":
       return user.teamsAccount?.displayName ?? user.teamsAccount?.platformUserId ?? "";
     case "projects":
@@ -220,7 +222,7 @@ export default function PermissionsAdminPage() {
       search: "",
       sortBy: "name",
       sortDirection: "asc",
-      visibleColumns: ["name", "email", "role", "teams", "projects", "exceptions"],
+      visibleColumns: ["name", "email", "personType", "role", "teams", "projects", "exceptions"],
       filters: {},
     },
   });
@@ -319,6 +321,7 @@ export default function PermissionsAdminPage() {
       return [
         user.fullName,
         user.email,
+        user.personType,
         user.teamsAccount?.displayName,
         user.teamsAccount?.platformUserId,
         user.primaryTemplateName,
@@ -377,6 +380,18 @@ export default function PermissionsAdminPage() {
         render: (user) => (
           <span className="block truncate text-sm text-muted-foreground">
             {user.email || "No email"}
+          </span>
+        ),
+      },
+      {
+        id: "personType",
+        label: "User Type",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (user) => user.personType,
+        render: (user) => (
+          <span className="block truncate text-sm text-foreground">
+            {user.personType || "Unknown"}
           </span>
         ),
       },

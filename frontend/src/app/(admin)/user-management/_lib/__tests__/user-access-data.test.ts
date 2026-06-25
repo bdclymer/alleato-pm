@@ -65,6 +65,7 @@ function permissionUser(overrides: Partial<PermissionUser> = {}): PermissionUser
     firstName: "Megan",
     lastName: "Harrison",
     email: "megan@example.com",
+    personType: "employee",
     profilePhotoUrl: null,
     isAdmin: true,
     companyTemplateId: null,
@@ -99,5 +100,11 @@ describe("toAccessSummary", () => {
     const summary = toAccessSummary(permissionUser({ teamsAccount: null }));
 
     expect(summary.teamsAccount).toBeNull();
+  });
+
+  it("preserves the raw Supabase person type", () => {
+    const summary = toAccessSummary(permissionUser({ personType: "subcontractor" }));
+
+    expect(summary.personType).toBe("subcontractor");
   });
 });
