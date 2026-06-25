@@ -319,6 +319,7 @@ function formatSourceSpecificRagContent(
       "Use these Teams snippets as evidence. Do not copy this section verbatim; synthesize the main operational themes, risks, decisions, and follow-ups for the user.",
       `Freshness: ${sourceLine}`,
       ...(liveLine ? [liveLine.replace(/^- /, "Freshness detail: ")] : []),
+      `Retrieval coverage: Retrieved ${rows.length} Teams row(s) from live Microsoft Graph and the document_metadata/document_chunks-backed Teams index.`,
       "",
       ...conversationGroups.slice(0, request.limit).map((group, index) => {
         const examples = group.rows

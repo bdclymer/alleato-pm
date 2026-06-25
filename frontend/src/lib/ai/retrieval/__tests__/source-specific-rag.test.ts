@@ -153,6 +153,10 @@ describe("buildSourceSpecificRagAnswer Teams hydration", () => {
     expect(answer.content).toContain("Teams conversation");
     expect(answer.content).toContain("warehouse pour");
     expect(answer.content).toContain("Live Microsoft Graph Teams message");
+    expect(answer.content).toContain("Retrieved 1 Teams row(s)");
+    expect(answer.content).toContain(
+      "document_metadata/document_chunks-backed Teams index",
+    );
     expect(answer.content).not.toContain("**Main Teams Discussions");
     expect(answer.content).not.toContain("**Observability**");
     expect(answer.content).not.toContain("**Next Step**");
