@@ -1,0 +1,329 @@
+{
+  "generated_at": "2026-06-25T22:38:51.914127+00:00",
+  "source_file": "docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-batch-2-aai-669.json",
+  "batch_count": 20,
+  "ok_count": 20,
+  "failed_count": 0,
+  "results": [
+    {
+      "id": "3736a213-abc8-4818-853c-20a8defa9678",
+      "title": "[062] E801",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 22,
+      "ok": true,
+      "result": {
+        "metadataId": "3736a213-abc8-4818-853c-20a8defa9678",
+        "chunkCount": 46,
+        "segmentCount": 22
+      },
+      "started_at": "2026-06-25T22:36:41.394725+00:00",
+      "finished_at": "2026-06-25T22:36:52.714401+00:00"
+    },
+    {
+      "id": "bf060942-bb71-412f-a908-54d9cea3a5d0",
+      "title": "[057] E401",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 7,
+      "ok": true,
+      "result": {
+        "metadataId": "bf060942-bb71-412f-a908-54d9cea3a5d0",
+        "chunkCount": 16,
+        "segmentCount": 7
+      },
+      "started_at": "2026-06-25T22:36:52.714415+00:00",
+      "finished_at": "2026-06-25T22:36:58.808095+00:00"
+    },
+    {
+      "id": "2a54ef6e-695e-4ca7-a0ca-2e03d9d62728",
+      "title": "[023] A001",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 10,
+      "ok": true,
+      "result": {
+        "metadataId": "2a54ef6e-695e-4ca7-a0ca-2e03d9d62728",
+        "chunkCount": 22,
+        "segmentCount": 10
+      },
+      "started_at": "2026-06-25T22:36:58.808103+00:00",
+      "finished_at": "2026-06-25T22:37:05.176169+00:00"
+    },
+    {
+      "id": "b0ec6738-d1e7-4bed-8e56-e7068ba4870b",
+      "title": "[013] S113",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 8,
+      "ok": true,
+      "result": {
+        "metadataId": "b0ec6738-d1e7-4bed-8e56-e7068ba4870b",
+        "chunkCount": 18,
+        "segmentCount": 8
+      },
+      "started_at": "2026-06-25T22:37:05.176186+00:00",
+      "finished_at": "2026-06-25T22:37:10.838369+00:00"
+    },
+    {
+      "id": "0d660938-38d2-48c0-9760-78f74dc0eec5",
+      "title": "[001] Cover sheet",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 1,
+      "ok": true,
+      "result": {
+        "metadataId": "0d660938-38d2-48c0-9760-78f74dc0eec5",
+        "chunkCount": 4,
+        "segmentCount": 1
+      },
+      "started_at": "2026-06-25T22:37:10.838383+00:00",
+      "finished_at": "2026-06-25T22:37:14.332658+00:00"
+    },
+    {
+      "id": "02c6c71b-003a-47a1-90c8-8d94bcb21ad9",
+      "title": "[033] A501",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 10,
+      "ok": true,
+      "result": {
+        "metadataId": "02c6c71b-003a-47a1-90c8-8d94bcb21ad9",
+        "chunkCount": 22,
+        "segmentCount": 10
+      },
+      "started_at": "2026-06-25T22:37:14.332666+00:00",
+      "finished_at": "2026-06-25T22:37:21.183725+00:00"
+    },
+    {
+      "id": "26397e0b-ce80-4442-8fe2-8e89176c3446",
+      "title": "[032] A401",
+      "family": "drawing_upload",
+      "status_before": "embedded",
+      "mode": "run_embedder",
+      "segment_count_before": 15,
+      "ok": true,
+      "result": {
+        "metadataId": "26397e0b-ce80-4442-8fe2-8e89176c3446",
+        "chunkCount": 32,
+        "segmentCount": 15
+      },
+      "started_at": "2026-06-25T22:37:21.183735+00:00",
+      "finished_at": "2026-06-25T22:37:27.941158+00:00"
+    },
+    {
+      "id": "0dd47117-439a-4ebe-b322-6706df1e108b",
+      "title": "[006] S002",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 19,
+      "ok": true,
+      "result": {
+        "metadataId": "0dd47117-439a-4ebe-b322-6706df1e108b",
+        "chunkCount": 43,
+        "segmentCount": 19
+      },
+      "started_at": "2026-06-25T22:37:27.941169+00:00",
+      "finished_at": "2026-06-25T22:37:36.149925+00:00"
+    },
+    {
+      "id": "20aa2b68-e2c2-459a-bfea-dd1f0b23bd6e",
+      "title": "[002] G001",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 23,
+      "ok": true,
+      "result": {
+        "metadataId": "20aa2b68-e2c2-459a-bfea-dd1f0b23bd6e",
+        "chunkCount": 49,
+        "segmentCount": 23
+      },
+      "started_at": "2026-06-25T22:37:36.149937+00:00",
+      "finished_at": "2026-06-25T22:37:45.541586+00:00"
+    },
+    {
+      "id": "623ce74a-e1e6-4240-8f5e-4df25f7571a8",
+      "title": "[012] S112",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 10,
+      "ok": true,
+      "result": {
+        "metadataId": "623ce74a-e1e6-4240-8f5e-4df25f7571a8",
+        "chunkCount": 23,
+        "segmentCount": 10
+      },
+      "started_at": "2026-06-25T22:37:45.541601+00:00",
+      "finished_at": "2026-06-25T22:37:52.267233+00:00"
+    },
+    {
+      "id": "7b5a94f4-85d1-40e3-a626-d39f872f97a6",
+      "title": "[028] A104",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 7,
+      "ok": true,
+      "result": {
+        "metadataId": "7b5a94f4-85d1-40e3-a626-d39f872f97a6",
+        "chunkCount": 16,
+        "segmentCount": 7
+      },
+      "started_at": "2026-06-25T22:37:52.267245+00:00",
+      "finished_at": "2026-06-25T22:37:58.969314+00:00"
+    },
+    {
+      "id": "c4f3dcfa-93aa-4bff-b9e6-4365b3cdb830",
+      "title": "[026] A102",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 4,
+      "ok": true,
+      "result": {
+        "metadataId": "c4f3dcfa-93aa-4bff-b9e6-4365b3cdb830",
+        "chunkCount": 11,
+        "segmentCount": 4
+      },
+      "started_at": "2026-06-25T22:37:58.969330+00:00",
+      "finished_at": "2026-06-25T22:38:03.332912+00:00"
+    },
+    {
+      "id": "f34f6f30-26ce-4f50-86e3-70e53a1218db",
+      "title": "[024] A100",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 11,
+      "ok": true,
+      "result": {
+        "metadataId": "f34f6f30-26ce-4f50-86e3-70e53a1218db",
+        "chunkCount": 24,
+        "segmentCount": 11
+      },
+      "started_at": "2026-06-25T22:38:03.332921+00:00",
+      "finished_at": "2026-06-25T22:38:09.631843+00:00"
+    },
+    {
+      "id": "20a24791-ea7c-4f00-ad2a-d65c76c7363e",
+      "title": "[036] P001",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 13,
+      "ok": true,
+      "result": {
+        "metadataId": "20a24791-ea7c-4f00-ad2a-d65c76c7363e",
+        "chunkCount": 28,
+        "segmentCount": 13
+      },
+      "started_at": "2026-06-25T22:38:09.631853+00:00",
+      "finished_at": "2026-06-25T22:38:16.469374+00:00"
+    },
+    {
+      "id": "6869ca41-4323-4ad7-8610-3cc45861a252",
+      "title": "[049] M112",
+      "family": "drawing_upload",
+      "status_before": "raw_ingested",
+      "mode": "run_embedder",
+      "segment_count_before": 1,
+      "ok": true,
+      "result": {
+        "metadataId": "6869ca41-4323-4ad7-8610-3cc45861a252",
+        "chunkCount": 2,
+        "segmentCount": 1
+      },
+      "started_at": "2026-06-25T22:38:16.469383+00:00",
+      "finished_at": "2026-06-25T22:38:20.188056+00:00"
+    },
+    {
+      "id": "4f1d136d-c016-42f6-a7e1-2a889a61285f",
+      "title": "[056] E001",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 23,
+      "ok": true,
+      "result": {
+        "metadataId": "4f1d136d-c016-42f6-a7e1-2a889a61285f",
+        "chunkCount": 48,
+        "segmentCount": 23
+      },
+      "started_at": "2026-06-25T22:38:20.188073+00:00",
+      "finished_at": "2026-06-25T22:38:30.119111+00:00"
+    },
+    {
+      "id": "37a6393b-bb03-4cf4-8174-5c9f285311be",
+      "title": "[015] S121",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 5,
+      "ok": true,
+      "result": {
+        "metadataId": "37a6393b-bb03-4cf4-8174-5c9f285311be",
+        "chunkCount": 12,
+        "segmentCount": 5
+      },
+      "started_at": "2026-06-25T22:38:30.119135+00:00",
+      "finished_at": "2026-06-25T22:38:35.960490+00:00"
+    },
+    {
+      "id": "07dff0db-a73f-4ad7-94eb-3d92342a8387",
+      "title": "[035] A602",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 12,
+      "ok": true,
+      "result": {
+        "metadataId": "07dff0db-a73f-4ad7-94eb-3d92342a8387",
+        "chunkCount": 26,
+        "segmentCount": 12
+      },
+      "started_at": "2026-06-25T22:38:35.960498+00:00",
+      "finished_at": "2026-06-25T22:38:42.114660+00:00"
+    },
+    {
+      "id": "429e9eaf-7235-4f0a-ac72-50cde1ef5739",
+      "title": "[037] P111",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 7,
+      "ok": true,
+      "result": {
+        "metadataId": "429e9eaf-7235-4f0a-ac72-50cde1ef5739",
+        "chunkCount": 16,
+        "segmentCount": 7
+      },
+      "started_at": "2026-06-25T22:38:42.114670+00:00",
+      "finished_at": "2026-06-25T22:38:47.136773+00:00"
+    },
+    {
+      "id": "837c0d0b-760f-4cd4-9de7-b819a7e11f39",
+      "title": "[039] P411",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "mode": "run_embedder",
+      "segment_count_before": 6,
+      "ok": true,
+      "result": {
+        "metadataId": "837c0d0b-760f-4cd4-9de7-b819a7e11f39",
+        "chunkCount": 14,
+        "segmentCount": 6
+      },
+      "started_at": "2026-06-25T22:38:47.136784+00:00",
+      "finished_at": "2026-06-25T22:38:51.914112+00:00"
+    }
+  ]
+}

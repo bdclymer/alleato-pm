@@ -371,12 +371,40 @@ Evidence directory:
   - [sharepoint-pdf-local-pipeline-proof-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-local-pipeline-proof-aai-669.json)
   - [sharepoint-pdf-local-pipeline-postcheck-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-local-pipeline-postcheck-aai-669.json)
 
+### 2026-06-25: AAI-669 SharePoint/PDF Backfill And Guardrail Checkpoint
+
+- Deployed the embedder fix to live Render backend:
+  - Service: `alleato-backend`
+  - Deploy: `dep-d8uqhm3rjlhs73bkjld0`
+  - Commit: `df7491e71627416a1d06a24a8a640adf4ede0c9f`
+- Live backend batch 1 repaired 10/10 drawing uploads through `/api/pipeline/process`; all reached `complete`, embedded chunks, and vision chunks.
+- Live backend batch 2 queued 20 additional rows; the poll showed 11/20 embedded, and pending trace isolated a citation-metadata orphan class.
+- Added a shared RAG chunk-integrity guardrail for document-like chunks without `rag_document_metadata`.
+- Repaired 34/34 recent orphan metadata rows with the canonical embedder.
+- `node scripts/verify/verify_rag_chunk_integrity.mjs --days=2` now passes.
+- Direct canonical batch 3 repaired 20/20 additional embedding gaps.
+- Manual upload batch 4 processed 19/19 PDF uploads with no row failures.
+- Current recent PDF/document inventory after batch 4:
+  - 66 active gaps remain, down from 156 after the deploy inventory.
+  - 12 embedding gaps remain: 5 `.txt` test uploads and 7 OneDrive `ocr_failed` rows.
+  - 54 vision gaps remain: 29 OneDrive embedded drawings, 22 Outlook attachments, and 3 drawing uploads.
+- Evidence:
+  - [render-backend-deploy-live-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/render-backend-deploy-live-aai-669.json)
+  - [pdf-backfill-live-batch-second-poll-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-live-batch-second-poll-aai-669.json)
+  - [pdf-backfill-live-batch-2-second-poll-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-live-batch-2-second-poll-aai-669.json)
+  - [pdf-backfill-live-batch-2-pending-trace-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-live-batch-2-pending-trace-aai-669.json)
+  - [pdf-backfill-direct-canonical-batch-3-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-direct-canonical-batch-3-aai-669.json)
+  - [pdf-backfill-orphan-metadata-repair-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-orphan-metadata-repair-aai-669.json)
+  - [rag-chunk-integrity-after-orphan-repair-aai-669.txt](../evidence/2026-06-25-ai-rag-production-finalization/rag-chunk-integrity-after-orphan-repair-aai-669.txt)
+  - [pdf-backfill-manual-upload-batch-4-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-manual-upload-batch-4-aai-669.json)
+  - [pdf-backfill-candidates-after-manual-batch-4-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-manual-batch-4-aai-669.json)
+
 ## Remaining Blockers
 
 - No active Fireflies meeting error backlog remains inside the two-month operational concern window.
 - No active Outlook/Teams shared queue backlog remains inside the one-week operational concern window.
-- SharePoint source sync/retrieval is healthy, but PDF/upload backfill remains after the embedder fix deploys:
-  - recent drawing uploads with `raw_ingested`/`segmented`/`ocr_failed`
-  - recent manual PDF uploads with `uploaded`/`segmented`
-  - recent OneDrive PDFs with `ocr_failed`
-  - recent Outlook attachments with `metadata_only`
+- SharePoint source sync/retrieval is healthy.
+- PDF/upload backfill has narrowed to:
+  - 7 OneDrive PDFs with `ocr_failed` that require Graph download/OCR failure inspection before retry.
+  - 54 vision gaps across OneDrive, Outlook attachments, and drawing uploads.
+  - 5 `.txt` manual test uploads that should be marked terminal/not-vectorizable or excluded from the PDF gate.

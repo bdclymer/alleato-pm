@@ -1,0 +1,308 @@
+{
+  "generated_at": "2026-06-25T22:27:02.425Z",
+  "backendUrl": "https://alleato-backend-rbnj.onrender.com",
+  "sourceFile": "docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-live-batch-aai-669.json",
+  "batch_count": 20,
+  "results": [
+    {
+      "id": "drawing-revision:124fa2b9-3233-4892-af3c-04175b324310",
+      "title": "[004] G003 - ACCESSIBILITY.pdf",
+      "family": "drawing_upload",
+      "status_before": "ocr_failed",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "drawing-revision:124fa2b9-3233-4892-af3c-04175b324310"
+      },
+      "started_at": "2026-06-25T22:26:42.072Z",
+      "finished_at": "2026-06-25T22:26:42.630Z"
+    },
+    {
+      "id": "drawing-revision:cdd61555-6cda-411a-9dff-a50a24d24085",
+      "title": "[003] G002 - CODE SUMMARY + LIFE SAFETY.pdf",
+      "family": "drawing_upload",
+      "status_before": "raw_ingested",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "drawing-revision:cdd61555-6cda-411a-9dff-a50a24d24085"
+      },
+      "started_at": "2026-06-25T22:26:43.382Z",
+      "finished_at": "2026-06-25T22:26:43.618Z"
+    },
+    {
+      "id": "drawing-revision:381623a9-19da-4688-8394-2683bb76db43",
+      "title": "[002] G001 - INDEX SHEET.pdf",
+      "family": "drawing_upload",
+      "status_before": "raw_ingested",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "drawing-revision:381623a9-19da-4688-8394-2683bb76db43"
+      },
+      "started_at": "2026-06-25T22:26:44.369Z",
+      "finished_at": "2026-06-25T22:26:44.623Z"
+    },
+    {
+      "id": "drawing-revision:0360a3da-754f-4e14-b464-7c6512a174ec",
+      "title": "[001] G000 - COVER PAGE.pdf",
+      "family": "drawing_upload",
+      "status_before": "raw_ingested",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "drawing-revision:0360a3da-754f-4e14-b464-7c6512a174ec"
+      },
+      "started_at": "2026-06-25T22:26:45.374Z",
+      "finished_at": "2026-06-25T22:26:45.622Z"
+    },
+    {
+      "id": "drawing-revision:bca704c9-5240-4947-8d91-14af39c6d551",
+      "title": "[018] P901 - PLUMBING SPECIFICATIONS.pdf",
+      "family": "drawing_upload",
+      "status_before": "raw_ingested",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "drawing-revision:bca704c9-5240-4947-8d91-14af39c6d551"
+      },
+      "started_at": "2026-06-25T22:26:46.372Z",
+      "finished_at": "2026-06-25T22:26:46.598Z"
+    },
+    {
+      "id": "drawing-revision:93269d48-e5c0-49ca-abdf-d0d947b24665",
+      "title": "[027] E300 - OVERALL LIGHTING.pdf",
+      "family": "drawing_upload",
+      "status_before": "raw_ingested",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "drawing-revision:93269d48-e5c0-49ca-abdf-d0d947b24665"
+      },
+      "started_at": "2026-06-25T22:26:47.348Z",
+      "finished_at": "2026-06-25T22:26:47.618Z"
+    },
+    {
+      "id": "drawing-revision:947c46ce-9dc5-44bf-a420-337322d86d93",
+      "title": "[022] M601 - HVAC SCHEDULES & DETAILS.pdf",
+      "family": "drawing_upload",
+      "status_before": "raw_ingested",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "drawing-revision:947c46ce-9dc5-44bf-a420-337322d86d93"
+      },
+      "started_at": "2026-06-25T22:26:48.371Z",
+      "finished_at": "2026-06-25T22:26:48.596Z"
+    },
+    {
+      "id": "drawing-revision:fffc9503-e347-4a4b-a3a2-cb237bb0ebad",
+      "title": "[026] E201 - OVERALL MECHANICAL POWER.pdf",
+      "family": "drawing_upload",
+      "status_before": "raw_ingested",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "drawing-revision:fffc9503-e347-4a4b-a3a2-cb237bb0ebad"
+      },
+      "started_at": "2026-06-25T22:26:49.347Z",
+      "finished_at": "2026-06-25T22:26:49.586Z"
+    },
+    {
+      "id": "drawing-revision:3e9b3a9c-e2e6-4b23-990e-2c7e04ce4e35",
+      "title": "[024] E001 - SYMBOLS, ABBREVIATIONS AND GENERAL SPECIFICATIONS.pdf",
+      "family": "drawing_upload",
+      "status_before": "raw_ingested",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "drawing-revision:3e9b3a9c-e2e6-4b23-990e-2c7e04ce4e35"
+      },
+      "started_at": "2026-06-25T22:26:50.337Z",
+      "finished_at": "2026-06-25T22:26:50.686Z"
+    },
+    {
+      "id": "drawing-revision:1a4dbe62-2b9d-4f4d-a0fe-204f22805101",
+      "title": "[021] M101 - FIRST FLOOR HVAC PLAN.pdf",
+      "family": "drawing_upload",
+      "status_before": "ocr_failed",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "drawing-revision:1a4dbe62-2b9d-4f4d-a0fe-204f22805101"
+      },
+      "started_at": "2026-06-25T22:26:51.438Z",
+      "finished_at": "2026-06-25T22:26:51.662Z"
+    },
+    {
+      "id": "drawing-revision:7a0a2772-031b-4715-8961-f12ce2c86519",
+      "title": "[025] E200 - OVERALL POWER.pdf",
+      "family": "drawing_upload",
+      "status_before": "raw_ingested",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "drawing-revision:7a0a2772-031b-4715-8961-f12ce2c86519"
+      },
+      "started_at": "2026-06-25T22:26:52.413Z",
+      "finished_at": "2026-06-25T22:26:52.661Z"
+    },
+    {
+      "id": "drawing-revision:6c45a6c7-7d42-4d7a-abbb-61dc09a5db14",
+      "title": "[020] M001 - HVAC GENERAL NOTES.pdf",
+      "family": "drawing_upload",
+      "status_before": "raw_ingested",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "drawing-revision:6c45a6c7-7d42-4d7a-abbb-61dc09a5db14"
+      },
+      "started_at": "2026-06-25T22:26:53.411Z",
+      "finished_at": "2026-06-25T22:26:53.632Z"
+    },
+    {
+      "id": "drawing-revision:3df6c2e1-cb4b-48a5-bafb-93f671c7199a",
+      "title": "[019] MD101 - FIRST FLOOR HVAC DEMOLITION PLAN.pdf",
+      "family": "drawing_upload",
+      "status_before": "raw_ingested",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "drawing-revision:3df6c2e1-cb4b-48a5-bafb-93f671c7199a"
+      },
+      "started_at": "2026-06-25T22:26:54.384Z",
+      "finished_at": "2026-06-25T22:26:54.615Z"
+    },
+    {
+      "id": "44968194-e480-46db-a0dc-63df99633c4a",
+      "title": "[047] M002",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "44968194-e480-46db-a0dc-63df99633c4a"
+      },
+      "started_at": "2026-06-25T22:26:55.367Z",
+      "finished_at": "2026-06-25T22:26:55.632Z"
+    },
+    {
+      "id": "a88b247e-ca87-4f40-9837-6ca09fd62522",
+      "title": "[063] E802",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "a88b247e-ca87-4f40-9837-6ca09fd62522"
+      },
+      "started_at": "2026-06-25T22:26:56.385Z",
+      "finished_at": "2026-06-25T22:26:56.820Z"
+    },
+    {
+      "id": "26ceec3d-4a44-4169-be0e-38fe645bed5f",
+      "title": "[034] A601",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "26ceec3d-4a44-4169-be0e-38fe645bed5f"
+      },
+      "started_at": "2026-06-25T22:26:57.573Z",
+      "finished_at": "2026-06-25T22:26:57.820Z"
+    },
+    {
+      "id": "7197d347-dd42-44ce-9aea-e427c7214e64",
+      "title": "[003] G002",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "7197d347-dd42-44ce-9aea-e427c7214e64"
+      },
+      "started_at": "2026-06-25T22:26:58.572Z",
+      "finished_at": "2026-06-25T22:26:58.799Z"
+    },
+    {
+      "id": "9a049661-421c-4d55-94ce-d889c20de128",
+      "title": "[059] E403",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "9a049661-421c-4d55-94ce-d889c20de128"
+      },
+      "started_at": "2026-06-25T22:26:59.551Z",
+      "finished_at": "2026-06-25T22:26:59.760Z"
+    },
+    {
+      "id": "9f6e08d0-5ea9-408a-928e-9d78d8051045",
+      "title": "[050] M411",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "9f6e08d0-5ea9-408a-928e-9d78d8051045"
+      },
+      "started_at": "2026-06-25T22:27:00.511Z",
+      "finished_at": "2026-06-25T22:27:00.713Z"
+    },
+    {
+      "id": "5b515bd2-06ef-43db-807e-716848b26443",
+      "title": "[021] AD102",
+      "family": "drawing_upload",
+      "status_before": "complete",
+      "disposition_before": "missing_embedding",
+      "ok": true,
+      "http_status": 200,
+      "body": {
+        "status": "queued",
+        "metadataId": "5b515bd2-06ef-43db-807e-716848b26443"
+      },
+      "started_at": "2026-06-25T22:27:01.463Z",
+      "finished_at": "2026-06-25T22:27:01.674Z"
+    }
+  ]
+}

@@ -42,6 +42,15 @@ const suspiciousPatterns = [
   },
 ];
 
+const metadataRequiredSourceTypes = [
+  "document",
+  "email",
+  "meeting_segment_summary",
+  "meeting_summary",
+  "meeting_transcript",
+  "vision_page_summary",
+];
+
 function loadEnvFile(filePath) {
   if (!fs.existsSync(filePath)) return;
   for (const line of fs.readFileSync(filePath, "utf8").split(/\r?\n/)) {
@@ -167,6 +176,24 @@ async function sequentialFailures(client, whereSql) {
   return rows;
 }
 
+async function orphanMetadataFailures(client, whereSql) {
+  const chunkWhereSql = whereSql.replace(/\bupdated_at\b/g, "c.updated_at");
+  const wherePrefix = chunkWhereSql ? `${chunkWhereSql} and` : "where";
+  const { rows } = await client.query(`
+    select c.source_type,
+           count(distinct c.document_id)::int as docs,
+           count(*)::int as chunks,
+           max(c.updated_at) as newest_chunk
+    from public.document_chunks c
+    left join public.rag_document_metadata m on m.id = c.document_id
+    ${wherePrefix} c.source_type = any($1::text[])
+      and m.id is null
+    group by c.source_type
+    order by chunks desc, c.source_type
+  `, [metadataRequiredSourceTypes]);
+  return rows;
+}
+
 async function examples(client, patternSql, whereSql) {
   const { rows } = await client.query(`
     select source_type,
@@ -179,6 +206,26 @@ async function examples(client, patternSql, whereSql) {
     order by updated_at desc nulls last, created_at desc nulls last
     limit 10
   `);
+  return rows;
+}
+
+async function orphanMetadataExamples(client, whereSql) {
+  const chunkWhereSql = whereSql.replace(/\bupdated_at\b/g, "c.updated_at");
+  const wherePrefix = chunkWhereSql ? `${chunkWhereSql} and` : "where";
+  const { rows } = await client.query(`
+    select c.source_type,
+           c.document_id,
+           count(*)::int as chunks,
+           count(*) filter(where c.embedding is not null)::int as embedded_chunks,
+           max(c.updated_at) as newest_chunk
+    from public.document_chunks c
+    left join public.rag_document_metadata m on m.id = c.document_id
+    ${wherePrefix} c.source_type = any($1::text[])
+      and m.id is null
+    group by c.source_type, c.document_id
+    order by newest_chunk desc nulls last
+    limit 10
+  `, [metadataRequiredSourceTypes]);
   return rows;
 }
 
@@ -199,6 +246,7 @@ async function main() {
     const fatal = await patternCounts(client, fatalPatterns, whereSql);
     const suspicious = await patternCounts(client, suspiciousPatterns, whereSql);
     const nonSequential = await sequentialFailures(client, whereSql);
+    const orphanMetadata = await orphanMetadataFailures(client, whereSql);
     const missingEmbedding = summary.filter((row) => row.missing_embedding_chunks > 0);
 
     console.log(`# RAG Chunk Integrity${days > 0 ? ` (${days}d)` : ""}`);
@@ -266,6 +314,33 @@ async function main() {
         ["Source", "Docs"],
         nonSequential.map((row) => [row.source_type, fmt(row.docs)]),
       ));
+    }
+    if (orphanMetadata.length) {
+      failures.push("Document-like chunks without rag_document_metadata rows found.");
+      console.error("\nOrphan chunk metadata:");
+      console.error(mdTable(
+        ["Source", "Docs", "Chunks", "Newest Chunk"],
+        orphanMetadata.map((row) => [
+          row.source_type,
+          fmt(row.docs),
+          fmt(row.chunks),
+          row.newest_chunk,
+        ]),
+      ));
+      const orphanExamples = await orphanMetadataExamples(client, whereSql);
+      if (orphanExamples.length) {
+        console.error("\nOrphan metadata examples:");
+        console.error(mdTable(
+          ["Source", "Document", "Chunks", "Embedded", "Newest Chunk"],
+          orphanExamples.map((row) => [
+            row.source_type,
+            row.document_id,
+            fmt(row.chunks),
+            fmt(row.embedded_chunks),
+            row.newest_chunk,
+          ]),
+        ));
+      }
     }
 
     if (failures.length) {
