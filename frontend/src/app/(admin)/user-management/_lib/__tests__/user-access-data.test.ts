@@ -1,5 +1,7 @@
 import {
   getProjectRoleTemplates,
+  toAccessSummary,
+  type PermissionUser,
 } from "../user-access-data";
 import type { PermissionTemplate } from "@/lib/permissions-shared";
 
@@ -53,5 +55,49 @@ describe("getProjectRoleTemplates", () => {
       "pm-1",
       "super",
     ]);
+  });
+});
+
+function permissionUser(overrides: Partial<PermissionUser> = {}): PermissionUser {
+  return {
+    personId: "person-1",
+    authUserId: "auth-1",
+    firstName: "Megan",
+    lastName: "Harrison",
+    email: "megan@example.com",
+    profilePhotoUrl: null,
+    isAdmin: true,
+    companyTemplateId: null,
+    companyTemplateName: null,
+    teamsAccount: null,
+    memberships: [],
+    granularOverrides: [],
+    ...overrides,
+  };
+}
+
+describe("toAccessSummary", () => {
+  it("preserves linked Teams account details", () => {
+    const summary = toAccessSummary(
+      permissionUser({
+        teamsAccount: {
+          platformUserId: "29:teams-user",
+          displayName: "Megan Harrison",
+          linkedAt: "2026-06-25T16:00:00.000Z",
+        },
+      }),
+    );
+
+    expect(summary.teamsAccount).toEqual({
+      platformUserId: "29:teams-user",
+      displayName: "Megan Harrison",
+      linkedAt: "2026-06-25T16:00:00.000Z",
+    });
+  });
+
+  it("keeps unlinked Teams account state explicit", () => {
+    const summary = toAccessSummary(permissionUser({ teamsAccount: null }));
+
+    expect(summary.teamsAccount).toBeNull();
   });
 });

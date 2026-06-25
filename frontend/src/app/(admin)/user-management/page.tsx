@@ -167,6 +167,8 @@ function getUserSortValue(user: UserAccessSummary, sortBy: string) {
       return user.primaryTemplateName;
     case "email":
       return user.email;
+    case "teams":
+      return user.teamsAccount?.displayName ?? user.teamsAccount?.platformUserId ?? "";
     case "projects":
       return user.projectCount;
     case "exceptions":
@@ -218,7 +220,7 @@ export default function PermissionsAdminPage() {
       search: "",
       sortBy: "name",
       sortDirection: "asc",
-      visibleColumns: ["name", "email", "role", "projects", "exceptions"],
+      visibleColumns: ["name", "email", "role", "teams", "projects", "exceptions"],
       filters: {},
     },
   });
@@ -317,6 +319,8 @@ export default function PermissionsAdminPage() {
       return [
         user.fullName,
         user.email,
+        user.teamsAccount?.displayName,
+        user.teamsAccount?.platformUserId,
         user.primaryTemplateName,
         projectNames,
       ]
@@ -392,6 +396,27 @@ export default function PermissionsAdminPage() {
             )}
           </div>
         ),
+      },
+      {
+        id: "teams",
+        label: "Teams Account",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (user) =>
+          user.teamsAccount?.displayName ?? user.teamsAccount?.platformUserId ?? "",
+        render: (user) => {
+          if (!user.teamsAccount) {
+            return <span className="text-sm text-muted-foreground">Not linked</span>;
+          }
+
+          return (
+            <div className="min-w-0">
+              <span className="block truncate text-sm text-foreground">
+                {user.teamsAccount.displayName || "Linked"}
+              </span>
+            </div>
+          );
+        },
       },
       {
         id: "projects",

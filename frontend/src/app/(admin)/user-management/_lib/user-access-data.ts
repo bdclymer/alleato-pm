@@ -18,6 +18,11 @@ export type PermissionUser = {
   isAdmin: boolean;
   companyTemplateId: string | null;
   companyTemplateName: string | null;
+  teamsAccount: {
+    platformUserId: string;
+    displayName: string | null;
+    linkedAt: string;
+  } | null;
   memberships: Array<{
     projectId: number | string;
     projectName: string | null;
@@ -62,6 +67,7 @@ export type UserAccessSummary = {
   isAdmin: boolean;
   companyTemplateId: string | null;
   companyTemplateName: string | null;
+  teamsAccount: PermissionUser["teamsAccount"];
   projectCount: number;
   assignedProjectCount: number;
   missingTemplateCount: number;
@@ -142,6 +148,7 @@ export function toAccessSummary(user: PermissionUser): UserAccessSummary {
     isAdmin: user.isAdmin,
     companyTemplateId: user.companyTemplateId,
     companyTemplateName: user.companyTemplateName,
+    teamsAccount: user.teamsAccount ?? null,
     projectCount: user.memberships.length,
     assignedProjectCount,
     missingTemplateCount,

@@ -28,6 +28,13 @@ type AuthAvatarLookup = {
   error: string | null;
 };
 
+type TeamsAccountLookup = {
+  supabase_user_id: string;
+  platform_user_id: string;
+  display_name: string | null;
+  created_at: string;
+};
+
 function getAuthMetadataAvatarUrl(metadata: Record<string, unknown> | null | undefined) {
   const avatarUrl = metadata?.avatar_url;
   const picture = metadata?.picture;
@@ -105,7 +112,14 @@ export const GET = withApiGuardrails(
 
     const personIds = (people ?? []).map((p) => p.id);
 
-    const [profilesResult, membershipsResult, companyTemplatesResult, granularOverridesResult, authAvatarLookups] = await Promise.all([
+    const [
+      profilesResult,
+      membershipsResult,
+      companyTemplatesResult,
+      granularOverridesResult,
+      teamsMappingsResult,
+      authAvatarLookups,
+    ] = await Promise.all([
       authIds.length
         ? supabase
             .from("user_profiles")
@@ -136,6 +150,14 @@ export const GET = withApiGuardrails(
             .in("person_id", personIds)
         : Promise.resolve({ data: [], error: null }),
       authIds.length
+        ? service
+            .from("bot_user_mappings")
+            .select("supabase_user_id, platform_user_id, display_name, created_at")
+            .eq("platform", "teams")
+            .in("supabase_user_id", authIds)
+            .order("created_at", { ascending: false })
+        : Promise.resolve({ data: [] as TeamsAccountLookup[], error: null }),
+      authIds.length
         ? Promise.all(
             authIds.map(async (authUserId): Promise<AuthAvatarLookup> => {
               const { data, error } = await service.auth.admin.getUserById(authUserId);
@@ -157,6 +179,15 @@ export const GET = withApiGuardrails(
           )
         : Promise.resolve([] as AuthAvatarLookup[]),
     ]);
+
+    if (teamsMappingsResult.error) {
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "permissions/users#GET",
+        message: "Failed to load Teams linked accounts.",
+        details: teamsMappingsResult.error,
+      });
+    }
 
     const profileMap = new Map<string, boolean>();
     for (const row of profilesResult.data ?? []) {
@@ -186,6 +217,20 @@ export const GET = withApiGuardrails(
     }>) {
       const tpl = Array.isArray(row.template) ? row.template[0] : row.template;
       companyTemplateMap.set(row.person_id, tpl ?? null);
+    }
+
+    const teamsAccountByAuthUser = new Map<
+      string,
+      { platformUserId: string; displayName: string | null; linkedAt: string }
+    >();
+    for (const row of (teamsMappingsResult.data ?? []) as TeamsAccountLookup[]) {
+      if (teamsAccountByAuthUser.has(row.supabase_user_id)) continue;
+
+      teamsAccountByAuthUser.set(row.supabase_user_id, {
+        platformUserId: row.platform_user_id,
+        displayName: row.display_name ?? null,
+        linkedAt: row.created_at,
+      });
     }
 
     const membershipsByPerson = new Map<
@@ -265,6 +310,9 @@ export const GET = withApiGuardrails(
         isAdmin: p.auth_user_id ? profileMap.get(p.auth_user_id) === true : false,
         companyTemplateId: companyTemplate?.id ?? null,
         companyTemplateName: companyTemplate?.name ?? null,
+        teamsAccount: p.auth_user_id
+          ? (teamsAccountByAuthUser.get(p.auth_user_id) ?? null)
+          : null,
         memberships: membershipsByPerson.get(p.id) ?? [],
         granularOverrides: granularOverridesByPerson.get(p.id) ?? [],
       };
