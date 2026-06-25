@@ -28,6 +28,77 @@ export interface DeletedDrawingRow extends DrawingLogTableRow {
   deletedAt: string | null;
 }
 
+export interface DrawingIntelligenceResponse {
+  drawing: {
+    id: string;
+    number: string | null;
+    title: string | null;
+  };
+  revision: {
+    id: string;
+    revision_number: string;
+    status: string;
+    is_current_revision: boolean;
+    document_metadata_id: string | null;
+    ocr_confidence_label: string;
+    ocr_confidence_score: number | null;
+    ocr_confidence_source: string;
+    created_at: string;
+  } | null;
+  documentMetadata: {
+    id: string;
+    title: string | null;
+    status: string | null;
+    documentType: string | null;
+    sourceSystem: string | null;
+    fileName: string | null;
+    storageBucket: string | null;
+    sourcePath: string | null;
+    url: string | null;
+    createdAt: string | null;
+  } | null;
+  ocr: {
+    ready: boolean;
+    textLength: number;
+    textPreview: string | null;
+  };
+  vision: {
+    ready: boolean;
+    pageCount: number;
+    pages: Array<{
+      pageNumber: number;
+      sheetNumber: string | null;
+      sheetTitle: string | null;
+      discipline: string | null;
+      scale: string | null;
+      detailReferences: string[];
+      impliedSubmittals: string[];
+      notesAndRequirements: string[];
+      aiSummary: string | null;
+      rawExtraction: unknown;
+      visionModel: string | null;
+      processedAt: string | null;
+    }>;
+  };
+  retrieval: {
+    ready: boolean;
+    chunkCount: number;
+    chunks: Array<{
+      chunkIndex: number | null;
+      docType: string | null;
+      textPreview: string | null;
+    }>;
+  };
+  readiness: {
+    state: "ready" | "partial" | "not_ready" | "failed";
+    ocrTextReady: boolean;
+    visionReady: boolean;
+    embeddedReady: boolean;
+    aiReviewReady: boolean;
+    reasons: string[];
+  };
+}
+
 /**
  * React Query hook for fetching drawings list
  */
@@ -73,6 +144,21 @@ export function useDrawing(projectId: string, drawingId: string) {
         `/api/projects/${projectId}/drawings/${drawingId}`,
       ),
     enabled: !!projectId && !!drawingId,
+  });
+}
+
+/**
+ * React Query hook for drawing OCR, visual AI, and retrieval readiness evidence.
+ */
+export function useDrawingIntelligence(projectId: string, drawingId: string) {
+  return useQuery<DrawingIntelligenceResponse>({
+    queryKey: ["drawing-intelligence", projectId, drawingId],
+    queryFn: async () =>
+      apiFetch<DrawingIntelligenceResponse>(
+        `/api/projects/${projectId}/drawings/${drawingId}/intelligence`,
+      ),
+    enabled: !!projectId && !!drawingId,
+    staleTime: 1000 * 60,
   });
 }
 
