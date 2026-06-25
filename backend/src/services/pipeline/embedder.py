@@ -242,7 +242,12 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     # 1. Fetch metadata
     resp = (
         client.table("document_metadata")
-        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,summary,overview,status,fireflies_id,participants,participants_array,source_metadata")
+        .select(
+            "id,title,type,category,source,source_system,project_id,date,captured_at,"
+            "created_at,summary,overview,status,fireflies_id,participants,"
+            "participants_array,source_metadata,content,raw_text,file_name,file_path,"
+            "storage_bucket,source_web_url,url,document_type"
+        )
         .eq("id", metadata_id)
         .single()
         .execute()
@@ -513,12 +518,35 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
 
     # 12. Update metadata status
     client.table("document_metadata").update({"status": "embedded"}).eq("id", metadata_id).execute()
-    rag_client.table("rag_document_metadata").update(
-        {
-            "embedding_status": "embedded",
-            **({"summary_embedding": summary_embedding} if summary_embedding is not None else {}),
-        }
-    ).eq("id", metadata_id).execute()
+    rag_metadata_update = {
+        "id": metadata_id,
+        "app_document_id": metadata_id,
+        "title": title,
+        "source": metadata.get("source"),
+        "source_system": metadata.get("source_system"),
+        "type": metadata.get("type"),
+        "category": metadata.get("category"),
+        "document_type": metadata.get("document_type"),
+        "project_id": project_id,
+        "storage_bucket": metadata.get("storage_bucket"),
+        "storage_path": metadata.get("file_path"),
+        "source_web_url": metadata.get("source_web_url"),
+        "url": metadata.get("url"),
+        "content": metadata.get("content"),
+        "raw_text": metadata.get("raw_text"),
+        "summary": metadata.get("summary"),
+        "overview": metadata.get("overview"),
+        "parsing_status": metadata.get("status"),
+        "embedding_status": "embedded",
+        "source_metadata": metadata.get("source_metadata"),
+    }
+    if summary_embedding is not None:
+        rag_metadata_update["summary_embedding"] = summary_embedding
+
+    rag_client.table("rag_document_metadata").upsert(
+        rag_metadata_update,
+        on_conflict="id",
+    ).execute()
 
     # 13. Advance job stage
     update_ingestion_job_state(

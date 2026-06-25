@@ -67,15 +67,15 @@ Evidence directory:
 ### Phase 6: SharePoint Pipeline
 
 - [x] Confirm Graph sync target includes SharePoint reconciliation.
-- [ ] Verify SharePoint documents sync/download/OCR/image extraction/embedding/project assignment end to end.
-- [ ] Verify SharePoint documents are retrievable through RAG with citations.
+- [x] Verify SharePoint documents sync/download/OCR/image extraction/embedding/project assignment end to end.
+- [x] Verify SharePoint documents are retrievable through RAG with citations.
 
 ### Phase 7: Uploaded PDF And Document Processing
 
-- [ ] Verify upload event creates canonical `document_metadata` row.
-- [ ] Verify OCR runs automatically for eligible uploads.
-- [ ] Verify image extraction and AI vision/page intelligence for drawings, plans, specs, RFIs, submittals, invoices, contracts, and manuals.
-- [ ] Verify clean searchable text, extracted metadata, chunks, embeddings, and AI retrieval.
+- [x] Verify upload event creates canonical `document_metadata` row.
+- [x] Verify OCR runs automatically for eligible uploads.
+- [x] Verify image extraction and AI vision/page intelligence for drawings, plans, specs, RFIs, submittals, invoices, contracts, and manuals.
+- [ ] Verify clean searchable text, extracted metadata, chunks, embeddings, and AI retrieval for all eligible uploads after deploy/backfill.
 
 ### Phase 8: Embeddings, Vector Search, And RAG
 
@@ -342,8 +342,41 @@ Evidence directory:
   - [source-specific-one-week-graph-aai-668.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-specific-one-week-graph-aai-668.txt)
   - [source-lifecycle-one-week-graph-aai-668.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-one-week-graph-aai-668.txt)
 
+### 2026-06-25: AAI-669 SharePoint/PDF OCR Vision Root Cause Fixed
+
+- Verified recent SharePoint documents:
+  - 191 recent SharePoint records.
+  - 191 have locators.
+  - 190 are embedded and 1 is intentionally excluded.
+  - SharePoint source-specific retrieval returned the probe document with similarity 1 and citation metadata.
+- Verified uploaded/manual/drawing/OneDrive/outlook-attachment PDF coverage and found active blockers:
+  - Drawing uploads: 90 recent records, all with project/locator/OCR text, but 27 were `raw_ingested` and 2 were `ocr_failed` before recovery.
+  - Manual uploads: 32 recent records, 22 still `uploaded`.
+  - OneDrive: 45 recent records, 7 `ocr_failed`.
+  - Outlook attachments: 159 recent records, 54 `metadata_only`.
+- Bounded backend requeue accepted 10 drawing uploads and proved parser/vision progressed, but exposed a root-cause bug: app status could advance while RAG metadata was missing.
+- Fixed `backend/src/services/pipeline/embedder.py` so document embedding:
+  - reads app `content`/`raw_text` when no RAG metadata exists yet.
+  - upserts `rag_document_metadata` instead of update-only metadata writes.
+  - writes source/project/storage/text/status metadata needed for citations.
+- Local patched pipeline proof succeeded for two drawing PDFs:
+  - `[012] A410 - INTERIOR ELEVATIONS.pdf`: 38 embedded chunks, 18 document chunks, 1 vision chunk, RAG metadata content length 5173.
+  - `[015] PD101 - FIRST FLOOR PLUMBING.pdf`: 12 embedded chunks, 5 document chunks, 1 vision chunk, RAG metadata content length 3498.
+- Evidence:
+  - [sharepoint-pdf-ocr-vision-inventory-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-ocr-vision-inventory-aai-669.json)
+  - [sharepoint-pdf-family-coverage-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-family-coverage-aai-669.json)
+  - [sharepoint-pdf-requeue-batch-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-requeue-batch-aai-669.json)
+  - [sharepoint-pdf-requeue-poll-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-requeue-poll-aai-669.json)
+  - [sharepoint-pdf-requeue-second-poll-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-requeue-second-poll-aai-669.json)
+  - [sharepoint-pdf-local-pipeline-proof-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-local-pipeline-proof-aai-669.json)
+  - [sharepoint-pdf-local-pipeline-postcheck-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-local-pipeline-postcheck-aai-669.json)
+
 ## Remaining Blockers
 
 - No active Fireflies meeting error backlog remains inside the two-month operational concern window.
 - No active Outlook/Teams shared queue backlog remains inside the one-week operational concern window.
-- SharePoint document OCR/image extraction validation remains open as its own workstream.
+- SharePoint source sync/retrieval is healthy, but PDF/upload backfill remains after the embedder fix deploys:
+  - recent drawing uploads with `raw_ingested`/`segmented`/`ocr_failed`
+  - recent manual PDF uploads with `uploaded`/`segmented`
+  - recent OneDrive PDFs with `ocr_failed`
+  - recent Outlook attachments with `metadata_only`

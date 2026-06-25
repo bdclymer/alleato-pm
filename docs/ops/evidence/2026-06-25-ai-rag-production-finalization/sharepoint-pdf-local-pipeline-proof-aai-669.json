@@ -1,0 +1,91 @@
+{
+  "generated_at": "2026-06-25T22:14:06.315083+00:00",
+  "results": [
+    {
+      "metadata_id": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+      "started_at": "2026-06-25T22:12:16.860101+00:00",
+      "ok": true,
+      "result": {
+        "metadataId": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+        "parser": {
+          "metadataId": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+          "segmentCount": 18,
+          "summaryLength": 2861,
+          "extractedChars": 5173
+        },
+        "vision": {
+          "pages_analyzed": 1,
+          "total_pages": 1
+        },
+        "embedder": {
+          "metadataId": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+          "chunkCount": 38,
+          "segmentCount": 18
+        },
+        "extractor": {
+          "metadataId": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+          "insights": 0,
+          "decisions": 0,
+          "risks": 0,
+          "opportunities": 0,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      }
+    },
+    {
+      "metadata_id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+      "started_at": "2026-06-25T22:13:19.912868+00:00",
+      "ok": true,
+      "result": {
+        "metadataId": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+        "parser": {
+          "metadataId": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+          "segmentCount": 5,
+          "summaryLength": 2306,
+          "extractedChars": 3498
+        },
+        "vision": {
+          "pages_analyzed": 1,
+          "total_pages": 1
+        },
+        "embedder": {
+          "metadataId": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+          "chunkCount": 12,
+          "segmentCount": 5
+        },
+        "extractor": {
+          "metadataId": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+          "insights": 16,
+          "decisions": 7,
+          "risks": 5,
+          "opportunities": 4,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      }
+    }
+  ]
+}

@@ -29100,6 +29100,230 @@ export type Database = {
           },
         ]
       }
+      submittal_ai_review_checks: {
+        Row: {
+          check_type: string
+          confidence: number | null
+          created_at: string
+          expected_value: string | null
+          finding: string
+          id: string
+          missing_data: Json
+          project_id: number
+          recommendation: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_disposition: string
+          reviewer_notes: string | null
+          run_id: string
+          severity: string
+          source_references: Json
+          status: string
+          submittal_id: string
+          submitted_value: string | null
+          title: string
+        }
+        Insert: {
+          check_type: string
+          confidence?: number | null
+          created_at?: string
+          expected_value?: string | null
+          finding: string
+          id?: string
+          missing_data?: Json
+          project_id: number
+          recommendation?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_disposition?: string
+          reviewer_notes?: string | null
+          run_id: string
+          severity: string
+          source_references?: Json
+          status: string
+          submittal_id: string
+          submitted_value?: string | null
+          title: string
+        }
+        Update: {
+          check_type?: string
+          confidence?: number | null
+          created_at?: string
+          expected_value?: string | null
+          finding?: string
+          id?: string
+          missing_data?: Json
+          project_id?: number
+          recommendation?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_disposition?: string
+          reviewer_notes?: string | null
+          run_id?: string
+          severity?: string
+          source_references?: Json
+          status?: string
+          submittal_id?: string
+          submitted_value?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submittal_ai_review_checks_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "submittal_ai_review_checks_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_ai_review_checks_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "submittal_ai_review_checks_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_ai_review_checks_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_ai_review_checks_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_ai_review_checks_run_id_fkey"
+            columns: ["run_id"]
+            referencedRelation: "submittal_ai_review_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_ai_review_checks_submittal_id_fkey"
+            columns: ["submittal_id"]
+            referencedRelation: "submittals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submittal_ai_review_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          error_code: string | null
+          error_message: string | null
+          focus_area: string | null
+          id: string
+          model_id: string | null
+          project_id: number
+          raw_model_output: Json | null
+          readiness: Json
+          recommendation: string | null
+          source_coverage: Json
+          started_at: string
+          status: string
+          submittal_id: string
+          summary: string | null
+          validated_output: Json | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          focus_area?: string | null
+          id?: string
+          model_id?: string | null
+          project_id: number
+          raw_model_output?: Json | null
+          readiness?: Json
+          recommendation?: string | null
+          source_coverage?: Json
+          started_at?: string
+          status: string
+          submittal_id: string
+          summary?: string | null
+          validated_output?: Json | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          focus_area?: string | null
+          id?: string
+          model_id?: string | null
+          project_id?: number
+          raw_model_output?: Json | null
+          readiness?: Json
+          recommendation?: string | null
+          source_coverage?: Json
+          started_at?: string
+          status?: string
+          submittal_id?: string
+          summary?: string | null
+          validated_output?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submittal_ai_review_runs_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "submittal_ai_review_runs_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_ai_review_runs_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "submittal_ai_review_runs_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_ai_review_runs_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_ai_review_runs_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_ai_review_runs_submittal_id_fkey"
+            columns: ["submittal_id"]
+            referencedRelation: "submittals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       submittal_analytics_events: {
         Row: {
           event_data: Json | null

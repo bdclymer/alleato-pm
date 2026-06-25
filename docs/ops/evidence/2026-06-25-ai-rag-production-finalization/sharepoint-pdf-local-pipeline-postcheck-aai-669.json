@@ -1,0 +1,73 @@
+{
+  "generated_at": "2026-06-25T22:14:30.987Z",
+  "rows": [
+    {
+      "id": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+      "title": "[012] A410 - INTERIOR ELEVATIONS.pdf",
+      "status": "complete",
+      "project_id": "25125",
+      "content_length": 5173,
+      "page_intelligence": {
+        "id": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+        "page_intelligence_count": 1,
+        "pages_with_ai_summary": 1,
+        "latest_processed_at": "2026-06-25T22:12:48.666Z"
+      },
+      "rag": {
+        "id": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+        "app_document_id": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+        "title": "[012] A410 - INTERIOR ELEVATIONS.pdf",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "project_id": 25125,
+        "storage_bucket": "project-files",
+        "storage_path": null,
+        "rag_content_length": 5173,
+        "chunk_count": 38,
+        "embedded_chunk_count": 38,
+        "document_chunk_count": 18,
+        "vision_chunk_count": 1,
+        "source_types": [
+          "document",
+          "meeting_segment_summary",
+          "meeting_summary",
+          "vision_page_summary"
+        ]
+      }
+    },
+    {
+      "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+      "title": "[015] PD101 - FIRST FLOOR PLUMBING.pdf",
+      "status": "complete",
+      "project_id": "25125",
+      "content_length": 3498,
+      "page_intelligence": {
+        "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+        "page_intelligence_count": 1,
+        "pages_with_ai_summary": 1,
+        "latest_processed_at": "2026-06-25T22:13:38.488Z"
+      },
+      "rag": {
+        "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+        "app_document_id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+        "title": "[015] PD101 - FIRST FLOOR PLUMBING.pdf",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "project_id": 25125,
+        "storage_bucket": "project-files",
+        "storage_path": null,
+        "rag_content_length": 3498,
+        "chunk_count": 12,
+        "embedded_chunk_count": 12,
+        "document_chunk_count": 5,
+        "vision_chunk_count": 1,
+        "source_types": [
+          "document",
+          "meeting_segment_summary",
+          "meeting_summary",
+          "vision_page_summary"
+        ]
+      }
+    }
+  ]
+}
