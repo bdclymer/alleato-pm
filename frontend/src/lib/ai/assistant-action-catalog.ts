@@ -237,3 +237,16 @@ export function buildAssistantActionCatalog(input: {
 }
 
 export const ASSISTANT_ACTION_CATALOG = buildAssistantActionCatalog();
+
+export function flattenAssistantActionCatalog(
+  catalog: AssistantActionCatalogGroup[] = ASSISTANT_ACTION_CATALOG,
+): AssistantActionCatalogItem[] {
+  return catalog.flatMap((group) => group.items);
+}
+
+export function assistantActionCatalogItemById(
+  id: string,
+  catalog: AssistantActionCatalogGroup[] = ASSISTANT_ACTION_CATALOG,
+): AssistantActionCatalogItem | null {
+  return flattenAssistantActionCatalog(catalog).find((item) => item.id === id) ?? null;
+}

@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { apiFetchBlob } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
@@ -152,6 +153,11 @@ import {
 } from "./memory-usage-disclosure";
 import { AssistantSkillTrace, type SkillUsage } from "./skill-usage-disclosure";
 import { AssistantActionCatalog } from "./assistant-action-catalog";
+import { AssistantSuggestionList } from "./assistant-suggestion-list";
+import {
+  resolveAssistantSuggestions,
+  type AssistantSuggestion,
+} from "@/lib/ai/assistant-suggestion-resolver";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -260,25 +266,6 @@ type SpeechRecognitionLike = {
 };
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
-
-const WIDGET_WELCOME_ACTIONS = [
-  {
-    label: "Create a change request",
-    prompt: "Help me create a new change request for this project.",
-  },
-  {
-    label: "Create a change event",
-    prompt: "Help me draft a change event for this project.",
-  },
-  {
-    label: "Generate a progress report",
-    prompt: "Generate a progress report for this project.",
-  },
-  {
-    label: "Find project evidence",
-    prompt: "Find source evidence for the current project status.",
-  },
-] as const;
 
 export type ResponseQuality = Omit<
   ScoredResponseQuality,
@@ -1248,6 +1235,7 @@ export function ChatArea({
   showWidgetWelcomePrompt = false,
   onWidgetWelcomeDismiss,
 }: ChatAreaProps) {
+  const pathname = usePathname();
   // Council mode can be controlled externally (via prop) or internally
   const [councilModeInternal, setCouncilModeInternal] = useState(false);
 
@@ -1616,6 +1604,15 @@ export function ChatArea({
     [isStreaming, onInputChange],
   );
 
+  const assistantSuggestions = useMemo(
+    () =>
+      resolveAssistantSuggestions({
+        pathname,
+        surface: welcomeHideOrb ? "widget" : "command_center",
+      }),
+    [pathname, welcomeHideOrb],
+  );
+
   const hasMessages = messages.length > 0;
   const showWelcome = !hasMessages && !isLoadingMessages;
 
@@ -1889,8 +1886,15 @@ export function ChatArea({
               showWidgetWelcomePrompt ? (
                 <WidgetWelcomePrompt
                   disabled={isStreaming}
+                  suggestions={assistantSuggestions}
                   onAction={handleWidgetWelcomeAction}
                   onDismiss={onWidgetWelcomeDismiss}
+                />
+              ) : !welcomeHideOrb ? (
+                <AssistantSuggestionList
+                  disabled={isStreaming}
+                  suggestions={assistantSuggestions}
+                  onSelectPrompt={handleCatalogAction}
                 />
               ) : null
             }
@@ -2428,10 +2432,12 @@ export function ChatArea({
 
 function WidgetWelcomePrompt({
   disabled,
+  suggestions,
   onAction,
   onDismiss,
 }: {
   disabled: boolean;
+  suggestions: AssistantSuggestion[];
   onAction: (prompt: string) => void;
   onDismiss?: () => void;
 }) {
@@ -2441,8 +2447,7 @@ function WidgetWelcomePrompt({
         <div className="min-w-0 space-y-1">
           <p className="text-sm font-medium text-foreground">Welcome back.</p>
           <p className="text-xs leading-5 text-muted-foreground">
-            I can help create change requests, draft change events, generate
-            progress reports, or find project evidence.
+            Here are the most useful AI actions for where you are.
           </p>
         </div>
         {onDismiss && (
@@ -2458,20 +2463,12 @@ function WidgetWelcomePrompt({
           </Button>
         )}
       </div>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {WIDGET_WELCOME_ACTIONS.map((action) => (
-          <Button
-            key={action.label}
-            type="button"
-            variant="secondary"
-            size="sm"
-            disabled={disabled}
-            onClick={() => onAction(action.prompt)}
-            className="h-8 rounded-full px-3 text-xs font-medium"
-          >
-            {action.label}
-          </Button>
-        ))}
+      <div className="mt-3">
+        <AssistantSuggestionList
+          disabled={disabled}
+          suggestions={suggestions}
+          onSelectPrompt={onAction}
+        />
       </div>
     </div>
   );
