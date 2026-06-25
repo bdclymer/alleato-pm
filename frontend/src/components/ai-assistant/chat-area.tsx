@@ -11,6 +11,7 @@ import {
   DEFAULT_AI_ASSISTANT_MODEL,
   type AiAssistantModelId,
 } from "@/lib/ai/assistant-models";
+import { getPreviewReviewGroups } from "./preview-review-card";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import type { UIMessage } from "ai";
 import { useProjects } from "@/hooks/use-projects";
@@ -506,6 +507,14 @@ function getPreviewFieldLabel(previewTable: string | null, key: string): string 
   return key;
 }
 
+function formatPreviewValueForDisplay(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (value == null) return "Not set";
+  return JSON.stringify(value);
+}
+
 function getToolOutputRecord(part: ToolPart): Record<string, unknown> | null {
   const output = asObject(part.output);
   const record = asObject(output.record);
@@ -827,6 +836,7 @@ function ToolCallItem({
   const preview = getToolPreview(part);
   const previewFields = asObject(preview?.fields);
   const previewEntries = Object.entries(previewFields);
+  const previewReviewGroups = getPreviewReviewGroups(preview);
   const links = getRecordDeepLinks(part);
   const approvalId = part.approval?.id;
 
@@ -932,23 +942,53 @@ function ToolCallItem({
               {getPreviewHeading(previewTable)}
             </p>
             {previewEntries.length > 0 && (
-              <div className="space-y-1">
-                {previewEntries.slice(0, 8).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="flex items-start justify-between gap-3 text-xs"
-                  >
-                    <span className="text-muted-foreground">
-                      {getPreviewFieldLabel(previewTable, key)}
-                    </span>
-                    <span className="w-2/3 break-words text-right text-foreground">
-                      {typeof value === "string"
-                        ? value
-                        : JSON.stringify(value)}
-                    </span>
+              <>
+                {previewReviewGroups.length > 0 ? (
+                  <div className="space-y-3">
+                    {previewReviewGroups.map((group) => (
+                      <div key={group.title} className="space-y-1.5">
+                        <p className="text-[11px] font-medium text-muted-foreground">
+                          {group.title}
+                        </p>
+                        <div className="space-y-1">
+                          {group.fields.map((field) => (
+                            <div
+                              key={`${group.title}-${field.key}`}
+                              className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.2fr)] gap-3 text-xs"
+                            >
+                              <span className="min-w-0 text-muted-foreground">
+                                {field.label}
+                                {field.required ? (
+                                  <span className="ml-1 text-foreground">*</span>
+                                ) : null}
+                              </span>
+                              <span className="min-w-0 break-words text-right text-foreground">
+                                {field.value ?? "Not set"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div className="space-y-1">
+                    {previewEntries.slice(0, 8).map(([key, value]) => (
+                      <div
+                        key={key}
+                        className="flex items-start justify-between gap-3 text-xs"
+                      >
+                        <span className="text-muted-foreground">
+                          {getPreviewFieldLabel(previewTable, key)}
+                        </span>
+                        <span className="w-2/3 break-words text-right text-foreground">
+                          {formatPreviewValueForDisplay(value)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
             <div className="flex flex-wrap gap-2 pt-1">
               <Button
@@ -1881,6 +1921,7 @@ export function ChatArea({
         <div className="flex min-h-0 flex-1 pb-6 md:pb-8">
           <WelcomeScreen
             hideOrb={welcomeHideOrb}
+            variant={welcomeHideOrb ? "widget" : "full"}
             composer={promptInputEl}
             beforeComposer={
               showWidgetWelcomePrompt ? (
@@ -2442,12 +2483,14 @@ function WidgetWelcomePrompt({
   onDismiss?: () => void;
 }) {
   return (
-    <div className="mb-4 rounded-lg bg-muted/45 px-3 py-3 text-left">
+    <div className="text-left">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
-          <p className="text-sm font-medium text-foreground">Welcome back.</p>
-          <p className="text-xs leading-5 text-muted-foreground">
-            Here are the most useful AI actions for where you are.
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Suggested actions
+          </p>
+          <p className="text-sm leading-5 text-foreground">
+            Continue from this page with the assistant.
           </p>
         </div>
         {onDismiss && (
@@ -2463,10 +2506,10 @@ function WidgetWelcomePrompt({
           </Button>
         )}
       </div>
-      <div className="mt-3">
+      <div className="mt-2">
         <AssistantSuggestionList
           disabled={disabled}
-          suggestions={suggestions}
+          suggestions={suggestions.slice(0, 3)}
           onSelectPrompt={onAction}
         />
       </div>

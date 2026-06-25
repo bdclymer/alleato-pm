@@ -38,7 +38,10 @@ import {
   createOutlookMailDraft,
   resolveOutlookMailboxUserId,
 } from "@/lib/microsoft-graph/mail";
-import { renderChangeRequestToolDescription } from "@/lib/ai/change-request-field-guide";
+import {
+  buildChangeRequestReviewCard,
+  renderChangeRequestToolDescription,
+} from "@/lib/ai/change-request-field-guide";
 import {
   notifyChangeRequestReviewNeeded,
   notifyRfiReviewNeeded,
@@ -890,6 +893,7 @@ export function createActionTools(
             preview: {
               table: "change_events",
               fields,
+              reviewCard: buildChangeRequestReviewCard(fields),
             },
           };
         }

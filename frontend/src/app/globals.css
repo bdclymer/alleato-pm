@@ -1900,10 +1900,10 @@ velt-comment-dialog-internal velt-sidebar-button {
     left: 12px;
     right: 12px;
     bottom: 88px;
-    height: min(680px, calc(100dvh - 112px));
-    min-height: 420px;
+    height: min(520px, calc(100dvh - 112px));
+    min-height: 340px;
     z-index: 2147483003;
-    box-shadow: 0 5px 40px rgba(0, 0, 0, 0.16);
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.14);
   }
 
   .compact-ai-message-bubble {
@@ -1926,8 +1926,8 @@ velt-comment-dialog-internal velt-sidebar-button {
       right: 20px;
       bottom: 100px;
       width: 376px;
-      height: calc(100dvh - 120px);
-      max-height: 704px;
+      height: min(456px, calc(100dvh - 120px));
+      max-height: 560px;
     }
 
     .global-ai-widget-panel-expanded {

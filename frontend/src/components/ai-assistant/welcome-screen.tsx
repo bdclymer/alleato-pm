@@ -12,6 +12,7 @@ interface WelcomeScreenProps {
   error?: ReactNode;
   /** Omit the decorative animated orb (used by the compact floating widget). */
   hideOrb?: boolean;
+  variant?: "full" | "widget";
 }
 
 export function WelcomeScreen({
@@ -20,12 +21,26 @@ export function WelcomeScreen({
   composer,
   error,
   hideOrb = false,
+  variant = "full",
 }: WelcomeScreenProps) {
   const fullName = useCurrentUserName();
   const rawFirstName = fullName.split(" ")[0] ?? "";
   const firstName = rawFirstName
     ? rawFirstName.charAt(0).toUpperCase() + rawFirstName.slice(1)
     : rawFirstName;
+
+  if (variant === "widget") {
+    return (
+      <div className="flex min-h-0 flex-1 items-end overflow-y-auto px-4 pb-4 pt-3">
+        <div className="w-full space-y-3">
+          {error}
+          {beforeComposer}
+          {composer}
+          {children ? <div>{children}</div> : null}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 pb-40 pt-16 sm:px-6">

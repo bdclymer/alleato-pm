@@ -20,9 +20,9 @@ import {
   DataTable as DsDataTable,
   EntityAttachments,
   ErrorState,
-  ExpandingSearch,
   EmptyState as DsEmptyState,
 } from "@/components/ds";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -780,10 +780,11 @@ export default function CompanyDetailsPage() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <SectionRuleHeading label="Commitments" />
                   {commitments.length > 0 && (
-                    <ExpandingSearch
+                    <ExpandableSearch
                       value={commitmentQuery}
                       onChange={setCommitmentQuery}
                       placeholder="Search scope or trade..."
+                      ariaLabel="Search commitments"
                     />
                   )}
                 </div>
