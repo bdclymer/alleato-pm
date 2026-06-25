@@ -1,0 +1,90 @@
+{
+  "generated_at": "2026-06-25T23:25:37.731Z",
+  "serviceId": "srv-d8271ohj2pic739klb7g",
+  "deploys": [
+    {
+      "deploy": {
+        "id": "dep-d8urhq42m8qs73diqo8g",
+        "commit": {
+          "id": "eb8b50ce9d06db67aa1b509d39269093920fcc1a",
+          "message": "Recover Graph PDF vision embedding",
+          "createdAt": "2026-06-25T23:25:22Z"
+        },
+        "status": "build_in_progress",
+        "trigger": "new_commit",
+        "createdAt": "2026-06-25T23:25:28.592227Z",
+        "updatedAt": "2026-06-25T23:25:28.592227Z",
+        "startedAt": "2026-06-25T23:25:28.528227Z"
+      },
+      "cursor": "3GX04pr6QlFocTQybThxczczZGlxbzhn"
+    },
+    {
+      "deploy": {
+        "id": "dep-d8uqhm3rjlhs73bkjld0",
+        "commit": {
+          "id": "df7491e71627416a1d06a24a8a640adf4ede0c9f",
+          "message": "Fix PDF embedding metadata upsert",
+          "createdAt": "2026-06-25T22:16:42Z"
+        },
+        "status": "live",
+        "trigger": "new_commit",
+        "createdAt": "2026-06-25T22:16:56.263333Z",
+        "updatedAt": "2026-06-25T22:18:32.741648Z",
+        "startedAt": "2026-06-25T22:16:56.19226Z",
+        "finishedAt": "2026-06-25T22:18:00.535476Z"
+      },
+      "cursor": "_m9Mbi2T04lobTNyamxoczczYmtqbGQw"
+    },
+    {
+      "deploy": {
+        "id": "dep-d8upqgernols73bni1bg",
+        "commit": {
+          "id": "e82ac71513892f135e365ebe6548ee5a64119e05",
+          "message": "Add user type column to user management",
+          "createdAt": "2026-06-25T21:27:16Z"
+        },
+        "status": "deactivated",
+        "trigger": "new_commit",
+        "createdAt": "2026-06-25T21:27:29.639843Z",
+        "updatedAt": "2026-06-25T22:18:00.534432Z",
+        "startedAt": "2026-06-25T21:27:29.575559Z",
+        "finishedAt": "2026-06-25T21:28:30.17208Z"
+      },
+      "cursor": "WF5DRsJtZPlxZ2Vybm9sczczYm5pMWJn"
+    },
+    {
+      "deploy": {
+        "id": "dep-d8uokcl7vvec73eifqog",
+        "commit": {
+          "id": "300eb7bd1beb261b32cb10e07fb847900d5a25ef",
+          "message": "Allow Fireflies vectorization when projections are blocked",
+          "createdAt": "2026-06-25T20:06:03Z"
+        },
+        "status": "deactivated",
+        "trigger": "new_commit",
+        "createdAt": "2026-06-25T20:06:10.997192Z",
+        "updatedAt": "2026-06-25T21:28:30.170925Z",
+        "startedAt": "2026-06-25T20:06:10.905368Z",
+        "finishedAt": "2026-06-25T20:07:40.304826Z"
+      },
+      "cursor": "ZevfBrPJHZNrY2w3dnZlYzczZWlmcW9n"
+    },
+    {
+      "deploy": {
+        "id": "dep-d8unr30js32c738a6lhg",
+        "commit": {
+          "id": "70ffbf0b5a0191e1152ba5baebc4341b659ea5ad",
+          "message": "Publish pending workspace changes",
+          "createdAt": "2026-06-25T19:10:37Z"
+        },
+        "status": "deactivated",
+        "trigger": "api",
+        "createdAt": "2026-06-25T19:12:12.851553Z",
+        "updatedAt": "2026-06-25T20:07:40.303753Z",
+        "startedAt": "2026-06-25T19:12:12.737595Z",
+        "finishedAt": "2026-06-25T19:12:41.306177Z"
+      },
+      "cursor": "Nga1XKa9r0VyMzBqczMyYzczOGE2bGhn"
+    }
+  ]
+}

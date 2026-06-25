@@ -402,12 +402,16 @@ Evidence directory:
 ### 2026-06-25: AAI-669 Graph Vision Path Recovered
 
 - Fixed the production vision analyzer to fall back to Microsoft Graph source downloads for OneDrive/SharePoint rows that have `source_drive_id` and `source_item_id` but only store OCR text locally.
-- Fixed Graph document embedding so `document_page_intelligence` summaries are embedded as `vision_page_summary` chunks with `metadata.chunk_type='vision_page'`.
+- Fixed Graph document embedding so it runs vision for PDF-like Graph rows when page intelligence is absent, then embeds `document_page_intelligence` summaries as `vision_page_summary` chunks with `metadata.chunk_type='vision_page'`.
 - OneDrive proof succeeded for `onedrive_01F674PXSIV6J6OA5TSFBYSDO6AXFJZJOF`:
   - 25 pages analyzed from the Graph-downloaded source PDF.
   - Graph embedder wrote 47 total chunks: 22 OneDrive text chunks and 25 vision page summary chunks.
+- Automatic Graph embed proof succeeded for `onedrive_01F674PXTBGWMDGWLXOJBZKUU35DJK3P37`:
+  - `embed_graph_document` ran vision internally.
+  - Graph embedder wrote 39 total chunks with page intelligence.
 - Evidence:
   - [pdf-vision-graph-download-proof-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-graph-download-proof-aai-669.json)
+  - [pdf-vision-graph-embed-auto-proof-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-graph-embed-auto-proof-aai-669.json)
 
 ## Remaining Blockers
 

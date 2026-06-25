@@ -49,6 +49,7 @@ Validate the production SharePoint and uploaded-document/PDF processing pipeline
 - Manual upload batch 4: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-manual-upload-batch-4-aai-669.json`
 - Current inventory: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-manual-batch-4-aai-669.json`
 - Graph vision download proof: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-graph-download-proof-aai-669.json`
+- Graph embed auto-vision proof: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-graph-embed-auto-proof-aai-669.json`
 
 Key results:
 
@@ -76,6 +77,7 @@ Key results:
 - Fixed the Graph document vision path so OneDrive/SharePoint rows without stored original PDFs can download the source PDF through Microsoft Graph.
 - Fixed Graph embedding so `document_page_intelligence` summaries become `vision_page_summary` vector chunks.
 - OneDrive proof succeeded for `onedrive_01F674PXSIV6J6OA5TSFBYSDO6AXFJZJOF`: 25 pages analyzed from Graph and 25 embedded `vision_page_summary` chunks written alongside 22 OneDrive text chunks.
+- Automatic Graph embed proof succeeded for `onedrive_01F674PXTBGWMDGWLXOJBZKUU35DJK3P37`: `embed_graph_document` ran vision internally and wrote 39 total chunks with page intelligence.
 
 ## Blockers
 
@@ -99,7 +101,7 @@ Key results:
 
 `verify_rag_chunk_integrity.mjs` now fails when document-like chunks exist without a `rag_document_metadata` row, preventing searchable chunks from silently losing citation metadata.
 
-`run_vision_analyzer` now falls back to Microsoft Graph source downloads for OneDrive/SharePoint rows that have `source_drive_id` and `source_item_id` but only store OCR text locally. Graph document embedding now includes `document_page_intelligence` summaries as `vision_page_summary` chunks.
+`run_vision_analyzer` now falls back to Microsoft Graph source downloads for OneDrive/SharePoint rows that have `source_drive_id` and `source_item_id` but only store OCR text locally. Graph document embedding now invokes the vision analyzer for PDF-like Graph rows when page intelligence is absent, then embeds `document_page_intelligence` summaries as `vision_page_summary` chunks.
 
 ## Failure-Loud Guardrail
 

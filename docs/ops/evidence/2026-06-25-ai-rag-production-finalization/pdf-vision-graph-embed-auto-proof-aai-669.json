@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-06-25T23:29:43.485398+00:00",
+  "started_at": "2026-06-25T23:28:08.692689+00:00",
+  "metadata_id": "onedrive_01F674PXTBGWMDGWLXOJBZKUU35DJK3P37",
+  "graph_embed_chunk_count": 39,
+  "page_intelligence_sample": [
+    {
+      "document_metadata_id": "onedrive_01F674PXTBGWMDGWLXOJBZKUU35DJK3P37",
+      "page_number": 1,
+      "sheet_number": null,
+      "sheet_title": null,
+      "discipline": "Structural",
+      "ai_summary": "This document contains structural calculations for the Uniqlo Phillipsburg Warehouse project. It includes information about the project location and the engineering team responsible for the calculations. The document is relevant to the structural discipline and would be referenced by engineers and architects involved in the project."
+    },
+    {
+      "document_metadata_id": "onedrive_01F674PXTBGWMDGWLXOJBZKUU35DJK3P37",
+      "page_number": 2,
+      "sheet_number": "A-1",
+      "sheet_title": "Design Summary",
+      "discipline": "Structural",
+      "ai_summary": "This page provides a design summary for the Uniqlo Phillipsburg Warehouse project, detailing seismic, wind, and snow design parameters. It specifies building codes, risk categories, and structural height. The document is relevant for structural engineers to ensure compliance with building codes and design requirements."
+    },
+    {
+      "document_metadata_id": "onedrive_01F674PXTBGWMDGWLXOJBZKUU35DJK3P37",
+      "page_number": 3,
+      "sheet_number": null,
+      "sheet_title": null,
+      "discipline": "Structural",
+      "ai_summary": "This page contains a design summary for dead loads related to roof framing and sprinkler systems. It provides detailed calculations for structural and special loads, including TPO roof membrane and insulation. The document is relevant for structural engineers to ensure compliance with load requirements and proper installation of roof and sprinkler systems."
+    }
+  ]
+}

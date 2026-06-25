@@ -447,6 +447,43 @@ def _vision_page_chunks(supabase_client, metadata_id: str) -> List[Dict[str, Any
     return chunks
 
 
+def _graph_doc_is_pdf(doc: Dict[str, Any]) -> bool:
+    candidates = [
+        doc.get("file_path"),
+        doc.get("title"),
+        doc.get("source_path"),
+        doc.get("source_web_url"),
+    ]
+    return any(str(candidate or "").lower().endswith(".pdf") for candidate in candidates)
+
+
+def _ensure_vision_page_intelligence(supabase_client, doc: Dict[str, Any]) -> None:
+    metadata_id = str(doc.get("id") or "")
+    if not metadata_id or not _graph_doc_is_pdf(doc):
+        return
+
+    try:
+        existing = (
+            supabase_client.table("document_page_intelligence")
+            .select("document_metadata_id", count="exact")
+            .eq("document_metadata_id", metadata_id)
+            .limit(1)
+            .execute()
+        )
+        if existing.count and existing.count > 0:
+            return
+    except Exception as exc:
+        logger.warning("[GraphEmbed] Could not inspect page intelligence for %s: %s", metadata_id, exc)
+
+    try:
+        from ...pipeline.vision_analyzer import run_vision_analyzer
+
+        result = run_vision_analyzer(metadata_id, supabase_client)
+        logger.info("[GraphEmbed] Vision analyzer result for %s: %s", metadata_id, result)
+    except Exception as exc:
+        logger.warning("[GraphEmbed] Vision analyzer failed for %s: %s", metadata_id, exc)
+
+
 def _source_processing_context(doc: Dict[str, Any]) -> SourceProcessingContext:
     metadata_id = str(doc.get("id") or "")
     source_system = str(doc.get("source_system") or doc.get("category") or "microsoft_graph")
@@ -845,6 +882,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
     # Prepend title for better retrieval context
     full_text = f"[{title}]\n\n{content}"
     chunks = _split_text(full_text)
+    _ensure_vision_page_intelligence(supabase_client, doc)
     vision_chunks = _vision_page_chunks(supabase_client, metadata_id)
     if not chunks:
         _update_app_document_status(supabase_client, metadata_id, "embedded", enabled=has_app_document)
