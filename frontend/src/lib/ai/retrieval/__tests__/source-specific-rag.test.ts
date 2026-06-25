@@ -173,7 +173,7 @@ describe("buildSourceSpecificRagAnswer Teams hydration", () => {
           date: "2026-06-24T00:00:00+00:00",
           created_at: "2026-06-24T20:21:19+00:00",
           content:
-            "[Teams Direct Message Conversation: 19:5f9d3daf-] Date: 2026-06-24 [message:1782332479114] [2026-06-24 20:21:19] Andrew Cannon: Is our Business ownership name &amp; Doing Business &nbsp;license in the Nevada folder?",
+            "[Teams Direct Message Conversation: 19:5f9d3daf-] Date: 2026-06-24 [message:1782332479114] [2026-06-24 19:44:54] Andrew Cannon: Is our Business ownership name &amp; Doing Business &nbsp;license in the Nevada folder?",
           summary: null,
           overview: null,
           project_id: null,
@@ -215,7 +215,7 @@ describe("buildSourceSpecificRagAnswer Teams hydration", () => {
     expect(answer.content).toContain("Teams Message Evidence For Synthesis");
     expect(answer.content).toContain("Teams conversation");
     expect(answer.content).toContain(
-      "Andrew Cannon: Is our Business ownership name & Doing Business license in the Nevada folder?",
+      "[2026-06-24 19:44:54] Andrew Cannon: Is our Business ownership name & Doing Business license in the Nevada folder?",
     );
     expect(answer.content).toContain(
       "Teams DM conversation: Alleato Marketing",
@@ -226,6 +226,7 @@ describe("buildSourceSpecificRagAnswer Teams hydration", () => {
     expect(answer.content).not.toContain("[Teams Direct Message Conversation:");
     expect(answer.content).not.toContain("[message:");
     expect(answer.content).not.toContain("19:5f9d3daf-");
+    expect(answer.content).not.toContain("Teams conversation:54");
     expect(answer.content).not.toContain("&nbsp;");
     expect(answer.content).not.toContain("&amp;");
   });

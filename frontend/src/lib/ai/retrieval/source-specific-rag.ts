@@ -142,7 +142,7 @@ function sanitizeSourceSpecificSnippetText(
     text = text
       .replace(/\[Teams Direct Message Conversation:[^\]]+\]\s*/gi, "")
       .replace(/\[message:[^\]]+\]\s*/gi, "")
-      .replace(/\b19:[A-Za-z0-9._-]+/g, "Teams conversation")
+      .replace(/\b19:[A-Za-z0-9._-]{6,}/g, "Teams conversation")
       .replace(/\bChat:\s*Teams conversation\b/gi, "")
       .replace(/\bMailbox:\s*\S+/gi, "")
       .replace(/\bParticipants:\s*/gi, "Participants: ");

@@ -105,9 +105,15 @@ function renderSemanticResults(raw: unknown): string {
 
   const sliced = results.slice(0, MAX_VECTOR_RESULTS);
   const lines = sliced.map((r, i) => {
-    const content = (r.content ?? "").trim().replace(/\s+/g, " ").slice(0, MAX_CHUNK_CHARS);
-    const date = r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 10) : "unknown date";
-    const score = typeof r.finalScore === "number" ? r.finalScore.toFixed(2) : "?";
+    const content = (r.content ?? "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .slice(0, MAX_CHUNK_CHARS);
+    const date = r.createdAt
+      ? new Date(r.createdAt).toISOString().slice(0, 10)
+      : "unknown date";
+    const score =
+      typeof r.finalScore === "number" ? r.finalScore.toFixed(2) : "?";
     const source = r.sourceTable ?? "unknown";
     const title =
       (r.metadata?.subject as string | undefined) ??
@@ -115,16 +121,20 @@ function renderSemanticResults(raw: unknown): string {
       (r.metadata?.meeting_title as string | undefined) ??
       "";
     const heading = title ? `${source} · ${title}` : source;
-    const truncated = (r.content ?? "").trim().replace(/\s+/g, " ").length > MAX_CHUNK_CHARS
-      ? " [truncated]"
-      : "";
+    const truncated =
+      (r.content ?? "").trim().replace(/\s+/g, " ").length > MAX_CHUNK_CHARS
+        ? " [truncated]"
+        : "";
     return `### [${i + 1}] ${heading}\nDate: ${date}; score: ${score}\n${content}${truncated}`;
   });
 
   return lines.join("\n\n");
 }
 
-function compactText(value: unknown, maxChars = MAX_COMPACT_VALUE_CHARS): string | null {
+function compactText(
+  value: unknown,
+  maxChars = MAX_COMPACT_VALUE_CHARS,
+): string | null {
   if (value == null) return null;
   const text = String(value).trim().replace(/\s+/g, " ");
   if (!text) return null;
@@ -134,7 +144,7 @@ function compactText(value: unknown, maxChars = MAX_COMPACT_VALUE_CHARS): string
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
-    ? value as Record<string, unknown>
+    ? (value as Record<string, unknown>)
     : {};
 }
 
@@ -142,7 +152,11 @@ function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
-function renderTitledItems(value: unknown, fields: string[], limit = MAX_PACKET_LIST_ITEMS): string {
+function renderTitledItems(
+  value: unknown,
+  fields: string[],
+  limit = MAX_PACKET_LIST_ITEMS,
+): string {
   const items = asArray(value)
     .slice(0, limit)
     .map((item) => {
@@ -209,11 +223,23 @@ function renderStrategicReport(packet: Record<string, unknown>): string {
 
   const sections = [
     ["What Changed", renderTitledItems(report.whatChanged, ["impact"])],
-    ["Risks", renderTitledItems(report.risks, ["recommendedAction", "severity"])],
-    ["Open Decisions", renderTitledItems(report.openDecisions, ["owner", "neededBy"])],
+    [
+      "Risks",
+      renderTitledItems(report.risks, ["recommendedAction", "severity"]),
+    ],
+    [
+      "Open Decisions",
+      renderTitledItems(report.openDecisions, ["owner", "neededBy"]),
+    ],
     ["Money Impact", compactText(asRecord(report.moneyImpact).summary, 700)],
-    ["Promises Made", renderTitledItems(report.promisesMade, ["owner", "dueDate"])],
-    ["Recommended Actions", renderTitledItems(report.recommendedActions, ["reason", "priority"])],
+    [
+      "Promises Made",
+      renderTitledItems(report.promisesMade, ["owner", "dueDate"]),
+    ],
+    [
+      "Recommended Actions",
+      renderTitledItems(report.recommendedActions, ["reason", "priority"]),
+    ],
   ].filter(([, body]) => Boolean(body));
 
   if (sections.length === 0) return "";
@@ -224,7 +250,9 @@ function renderStrategicReport(packet: Record<string, unknown>): string {
 }
 
 function renderProjectOperatingRecord(packet: Record<string, unknown>): string {
-  const operatingRecord = asRecord(packet.operatingRecord ?? packet.operating_record);
+  const operatingRecord = asRecord(
+    packet.operatingRecord ?? packet.operating_record,
+  );
   if (Object.keys(operatingRecord).length === 0) return "";
 
   const currentState = asRecord(operatingRecord.currentState);
@@ -271,22 +299,40 @@ function renderProjectOperatingRecord(packet: Record<string, unknown>): string {
           .map(([key, value]) => `${key}=${compactText(value, 80) ?? ""}`)
           .join(", ")
       : null,
-  ].filter(Boolean).join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const lines = ["## Source-Synthesized Operating Record"];
   const summary = compactText(currentState.current_summary, 900);
   if (summary) lines.push(`### Current State\n${summary}`);
 
-  const changed = renderTitledItems(currentState.what_changed_since_last_update, ["summary", "impact"], 5);
+  const changed = renderTitledItems(
+    currentState.what_changed_since_last_update,
+    ["summary", "impact"],
+    5,
+  );
   if (changed) lines.push(`### What Changed Since Last Update\n${changed}`);
 
-  const attention = renderTitledItems(currentState.needs_attention, ["summary", "owner", "priority"], 5);
+  const attention = renderTitledItems(
+    currentState.needs_attention,
+    ["summary", "owner", "priority"],
+    5,
+  );
   if (attention) lines.push(`### Needs Attention\n${attention}`);
 
-  const decisions = renderTitledItems(currentState.open_decisions, ["summary", "owner", "neededBy"], 5);
+  const decisions = renderTitledItems(
+    currentState.open_decisions,
+    ["summary", "owner", "neededBy"],
+    5,
+  );
   if (decisions) lines.push(`### Open Decisions\n${decisions}`);
 
-  const risks = renderTitledItems(currentState.active_risks, ["summary", "recommendedAction", "severity"], 5);
+  const risks = renderTitledItems(
+    currentState.active_risks,
+    ["summary", "recommendedAction", "severity"],
+    5,
+  );
   if (risks) lines.push(`### Active Risks\n${risks}`);
 
   if (timelineEvents.length > 0) {
@@ -352,9 +398,12 @@ function renderDocumentIntelligence(packet: Record<string, unknown>): string {
     .filter((line): line is string => Boolean(line));
 
   const lines: string[] = ["## Document Intelligence"];
-  if (latest.length > 0) lines.push("### Latest Document Signals", latest.join("\n"));
-  if (obligations.length > 0) lines.push("### Obligations", obligations.join("\n"));
-  if (conflicts.length > 0) lines.push("### Conflict / Revision Signals", conflicts.join("\n"));
+  if (latest.length > 0)
+    lines.push("### Latest Document Signals", latest.join("\n"));
+  if (obligations.length > 0)
+    lines.push("### Obligations", obligations.join("\n"));
+  if (conflicts.length > 0)
+    lines.push("### Conflict / Revision Signals", conflicts.join("\n"));
   if (lines.length === 1) return "";
   lines.push(
     "Use this as the document baseline. Use document/source-specific RAG only when the user asks for exact clauses, excerpts, attachments, or proof.",
@@ -385,27 +434,37 @@ function renderIntelligencePacket(raw: unknown): string {
     );
   }
 
-  const summary = compactText(packet.executiveSummary ?? packet.executive_summary);
+  const summary = compactText(
+    packet.executiveSummary ?? packet.executive_summary,
+  );
   if (summary) {
     lines.push(`## Executive Summary\n${summary}`);
   }
 
-  const currentStatus = compactText(packet.currentStatus ?? packet.current_status);
+  const currentStatus = compactText(
+    packet.currentStatus ?? packet.current_status,
+  );
   if (currentStatus) {
     lines.push(`## Current Status\n${currentStatus}`);
   }
 
-  const strategicRead = compactText(packet.strategicRead ?? packet.strategic_read);
+  const strategicRead = compactText(
+    packet.strategicRead ?? packet.strategic_read,
+  );
   if (strategicRead) {
     lines.push(`## Strategic Read\n${strategicRead}`);
   }
 
-  const recommendedMoves = asArray(packet.recommendedNextMoves ?? packet.recommended_next_moves)
+  const recommendedMoves = asArray(
+    packet.recommendedNextMoves ?? packet.recommended_next_moves,
+  )
     .map((move) => compactText(move, 260))
     .filter((move): move is string => Boolean(move))
     .slice(0, MAX_PACKET_LIST_ITEMS);
   if (recommendedMoves.length > 0) {
-    lines.push(`## Recommended Next Moves\n${recommendedMoves.map((move) => `- ${move}`).join("\n")}`);
+    lines.push(
+      `## Recommended Next Moves\n${recommendedMoves.map((move) => `- ${move}`).join("\n")}`,
+    );
   }
 
   const sourceCoverage = renderPacketSourceCoverage(packet);
@@ -428,7 +487,9 @@ function renderIntelligencePacket(raw: unknown): string {
     lines.push(documentIntelligence);
   }
 
-  const cards = Array.isArray(packet.cards) ? packet.cards.slice(0, MAX_PACKET_CARDS) : [];
+  const cards = Array.isArray(packet.cards)
+    ? packet.cards.slice(0, MAX_PACKET_CARDS)
+    : [];
   if (cards.length > 0) {
     const renderedCards = cards
       .map((card, index) => {
@@ -436,11 +497,11 @@ function renderIntelligencePacket(raw: unknown): string {
         const cardRecord = card as Record<string, unknown>;
         const title = compactText(cardRecord.title, 160) ?? `Card ${index + 1}`;
         const cardSummary = compactText(
-          cardRecord.summary ?? cardRecord.description ?? cardRecord.recommendation,
+          cardRecord.summary ??
+            cardRecord.description ??
+            cardRecord.recommendation,
         );
-        return cardSummary
-          ? `### ${title}\n${cardSummary}`
-          : `### ${title}`;
+        return cardSummary ? `### ${title}\n${cardSummary}` : `### ${title}`;
       })
       .filter((value): value is string => Boolean(value));
     if (renderedCards.length > 0) {
@@ -448,13 +509,19 @@ function renderIntelligencePacket(raw: unknown): string {
     }
   }
 
-  const status = compactText(packet.status ?? packet.health ?? packet.riskLevel, 240);
+  const status = compactText(
+    packet.status ?? packet.health ?? packet.riskLevel,
+    240,
+  );
   if (status) {
     lines.push(`## Status\n${status}`);
   }
 
   if (lines.length === 0) {
-    const id = compactText(packet.id ?? packet.targetId ?? packet.target_id, 240);
+    const id = compactText(
+      packet.id ?? packet.targetId ?? packet.target_id,
+      240,
+    );
     if (id) {
       lines.push(`Packet ID: ${id}`);
     }
@@ -490,27 +557,34 @@ function renderRecentEmailInbox(raw: unknown): string {
     if (value) lines.push(`- ${key}: ${value}`);
   }
 
-  const threads = Array.isArray(record.threads) ? record.threads.slice(0, 12) : [];
+  const threads = Array.isArray(record.threads)
+    ? record.threads.slice(0, 12)
+    : [];
   if (threads.length > 0) {
     lines.push("## Threads");
     threads.forEach((thread, index) => {
       if (!thread || typeof thread !== "object") return;
       const threadRecord = thread as Record<string, unknown>;
-      const subject = compactText(threadRecord.latestSubject, 180) ?? `Thread ${index + 1}`;
-      const receivedAt = compactText(threadRecord.latestReceivedAt, 80) ?? "unknown time";
+      const subject =
+        compactText(threadRecord.latestSubject, 180) ?? `Thread ${index + 1}`;
+      const receivedAt =
+        compactText(threadRecord.latestReceivedAt, 80) ?? "unknown time";
       const senders = Array.isArray(threadRecord.senders)
         ? threadRecord.senders.join(", ")
         : compactText(threadRecord.senders, 240);
       const preview = compactText(threadRecord.latestPreview, 500);
       const messageCount = compactText(threadRecord.messageCount, 40);
-      const attachmentNote = threadRecord.hasAttachments === true ? "; has attachments" : "";
+      const attachmentNote =
+        threadRecord.hasAttachments === true ? "; has attachments" : "";
       lines.push(
         [
           `${index + 1}. ${subject}`,
           `   received: ${receivedAt}${messageCount ? `; messages: ${messageCount}` : ""}${attachmentNote}`,
           senders ? `   senders: ${senders}` : null,
           preview ? `   preview: ${preview}` : null,
-        ].filter((line): line is string => Boolean(line)).join("\n"),
+        ]
+          .filter((line): line is string => Boolean(line))
+          .join("\n"),
       );
     });
   }
@@ -544,13 +618,16 @@ function renderAppExpertPacket(raw: unknown): string {
     lines.push("", "## Backend Answer", answer);
   }
 
-  const sources = Array.isArray(record.sources) ? record.sources.slice(0, 12) : [];
+  const sources = Array.isArray(record.sources)
+    ? record.sources.slice(0, 12)
+    : [];
   if (sources.length > 0) {
     lines.push("", "## Sources");
     sources.forEach((source, index) => {
       if (!source || typeof source !== "object") return;
       const sourceRecord = source as Record<string, unknown>;
-      const title = compactText(sourceRecord.title, 180) ?? `Source ${index + 1}`;
+      const title =
+        compactText(sourceRecord.title, 180) ?? `Source ${index + 1}`;
       const sourceType = compactText(sourceRecord.sourceType, 80) ?? "unknown";
       const route = compactText(sourceRecord.route, 120);
       const filePath = compactText(sourceRecord.filePath, 180);
@@ -561,12 +638,16 @@ function renderAppExpertPacket(raw: unknown): string {
           route ? `   route: ${route}` : null,
           filePath ? `   file: ${filePath}` : null,
           detail ? `   detail: ${detail}` : null,
-        ].filter((line): line is string => Boolean(line)).join("\n"),
+        ]
+          .filter((line): line is string => Boolean(line))
+          .join("\n"),
       );
     });
   }
 
-  const trace = Array.isArray(record.toolTrace) ? record.toolTrace.slice(0, 8) : [];
+  const trace = Array.isArray(record.toolTrace)
+    ? record.toolTrace.slice(0, 8)
+    : [];
   if (trace.length > 0) {
     lines.push("", "## Backend Trace");
     for (const item of trace) {
@@ -576,7 +657,9 @@ function renderAppExpertPacket(raw: unknown): string {
       const tool = compactText(traceRecord.tool, 120) ?? "unknown-tool";
       const status = compactText(traceRecord.status, 80) ?? "unknown";
       const detail = compactText(traceRecord.detail, 260);
-      lines.push(`- ${agent}/${tool}: ${status}${detail ? ` - ${detail}` : ""}`);
+      lines.push(
+        `- ${agent}/${tool}: ${status}${detail ? ` - ${detail}` : ""}`,
+      );
     }
   }
 
@@ -630,9 +713,7 @@ export function assembleSystemPromptFromContext(
   if (ctx.projectSnapshot) {
     const snapshot = renderCompactRecord(ctx.projectSnapshot);
     if (snapshot) {
-      parts.push(
-        `# Project Briefing Snapshot\n\n${snapshot}`,
-      );
+      parts.push(`# Project Briefing Snapshot\n\n${snapshot}`);
     }
   }
 
@@ -648,9 +729,7 @@ export function assembleSystemPromptFromContext(
   if (ctx.executiveBriefingRetrieval) {
     const briefing = renderCompactRecord(ctx.executiveBriefingRetrieval);
     if (briefing) {
-      parts.push(
-        `# Recent Communication Signals\n\n${briefing}`,
-      );
+      parts.push(`# Recent Communication Signals\n\n${briefing}`);
     }
   }
 
@@ -672,7 +751,18 @@ export function assembleSystemPromptFromContext(
   if (ctx.sourceSpecificRagAnswer) {
     const content = compactText(ctx.sourceSpecificRagAnswer.content, 2500);
     if (content) {
-      parts.push(`# Source-Specific RAG Result\n\n${content}`);
+      parts.push(
+        [
+          "# Internal Source-Specific RAG Evidence",
+          "",
+          "This block is internal evidence for synthesis. Do NOT copy this block, its heading, coverage notes, freshness lines, source context lines, or numbered evidence rows into the final answer.",
+          "Use it to produce a concise user-facing answer with the main themes, risks, decisions, and follow-ups. If evidence is thin, say that in plain English without exposing the internal evidence block.",
+          "",
+          content,
+          "",
+          "Final-answer contract: never begin the user-visible response with `Source-Specific RAG`, `Teams Message Evidence For Synthesis`, `Use these Teams snippets`, `Freshness`, or `Coverage note`. Do not output raw evidence rows.",
+        ].join("\n"),
+      );
     } else {
       // Pre-fetch was attempted but returned no rows. Tell the model to use
       // its runtime tools rather than saying "no data found."
@@ -705,7 +795,9 @@ export function assembleSystemPromptFromContext(
   }
 
   if (ctx.warnings.length > 0) {
-    const lines = ctx.warnings.map((w) => `- ${w.source}: ${w.message}`).join("\n");
+    const lines = ctx.warnings
+      .map((w) => `- ${w.source}: ${w.message}`)
+      .join("\n");
     parts.push(
       `# Sources Unavailable\nThe following sources were attempted and did not return in time. Acknowledge this gap in your answer and proceed with what you have.\n${lines}`,
     );
