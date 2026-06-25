@@ -1,6 +1,6 @@
 # Task: AI-routable idea inbox
 
-Status: Verified locally - ready for publish
+Status: Published to origin/main at 10d22cc10
 Owner: Codex
 Created: 2026-06-25
 Linear Issue: AAI-643 https://linear.app/megankharrison/issue/AAI-643/build-ai-routable-idea-inbox-with-quick-capture-and-status-tracking

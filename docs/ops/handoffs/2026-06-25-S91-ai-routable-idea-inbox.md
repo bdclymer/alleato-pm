@@ -6,7 +6,7 @@
 2) Task ID: AAI-643
 3) Linear issue: AAI-643
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-643/build-ai-routable-idea-inbox-with-quick-capture-and-status-tracking
-5) Current status: Verified locally; ready for publish
+5) Current status: Published to origin/main at 10d22cc10
 6) Files changed (absolute paths):
 - /Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-25-ai-routable-idea-inbox.md
 - /Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-25-S91-ai-routable-idea-inbox.md
@@ -59,7 +59,7 @@ Implemented `/ideas` as a quick editable idea table backed by `public.idea_items
 
 ## Exact Next Step
 
-Publish this slice with `npm run codex:finish -- --message "Add editable AI-routable idea inbox" --files <task-owned paths>`.
+Monitor production route/deployment health if needed; the implementation is published to `origin/main`.
 
 ## Evidence
 
