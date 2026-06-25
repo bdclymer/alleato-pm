@@ -511,6 +511,12 @@ Required verifier families:
 - Acumatica sync health
 - browser proof for operator dashboards when UI is part of the workflow
 
+Operational freshness windows:
+
+- Fireflies ingestion/vectorization failures are active production-readiness blockers only when they affect records from the last two months, or when they affect the recent meeting coverage window enforced by `npm run rag:verify:meetings`.
+- Outlook email and Microsoft Teams backlog failures are active production-readiness blockers only when they affect records from the last one week. Older Outlook/Teams messages may remain archived for audit/search history, but they are not blockers for current assistant usefulness unless a user asks for historical reconstruction.
+- These windows do not weaken automatic sync requirements for new data: current webhook/cron sync, embedding, project assignment, task generation, and RAG retrieval must still fail loudly.
+
 ## Legacy Implementations To Remove Or Decommission
 
 These implementation classes do not belong in the final architecture:

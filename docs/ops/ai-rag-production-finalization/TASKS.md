@@ -46,7 +46,7 @@ Evidence directory:
 
 - [x] Recover recent eligible meeting vectorization after PM projection guard failure.
 - [x] Reprocess known recent missing Fireflies meetings through canonical `run_full_pipeline`.
-- [ ] Drain or classify historical `fireflies_ingestion_jobs` error backlog.
+- [ ] Drain or classify Fireflies ingestion errors inside the two-month operational concern window; older errors are historical and not active blockers unless needed for a historical reconstruction request.
 - [ ] Fix provider JSON-mode/non-JSON extraction noise or classify it with a fail-loud follow-up.
 - [ ] Verify meeting transcripts sync automatically, save, embed, assign projects, create tasks where appropriate, and retrieve through RAG.
 
@@ -55,14 +55,14 @@ Evidence directory:
 - [x] Confirm Graph webhook plus scheduled reconciliation is the target trigger model.
 - [x] Confirm Graph subscription reconciliation cron exists and is active in Render.
 - [x] Repair stale cached Outlook intake for Microsoft Executive Assistant health.
-- [ ] Verify Outlook messages sync, embed, project-assign, generate tasks where applicable, and appear in semantic search.
+- [ ] Verify Outlook messages from the one-week operational concern window sync, embed, project-assign, generate tasks where applicable, and appear in semantic search.
 - [ ] Verify Outlook data is available to every relevant AI assistant through the finalized RAG/tool path.
 
 ### Phase 5: Microsoft Teams Pipeline
 
 - [x] Confirm Teams channel and DM Render cron jobs are active.
 - [x] Confirm source-specific Teams RAG checks live Microsoft Graph and indexed Supabase fallback with explicit observability.
-- [ ] Verify Teams message sync, embedding, project assignment, task generation, and RAG retrieval end to end.
+- [ ] Verify Teams message sync, embedding, project assignment, task generation, and RAG retrieval end to end for the one-week operational concern window.
 
 ### Phase 6: SharePoint Pipeline
 
@@ -294,7 +294,17 @@ Evidence directory:
 - Evidence:
   - [chat-architecture-after-source-of-truth-aai-662.txt](../evidence/2026-06-25-ai-rag-production-finalization/chat-architecture-after-source-of-truth-aai-662.txt)
 
+### 2026-06-25: AAI-663 Source Freshness Windows Applied
+
+- Applied the operational backlog policy:
+  - Fireflies backlog errors older than two months are historical, not active production-readiness blockers.
+  - Outlook email and Teams message backlog errors older than one week are historical, not active production-readiness blockers unless needed for a historical reconstruction request.
+- Updated the meeting vectorization verifier to report Fireflies backlog concern using a 60-day job creation window while preserving the 14-day recent meeting coverage gate.
+- `npm run rag:verify:meetings` passes with 75/75 recent meetings embedded and now reports 1,600 Fireflies error-stage jobs created in the last 60 days.
+- Evidence:
+  - [meetings-after-freshness-window-aai-663.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-after-freshness-window-aai-663.txt)
+
 ## Remaining Blockers
 
-- Historical Fireflies error backlog remains large and must be drained or classified.
+- 1,600 Fireflies ingestion errors inside the two-month operational concern window must be drained or classified; older Fireflies errors are not active production-readiness blockers.
 - Provider JSON-mode fallback/non-JSON extraction noise still occurs during canonical Fireflies processing.
