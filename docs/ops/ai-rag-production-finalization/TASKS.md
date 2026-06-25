@@ -55,14 +55,14 @@ Evidence directory:
 - [x] Confirm Graph webhook plus scheduled reconciliation is the target trigger model.
 - [x] Confirm Graph subscription reconciliation cron exists and is active in Render.
 - [x] Repair stale cached Outlook intake for Microsoft Executive Assistant health.
-- [ ] Verify Outlook messages from the one-week operational concern window sync, embed, project-assign, generate tasks where applicable, and appear in semantic search.
+- [x] Verify Outlook messages from the one-week operational concern window sync, embed, project-assign, generate tasks where applicable, and appear in semantic search.
 - [ ] Verify Outlook data is available to every relevant AI assistant through the finalized RAG/tool path.
 
 ### Phase 5: Microsoft Teams Pipeline
 
 - [x] Confirm Teams channel and DM Render cron jobs are active.
 - [x] Confirm source-specific Teams RAG checks live Microsoft Graph and indexed Supabase fallback with explicit observability.
-- [ ] Verify Teams message sync, embedding, project assignment, task generation, and RAG retrieval end to end for the one-week operational concern window.
+- [x] Verify Teams message sync, embedding, project assignment, task generation, and RAG retrieval end to end for the one-week operational concern window.
 
 ### Phase 6: SharePoint Pipeline
 
@@ -327,7 +327,23 @@ Evidence directory:
   - [fireflies-60-day-error-groups-final-aai-665.json](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-60-day-error-groups-final-aai-665.json)
   - [meetings-after-fireflies-60-day-final-drain-aai-665.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-after-fireflies-60-day-final-drain-aai-665.txt)
 
+### 2026-06-25: AAI-668 Outlook And Teams One-Week Queue Verified
+
+- Grouped the shared queue inside the one-week Outlook/Teams operational concern window.
+- Result: no active Outlook/Teams/Graph shared queue rows exist in the one-week window.
+- `npm run rag:verify:source-specific` passed.
+- `npm run rag:verify:source-lifecycle` passed.
+- Lifecycle evidence shows current Outlook and Teams source health:
+  - Outlook: 516 recent sources, 448 embedding-required, embedded ratio 1.0, lifecycle ratio 1.0, project disposition ratio 1.0.
+  - Teams: 293 recent sources, 187 embedding-required, embedded ratio 1.0, lifecycle ratio 1.0, project disposition ratio 1.0.
+- Recent Outlook/Teams lifecycle failures are terminal `skipped_low_content` rows, not retryable backlog.
+- Evidence:
+  - [graph-teams-outlook-one-week-queue-aai-668.json](../evidence/2026-06-25-ai-rag-production-finalization/graph-teams-outlook-one-week-queue-aai-668.json)
+  - [source-specific-one-week-graph-aai-668.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-specific-one-week-graph-aai-668.txt)
+  - [source-lifecycle-one-week-graph-aai-668.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-one-week-graph-aai-668.txt)
+
 ## Remaining Blockers
 
 - No active Fireflies meeting error backlog remains inside the two-month operational concern window.
-- Remaining shared queue errors from the original 1,600-row count are not Fireflies meeting rows and should be handled by the Graph/Teams/Outlook source freshness issues using the one-week operational concern window.
+- No active Outlook/Teams shared queue backlog remains inside the one-week operational concern window.
+- SharePoint document OCR/image extraction validation remains open as its own workstream.

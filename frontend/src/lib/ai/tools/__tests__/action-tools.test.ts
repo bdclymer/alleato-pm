@@ -18,7 +18,12 @@ jest.mock("@/lib/microsoft-graph/mail", () => ({
   resolveOutlookMailboxUserId: jest.fn(),
 }));
 
+jest.mock("@/services/notificationService", () => ({
+  notifyChangeRequestReviewNeeded: jest.fn(),
+}));
+
 import { createServiceClient } from "@/lib/supabase/service";
+import { notifyChangeRequestReviewNeeded } from "@/services/notificationService";
 import { createToolGuardrails } from "../guardrails";
 import {
   buildCommitmentDraftWidget,
@@ -32,10 +37,17 @@ import {
 
 const mockedCreateToolGuardrails = jest.mocked(createToolGuardrails);
 const mockedCreateServiceClient = jest.mocked(createServiceClient);
+const mockedNotifyChangeRequestReviewNeeded = jest.mocked(
+  notifyChangeRequestReviewNeeded,
+);
 
 describe("previewCreateRFI", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedNotifyChangeRequestReviewNeeded.mockResolvedValue({
+      created: 1,
+      skipped: 0,
+    });
   });
 
   it("returns a traced preview without writing an RFI", async () => {
@@ -176,6 +188,18 @@ describe("createChangeEvent", () => {
         },
       },
     });
+    expect(mockedNotifyChangeRequestReviewNeeded).toHaveBeenCalledWith(
+      "00000000-0000-0000-0000-000000000001",
+      expect.objectContaining({
+        projectId: 43,
+        title: "Owner-requested lobby finish change",
+        description: "Owner asked to upgrade the lobby finish package.",
+        scope: "owner_change",
+        type: "potential_change",
+        status: "open",
+        eventKey: expect.stringMatching(/^[a-f0-9]{64}$/),
+      }),
+    );
     expect(onTrace).toHaveBeenCalledWith(
       expect.objectContaining({
         tool: "createChangeEvent",

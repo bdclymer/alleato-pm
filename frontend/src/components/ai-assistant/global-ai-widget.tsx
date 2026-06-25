@@ -172,6 +172,29 @@ export function GlobalAiWidget() {
     unreadNotificationDraft,
   ]);
 
+  React.useEffect(() => {
+    if (!open) return;
+
+    if (unreadNotificationDraft) {
+      setNotificationDraft((current) =>
+        current?.id === unreadNotificationDraft.id
+          ? current
+          : unreadNotificationDraft,
+      );
+    }
+
+    const markableNotifications = unreadAiNotifications.filter(
+      (notification) => isAiWidgetNotificationKind(notification.kind),
+    );
+    if (markableNotifications.length > 0) {
+      void Promise.all(
+        markableNotifications.map((notification) =>
+          markAsRead(notification.id),
+        ),
+      ).catch(reportNotificationError);
+    }
+  }, [markAsRead, open, unreadAiNotifications, unreadNotificationDraft]);
+
   const handleAssistantActivity = React.useCallback(() => {
     if (!openRef.current) setHasAssistantActivityUnread(true);
   }, []);

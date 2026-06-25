@@ -39,6 +39,7 @@ import {
   resolveOutlookMailboxUserId,
 } from "@/lib/microsoft-graph/mail";
 import { renderChangeRequestToolDescription } from "@/lib/ai/change-request-field-guide";
+import { notifyChangeRequestReviewNeeded } from "@/services/notificationService";
 
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -446,6 +447,15 @@ export function createActionTools(
       .digest("hex");
   }
 
+  function resolvePreviewEventKey(
+    toolName: string,
+    input: Record<string, unknown>,
+  ): string {
+    return createHash("sha256")
+      .update(`${toolName}:preview:${JSON.stringify(input)}`)
+      .digest("hex");
+  }
+
   async function getReplayResponse(
     toolName: string,
     idempotencyKey: string,
@@ -847,12 +857,23 @@ export function createActionTools(
         if (!access.ok) return { success: false, error: access.error };
 
         if (!confirmed) {
+          const fields = { project_id: projectId, title, description, scope, type, status };
+          await notifyChangeRequestReviewNeeded(userId, {
+            projectId,
+            title,
+            description,
+            scope,
+            type,
+            status,
+            eventKey: resolvePreviewEventKey("createChangeEvent", fields),
+          });
+
           return {
             action: "preview",
             message: "Here's the change event I'll create. Reply **confirm** to proceed.",
             preview: {
               table: "change_events",
-              fields: { project_id: projectId, title, description, scope, type, status },
+              fields,
             },
           };
         }
