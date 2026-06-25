@@ -107,7 +107,7 @@ Evidence directory:
 ### Phase 11: AI Assistants And Tool Architecture
 
 - [x] Record AI SDK MCP architecture gap.
-- [ ] Resolve AAI-641 by either fully implementing AI SDK MCP discovery/merge/trace/close or removing unused MCP package/config/docs surface.
+- [x] Resolve AAI-641 by fully implementing AI SDK MCP discovery, merge, trace, and close in the live `/api/ai-assistant/chat` stream path.
 - [ ] Verify every assistant uses finalized prompt, tool calling, and RAG architecture.
 - [ ] Verify assistants retrieve expected context end to end.
 
@@ -197,7 +197,7 @@ Evidence directory:
 - Patched live Render Acumatica cron schedule through the Render API.
 - Resumed live Render Acumatica cron.
 - Triggered immediate Acumatica run `crn-d827cfm7r5hc73e7lp20-1782421595`.
-- Current blocker: sync state remains stale after the short poll window; freshness must be verified after the triggered run completes or surfaces a provider/code failure.
+- The Render-triggered run did not update health within the short poll window, so the guarded canonical Acumatica entrypoint was run directly and health passed afterward.
 - Evidence:
   - [acumatica-render-schedule-patch-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-render-schedule-patch-aai-653.json)
   - [acumatica-render-resume-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-render-resume-aai-653.json)
@@ -212,9 +212,7 @@ Evidence directory:
   - `alleato-microsoft-executive-assistant-check`
 - Triggered immediate runs for all three restored crons.
 - Render AI Gateway health passes.
-- Current blockers surfaced by resumed checks:
-  - Microsoft Executive Assistant live Graph works, but cached Outlook intake is stale.
-  - Meeting vectorization slipped to 73/75 recent meetings after new Fireflies records arrived.
+- Resumed checks surfaced stale Outlook cache and two newly missing Fireflies embeddings; both were repaired in the follow-up provider reconciliation steps below.
 - Evidence:
   - [render-health-cron-resume-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/render-health-cron-resume-aai-653.json)
   - [render-health-cron-trigger-runs-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/render-health-cron-trigger-runs-aai-653.json)
@@ -222,7 +220,7 @@ Evidence directory:
   - [microsoft-assistant-health-after-resume-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/microsoft-assistant-health-after-resume-aai-653.json)
   - [meetings-after-health-cron-resume-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-after-health-cron-resume-aai-653.txt)
 
-### 2026-06-25: Current Active Work
+### 2026-06-25: AAI-653 Provider Schedule Reconciliation Completed
 
 - Re-drove two newly missing Fireflies meetings through canonical `run_full_pipeline`:
   - `01KVD86PYMPG69CHFZ9CPZRQRC` - Ulta Beauty Fresno Weekly Meeting
@@ -235,10 +233,17 @@ Evidence directory:
   - [meetings-after-redrive-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-after-redrive-aai-653.txt)
   - [source-lifecycle-after-provider-reconcile-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-provider-reconcile-aai-653.txt)
 
-### 2026-06-25: Current Active Work
+### 2026-06-25: AAI-641 AI SDK MCP Tool Architecture Recovered
 
-- Investigate AI SDK MCP architecture gap under AAI-641.
-- Package disabled Vercel cron route deletion proof for the cleanup slice.
+- Wired the existing `createAiAssistantMcpTools()` helper into the live `/api/ai-assistant/chat` `handler-v2.ts` stream path.
+- Discovered safe MCP tools are now merged into the Strategist `streamText` toolset.
+- MCP discovery success/failure trace is persisted in chat metadata with the rest of the tool trace.
+- MCP clients are closed on stream finish and stream error.
+- Verification passed: focused MCP policy unit test and chat architecture verifier.
+- Remaining warning: archived audit doc does not identify the current live AI SDK MCP implementation; this is documentation cleanup, not a live route failure.
+- Evidence:
+  - [chat-architecture-after-mcp-wire-aai-641.txt](../evidence/2026-06-25-ai-rag-production-finalization/chat-architecture-after-mcp-wire-aai-641.txt)
+  - [mcp-tools-unit-after-chat-wire-aai-641.txt](../evidence/2026-06-25-ai-rag-production-finalization/mcp-tools-unit-after-chat-wire-aai-641.txt)
 
 ### 2026-06-25: Microsoft Executive Assistant Outlook Cache Recovered
 
@@ -262,7 +267,5 @@ Evidence directory:
 
 - Historical Fireflies error backlog remains large and must be drained or classified.
 - Provider JSON-mode fallback/non-JSON extraction noise still occurs during canonical Fireflies processing.
-- Acumatica cron is restored but entity freshness is still stale until a triggered/scheduled run completes successfully.
-- Microsoft Executive Assistant cached Outlook intake is stale even though live Graph reads work.
-- AI SDK MCP package surface remains unresolved under AAI-641.
+- Archived audit doc still needs to identify the current live AI SDK MCP implementation.
 - Disabled Vercel cron routes remain deletion candidates, but deletion is blocked until replacement proof is complete for each route.

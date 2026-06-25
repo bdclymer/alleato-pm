@@ -45,6 +45,7 @@ import {
 } from "@/lib/ai/services/skill-injection-service";
 import { isPersonalTaskRegisterRequest } from "@/lib/ai/personal-daily-brief";
 import { createStrategistTools } from "@/lib/ai/orchestrator";
+import { createAiAssistantMcpTools } from "@/lib/ai/tools/mcp-tools";
 import { fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { scoreResponseQuality } from "@/lib/ai/score-response-quality";
@@ -1810,6 +1811,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
   const bridgeToolTrace: Array<Record<string, unknown>> = [];
   const backendDeepAgentContextBlocks: string[] = [];
   const liveToolTrace: Array<Record<string, unknown>> = [];
+  let mcpToolBundle: Awaited<ReturnType<typeof createAiAssistantMcpTools>> | null =
+    null;
   let latestRetrievalCtx: Awaited<
     ReturnType<typeof executeRetrievalPlan>
   > | null = null;
@@ -3118,6 +3121,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           if (normalizedTrace) liveToolTrace.push(normalizedTrace);
         },
       });
+      mcpToolBundle = await createAiAssistantMcpTools();
+      Object.assign(tools, mcpToolBundle.tools);
       if (process.env.NODE_ENV !== "production") {
         console.log("[handler-v2] streamText input", {
           plan_reason: plan.reason,
@@ -3282,6 +3287,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                         ? error.stack?.split("\n").slice(0, 5).join("\n")
                         : undefined,
                   });
+                  if (mcpToolBundle) {
+                    waitUntil(mcpToolBundle.close());
+                  }
                 },
                 onFinish: ({
                   finishReason,
@@ -3315,6 +3323,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                     tool_calls: toolCallNames,
                     step_count: steps?.length ?? 0,
                   });
+                  if (mcpToolBundle) {
+                    waitUntil(mcpToolBundle.close());
+                  }
                   setActiveTraceIO({ input: inputText, output: text ?? "" });
                   rootSpan.update({ output: text ?? "" });
                   rootSpan.end();
@@ -3385,6 +3396,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         ...liveToolTrace,
         ...streamToolTrace,
       ];
+      if (mcpToolBundle) {
+        toolTrace.push(...mcpToolBundle.trace);
+      }
 
       const metadata: Record<string, unknown> = {
         architecture: "retrieval-planner-v2",
