@@ -38,6 +38,7 @@ import {
   createOutlookMailDraft,
   resolveOutlookMailboxUserId,
 } from "@/lib/microsoft-graph/mail";
+import { renderChangeRequestToolDescription } from "@/lib/ai/change-request-field-guide";
 
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -823,11 +824,7 @@ export function createActionTools(
     }),
 
     createChangeEvent: tool({
-      description:
-        "Log a new change event — a potential scope change that may or may not " +
-        "become a change order. Use when the user says 'log a change event', " +
-        "'something came up on [project]', or describes an unexpected field condition. " +
-        "Always preview before writing.",
+      description: renderChangeRequestToolDescription(),
       inputSchema: z.object({
         projectId: z.number().describe("Project ID — required"),
         title: z.string().describe("Short descriptive title"),

@@ -146,6 +146,7 @@ describe("global AI assistant tool registry", () => {
         "getAPAgingReport",
         "semanticSearch",
         "getSopBacklog",
+        "createChangeEvent",
         "createTask",
         "draftOutlookEmail",
         "sendTeamsMessage",

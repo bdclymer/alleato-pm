@@ -127,6 +127,70 @@ describe("previewCreateRFI", () => {
   });
 });
 
+describe("createChangeEvent", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("previews change request creation before writing", async () => {
+    const onTrace = jest.fn();
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn().mockResolvedValue({
+        ok: true,
+        projectId: 43,
+      }),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn(),
+    });
+    mockedCreateServiceClient.mockReturnValue({ from: jest.fn() } as never);
+
+    const tools = createActionTools(
+      "00000000-0000-0000-0000-000000000001",
+      { onTrace },
+    );
+    const execute = tools.createChangeEvent.execute;
+    if (!execute) throw new Error("createChangeEvent execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      title: "Owner-requested lobby finish change",
+      description: "Owner asked to upgrade the lobby finish package.",
+      scope: "owner_change",
+      type: "potential_change",
+      status: "open",
+      confirmed: false,
+    });
+
+    expect(output).toMatchObject({
+      action: "preview",
+      preview: {
+        table: "change_events",
+        fields: {
+          project_id: 43,
+          title: "Owner-requested lobby finish change",
+          description: "Owner asked to upgrade the lobby finish package.",
+          scope: "owner_change",
+          type: "potential_change",
+          status: "open",
+        },
+      },
+    });
+    expect(onTrace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tool: "createChangeEvent",
+        input: expect.objectContaining({
+          projectId: 43,
+          confirmed: false,
+        }),
+        output: expect.objectContaining({
+          action: "preview",
+        }),
+      }),
+    );
+  });
+});
+
 describe("generated task DB contract normalization", () => {
   beforeEach(() => {
     jest.clearAllMocks();

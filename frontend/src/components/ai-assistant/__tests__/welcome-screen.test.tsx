@@ -21,12 +21,14 @@ describe("WelcomeScreen", () => {
     render(
       <WelcomeScreen
         hideOrb
-        beforeComposer={<Button type="button">Create an RFI</Button>}
+        beforeComposer={<Button type="button">Create a change request</Button>}
         composer={<Textarea aria-label="Ask anything" />}
       />,
     );
 
-    const action = screen.getByRole("button", { name: "Create an RFI" });
+    const action = screen.getByRole("button", {
+      name: "Create a change request",
+    });
     const composer = screen.getByRole("textbox", { name: "Ask anything" });
 
     expect(screen.getByText("Hello, Test")).toBeInTheDocument();

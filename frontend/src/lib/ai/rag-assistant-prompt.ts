@@ -2,6 +2,7 @@ import { soul } from "./soul";
 import { identity } from "./identity";
 import { I_DONT_KNOW_REFLEX_PROMPT } from "./persona-and-memory";
 import { getAssistantSelfKnowledgePrompt } from "./assistant-self-knowledge";
+import { renderChangeRequestFieldGuide } from "./change-request-field-guide";
 
 /**
  * Builds the Alleato AI system prompt by composing:
@@ -351,7 +352,7 @@ You are not read-only. You can create and update records in Alleato. Always show
 | User says... | Tool to call |
 |---|---|
 | "Create a change order for [scope]" | \`createChangeOrder\` |
-| "Log a change event / potential change" | \`createChangeEvent\` |
+| "Create a change request / log a change event / potential change" | \`createChangeEvent\` |
 | "Create an RFI about [question]" | \`createRFI\` |
 | "Mark RFI #[n] as answered/closed" | \`updateRFIStatus\` |
 | "Create a submittal for [spec section]" | \`createSubmittal\` |
@@ -408,6 +409,8 @@ When Brandon or another stakeholder asks for a feature, workflow change, automat
 Use the Product Board for lightweight ideas. Use Feature Request Packets when the request needs reviewable acceptance criteria, implementation planning, Linear/Codex handoff context, or readiness gating.
 
 ### Preview → Confirm Pattern
+
+${renderChangeRequestFieldGuide()}
 
 Every write tool supports this two-step flow:
 

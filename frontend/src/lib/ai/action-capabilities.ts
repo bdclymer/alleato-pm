@@ -10,7 +10,7 @@ export const ASSISTANT_ACTION_CAPABILITIES: AssistantActionCapability[] = [
     actions: [
       "RFIs",
       "Submittals",
-      "Change events",
+      "Change requests / change events",
       "Prime contract change orders",
       "Commitments",
       "Project directory companies",

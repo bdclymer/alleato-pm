@@ -263,8 +263,8 @@ type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
 const WIDGET_WELCOME_ACTIONS = [
   {
-    label: "Create an RFI",
-    prompt: "Help me create a new RFI for this project.",
+    label: "Create a change request",
+    prompt: "Help me create a new change request for this project.",
   },
   {
     label: "Create a change event",
@@ -496,6 +496,27 @@ function getToolPreview(part: ToolPart): Record<string, unknown> | null {
   if (output.action !== "preview") return null;
   const preview = asObject(output.preview);
   return Object.keys(preview).length > 0 ? preview : null;
+}
+
+const CHANGE_EVENT_PREVIEW_FIELD_LABELS: Record<string, string> = {
+  project_id: "Project",
+  title: "Title",
+  description: "Description",
+  scope: "Scope",
+  type: "Type",
+  status: "Status",
+};
+
+function getPreviewHeading(previewTable: string | null): string {
+  if (previewTable === "change_events") return "Change request preview";
+  return "Pending write";
+}
+
+function getPreviewFieldLabel(previewTable: string | null, key: string): string {
+  if (previewTable === "change_events") {
+    return CHANGE_EVENT_PREVIEW_FIELD_LABELS[key] ?? key;
+  }
+  return key;
 }
 
 function getToolOutputRecord(part: ToolPart): Record<string, unknown> | null {
@@ -959,7 +980,7 @@ function ToolCallItem({
         {preview && (
           <div className="space-y-2 rounded-xl bg-muted/40 p-3">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-              Pending write
+              {getPreviewHeading(previewTable)}
             </p>
             {previewEntries.length > 0 && (
               <div className="space-y-1">
@@ -968,7 +989,9 @@ function ToolCallItem({
                     key={key}
                     className="flex items-start justify-between gap-3 text-xs"
                   >
-                    <span className="text-muted-foreground">{key}</span>
+                    <span className="text-muted-foreground">
+                      {getPreviewFieldLabel(previewTable, key)}
+                    </span>
                     <span className="w-2/3 break-words text-right text-foreground">
                       {typeof value === "string"
                         ? value
@@ -2441,8 +2464,8 @@ function WidgetWelcomePrompt({
         <div className="min-w-0 space-y-1">
           <p className="text-sm font-medium text-foreground">Welcome back.</p>
           <p className="text-xs leading-5 text-muted-foreground">
-            I can help create RFIs, draft change events, generate progress
-            reports, or find project evidence.
+            I can help create change requests, draft change events, generate
+            progress reports, or find project evidence.
           </p>
         </div>
         {onDismiss && (
