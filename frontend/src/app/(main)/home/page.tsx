@@ -60,11 +60,20 @@ type ActionRowProps = {
   title: string;
   meta?: string;
   href?: string;
-  actionLabel?: string;
+  actionLabel?: string | null;
   muted?: boolean;
+  eyebrow?: string;
 };
 
 const OPEN_TASK_STATUSES = new Set(["open", "todo", "new", "pending", "in_progress"]);
+const HOME_REQUIRED_SECTIONS = [
+  "Start here",
+  "Work queue",
+  "Resume projects",
+  "Review queue",
+  "Recent movement",
+  "Source wiring",
+] as const;
 
 function isOpenTask(task: TaskRow): boolean {
   const status = task.status?.trim().toLowerCase();
@@ -116,18 +125,47 @@ function taskMeta(task: TaskRow): string {
     .join(" · ");
 }
 
+function projectMeta(project: ProjectRow): string {
+  return [
+    getProjectJobNumber(project) ? `#${getProjectJobNumber(project)}` : null,
+    project.client,
+    project.phase,
+    project.updated_at ? `Updated ${formatDate(project.updated_at) ?? project.updated_at}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(" · ");
+}
+
+function queueSummary(todayCount: number, openCount: number, aiApprovalCount: number): string {
+  if (todayCount > 0) {
+    return `${todayCount} due today. ${openCount} open in your task feed.`;
+  }
+  if (openCount > 0) {
+    return `${openCount} open task${openCount === 1 ? "" : "s"} in your feed.`;
+  }
+  if (aiApprovalCount > 0) {
+    return `${aiApprovalCount} AI decision${aiApprovalCount === 1 ? "" : "s"} waiting for review.`;
+  }
+  return "No dated or assigned tasks are blocking the start of the day.";
+}
+
 function Section({
   title,
+  action,
   children,
   className,
 }: {
   title: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
-    <section className={cn("min-w-0 space-y-3", className)}>
-      <SectionRuleHeading label={title} className="mb-0 pb-0" />
+    <section className={cn("min-w-0 space-y-4", className)}>
+      <div className="flex items-center justify-between gap-4">
+        <SectionRuleHeading label={title} className="mb-0 pb-0" />
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
       {children}
     </section>
   );
@@ -144,7 +182,7 @@ function RowList({
 
   if (items.length === 0) {
     return (
-      <p className="py-3 text-sm text-muted-foreground">
+      <p className="py-4 text-sm text-muted-foreground">
         {empty ?? "Nothing needs attention from this source right now."}
       </p>
     );
@@ -159,10 +197,16 @@ function ActionRow({
   href,
   actionLabel = "Open",
   muted,
+  eyebrow,
 }: ActionRowProps) {
   const content = (
-    <div className="flex min-h-12 items-center justify-between gap-4 py-3">
+    <div className="flex min-h-14 items-center justify-between gap-4 py-3">
       <div className="min-w-0">
+        {eyebrow ? (
+          <p className="mb-1 text-xs font-medium text-muted-foreground">
+            {eyebrow}
+          </p>
+        ) : null}
         <p
           className={cn(
             "truncate text-sm font-medium",
@@ -177,7 +221,7 @@ function ActionRow({
           </p>
         ) : null}
       </div>
-      {href ? (
+      {href && actionLabel ? (
         <span className="shrink-0 text-xs font-medium text-primary">
           {actionLabel}
         </span>
@@ -190,9 +234,55 @@ function ActionRow({
   }
 
   return (
-    <Link href={href} className="block rounded-sm transition-colors hover:bg-muted/40">
+    <Link href={href} className="block rounded-md transition-colors hover:bg-muted/40">
       {content}
     </Link>
+  );
+}
+
+function PrimaryActionRow({
+  title,
+  meta,
+  href,
+  actionLabel,
+}: {
+  title: string;
+  meta: string;
+  href: string;
+  actionLabel: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="block rounded-lg bg-muted/60 px-4 py-4 transition-colors hover:bg-muted"
+    >
+      <div className="flex min-h-12 items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="truncate text-base font-semibold text-foreground">{title}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{meta}</p>
+        </div>
+        <span className="shrink-0 text-sm font-medium text-primary">{actionLabel}</span>
+      </div>
+    </Link>
+  );
+}
+
+function EmptyQueueAction({
+  title,
+  meta,
+  href,
+  actionLabel,
+}: {
+  title: string;
+  meta: string;
+  href: string;
+  actionLabel: string;
+}) {
+  return (
+    <div className="space-y-3 py-2">
+      <p className="text-sm text-muted-foreground">{meta}</p>
+      <ActionRow title={title} href={href} actionLabel={actionLabel} />
+    </div>
   );
 }
 
@@ -294,6 +384,22 @@ export default function HomeActionDashboardPage() {
       ? `${aiApprovalCount} AI decision${aiApprovalCount === 1 ? "" : "s"} waiting for review.`
       : "No AI decisions are waiting for review.";
 
+  const startSummary = queueSummary(todayTasks.length, openTasks.length, aiApprovalCount);
+  const primaryQueueHref =
+    todayTasks[0]?.project_id
+      ? `/${todayTasks[0].project_id}/tasks`
+      : openTasks[0]?.project_id
+        ? `/${openTasks[0].project_id}/tasks`
+        : aiApprovalCount > 0
+          ? "/ai/approvals"
+          : "/tasks";
+  const primaryQueueLabel =
+    todayTasks.length > 0 || openTasks.length > 0
+      ? "Open tasks"
+      : aiApprovalCount > 0
+        ? "Review AI"
+        : "Open tasks";
+
   const recentActivity = React.useMemo(() => {
     const taskItems = state.tasks.slice(0, 3).map((task) => ({
       key: `task-${task.id}`,
@@ -336,13 +442,12 @@ export default function HomeActionDashboardPage() {
     <PageShell
       variant="dashboard"
       title="Home"
-      description="Today, assigned work, and project entry points."
-      contentClassName="space-y-8"
+      contentClassName="space-y-10"
     >
       {errorMessage ? (
         <div
           role="alert"
-          className="border-l-2 border-destructive py-2 pl-4 text-sm text-foreground"
+          className="rounded-lg bg-danger-subtle p-4 text-sm text-danger"
         >
           <p className="font-medium">Homepage data failed to load.</p>
           <p className="mt-1 text-muted-foreground">{errorMessage}</p>
@@ -351,82 +456,127 @@ export default function HomeActionDashboardPage() {
 
       {isLoading ? (
         <div className="space-y-3 text-sm text-muted-foreground">
-          <p>Loading homepage actions...</p>
+          <p>Loading homepage actions.</p>
           <div className="h-px bg-border/60" />
         </div>
       ) : null}
 
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.65fr)]">
-        <div className="min-w-0 space-y-8">
-          <Section title="Today">
-            <RowList empty="No dated tasks are due today from your current task feed.">
-              {todayTasks.map((task) => (
-                <ActionRow
-                  key={task.id}
-                  title={taskTitle(task)}
-                  meta={taskMeta(task)}
-                  href={task.project_id ? `/${task.project_id}/tasks` : "/tasks"}
-                />
-              ))}
-            </RowList>
-          </Section>
-
-          <Section title="My Work">
-            <RowList empty="No open assigned tasks were returned by the task feed.">
-              {openTasks.map((task) => (
-                <ActionRow
-                  key={task.id}
-                  title={taskTitle(task)}
-                  meta={taskMeta(task)}
-                  href={task.project_id ? `/${task.project_id}/tasks` : "/tasks"}
-                />
-              ))}
-            </RowList>
-          </Section>
-
-          <Section title="AI Brief">
-            <RowList>
-              <ActionRow
-                title="Open executive intelligence"
-                meta="Uses the existing executive brief surface while homepage synthesis is wired."
-                href="/executive"
-                actionLabel="Review"
-              />
-              <SourcePendingRow
-                title="Personal AI brief summary"
-                owner="needs a homepage-specific brief API contract"
-              />
-            </RowList>
-          </Section>
+      <section className="grid gap-8 lg:grid-cols-3">
+        <div className="min-w-0 space-y-3 lg:col-span-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+            Start here
+          </p>
+          <p className="max-w-3xl text-2xl font-semibold tracking-tight text-foreground">
+            {startSummary}
+          </p>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            Use this page to resume work, not monitor everything. Open the first queue that can change what happens next.
+          </p>
         </div>
+        <div className="min-w-0 self-end">
+          <PrimaryActionRow
+            title={aiApprovalCount > 0 ? "Review waiting decisions" : "Open the work queue"}
+            meta={aiApprovalCount > 0 ? aiApprovalMeta : "Tasks, assignments, and project queues stay one click away."}
+            href={primaryQueueHref}
+            actionLabel={primaryQueueLabel}
+          />
+        </div>
+      </section>
 
-        <div className="min-w-0 space-y-8">
-          <Section title="My Projects">
+      <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(24rem,0.75fr)]">
+        <div className="min-w-0 space-y-10">
+          <Section
+            title={HOME_REQUIRED_SECTIONS[1]}
+            action={
+              <Link href="/tasks" className="text-sm font-medium text-primary">
+                All tasks
+              </Link>
+            }
+          >
+            {todayTasks.length > 0 ? (
+              <div className="space-y-6">
+                <div>
+                  <p className="mb-2 text-sm font-medium text-foreground">Due now</p>
+                  <RowList>
+                    {todayTasks.map((task) => (
+                      <ActionRow
+                        key={task.id}
+                        title={taskTitle(task)}
+                        meta={taskMeta(task)}
+                        href={task.project_id ? `/${task.project_id}/tasks` : "/tasks"}
+                        actionLabel="Open"
+                      />
+                    ))}
+                  </RowList>
+                </div>
+                <div>
+                  <p className="mb-2 text-sm font-medium text-foreground">Open assignments</p>
+                  <RowList empty="No other open assigned tasks were returned.">
+                    {openTasks
+                      .filter((task) => !todayTasks.includes(task))
+                      .slice(0, 4)
+                      .map((task) => (
+                        <ActionRow
+                          key={task.id}
+                          title={taskTitle(task)}
+                          meta={taskMeta(task)}
+                          href={task.project_id ? `/${task.project_id}/tasks` : "/tasks"}
+                          actionLabel="Open"
+                        />
+                      ))}
+                  </RowList>
+                </div>
+              </div>
+            ) : (
+              <RowList>
+                {openTasks.map((task) => (
+                  <ActionRow
+                    key={task.id}
+                    title={taskTitle(task)}
+                    meta={taskMeta(task)}
+                    href={task.project_id ? `/${task.project_id}/tasks` : "/tasks"}
+                    actionLabel="Open"
+                  />
+                ))}
+                {openTasks.length === 0 ? (
+                  <EmptyQueueAction
+                    title="Open all tasks"
+                    meta="No open assigned tasks came back from your task feed."
+                    href="/tasks"
+                    actionLabel="Review"
+                  />
+                ) : null}
+              </RowList>
+            )}
+          </Section>
+
+          <Section
+            title={HOME_REQUIRED_SECTIONS[2]}
+            action={
+              <Link href="/" className="text-sm font-medium text-primary">
+                Portfolio
+              </Link>
+            }
+          >
             <RowList empty="No active projects were returned for this user.">
-              {state.projects.slice(0, 6).map((project) => {
+              {state.projects.slice(0, 7).map((project) => {
                 const projectId = getProjectId(project);
-                const jobNumber = getProjectJobNumber(project);
                 return (
                   <ActionRow
                     key={projectId}
                     title={project.name ?? `Project #${projectId}`}
-                    meta={[jobNumber ? `#${jobNumber}` : null, project.client, project.phase]
-                      .filter((value): value is string => Boolean(value))
-                      .join(" · ")}
+                    meta={projectMeta(project)}
                     href={`/${projectId}/home`}
+                    actionLabel={null}
                   />
                 );
               })}
-              <ActionRow
-                title="View all projects"
-                meta={state.isAdmin ? "Portfolio includes admin-visible projects." : "Portfolio is scoped to your memberships."}
-                href="/"
-                actionLabel="View"
-              />
             </RowList>
           </Section>
+        </div>
 
-          <Section title="Quiet Inbox">
+        <div className="min-w-0 space-y-10">
+          <Section title={HOME_REQUIRED_SECTIONS[3]}>
             <RowList>
               <ActionRow
                 title="AI approvals"
@@ -435,25 +585,27 @@ export default function HomeActionDashboardPage() {
                 actionLabel="Review"
               />
               <ActionRow
+                title="Executive intelligence"
+                meta="Open the existing source-backed executive surface."
+                href="/executive"
+                actionLabel="Review"
+              />
+              <ActionRow
                 title="Assignment inbox"
-                meta="Open the existing assignment queue."
+                meta="Open the shared assignment queue."
                 href="/assignment-inbox"
                 actionLabel="View"
               />
               <ActionRow
                 title="Notifications"
-                meta="Open the existing notification center."
+                meta="Open the notification center."
                 href="/notifications"
                 actionLabel="View"
-              />
-              <SourcePendingRow
-                title="Inbox priority rollup"
-                owner="needs a shared unread/priority inbox source"
               />
             </RowList>
           </Section>
 
-          <Section title="Recent Activity">
+          <Section title={HOME_REQUIRED_SECTIONS[4]}>
             <RowList empty="No recent project or task activity was returned.">
               {recentActivity.map((item) => (
                 <ActionRow
@@ -461,8 +613,22 @@ export default function HomeActionDashboardPage() {
                   title={item.title}
                   meta={item.meta}
                   href={item.href}
+                  actionLabel={null}
                 />
               ))}
+            </RowList>
+          </Section>
+
+          <Section title={HOME_REQUIRED_SECTIONS[5]}>
+            <RowList>
+              <SourcePendingRow
+                title="Personal AI brief summary"
+                owner="needs a homepage-specific brief API contract"
+              />
+              <SourcePendingRow
+                title="Inbox priority rollup"
+                owner="needs a shared unread/priority inbox source"
+              />
             </RowList>
           </Section>
         </div>
