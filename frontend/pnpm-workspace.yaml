@@ -13,3 +13,7 @@ allowBuilds:
   unrs-resolver: set this to true or false
 patchedDependencies:
   agentation@3.0.2: patches/agentation@3.0.2.patch
+overrides:
+  '@opentelemetry/sdk-trace-base': ^2.7.1
+  '@opentelemetry/exporter-trace-otlp-http': ^0.208.0
+  '@opentelemetry/sdk-node': ^0.208.0

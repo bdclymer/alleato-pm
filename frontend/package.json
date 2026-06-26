@@ -3,16 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.13.1",
-  "pnpm": {
-    "patchedDependencies": {
-      "agentation@3.0.2": "patches/agentation@3.0.2.patch"
-    },
-    "overrides": {
-      "@opentelemetry/sdk-trace-base": "^2.7.1",
-      "@opentelemetry/exporter-trace-otlp-http": "^0.208.0",
-      "@opentelemetry/sdk-node": "^0.208.0"
-    }
-  },
   "scripts": {
     "postinstall": "rm -rf .next 2>/dev/null || true",
     "dev": "bash ../scripts/dev/start-frontend-clean.sh",
