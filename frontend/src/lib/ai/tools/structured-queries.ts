@@ -61,7 +61,10 @@ export function createStructuredQueryTools(
 
           const query = supabase
             .from("budget_lines")
-            .select("*, cost_codes:cost_code_id(id, title), cost_types:cost_type_id(id, title)")
+            // cost_type_id -> cost_code_types, which has code/description (NOT
+            // title — selecting title errors). cost_code_id -> cost_codes,
+            // which does have title. Guarded by the AI read-tool contract harness.
+            .select("*, cost_codes:cost_code_id(id, title), cost_types:cost_type_id(id, code, description)")
             .eq("project_id", resolved.id)
             .order("cost_code_id", { ascending: true });
 
@@ -141,11 +144,14 @@ export function createStructuredQueryTools(
           if (pccoError) return { error: `Prime contract CO query failed: ${pccoError.message}` };
           const pccos = (pccoData ?? []) as AnyRow[];
 
-          // Fetch commitment (subcontractor) change orders via contract_change_orders
-          // These are linked via contract_id → contracts → project_id
+          // Fetch commitment (subcontractor) change orders. contract_change_orders
+          // has a direct project_id FK (it does NOT have a contract_id
+          // relationship — embedding contracts:contract_id errors). Query by
+          // project_id directly. Guarded by the AI read-tool contract harness.
           let ccoQuery = supabase
             .from("contract_change_orders")
-            .select("*, contracts:contract_id(id, title, project_id)")
+            .select("*")
+            .eq("project_id", resolved.id)
             .order("created_at", { ascending: false });
 
           if (status) {
@@ -154,12 +160,7 @@ export function createStructuredQueryTools(
 
           const { data: ccoData, error: ccoError } = await ccoQuery.limit(500);
           if (ccoError) return { error: `Commitment CO query failed: ${ccoError.message}` };
-          // Filter to this project (contract_change_orders don't have project_id directly)
-          const allCcos = (ccoData ?? []) as AnyRow[];
-          const ccos = allCcos.filter((co) => {
-            const contract = co.contracts as AnyRow | null;
-            return contract && asNumber(contract.project_id) === resolved.id;
-          });
+          const ccos = (ccoData ?? []) as AnyRow[];
 
           const totalPccoAmount = pccos.reduce((sum, r) => sum + asNumber(r.total_amount), 0);
           const totalCcoAmount = ccos.reduce((sum, r) => sum + asNumber(r.amount), 0);
@@ -191,7 +192,6 @@ export function createStructuredQueryTools(
               amount: r.amount,
               requestedDate: r.requested_date,
               approvedDate: r.approved_date,
-              contractTitle: (r.contracts as AnyRow | null)?.title,
             })),
           };
         },

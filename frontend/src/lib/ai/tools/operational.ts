@@ -570,7 +570,11 @@ export function createOperationalTools(
               "person_id, role, user_type, status, " +
                 "people(id, first_name, last_name, email, job_title, " +
                 "phone_mobile, phone_business, person_type, " +
-                "companies(id, name))",
+                // Disambiguate: people<->companies has FKs in both directions
+                // (people.company_id and companies.primary_contact_id), so the
+                // embed must name the FK or PostgREST errors "more than one
+                // relationship". Guarded by the AI read-tool contract harness.
+                "companies!people_company_id_fkey(id, name))",
             )
             .eq("project_id", resolved.id)
             .eq("status", "active");
