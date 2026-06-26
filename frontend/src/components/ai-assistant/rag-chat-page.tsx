@@ -7,6 +7,7 @@ import {
   type FileUIPart,
 } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -467,6 +468,29 @@ export function RagChatPage() {
           <TooltipContent sideOffset={6}>Chat history</TooltipContent>
         </Tooltip>
       </div>
+      <nav
+        aria-label="AI workspace links"
+        className="fixed right-4 top-20 z-30 hidden items-center gap-3 text-xs font-medium text-muted-foreground md:flex"
+      >
+        <Link
+          href="/ai/approvals"
+          className="underline-offset-4 hover:text-foreground hover:underline"
+        >
+          AI Approvals
+        </Link>
+        <Link
+          href="/ai/profile"
+          className="underline-offset-4 hover:text-foreground hover:underline"
+        >
+          AI Profile
+        </Link>
+        <Link
+          href="/ai/teach"
+          className="underline-offset-4 hover:text-foreground hover:underline"
+        >
+          Teach Alleato
+        </Link>
+      </nav>
       <div className="min-h-0 flex-1">
         {effectiveSessionId ? (
           <ChatWithSession
