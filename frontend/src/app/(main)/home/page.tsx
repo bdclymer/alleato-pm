@@ -9,9 +9,13 @@ import {
   AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
   isAiApprovalQueueNotification,
 } from "@/lib/collaboration/ai-approval-queue";
+import { shouldInterruptAiWidget } from "@/lib/collaboration/ai-notification-routing";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import { getHomePrimaryQueueAction } from "./home-action-routing";
+import {
+  getHomeAiApprovalMeta,
+  getHomePrimaryQueueAction,
+} from "./home-action-routing";
 
 type ProjectRow = {
   id: number | string;
@@ -379,11 +383,21 @@ export default function HomeActionDashboardPage() {
     [aiApprovalNotifications],
   );
 
-  const aiApprovalMeta = isLoadingAiApprovals
-    ? "Checking AI decisions."
-    : aiApprovalCount > 0
-      ? `${aiApprovalCount} AI decision${aiApprovalCount === 1 ? "" : "s"} waiting for review.`
-      : "No AI decisions are waiting for review.";
+  const interruptingAiApprovalCount = React.useMemo(
+    () =>
+      aiApprovalNotifications.filter(
+        (notification) =>
+          isAiApprovalQueueNotification(notification) &&
+          shouldInterruptAiWidget(notification),
+      ).length,
+    [aiApprovalNotifications],
+  );
+
+  const aiApprovalMeta = getHomeAiApprovalMeta({
+    isLoading: isLoadingAiApprovals,
+    aiApprovalCount,
+    interruptCount: interruptingAiApprovalCount,
+  });
 
   const startSummary = queueSummary(todayTasks.length, openTasks.length, aiApprovalCount);
   const primaryQueueAction = getHomePrimaryQueueAction({

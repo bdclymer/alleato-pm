@@ -7,6 +7,30 @@ export type HomePrimaryQueueAction = {
   label: string;
 };
 
+export function getHomeAiApprovalMeta({
+  isLoading,
+  aiApprovalCount,
+  interruptCount,
+}: {
+  isLoading: boolean;
+  aiApprovalCount: number;
+  interruptCount: number;
+}): string {
+  if (isLoading) return "Checking AI decisions.";
+
+  if (aiApprovalCount === 0) {
+    return "No AI decisions are waiting for review.";
+  }
+
+  const decisionLabel = `AI decision${aiApprovalCount === 1 ? "" : "s"}`;
+
+  if (interruptCount > 0) {
+    return `${aiApprovalCount} ${decisionLabel} waiting. ${interruptCount} also alert${interruptCount === 1 ? "s" : ""} the AI widget.`;
+  }
+
+  return `${aiApprovalCount} ${decisionLabel} waiting quietly in the review queue.`;
+}
+
 export function getHomePrimaryQueueAction({
   todayTasks,
   openTasks,

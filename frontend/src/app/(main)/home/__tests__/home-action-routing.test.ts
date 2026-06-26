@@ -1,4 +1,39 @@
-import { getHomePrimaryQueueAction } from "../home-action-routing";
+import {
+  getHomeAiApprovalMeta,
+  getHomePrimaryQueueAction,
+} from "../home-action-routing";
+
+describe("getHomeAiApprovalMeta", () => {
+  it("shows loading state while AI review decisions are being checked", () => {
+    expect(
+      getHomeAiApprovalMeta({
+        isLoading: true,
+        aiApprovalCount: 0,
+        interruptCount: 0,
+      }),
+    ).toBe("Checking AI decisions.");
+  });
+
+  it("keeps quiet AI approval decisions out of widget-interrupt copy", () => {
+    expect(
+      getHomeAiApprovalMeta({
+        isLoading: false,
+        aiApprovalCount: 2,
+        interruptCount: 0,
+      }),
+    ).toBe("2 AI decisions waiting quietly in the review queue.");
+  });
+
+  it("surfaces AI approvals that also alert the widget", () => {
+    expect(
+      getHomeAiApprovalMeta({
+        isLoading: false,
+        aiApprovalCount: 2,
+        interruptCount: 1,
+      }),
+    ).toBe("2 AI decisions waiting. 1 also alerts the AI widget.");
+  });
+});
 
 describe("getHomePrimaryQueueAction", () => {
   it("routes to due project tasks before AI approvals", () => {
