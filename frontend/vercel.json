@@ -2,6 +2,9 @@
   "framework": "nextjs",
   "installCommand": "pnpm install --frozen-lockfile --ignore-scripts",
   "buildCommand": "pnpm run build:production",
+  "github": {
+    "autoJobCancelation": true
+  },
   "crons": [
     { "path": "/api/cron/decay-memories", "schedule": "0 4 * * 0" },
     { "path": "/api/cron/daily-flags", "schedule": "0 6 * * *" },
