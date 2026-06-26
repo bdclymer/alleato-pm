@@ -26,7 +26,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MessageSquareIcon } from "lucide-react";
+import { PanelLeftOpenIcon } from "lucide-react";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ChatArea, type ResponseQuality } from "./chat-area";
 import { shouldSyncInitialMessages } from "./chat-message-sync";
@@ -450,18 +450,18 @@ export function RagChatPage() {
         onRename={handleRename}
         onDelete={handleDelete}
       />
-      <div className="fixed right-4 top-14 z-30 sm:right-10 sm:top-20">
+      <div className="fixed left-4 top-20 z-30 md:left-20">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               type="button"
               variant="ghost"
-              size="icon"
-              className="h-12 w-12 rounded-full bg-muted/50 text-foreground shadow-none hover:bg-muted"
+              aria-label="Open chat history"
+              className="h-9 rounded-full bg-background/90 px-3 text-xs font-medium text-muted-foreground shadow-none ring-1 ring-border/50 hover:bg-muted hover:text-foreground"
               onClick={() => setHistoryOpen(true)}
             >
-              <MessageSquareIcon className="h-4 w-4" />
-              <span className="sr-only">Chat history</span>
+              <PanelLeftOpenIcon className="mr-2 h-3.5 w-3.5" />
+              Chat history
             </Button>
           </TooltipTrigger>
           <TooltipContent sideOffset={6}>Chat history</TooltipContent>

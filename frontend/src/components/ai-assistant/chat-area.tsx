@@ -1686,7 +1686,7 @@ export function ChatArea({
         "overflow-hidden rounded-2xl border-0 transition-all",
         welcomeHideOrb
           ? "bg-background shadow-none ring-1 ring-border/35 focus-within:ring-border/60"
-          : "bg-transparent shadow-[0_10px_40px_-28px_rgb(15_23_42/0.45)] ring-1 ring-border/70 focus-within:ring-2 focus-within:ring-border",
+          : "bg-transparent shadow-[0_8px_24px_-22px_rgb(15_23_42/0.25)] ring-1 ring-border/70 focus-within:ring-2 focus-within:ring-border",
         welcomeHideOrb
           ? hasMessages
             ? "px-3 py-2"

@@ -91,15 +91,7 @@ export default function MainLayout({
               className="flex min-w-0 flex-1 flex-col overflow-auto scrollbar-hide transition-[padding] duration-200 ease-out"
               style={{ paddingRight: "var(--admin-feedback-sheet-offset, 0px)" }}
             >
-              {!isDrawingViewer && (
-                isAiAssistant ? (
-                  <div key="site-header-mobile" className="md:hidden">
-                    <SiteHeader key="site-header" />
-                  </div>
-                ) : (
-                  <SiteHeader key="site-header" />
-                )
-              )}
+              {!isDrawingViewer && <SiteHeader key="site-header" />}
               <main
                 id="app-main-content"
                 key="main-content"

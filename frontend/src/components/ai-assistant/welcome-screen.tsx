@@ -56,9 +56,6 @@ export function WelcomeScreen({
           <h1 className="text-blur-intro text-xl font-semibold text-muted-foreground sm:text-2xl">
             Hello, {firstName}
           </h1>
-          <p className="text-sm text-muted-foreground/75 sm:text-base">
-            How can I help?
-          </p>
         </div>
 
         {(composer || children) && (
@@ -66,7 +63,7 @@ export function WelcomeScreen({
             {error && <div className="mb-2">{error}</div>}
             {beforeComposer}
             {composer}
-            {afterComposer ? <div className="mt-4">{afterComposer}</div> : null}
+            {afterComposer ? <div className="mt-7">{afterComposer}</div> : null}
             <div className="mt-3 flex items-center justify-center gap-4 text-center">
               <Link
                 href="/ai/profile"
