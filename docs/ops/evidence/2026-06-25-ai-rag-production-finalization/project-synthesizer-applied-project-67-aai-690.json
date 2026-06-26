@@ -1,0 +1,29 @@
+{
+  "project_id": 67,
+  "since": "2026-06-25",
+  "docs_seen": 5,
+  "emails": 0,
+  "teams": 0,
+  "skipped": 1,
+  "cards_written": 4,
+  "tasks_written": 0,
+  "dry_run": false,
+  "errors": [
+    {
+      "doc_id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcXZAAA=",
+      "error": "Blocked intelligence_promote_signal_candidate: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: insight_card_evidence=1, insight_card_targets=1, insight_cards=1."
+    },
+    {
+      "doc_id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcXoAAA=",
+      "error": "Blocked intelligence_promote_signal_candidate: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: insight_card_evidence=1, insight_card_targets=1, insight_cards=1."
+    },
+    {
+      "doc_id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcXPAAA=",
+      "error": "Blocked intelligence_promote_signal_candidate: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: insight_card_evidence=1, insight_card_targets=1, insight_cards=1."
+    },
+    {
+      "doc_id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcXiAAA=",
+      "error": "Blocked intelligence_promote_signal_candidate: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: insight_card_evidence=1, insight_card_targets=1, insight_cards=1."
+    }
+  ]
+}

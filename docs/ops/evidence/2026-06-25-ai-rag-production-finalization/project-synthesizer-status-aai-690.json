@@ -1,0 +1,252 @@
+{
+  "generatedAt": "2026-06-26T03:36:39.430Z",
+  "processingJobs": [],
+  "recentDocs": [
+    {
+      "source_bucket": "outlook_email",
+      "docs": 454,
+      "project_assigned": 369,
+      "marked_synthesized": 0,
+      "assigned_unmarked": 369,
+      "newest_source_at": "2026-06-25T21:21:06.361Z"
+    },
+    {
+      "source_bucket": "teams_message",
+      "docs": 341,
+      "project_assigned": 24,
+      "marked_synthesized": 0,
+      "assigned_unmarked": 24,
+      "newest_source_at": "2026-06-26T01:43:55.190Z"
+    },
+    {
+      "source_bucket": "outlook_attachment",
+      "docs": 91,
+      "project_assigned": 91,
+      "marked_synthesized": 0,
+      "assigned_unmarked": 91,
+      "newest_source_at": "2026-06-25T21:22:19.021Z"
+    }
+  ],
+  "assignedUnmarkedSamples": [
+    {
+      "id": "outlook_attachment_4c2908dfcc8855bbc000053f_7b772968fec887d9bc53aa7f",
+      "title": "Hillsdale-Alleato_A141 (2014) Exhibit A - Design-Build Amendment (6.24.26).docx",
+      "source_system": "outlook_attachment",
+      "category": "Permit",
+      "type": "email_attachment",
+      "project_id": "67",
+      "created_at": "2026-06-26T01:22:19.021Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_attachment_04143defe086997e08a671f1_f2e3adf54b164f4871fd8864",
+      "title": "170569002_GOODWILL_-_KOKOMO_2026-05.pdf",
+      "source_system": "outlook_attachment",
+      "category": "Invoice",
+      "type": "email_attachment",
+      "project_id": "1016",
+      "created_at": "2026-06-26T01:22:17.141Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnVAAA=",
+      "title": "Email: Re: Park Collective Floor Plan",
+      "source_system": "outlook_email",
+      "category": "email",
+      "type": "email",
+      "project_id": "1097",
+      "created_at": "2026-06-26T01:21:06.361Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnWAAA=",
+      "title": "Email: RE: Hillsdale-Alleato A141",
+      "source_system": "outlook_email",
+      "category": "email",
+      "type": "email",
+      "project_id": "67",
+      "created_at": "2026-06-26T01:21:03.776Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnYAAA=",
+      "title": "Email: RE: Hillsdale-Alleato A141",
+      "source_system": "outlook_email",
+      "category": "email",
+      "type": "email",
+      "project_id": "67",
+      "created_at": "2026-06-26T01:20:58.633Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjncAAA=",
+      "title": "Email: RE: Ulta Warehouse HVAV Additio,Alleato Group/Acco Job#70981292",
+      "source_system": "outlook_email",
+      "category": "email",
+      "type": "email",
+      "project_id": "60",
+      "created_at": "2026-06-26T01:20:51.725Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjndAAA=",
+      "title": "Email: Complete with Docusign: Hillsdale-Alleato_A141 (2014) Exhibit A - Design-Build Amendment (6.24....",
+      "source_system": "outlook_email",
+      "category": "email",
+      "type": "email",
+      "project_id": "67",
+      "created_at": "2026-06-26T01:20:49.035Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnfAAA=",
+      "title": "Email: Completed: Complete with Docusign: Hillsdale-Alleato_A141 (2014) Exhibit A - Design-Build Amendment (6.24....",
+      "source_system": "outlook_email",
+      "category": "email",
+      "type": "email",
+      "project_id": "67",
+      "created_at": "2026-06-26T01:20:43.683Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjngAAA=",
+      "title": "Email: GOODWILL - KOKOMO - Kimley-Horn May 2026 Invoice - 170569002",
+      "source_system": "outlook_email",
+      "category": "email",
+      "type": "email",
+      "project_id": "1016",
+      "created_at": "2026-06-26T01:20:41.156Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnkAAA=",
+      "title": "Email: Re: Ulta Warehouse HVAV Additio,Alleato Group/Acco Job#70981292",
+      "source_system": "outlook_email",
+      "category": "email",
+      "type": "email",
+      "project_id": "60",
+      "created_at": "2026-06-26T01:20:32.270Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEgMF7EAAA=",
+      "title": "Email: RE: Vertical Pipe Attachment - McLane Jazz Project",
+      "source_system": "outlook_email",
+      "category": "email",
+      "type": "email",
+      "project_id": "879",
+      "created_at": "2026-06-26T01:17:13.604Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEgSMJRAAA=",
+      "title": "Email: RE: Vertical Pipe Attachment - McLane Jazz Project",
+      "source_system": "outlook_email",
+      "category": "email",
+      "type": "email",
+      "project_id": "879",
+      "created_at": "2026-06-26T01:17:11.045Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEgSMJSAAA=",
+      "title": "Email: Fw: Superior Beverage Exotec Install and Sprinkler Touchbase",
+      "source_system": "outlook_email",
+      "category": "email",
+      "type": "email",
+      "project_id": "178",
+      "created_at": "2026-06-26T01:17:08.637Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEgSMJTAAA=",
+      "title": "Email: Re: Vertical Pipe Attachment - McLane Jazz Project",
+      "source_system": "outlook_email",
+      "category": "email",
+      "type": "email",
+      "project_id": "879",
+      "created_at": "2026-06-26T01:17:06.019Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "teamsdm_88eaa94af37cf3f5_2026-06-25",
+      "title": "Teams DM Conversation: Alleato Marketing",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "89",
+      "created_at": "2026-06-25T23:46:03.362Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_attachment_cc686b89d428cf64eb356e81_da925f5a686e539497fed362",
+      "title": "Rajane WH RE LLC_Alleato LLC_26-27 Master Template_6-25-2026_702103239.pdf",
+      "source_system": "outlook_attachment",
+      "category": "Specification",
+      "type": "email_attachment",
+      "project_id": "1067",
+      "created_at": "2026-06-25T20:23:15.100Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_attachment_cc686b89d428cf64eb356e81_dbd7cc6fd08ef8bd0305c8ab",
+      "title": "Robinson Hospitality_Alleato LLC_26-27 Master Template_6-25-2026_595269788.pdf",
+      "source_system": "outlook_attachment",
+      "category": "Specification",
+      "type": "email_attachment",
+      "project_id": "1067",
+      "created_at": "2026-06-25T20:23:14.231Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_attachment_35f364bad2d4a106fe2f181a_ab9a2a872506c04c93ea00a2",
+      "title": "26-113 Champagne Ace Pay RI-8530-0001.pdf",
+      "source_system": "outlook_attachment",
+      "category": "Invoice",
+      "type": "email_attachment",
+      "project_id": "38",
+      "created_at": "2026-06-25T20:23:12.618Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcXPAAA=",
+      "title": "Email: Re: Vermillion Rise",
+      "source_system": "outlook_email",
+      "category": "email",
+      "type": "email",
+      "project_id": "67",
+      "created_at": "2026-06-25T20:18:06.397Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    },
+    {
+      "id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcXZAAA=",
+      "title": "Email: Re: Project Name: 'Vermillion Rise TI' Number: '462305' confirmation.",
+      "source_system": "outlook_email",
+      "category": "email",
+      "type": "email",
+      "project_id": "67",
+      "created_at": "2026-06-25T20:17:53.499Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null
+    }
+  ]
+}

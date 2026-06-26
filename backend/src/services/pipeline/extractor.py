@@ -1068,6 +1068,14 @@ def _upsert_task(
             resolved_project_id = int(project_ids[0])
         except (TypeError, ValueError):
             resolved_project_id = None
+    resolved_project_ids = list(project_ids or [])
+    if resolved_project_id is not None:
+        try:
+            scalar_project_id = int(resolved_project_id)
+        except (TypeError, ValueError):
+            scalar_project_id = None
+        if scalar_project_id is not None and scalar_project_id not in resolved_project_ids:
+            resolved_project_ids.append(scalar_project_id)
 
     # Reject role/trade names that are not real people.
     if (task.assignee or "").strip().lower() in _TRADE_ROLE_NAMES:
@@ -1158,7 +1166,7 @@ def _upsert_task(
         "embedding": task.embedding,
         "status": "open",
         "source_system": source_system,
-        "project_ids": project_ids or [],
+        "project_ids": resolved_project_ids,
         "project_id": resolved_project_id,
         "client_id": client_id,
         "extraction_source": extraction_source,

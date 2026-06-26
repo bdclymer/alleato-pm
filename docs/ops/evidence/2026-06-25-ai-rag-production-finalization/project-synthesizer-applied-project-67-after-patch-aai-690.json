@@ -1,0 +1,14 @@
+{
+  "project_id": 67,
+  "since": "2026-06-25",
+  "docs_seen": 2,
+  "emails": 1,
+  "teams": 0,
+  "skipped": 1,
+  "cards_written": 6,
+  "tasks_written": 1,
+  "extractions_attempted": 1,
+  "dry_run": false,
+  "errors": [],
+  "capped_at_max_extractions": 1
+}

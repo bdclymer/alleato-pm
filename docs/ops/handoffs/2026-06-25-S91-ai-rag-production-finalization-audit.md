@@ -254,6 +254,11 @@ AAI-690 progress:
 - Scope: end-to-end project assignment and task generation verification/repair.
 - Linear issue: AAI-690.
 - Code changed:
+  - `/Users/meganharrison/Documents/alleato-pm/backend/src/services/integrations/microsoft_graph/sync.py`
+  - `/Users/meganharrison/Documents/alleato-pm/backend/src/services/intelligence/project_synthesizer.py`
+  - `/Users/meganharrison/Documents/alleato-pm/backend/src/services/pipeline/extractor.py`
+  - `/Users/meganharrison/Documents/alleato-pm/backend/tests/test_graph_sync_options.py`
+  - `/Users/meganharrison/Documents/alleato-pm/backend/unit_tests/test_task_writer_titles.py`
   - `/Users/meganharrison/Documents/alleato-pm/scripts/verify/backfill_project_assignments_from_compiler_jobs.mjs`
   - `/Users/meganharrison/Documents/alleato-pm/scripts/verify/backfill_task_project_assignments_from_rules.mjs`
   - `/Users/meganharrison/Documents/alleato-pm/scripts/verify/backfill_project_assignments_from_attribution_rules.mjs`
@@ -267,6 +272,8 @@ AAI-690 progress:
   - Stale Fireflies task rows had scalar project values populated but project arrays empty or mismatched.
   - Current Fireflies task writers already populate project arrays; the first failure was historical drift.
   - A stricter duplicate/link check then found task-level attribution repairs had set scalar projects from task text without updating project arrays.
+  - Recent Outlook/Teams communication docs had no synthesizer markers and no task rows because event-driven extraction was gated on inline embedding, while Teams scheduled phases skip embedding.
+  - Signal promotion failures blocked task creation for a document, and shared task upsert did not mirror scalar project IDs into task project arrays for communication task writes.
 - Data repair:
   - Fireflies source-document task repair updated 76 task links and 0 document rows.
   - Fireflies task-attribution sync assigned 5 additional tasks from deterministic task text.
@@ -276,6 +283,10 @@ AAI-690 progress:
   - `backfill_task_project_assignments_from_rules.mjs` now supports `--source-system` and `--sync-existing-project-ids`; future task-text project assignments populate task project arrays.
   - `backfill_project_assignments_from_attribution_rules.mjs` now populates task project arrays when assigning linked document tasks.
   - Python guardrail test proves extractor `_upsert_task` persists project arrays with scalar projects.
+  - Graph sync now triggers project synthesizer after new Outlook/Teams communication items even when inline embedding is skipped.
+  - Project synthesizer records signal-promotion errors without blocking task writes.
+  - Shared task writer mirrors scalar project IDs into task project arrays for every source.
+  - Dead email/Teams compiler-title unit test was migrated to the active project synthesizer task writer path.
 - Verification:
   - PASS: `PROJECT_ATTRIBUTION_AUDIT_DAYS=7 npm run verify:project-attribution`
   - PASS: `npm run rag:verify:source-lifecycle -- --days 7`
@@ -286,6 +297,9 @@ AAI-690 progress:
   - PASS: generated-task duplicate check found 0 duplicate groups.
   - PASS: JS syntax checks for touched verifier/backfill scripts.
   - PASS: delegated no-timeout frontend typecheck passed after bounded typecheck agents timed out or were externally terminated without TypeScript diagnostics.
+  - PASS: `PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_fireflies_action_items.py backend/tests/test_graph_sync_options.py backend/unit_tests/test_task_writer_titles.py -q`
+  - PASS: delegated no-timeout frontend typecheck passed after each backend code edit checkpoint.
+  - PASS: bounded project 67 Outlook synthesis redrive wrote 1 real communication task with scalar project, project array, owner, and no duplicate group.
 - Evidence:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-assignment-task-generation-inventory-aai-690.md`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-attribution-baseline-aai-690.txt`
@@ -296,12 +310,16 @@ AAI-690 progress:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-project-rules-fireflies-sync-applied-aai-690.json`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/generated-task-duplicate-after-repair-aai-690.json`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-task-attribution-sync-aai-690.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-status-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-applied-project-67-after-patch-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-generation-live-coverage-after-synthesis-fix-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/communications-task-generation-tests-aai-690.txt`
 - Remaining blocker:
-  - AAI-690 is not fully closed because email, Teams, document-analysis task-generation, unmatched manual-review routing, and cross-source duplicate-prevention coverage still need the same level of evidence.
+  - AAI-690 is not fully closed because Teams task-generation proof, document-analysis task-generation, unmatched manual-review routing, and remaining SharePoint/upload/drawing/RFI/contract assignment evidence still need the same level of evidence.
 
 ## Exact Next Step
 
-Publish the Fireflies project/task repair slice, then continue AAI-690 with email, Teams, document-analysis task-generation, unmatched manual-review routing, and cross-source duplicate-prevention evidence.
+Publish the communication task-generation repair slice, then continue AAI-690 with Teams redrive/proof, document-analysis task-generation, unmatched manual-review routing, and remaining assignment-source evidence.
 
 ## Known Pitfalls
 

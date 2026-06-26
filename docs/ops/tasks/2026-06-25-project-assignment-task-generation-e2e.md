@@ -43,7 +43,7 @@ Verify and finalize end-to-end project assignment and automatic task generation 
 - [ ] Verify project assignment for drawings, submittals, RFIs, and contracts where source records exist.
 - [ ] Verify unmatched/ambiguous records route to manual review with confidence scoring.
 - [x] Verify task generation from meetings.
-- [ ] Verify task generation from emails.
+- [x] Verify task generation from emails.
 - [ ] Verify task generation from Teams conversations.
 - [ ] Verify task generation from document analysis and AI extraction.
 - [ ] Verify duplicate task prevention.
@@ -97,6 +97,12 @@ Repair evidence:
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/generated-task-duplicate-after-repair-aai-690.json`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/fireflies-task-integrity-after-task-attribution-sync-aai-690.json`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-task-attribution-sync-aai-690.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-status-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-dry-run-project-67-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-applied-project-67-after-patch-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-created-task-project-array-repair-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-generation-live-coverage-after-synthesis-fix-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/communications-task-generation-tests-aai-690.txt`
 
 ## Initial Known Constraints
 
@@ -114,6 +120,8 @@ Fireflies task integrity initially failed because stale task rows had their scal
 
 A stricter duplicate/link query then found 48 additional Fireflies task rows where task-level attribution repairs had set the scalar project from task text while leaving the project array empty. The recurring path was `backfill_task_project_assignments_from_rules.mjs`, which updated only the scalar project.
 
+Outlook/Teams automatic task generation had a separate active gap. Recent live data showed 454 Outlook email documents and 341 Teams message documents inside the one-week concern window, but zero communication task rows and zero synthesizer processing markers. The Graph sync path only invoked communication intelligence extraction when inline embedding was enabled, while Teams-only scheduled phases intentionally run fetch-only. A bounded Outlook redrive then exposed a second issue: signal-card promotion failures aborted the whole document before task writes, and the shared task writer populated the scalar project but not the task project array for communication tasks called with only scalar project ID.
+
 ## Prevention
 
 - Added source-filter and task-only controls to the deterministic project-assignment backfill so stale task links can be repaired without touching older Teams/Outlook rows or unrelated document assignment rows.
@@ -121,6 +129,11 @@ A stricter duplicate/link query then found 48 additional Fireflies task rows whe
 - Updated task-attribution and document-attribution repair scripts so any future scalar task project assignment also updates the project array.
 - Applied Fireflies-only task-attribution repair and confirmed 0 remaining Fireflies scalar/array task project mismatches over the two-month operational concern window.
 - Fireflies task integrity verifier now passes over the two-month operational concern window after repair.
+- Updated Graph sync so event-driven communication extraction runs whenever Outlook, Teams channel, or Teams DM items are synced, even when inline embedding is skipped.
+- Updated project synthesizer so signal promotion failures are recorded but no longer block downstream task creation for the same document.
+- Updated the shared task writer so scalar project assignments always populate the task project array.
+- Replaced a dead compiler-title unit test that referenced deleted email/Teams compiler modules with active-path project synthesizer task writer tests.
+- Verified one real recent Outlook email generated a task with project, project array, owner, and no duplicate task group after the fix.
 
 ## Failure-Loud Guardrail
 

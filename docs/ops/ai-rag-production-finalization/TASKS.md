@@ -365,6 +365,34 @@ Evidence directory:
   - [task-project-rules-fireflies-sync-applied-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/task-project-rules-fireflies-sync-applied-aai-690.json)
   - [generated-task-duplicate-after-repair-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/generated-task-duplicate-after-repair-aai-690.json)
 
+### 2026-06-25: AAI-690 Outlook Communication Task Generation Restored
+
+- Live coverage found recent Outlook/Teams communications were synced but not being synthesized into tasks:
+  - 454 Outlook email docs in the 7-day window, 369 project-assigned, 0 task rows before repair.
+  - 341 Teams message docs in the 7-day window, 24 project-assigned, 0 task rows before repair.
+  - 0 project synthesizer processing markers.
+- Root causes:
+  - Graph sync only invoked communication intelligence extraction when inline embedding was enabled; Teams-only scheduled phases intentionally run fetch-only.
+  - Project synthesizer let signal-promotion failures abort a document before task writes.
+  - Shared task writer populated scalar project ID but not the task project array when called with only scalar project ID.
+  - A stale unit test referenced deleted email/Teams compiler modules instead of the production `project_synthesizer` path.
+- Repairs:
+  - Event-driven communication extraction now runs after any Outlook, Teams channel, or Teams DM sync that returns new items, regardless of inline embedding.
+  - Signal-promotion failures are logged/recorded but no longer block task writes for the same communication.
+  - Shared task writer now mirrors scalar project ID into the task project array.
+  - Replaced dead compiler tests with active project synthesizer task-writer coverage.
+  - Ran one bounded production Outlook redrive for project 67; it created 1 task with project, project array, owner, and no duplicate group.
+- Remaining AAI-690 work:
+  - Teams task-generation proof is still open; recent Teams docs are present but no Teams task row has been generated yet.
+  - Document-analysis task generation, unmatched/manual-review routing, and SharePoint/upload/drawing/RFI/contract assignment evidence still need completion.
+- Evidence:
+  - [project-synthesizer-status-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-status-aai-690.json)
+  - [project-synthesizer-dry-run-project-67-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-dry-run-project-67-aai-690.json)
+  - [project-synthesizer-applied-project-67-after-patch-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-applied-project-67-after-patch-aai-690.json)
+  - [project-synthesizer-created-task-project-array-repair-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-created-task-project-array-repair-aai-690.json)
+  - [task-generation-live-coverage-after-synthesis-fix-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/task-generation-live-coverage-after-synthesis-fix-aai-690.json)
+  - [communications-task-generation-tests-aai-690.txt](../evidence/2026-06-25-ai-rag-production-finalization/communications-task-generation-tests-aai-690.txt)
+
 ### 2026-06-25: Microsoft Executive Assistant Outlook Cache Recovered
 
 - Ran a bounded canonical Outlook delta redrive for `bclymer@alleatogroup.com`.

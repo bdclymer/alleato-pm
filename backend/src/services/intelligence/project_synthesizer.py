@@ -330,6 +330,7 @@ def synthesize_project_intelligence(
         "skipped": 0,
         "cards_written": 0,
         "tasks_written": 0,
+        "extractions_attempted": 0,
         "dry_run": dry_run,
         "errors": [],
     }
@@ -400,7 +401,7 @@ def synthesize_project_intelligence(
         # Cap the number of (slow) LLM extractions per call. Deep extraction takes
         # seconds per doc, so a large synchronous batch can exceed the request
         # timeout. max_extractions bounds the actual extractions (not docs scanned).
-        if max_extractions is not None and (result["emails"] + result["teams"]) >= max_extractions:
+        if max_extractions is not None and result["extractions_attempted"] >= max_extractions:
             result["capped_at_max_extractions"] = max_extractions
             break
 
@@ -471,6 +472,7 @@ def synthesize_project_intelligence(
                 continue
 
             # (d) Deep extraction.
+            result["extractions_attempted"] += 1
             structured = llm.extract_deep_communication_intelligence(
                 comm_type=comm_type,
                 title=doc.get("title") or "Untitled",
@@ -539,9 +541,26 @@ def synthesize_project_intelligence(
                 )
                 result["cards_written"] += 1
                 if candidate.get("status") == "candidate":
-                    promote_signal_candidate(
-                        client, candidate["id"], compiler_version=COMMS_COMPILER_VERSION
-                    )
+                    try:
+                        promote_signal_candidate(
+                            client, candidate["id"], compiler_version=COMMS_COMPILER_VERSION
+                        )
+                    except Exception as promote_exc:  # noqa: BLE001
+                        logger.error(
+                            "[ProjectSynthesizer] signal promotion failed for doc %s candidate %s: %s",
+                            doc_id,
+                            candidate.get("id"),
+                            promote_exc,
+                            exc_info=True,
+                        )
+                        result["errors"].append(
+                            {
+                                "doc_id": doc_id,
+                                "candidate_id": candidate.get("id"),
+                                "stage": "signal_promotion",
+                                "error": str(promote_exc),
+                            }
+                        )
 
             # (g) Tasks — tagged with the real source system (email/teams), not fireflies.
             for task in structured.tasks:

@@ -1,16 +1,10 @@
-from types import SimpleNamespace
+from dataclasses import dataclass
+from typing import Any
 
-from bootstrap import load_service_module
+import pytest
 
-
-email_compiler = load_service_module(
-    "services/intelligence/email_compiler.py",
-    "services.intelligence.email_compiler",
-)
-teams_compiler = load_service_module(
-    "services/intelligence/teams_compiler.py",
-    "services.intelligence.teams_compiler",
-)
+from src.services.intelligence import project_synthesizer
+from src.services.pipeline.models import DecisionItem, StructuredData, TaskItem
 
 
 class _Result:
@@ -22,104 +16,279 @@ class _TableQuery:
     def __init__(self, db, table_name):
         self.db = db
         self.table_name = table_name
-        self.payload = None
+        self._update_payload = None
 
-    def upsert(self, payload, on_conflict=None):
-        self.payload = payload if isinstance(payload, list) else [payload]
-        self.db.upserts.append(
-            {
-                "table": self.table_name,
-                "rows": self.payload,
-                "on_conflict": on_conflict,
-            }
-        )
+    def select(self, *_args, **_kwargs):
+        return self
+
+    def eq(self, *_args, **_kwargs):
+        return self
+
+    def or_(self, *_args, **_kwargs):
+        return self
+
+    def order(self, *_args, **_kwargs):
+        return self
+
+    def limit(self, *_args, **_kwargs):
+        return self
+
+    def delete(self):
+        self.db.deletes.append(self.table_name)
+        return self
+
+    def update(self, payload):
+        self._update_payload = payload
         return self
 
     def execute(self):
-        return _Result(self.payload or [])
+        if self._update_payload is not None:
+            self.db.updates.append(
+                {"table": self.table_name, "payload": self._update_payload}
+            )
+            return _Result([self._update_payload])
+        if self.table_name == "document_metadata":
+            return _Result(self.db.document_rows)
+        if self.table_name == "source_signal_candidates":
+            return _Result([])
+        return _Result([])
 
 
 class _FakeSupabase:
-    def __init__(self):
-        self.upserts = []
+    def __init__(self, document_rows):
+        self.document_rows = document_rows
+        self.deletes = []
+        self.updates = []
 
     def table(self, table_name):
         return _TableQuery(self, table_name)
 
 
-class _FakeResolver:
-    def __init__(self, _supabase):
-        pass
+@dataclass
+class _UpsertCall:
+    metadata_id: str
+    project_id: int
+    source_system: str
+    description: str
+    assignee: str | None
+    assignee_email: str | None
 
-    def resolve(self, name, email):
-        return SimpleNamespace(
-            is_employee=True,
-            row_values=lambda: {
-                "assignee_name": name,
-                "assignee_email": email,
-                "assignee_person_id": "person-1",
-            },
-            metadata=lambda: {"assignee_resolution_method": "test"},
+
+@pytest.mark.parametrize(
+    ("source_system", "expected_comm_type"),
+    [
+        ("outlook_email", "email"),
+        ("teams_message", "teams"),
+    ],
+)
+def test_project_synthesizer_writes_email_and_teams_tasks(monkeypatch, source_system, expected_comm_type):
+    doc_id = f"{expected_comm_type}-doc-1"
+    client = _FakeSupabase(
+        [
+            {
+                "id": doc_id,
+                "title": f"{expected_comm_type.title()} source",
+                "type": expected_comm_type,
+                "category": expected_comm_type,
+                "source": source_system,
+                "source_system": source_system,
+                "date": "2026-06-25",
+                "captured_at": "2026-06-25T12:00:00Z",
+                "participants": "Megan Harrison",
+                "participants_array": ["Megan Harrison"],
+                "source_metadata": {},
+                "source_item_id": f"{doc_id}-source",
+                "source_web_url": None,
+                "source_path": None,
+                "content_hash": "hash-1",
+                "project_id": 1009,
+            }
+        ]
+    )
+    rag_read = _FakeSupabase([])
+    rag_write = _FakeSupabase([])
+    upserts: list[_UpsertCall] = []
+
+    monkeypatch.setattr(project_synthesizer, "get_supabase_client", lambda: client)
+    monkeypatch.setattr(project_synthesizer, "get_rag_read_client", lambda: rag_read)
+    monkeypatch.setattr(project_synthesizer, "get_rag_write_client", lambda: rag_write)
+    monkeypatch.setattr(
+        project_synthesizer,
+        "ensure_client_project_target",
+        lambda *_args, **_kwargs: {"id": "target-1009"},
+    )
+    monkeypatch.setattr(project_synthesizer, "_resolve_since", lambda *_args, **_kwargs: "2026-06-18")
+    monkeypatch.setattr(project_synthesizer, "_fetch_project_state", lambda *_args, **_kwargs: "Tracked state")
+    monkeypatch.setattr(
+        project_synthesizer,
+        "fetch_optional_row",
+        lambda *_args, **_kwargs: {"content": "Please send the updated plan to the field team."},
+    )
+    monkeypatch.setattr(
+        project_synthesizer.llm,
+        "extract_deep_communication_intelligence",
+        lambda **_kwargs: StructuredData(
+            tasks=[
+                TaskItem(
+                    description="Send the updated plan to the field team.",
+                    assignee="Megan Harrison",
+                    assignee_email="megan@alleatogroup.com",
+                    priority="medium",
+                    confidence=0.94,
+                )
+            ]
+        ),
+    )
+    monkeypatch.setattr(
+        project_synthesizer,
+        "record_source_processing_status",
+        lambda *_args, **_kwargs: None,
+    )
+
+    def fake_upsert_task(_client: Any, task: TaskItem, *, metadata_id: str, project_id: int, client_id: Any, source_system: str):
+        upserts.append(
+            _UpsertCall(
+                metadata_id=metadata_id,
+                project_id=project_id,
+                source_system=source_system,
+                description=task.description,
+                assignee=task.assignee,
+                assignee_email=task.assignee_email,
+            )
         )
+        return {"id": "task-1"}
+
+    monkeypatch.setattr(project_synthesizer, "_upsert_task", fake_upsert_task)
+
+    result = project_synthesizer.synthesize_project_intelligence(
+        1009,
+        since="2026-06-18",
+        max_docs=10,
+        skip_synthesized=False,
+    )
+
+    result_key = "emails" if expected_comm_type == "email" else "teams"
+    assert result[result_key] == 1
+    assert result["tasks_written"] == 1
+    assert result["errors"] == []
+    assert upserts == [
+        _UpsertCall(
+            metadata_id=doc_id,
+            project_id=1009,
+            source_system=expected_comm_type,
+            description="Send the updated plan to the field team.",
+            assignee="Megan Harrison",
+            assignee_email="megan@alleatogroup.com",
+        )
+    ]
 
 
-def test_email_compiler_writes_task_title(monkeypatch):
-    monkeypatch.setattr(email_compiler, "TaskAssigneeResolver", _FakeResolver)
-    supabase = _FakeSupabase()
-
-    inserted = email_compiler.write_tasks(
-        supabase,
-        "doc-1",
+def test_project_synthesizer_signal_promotion_failure_does_not_block_task_write(monkeypatch):
+    client = _FakeSupabase(
         [
             {
-                "task_text": "Confirm the subcontractor plan with procurement before Friday.",
-                "owner": "Brandon",
-                "owner_email": "brandon@alleatogroup.com",
-                "confidence": 0.95,
-                "needs_review": False,
+                "id": "email-doc-with-signal",
+                "title": "Email: Action and decision",
+                "type": "email",
+                "category": "email",
+                "source": "outlook_email",
+                "source_system": "outlook_email",
+                "date": "2026-06-25",
+                "captured_at": "2026-06-25T12:00:00Z",
+                "participants": "Megan Harrison",
+                "participants_array": ["Megan Harrison"],
+                "source_metadata": {},
+                "source_item_id": "email-source-1",
+                "source_web_url": None,
+                "source_path": None,
+                "content_hash": "hash-2",
+                "project_id": 1009,
             }
-        ],
-        42,
+        ]
+    )
+    rag_read = _FakeSupabase([])
+    rag_write = _FakeSupabase([])
+    upserts: list[_UpsertCall] = []
+
+    monkeypatch.setattr(project_synthesizer, "get_supabase_client", lambda: client)
+    monkeypatch.setattr(project_synthesizer, "get_rag_read_client", lambda: rag_read)
+    monkeypatch.setattr(project_synthesizer, "get_rag_write_client", lambda: rag_write)
+    monkeypatch.setattr(
+        project_synthesizer,
+        "ensure_client_project_target",
+        lambda *_args, **_kwargs: {"id": "target-1009"},
+    )
+    monkeypatch.setattr(project_synthesizer, "_resolve_since", lambda *_args, **_kwargs: "2026-06-18")
+    monkeypatch.setattr(project_synthesizer, "_fetch_project_state", lambda *_args, **_kwargs: "Tracked state")
+    monkeypatch.setattr(
+        project_synthesizer,
+        "fetch_optional_row",
+        lambda *_args, **_kwargs: {"content": "Proceed with the decision and send the plan."},
+    )
+    monkeypatch.setattr(
+        project_synthesizer.llm,
+        "extract_deep_communication_intelligence",
+        lambda **_kwargs: StructuredData(
+            decisions=[
+                DecisionItem(
+                    description="Proceed with the updated logistics plan.",
+                    rationale="The project team agreed in the thread.",
+                    confidence=0.92,
+                    evidence_quote="Proceed with the updated logistics plan.",
+                )
+            ],
+            tasks=[
+                TaskItem(
+                    description="Send the updated logistics plan to the field team.",
+                    assignee="Megan Harrison",
+                    assignee_email="megan@alleatogroup.com",
+                    priority="medium",
+                    confidence=0.94,
+                )
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        project_synthesizer,
+        "record_source_processing_status",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        project_synthesizer,
+        "write_source_signal_candidate",
+        lambda *_args, **_kwargs: {"id": "candidate-1", "status": "candidate"},
+    )
+    monkeypatch.setattr(
+        project_synthesizer,
+        "promote_signal_candidate",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("projection disabled")),
     )
 
-    assert inserted == 1
-    row = supabase.upserts[0]["rows"][0]
-    assert (
-        row["title"]
-        == "Confirm the subcontractor plan with procurement before Friday"
-    )
-    assert (
-        row["description"]
-        == "Confirm the subcontractor plan with procurement before Friday."
+    def fake_upsert_task(_client: Any, task: TaskItem, *, metadata_id: str, project_id: int, client_id: Any, source_system: str):
+        upserts.append(
+            _UpsertCall(
+                metadata_id=metadata_id,
+                project_id=project_id,
+                source_system=source_system,
+                description=task.description,
+                assignee=task.assignee,
+                assignee_email=task.assignee_email,
+            )
+        )
+        return {"id": "task-1"}
+
+    monkeypatch.setattr(project_synthesizer, "_upsert_task", fake_upsert_task)
+
+    result = project_synthesizer.synthesize_project_intelligence(
+        1009,
+        since="2026-06-18",
+        max_docs=10,
+        max_extractions=1,
+        skip_synthesized=False,
     )
 
-
-def test_teams_compiler_writes_task_title(monkeypatch):
-    monkeypatch.setattr(teams_compiler, "TaskAssigneeResolver", _FakeResolver)
-    supabase = _FakeSupabase()
-
-    inserted = teams_compiler.write_tasks(
-        supabase,
-        "doc-2",
-        [
-            {
-                "task_text": "Send the updated schedule to the field team after coordination is complete.",
-                "owner": "Megan",
-                "owner_email": "megan@alleatogroup.com",
-                "confidence": 0.93,
-                "needs_review": False,
-            }
-        ],
-        77,
-    )
-
-    assert inserted == 1
-    row = supabase.upserts[0]["rows"][0]
-    assert (
-        row["title"]
-        == "Send the updated schedule to the field team after coordination"
-    )
-    assert (
-        row["description"]
-        == "Send the updated schedule to the field team after coordination is complete."
-    )
+    assert result["extractions_attempted"] == 1
+    assert result["tasks_written"] == 1
+    assert result["errors"][0]["stage"] == "signal_promotion"
+    assert upserts[0].metadata_id == "email-doc-with-signal"
+    assert upserts[0].source_system == "email"
