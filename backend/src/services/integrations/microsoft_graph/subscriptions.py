@@ -179,6 +179,62 @@ def _existing_subscription(supabase: Any, target: GraphSubscriptionTarget) -> Op
     return dict(rows[0]) if rows else None
 
 
+def _remove_stale_subscription_rows(
+    supabase: Any,
+    *,
+    selected_targets: List[GraphSubscriptionTarget],
+) -> int:
+    """Mark subscription rows outside the configured target set as removed.
+
+    Rows are retained for audit/history, but they must not continue to appear as
+    active renewal debt after a mailbox leaves the configured sync target list.
+    """
+
+    target_keys = {(target.source, target.resource_id) for target in selected_targets}
+    target_sources = {target.source for target in selected_targets}
+    response = (
+        _get_graph_subscription_read_client()
+        .table("graph_subscriptions")
+        .select("source,resource_id,status")
+        .execute()
+    )
+    rows = response.data or []
+    stale_rows = [
+        row
+        for row in rows
+        if row.get("source") in target_sources
+        and (row.get("source"), row.get("resource_id")) not in target_keys
+        and row.get("status") != "removed"
+    ]
+    if not stale_rows:
+        return 0
+
+    removed = 0
+    now_iso = _utcnow().isoformat()
+    write_client = _get_graph_subscription_write_client()
+    for row in stale_rows:
+        source = row.get("source")
+        resource_id = row.get("resource_id")
+        if not source or not resource_id:
+            continue
+        update_response = (
+            write_client.table("graph_subscriptions")
+            .update({
+                "status": "removed",
+                "last_error_message": None,
+                "metadata": {
+                    "removal_reason": "not_in_configured_subscription_targets",
+                    "removed_at": now_iso,
+                },
+            })
+            .eq("source", source)
+            .eq("resource_id", resource_id)
+            .execute()
+        )
+        removed += len(update_response.data or [])
+    return removed
+
+
 def _upsert_subscription(
     supabase: Any,
     target: GraphSubscriptionTarget,
@@ -286,7 +342,19 @@ def ensure_subscriptions(
         raise RuntimeError("MICROSOFT_GRAPH_WEBHOOK_CLIENT_STATE or GRAPH_WEBHOOK_CLIENT_STATE is required")
 
     selected_targets = targets if targets is not None else configured_subscription_targets()
-    stats = {"checked": 0, "created": 0, "renewed": 0, "skipped": 0, "failed": 0, "errors": []}
+    stale_removed = _remove_stale_subscription_rows(
+        supabase,
+        selected_targets=selected_targets,
+    )
+    stats = {
+        "checked": 0,
+        "created": 0,
+        "renewed": 0,
+        "skipped": 0,
+        "failed": 0,
+        "stale_removed": stale_removed,
+        "errors": [],
+    }
     now = _utcnow()
     renew_cutoff = now + timedelta(hours=renew_within_hours)
 

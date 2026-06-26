@@ -121,6 +121,7 @@ async function main() {
   );
 
   const activeSubscriptions = subscriptions.filter((row) => row.status === "active");
+  const staleSubscriptions = subscriptions.filter((row) => !["active", "removed"].includes(row.status));
   const erroredSyncStates = syncStates.filter((row) => row.sync_status === "error" || row.error_message);
   const expectedTargets = options.source === "outlook_email" && options.requireConfiguredTargets
     ? configuredOutlookTargets()
@@ -129,8 +130,20 @@ async function main() {
     activeSubscriptions.map((row) => String(row.resource_id || "").toLowerCase()).filter(Boolean),
   );
   const missingActiveTargets = expectedTargets.filter((resourceId) => !activeByResourceId.has(resourceId));
+  const expectedTargetSet = new Set(expectedTargets);
+  const unconfiguredSubscriptions = expectedTargets.length > 0
+    ? subscriptions.filter((row) => {
+      const resourceId = String(row.resource_id || "").toLowerCase();
+      return resourceId && !expectedTargetSet.has(resourceId) && row.status !== "removed";
+    })
+    : [];
   const minActiveSubscriptions = options.minActive ?? (expectedTargets.length > 0 ? expectedTargets.length : 1);
-  const ok = activeSubscriptions.length >= minActiveSubscriptions && missingActiveTargets.length === 0;
+  const ok = (
+    activeSubscriptions.length >= minActiveSubscriptions &&
+    missingActiveTargets.length === 0 &&
+    staleSubscriptions.length === 0 &&
+    unconfiguredSubscriptions.length === 0
+  );
   const payload = {
     ok,
     checkedAt: new Date().toISOString(),
@@ -140,9 +153,13 @@ async function main() {
     missingActiveTargets,
     subscriptionCount: subscriptions.length,
     activeSubscriptionCount: activeSubscriptions.length,
+    staleSubscriptionCount: staleSubscriptions.length,
+    unconfiguredSubscriptionCount: unconfiguredSubscriptions.length,
     syncStateCount: syncStates.length,
     erroredSyncStateCount: erroredSyncStates.length,
     subscriptions,
+    staleSubscriptions,
+    unconfiguredSubscriptions,
     syncStates,
   };
 
@@ -159,6 +176,12 @@ async function main() {
     );
     if (missingActiveTargets.length > 0) {
       console.error(`Missing active subscriptions for configured target(s): ${missingActiveTargets.join(", ")}.`);
+    }
+    if (staleSubscriptions.length > 0) {
+      console.error(`Stale subscription row(s): ${staleSubscriptions.length}.`);
+    }
+    if (unconfiguredSubscriptions.length > 0) {
+      console.error(`Unconfigured active subscription row(s): ${unconfiguredSubscriptions.length}.`);
     }
     console.error(`Subscription rows: ${subscriptions.length}; sync state rows: ${syncStates.length}; errored sync states: ${erroredSyncStates.length}.`);
     for (const row of subscriptions.slice(0, 5)) {

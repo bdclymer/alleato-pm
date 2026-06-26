@@ -921,3 +921,35 @@ Evidence directory:
 - Published:
   - `4ba56cec55cb4017729a3a38e5dd290eb83f9f31`
   - Linear AAI-715 marked Done.
+
+### 2026-06-26: AAI-718 Outlook Stale Subscription Prevention Started
+
+- Opened urgent follow-up because stale Outlook subscription rows should not remain visible indefinitely.
+- Clarified that `MICROSOFT_SYNC_USERS` is the configured mailbox set for Graph sync/subscription jobs; if `mharrison@alleatogroup.com` should be monitored, excluding it was a config bug.
+- Scope:
+  - mark out-of-config Outlook subscription rows removed during reconciliation;
+  - add `mharrison@alleatogroup.com` to Graph-related Render `MICROSOFT_SYNC_USERS`;
+  - rerun live reconcile/read-back;
+  - keep `verify:graph-subscriptions` proving full configured coverage.
+- Links:
+  - [Task](../tasks/2026-06-26-outlook-stale-subscription-prevention.md)
+  - [Linear AAI-718](https://linear.app/megankharrison/issue/AAI-718/prevent-stale-outlook-graph-subscriptions-and-include-megan-mailbox)
+
+### 2026-06-26: AAI-718 Outlook Stale Subscription Prevention Ready For Publish
+
+- Prevented recurrence:
+  - Graph subscription reconcile now marks out-of-config subscription rows `removed` so stale lifecycle rows cannot remain active renewal debt.
+  - Source health now reports `unconfigured_graph_subscription` separately from generic renewal/expiration warnings.
+  - `verify:graph-subscriptions` now fails on stale non-active rows and unconfigured non-removed rows.
+- Live config aligned:
+  - `alleato-graph-subscription-reconcile`, `alleato-graph-sync`, `alleato-teams-dm-sync`, `alleato-teams-channel-sync`, and `alleato-source-sync-health` all read back with the 11-user Microsoft sync target set including `mharrison@alleatogroup.com`.
+- Live proof:
+  - Strict subscription verifier passed with `expectedTargetCount=11`, `activeSubscriptionCount=11`, `staleSubscriptionCount=0`, `unconfiguredSubscriptionCount=0`.
+  - Megan mailbox scoped sync succeeded and read back as `sync_status=success` with `last_sync_at=2026-06-26T12:57:54.566226+00:00`.
+  - Full Graph sync was blocked by the DB pressure guard at `total_connections=42>35`; scoped mailbox delta sync was used instead.
+- Verification:
+  - Delegated focused tests passed: `29 passed`.
+  - Delegated Python compile passed.
+  - Delegated `node --check scripts/verify/verify_graph_subscriptions.mjs` passed.
+- Evidence:
+  - [AAI-718 evidence](../evidence/2026-06-25-ai-rag-production-finalization/outlook-stale-subscription-prevention-aai-718.md)

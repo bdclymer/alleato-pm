@@ -362,6 +362,76 @@ def test_ensure_subscriptions_creates_fresh_when_stale_delete_fails(monkeypatch)
     assert supabase.tables["graph_subscriptions"][0]["graph_subscription_id"] == "sub-created"
 
 
+def test_ensure_subscriptions_marks_out_of_config_rows_removed(monkeypatch):
+    monkeypatch.setenv("GRAPH_WEBHOOK_NOTIFICATION_URL", "https://example.com/api/graph/webhooks/notifications")
+    monkeypatch.setenv("GRAPH_WEBHOOK_CLIENT_STATE", "state-1")
+    supabase = _FakeSupabase()
+    supabase.tables["graph_subscriptions"] = [
+        {
+            "source": "outlook_email",
+            "resource_id": "stale@example.com",
+            "graph_subscription_id": "sub-stale",
+            "resource": "users/stale@example.com/mailFolders('inbox')/messages",
+            "expiration_at": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
+            "status": "renewal_due",
+            "last_error_message": "Microsoft Graph lifecycle event: reauthorizationRequired",
+        }
+    ]
+    graph = _FakeGraph()
+    target = subscriptions.GraphSubscriptionTarget(
+        source="outlook_email",
+        resource_id="active@example.com",
+        resource_name="Outlook: active@example.com",
+        resource="users/active@example.com/mailFolders('inbox')/messages",
+        change_type="created,updated",
+    )
+
+    original_read, original_write = _route_graph_subscriptions_to_fake_rag(supabase)
+    try:
+        result = subscriptions.ensure_subscriptions(supabase, targets=[target], graph=graph)
+    finally:
+        _restore_graph_subscriptions_clients(original_read, original_write)
+
+    assert result["stale_removed"] == 1
+    stale_row = next(row for row in supabase.tables["graph_subscriptions"] if row["resource_id"] == "stale@example.com")
+    assert stale_row["status"] == "removed"
+    assert stale_row["last_error_message"] is None
+    assert stale_row["metadata"]["removal_reason"] == "not_in_configured_subscription_targets"
+    active_row = next(row for row in supabase.tables["graph_subscriptions"] if row["resource_id"] == "active@example.com")
+    assert active_row["status"] == "active"
+
+
+def test_ensure_subscriptions_does_not_recount_already_removed_stale_rows(monkeypatch):
+    monkeypatch.setenv("GRAPH_WEBHOOK_NOTIFICATION_URL", "https://example.com/api/graph/webhooks/notifications")
+    monkeypatch.setenv("GRAPH_WEBHOOK_CLIENT_STATE", "state-1")
+    supabase = _FakeSupabase()
+    supabase.tables["graph_subscriptions"] = [
+        {
+            "source": "outlook_email",
+            "resource_id": "stale@example.com",
+            "status": "removed",
+            "metadata": {"removal_reason": "not_in_configured_subscription_targets"},
+        }
+    ]
+    graph = _FakeGraph()
+    target = subscriptions.GraphSubscriptionTarget(
+        source="outlook_email",
+        resource_id="active@example.com",
+        resource_name="Outlook: active@example.com",
+        resource="users/active@example.com/mailFolders('inbox')/messages",
+        change_type="created,updated",
+    )
+
+    original_read, original_write = _route_graph_subscriptions_to_fake_rag(supabase)
+    try:
+        result = subscriptions.ensure_subscriptions(supabase, targets=[target], graph=graph)
+    finally:
+        _restore_graph_subscriptions_clients(original_read, original_write)
+
+    assert result["stale_removed"] == 0
+    assert supabase.tables["graph_subscriptions"][0]["status"] == "removed"
+
+
 def test_delete_subscription_marks_removed():
     supabase = _FakeSupabase()
     supabase.tables["graph_subscriptions"] = [
