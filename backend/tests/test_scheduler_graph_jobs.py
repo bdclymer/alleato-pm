@@ -388,7 +388,7 @@ def test_init_scheduler_registers_acumatica_job_with_runtime_envs(monkeypatch):
     scheduler.init_scheduler()
 
     job_ids = {job["id"] for job in recording_scheduler.jobs}
-    assert "daily_digest" in job_ids
+    assert "daily_digest" not in job_ids
     assert "acumatica_financial_sync" in job_ids
     assert recording_scheduler.running is True
 

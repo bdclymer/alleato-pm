@@ -76,7 +76,6 @@ Protected endpoints:
 - `POST /api/ingest/fireflies/recent`
 - `POST /api/graph/sync`
 - `POST /api/intelligence/teams-compiler/run`
-- `POST /api/digests/daily/generate`
 
 If `ADMIN_API_KEY` is not set in the environment, protected endpoints return `503`.
 

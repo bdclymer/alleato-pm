@@ -28,7 +28,7 @@
 - **Ingesting** meeting transcripts from Fireflies.ai into the database
 - **Embedding** document chunks into pgvector-compatible vectors (stored in Supabase)
 - **Syncing** email and Teams messages from Microsoft Graph into the database
-- **Running** scheduled background jobs (daily digests, project summary generation)
+- **Running** scheduled background jobs (source sync, embeddings, task extraction, project summary generation)
 - **Exposing** a small admin API for triggering pipeline tasks manually
 
 **The backend does NOT handle:**
@@ -86,7 +86,6 @@ backend/
 │   │
 │   ├── services/
 │   │   ├── acumatica_sync.py         # Sync financial data from Acumatica ERP → Supabase
-│   │   ├── daily_digest.py           # Generate and send daily AI digest emails
 │   │   ├── email_service.py          # Send emails via SMTP/SendGrid
 │   │   ├── env_loader.py             # Load .env with fallback logic
 │   │   ├── memory_store.py           # In-memory KV cache (used by pipeline)
@@ -144,7 +143,6 @@ backend/
 ├── scripts/                          # Operational scripts (run from command line)
 │   ├── extract_meeting_insights.py           # Extract insights from processed meetings
 │   ├── extract_tasks_from_meetings.py        # Extract action items from meeting transcripts
-│   ├── generate_daily_recap.py               # Generate a daily summary report
 │   ├── generate_project_summaries_batch.py   # Batch-generate project summaries
 │   ├── generate_project_summary.py           # Generate one project's summary
 │   ├── import_budget_from_excel.py           # Import budget data from Excel files
@@ -464,7 +462,7 @@ If this is a plain Python dict or a module-level variable (standard in-memory ca
 ### RISK 12 — Scheduler Jobs Have No Failure Alerting (MEDIUM)
 **File:** `backend/src/services/scheduler.py`
 
-Background scheduler jobs (daily digest, MS Graph sync) likely fail silently when the Supabase connection drops, OpenAI rate-limits, or the MS Graph token expires. There is no evidence of email/Slack alerting on job failure.
+Background scheduler jobs (MS Graph sync, source sync, and task extraction) likely fail silently when the Supabase connection drops, OpenAI rate-limits, or the MS Graph token expires. There is no evidence of email/Slack alerting on job failure.
 
 **Impact:** The system can stop ingesting new meetings, emails, or Teams messages entirely with no notification. Users will notice the AI chat giving stale answers, but there will be no operational alert to trigger a fix.
 

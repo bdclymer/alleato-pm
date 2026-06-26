@@ -43,6 +43,10 @@ Completed legacy Fireflies file-ingest removal slice:
 
 - [2026-06-26-remove-legacy-fireflies-file-ingest.md](../tasks/2026-06-26-remove-legacy-fireflies-file-ingest.md)
 
+Completed legacy daily digest removal slice:
+
+- [2026-06-26-remove-legacy-daily-digest-backend-path.md](../tasks/2026-06-26-remove-legacy-daily-digest-backend-path.md)
+
 Evidence directory:
 
 - [2026-06-25-ai-rag-production-finalization](../evidence/2026-06-25-ai-rag-production-finalization)
@@ -317,7 +321,7 @@ Evidence directory:
 - `npm run db:inventory` now passes schema drift and generated a 458-table inventory.
 - `npm run db:inventory -- --check-only` passes.
 - First env cleanup candidates were classified:
-  - `LEGACY_DAILY_DIGEST_ENABLED` remains a migrate-first disabled legacy gate.
+  - `LEGACY_DAILY_DIGEST_ENABLED` moved to AAI-708 and is being removed with the legacy backend daily digest route/job path.
   - `ENABLE_LEGACY_FIREFLIES_FILE_INGEST` moved to AAI-706 and is being removed with the legacy file-ingest route.
   - `GRAPH_API_INGESTION_ENABLED` is an active provider/web-service pressure guard.
   - `OUTLOOK_SYNC_LEGACY_ATTACHMENTS`, `OUTLOOK_SYNC_LEGACY_LINKS`, and `OUTLOOK_SYNC_LEGACY_PROJECT_EMAILS` are migrate-first Outlook compatibility gates.
@@ -350,6 +354,30 @@ Evidence directory:
 - Evidence:
   - [2026-06-26-remove-legacy-fireflies-file-ingest.md](../tasks/2026-06-26-remove-legacy-fireflies-file-ingest.md)
   - [legacy-fireflies-file-ingest-removal-aai-706.md](../evidence/2026-06-25-ai-rag-production-finalization/legacy-fireflies-file-ingest-removal-aai-706.md)
+
+### 2026-06-26: AAI-708 Legacy Daily Digest Backend Removal Complete
+
+- Removed the disabled backend legacy daily digest generation route
+  `POST /api/digests/daily/generate`, `LEGACY_DAILY_DIGEST_ENABLED` runtime
+  gate, `backend/src/services/daily_digest.py`, disabled standalone
+  `backend/scripts/generate_daily_recap.py`, and the APScheduler
+  `daily_digest` registration/job/wrapper/email helper.
+- Proof shows the canonical executive daily brief owner is the frontend
+  AI Ops runner `frontend/scripts/run-executive-daily-brief.ts` plus the
+  executive daily brief workflow/ledger, not the backend legacy daily digest.
+- Retained `GET /api/digests/daily/{date}` as read-only historical
+  `daily_recaps` access.
+- Verification passed:
+  - delegated `cd frontend && npm run typecheck:changed`;
+  - backend compileall for changed backend files;
+  - `backend/.venv/bin/python -m pytest backend/tests/test_scheduler_graph_jobs.py backend/tests/test_api_routes.py -q`;
+  - live reference scan for deleted env/route/service/script;
+  - `npm run rag:verify:metadata-boundary`;
+  - `npm run rag:verify:executive-daily-brief-gateway`;
+  - `npm run rag:verify:chat-architecture`.
+- Evidence:
+  - [2026-06-26-remove-legacy-daily-digest-backend-path.md](../tasks/2026-06-26-remove-legacy-daily-digest-backend-path.md)
+  - [legacy-daily-digest-removal-aai-708.md](../evidence/2026-06-25-ai-rag-production-finalization/legacy-daily-digest-removal-aai-708.md)
 
 ### 2026-06-26: AAI-698 AI Assistant Routing And RAG Architecture Verified
 

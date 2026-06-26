@@ -11,7 +11,6 @@ const checkedPaths = [
   "backend/src/services/integrations/microsoft_graph",
   "backend/src/services/intelligence",
   "backend/src/services/task_extraction.py",
-  "backend/src/services/daily_digest.py",
   "backend/src/services/supabase_helpers.py",
   "frontend/src/lib/ai",
   "frontend/src/app/api/tasks",

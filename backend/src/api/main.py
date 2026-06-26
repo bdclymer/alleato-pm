@@ -1797,32 +1797,6 @@ async def get_meeting_digest(metadata_id: str) -> Dict[str, Any]:
     return resp.data
 
 
-@app.post("/api/digests/daily/generate", tags=["Digests"])
-async def trigger_daily_digest(
-    background_tasks: BackgroundTasks,
-    date: Optional[str] = Query(None, description="YYYY-MM-DD, default today"),
-    days: int = Query(1, description="Number of days to include"),
-    _: None = Depends(require_admin_api_key),
-) -> Dict[str, Any]:
-    """Manually trigger daily digest generation."""
-    if os.getenv("LEGACY_DAILY_DIGEST_ENABLED", "false").lower() != "true":
-        logger.warning(
-            "[DailyDigest] Legacy daily digest API blocked. Executive Daily Brief must run through the AI Ops gateway ledger."
-        )
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "code": "LEGACY_DAILY_DIGEST_DISABLED",
-                "message": "Legacy daily digest is disabled. Executive Daily Brief generation must run through the AI Ops gateway ledger.",
-                "canonical_runner": "frontend/scripts/run-executive-daily-brief.ts",
-            },
-        )
-
-    from src.services.daily_digest import run_daily_digest
-    background_tasks.add_task(run_daily_digest, date, days)
-    return {"status": "queued", "date": date, "days": days}
-
-
 @app.get("/api/digests/daily/{date}", tags=["Digests"])
 async def get_daily_digest(date: str) -> Dict[str, Any]:
     """Get the daily recap for a specific date (YYYY-MM-DD)."""

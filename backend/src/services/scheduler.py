@@ -4,7 +4,6 @@ Scheduled analysis engine — runs periodic jobs via APScheduler.
 Currently registered jobs:
   - Fireflies sync: every 15 min, fetches new transcripts and ingests via pipeline
   - Fireflies pipeline backlog: periodic drain of stale raw_ingested/provider-error jobs
-  - Daily digest: 6 PM daily, aggregates meetings into executive briefing
   - Acumatica financial sync: daily incremental ERP import into Supabase
   - Microsoft Graph sync: periodic incremental sync of Outlook/Teams/SharePoint
   - Microsoft Graph subscriptions: periodic webhook subscription creation/renewal
@@ -197,24 +196,6 @@ def init_scheduler() -> None:
             backlog_interval_minutes,
             backlog_limit,
             backlog_stale_minutes,
-        )
-
-    if _env_flag_enabled("LEGACY_DAILY_DIGEST_ENABLED", default="false"):
-        # Legacy meeting digest only. Executive Daily Brief runs through the
-        # frontend AI Ops gateway and ai_work_runs ledger.
-        digest_hour = int(os.getenv("DAILY_DIGEST_HOUR", "18"))
-        digest_minute = int(os.getenv("DAILY_DIGEST_MINUTE", "0"))
-
-        scheduler.add_job(
-            run_daily_digest_job,
-            CronTrigger(hour=digest_hour, minute=digest_minute),
-            id="daily_digest",
-            name="Legacy Daily Meeting Digest",
-            replace_existing=True,
-        )
-    else:
-        logger.warning(
-            "[Scheduler] Legacy daily digest disabled. Executive Daily Brief must run through the AI Ops gateway."
         )
 
     if _env_flag_enabled("ACUMATICA_FINANCIAL_SYNC_ENABLED"):
@@ -417,10 +398,8 @@ def init_scheduler() -> None:
             logger.info("[Scheduler] Microsoft Graph sync disabled (no credentials configured)")
 
     scheduler.start()
-    logger.info(
-        "[Scheduler] Started — daily digest at %02d:%02d",
-        digest_hour, digest_minute,
-    )
+    registered_jobs = scheduler.get_jobs() if hasattr(scheduler, "get_jobs") else getattr(scheduler, "jobs", [])
+    logger.info("[Scheduler] Started with %d registered job(s)", len(registered_jobs))
 
 
 def shutdown_scheduler() -> None:
@@ -495,43 +474,6 @@ async def run_fireflies_pipeline_backlog_job(
             e,
             exc_info=True,
         )
-
-
-async def run_daily_digest_job() -> None:
-    """
-    Scheduled job: generate daily digest and send email.
-
-    Runs in an async context via APScheduler's AsyncIOScheduler.
-    """
-    import asyncio
-
-    if not _env_flag_enabled("LEGACY_DAILY_DIGEST_ENABLED", default="false"):
-        logger.warning(
-            "[Scheduler] Legacy daily digest skipped. Executive Daily Brief must run through the AI Ops gateway."
-        )
-        return
-
-    logger.info("[Scheduler] Running legacy daily digest job")
-    try:
-        # Run the sync digest function in a thread pool
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, _run_digest_sync)
-        logger.info(
-            "[Scheduler] Daily digest complete: %d meetings, recap_id=%s",
-            result.get("meeting_count", 0),
-            result.get("recap_id"),
-        )
-
-        # Send email if recipients configured
-        recipients = _get_daily_recipients()
-        if recipients and result.get("recap_id"):
-            _send_recap_email(recipients, result)
-    except ConfigurationError as e:
-        logger.critical("[Scheduler] Daily digest disabled — fix config and restart: %s", e)
-        if scheduler:
-            scheduler.remove_job("daily_digest")
-    except Exception as e:
-        logger.warning("[Scheduler] Daily digest job failed (will retry): %s", e, exc_info=True)
 
 
 async def run_acumatica_financial_sync_job() -> None:
@@ -1177,13 +1119,6 @@ def _run_fireflies_pipeline_backlog(limit: int = 10, stale_minutes: int = 120) -
     return result
 
 
-def _run_digest_sync():
-    """Synchronous wrapper for daily digest generation."""
-    from .daily_digest import run_daily_digest
-    _guard_background_app_db("daily_digest")
-    return run_daily_digest()
-
-
 def _run_acumatica_financial_sync():
     """Synchronous wrapper for Acumatica ERP finance sync."""
     from .acumatica_sync import run_acumatica_financial_sync
@@ -1400,34 +1335,3 @@ def _maybe_run_comm_project_backfill(client) -> dict:
             result.get("assigned", 0),
         )
     return result
-
-
-def _get_daily_recipients() -> list[str]:
-    """Get daily digest email recipients from env var."""
-    raw = os.getenv("DAILY_DIGEST_RECIPIENTS", "")
-    if not raw:
-        return []
-    return [email.strip() for email in raw.split(",") if email.strip()]
-
-
-def _send_recap_email(recipients: list[str], result: dict) -> None:
-    """Send the daily recap email to configured recipients."""
-    from .email_service import send_daily_recap_email
-    from .daily_digest import generate_recap_html
-
-    recap_text = result.get("recap_text", "")
-    recap_html = generate_recap_html(recap_text)
-
-    from datetime import datetime
-    date_str = datetime.now().strftime("%B %d, %Y")
-
-    send_result = send_daily_recap_email(
-        to_emails=recipients,
-        date_str=date_str,
-        recap_html=recap_html,
-        meeting_count=result.get("meeting_count", 0),
-    )
-    if send_result.get("success"):
-        logger.info("[Scheduler] Daily recap email sent to %d recipients", len(recipients))
-    else:
-        logger.warning("[Scheduler] Daily recap email failed: %s", send_result.get("error"))
