@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { appToast as toast } from "@/lib/toast/app-toast";
@@ -84,6 +84,7 @@ import type {
 } from "@/lib/permissions-shared";
 import { UserAvatar } from "./_components/user-access-panel";
 import {
+  buildUserSlugMaps,
   fetchTemplates,
   fetchUsers,
   formatProjectCount,
@@ -271,6 +272,29 @@ export default function PermissionsAdminPage() {
   const users = useMemo(
     () => (activeUsersQuery.data?.data ?? []).map(toAccessSummary),
     [activeUsersQuery.data?.data],
+  );
+  // Build the slug map from the full combined universe (app + project users)
+  // rather than the current tab's filtered subset. The detail page resolves
+  // slugs against all users, so both sides must agree on who is "john-smith"
+  // vs "john-smith-2" regardless of which tab the link came from.
+  const allUsersForSlugs = useMemo(() => {
+    const seen = new Set<string>();
+    return [
+      ...(appUsersQuery.data?.data ?? []),
+      ...(projectAccessUsersQuery.data?.data ?? []),
+    ]
+      .filter((u) => {
+        if (seen.has(u.personId)) return false;
+        seen.add(u.personId);
+        return true;
+      })
+      .map(toAccessSummary);
+  }, [appUsersQuery.data?.data, projectAccessUsersQuery.data?.data]);
+  const { slugByPersonId } = useMemo(() => buildUserSlugMaps(allUsersForSlugs), [allUsersForSlugs]);
+  const userHref = useCallback(
+    (user: UserAccessSummary) =>
+      `/user-management/users/${slugByPersonId.get(user.personId) ?? user.personId}`,
+    [slugByPersonId],
   );
   const appUserCount = appUsersQuery.data?.data.length ?? 0;
   const projectAccessUserCount = projectAccessUsersQuery.data?.data.length ?? 0;
@@ -800,7 +824,7 @@ export default function PermissionsAdminPage() {
           table={{
             columns: userColumns,
             getRowId: (user) => user.id,
-            onRowClick: (user) => router.push(`/user-management/users/${user.personId}`),
+            onRowClick: (user) => router.push(userHref(user)),
             rowActions: canManageUserRows
               ? (user) => (
                   <DropdownMenu>
@@ -816,15 +840,13 @@ export default function PermissionsAdminPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => router.push(`/user-management/users/${user.personId}`)}
+                        onClick={() => router.push(userHref(user))}
                       >
                         <Eye className="mr-2 h-4 w-4" />
                         View
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() =>
-                          router.push(`/user-management/users/${user.personId}?mode=edit`)
-                        }
+                        onClick={() => router.push(`${userHref(user)}?mode=edit`)}
                       >
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit

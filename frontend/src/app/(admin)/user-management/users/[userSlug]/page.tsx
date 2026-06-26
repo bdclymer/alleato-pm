@@ -1,15 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 import {
+  buildUserSlugMaps,
   fetchTemplates,
   fetchUsers,
   getProjectRoleTemplates,
+  looksLikePersonId,
   toAccessSummary,
   type GranularOverrideEffect,
 } from "../../_lib/user-access-data";
@@ -49,7 +51,16 @@ async function fetchProjectOptions(): Promise<ProjectOption[]> {
 export default function PermissionUserDetailPage() {
   const router = useRouter();
   const qc = useQueryClient();
-  const { personId } = useParams<{ personId: string }>()! ?? { personId: "" };
+  const searchParams = useSearchParams();
+  const { userSlug } = useParams<{ userSlug: string }>();
+  const rawSlug = userSlug ?? "";
+  const routeKey = (() => {
+    try {
+      return decodeURIComponent(rawSlug);
+    } catch {
+      return rawSlug;
+    }
+  })();
 
   const usersQuery = useQuery({
     queryKey: ["permission-users"],
@@ -76,9 +87,38 @@ export default function PermissionUserDetailPage() {
     () => (usersQuery.data?.data ?? []).map(toAccessSummary),
     [usersQuery.data?.data],
   );
-  const user =
-    users.find((item) => item.personId === personId || item.authUserId === personId) ??
-    null;
+  const { slugByPersonId, personIdBySlug } = useMemo(
+    () => buildUserSlugMaps(users),
+    [users],
+  );
+
+  // Resolve the route key as a name slug first, then fall back to a raw
+  // personId/authUserId so legacy UUID links keep working.
+  // Skip the slug map when the route key is already a UUID — the map won't
+  // have a UUID key, so the lookup would always return undefined anyway.
+  const personIdFromSlug = looksLikePersonId(routeKey) ? null : (personIdBySlug.get(routeKey) ?? null);
+  const user = useMemo(
+    () =>
+      users.find(
+        (item) =>
+          item.personId === personIdFromSlug ||
+          item.personId === routeKey ||
+          item.authUserId === routeKey,
+      ) ?? null,
+    [users, personIdFromSlug, routeKey],
+  );
+
+  // Canonicalize the URL to the user's name slug (e.g. when arriving via a
+  // legacy UUID link). Replace so the back button skips the UUID entry.
+  useEffect(() => {
+    if (!user) return;
+    const canonicalSlug = slugByPersonId.get(user.personId);
+    if (!canonicalSlug || canonicalSlug === routeKey) return;
+    const query = searchParams?.toString();
+    router.replace(
+      `/user-management/users/${canonicalSlug}${query ? `?${query}` : ""}`,
+    );
+  }, [user, slugByPersonId, routeKey, router, searchParams]);
 
   const assignMutation = useMutation({
     mutationFn: async ({
@@ -101,7 +141,9 @@ export default function PermissionUserDetailPage() {
     },
     onError: (err) => {
       console.error("Project access role update failed", err);
-      toast.error("Failed to update project access");
+      toast.error("Project access update failed", {
+        description: err instanceof Error ? err.message : String(err),
+      });
     },
   });
 
@@ -167,7 +209,9 @@ export default function PermissionUserDetailPage() {
     },
     onError: (err) => {
       console.error("Company access update failed", err);
-      toast.error("Failed to update company access");
+      toast.error("Company access update failed", {
+        description: err instanceof Error ? err.message : String(err),
+      });
     },
   });
 
@@ -201,7 +245,9 @@ export default function PermissionUserDetailPage() {
     },
     onError: (err) => {
       console.error("Permission exception update failed", err);
-      toast.error("Failed to update permission exception");
+      toast.error("Permission exception update failed", {
+        description: err instanceof Error ? err.message : String(err),
+      });
     },
   });
 

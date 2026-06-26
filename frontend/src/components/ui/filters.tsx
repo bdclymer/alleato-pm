@@ -435,7 +435,7 @@ function FilterValueInput({
         onKeyDown={(e) => {
           if (e.key === 'Enter') onChange(Number((e.target as HTMLInputElement).value));
         }}
-        placeholder="Enter value…"
+        placeholder="e.g. 100"
         autoFocus
         className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
       />
@@ -463,7 +463,7 @@ function FilterValueInput({
       onKeyDown={(e) => {
         if (e.key === 'Enter') onChange((e.target as HTMLInputElement).value || null);
       }}
-      placeholder="Enter value…"
+      placeholder="Search"
       autoFocus
       className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
     />
