@@ -241,6 +241,7 @@ describe("recordSubmittalWorkflowResponse", () => {
       "submittals.update": [{ data: null }],
       "submittal_history.insert": [{ data: null }],
       "collaboration_notifications.insert": [{ data: null }],
+      "submittal_project_settings.select": [{ data: null }],
       "user_profiles.select": [
         { data: { full_name: "Next Reviewer", email: "next@example.com" } },
         { data: { full_name: "Current Reviewer", email: "current@example.com" } },
@@ -356,6 +357,7 @@ describe("recordSubmittalWorkflowResponse", () => {
       "submittals.update": [{ data: null }],
       "submittal_history.insert": [{ data: null }],
       "collaboration_notifications.insert": [{ data: null }],
+      "submittal_project_settings.select": [{ data: null }],
       "user_profiles.select": [
         { data: { full_name: "Next Reviewer", email: null } },
         { data: { full_name: "Current Reviewer", email: "current@example.com" } },
@@ -383,6 +385,79 @@ describe("recordSubmittalWorkflowResponse", () => {
       email: {
         status: "skipped",
         reason: "missing_recipient_email",
+      },
+    });
+    expect(emailSender).not.toHaveBeenCalled();
+  });
+
+  it("skips workflow email when project submittal update emails are disabled", async () => {
+    const supabase = new SupabaseMock({
+      "submittals.select": [
+        {
+          data: {
+            id: "sub-1",
+            project_id: 25125,
+            status: "Open",
+            submittal_number: "SUB-007",
+            title: "Lighting controls",
+          },
+        },
+      ],
+      "submittal_workflow_steps.select": [
+        { data: { id: "step-1" } },
+        {
+          data: [
+            {
+              id: "step-1",
+              step_order: 1,
+              step_type: "Reviewer",
+              submittal_responses: [
+                { responder_id: "user-1", response_status: "Approved" },
+              ],
+            },
+            {
+              id: "step-2",
+              step_order: 2,
+              step_type: "Approver",
+              submittal_responses: [
+                { responder_id: "user-2", response_status: "Pending" },
+              ],
+            },
+          ],
+        },
+      ],
+      "submittal_responses.select": [{ data: { id: "response-1" } }],
+      "submittal_responses.update": [
+        { data: { id: "response-1", response_status: "Approved" } },
+      ],
+      "submittals.update": [{ data: null }],
+      "submittal_history.insert": [{ data: null }],
+      "collaboration_notifications.insert": [{ data: null }],
+      "submittal_project_settings.select": [
+        { data: { email_notify_submittal_updated: false } },
+      ],
+    });
+    const emailSender = jest.fn();
+
+    const result = await recordSubmittalWorkflowResponse({
+      supabase: supabase as never,
+      notificationSupabase: supabase as never,
+      emailSender,
+      projectId: 25125,
+      submittalId: "sub-1",
+      stepId: "step-1",
+      userId: "user-1",
+      responseStatus: "Approved",
+      comments: null,
+      where: "workflow-response-test",
+    });
+
+    expect(result.notification).toMatchObject({
+      status: "created",
+      userId: "user-2",
+      email: {
+        status: "skipped",
+        reason: "project_email_disabled",
       },
     });
     expect(emailSender).not.toHaveBeenCalled();
@@ -431,6 +506,7 @@ describe("recordSubmittalWorkflowResponse", () => {
       "submittals.update": [{ data: null }],
       "submittal_history.insert": [{ data: null }, { data: null }],
       "collaboration_notifications.insert": [{ data: null }],
+      "submittal_project_settings.select": [{ data: null }],
       "user_profiles.select": [
         { data: { full_name: "Next Reviewer", email: "next@example.com" } },
         { data: { full_name: "Current Reviewer", email: "current@example.com" } },
@@ -486,6 +562,95 @@ describe("recordSubmittalWorkflowResponse", () => {
         response_id: "response-1",
         target_user_id: "user-2",
         error: "resend unavailable",
+        source: "workflow",
+      },
+    });
+  });
+
+  it("records settings lookup failures before workflow email", async () => {
+    const supabase = new SupabaseMock({
+      "submittals.select": [
+        {
+          data: {
+            id: "sub-1",
+            project_id: 25125,
+            status: "Open",
+            submittal_number: "SUB-008",
+            title: "Fire alarm panel",
+          },
+        },
+      ],
+      "submittal_workflow_steps.select": [
+        { data: { id: "step-1" } },
+        {
+          data: [
+            {
+              id: "step-1",
+              step_order: 1,
+              step_type: "Reviewer",
+              submittal_responses: [
+                { responder_id: "user-1", response_status: "Approved" },
+              ],
+            },
+            {
+              id: "step-2",
+              step_order: 2,
+              step_type: "Approver",
+              submittal_responses: [
+                { responder_id: "user-2", response_status: "Pending" },
+              ],
+            },
+          ],
+        },
+      ],
+      "submittal_responses.select": [{ data: { id: "response-1" } }],
+      "submittal_responses.update": [
+        { data: { id: "response-1", response_status: "Approved" } },
+      ],
+      "submittals.update": [{ data: null }],
+      "submittal_history.insert": [{ data: null }, { data: null }],
+      "collaboration_notifications.insert": [{ data: null }],
+      "submittal_project_settings.select": [
+        { error: { message: "settings unavailable" } },
+      ],
+    });
+    const emailSender = jest.fn();
+
+    const result = await recordSubmittalWorkflowResponse({
+      supabase: supabase as never,
+      notificationSupabase: supabase as never,
+      emailSender,
+      projectId: 25125,
+      submittalId: "sub-1",
+      stepId: "step-1",
+      userId: "user-1",
+      responseStatus: "Approved",
+      comments: null,
+      where: "workflow-response-test",
+    });
+
+    expect(result.notification).toMatchObject({
+      status: "created",
+      userId: "user-2",
+      email: {
+        status: "failed",
+        error: "settings unavailable",
+      },
+    });
+    expect(emailSender).not.toHaveBeenCalled();
+
+    const emailFailureHistoryCall = supabase.calls
+      .filter((call) => call.table === "submittal_history")
+      .find(
+        (call) =>
+          (call.payload as { action?: string }).action ===
+          "workflow_email_failed",
+      );
+    expect(emailFailureHistoryCall?.payload).toMatchObject({
+      action: "workflow_email_failed",
+      metadata: {
+        error: "settings unavailable",
+        response_id: "response-1",
         source: "workflow",
       },
     });

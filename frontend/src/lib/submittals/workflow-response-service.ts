@@ -47,7 +47,10 @@ export type SubmittalWorkflowNotificationResult =
       eventKey: string;
       email:
         | { status: "sent"; id: string | null }
-        | { status: "skipped"; reason: "missing_recipient_email" }
+        | {
+            status: "skipped";
+            reason: "missing_recipient_email" | "project_email_disabled";
+          }
         | { status: "failed"; error: string };
     }
   | {
@@ -319,6 +322,44 @@ async function createWorkflowHandoffNotification({
     });
 
   if (!error) {
+    const { data: settings, error: settingsError } = await notificationClient
+      .from("submittal_project_settings")
+      .select("email_notify_submittal_updated")
+      .eq("project_id", projectId)
+      .maybeSingle();
+
+    if (settingsError) {
+      await insertWorkflowEmailFailureHistory({
+        supabase,
+        submittalId,
+        projectId,
+        userId,
+        responseId,
+        stepId,
+        nextStepId: target.stepId,
+        targetUserId: target.userId,
+        eventKey,
+        errorMessage: settingsError.message,
+        where,
+      });
+
+      return {
+        status: "created",
+        userId: target.userId,
+        eventKey,
+        email: { status: "failed", error: settingsError.message },
+      };
+    }
+
+    if (settings?.email_notify_submittal_updated === false) {
+      return {
+        status: "created",
+        userId: target.userId,
+        eventKey,
+        email: { status: "skipped", reason: "project_email_disabled" },
+      };
+    }
+
     const [
       { data: targetProfile, error: targetProfileError },
       { data: actorProfile, error: actorProfileError },
