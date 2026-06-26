@@ -733,7 +733,9 @@ export function SubmittalDetailClient({
           responder: r.responder_id,
           status: r.response_status,
           comment: r.comments,
-          source: responseHistorySources.get(r.id) ?? null,
+          source:
+            responseHistorySources.get(r.id) ??
+            (parseAIReviewResponseComment(r.comments) ? "ai_review" : null),
         })),
     ),
     ...distributions.map((d) => ({
