@@ -59,6 +59,15 @@ const GROUP_COPY: Record<string, string> = {
   "Delivery": "Prepare email, calendar, and Teams messages with confirmation.",
 };
 
+const GROUP_ORDER = [
+  "Review and approve",
+  "Create records",
+  "Find evidence",
+  "Reports and briefings",
+  "Personalization",
+  "Delivery",
+];
+
 const FEATURED_ACTIONS: CatalogDefinition[] = [
   {
     toolName: "getProjectBriefingSnapshot",
@@ -285,11 +294,20 @@ export function buildAssistantActionCatalog(input: {
     groups.set(definition.group, current);
   }
 
-  return Array.from(groups.entries()).map(([title, items]) => ({
-    title,
-    description: GROUP_COPY[title] ?? "Assistant actions available in Alleato.",
-    items,
-  }));
+  return Array.from(groups.entries())
+    .sort(([left], [right]) => {
+      const leftIndex = GROUP_ORDER.indexOf(left);
+      const rightIndex = GROUP_ORDER.indexOf(right);
+      if (leftIndex === -1 && rightIndex === -1) return left.localeCompare(right);
+      if (leftIndex === -1) return 1;
+      if (rightIndex === -1) return -1;
+      return leftIndex - rightIndex;
+    })
+    .map(([title, items]) => ({
+      title,
+      description: GROUP_COPY[title] ?? "Assistant actions available in Alleato.",
+      items,
+    }));
 }
 
 export const ASSISTANT_ACTION_CATALOG = buildAssistantActionCatalog();
