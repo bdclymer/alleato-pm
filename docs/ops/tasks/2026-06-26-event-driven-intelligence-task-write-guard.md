@@ -3,7 +3,7 @@
 Date: 2026-06-26
 Linear: AAI-699
 Parent: AAI-636
-Status: In Progress
+Status: Complete
 
 ## Objective
 
@@ -34,7 +34,7 @@ Finalize the production path for event-driven Outlook/Teams intelligence and tas
 - [ ] Run Python compile/pytest for backend changes.
 - [ ] Update central AI/RAG finalization `TASKS.md`.
 - [x] Update handoff with evidence and residual risk.
-- [ ] Publish code/docs/evidence if changed.
+- [x] Publish code/docs/evidence if changed.
 
 ## Evidence
 
@@ -75,7 +75,11 @@ Active-window redrives:
 
 ## Blockers
 
-- The bounded Outlook/Teams redrives did not create new task/card rows because the synced items were not project-scoped actionable communications in the run window. This is not a current blocker because the path executed, embedded where eligible, surfaced `pm_projection_rows`, and returned no hidden guard failure. A future seeded fixture should force a project-scoped task/card projection for deterministic CI proof.
+- None for this slice.
+
+## Follow-Up
+
+- Add a deterministic seeded integration fixture that forces one project-scoped Outlook/Teams task/card projection. The production path is fixed and covered by unit/regression tests, but the live active-window redrives did not happen to contain a project-scoped actionable communication that produced new PM task/card rows.
 
 ## Root Cause
 
