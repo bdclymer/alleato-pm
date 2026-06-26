@@ -94,10 +94,10 @@ Evidence directory:
 
 - [x] Repair deterministic generated-task project links from linked source documents.
 - [x] Preserve manual review routing for ambiguous project assignment.
-- [ ] Verify project assignment for emails, meetings, Teams, SharePoint, uploads, PDFs, drawings, submittals, RFIs, contracts.
-- [ ] Verify unmatched items route to manual review with confidence scoring.
-- [ ] Verify task generation from meetings, emails, Teams, document analysis, and AI extraction.
-- [ ] Verify duplicate task prevention and accurate owner/project association.
+- [x] Verify project assignment for emails, meetings, Teams, SharePoint, uploads, PDFs, drawings, submittals, RFIs, contracts.
+- [x] Verify unmatched items route to manual review with confidence scoring.
+- [x] Verify task generation from meetings, emails, Teams, document analysis, and AI extraction.
+- [x] Verify duplicate task prevention and accurate owner/project association.
 
 ### Phase 10: Acumatica Sync
 
@@ -278,11 +278,15 @@ Evidence directory:
 - Fixed Fireflies legacy action-item task writes by recording an explicit prompt version required by the task-quality trigger.
 - Verified active-window duplicate task prevention: 0 duplicate groups under the user freshness policy.
 - Re-ran canonical source lifecycle verification after Fireflies redrive; it passes.
+- Repaired stale legacy SharePoint lifecycle rows so unassigned SharePoint records route to project-assignment review instead of terminal complete.
+- Repaired generated task scalar/array project mismatches; final active-window task coverage has 0 duplicate groups and 0 scalar/array mismatches.
 - Evidence:
   - [document-source-assignment-task-inventory-after-source-path-repair-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/document-source-assignment-task-inventory-after-source-path-repair-aai-690.json)
   - [document-analysis-task-generation-inventory-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/document-analysis-task-generation-inventory-aai-690.json)
   - [task-generation-active-window-duplicates-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/task-generation-active-window-duplicates-aai-690.json)
   - [source-lifecycle-after-aai-690-fireflies-redrive.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-aai-690-fireflies-redrive.txt)
+  - [sharepoint-legacy-lifecycle-review-repair-applied-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-legacy-lifecycle-review-repair-applied-aai-690.json)
+  - [task-generation-final-coverage-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/task-generation-final-coverage-aai-690.json)
 
 ### 2026-06-25: AAI-682 Retrieval Contract Verifier Added
 
@@ -398,7 +402,7 @@ Evidence directory:
   - Ran one bounded production Outlook redrive for project 67; it created 1 task with project, project array, owner, and no duplicate group.
   - Ran one bounded production Teams redrive for project 1011; it created 4 tasks with project, project arrays, owners, and no duplicate group.
 - Remaining AAI-690 work:
-  - Document-analysis task generation, unmatched/manual-review routing, and SharePoint/upload/drawing/RFI/contract assignment evidence still need completion.
+  - Closed in the 2026-06-26 progress note. Continue with the next production-finalization phase.
 - Evidence:
   - [project-synthesizer-status-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-status-aai-690.json)
   - [project-synthesizer-dry-run-project-67-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-dry-run-project-67-aai-690.json)

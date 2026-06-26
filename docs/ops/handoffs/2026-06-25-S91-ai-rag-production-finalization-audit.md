@@ -71,7 +71,7 @@
    - Meeting vectorization for recent eligible meetings is recovered: official verifier now reports `75/75` recent meetings with embedded chunks. Historical Fireflies error backlog remains at `13225` rows and must be classified/drained separately.
    - Source lifecycle verifier is recovered: project disposition semantics now honor manual-review terminal states, and 162 deterministic task links were repaired from their source document projects.
    - Provider schedules do not fully match the target architecture: Render Acumatica, RAG health, AI provider health, and Microsoft Executive Assistant checks are suspended; Vercel Graph/Graph-embed/Acumatica crons are disabled but still present in repo config.
-10) Recommended next action (one line): Close the remaining SharePoint assignment disposition gap before claiming AAI-690 complete.
+10) Recommended next action (one line): Continue with the next production-finalization phase after AAI-690 publish.
 11) Handoff file path: docs/ops/handoffs/2026-06-25-S91-ai-rag-production-finalization-audit.md
 12) Migration ledger evidence: No migration in this slice.
 
@@ -252,8 +252,14 @@ AAI-690 continued progress:
   - PASS: `PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_meeting_signal_promotion.py -q`
   - PASS: delegated sub-agent typecheck `TYPECHECK_NO_TIMEOUT=1 npm --prefix frontend run typecheck`
   - PASS: `npm run rag:verify:source-lifecycle` after Fireflies redrive
-- Remaining blocker:
-  - AAI-690 is still not complete. Live inventory still shows SharePoint documents without a direct project, including rows with lifecycle status complete but no project and rows in project-assignment review. This needs a final disposition policy or stronger deterministic accounting match before completion.
+- SharePoint disposition closeout:
+  - Applied current-state lifecycle normalization over the active 7-day Microsoft window.
+  - Repaired 124 stale legacy `sharepoint` lifecycle rows from complete/no-project to project-assignment review.
+  - Postcheck found 0 remaining no-project terminal SharePoint rows in the active window.
+- Task association closeout:
+  - Repaired 4 generated task scalar/array mismatches.
+  - Final active-window task coverage has 0 duplicate task groups and 0 scalar/array mismatches.
+  - Remaining no-project tasks map to source meetings whose latest lifecycle disposition is project-assignment review, internal, or multi-project.
 - Evidence:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/document-source-assignment-task-inventory-aai-690.json`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/document-source-assignment-task-inventory-after-source-path-repair-aai-690.json`
@@ -263,6 +269,9 @@ AAI-690 continued progress:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/sharepoint-ap-check-assignment-dry-run-aai-690.json`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/fireflies-redrive-aai-690-after-legacy-prompt-fix.json`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-aai-690-fireflies-redrive.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/sharepoint-legacy-lifecycle-review-repair-applied-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-project-array-final-repair-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-generation-final-coverage-aai-690.json`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-boundary-fix-aai-682.txt`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/focused-compile-lint-after-boundary-fix-aai-682.txt`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/retrieval-contract-aai-682.txt`

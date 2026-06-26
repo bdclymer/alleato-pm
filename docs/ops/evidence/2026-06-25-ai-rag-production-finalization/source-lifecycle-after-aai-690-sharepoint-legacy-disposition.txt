@@ -1,0 +1,1113 @@
+
+> alleato-procore@0.1.0 rag:verify:source-lifecycle
+> node scripts/verify/verify_source_lifecycle_health.mjs
+
+{
+  "status": "pass",
+  "generatedAt": "2026-06-26T05:27:45.772Z",
+  "thresholds": {
+    "lookbackDays": 2,
+    "sourceLimit": 1500,
+    "maxPacketAgeHours": 36,
+    "minProjectAssignedRatio": 0.9,
+    "minEmbeddedRatio": 0.9,
+    "minTaskAssignedRatio": 0.9,
+    "requireLifecycleRows": true
+  },
+  "sources": {
+    "total_recent_sources": 612,
+    "by_family": [
+      {
+        "family": "fireflies",
+        "recent_sources": 16,
+        "project_required_sources": 15,
+        "project_not_required_sources": 1,
+        "project_applicability": {
+          "single_project": 14,
+          "internal_project": 1,
+          "project_assignment_review": 1
+        },
+        "with_project": 14,
+        "project_assigned_ratio": 0.9333333333333333,
+        "with_project_disposition": 15,
+        "project_disposition_ratio": 1,
+        "embedding_required_sources": 14,
+        "terminal_embedding_failures": 2,
+        "with_chunks": 14,
+        "with_embeddings": 14,
+        "embedded_ratio": 1,
+        "with_lifecycle": 16,
+        "lifecycle_ratio": 1,
+        "with_project_assignment_lifecycle": 16,
+        "with_project_intelligence_lifecycle": 14,
+        "newest_source": "2026-06-25T23:30:40.288Z",
+        "unassigned_samples": [
+          {
+            "id": "01KVV1ZXBWSG077B23VWVA0F7V",
+            "title": "Quarterly Meeting Brainstorm",
+            "type": "meeting",
+            "created_at": "2026-06-25T20:17:14.537Z"
+          },
+          {
+            "id": "01KV8RZP74R2SND8XNKGVZA248",
+            "title": "Rob+Brandon discussion",
+            "type": "meeting",
+            "created_at": "2026-06-25T00:30:28.604Z"
+          }
+        ],
+        "project_assignment_review_samples": [
+          {
+            "id": "01KV8RZP74R2SND8XNKGVZA248",
+            "title": "Rob+Brandon discussion",
+            "type": "meeting",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "matched_project_signal_pattern:\\bpricing\\b",
+            "created_at": "2026-06-25T00:30:28.604Z"
+          }
+        ],
+        "not_project_required_samples": [
+          {
+            "id": "01KVV1ZXBWSG077B23VWVA0F7V",
+            "title": "Quarterly Meeting Brainstorm",
+            "type": "meeting",
+            "project_applicability": "internal_project",
+            "project_applicability_reason": "matched_internal_pattern:\\bcompany announcements?\\b",
+            "created_at": "2026-06-25T20:17:14.537Z"
+          }
+        ],
+        "unembedded_samples": [],
+        "terminal_unembeddable_samples": [
+          {
+            "id": "01KVRSVPDN1K5SPGX31YXF4FAB",
+            "title": "440 W - Alleato Group Interview",
+            "type": "meeting",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "intentionally_excluded",
+            "created_at": "2026-06-24T23:30:28.814Z"
+          },
+          {
+            "id": "01KVDNXX51X4577FW682AJEFQY",
+            "title": "Interview Alleato Group (Accountant-Jake)",
+            "type": "meeting",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "intentionally_excluded",
+            "created_at": "2026-06-24T21:30:28.626Z"
+          }
+        ]
+      },
+      {
+        "family": "teams",
+        "recent_sources": 86,
+        "project_required_sources": 49,
+        "project_not_required_sources": 37,
+        "project_applicability": {
+          "not_project_applicable": 33,
+          "project_assignment_review": 42,
+          "single_project": 7,
+          "internal_project": 4
+        },
+        "with_project": 7,
+        "project_assigned_ratio": 0.14285714285714285,
+        "with_project_disposition": 49,
+        "project_disposition_ratio": 1,
+        "embedding_required_sources": 57,
+        "terminal_embedding_failures": 29,
+        "with_chunks": 57,
+        "with_embeddings": 57,
+        "embedded_ratio": 1,
+        "with_lifecycle": 86,
+        "lifecycle_ratio": 1,
+        "with_project_assignment_lifecycle": 58,
+        "with_project_intelligence_lifecycle": 58,
+        "newest_source": "2026-06-26T05:43:55.190Z",
+        "unassigned_samples": [
+          {
+            "id": "teamsdm_1a7d3f7ac20ac0ff_2026-06-26",
+            "title": "Teams DM Conversation: Company announcements",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "created_at": "2026-06-26T05:43:55.190Z"
+          },
+          {
+            "id": "teamsdm_240a50c23fbd2bca_2026-06-25",
+            "title": "Teams DM Conversation: 19:81e9018c-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "created_at": "2026-06-26T02:42:34.562Z"
+          },
+          {
+            "id": "teamsdm_3134f3e637b9402d_2026-06-25",
+            "title": "Teams DM Conversation: 19:5ccd645d-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "created_at": "2026-06-26T01:17:33.125Z"
+          },
+          {
+            "id": "teamsdm_4ebcf74f0f650a96_2026-06-25",
+            "title": "Teams DM Conversation: 19:0b91490a2",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "created_at": "2026-06-26T00:43:15.388Z"
+          },
+          {
+            "id": "teamsdm_adf25d228efeb15f_2026-06-25",
+            "title": "Teams DM Conversation: 19:meeting_N",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "created_at": "2026-06-25T23:43:20.430Z"
+          }
+        ],
+        "project_assignment_review_samples": [
+          {
+            "id": "teamsdm_4ebcf74f0f650a96_2026-06-25",
+            "title": "Teams DM Conversation: 19:0b91490a2",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-26T00:43:15.388Z"
+          },
+          {
+            "id": "teamsdm_862e0c3cd3fa9916_2026-06-25",
+            "title": "Teams DM Conversation: 19:38f414d6-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "matched_project_signal_pattern:\\bsubmittal\\b",
+            "created_at": "2026-06-25T22:47:08.405Z"
+          },
+          {
+            "id": "teamsdm_19f77c715175e56a_2026-06-25",
+            "title": "Teams DM Conversation: 19:737d4feb-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "matched_project_signal_pattern:\\bdrawings?\\b",
+            "created_at": "2026-06-25T20:47:57.645Z"
+          },
+          {
+            "id": "teamsdm_c1a042ef5a4aca63_2026-06-25",
+            "title": "Teams DM Conversation: 19:362f7b90-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-25T19:45:33.529Z"
+          },
+          {
+            "id": "teamsdm_cd0dcb2f4f189d3c_2026-06-25",
+            "title": "Teams DM Conversation: 19:81e9018c-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "matched_project_signal_pattern:\\bpricing\\b",
+            "created_at": "2026-06-25T18:42:39.231Z"
+          }
+        ],
+        "not_project_required_samples": [
+          {
+            "id": "teamsdm_1a7d3f7ac20ac0ff_2026-06-26",
+            "title": "Teams DM Conversation: Company announcements",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "not_project_applicable",
+            "project_applicability_reason": "terminal_status_skipped_low_content",
+            "created_at": "2026-06-26T05:43:55.190Z"
+          },
+          {
+            "id": "teamsdm_240a50c23fbd2bca_2026-06-25",
+            "title": "Teams DM Conversation: 19:81e9018c-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "not_project_applicable",
+            "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+            "created_at": "2026-06-26T02:42:34.562Z"
+          },
+          {
+            "id": "teamsdm_3134f3e637b9402d_2026-06-25",
+            "title": "Teams DM Conversation: 19:5ccd645d-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "not_project_applicable",
+            "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+            "created_at": "2026-06-26T01:17:33.125Z"
+          },
+          {
+            "id": "teamsdm_adf25d228efeb15f_2026-06-25",
+            "title": "Teams DM Conversation: 19:meeting_N",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "not_project_applicable",
+            "project_applicability_reason": "matched_non_project_pattern:\\bnotetaker\\b",
+            "created_at": "2026-06-25T23:43:20.430Z"
+          },
+          {
+            "id": "teamsdm_29fd3f8f3bfe7dac_2026-06-25",
+            "title": "Teams DM Conversation: 19:11a980385",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "not_project_applicable",
+            "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+            "created_at": "2026-06-25T22:42:52.011Z"
+          }
+        ],
+        "unembedded_samples": [],
+        "terminal_unembeddable_samples": [
+          {
+            "id": "teamsdm_1a7d3f7ac20ac0ff_2026-06-26",
+            "title": "Teams DM Conversation: Company announcements",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "skipped_low_content",
+            "created_at": "2026-06-26T05:43:55.190Z"
+          },
+          {
+            "id": "teamsdm_240a50c23fbd2bca_2026-06-25",
+            "title": "Teams DM Conversation: 19:81e9018c-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "skipped_low_content",
+            "created_at": "2026-06-26T02:42:34.562Z"
+          },
+          {
+            "id": "teamsdm_3134f3e637b9402d_2026-06-25",
+            "title": "Teams DM Conversation: 19:5ccd645d-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "skipped_low_content",
+            "created_at": "2026-06-26T01:17:33.125Z"
+          },
+          {
+            "id": "teamsdm_29fd3f8f3bfe7dac_2026-06-25",
+            "title": "Teams DM Conversation: 19:11a980385",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "skipped_low_content",
+            "created_at": "2026-06-25T22:42:52.011Z"
+          },
+          {
+            "id": "teamsdm_b407086ed7842167_2026-06-25",
+            "title": "Teams DM Conversation: 19:05e7f199-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "skipped_low_content",
+            "created_at": "2026-06-25T21:44:30.459Z"
+          }
+        ]
+      },
+      {
+        "family": "outlook_email",
+        "recent_sources": 510,
+        "project_required_sources": 499,
+        "project_not_required_sources": 11,
+        "project_applicability": {
+          "single_project": 424,
+          "project_assignment_review": 75,
+          "internal_project": 8,
+          "not_project_applicable": 2,
+          "multi_project_review": 1
+        },
+        "with_project": 424,
+        "project_assigned_ratio": 0.8496993987975952,
+        "with_project_disposition": 499,
+        "project_disposition_ratio": 1,
+        "embedding_required_sources": 455,
+        "terminal_embedding_failures": 55,
+        "with_chunks": 489,
+        "with_embeddings": 455,
+        "embedded_ratio": 1,
+        "with_lifecycle": 510,
+        "lifecycle_ratio": 1,
+        "with_project_assignment_lifecycle": 501,
+        "with_project_intelligence_lifecycle": 489,
+        "newest_source": "2026-06-26T01:22:19.021Z",
+        "unassigned_samples": [
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnXAAA=",
+            "title": "Email: Standing Instructions_Clymer",
+            "category": "email",
+            "type": "email",
+            "created_at": "2026-06-26T01:21:01.043Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnZAAA=",
+            "title": "Email: ATMI Cost Increase",
+            "category": "email",
+            "type": "email",
+            "created_at": "2026-06-26T01:20:56.328Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnaAAA=",
+            "title": "Email: Re: Abundance360 2027 - Please Secure Your Patron Spot.",
+            "category": "email",
+            "type": "email",
+            "created_at": "2026-06-26T01:20:54.181Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjneAAA=",
+            "title": "Email: Re: TAG 06/24/26 - VP Offer",
+            "category": "email",
+            "type": "email",
+            "created_at": "2026-06-26T01:20:46.672Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnhAAA=",
+            "title": "Email: Re: Wire Instructions for June 2026 Distribution",
+            "category": "email",
+            "type": "email",
+            "created_at": "2026-06-26T01:20:38.862Z"
+          }
+        ],
+        "project_assignment_review_samples": [
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnXAAA=",
+            "title": "Email: Standing Instructions_Clymer",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-26T01:21:01.043Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnZAAA=",
+            "title": "Email: ATMI Cost Increase",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "matched_project_signal_pattern:\\brfi\\b",
+            "created_at": "2026-06-26T01:20:56.328Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnaAAA=",
+            "title": "Email: Re: Abundance360 2027 - Please Secure Your Patron Spot.",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "matched_project_signal_pattern:\\binvoice\\b",
+            "created_at": "2026-06-26T01:20:54.181Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnhAAA=",
+            "title": "Email: Re: Wire Instructions for June 2026 Distribution",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-26T01:20:38.862Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjniAAA=",
+            "title": "Email: Exol PA proposal",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-26T01:20:36.961Z"
+          }
+        ],
+        "not_project_required_samples": [
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjneAAA=",
+            "title": "Email: Re: TAG 06/24/26 - VP Offer",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "internal_project",
+            "project_applicability_reason": "matched_internal_pattern:\\bsalary\\b",
+            "created_at": "2026-06-26T01:20:46.672Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnnAAA=",
+            "title": "Email: Re: TAG 06/24/26 - VP Offer",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "not_project_applicable",
+            "project_applicability_reason": "terminal_status_skipped_low_content",
+            "created_at": "2026-06-26T01:20:25.323Z"
+          },
+          {
+            "id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcXlAAA=",
+            "title": "Email: Re: TAG 06/24/26 - VP Offer",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "internal_project",
+            "project_applicability_reason": "matched_internal_pattern:\\bsalary\\b",
+            "created_at": "2026-06-25T20:17:25.308Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjmFAAA=",
+            "title": "Email: Re: Outreach Feasibility Study Interview",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "internal_project",
+            "project_applicability_reason": "matched_internal_pattern:\\binterview\\b",
+            "created_at": "2026-06-25T18:18:16.870Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjmNAAA=",
+            "title": "Email: Re: TAG 06/24/26 - VP Offer",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "internal_project",
+            "project_applicability_reason": "matched_internal_pattern:\\bsalary\\b",
+            "created_at": "2026-06-25T18:18:14.431Z"
+          }
+        ],
+        "unembedded_samples": [],
+        "terminal_unembeddable_samples": [
+          {
+            "id": "outlook_attachment_4c2908dfcc8855bbc000053f_7b772968fec887d9bc53aa7f",
+            "title": "Hillsdale-Alleato_A141 (2014) Exhibit A - Design-Build Amendment (6.24.26).docx",
+            "category": "Permit",
+            "type": "email_attachment",
+            "terminal_source": "rag_document_metadata.parsing_status",
+            "terminal_code": "metadata_only",
+            "created_at": "2026-06-26T01:22:19.021Z"
+          },
+          {
+            "id": "outlook_attachment_04143defe086997e08a671f1_f2e3adf54b164f4871fd8864",
+            "title": "170569002_GOODWILL_-_KOKOMO_2026-05.pdf",
+            "category": "Invoice",
+            "type": "email_attachment",
+            "terminal_source": "rag_document_metadata.parsing_status",
+            "terminal_code": "metadata_only",
+            "created_at": "2026-06-26T01:22:17.141Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnnAAA=",
+            "title": "Email: Re: TAG 06/24/26 - VP Offer",
+            "category": "email",
+            "type": "email",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "skipped_low_content",
+            "created_at": "2026-06-26T01:20:25.323Z"
+          },
+          {
+            "id": "outlook_attachment_cc686b89d428cf64eb356e81_da925f5a686e539497fed362",
+            "title": "Rajane WH RE LLC_Alleato LLC_26-27 Master Template_6-25-2026_702103239.pdf",
+            "category": "Specification",
+            "type": "email_attachment",
+            "terminal_source": "rag_document_metadata.parsing_status",
+            "terminal_code": "metadata_only",
+            "created_at": "2026-06-25T20:23:15.100Z"
+          },
+          {
+            "id": "outlook_attachment_cc686b89d428cf64eb356e81_dbd7cc6fd08ef8bd0305c8ab",
+            "title": "Robinson Hospitality_Alleato LLC_26-27 Master Template_6-25-2026_595269788.pdf",
+            "category": "Specification",
+            "type": "email_attachment",
+            "terminal_source": "rag_document_metadata.parsing_status",
+            "terminal_code": "metadata_only",
+            "created_at": "2026-06-25T20:23:14.231Z"
+          }
+        ]
+      },
+      {
+        "family": "sharepoint_document",
+        "recent_sources": 0,
+        "project_required_sources": 0,
+        "project_not_required_sources": 0,
+        "project_applicability": {},
+        "with_project": 0,
+        "project_assigned_ratio": 1,
+        "with_project_disposition": 0,
+        "project_disposition_ratio": 1,
+        "embedding_required_sources": 0,
+        "terminal_embedding_failures": 0,
+        "with_chunks": 0,
+        "with_embeddings": 0,
+        "embedded_ratio": 1,
+        "with_lifecycle": 0,
+        "lifecycle_ratio": 1,
+        "with_project_assignment_lifecycle": 0,
+        "with_project_intelligence_lifecycle": 0,
+        "newest_source": null,
+        "unassigned_samples": [],
+        "project_assignment_review_samples": [],
+        "not_project_required_samples": [],
+        "unembedded_samples": [],
+        "terminal_unembeddable_samples": []
+      }
+    ]
+  },
+  "lifecycle": {
+    "total_rows": 5000,
+    "by_source_and_status": [
+      {
+        "source_system": "meeting",
+        "status": "project_intelligence_updated",
+        "count": 52,
+        "newest": "2026-06-24T17:33:11.649Z"
+      },
+      {
+        "source_system": "outlook_email",
+        "status": "project_intelligence_updated",
+        "count": 191,
+        "newest": "2026-06-24T17:32:48.058Z"
+      },
+      {
+        "source_system": "teams",
+        "status": "project_intelligence_updated",
+        "count": 25,
+        "newest": "2026-06-24T17:31:51.435Z"
+      },
+      {
+        "source_system": "outlook_attachment",
+        "status": "project_intelligence_updated",
+        "count": 26,
+        "newest": "2026-06-24T17:31:51.317Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "project_assigned",
+        "count": 2,
+        "newest": "2026-06-24T10:10:39.211Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "captured",
+        "count": 2,
+        "newest": "2026-06-23T22:14:11.418Z"
+      },
+      {
+        "source_system": "microsoft_graph_sharepoint",
+        "status": "indexed_for_rag",
+        "count": 26,
+        "newest": "2026-06-23T06:06:49.211Z"
+      },
+      {
+        "source_system": "microsoft_graph_sharepoint",
+        "status": "failed_permanent",
+        "count": 7,
+        "newest": "2026-06-23T06:06:49.211Z"
+      },
+      {
+        "source_system": "sharepoint",
+        "status": "project_assigned",
+        "count": 4,
+        "newest": "2026-06-23T04:31:11.122Z"
+      },
+      {
+        "source_system": "teams_message",
+        "status": "project_assignment_review",
+        "count": 12,
+        "newest": "2026-06-23T04:31:09.936Z"
+      },
+      {
+        "source_system": "teams",
+        "status": "signals_extracted",
+        "count": 1,
+        "newest": "2026-06-26T03:48:35.985Z"
+      },
+      {
+        "source_system": "outlook_email",
+        "status": "signals_extracted",
+        "count": 1,
+        "newest": "2026-06-26T03:40:55.931Z"
+      },
+      {
+        "source_system": "outlook_email",
+        "status": "failed_retryable",
+        "count": 3,
+        "newest": "2026-06-26T03:39:16.733Z"
+      },
+      {
+        "source_system": "outlook_attachment",
+        "status": "complete",
+        "count": 101,
+        "newest": "2026-06-26T00:09:02.957Z"
+      },
+      {
+        "source_system": "onedrive",
+        "status": "complete",
+        "count": 36,
+        "newest": "2026-06-25T23:55:06.148Z"
+      },
+      {
+        "source_system": "teams_message",
+        "status": "complete",
+        "count": 228,
+        "newest": "2026-06-25T23:35:26.875Z"
+      },
+      {
+        "source_system": "outlook_email",
+        "status": "complete",
+        "count": 644,
+        "newest": "2026-06-25T23:35:23.778Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "failed_retryable",
+        "count": 547,
+        "newest": "2026-06-25T23:04:54.142Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "complete",
+        "count": 114,
+        "newest": "2026-06-25T22:34:39.421Z"
+      },
+      {
+        "source_system": "outlook_email",
+        "status": "failed_permanent",
+        "count": 36,
+        "newest": "2026-06-25T21:37:46.286Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "failed_permanent",
+        "count": 35,
+        "newest": "2026-06-25T16:17:48.817Z"
+      },
+      {
+        "source_system": "sharepoint",
+        "status": "complete",
+        "count": 44,
+        "newest": "2026-06-25T11:33:05.657Z"
+      },
+      {
+        "source_system": "outlook_email",
+        "status": "project_assignment_review",
+        "count": 9,
+        "newest": "2026-06-20T15:54:56.865Z"
+      },
+      {
+        "source_system": "onedrive",
+        "status": "project_assigned",
+        "count": 4,
+        "newest": "2026-06-20T15:24:55.056Z"
+      },
+      {
+        "source_system": "teams_message",
+        "status": "project_assigned",
+        "count": 2,
+        "newest": "2026-06-20T13:39:51.508Z"
+      },
+      {
+        "source_system": "outlook_email",
+        "status": "project_assigned",
+        "count": 17,
+        "newest": "2026-06-23T03:31:08.057Z"
+      },
+      {
+        "source_system": "onedrive",
+        "status": "failed_permanent",
+        "count": 6,
+        "newest": "2026-06-22T22:26:26.112Z"
+      },
+      {
+        "source_system": "sharepoint",
+        "status": "failed_permanent",
+        "count": 1,
+        "newest": "2026-06-22T22:22:04.947Z"
+      },
+      {
+        "source_system": "sharepoint",
+        "status": "project_assignment_review",
+        "count": 131,
+        "newest": "2026-06-26T05:27:32.701Z"
+      },
+      {
+        "source_system": "microsoft_graph_outlook",
+        "status": "project_assignment_review",
+        "count": 649,
+        "newest": "2026-06-26T05:26:29.018Z"
+      },
+      {
+        "source_system": "microsoft_graph_outlook",
+        "status": "project_intelligence_updated",
+        "count": 182,
+        "newest": "2026-06-26T05:26:28.171Z"
+      },
+      {
+        "source_system": "microsoft_graph_outlook",
+        "status": "indexed_for_rag",
+        "count": 864,
+        "newest": "2026-06-26T05:26:28.171Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "project_intelligence_updated",
+        "count": 64,
+        "newest": "2026-06-26T05:26:28.171Z"
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "status": "project_assignment_review",
+        "count": 222,
+        "newest": "2026-06-26T05:26:28.171Z"
+      },
+      {
+        "source_system": "microsoft_graph_outlook",
+        "status": "failed_permanent",
+        "count": 26,
+        "newest": "2026-06-26T05:26:28.171Z"
+      },
+      {
+        "source_system": "microsoft_graph_outlook",
+        "status": "project_assigned",
+        "count": 190,
+        "newest": "2026-06-26T05:26:28.171Z"
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "status": "failed_permanent",
+        "count": 123,
+        "newest": "2026-06-26T05:26:28.171Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "project_assignment_review",
+        "count": 8,
+        "newest": "2026-06-26T05:26:28.171Z"
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "status": "project_intelligence_updated",
+        "count": 3,
+        "newest": "2026-06-26T05:26:28.171Z"
+      },
+      {
+        "source_system": "microsoft_graph_sharepoint",
+        "status": "project_intelligence_updated",
+        "count": 67,
+        "newest": "2026-06-26T05:26:27.348Z"
+      },
+      {
+        "source_system": "microsoft_graph_sharepoint",
+        "status": "project_assignment_review",
+        "count": 136,
+        "newest": "2026-06-26T05:26:27.348Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "indexed_for_rag",
+        "count": 11,
+        "newest": "2026-06-26T05:26:27.348Z"
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "status": "indexed_for_rag",
+        "count": 20,
+        "newest": "2026-06-26T05:26:27.348Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "actions_routed",
+        "count": 5,
+        "newest": "2026-06-26T05:26:26.135Z"
+      },
+      {
+        "source_system": "teams_message",
+        "status": "failed_permanent",
+        "count": 123,
+        "newest": "2026-06-26T05:23:53.719Z"
+      }
+    ],
+    "recent_failures": [
+      {
+        "source_system": "microsoft_graph_outlook",
+        "source_item_id": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQ7dWmaAAA=",
+        "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQ7dWmaAAA=",
+        "content_hash": "Sun Jun 21 2026 23:01:23 GMT-0400 (Eastern Daylight Time)",
+        "project_id": "89",
+        "status": "failed_permanent",
+        "updated_at": "2026-06-26T05:26:28.171Z",
+        "completed_at": "2026-06-26T05:26:25.915Z",
+        "retry_count": 0,
+        "error_code": "skipped_low_content",
+        "error_message": "Source item was skipped because it did not contain enough substantive text to embed.",
+        "metadata": {
+          "type": "email",
+          "chunks": 0,
+          "source": "microsoft_graph",
+          "category": "email",
+          "has_task": false,
+          "embedded_chunks": 0,
+          "project_required": true,
+          "project_applicability": "single_project",
+          "project_applicability_reason": "source_has_project_id",
+          "backfilled_from_current_state": true,
+          "has_project_intelligence_evidence": false
+        }
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "source_item_id": "teamsdm_38b2906e5ff50ceb_2026-06-18",
+        "source_document_id": "teamsdm_38b2906e5ff50ceb_2026-06-18",
+        "content_hash": "Mon Jun 22 2026 20:59:42 GMT-0400 (Eastern Daylight Time)",
+        "status": "failed_permanent",
+        "updated_at": "2026-06-26T05:26:28.171Z",
+        "completed_at": "2026-06-26T05:26:25.914Z",
+        "retry_count": 0,
+        "error_code": "skipped_low_content",
+        "error_message": "Source item was skipped because it did not contain enough substantive text to embed.",
+        "metadata": {
+          "type": "teams_dm_conversation",
+          "chunks": 0,
+          "source": "microsoft_graph",
+          "category": "teams_message",
+          "has_task": false,
+          "embedded_chunks": 0,
+          "project_required": false,
+          "project_applicability": "not_project_applicable",
+          "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+          "backfilled_from_current_state": true,
+          "has_project_intelligence_evidence": false
+        }
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "source_item_id": "teamsdm_734b810fa98e1a0c_2026-06-22",
+        "source_document_id": "teamsdm_734b810fa98e1a0c_2026-06-22",
+        "content_hash": "Mon Jun 22 2026 16:40:48 GMT-0400 (Eastern Daylight Time)",
+        "status": "failed_permanent",
+        "updated_at": "2026-06-26T05:26:28.171Z",
+        "completed_at": "2026-06-26T05:26:25.914Z",
+        "retry_count": 0,
+        "error_code": "skipped_low_content",
+        "error_message": "Source item was skipped because it did not contain enough substantive text to embed.",
+        "metadata": {
+          "type": "teams_dm_conversation",
+          "chunks": 0,
+          "source": "microsoft_graph",
+          "category": "teams_message",
+          "has_task": false,
+          "embedded_chunks": 0,
+          "project_required": false,
+          "project_applicability": "not_project_applicable",
+          "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+          "backfilled_from_current_state": true,
+          "has_project_intelligence_evidence": false
+        }
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "source_item_id": "teamsdm_3134f3e637b9402d_2026-06-22",
+        "source_document_id": "teamsdm_3134f3e637b9402d_2026-06-22",
+        "content_hash": "Mon Jun 22 2026 20:40:31 GMT-0400 (Eastern Daylight Time)",
+        "status": "failed_permanent",
+        "updated_at": "2026-06-26T05:26:28.171Z",
+        "completed_at": "2026-06-26T05:26:25.914Z",
+        "retry_count": 0,
+        "error_code": "skipped_low_content",
+        "error_message": "Source item was skipped because it did not contain enough substantive text to embed.",
+        "metadata": {
+          "type": "teams_dm_conversation",
+          "chunks": 0,
+          "source": "microsoft_graph",
+          "category": "teams_message",
+          "has_task": false,
+          "embedded_chunks": 0,
+          "project_required": false,
+          "project_applicability": "not_project_applicable",
+          "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+          "backfilled_from_current_state": true,
+          "has_project_intelligence_evidence": false
+        }
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "source_item_id": "teamsdm_f8040d175e4c02da_2026-06-16",
+        "source_document_id": "teamsdm_f8040d175e4c02da_2026-06-16",
+        "content_hash": "Tue Jun 23 2026 00:00:34 GMT-0400 (Eastern Daylight Time)",
+        "status": "failed_permanent",
+        "updated_at": "2026-06-26T05:26:27.348Z",
+        "completed_at": "2026-06-26T05:26:25.909Z",
+        "retry_count": 0,
+        "error_code": "skipped_low_content",
+        "error_message": "Source item was skipped because it did not contain enough substantive text to embed.",
+        "metadata": {
+          "type": "teams_dm_conversation",
+          "chunks": 0,
+          "source": "microsoft_graph",
+          "category": "teams_message",
+          "has_task": false,
+          "embedded_chunks": 0,
+          "project_required": false,
+          "project_applicability": "not_project_applicable",
+          "project_applicability_reason": "terminal_status_skipped_low_content",
+          "backfilled_from_current_state": true,
+          "has_project_intelligence_evidence": false
+        }
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "source_item_id": "teamsdm_3b4bd9acdcc42826_2026-06-23",
+        "source_document_id": "teamsdm_3b4bd9acdcc42826_2026-06-23",
+        "content_hash": "Wed Jun 24 2026 01:05:32 GMT-0400 (Eastern Daylight Time)",
+        "status": "failed_permanent",
+        "updated_at": "2026-06-26T05:26:27.348Z",
+        "completed_at": "2026-06-26T05:26:25.908Z",
+        "retry_count": 0,
+        "error_code": "skipped_low_content",
+        "error_message": "Source item was skipped because it did not contain enough substantive text to embed.",
+        "metadata": {
+          "type": "teams_dm_conversation",
+          "chunks": 0,
+          "source": "microsoft_graph",
+          "category": "teams_message",
+          "has_task": false,
+          "embedded_chunks": 0,
+          "project_required": false,
+          "project_applicability": "not_project_applicable",
+          "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+          "backfilled_from_current_state": true,
+          "has_project_intelligence_evidence": false
+        }
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "source_item_id": "teamsdm_d6f5e3680dc00f64_2026-06-22",
+        "source_document_id": "teamsdm_d6f5e3680dc00f64_2026-06-22",
+        "content_hash": "Tue Jun 23 2026 00:10:13 GMT-0400 (Eastern Daylight Time)",
+        "status": "failed_permanent",
+        "updated_at": "2026-06-26T05:26:27.348Z",
+        "completed_at": "2026-06-26T05:26:25.908Z",
+        "retry_count": 0,
+        "error_code": "skipped_low_content",
+        "error_message": "Source item was skipped because it did not contain enough substantive text to embed.",
+        "metadata": {
+          "type": "teams_dm_conversation",
+          "chunks": 0,
+          "source": "microsoft_graph",
+          "category": "teams_message",
+          "has_task": false,
+          "embedded_chunks": 0,
+          "project_required": false,
+          "project_applicability": "not_project_applicable",
+          "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+          "backfilled_from_current_state": true,
+          "has_project_intelligence_evidence": false
+        }
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "source_item_id": "teamsdm_ca2f2c7230099805_2026-06-21",
+        "source_document_id": "teamsdm_ca2f2c7230099805_2026-06-21",
+        "content_hash": "Wed Jun 24 2026 01:17:49 GMT-0400 (Eastern Daylight Time)",
+        "status": "failed_permanent",
+        "updated_at": "2026-06-26T05:26:27.348Z",
+        "completed_at": "2026-06-26T05:26:25.907Z",
+        "retry_count": 0,
+        "error_code": "skipped_low_content",
+        "error_message": "Source item was skipped because it did not contain enough substantive text to embed.",
+        "metadata": {
+          "type": "teams_dm_conversation",
+          "chunks": 0,
+          "source": "microsoft_graph",
+          "category": "teams_message",
+          "has_task": false,
+          "embedded_chunks": 0,
+          "project_required": false,
+          "project_applicability": "not_project_applicable",
+          "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+          "backfilled_from_current_state": true,
+          "has_project_intelligence_evidence": false
+        }
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "source_item_id": "teamsdm_e55b5f23ec202b3d_2026-06-17",
+        "source_document_id": "teamsdm_e55b5f23ec202b3d_2026-06-17",
+        "content_hash": "Wed Jun 24 2026 01:17:33 GMT-0400 (Eastern Daylight Time)",
+        "status": "failed_permanent",
+        "updated_at": "2026-06-26T05:26:27.348Z",
+        "completed_at": "2026-06-26T05:26:25.907Z",
+        "retry_count": 0,
+        "error_code": "skipped_low_content",
+        "error_message": "Source item was skipped because it did not contain enough substantive text to embed.",
+        "metadata": {
+          "type": "teams_dm_conversation",
+          "chunks": 0,
+          "source": "microsoft_graph",
+          "category": "teams_message",
+          "has_task": false,
+          "embedded_chunks": 0,
+          "project_required": false,
+          "project_applicability": "not_project_applicable",
+          "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+          "backfilled_from_current_state": true,
+          "has_project_intelligence_evidence": false
+        }
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "source_item_id": "teamsdm_aa0d3958c6fb3463_2026-06-11",
+        "source_document_id": "teamsdm_aa0d3958c6fb3463_2026-06-11",
+        "content_hash": "Wed Jun 24 2026 01:18:27 GMT-0400 (Eastern Daylight Time)",
+        "status": "failed_permanent",
+        "updated_at": "2026-06-26T05:26:27.348Z",
+        "completed_at": "2026-06-26T05:26:25.907Z",
+        "retry_count": 0,
+        "error_code": "skipped_low_content",
+        "error_message": "Source item was skipped because it did not contain enough substantive text to embed.",
+        "metadata": {
+          "type": "teams_dm_conversation",
+          "chunks": 0,
+          "source": "microsoft_graph",
+          "category": "teams_message",
+          "has_task": false,
+          "embedded_chunks": 0,
+          "project_required": false,
+          "project_applicability": "not_project_applicable",
+          "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+          "backfilled_from_current_state": true,
+          "has_project_intelligence_evidence": false
+        }
+      }
+    ]
+  },
+  "tasks": {
+    "total": 340,
+    "with_project": 316,
+    "project_assigned_ratio": 0.9294117647058824,
+    "by_source_and_status": [
+      {
+        "source_system": "email",
+        "status": "open",
+        "count": 45,
+        "with_project": 45,
+        "newest": "2026-06-26T03:40:55.479Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "open",
+        "count": 290,
+        "with_project": 270,
+        "newest": "2026-06-25T19:42:13.164Z"
+      },
+      {
+        "source_system": "teams_dm_conversation",
+        "status": "open",
+        "count": 3,
+        "with_project": 0,
+        "newest": "2026-06-13T07:01:51.674Z"
+      },
+      {
+        "source_system": "meeting",
+        "status": "open",
+        "count": 2,
+        "with_project": 1,
+        "newest": "2026-06-13T07:00:19.562Z"
+      }
+    ]
+  },
+  "project_intelligence": {
+    "packets": {
+      "current_packets": 104,
+      "fresh_packets": 15,
+      "newest_current_packet": "2026-06-25T00:14:49.150Z"
+    },
+    "evidence": {
+      "recent_evidence": 2004,
+      "cards_with_recent_evidence": 1037,
+      "newest_evidence": "2026-06-26T03:48:33.146Z"
+    }
+  },
+  "failures": []
+}

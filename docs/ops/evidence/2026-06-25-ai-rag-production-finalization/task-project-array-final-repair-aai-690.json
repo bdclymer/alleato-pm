@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-06-26T05:29:04.446Z",
+  "rowsMatched": 4,
+  "rowsUpdated": 4,
+  "before": [
+    {
+      "id": "a08a3c03-7062-4308-bd0f-8ec3d19d756b",
+      "metadata_id": "01KTSDHMWZK41424ATS0563A71",
+      "title": "Confirm Dustin VP travel requirements",
+      "source_system": "meeting",
+      "extraction_source": "scheduled_task_extraction",
+      "project_id": "90",
+      "project_ids": [],
+      "created_at": "2026-06-13 07:00:19.562754+00"
+    },
+    {
+      "id": "d0636661-31c3-4dd6-90fa-b9e91f039e53",
+      "metadata_id": "01KTRPC1MKTWAH72NR7E80QNGR",
+      "title": "Schedule Dustin Corbett’s VP recruitment next step",
+      "source_system": "meeting",
+      "extraction_source": "scheduled_task_extraction",
+      "project_id": "90",
+      "project_ids": [],
+      "created_at": "2026-06-11 07:00:48.427589+00"
+    },
+    {
+      "id": "092e9eed-0eb5-4a7f-bedd-0ec0ac35884e",
+      "metadata_id": "01KTRST5HSSZP8TT3VWS40RVWC",
+      "title": "Notify Rodney of interview decision",
+      "source_system": "meeting",
+      "extraction_source": "scheduled_task_extraction",
+      "project_id": "90",
+      "project_ids": [],
+      "created_at": "2026-06-11 07:00:36.559469+00"
+    },
+    {
+      "id": "9d6ada11-b7d1-46c1-863a-d7db6f321351",
+      "metadata_id": "01KTRST5HSSZP8TT3VWS40RVWC",
+      "title": "Submit Rodney screening notes to Brandon",
+      "source_system": "meeting",
+      "extraction_source": "scheduled_task_extraction",
+      "project_id": "90",
+      "project_ids": [],
+      "created_at": "2026-06-11 07:00:36.129552+00"
+    }
+  ],
+  "remainingScalarArrayMismatches": []
+}

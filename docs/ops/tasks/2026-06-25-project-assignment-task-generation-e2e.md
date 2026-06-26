@@ -3,7 +3,7 @@
 Date: 2026-06-25
 Linear: AAI-690
 Parent: AAI-636
-Status: In Progress
+Status: Complete
 
 ## Objective
 
@@ -38,7 +38,7 @@ Verify and finalize end-to-end project assignment and automatic task generation 
 - [x] Verify project assignment for Outlook emails inside the one-week operational concern window.
 - [x] Verify project assignment for Teams messages inside the one-week operational concern window.
 - [x] Verify project assignment for Fireflies meetings inside the two-month operational concern window.
-- [ ] Verify project assignment for SharePoint files.
+- [x] Verify project assignment for SharePoint files.
 - [x] Verify project assignment for uploaded documents and PDFs.
 - [x] Verify project assignment for drawings, submittals, RFIs, and contracts where source records exist.
 - [x] Verify unmatched/ambiguous records route to manual review with confidence scoring.
@@ -68,6 +68,7 @@ Linear kickoff comment:
 
 - AAI-690 comment `6957e310-e278-4724-be79-20587c94d45d`
 - AAI-690 progress comment `18a3c44b-bdb3-4400-86a6-abb1bdb9b0d1`
+- AAI-690 completion comment `3d95ba04-03d1-4fcc-a975-56ba166c3195`
 
 Path inventory:
 
@@ -122,6 +123,14 @@ Repair evidence:
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/fireflies-legacy-prompt-compile-aai-690.txt`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/fireflies-legacy-prompt-tests-aai-690.txt`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-aai-690-fireflies-legacy-prompt-fix.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-current-state-dry-run-aai-690-sharepoint-disposition.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-current-state-applied-aai-690-sharepoint-disposition.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/sharepoint-disposition-postcheck-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/sharepoint-legacy-lifecycle-review-repair-dry-run-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/sharepoint-legacy-lifecycle-review-repair-applied-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-aai-690-sharepoint-legacy-disposition.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-project-array-final-repair-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-generation-final-coverage-aai-690.json`
 
 ## Initial Known Constraints
 
@@ -131,9 +140,11 @@ Repair evidence:
 
 ## Blockers
 
-- Bounded delegated frontend typechecks timed out or were externally terminated without TypeScript diagnostics. The delegated no-timeout retry passed with no TypeScript errors.
-- SharePoint assignment is not closed. Live inventory after deterministic repair still shows 136 SharePoint app documents without a direct project, and lifecycle evidence includes SharePoint rows marked complete without a project as well as rows explicitly in project-assignment review. The AP-check deterministic repair found 81 parsed SharePoint check documents but 0 safe exact project matches, so remaining rows must stay review-routed until a stronger accounting match or review workflow closes them.
-- Fireflies lifecycle regressed during this slice because recent meetings can reappear as missing chunk coverage. Redrive restored the source lifecycle verifier, but the first retry exposed a real Fireflies legacy task guardrail failure that required a code fix.
+- None remaining for this AAI-690 slice.
+
+## Residual Risk
+
+- Some Fireflies-generated tasks remain intentionally without direct project links because their source meetings are latest-routed to project-assignment review, internal, or multi-project disposition. They are not scalar/array mismatches and should not be force-assigned without review.
 
 ## Root Cause
 
@@ -146,6 +157,8 @@ Outlook/Teams automatic task generation had a separate active gap. Recent live d
 The remaining Fireflies lifecycle regression exposed a third active issue. Legacy Fireflies action-item tasks created by the pipeline extractor were classified as `fireflies_pipeline_legacy` but left the required extraction prompt version empty, so the database task-quality trigger rejected the write and stopped the redrive. The extractor now records an explicit legacy Fireflies prompt version for that path.
 
 Document-source inventory found that deterministic source-path assignment could safely repair 7 OneDrive/SharePoint documents. SharePoint AP check assignment was intentionally not applied because exact payment or accounting matches resolved 0 safe assignments and rejected 81 parsed candidates.
+
+Legacy SharePoint lifecycle rows used the older `sharepoint` source namespace and marked unassigned records complete. Current canonical backfill writes `microsoft_graph_sharepoint` rows with `project_assignment_review`, so those stale legacy rows needed a status-only repair to avoid silently treating unassigned SharePoint documents as terminally complete.
 
 ## Prevention
 
@@ -167,7 +180,11 @@ Document-source inventory found that deterministic source-path assignment could 
 - Verified duplicate task prevention inside the active freshness windows: 0 duplicate groups for Outlook/Teams one-week windows, Fireflies two-month window, and all other document-task rows.
 - Added `LEGACY_FIREFLIES_TASK_PROMPT_VERSION` so legacy Fireflies action-item tasks satisfy the task-quality database trigger instead of failing redrive.
 - Re-ran canonical source lifecycle verification after Fireflies redrive; it passes with no failures.
+- Applied current-state lifecycle normalization over the active 7-day Microsoft window, routing 126 current SharePoint rows to project-assignment review and preserving 46 project-intelligence-updated rows with projects.
+- Repaired 124 stale legacy `sharepoint` lifecycle rows from complete/no-project to project-assignment review; postcheck found 0 remaining no-project terminal SharePoint rows.
+- Repaired 4 generated task scalar/array mismatches; final task coverage found 0 active scalar/array mismatches and 0 active duplicate task groups.
+- Confirmed remaining no-project generated tasks map to source meetings with project-assignment review, internal, or multi-project lifecycle disposition.
 
 ## Failure-Loud Guardrail
 
-This slice is not complete until assignment gaps, missing manual-review routing, missing generated tasks, duplicate generated tasks, or incorrect task owner/project links are caught by repeatable verifiers instead of manual inspection alone.
+Assignment gaps, missing manual-review routing, missing generated tasks, duplicate generated tasks, and incorrect task owner/project links are now backed by repeatable evidence files for this slice. Future regressions should fail through source lifecycle, task duplicate, Fireflies integrity, and task scalar/array coverage checks instead of manual inspection alone.

@@ -1,0 +1,206 @@
+{
+  "generatedAt": "2026-06-26T05:26:46.308Z",
+  "summary": [
+    {
+      "source_system": "microsoft_graph_sharepoint",
+      "status": "failed_permanent",
+      "total": 7,
+      "without_project": 0,
+      "newest_updated_at": "2026-06-23 06:06:49.211616+00"
+    },
+    {
+      "source_system": "microsoft_graph_sharepoint",
+      "status": "indexed_for_rag",
+      "total": 26,
+      "without_project": 0,
+      "newest_updated_at": "2026-06-23 06:06:49.211616+00"
+    },
+    {
+      "source_system": "microsoft_graph_sharepoint",
+      "status": "project_assignment_review",
+      "total": 136,
+      "without_project": 136,
+      "newest_updated_at": "2026-06-26 05:26:27.34862+00"
+    },
+    {
+      "source_system": "microsoft_graph_sharepoint",
+      "status": "project_intelligence_updated",
+      "total": 67,
+      "without_project": 0,
+      "newest_updated_at": "2026-06-26 05:26:27.34862+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "total": 168,
+      "without_project": 124,
+      "newest_updated_at": "2026-06-25 21:03:04.116924+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "failed_permanent",
+      "total": 1,
+      "without_project": 1,
+      "newest_updated_at": "2026-06-22 22:22:04.947532+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "project_assigned",
+      "total": 3,
+      "without_project": 0,
+      "newest_updated_at": "2026-06-23 04:31:11.122001+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "project_assignment_review",
+      "total": 7,
+      "without_project": 7,
+      "newest_updated_at": "2026-06-23 04:31:10.605139+00"
+    }
+  ],
+  "completeNoProject": [
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXON77NRDSOXKRCYXF2GKWEJ5523",
+      "source_title": "Check # 570 Hoplite Lawn Care $500.00.pdf",
+      "updated_at": "2026-06-25 21:03:04.116924+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXMJKHC5CPEX2RALMRD7R4TUT6KJ",
+      "source_title": "Check # 682 Advanced Doc Sol $210.66.pdf",
+      "updated_at": "2026-06-25 19:33:09.112716+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXOQJRDLOK3LPFEKV4P3IPBXX6FY",
+      "source_title": "Check 783_Trane U.S Inc_$2,299.40.pdf",
+      "updated_at": "2026-06-25 19:02:59.889885+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXOXYWQBY77ST5A2JGIIWIXIJIJD",
+      "source_title": "Check # 587 Coots Henke & Wheeler PC $2,277.31.pdf",
+      "updated_at": "2026-06-25 16:03:02.568132+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXKRNMH2HWCT5VGJZERARP4VSWT2",
+      "source_title": "Check # 618 S&S Electric $2,106.46.pdf",
+      "updated_at": "2026-06-25 15:33:09.80861+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXJXMFQHNVLU3ZEZQSNQ7BQ43NKM",
+      "source_title": "Check # 567 Brantley $99.00.pdf",
+      "updated_at": "2026-06-25 14:18:06.848519+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXKJH2DAQ7ENXBHJDYAV6ZO7GJRI",
+      "source_title": "QBO Vendor Payment Check Guide.docx",
+      "updated_at": "2026-06-25 13:32:59.319796+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXKJ4LC5VXSUKRF26CQUQQEDK7AC",
+      "source_title": "Check # 617 TECO $90.10.pdf",
+      "updated_at": "2026-06-25 12:32:56.309401+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXLAR6MUVUE2YFBY2CRRYRNM4DKL",
+      "source_title": "Training-12-18-2025.docx",
+      "updated_at": "2026-06-25 09:03:02.869466+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXLPXAWRQX34KVHYAW25PUNN5N3Q",
+      "source_title": "Overall In Rack Sprinkler SOP.pdf",
+      "updated_at": "2026-06-25 08:03:19.794274+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXIBRG33ZYWIXFGJ45CQVMPU532J",
+      "source_title": "Vargo LLC Check # 26398.pdf",
+      "updated_at": "2026-06-25 07:32:58.938723+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXLUK4RKOAWVURDKD6ZSWLFLE3K7",
+      "source_title": "#005 Alleato Company Estimating Policy and Procedure.docx",
+      "updated_at": "2026-06-25 06:33:04.398362+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXNSXGM272NXFVC2OCPFW345SC4X",
+      "source_title": "General Onboarding Check list - Copy.docx",
+      "updated_at": "2026-06-25 04:47:58.276855+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXKFZ2D3TXPFDRH3DEICAEYEL5HH",
+      "source_title": "Check # 680 Outreach $25,000.00.pdf",
+      "updated_at": "2026-06-25 03:18:05.992749+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXLVNJV4E2HHDVBJOQSU2O6GMFWZ",
+      "source_title": "SOP Notion Timesheet instructions.docx",
+      "updated_at": "2026-06-25 03:18:03.30685+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXOBHGBTKZ7VXFFZBRJR4LMXQOVB",
+      "source_title": "Check # 681 Somerset Tech $3,192.00.pdf",
+      "updated_at": "2026-06-25 02:48:01.841805+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXOBREE37OCTYZD2OT75VOLIO6OH",
+      "source_title": "Alleato - Owner Contractor Agreement - Cost Plus Fee 20240313.docx",
+      "updated_at": "2026-06-24 23:24:50.671921+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXKFOBUN4G3XOBCYFWKSKSLTCWLA",
+      "source_title": "Check # 593 Graybar Electric Comp $5,425.97 - voided check.pdf",
+      "updated_at": "2026-06-24 23:24:47.065326+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXL4I2OSLA76YVF25PKVYL4A2FHQ",
+      "source_title": "Check # 600 VA Prof $586.92.pdf",
+      "updated_at": "2026-06-24 23:24:44.618924+00"
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "source_document_id": "sharepoint_01AFX6IXLASR6RBX3P2JCZQNM6OSB3HS3N",
+      "source_title": "Pre-Install Material List.pdf",
+      "updated_at": "2026-06-24 23:24:42.004215+00"
+    }
+  ],
+  "reviewNoProject": {
+    "total": 143
+  }
+}
