@@ -19,6 +19,10 @@ Active project/task generation slice:
 
 - [2026-06-25-project-assignment-task-generation-e2e.md](../tasks/2026-06-25-project-assignment-task-generation-e2e.md)
 
+Active Acumatica readiness slice:
+
+- [2026-06-26-acumatica-sync-production-readiness.md](../tasks/2026-06-26-acumatica-sync-production-readiness.md)
+
 Evidence directory:
 
 - [2026-06-25-ai-rag-production-finalization](../evidence/2026-06-25-ai-rag-production-finalization)
@@ -106,7 +110,7 @@ Evidence directory:
 - [x] Resume live Render Acumatica cron.
 - [x] Trigger an immediate Acumatica run.
 - [x] Verify Acumatica sync entities are fresh and successful after the triggered or next scheduled run.
-- [ ] Verify retries, logging, statistics, and duplicate-import prevention.
+- [x] Verify retries, logging, statistics, and duplicate-import prevention.
 
 ### Phase 11: AI Assistants And Tool Architecture
 
@@ -207,6 +211,29 @@ Evidence directory:
   - [acumatica-render-resume-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-render-resume-aai-653.json)
   - [acumatica-render-trigger-run-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-render-trigger-run-aai-653.json)
   - [acumatica-sync-health-after-trigger-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-after-trigger-aai-653.txt)
+
+### 2026-06-26: AAI-697 Acumatica Production Readiness Verified
+
+- Fixed the Acumatica health verifier's stale threshold so it matches the final twice-daily Render cron cadence plus scheduler/provider jitter.
+- Verified live Render cron state: `alleato-acumatica-financial-sync` is active on `0 0,12 * * *`.
+- Verified required Acumatica entities have current successful sync state and stats.
+- Verified warning/fallback behavior is logged instead of silently failing:
+  - unsupported customer fields are dropped with persisted warnings;
+  - missing historical payment-application endpoint is logged with fallback projection from `acumatica_payments` where customer-to-project mapping is unique.
+- Verified duplicate prevention:
+  - upsert/conflict-key code guardrails exist;
+  - live unique indexes exist for Acumatica raw/projection keys;
+  - 18 duplicate probes returned zero duplicate groups.
+- Verification passed:
+  - `npm run verify:acumatica-sync-health`
+  - delegated `TYPECHECK_NO_TIMEOUT=1 npm --prefix frontend run typecheck`
+- Evidence:
+  - [acumatica-sync-health-baseline-aai-697.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-baseline-aai-697.txt)
+  - [acumatica-sync-health-after-stale-threshold-fix-aai-697.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-after-stale-threshold-fix-aai-697.txt)
+  - [acumatica-run-state-duplicate-inventory-aai-697.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-run-state-duplicate-inventory-aai-697.json)
+  - [acumatica-code-guardrail-inventory-aai-697.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-code-guardrail-inventory-aai-697.json)
+  - [acumatica-logging-stats-duplicate-proof-aai-697.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-logging-stats-duplicate-proof-aai-697.json)
+  - [frontend-typecheck-after-acumatica-verifier-threshold-aai-697.txt](../evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-acumatica-verifier-threshold-aai-697.txt)
 
 ### 2026-06-25: Health And Assistant Crons Restored
 

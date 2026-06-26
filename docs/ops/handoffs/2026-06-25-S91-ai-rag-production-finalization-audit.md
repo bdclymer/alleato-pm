@@ -358,11 +358,42 @@ AAI-690 progress:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/teams-task-generation-live-proof-aai-690.json`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-generation-live-coverage-after-teams-proof-aai-690.json`
 - Remaining blocker:
-  - AAI-690 is not fully closed because document-analysis task-generation, unmatched manual-review routing, and remaining SharePoint/upload/drawing/RFI/contract assignment evidence still need the same level of evidence.
+- AAI-690 is closed. Document-analysis task generation, unmatched manual-review routing, and remaining SharePoint/upload/drawing/RFI/contract assignment evidence were completed in the follow-up AAI-690 closeout and reflected in `docs/ops/tasks/2026-06-25-project-assignment-task-generation-e2e.md`.
+
+AAI-697 progress:
+
+- Scope: Acumatica retry/fallback behavior, logging, sync statistics, and duplicate-import prevention.
+- Linear issue: AAI-697.
+- Code changed:
+  - `/Users/meganharrison/Documents/alleato-pm/scripts/verify/verify-acumatica-sync-health.mjs`
+- Documentation/evidence changed:
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-26-acumatica-sync-production-readiness.md`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/ai-rag-production-finalization/TASKS.md`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-baseline-aai-697.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-after-stale-threshold-fix-aai-697.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/acumatica-run-state-duplicate-inventory-aai-697.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/acumatica-code-guardrail-inventory-aai-697.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/acumatica-logging-stats-duplicate-proof-aai-697.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-acumatica-verifier-threshold-aai-697.txt`
+- Root cause confirmed:
+  - The Acumatica health verifier still used a 180-minute default freshness threshold even though production now runs twice daily. That made healthy twice-daily state fail between scheduled runs.
+- Prevention:
+  - The health verifier now defaults to 780 minutes, matching the twice-daily cadence plus one hour of scheduler/provider jitter.
+  - The verifier still reads live Render schedule state and required entity freshness, so schedule drift and stale required syncs fail loudly.
+- Verification:
+  - PASS: `npm run verify:acumatica-sync-health` after stale-threshold fix. Output confirmed Render cron `not_suspended`, schedule `0 0,12 * * *`, command `python3 scripts/run_acumatica_financial_sync.py`, 12 checked entities, and PASS.
+  - PASS: Acumatica sync run/state proof found stats coverage for all 12 required entities and persisted `last_stats` in `acumatica_sync_state`.
+  - PASS: Warning/fallback proof found persisted warning runs for unsupported customer fields and missing historical payment-application endpoint; payment applications fall back to projection from `acumatica_payments` where customer-to-project mapping is unique.
+  - PASS: Duplicate prevention proof found upsert/conflict-key code guardrails, live unique indexes, and zero duplicate groups across 18 Acumatica raw/projection duplicate probes.
+  - PASS: delegated sub-agent typecheck `TYPECHECK_NO_TIMEOUT=1 npm --prefix frontend run typecheck`.
+- Residual risk:
+  - Historical AR payment application detail still needs an Acumatica Generic Inquiry or endpoint exposure for full fidelity. It is not silent and is not blocking this slice because the current production path logs the warning and projects payment records through the supported fallback.
+- Remaining blocker:
+  - No active blocker inside AAI-697. The slice is ready to publish.
 
 ## Exact Next Step
 
-Publish the Teams task-generation proof, then continue AAI-690 with document-analysis task-generation, unmatched manual-review routing, and remaining assignment-source evidence.
+Publish AAI-697, then continue Phase 11 with final assistant prompt/tool/RAG architecture verification and Phase 12 deletion-candidate proof.
 
 ## Known Pitfalls
 

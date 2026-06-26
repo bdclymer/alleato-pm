@@ -1,0 +1,1686 @@
+{
+  "generatedAt": "2026-06-26T05:34:46.248Z",
+  "requiredEntities": [
+    "projects",
+    "vendors",
+    "change_orders",
+    "change_orders_projection",
+    "subcontracts",
+    "purchase_orders",
+    "ap_bills",
+    "commitments_projection",
+    "ar_invoices",
+    "ar_payments",
+    "ap_checks",
+    "project_budgets"
+  ],
+  "statsCoverage": [
+    {
+      "entity_name": "ap_bills",
+      "status": "success",
+      "has_stats": true,
+      "stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "counters": {
+        "fetched": 1,
+        "upserted": 1,
+        "projected": 1,
+        "skipped": 0,
+        "errors": 0
+      },
+      "started_at": "2026-06-26 00:00:51.157052+00",
+      "finished_at": "2026-06-26 00:00:53.925278+00",
+      "error_message": null
+    },
+    {
+      "entity_name": "ap_checks",
+      "status": "success",
+      "has_stats": true,
+      "stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "counters": {
+        "fetched": 0,
+        "upserted": 0,
+        "projected": 0,
+        "skipped": 0,
+        "errors": 0
+      },
+      "started_at": "2026-06-26 00:02:24.391607+00",
+      "finished_at": "2026-06-26 00:02:24.920072+00",
+      "error_message": null
+    },
+    {
+      "entity_name": "ar_invoices",
+      "status": "success",
+      "has_stats": true,
+      "stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "counters": {
+        "fetched": 0,
+        "upserted": 0,
+        "projected": 0,
+        "skipped": 0,
+        "errors": 0
+      },
+      "started_at": "2026-06-26 00:02:03.62465+00",
+      "finished_at": "2026-06-26 00:02:04.613426+00",
+      "error_message": null
+    },
+    {
+      "entity_name": "ar_payments",
+      "status": "success",
+      "has_stats": true,
+      "stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "counters": {
+        "fetched": 0,
+        "upserted": 0,
+        "projected": 0,
+        "skipped": 0,
+        "errors": 0
+      },
+      "started_at": "2026-06-26 00:02:04.86007+00",
+      "finished_at": "2026-06-26 00:02:05.555185+00",
+      "error_message": null
+    },
+    {
+      "entity_name": "change_orders",
+      "status": "success",
+      "has_stats": true,
+      "stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "counters": {
+        "fetched": 1,
+        "upserted": 1,
+        "projected": 0,
+        "skipped": 0,
+        "errors": 0
+      },
+      "started_at": "2026-06-26 00:00:43.824026+00",
+      "finished_at": "2026-06-26 00:00:44.848526+00",
+      "error_message": null
+    },
+    {
+      "entity_name": "change_orders_projection",
+      "status": "success",
+      "has_stats": true,
+      "stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "counters": {
+        "fetched": 913,
+        "upserted": 137,
+        "projected": 0,
+        "skipped": 776,
+        "errors": 0
+      },
+      "started_at": "2026-06-26 00:00:45.097252+00",
+      "finished_at": "2026-06-26 00:00:48.872865+00",
+      "error_message": null
+    },
+    {
+      "entity_name": "commitments_projection",
+      "status": "success",
+      "has_stats": true,
+      "stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "counters": {
+        "fetched": 509,
+        "upserted": 509,
+        "projected": 0,
+        "skipped": 0,
+        "errors": 0
+      },
+      "started_at": "2026-06-26 00:00:54.123281+00",
+      "finished_at": "2026-06-26 00:02:03.332087+00",
+      "error_message": null
+    },
+    {
+      "entity_name": "project_budgets",
+      "status": "success",
+      "has_stats": true,
+      "stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "counters": {
+        "fetched": 3,
+        "upserted": 3,
+        "projected": 0,
+        "skipped": 0,
+        "errors": 0
+      },
+      "started_at": "2026-06-26 00:02:25.091117+00",
+      "finished_at": "2026-06-26 00:02:25.932164+00",
+      "error_message": null
+    },
+    {
+      "entity_name": "projects",
+      "status": "success",
+      "has_stats": true,
+      "stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "counters": {
+        "fetched": 1,
+        "upserted": 1,
+        "projected": 0,
+        "skipped": 0,
+        "errors": 0
+      },
+      "started_at": "2026-06-26 00:00:32.699917+00",
+      "finished_at": "2026-06-26 00:00:37.766403+00",
+      "error_message": null
+    },
+    {
+      "entity_name": "purchase_orders",
+      "status": "success",
+      "has_stats": true,
+      "stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "counters": {
+        "fetched": 0,
+        "upserted": 0,
+        "projected": 0,
+        "skipped": 0,
+        "errors": 0
+      },
+      "started_at": "2026-06-26 00:00:50.310052+00",
+      "finished_at": "2026-06-26 00:00:50.962506+00",
+      "error_message": null
+    },
+    {
+      "entity_name": "subcontracts",
+      "status": "success",
+      "has_stats": true,
+      "stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "counters": {
+        "fetched": 0,
+        "upserted": 0,
+        "projected": 0,
+        "skipped": 0,
+        "errors": 0
+      },
+      "started_at": "2026-06-26 00:00:49.103687+00",
+      "finished_at": "2026-06-26 00:00:50.063019+00",
+      "error_message": null
+    },
+    {
+      "entity_name": "vendors",
+      "status": "success",
+      "has_stats": true,
+      "stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "counters": {
+        "fetched": 0,
+        "upserted": 0,
+        "projected": 0,
+        "skipped": 0,
+        "errors": 0
+      },
+      "started_at": "2026-06-26 00:00:38.294552+00",
+      "finished_at": "2026-06-26 00:00:39.669094+00",
+      "error_message": null
+    }
+  ],
+  "state": [
+    {
+      "entity_name": "ap_bills",
+      "status": "success",
+      "has_last_stats": true,
+      "last_stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "last_error": null,
+      "last_started_at": "2026-06-26 00:00:51.157052+00",
+      "last_success_at": "2026-06-26 00:00:53.804277+00"
+    },
+    {
+      "entity_name": "ap_checks",
+      "status": "success",
+      "has_last_stats": true,
+      "last_stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "last_error": null,
+      "last_started_at": "2026-06-26 00:02:24.391607+00",
+      "last_success_at": "2026-06-26 00:02:24.81958+00"
+    },
+    {
+      "entity_name": "ar_invoices",
+      "status": "success",
+      "has_last_stats": true,
+      "last_stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "last_error": null,
+      "last_started_at": "2026-06-26 00:02:03.62465+00",
+      "last_success_at": "2026-06-26 00:02:04.486417+00"
+    },
+    {
+      "entity_name": "ar_payments",
+      "status": "success",
+      "has_last_stats": true,
+      "last_stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "last_error": null,
+      "last_started_at": "2026-06-26 00:02:04.86007+00",
+      "last_success_at": "2026-06-26 00:02:05.425497+00"
+    },
+    {
+      "entity_name": "change_orders",
+      "status": "success",
+      "has_last_stats": true,
+      "last_stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "last_error": null,
+      "last_started_at": "2026-06-26 00:00:43.824026+00",
+      "last_success_at": "2026-06-26 00:00:44.725917+00"
+    },
+    {
+      "entity_name": "change_orders_projection",
+      "status": "success",
+      "has_last_stats": true,
+      "last_stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "last_error": null,
+      "last_started_at": "2026-06-26 00:00:45.097252+00",
+      "last_success_at": "2026-06-26 00:00:48.761983+00"
+    },
+    {
+      "entity_name": "commitments_projection",
+      "status": "success",
+      "has_last_stats": true,
+      "last_stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "last_error": null,
+      "last_started_at": "2026-06-26 00:00:54.123281+00",
+      "last_success_at": "2026-06-26 00:02:03.213033+00"
+    },
+    {
+      "entity_name": "project_budgets",
+      "status": "success",
+      "has_last_stats": true,
+      "last_stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "last_error": null,
+      "last_started_at": "2026-06-26 00:02:25.091117+00",
+      "last_success_at": "2026-06-26 00:02:25.832972+00"
+    },
+    {
+      "entity_name": "projects",
+      "status": "success",
+      "has_last_stats": true,
+      "last_stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "last_error": null,
+      "last_started_at": "2026-06-26 00:00:32.699917+00",
+      "last_success_at": "2026-06-26 00:00:37.637264+00"
+    },
+    {
+      "entity_name": "purchase_orders",
+      "status": "success",
+      "has_last_stats": true,
+      "last_stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "last_error": null,
+      "last_started_at": "2026-06-26 00:00:50.310052+00",
+      "last_success_at": "2026-06-26 00:00:50.81366+00"
+    },
+    {
+      "entity_name": "subcontracts",
+      "status": "success",
+      "has_last_stats": true,
+      "last_stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "last_error": null,
+      "last_started_at": "2026-06-26 00:00:49.103687+00",
+      "last_success_at": "2026-06-26 00:00:49.930662+00"
+    },
+    {
+      "entity_name": "vendors",
+      "status": "success",
+      "has_last_stats": true,
+      "last_stats_keys": [
+        "cursor",
+        "entity",
+        "errors",
+        "fetched",
+        "projected",
+        "skipped",
+        "upserted"
+      ],
+      "last_error": null,
+      "last_started_at": "2026-06-26 00:00:38.294552+00",
+      "last_success_at": "2026-06-26 00:00:39.546519+00"
+    }
+  ],
+  "warningRuns": [
+    {
+      "entity_name": "payment_applications",
+      "status": "warning",
+      "started_at": "2026-06-26 00:02:17.696299+00",
+      "finished_at": "2026-06-26 00:02:24.197495+00",
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T00:20:55.928596+00:00",
+        "entity": "payment_applications",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "warnings": [
+          "Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. No AR payment application OData entity set was found. Set ACUMATICA_AR_PAYMENT_APPLICATIONS_ENTITY to the exposed GI name once it appears in metadata. Currently relevant OData entity sets: APBillsToPayments, BI-ARInvoices, CR-CampaignInvoices, DB-StorageDetailsByItemWarehouseLocation, ProcoreRetainageReleaseInvoices, ProcoreSyncedInvoices, Project Summary With Revised vs Approved CO, Z Project Summary. REST fallback error: Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. ApplicationHistory error: Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"Optimization cannot be performed.The following fields cause the error:\\r\\nApplicationHistory.AdjustedDocType: View ARPost has BQL delegate\\r\\nApplicationHistory.BalanceWriteOff: View ARPost has BQL delegate\\r\\nApplicationHistory.BatchNbr: View ",
+          "Projected prime contract payments directly from acumatica_payments using unique customer-to-project mapping because historical payment applications are not exposed."
+        ],
+        "projected": 40
+      }
+    },
+    {
+      "entity_name": "customers",
+      "status": "warning",
+      "started_at": "2026-06-26 00:00:40.659845+00",
+      "finished_at": "2026-06-26 00:00:42.676867+00",
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-26T00:00:42.585557Z",
+        "entity": "customers",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "warnings": [
+          "Customer sync dropped unsupported/select-timeout fields: Phone1. Active field set: CustomerID, CustomerName, LastModifiedDateTime, Status, CurrencyID, Terms, TaxZone, Email"
+        ],
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "payment_applications",
+      "status": "warning",
+      "started_at": "2026-06-25 21:24:14.682058+00",
+      "finished_at": "2026-06-25 21:24:21.808538+00",
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T00:20:55.928596+00:00",
+        "entity": "payment_applications",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "warnings": [
+          "Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. No AR payment application OData entity set was found. Set ACUMATICA_AR_PAYMENT_APPLICATIONS_ENTITY to the exposed GI name once it appears in metadata. Currently relevant OData entity sets: APBillsToPayments, BI-ARInvoices, CR-CampaignInvoices, DB-StorageDetailsByItemWarehouseLocation, ProcoreRetainageReleaseInvoices, ProcoreSyncedInvoices, Project Summary With Revised vs Approved CO, Z Project Summary. REST fallback error: Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. ApplicationHistory error: Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"Optimization cannot be performed.The following fields cause the error:\\r\\nApplicationHistory.AdjustedDocType: View ARPost has BQL delegate\\r\\nApplicationHistory.BalanceWriteOff: View ARPost has BQL delegate\\r\\nApplicationHistory.BatchNbr: View ",
+          "Projected prime contract payments directly from acumatica_payments using unique customer-to-project mapping because historical payment applications are not exposed."
+        ],
+        "projected": 40
+      }
+    },
+    {
+      "entity_name": "customers",
+      "status": "warning",
+      "started_at": "2026-06-25 21:21:48.838284+00",
+      "finished_at": "2026-06-25 21:21:51.255532+00",
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T21:21:50.406376Z",
+        "entity": "customers",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "warnings": [
+          "Customer sync dropped unsupported/select-timeout fields: Phone1. Active field set: CustomerID, CustomerName, LastModifiedDateTime, Status, CurrencyID, Terms, TaxZone, Email"
+        ],
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "payment_applications",
+      "status": "warning",
+      "started_at": "2026-06-25 00:20:49.363845+00",
+      "finished_at": "2026-06-25 00:20:56.098151+00",
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T00:20:55.928596Z",
+        "entity": "payment_applications",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "warnings": [
+          "Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. No AR payment application OData entity set was found. Set ACUMATICA_AR_PAYMENT_APPLICATIONS_ENTITY to the exposed GI name once it appears in metadata. Currently relevant OData entity sets: APBillsToPayments, BI-ARInvoices, CR-CampaignInvoices, DB-StorageDetailsByItemWarehouseLocation, ProcoreRetainageReleaseInvoices, ProcoreSyncedInvoices, Project Summary With Revised vs Approved CO, Z Project Summary. REST fallback error: Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. ApplicationHistory error: Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"Optimization cannot be performed.The following fields cause the error:\\r\\nApplicationHistory.AdjustedDocType: View ARPost has BQL delegate\\r\\nApplicationHistory.BalanceWriteOff: View ARPost has BQL delegate\\r\\nApplicationHistory.BatchNbr: View ",
+          "Projected prime contract payments directly from acumatica_payments using unique customer-to-project mapping because historical payment applications are not exposed."
+        ],
+        "projected": 40
+      }
+    },
+    {
+      "entity_name": "customers",
+      "status": "warning",
+      "started_at": "2026-06-25 00:19:33.883881+00",
+      "finished_at": "2026-06-25 00:19:35.253998+00",
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T00:19:35.157524Z",
+        "entity": "customers",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "warnings": [
+          "Customer sync dropped unsupported/select-timeout fields: Phone1. Active field set: CustomerID, CustomerName, LastModifiedDateTime, Status, CurrencyID, Terms, TaxZone, Email"
+        ],
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "payment_applications",
+      "status": "failed",
+      "started_at": "2026-06-25 00:18:41.17444+00",
+      "finished_at": "2026-06-25 00:18:41.250509+00",
+      "error_message": "{'message': 'duplicate key value violates unique constraint \"idx_prime_contract_payments_acumatica_ref_nbr\"', 'code': '23505', 'hint': None, 'details': 'Key (acumatica_ref_nbr)=(000314) already exists.'}",
+      "stats": null
+    },
+    {
+      "entity_name": "customers",
+      "status": "warning",
+      "started_at": "2026-06-25 00:17:11.715526+00",
+      "finished_at": "2026-06-25 00:17:16.23394+00",
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T00:17:16.070434Z",
+        "entity": "customers",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "warnings": [
+          "Customer sync dropped unsupported/select-timeout fields: Phone1. Active field set: CustomerID, CustomerName, LastModifiedDateTime, Status, CurrencyID, Terms, TaxZone, Email"
+        ],
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "payment_applications",
+      "status": "failed",
+      "started_at": "2026-06-25 00:16:12.79989+00",
+      "finished_at": "2026-06-25 00:16:12.874188+00",
+      "error_message": "{'message': 'duplicate key value violates unique constraint \"idx_prime_contract_payments_acumatica_ref_nbr\"', 'code': '23505', 'hint': None, 'details': 'Key (acumatica_ref_nbr)=(000526) already exists.'}",
+      "stats": null
+    },
+    {
+      "entity_name": "customers",
+      "status": "warning",
+      "started_at": "2026-06-25 00:10:18.992194+00",
+      "finished_at": "2026-06-25 00:13:55.019718+00",
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T00:13:54.385530Z",
+        "entity": "customers",
+        "errors": 0,
+        "fetched": 61,
+        "skipped": 0,
+        "upserted": 61,
+        "warnings": [
+          "Customer sync dropped unsupported/select-timeout fields: LastModifiedDateTime, CurrencyID, Terms, TaxZone, Email, Phone1. Active field set: CustomerID, CustomerName, Status"
+        ],
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "customers",
+      "status": "failed",
+      "started_at": "2026-06-25 00:08:49.869304+00",
+      "finished_at": "2026-06-25 00:08:50.314813+00",
+      "error_message": "The read operation timed out",
+      "stats": null
+    },
+    {
+      "entity_name": "payment_applications",
+      "status": "failed",
+      "started_at": "2026-06-24 23:23:34.198635+00",
+      "finished_at": "2026-06-24 23:23:34.360003+00",
+      "error_message": "Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. No AR payment application OData entity set was found. Set ACUMATICA_AR_PAYMENT_APPLICATIONS_ENTITY to the exposed GI name once it appears in metadata. Currently relevant OData entity sets: APBillsToPayments, BI-ARInvoices, CR-CampaignInvoices, DB-StorageDetailsByItemWarehouseLocation, ProcoreRetainageReleaseInvoices, ProcoreSyncedInvoices, Project Summary With Revised vs Approved CO, Z Project Summary. REST fallback error: Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. ApplicationHistory error: Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"Optimization cannot be performed.The following fields cause the error:\\r\\nApplicationHistory.AdjustedDocType: View ARPost has BQL delegate\\r\\nApplicationHistory.BalanceWriteOff: View ARPost has BQL delegate\\r\\nApplicationHistory.BatchNbr: View ",
+      "stats": null
+    },
+    {
+      "entity_name": "customers",
+      "status": "failed",
+      "started_at": "2026-06-24 23:19:48.475937+00",
+      "finished_at": "2026-06-24 23:19:48.615214+00",
+      "error_message": "Acumatica Customer fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"The given key was not present in the dictionary.\",\"exceptionType\":\"System.Collections.Generic.KeyNotFoundException\",\"stackTrace\":\"   at System.ThrowHelper.ThrowKeyNotFoundException()\\r\\n   at System.Collections.Generic.Dictionary`2.get_Item(TKe",
+      "stats": null
+    },
+    {
+      "entity_name": "payment_applications",
+      "status": "failed",
+      "started_at": "2026-06-14 00:44:04.475741+00",
+      "finished_at": "2026-06-14 00:44:04.601417+00",
+      "error_message": "Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. No AR payment application OData entity set was found. Set ACUMATICA_AR_PAYMENT_APPLICATIONS_ENTITY to the exposed GI name once it appears in metadata. Currently relevant OData entity sets: APBillsToPayments, BI-ARInvoices, CR-CampaignInvoices, DB-StorageDetailsByItemWarehouseLocation, ProcoreRetainageReleaseInvoices, ProcoreSyncedInvoices, Project Summary With Revised vs Approved CO, Z Project Summary. REST fallback error: Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. ApplicationHistory error: Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"Optimization cannot be performed.The following fields cause the error:\\r\\nApplicationHistory.AdjustedDocType: View ARPost has BQL delegate\\r\\nApplicationHistory.BalanceWriteOff: View ARPost has BQL delegate\\r\\nApplicationHistory.BatchNbr: View ",
+      "stats": null
+    },
+    {
+      "entity_name": "payment_applications",
+      "status": "failed",
+      "started_at": "2026-06-14 00:37:23.869994+00",
+      "finished_at": "2026-06-14 00:37:24.050025+00",
+      "error_message": "Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. ApplicationHistory error: Acumatica Payment fetch failed (HTTP 500): Optimization cannot be performed. ApplicationHistory fields from ARPost have BQL delegate. DocumentsToApply returned no historical application lines. BI-ARInvoices is accessible but contains invoice line fields, not payment application fields.",
+      "stats": null
+    },
+    {
+      "entity_name": "payment_applications",
+      "status": "failed",
+      "started_at": "2026-06-12 17:18:56.159463+00",
+      "finished_at": "2026-06-12 17:18:58.140566+00",
+      "error_message": "Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. ApplicationHistory error: Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"Optimization cannot be performed.The following fields cause the error:\\r\\nApplicationHistory.AdjustedDocType: View ARPost has BQL delegate\\r\\nApplicationHistory.BalanceWriteOff: View ARPost has BQL delegate\\r\\nApplicationHistory.BatchNbr: View ",
+      "stats": null
+    },
+    {
+      "entity_name": "payment_applications",
+      "status": "failed",
+      "started_at": "2026-06-12 14:45:48.501534+00",
+      "finished_at": "2026-06-12 14:45:48.565001+00",
+      "error_message": "Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"Optimization cannot be performed.The following fields cause the error:\\r\\nApplicationHistory.AdjustedDocType: View ARPost has BQL delegate\\r\\nApplicationHistory.BalanceWriteOff: View ARPost has BQL delegate\\r\\nApplicationHistory.BatchNbr: View ",
+      "stats": null
+    },
+    {
+      "entity_name": "customers",
+      "status": "failed",
+      "started_at": "2026-06-12 14:44:20.655504+00",
+      "finished_at": "2026-06-12 14:44:20.703849+00",
+      "error_message": "Acumatica Customer fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"The given key was not present in the dictionary.\",\"exceptionType\":\"System.Collections.Generic.KeyNotFoundException\",\"stackTrace\":\"   at System.ThrowHelper.ThrowKeyNotFoundException()\\r\\n   at System.Collections.Generic.Dictionary`2.get_Item(TKe",
+      "stats": null
+    },
+    {
+      "entity_name": "commitments_projection",
+      "status": "failed",
+      "started_at": "2026-05-07 13:14:46.637784+00",
+      "finished_at": "2026-05-07 13:14:46.716245+00",
+      "error_message": "{'message': 'new row for relation \"subcontracts\" violates check constraint \"subcontracts_status_check\"', 'code': '23514', 'hint': None, 'details': 'Failing row contains (54bdd22e-2de6-4f10-927a-c3574fa2d6be, SC-000157, ad49c85d-7a57-4221-b335-aa4a01822b0a, Westfield Collective Site Surveying, Closed, f, 0.00, Westfield Collective Site Surveying, null, null, 2025-03-31, null, null, 2025-03-11, null, null, t, {}, f, {}, 43, null, 2026-05-07 13:14:46.555973+00, 2026-05-07 13:14:46.459128+00, null, Subcontract|SC-000157, null).'}",
+      "stats": null
+    },
+    {
+      "entity_name": "change_orders_projection",
+      "status": "failed",
+      "started_at": "2026-05-07 13:14:31.338128+00",
+      "finished_at": "2026-05-07 13:14:31.459474+00",
+      "error_message": "{'message': 'contract_change_orders.contract_id 20906925-abe3-418e-80da-018ec1fc8ef1 must reference an active commitment', 'code': '23503', 'hint': None, 'details': None}",
+      "stats": null
+    }
+  ],
+  "duplicateProbes": {
+    "acumatica_ap_bills": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "direct_costs": {
+      "exists": true,
+      "keys": [
+        "acumatica_document_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_ar_invoices": {
+      "exists": true,
+      "keys": [
+        "reference_nbr",
+        "type"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_checks": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "commitment_payments": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_change_orders": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_subcontracts": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_purchase_orders": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "prime_contract_change_orders": {
+      "exists": true,
+      "keys": [
+        "acumatica_external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "contract_change_orders": {
+      "exists": true,
+      "keys": [
+        "acumatica_external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "subcontracts": {
+      "exists": true,
+      "keys": [
+        "acumatica_external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "purchase_orders": {
+      "exists": true,
+      "keys": [
+        "acumatica_external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_payments": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_project_budgets": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_accounts": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_customers": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_project_tasks": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_payment_applications": {
+      "exists": true,
+      "keys": [
+        "payment_reference_nbr",
+        "payment_type",
+        "invoice_reference_nbr",
+        "invoice_type"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    }
+  },
+  "indexes": [
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_accounts",
+      "indexname": "acumatica_accounts_external_key_key",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_accounts_external_key_key ON public.acumatica_accounts USING btree (external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_accounts",
+      "indexname": "acumatica_accounts_pkey",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_accounts_pkey ON public.acumatica_accounts USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_accounts",
+      "indexname": "idx_acumatica_accounts_account_id",
+      "indexdef": "CREATE UNIQUE INDEX idx_acumatica_accounts_account_id ON public.acumatica_accounts USING btree (account_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_accounts",
+      "indexname": "idx_acumatica_accounts_type",
+      "indexdef": "CREATE INDEX idx_acumatica_accounts_type ON public.acumatica_accounts USING btree (type)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_ap_bills",
+      "indexname": "acumatica_ap_bills_external_key_key",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_ap_bills_external_key_key ON public.acumatica_ap_bills USING btree (external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_ap_bills",
+      "indexname": "acumatica_ap_bills_last_modified_at_idx",
+      "indexdef": "CREATE INDEX acumatica_ap_bills_last_modified_at_idx ON public.acumatica_ap_bills USING btree (last_modified_at DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_ap_bills",
+      "indexname": "acumatica_ap_bills_pkey",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_ap_bills_pkey ON public.acumatica_ap_bills USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_ap_bills",
+      "indexname": "acumatica_ap_bills_project_id_idx",
+      "indexdef": "CREATE INDEX acumatica_ap_bills_project_id_idx ON public.acumatica_ap_bills USING btree (project_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_ap_bills",
+      "indexname": "acumatica_ap_bills_reference_nbr_idx",
+      "indexdef": "CREATE INDEX acumatica_ap_bills_reference_nbr_idx ON public.acumatica_ap_bills USING btree (reference_nbr)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_ap_bills",
+      "indexname": "acumatica_ap_bills_vendor_id_idx",
+      "indexdef": "CREATE INDEX acumatica_ap_bills_vendor_id_idx ON public.acumatica_ap_bills USING btree (vendor_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_ar_invoices",
+      "indexname": "acumatica_ar_invoices_customer_idx",
+      "indexdef": "CREATE INDEX acumatica_ar_invoices_customer_idx ON public.acumatica_ar_invoices USING btree (customer)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_ar_invoices",
+      "indexname": "acumatica_ar_invoices_pkey",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_ar_invoices_pkey ON public.acumatica_ar_invoices USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_ar_invoices",
+      "indexname": "acumatica_ar_invoices_project_idx",
+      "indexdef": "CREATE INDEX acumatica_ar_invoices_project_idx ON public.acumatica_ar_invoices USING btree (project)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_ar_invoices",
+      "indexname": "acumatica_ar_invoices_reference_nbr_type_key",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_ar_invoices_reference_nbr_type_key ON public.acumatica_ar_invoices USING btree (reference_nbr, type)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_ar_invoices",
+      "indexname": "acumatica_ar_invoices_status_idx",
+      "indexdef": "CREATE INDEX acumatica_ar_invoices_status_idx ON public.acumatica_ar_invoices USING btree (status)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_ar_invoices",
+      "indexname": "idx_acumatica_ar_invoices_external_key",
+      "indexdef": "CREATE UNIQUE INDEX idx_acumatica_ar_invoices_external_key ON public.acumatica_ar_invoices USING btree (external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_change_orders",
+      "indexname": "acumatica_change_orders_change_date_idx",
+      "indexdef": "CREATE INDEX acumatica_change_orders_change_date_idx ON public.acumatica_change_orders USING btree (change_date DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_change_orders",
+      "indexname": "acumatica_change_orders_external_key_key",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_change_orders_external_key_key ON public.acumatica_change_orders USING btree (external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_change_orders",
+      "indexname": "acumatica_change_orders_pkey",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_change_orders_pkey ON public.acumatica_change_orders USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_change_orders",
+      "indexname": "acumatica_change_orders_project_id_idx",
+      "indexdef": "CREATE INDEX acumatica_change_orders_project_id_idx ON public.acumatica_change_orders USING btree (project_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_change_orders",
+      "indexname": "acumatica_change_orders_reference_nbr_idx",
+      "indexdef": "CREATE INDEX acumatica_change_orders_reference_nbr_idx ON public.acumatica_change_orders USING btree (reference_nbr)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_change_orders",
+      "indexname": "acumatica_change_orders_status_idx",
+      "indexdef": "CREATE INDEX acumatica_change_orders_status_idx ON public.acumatica_change_orders USING btree (status)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_checks",
+      "indexname": "acumatica_checks_application_date_idx",
+      "indexdef": "CREATE INDEX acumatica_checks_application_date_idx ON public.acumatica_checks USING btree (application_date DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_checks",
+      "indexname": "acumatica_checks_external_key_key",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_checks_external_key_key ON public.acumatica_checks USING btree (external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_checks",
+      "indexname": "acumatica_checks_pkey",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_checks_pkey ON public.acumatica_checks USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_checks",
+      "indexname": "acumatica_checks_vendor_id_idx",
+      "indexdef": "CREATE INDEX acumatica_checks_vendor_id_idx ON public.acumatica_checks USING btree (vendor_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_checks",
+      "indexname": "idx_acumatica_checks_company_id",
+      "indexdef": "CREATE INDEX idx_acumatica_checks_company_id ON public.acumatica_checks USING btree (company_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_customers",
+      "indexname": "acumatica_customers_external_key_key",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_customers_external_key_key ON public.acumatica_customers USING btree (external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_customers",
+      "indexname": "acumatica_customers_pkey",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_customers_pkey ON public.acumatica_customers USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_customers",
+      "indexname": "idx_acumatica_customers_customer_id",
+      "indexdef": "CREATE UNIQUE INDEX idx_acumatica_customers_customer_id ON public.acumatica_customers USING btree (customer_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_customers",
+      "indexname": "idx_acumatica_customers_status",
+      "indexdef": "CREATE INDEX idx_acumatica_customers_status ON public.acumatica_customers USING btree (status)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_payment_applications",
+      "indexname": "acumatica_payment_applications_pkey",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_payment_applications_pkey ON public.acumatica_payment_applications USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_payment_applications",
+      "indexname": "acumatica_payment_applications_unique",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_payment_applications_unique ON public.acumatica_payment_applications USING btree (payment_reference_nbr, payment_type, invoice_reference_nbr, invoice_type)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_payment_applications",
+      "indexname": "idx_acumatica_payment_apps_customer_id",
+      "indexdef": "CREATE INDEX idx_acumatica_payment_apps_customer_id ON public.acumatica_payment_applications USING btree (customer_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_payment_applications",
+      "indexname": "idx_acumatica_payment_apps_invoice_ref",
+      "indexdef": "CREATE INDEX idx_acumatica_payment_apps_invoice_ref ON public.acumatica_payment_applications USING btree (invoice_reference_nbr)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_payment_applications",
+      "indexname": "idx_acumatica_payment_apps_payment_ref",
+      "indexdef": "CREATE INDEX idx_acumatica_payment_apps_payment_ref ON public.acumatica_payment_applications USING btree (payment_reference_nbr)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_payment_applications",
+      "indexname": "idx_acumatica_payment_apps_resolved_project",
+      "indexdef": "CREATE INDEX idx_acumatica_payment_apps_resolved_project ON public.acumatica_payment_applications USING btree (resolved_project_code)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_payments",
+      "indexname": "acumatica_payments_application_date_idx",
+      "indexdef": "CREATE INDEX acumatica_payments_application_date_idx ON public.acumatica_payments USING btree (application_date DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_payments",
+      "indexname": "acumatica_payments_customer_id_idx",
+      "indexdef": "CREATE INDEX acumatica_payments_customer_id_idx ON public.acumatica_payments USING btree (customer_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_payments",
+      "indexname": "acumatica_payments_external_key_key",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_payments_external_key_key ON public.acumatica_payments USING btree (external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_payments",
+      "indexname": "acumatica_payments_pkey",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_payments_pkey ON public.acumatica_payments USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_payments",
+      "indexname": "acumatica_payments_project_id_idx",
+      "indexdef": "CREATE INDEX acumatica_payments_project_id_idx ON public.acumatica_payments USING btree (project_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_payments",
+      "indexname": "acumatica_payments_reference_nbr_idx",
+      "indexdef": "CREATE INDEX acumatica_payments_reference_nbr_idx ON public.acumatica_payments USING btree (reference_nbr)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_project_budgets",
+      "indexname": "acumatica_project_budgets_cost_code_idx",
+      "indexdef": "CREATE INDEX acumatica_project_budgets_cost_code_idx ON public.acumatica_project_budgets USING btree (cost_code)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_project_budgets",
+      "indexname": "acumatica_project_budgets_external_key_key",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_project_budgets_external_key_key ON public.acumatica_project_budgets USING btree (external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_project_budgets",
+      "indexname": "acumatica_project_budgets_pkey",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_project_budgets_pkey ON public.acumatica_project_budgets USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_project_budgets",
+      "indexname": "acumatica_project_budgets_project_code_idx",
+      "indexdef": "CREATE INDEX acumatica_project_budgets_project_code_idx ON public.acumatica_project_budgets USING btree (project_code)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_project_budgets",
+      "indexname": "acumatica_project_budgets_project_id_idx",
+      "indexdef": "CREATE INDEX acumatica_project_budgets_project_id_idx ON public.acumatica_project_budgets USING btree (project_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_project_tasks",
+      "indexname": "acumatica_project_tasks_external_key_key",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_project_tasks_external_key_key ON public.acumatica_project_tasks USING btree (external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_project_tasks",
+      "indexname": "acumatica_project_tasks_pkey",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_project_tasks_pkey ON public.acumatica_project_tasks USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_project_tasks",
+      "indexname": "idx_acumatica_project_tasks_project_task",
+      "indexdef": "CREATE INDEX idx_acumatica_project_tasks_project_task ON public.acumatica_project_tasks USING btree (project_id, project_task_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_project_tasks",
+      "indexname": "idx_acumatica_project_tasks_status",
+      "indexdef": "CREATE INDEX idx_acumatica_project_tasks_status ON public.acumatica_project_tasks USING btree (status)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_purchase_orders",
+      "indexname": "acumatica_purchase_orders_external_key_key",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_purchase_orders_external_key_key ON public.acumatica_purchase_orders USING btree (external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_purchase_orders",
+      "indexname": "acumatica_purchase_orders_order_nbr_idx",
+      "indexdef": "CREATE INDEX acumatica_purchase_orders_order_nbr_idx ON public.acumatica_purchase_orders USING btree (order_nbr)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_purchase_orders",
+      "indexname": "acumatica_purchase_orders_pkey",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_purchase_orders_pkey ON public.acumatica_purchase_orders USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_purchase_orders",
+      "indexname": "acumatica_purchase_orders_project_id_idx",
+      "indexdef": "CREATE INDEX acumatica_purchase_orders_project_id_idx ON public.acumatica_purchase_orders USING btree (project_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_purchase_orders",
+      "indexname": "acumatica_purchase_orders_status_idx",
+      "indexdef": "CREATE INDEX acumatica_purchase_orders_status_idx ON public.acumatica_purchase_orders USING btree (status)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_purchase_orders",
+      "indexname": "acumatica_purchase_orders_vendor_acumatica_id_idx",
+      "indexdef": "CREATE INDEX acumatica_purchase_orders_vendor_acumatica_id_idx ON public.acumatica_purchase_orders USING btree (vendor_acumatica_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_purchase_orders",
+      "indexname": "acumatica_purchase_orders_vendor_id_idx",
+      "indexdef": "CREATE INDEX acumatica_purchase_orders_vendor_id_idx ON public.acumatica_purchase_orders USING btree (vendor_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_purchase_orders",
+      "indexname": "acumatica_purchase_orders_vendor_uuid_idx",
+      "indexdef": "CREATE INDEX acumatica_purchase_orders_vendor_uuid_idx ON public.acumatica_purchase_orders USING btree (vendor_uuid)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_subcontracts",
+      "indexname": "acumatica_subcontracts_external_key_key",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_subcontracts_external_key_key ON public.acumatica_subcontracts USING btree (external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_subcontracts",
+      "indexname": "acumatica_subcontracts_pkey",
+      "indexdef": "CREATE UNIQUE INDEX acumatica_subcontracts_pkey ON public.acumatica_subcontracts USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_subcontracts",
+      "indexname": "acumatica_subcontracts_project_id_idx",
+      "indexdef": "CREATE INDEX acumatica_subcontracts_project_id_idx ON public.acumatica_subcontracts USING btree (project_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_subcontracts",
+      "indexname": "acumatica_subcontracts_status_idx",
+      "indexdef": "CREATE INDEX acumatica_subcontracts_status_idx ON public.acumatica_subcontracts USING btree (status)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_subcontracts",
+      "indexname": "acumatica_subcontracts_subcontract_nbr_idx",
+      "indexdef": "CREATE INDEX acumatica_subcontracts_subcontract_nbr_idx ON public.acumatica_subcontracts USING btree (subcontract_nbr)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_subcontracts",
+      "indexname": "acumatica_subcontracts_vendor_acumatica_id_idx",
+      "indexdef": "CREATE INDEX acumatica_subcontracts_vendor_acumatica_id_idx ON public.acumatica_subcontracts USING btree (vendor_acumatica_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_subcontracts",
+      "indexname": "acumatica_subcontracts_vendor_id_idx",
+      "indexdef": "CREATE INDEX acumatica_subcontracts_vendor_id_idx ON public.acumatica_subcontracts USING btree (vendor_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "acumatica_subcontracts",
+      "indexname": "acumatica_subcontracts_vendor_uuid_idx",
+      "indexdef": "CREATE INDEX acumatica_subcontracts_vendor_uuid_idx ON public.acumatica_subcontracts USING btree (vendor_uuid)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "commitment_payments",
+      "indexname": "commitment_payments_external_key_unique",
+      "indexdef": "CREATE UNIQUE INDEX commitment_payments_external_key_unique ON public.commitment_payments USING btree (external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "commitment_payments",
+      "indexname": "commitment_payments_pkey",
+      "indexdef": "CREATE UNIQUE INDEX commitment_payments_pkey ON public.commitment_payments USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "commitment_payments",
+      "indexname": "idx_commitment_payments_acumatica_check_id",
+      "indexdef": "CREATE INDEX idx_commitment_payments_acumatica_check_id ON public.commitment_payments USING btree (acumatica_check_id) WHERE (acumatica_check_id IS NOT NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "commitment_payments",
+      "indexname": "idx_commitment_payments_invoice_id",
+      "indexdef": "CREATE INDEX idx_commitment_payments_invoice_id ON public.commitment_payments USING btree (subcontractor_invoice_id) WHERE (subcontractor_invoice_id IS NOT NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "commitment_payments",
+      "indexname": "idx_commitment_payments_payment_date",
+      "indexdef": "CREATE INDEX idx_commitment_payments_payment_date ON public.commitment_payments USING btree (payment_date DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "commitment_payments",
+      "indexname": "idx_commitment_payments_project_id",
+      "indexdef": "CREATE INDEX idx_commitment_payments_project_id ON public.commitment_payments USING btree (project_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "commitment_payments",
+      "indexname": "idx_commitment_payments_purchase_order_id",
+      "indexdef": "CREATE INDEX idx_commitment_payments_purchase_order_id ON public.commitment_payments USING btree (purchase_order_id) WHERE (purchase_order_id IS NOT NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "commitment_payments",
+      "indexname": "idx_commitment_payments_subcontract_id",
+      "indexdef": "CREATE INDEX idx_commitment_payments_subcontract_id ON public.commitment_payments USING btree (subcontract_id) WHERE (subcontract_id IS NOT NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "contract_change_orders",
+      "indexname": "contract_change_orders_acumatica_external_key_key",
+      "indexdef": "CREATE UNIQUE INDEX contract_change_orders_acumatica_external_key_key ON public.contract_change_orders USING btree (acumatica_external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "contract_change_orders",
+      "indexname": "contract_change_orders_contract_id_change_order_number_key",
+      "indexdef": "CREATE UNIQUE INDEX contract_change_orders_contract_id_change_order_number_key ON public.contract_change_orders USING btree (contract_id, change_order_number)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "contract_change_orders",
+      "indexname": "contract_change_orders_pkey",
+      "indexdef": "CREATE UNIQUE INDEX contract_change_orders_pkey ON public.contract_change_orders USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "contract_change_orders",
+      "indexname": "idx_change_orders_approved_by",
+      "indexdef": "CREATE INDEX idx_change_orders_approved_by ON public.contract_change_orders USING btree (approved_by)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "contract_change_orders",
+      "indexname": "idx_change_orders_contract",
+      "indexdef": "CREATE INDEX idx_change_orders_contract ON public.contract_change_orders USING btree (contract_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "contract_change_orders",
+      "indexname": "idx_change_orders_created_at",
+      "indexdef": "CREATE INDEX idx_change_orders_created_at ON public.contract_change_orders USING btree (created_at)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "contract_change_orders",
+      "indexname": "idx_change_orders_requested_by",
+      "indexdef": "CREATE INDEX idx_change_orders_requested_by ON public.contract_change_orders USING btree (requested_by)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "contract_change_orders",
+      "indexname": "idx_change_orders_status",
+      "indexdef": "CREATE INDEX idx_change_orders_status ON public.contract_change_orders USING btree (status)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "contract_change_orders",
+      "indexname": "idx_contract_change_orders_project_id",
+      "indexdef": "CREATE INDEX idx_contract_change_orders_project_id ON public.contract_change_orders USING btree (project_id) WHERE (project_id IS NOT NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "contract_change_orders",
+      "indexname": "idx_contract_change_orders_project_status_requested",
+      "indexdef": "CREATE INDEX idx_contract_change_orders_project_status_requested ON public.contract_change_orders USING btree (project_id, status, requested_date DESC) WHERE (project_id IS NOT NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "direct_costs",
+      "indexname": "direct_costs_acumatica_document_key_key",
+      "indexdef": "CREATE UNIQUE INDEX direct_costs_acumatica_document_key_key ON public.direct_costs USING btree (acumatica_document_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "direct_costs",
+      "indexname": "direct_costs_acumatica_ref_nbr_idx",
+      "indexdef": "CREATE INDEX direct_costs_acumatica_ref_nbr_idx ON public.direct_costs USING btree (acumatica_ref_nbr) WHERE (acumatica_ref_nbr IS NOT NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "direct_costs",
+      "indexname": "direct_costs_pkey",
+      "indexdef": "CREATE UNIQUE INDEX direct_costs_pkey ON public.direct_costs USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "direct_costs",
+      "indexname": "idx_direct_costs_cost_type",
+      "indexdef": "CREATE INDEX idx_direct_costs_cost_type ON public.direct_costs USING btree (cost_type)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "direct_costs",
+      "indexname": "idx_direct_costs_employee_id",
+      "indexdef": "CREATE INDEX idx_direct_costs_employee_id ON public.direct_costs USING btree (employee_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "direct_costs",
+      "indexname": "idx_direct_costs_not_deleted",
+      "indexdef": "CREATE INDEX idx_direct_costs_not_deleted ON public.direct_costs USING btree (is_deleted) WHERE (is_deleted = false)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "direct_costs",
+      "indexname": "idx_direct_costs_project_date",
+      "indexdef": "CREATE INDEX idx_direct_costs_project_date ON public.direct_costs USING btree (project_id, date)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "direct_costs",
+      "indexname": "idx_direct_costs_status",
+      "indexdef": "CREATE INDEX idx_direct_costs_status ON public.direct_costs USING btree (status)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "direct_costs",
+      "indexname": "idx_direct_costs_vendor",
+      "indexdef": "CREATE INDEX idx_direct_costs_vendor ON public.direct_costs USING btree (vendor_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "prime_contract_change_orders",
+      "indexname": "idx_pcco_prime_contract_id",
+      "indexdef": "CREATE INDEX idx_pcco_prime_contract_id ON public.prime_contract_change_orders USING btree (prime_contract_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "prime_contract_change_orders",
+      "indexname": "idx_pccos_contract",
+      "indexdef": "CREATE INDEX idx_pccos_contract ON public.prime_contract_change_orders USING btree (contract_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "prime_contract_change_orders",
+      "indexname": "idx_prime_contract_change_orders_prime_contract_id",
+      "indexdef": "CREATE INDEX idx_prime_contract_change_orders_prime_contract_id ON public.prime_contract_change_orders USING btree (prime_contract_id) WHERE (prime_contract_id IS NOT NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "prime_contract_change_orders",
+      "indexname": "idx_prime_contract_change_orders_project_id",
+      "indexdef": "CREATE INDEX idx_prime_contract_change_orders_project_id ON public.prime_contract_change_orders USING btree (project_id) WHERE (project_id IS NOT NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "prime_contract_change_orders",
+      "indexname": "idx_prime_contract_change_orders_project_status_created",
+      "indexdef": "CREATE INDEX idx_prime_contract_change_orders_project_status_created ON public.prime_contract_change_orders USING btree (project_id, status, created_at DESC) WHERE (project_id IS NOT NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "prime_contract_change_orders",
+      "indexname": "prime_contract_change_orders_acumatica_external_key_key",
+      "indexdef": "CREATE UNIQUE INDEX prime_contract_change_orders_acumatica_external_key_key ON public.prime_contract_change_orders USING btree (acumatica_external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "prime_contract_change_orders",
+      "indexname": "prime_contract_change_orders_pkey",
+      "indexdef": "CREATE UNIQUE INDEX prime_contract_change_orders_pkey ON public.prime_contract_change_orders USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "purchase_orders",
+      "indexname": "idx_purchase_orders_acumatica_external_key",
+      "indexdef": "CREATE INDEX idx_purchase_orders_acumatica_external_key ON public.purchase_orders USING btree (acumatica_external_key) WHERE (acumatica_external_key IS NOT NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "purchase_orders",
+      "indexname": "idx_purchase_orders_bill_to_company_id",
+      "indexdef": "CREATE INDEX idx_purchase_orders_bill_to_company_id ON public.purchase_orders USING btree (bill_to_company_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "purchase_orders",
+      "indexname": "idx_purchase_orders_contract_company",
+      "indexdef": "CREATE INDEX idx_purchase_orders_contract_company ON public.purchase_orders USING btree (contract_company_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "purchase_orders",
+      "indexname": "idx_purchase_orders_deleted_at",
+      "indexdef": "CREATE INDEX idx_purchase_orders_deleted_at ON public.purchase_orders USING btree (deleted_at)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "purchase_orders",
+      "indexname": "idx_purchase_orders_invoice_contact_ids",
+      "indexdef": "CREATE INDEX idx_purchase_orders_invoice_contact_ids ON public.purchase_orders USING gin (invoice_contact_ids)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "purchase_orders",
+      "indexname": "idx_purchase_orders_project_active_status",
+      "indexdef": "CREATE INDEX idx_purchase_orders_project_active_status ON public.purchase_orders USING btree (project_id, status, created_at DESC) WHERE (deleted_at IS NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "purchase_orders",
+      "indexname": "idx_purchase_orders_project_id",
+      "indexdef": "CREATE INDEX idx_purchase_orders_project_id ON public.purchase_orders USING btree (project_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "purchase_orders",
+      "indexname": "idx_purchase_orders_ship_to_company_id",
+      "indexdef": "CREATE INDEX idx_purchase_orders_ship_to_company_id ON public.purchase_orders USING btree (ship_to_company_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "purchase_orders",
+      "indexname": "idx_purchase_orders_status",
+      "indexdef": "CREATE INDEX idx_purchase_orders_status ON public.purchase_orders USING btree (status)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "purchase_orders",
+      "indexname": "purchase_orders_acumatica_external_key_key",
+      "indexdef": "CREATE UNIQUE INDEX purchase_orders_acumatica_external_key_key ON public.purchase_orders USING btree (acumatica_external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "purchase_orders",
+      "indexname": "purchase_orders_pkey",
+      "indexdef": "CREATE UNIQUE INDEX purchase_orders_pkey ON public.purchase_orders USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "purchase_orders",
+      "indexname": "purchase_orders_prime_contract_id_idx",
+      "indexdef": "CREATE INDEX purchase_orders_prime_contract_id_idx ON public.purchase_orders USING btree (prime_contract_id) WHERE (prime_contract_id IS NOT NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "purchase_orders",
+      "indexname": "purchase_orders_project_id_contract_number_key",
+      "indexdef": "CREATE UNIQUE INDEX purchase_orders_project_id_contract_number_key ON public.purchase_orders USING btree (project_id, contract_number)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "subcontracts",
+      "indexname": "contract_number_project_unique",
+      "indexdef": "CREATE UNIQUE INDEX contract_number_project_unique ON public.subcontracts USING btree (contract_number, project_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "subcontracts",
+      "indexname": "idx_subcontracts_acumatica_external_key",
+      "indexdef": "CREATE INDEX idx_subcontracts_acumatica_external_key ON public.subcontracts USING btree (acumatica_external_key) WHERE (acumatica_external_key IS NOT NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "subcontracts",
+      "indexname": "idx_subcontracts_company_id",
+      "indexdef": "CREATE INDEX idx_subcontracts_company_id ON public.subcontracts USING btree (contract_company_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "subcontracts",
+      "indexname": "idx_subcontracts_contract_number",
+      "indexdef": "CREATE INDEX idx_subcontracts_contract_number ON public.subcontracts USING btree (contract_number)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "subcontracts",
+      "indexname": "idx_subcontracts_created_at",
+      "indexdef": "CREATE INDEX idx_subcontracts_created_at ON public.subcontracts USING btree (created_at DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "subcontracts",
+      "indexname": "idx_subcontracts_deleted_at",
+      "indexdef": "CREATE INDEX idx_subcontracts_deleted_at ON public.subcontracts USING btree (deleted_at)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "subcontracts",
+      "indexname": "idx_subcontracts_invoice_contact_ids",
+      "indexdef": "CREATE INDEX idx_subcontracts_invoice_contact_ids ON public.subcontracts USING gin (invoice_contact_ids)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "subcontracts",
+      "indexname": "idx_subcontracts_project_active_status",
+      "indexdef": "CREATE INDEX idx_subcontracts_project_active_status ON public.subcontracts USING btree (project_id, status, created_at DESC) WHERE (deleted_at IS NULL)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "subcontracts",
+      "indexname": "idx_subcontracts_project_id",
+      "indexdef": "CREATE INDEX idx_subcontracts_project_id ON public.subcontracts USING btree (project_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "subcontracts",
+      "indexname": "idx_subcontracts_status",
+      "indexdef": "CREATE INDEX idx_subcontracts_status ON public.subcontracts USING btree (status)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "subcontracts",
+      "indexname": "subcontracts_acumatica_external_key_key",
+      "indexdef": "CREATE UNIQUE INDEX subcontracts_acumatica_external_key_key ON public.subcontracts USING btree (acumatica_external_key)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "subcontracts",
+      "indexname": "subcontracts_pkey",
+      "indexdef": "CREATE UNIQUE INDEX subcontracts_pkey ON public.subcontracts USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "subcontracts",
+      "indexname": "subcontracts_prime_contract_id_idx",
+      "indexdef": "CREATE INDEX subcontracts_prime_contract_id_idx ON public.subcontracts USING btree (prime_contract_id) WHERE (prime_contract_id IS NOT NULL)"
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+{
+  "generatedAt": "2026-06-26T05:34:41.153Z",
+  "file": "backend/src/services/acumatica_sync.py",
+  "checks": [
+    {
+      "name": "optional_field_probe_retry",
+      "pass": true
+    },
+    {
+      "name": "duplicate_key_detector",
+      "pass": true
+    },
+    {
+      "name": "sync_state_updates",
+      "pass": true
+    },
+    {
+      "name": "sync_run_logging",
+      "pass": true
+    },
+    {
+      "name": "raw_upserts_external_keys",
+      "pass": true
+    },
+    {
+      "name": "projection_upserts_external_keys",
+      "pass": true
+    },
+    {
+      "name": "payment_application_unique_key",
+      "pass": true
+    },
+    {
+      "name": "cancelled_project_duplicate_guard",
+      "pass": true
+    }
+  ],
+  "upsertLines": [
+    {
+      "line": 564,
+      "text": "self.supabase.table(\"acumatica_sync_state\").upsert(payload).execute()"
+    },
+    {
+      "line": 1150,
+      "text": "self.supabase.table(\"acumatica_ap_bills\").upsert(list(chunk), on_conflict=\"external_key\").execute()"
+    },
+    {
+      "line": 1157,
+      "text": "self.supabase.table(\"direct_costs\").upsert(list(chunk), on_conflict=\"acumatica_document_key\").execute()"
+    },
+    {
+      "line": 1304,
+      "text": "self.supabase.table(\"acumatica_ar_invoices\").upsert("
+    },
+    {
+      "line": 1306,
+      "text": "on_conflict=\"reference_nbr,type\","
+    },
+    {
+      "line": 1544,
+      "text": "self.supabase.table(\"acumatica_checks\").upsert(list(chunk), on_conflict=\"external_key\").execute()"
+    },
+    {
+      "line": 1837,
+      "text": "self.supabase.table(\"commitment_payments\").upsert(list(chunk), on_conflict=\"external_key\").execute()"
+    },
+    {
+      "line": 1910,
+      "text": "self.supabase.table(\"acumatica_change_orders\").upsert(list(chunk), on_conflict=\"external_key\").execute()"
+    },
+    {
+      "line": 1972,
+      "text": "self.supabase.table(\"acumatica_subcontracts\").upsert(list(chunk), on_conflict=\"external_key\").execute()"
+    },
+    {
+      "line": 2031,
+      "text": "self.supabase.table(\"acumatica_purchase_orders\").upsert(list(chunk), on_conflict=\"external_key\").execute()"
+    },
+    {
+      "line": 2172,
+      "text": "self.supabase.table(\"prime_contract_change_orders\").upsert("
+    },
+    {
+      "line": 2173,
+      "text": "list(chunk), on_conflict=\"acumatica_external_key\""
+    },
+    {
+      "line": 2250,
+      "text": "self.supabase.table(\"contract_change_orders\").upsert("
+    },
+    {
+      "line": 2251,
+      "text": "list(chunk), on_conflict=\"acumatica_external_key\""
+    },
+    {
+      "line": 2311,
+      "text": "self.supabase.table(\"subcontracts\").upsert("
+    },
+    {
+      "line": 2312,
+      "text": "list(chunk), on_conflict=\"acumatica_external_key\""
+    },
+    {
+      "line": 2380,
+      "text": "self.supabase.table(\"subcontract_sov_items\").upsert("
+    },
+    {
+      "line": 2381,
+      "text": "list(chunk), on_conflict=\"subcontract_id,line_number\""
+    },
+    {
+      "line": 2442,
+      "text": "self.supabase.table(\"purchase_orders\").upsert("
+    },
+    {
+      "line": 2443,
+      "text": "list(chunk), on_conflict=\"acumatica_external_key\""
+    },
+    {
+      "line": 2562,
+      "text": "self.supabase.table(\"acumatica_payments\").upsert(list(chunk), on_conflict=\"external_key\").execute()"
+    },
+    {
+      "line": 2634,
+      "text": "self.supabase.table(\"acumatica_project_budgets\").upsert(list(chunk), on_conflict=\"external_key\").execute()"
+    },
+    {
+      "line": 2691,
+      "text": "self.supabase.table(\"acumatica_accounts\").upsert("
+    },
+    {
+      "line": 2692,
+      "text": "list(chunk), on_conflict=\"external_key\""
+    },
+    {
+      "line": 2746,
+      "text": "self.supabase.table(\"acumatica_customers\").upsert("
+    },
+    {
+      "line": 2747,
+      "text": "list(chunk), on_conflict=\"external_key\""
+    },
+    {
+      "line": 2792,
+      "text": "self.supabase.table(\"acumatica_project_tasks\").upsert("
+    },
+    {
+      "line": 2793,
+      "text": "list(chunk), on_conflict=\"external_key\""
+    },
+    {
+      "line": 2856,
+      "text": "self.supabase.table(\"acumatica_payment_applications\").upsert("
+    },
+    {
+      "line": 2858,
+      "text": "on_conflict=\"payment_reference_nbr,payment_type,invoice_reference_nbr,invoice_type\","
+    },
+    {
+      "line": 3002,
+      "text": "self.supabase.table(\"acumatica_payment_applications\").upsert("
+    },
+    {
+      "line": 3004,
+      "text": "on_conflict=\"payment_reference_nbr,payment_type,invoice_reference_nbr,invoice_type\","
+    },
+    {
+      "line": 3370,
+      "text": "self.supabase.table(\"acumatica_payment_applications\").upsert("
+    },
+    {
+      "line": 3372,
+      "text": "on_conflict=\"payment_reference_nbr,payment_type,invoice_reference_nbr,invoice_type\","
+    }
+  ]
+}

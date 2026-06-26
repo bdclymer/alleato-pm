@@ -1,0 +1,1513 @@
+{
+  "generatedAt": "2026-06-26T05:33:25.610Z",
+  "state": [
+    {
+      "entity_name": "accounts",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:00:39.948096+00",
+      "last_success_at": "2026-06-26 00:00:40.257681+00",
+      "last_cursor": "2026-06-26T00:00:40.257Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-06-26T00:00:40.257671Z",
+        "entity": "accounts",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      },
+      "updated_at": "2026-06-26 00:00:40.257687+00"
+    },
+    {
+      "entity_name": "acumatica_accounts",
+      "status": "success",
+      "last_started_at": null,
+      "last_success_at": "2026-05-11 20:42:01.209+00",
+      "last_cursor": "2026-04-07T17:27:51.130Z",
+      "last_error": null,
+      "last_stats": {
+        "errors": 0,
+        "fetched": 154,
+        "skipped": 153,
+        "upserted": 1
+      },
+      "updated_at": "2026-05-11 20:42:01.209+00"
+    },
+    {
+      "entity_name": "acumatica_ap_bills",
+      "status": "success",
+      "last_started_at": null,
+      "last_success_at": "2026-05-11 20:42:33.518+00",
+      "last_cursor": "2026-05-11T14:03:45.720Z",
+      "last_error": null,
+      "last_stats": {
+        "errors": 0,
+        "fetched": 3203,
+        "skipped": 3202,
+        "upserted": 1
+      },
+      "updated_at": "2026-05-11 20:42:33.518+00"
+    },
+    {
+      "entity_name": "acumatica_ar_invoices",
+      "status": "success",
+      "last_started_at": null,
+      "last_success_at": "2026-05-11 20:42:04.962+00",
+      "last_cursor": "2026-05-11T16:11:09.643Z",
+      "last_error": null,
+      "last_stats": {
+        "errors": 0,
+        "fetched": 467,
+        "skipped": 466,
+        "upserted": 1
+      },
+      "updated_at": "2026-05-11 20:42:04.962+00"
+    },
+    {
+      "entity_name": "acumatica_change_orders",
+      "status": "success",
+      "last_started_at": null,
+      "last_success_at": "2026-05-11 20:43:04.069+00",
+      "last_cursor": "2026-05-08T13:02:40.550Z",
+      "last_error": null,
+      "last_stats": {
+        "errors": 0,
+        "fetched": 2035,
+        "skipped": 2034,
+        "upserted": 1
+      },
+      "updated_at": "2026-05-11 20:43:04.069+00"
+    },
+    {
+      "entity_name": "acumatica_checks",
+      "status": "success",
+      "last_started_at": null,
+      "last_success_at": "2026-05-11 20:42:54.779+00",
+      "last_cursor": "2026-05-07T14:43:17.320Z",
+      "last_error": null,
+      "last_stats": {
+        "errors": 0,
+        "fetched": 2552,
+        "skipped": 2551,
+        "upserted": 1
+      },
+      "updated_at": "2026-05-11 20:42:54.779+00"
+    },
+    {
+      "entity_name": "acumatica_customers",
+      "status": "success",
+      "last_started_at": null,
+      "last_success_at": "2026-05-11 20:42:00.717+00",
+      "last_cursor": "2026-04-27T18:02:28.520Z",
+      "last_error": null,
+      "last_stats": {
+        "errors": 0,
+        "fetched": 58,
+        "skipped": 57,
+        "upserted": 1
+      },
+      "updated_at": "2026-05-11 20:42:00.717+00"
+    },
+    {
+      "entity_name": "acumatica_payments",
+      "status": "success",
+      "last_started_at": null,
+      "last_success_at": "2026-05-11 20:42:06.621+00",
+      "last_cursor": "2026-05-11T16:11:09.613Z",
+      "last_error": null,
+      "last_stats": {
+        "errors": 0,
+        "fetched": 368,
+        "skipped": 367,
+        "upserted": 1
+      },
+      "updated_at": "2026-05-11 20:42:06.621+00"
+    },
+    {
+      "entity_name": "acumatica_project_budgets",
+      "status": "success",
+      "last_started_at": null,
+      "last_success_at": "2026-05-11 20:43:09.337+00",
+      "last_cursor": "2026-05-11T16:10:42.150Z",
+      "last_error": null,
+      "last_stats": {
+        "errors": 0,
+        "fetched": 3085,
+        "skipped": 3084,
+        "upserted": 1
+      },
+      "updated_at": "2026-05-11 20:43:09.337+00"
+    },
+    {
+      "entity_name": "acumatica_project_tasks",
+      "status": "success",
+      "last_started_at": null,
+      "last_success_at": "2026-05-11 20:42:02.465+00",
+      "last_cursor": "2026-05-06T15:42:36.010Z",
+      "last_error": null,
+      "last_stats": {
+        "errors": 0,
+        "fetched": 99,
+        "skipped": 98,
+        "upserted": 1
+      },
+      "updated_at": "2026-05-11 20:42:02.465+00"
+    },
+    {
+      "entity_name": "acumatica_projects",
+      "status": "success",
+      "last_started_at": null,
+      "last_success_at": "2026-05-11 20:42:01.888+00",
+      "last_cursor": "2026-05-08T13:02:37.893Z",
+      "last_error": null,
+      "last_stats": {
+        "errors": 0,
+        "fetched": 87,
+        "skipped": 86,
+        "upserted": 1
+      },
+      "updated_at": "2026-05-11 20:42:01.888+00"
+    },
+    {
+      "entity_name": "acumatica_purchase_orders",
+      "status": "success",
+      "last_started_at": null,
+      "last_success_at": "2026-05-11 20:42:55.957+00",
+      "last_cursor": "2026-05-06T18:34:39.577Z",
+      "last_error": null,
+      "last_stats": {
+        "errors": 0,
+        "fetched": 102,
+        "skipped": 101,
+        "upserted": 1
+      },
+      "updated_at": "2026-05-11 20:42:55.957+00"
+    },
+    {
+      "entity_name": "acumatica_subcontracts",
+      "status": "success",
+      "last_started_at": null,
+      "last_success_at": "2026-05-11 20:42:58.667+00",
+      "last_cursor": "2026-05-08T13:02:40.200Z",
+      "last_error": null,
+      "last_stats": {
+        "errors": 0,
+        "fetched": 359,
+        "skipped": 358,
+        "upserted": 1
+      },
+      "updated_at": "2026-05-11 20:42:58.667+00"
+    },
+    {
+      "entity_name": "ap_bills",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:00:51.157052+00",
+      "last_success_at": "2026-06-26 00:00:53.804277+00",
+      "last_cursor": "2026-06-25T23:07:39.543Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-06-25T23:07:39.543+00:00",
+        "entity": "ap_bills",
+        "errors": 0,
+        "fetched": 1,
+        "skipped": 0,
+        "upserted": 1,
+        "projected": 1
+      },
+      "updated_at": "2026-06-26 00:00:53.804286+00"
+    },
+    {
+      "entity_name": "ap_checks",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:02:24.391607+00",
+      "last_success_at": "2026-06-26 00:02:24.81958+00",
+      "last_cursor": "2026-06-26T00:02:24.819Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-06-26T00:02:24.819572Z",
+        "entity": "ap_checks",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      },
+      "updated_at": "2026-06-26 00:02:24.819584+00"
+    },
+    {
+      "entity_name": "ap_payment_applications",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:02:05.813837+00",
+      "last_success_at": "2026-06-26 00:02:17.348083+00",
+      "last_cursor": "2026-06-26T00:02:10.253Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-06-26T00:02:10.253641Z",
+        "entity": "ap_payment_applications",
+        "errors": 0,
+        "fetched": 1499,
+        "skipped": 0,
+        "upserted": 1499,
+        "projected": 1394
+      },
+      "updated_at": "2026-06-26 00:02:17.348095+00"
+    },
+    {
+      "entity_name": "ar_invoices",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:02:03.62465+00",
+      "last_success_at": "2026-06-26 00:02:04.486417+00",
+      "last_cursor": "2026-06-26T00:02:04.486Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-06-26T00:02:04.486409Z",
+        "entity": "ar_invoices",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      },
+      "updated_at": "2026-06-26 00:02:04.486421+00"
+    },
+    {
+      "entity_name": "ar_payments",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:02:04.86007+00",
+      "last_success_at": "2026-06-26 00:02:05.425497+00",
+      "last_cursor": "2026-06-26T00:02:05.425Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-06-26T00:02:05.425489Z",
+        "entity": "ar_payments",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      },
+      "updated_at": "2026-06-26 00:02:05.425501+00"
+    },
+    {
+      "entity_name": "change_orders",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:00:43.824026+00",
+      "last_success_at": "2026-06-26 00:00:44.725917+00",
+      "last_cursor": "2026-06-25T22:02:21.807Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-06-25T22:02:21.807+00:00",
+        "entity": "change_orders",
+        "errors": 0,
+        "fetched": 1,
+        "skipped": 0,
+        "upserted": 1,
+        "projected": 0
+      },
+      "updated_at": "2026-06-26 00:00:44.725927+00"
+    },
+    {
+      "entity_name": "change_orders_projection",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:00:45.097252+00",
+      "last_success_at": "2026-06-26 00:00:48.761983+00",
+      "last_cursor": "2026-03-18T20:15:30.601Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-03-18T20:15:30.601944+00:00",
+        "entity": "change_orders_projection",
+        "errors": 0,
+        "fetched": 913,
+        "skipped": 776,
+        "upserted": 137,
+        "projected": 0
+      },
+      "updated_at": "2026-06-26 00:00:48.761992+00"
+    },
+    {
+      "entity_name": "commitments_projection",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:00:54.123281+00",
+      "last_success_at": "2026-06-26 00:02:03.213033+00",
+      "last_cursor": "2026-03-18T20:15:56.373Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-03-18T20:15:56.373709+00:00",
+        "entity": "commitments_projection",
+        "errors": 0,
+        "fetched": 509,
+        "skipped": 0,
+        "upserted": 509,
+        "projected": 0
+      },
+      "updated_at": "2026-06-26 00:02:03.213041+00"
+    },
+    {
+      "entity_name": "cron_acumatica_pipeline",
+      "status": "running",
+      "last_started_at": "2026-05-11 16:18:52.161+00",
+      "last_success_at": "2026-05-08 11:59:28.245+00",
+      "last_cursor": null,
+      "last_error": null,
+      "last_stats": null,
+      "updated_at": "2026-05-11 16:18:52.161+00"
+    },
+    {
+      "entity_name": "cron_acumatica_project_batch",
+      "status": "success",
+      "last_started_at": null,
+      "last_success_at": "2026-05-08 11:59:28.15+00",
+      "last_cursor": null,
+      "last_error": null,
+      "last_stats": {
+        "batch_size": 25,
+        "next_offset": 25,
+        "project_ids": [
+          31,
+          34,
+          38,
+          43,
+          47,
+          53,
+          55,
+          58,
+          67,
+          754,
+          760,
+          761,
+          762,
+          764,
+          765,
+          766,
+          767,
+          793,
+          795,
+          796,
+          798,
+          800,
+          801,
+          802,
+          803
+        ],
+        "start_offset": 0,
+        "total_projects": 84
+      },
+      "updated_at": "2026-05-08 11:59:28.151+00"
+    },
+    {
+      "entity_name": "customers",
+      "status": "warning",
+      "last_started_at": "2026-06-26 00:00:40.659845+00",
+      "last_success_at": "2026-06-26 00:00:42.585573+00",
+      "last_cursor": "2026-06-26T00:00:42.585Z",
+      "last_error": "Customer sync dropped unsupported/select-timeout fields: Phone1. Active field set: CustomerID, CustomerName, LastModifiedDateTime, Status, CurrencyID, Terms, TaxZone, Email",
+      "last_stats": {
+        "cursor": "2026-06-26T00:00:42.585557Z",
+        "entity": "customers",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "warnings": [
+          "Customer sync dropped unsupported/select-timeout fields: Phone1. Active field set: CustomerID, CustomerName, LastModifiedDateTime, Status, CurrencyID, Terms, TaxZone, Email"
+        ],
+        "projected": 0
+      },
+      "updated_at": "2026-06-26 00:00:42.585579+00"
+    },
+    {
+      "entity_name": "payment_applications",
+      "status": "warning",
+      "last_started_at": "2026-06-26 00:02:17.696299+00",
+      "last_success_at": "2026-06-26 00:02:24.088039+00",
+      "last_cursor": "2026-06-25T00:20:55.928Z",
+      "last_error": "Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. No AR payment application OData entity set was found. Set ACUMATICA_AR_PAYMENT_APPLICATIONS_ENTITY to the exposed GI name once it appears in metadata. Currently relevant OData entity sets: APBillsToPayments, BI-ARInvoices, CR-CampaignInvoices, DB-StorageDetailsByItemWarehouseLocation, ProcoreRetainageReleaseInvoices, ProcoreSyncedInvoices, Project Summary With Revised vs Approved CO, Z Project Summary. REST fallback error: Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. ApplicationHistory error: Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"Optimization cannot be performed.The following fields cause the error:\\r\\nApplicationHistory.AdjustedDocType: View ARPost has BQL delegate\\r\\nApplicationHistory.BalanceWriteOff: View ARPost has BQL delegate\\r\\nApplicationHistory.BatchNbr: View ; Projected prime contract payments directly from acumatica_payments using unique customer-to-project mapping because historical payment applications are not exposed.",
+      "last_stats": {
+        "cursor": "2026-06-25T00:20:55.928596+00:00",
+        "entity": "payment_applications",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "warnings": [
+          "Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. No AR payment application OData entity set was found. Set ACUMATICA_AR_PAYMENT_APPLICATIONS_ENTITY to the exposed GI name once it appears in metadata. Currently relevant OData entity sets: APBillsToPayments, BI-ARInvoices, CR-CampaignInvoices, DB-StorageDetailsByItemWarehouseLocation, ProcoreRetainageReleaseInvoices, ProcoreSyncedInvoices, Project Summary With Revised vs Approved CO, Z Project Summary. REST fallback error: Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. ApplicationHistory error: Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"Optimization cannot be performed.The following fields cause the error:\\r\\nApplicationHistory.AdjustedDocType: View ARPost has BQL delegate\\r\\nApplicationHistory.BalanceWriteOff: View ARPost has BQL delegate\\r\\nApplicationHistory.BatchNbr: View ",
+          "Projected prime contract payments directly from acumatica_payments using unique customer-to-project mapping because historical payment applications are not exposed."
+        ],
+        "projected": 40
+      },
+      "updated_at": "2026-06-26 00:02:24.088047+00"
+    },
+    {
+      "entity_name": "project_budgets",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:02:25.091117+00",
+      "last_success_at": "2026-06-26 00:02:25.832972+00",
+      "last_cursor": "2026-06-25T22:02:22.237Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-06-25T22:02:22.237+00:00",
+        "entity": "project_budgets",
+        "errors": 0,
+        "fetched": 3,
+        "skipped": 0,
+        "upserted": 3,
+        "projected": 0
+      },
+      "updated_at": "2026-06-26 00:02:25.832981+00"
+    },
+    {
+      "entity_name": "project_tasks",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:00:42.901314+00",
+      "last_success_at": "2026-06-26 00:00:43.52589+00",
+      "last_cursor": "2026-06-26T00:00:43.525Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-06-26T00:00:43.525881Z",
+        "entity": "project_tasks",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      },
+      "updated_at": "2026-06-26 00:00:43.525896+00"
+    },
+    {
+      "entity_name": "projects",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:00:32.699917+00",
+      "last_success_at": "2026-06-26 00:00:37.637264+00",
+      "last_cursor": "2026-06-25T22:02:21.930Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-06-25T22:02:21.93+00:00",
+        "entity": "projects",
+        "errors": 0,
+        "fetched": 1,
+        "skipped": 0,
+        "upserted": 1,
+        "projected": 0
+      },
+      "updated_at": "2026-06-26 00:00:37.637277+00"
+    },
+    {
+      "entity_name": "purchase_orders",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:00:50.310052+00",
+      "last_success_at": "2026-06-26 00:00:50.81366+00",
+      "last_cursor": "2026-06-26T00:00:50.813Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-06-26T00:00:50.813652Z",
+        "entity": "purchase_orders",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      },
+      "updated_at": "2026-06-26 00:00:50.813664+00"
+    },
+    {
+      "entity_name": "subcontracts",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:00:49.103687+00",
+      "last_success_at": "2026-06-26 00:00:49.930662+00",
+      "last_cursor": "2026-06-26T00:00:49.930Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-06-26T00:00:49.930653Z",
+        "entity": "subcontracts",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      },
+      "updated_at": "2026-06-26 00:00:49.930666+00"
+    },
+    {
+      "entity_name": "vendors",
+      "status": "success",
+      "last_started_at": "2026-06-26 00:00:38.294552+00",
+      "last_success_at": "2026-06-26 00:00:39.546519+00",
+      "last_cursor": "2026-06-26T00:00:39.546Z",
+      "last_error": null,
+      "last_stats": {
+        "cursor": "2026-06-26T00:00:39.546507Z",
+        "entity": "vendors",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      },
+      "updated_at": "2026-06-26 00:00:39.546526+00"
+    }
+  ],
+  "latestRuns": [
+    {
+      "entity_name": "acumatica_project_budgets",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:25.565284+00",
+      "finished_at": "2026-06-26 00:02:25.565284+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_project_budgets",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:25.565284+00",
+      "finished_at": "2026-06-26 00:02:25.565284+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "project_budgets",
+      "status": "success",
+      "started_at": "2026-06-26 00:02:25.091117+00",
+      "finished_at": "2026-06-26 00:02:25.932164+00",
+      "fetched": 3,
+      "upserted": 3,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T22:02:22.237+00:00",
+        "entity": "project_budgets",
+        "errors": 0,
+        "fetched": 3,
+        "skipped": 0,
+        "upserted": 3,
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "ap_checks",
+      "status": "success",
+      "started_at": "2026-06-26 00:02:24.391607+00",
+      "finished_at": "2026-06-26 00:02:24.920072+00",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-26T00:02:24.819572Z",
+        "entity": "ap_checks",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "payment_applications",
+      "status": "warning",
+      "started_at": "2026-06-26 00:02:17.696299+00",
+      "finished_at": "2026-06-26 00:02:24.197495+00",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 40,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T00:20:55.928596+00:00",
+        "entity": "payment_applications",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "warnings": [
+          "Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. No AR payment application OData entity set was found. Set ACUMATICA_AR_PAYMENT_APPLICATIONS_ENTITY to the exposed GI name once it appears in metadata. Currently relevant OData entity sets: APBillsToPayments, BI-ARInvoices, CR-CampaignInvoices, DB-StorageDetailsByItemWarehouseLocation, ProcoreRetainageReleaseInvoices, ProcoreSyncedInvoices, Project Summary With Revised vs Approved CO, Z Project Summary. REST fallback error: Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. ApplicationHistory error: Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"Optimization cannot be performed.The following fields cause the error:\\r\\nApplicationHistory.AdjustedDocType: View ARPost has BQL delegate\\r\\nApplicationHistory.BalanceWriteOff: View ARPost has BQL delegate\\r\\nApplicationHistory.BatchNbr: View ",
+          "Projected prime contract payments directly from acumatica_payments using unique customer-to-project mapping because historical payment applications are not exposed."
+        ],
+        "projected": 40
+      }
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:13.248024+00",
+      "finished_at": "2026-06-26 00:02:13.248024+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:13.248024+00",
+      "finished_at": "2026-06-26 00:02:13.248024+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:13.111441+00",
+      "finished_at": "2026-06-26 00:02:13.111441+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:13.111441+00",
+      "finished_at": "2026-06-26 00:02:13.111441+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:12.924258+00",
+      "finished_at": "2026-06-26 00:02:12.924258+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:12.924258+00",
+      "finished_at": "2026-06-26 00:02:12.924258+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:12.744608+00",
+      "finished_at": "2026-06-26 00:02:12.744608+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:12.744608+00",
+      "finished_at": "2026-06-26 00:02:12.744608+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:12.544823+00",
+      "finished_at": "2026-06-26 00:02:12.544823+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:12.544823+00",
+      "finished_at": "2026-06-26 00:02:12.544823+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:12.320716+00",
+      "finished_at": "2026-06-26 00:02:12.320716+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:12.320716+00",
+      "finished_at": "2026-06-26 00:02:12.320716+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:12.085435+00",
+      "finished_at": "2026-06-26 00:02:12.085435+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:12.085435+00",
+      "finished_at": "2026-06-26 00:02:12.085435+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:11.765894+00",
+      "finished_at": "2026-06-26 00:02:11.765894+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:02:11.765894+00",
+      "finished_at": "2026-06-26 00:02:11.765894+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "ap_payment_applications",
+      "status": "success",
+      "started_at": "2026-06-26 00:02:05.813837+00",
+      "finished_at": "2026-06-26 00:02:17.479972+00",
+      "fetched": 1499,
+      "upserted": 1499,
+      "projected": 1394,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-26T00:02:10.253641Z",
+        "entity": "ap_payment_applications",
+        "errors": 0,
+        "fetched": 1499,
+        "skipped": 0,
+        "upserted": 1499,
+        "projected": 1394
+      }
+    },
+    {
+      "entity_name": "ar_payments",
+      "status": "success",
+      "started_at": "2026-06-26 00:02:04.86007+00",
+      "finished_at": "2026-06-26 00:02:05.555185+00",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-26T00:02:05.425489Z",
+        "entity": "ar_payments",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "ar_invoices",
+      "status": "success",
+      "started_at": "2026-06-26 00:02:03.62465+00",
+      "finished_at": "2026-06-26 00:02:04.613426+00",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-26T00:02:04.486409Z",
+        "entity": "ar_invoices",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "commitments_projection",
+      "status": "success",
+      "started_at": "2026-06-26 00:00:54.123281+00",
+      "finished_at": "2026-06-26 00:02:03.332087+00",
+      "fetched": 509,
+      "upserted": 509,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-03-18T20:15:56.373709+00:00",
+        "entity": "commitments_projection",
+        "errors": 0,
+        "fetched": 509,
+        "skipped": 0,
+        "upserted": 509,
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "acumatica_ap_bills",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:00:52.48951+00",
+      "finished_at": "2026-06-26 00:00:52.48951+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_ap_bills",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-26 00:00:52.48951+00",
+      "finished_at": "2026-06-26 00:00:52.48951+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "ap_bills",
+      "status": "success",
+      "started_at": "2026-06-26 00:00:51.157052+00",
+      "finished_at": "2026-06-26 00:00:53.925278+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": 1,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T23:07:39.543+00:00",
+        "entity": "ap_bills",
+        "errors": 0,
+        "fetched": 1,
+        "skipped": 0,
+        "upserted": 1,
+        "projected": 1
+      }
+    },
+    {
+      "entity_name": "purchase_orders",
+      "status": "success",
+      "started_at": "2026-06-26 00:00:50.310052+00",
+      "finished_at": "2026-06-26 00:00:50.962506+00",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-26T00:00:50.813652Z",
+        "entity": "purchase_orders",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "subcontracts",
+      "status": "success",
+      "started_at": "2026-06-26 00:00:49.103687+00",
+      "finished_at": "2026-06-26 00:00:50.063019+00",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-26T00:00:49.930653Z",
+        "entity": "subcontracts",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "change_orders_projection",
+      "status": "success",
+      "started_at": "2026-06-26 00:00:45.097252+00",
+      "finished_at": "2026-06-26 00:00:48.872865+00",
+      "fetched": 913,
+      "upserted": 137,
+      "projected": 0,
+      "skipped": 776,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-03-18T20:15:30.601944+00:00",
+        "entity": "change_orders_projection",
+        "errors": 0,
+        "fetched": 913,
+        "skipped": 776,
+        "upserted": 137,
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "change_orders",
+      "status": "success",
+      "started_at": "2026-06-26 00:00:43.824026+00",
+      "finished_at": "2026-06-26 00:00:44.848526+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T22:02:21.807+00:00",
+        "entity": "change_orders",
+        "errors": 0,
+        "fetched": 1,
+        "skipped": 0,
+        "upserted": 1,
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "project_tasks",
+      "status": "success",
+      "started_at": "2026-06-26 00:00:42.901314+00",
+      "finished_at": "2026-06-26 00:00:43.616976+00",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-26T00:00:43.525881Z",
+        "entity": "project_tasks",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "customers",
+      "status": "warning",
+      "started_at": "2026-06-26 00:00:40.659845+00",
+      "finished_at": "2026-06-26 00:00:42.676867+00",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-26T00:00:42.585557Z",
+        "entity": "customers",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "warnings": [
+          "Customer sync dropped unsupported/select-timeout fields: Phone1. Active field set: CustomerID, CustomerName, LastModifiedDateTime, Status, CurrencyID, Terms, TaxZone, Email"
+        ],
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "accounts",
+      "status": "success",
+      "started_at": "2026-06-26 00:00:39.948096+00",
+      "finished_at": "2026-06-26 00:00:40.407662+00",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-26T00:00:40.257671Z",
+        "entity": "accounts",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "vendors",
+      "status": "success",
+      "started_at": "2026-06-26 00:00:38.294552+00",
+      "finished_at": "2026-06-26 00:00:39.669094+00",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-26T00:00:39.546507Z",
+        "entity": "vendors",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "projects",
+      "status": "success",
+      "started_at": "2026-06-26 00:00:32.699917+00",
+      "finished_at": "2026-06-26 00:00:37.766403+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T22:02:21.93+00:00",
+        "entity": "projects",
+        "errors": 0,
+        "fetched": 1,
+        "skipped": 0,
+        "upserted": 1,
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "acumatica_project_budgets",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-25 21:24:27.330948+00",
+      "finished_at": "2026-06-25 21:24:27.330948+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_project_budgets",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-25 21:24:27.330948+00",
+      "finished_at": "2026-06-25 21:24:27.330948+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "project_budgets",
+      "status": "success",
+      "started_at": "2026-06-25 21:24:26.365244+00",
+      "finished_at": "2026-06-25 21:24:42.497256+00",
+      "fetched": 17,
+      "upserted": 17,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T20:46:29.6+00:00",
+        "entity": "project_budgets",
+        "errors": 0,
+        "fetched": 17,
+        "skipped": 0,
+        "upserted": 17,
+        "projected": 0
+      }
+    },
+    {
+      "entity_name": "ap_checks",
+      "status": "success",
+      "started_at": "2026-06-25 21:24:22.004873+00",
+      "finished_at": "2026-06-25 21:24:26.104057+00",
+      "fetched": 8,
+      "upserted": 8,
+      "projected": 1394,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T18:13:24.69+00:00",
+        "entity": "ap_checks",
+        "errors": 0,
+        "fetched": 8,
+        "skipped": 0,
+        "upserted": 8,
+        "projected": 1394
+      }
+    },
+    {
+      "entity_name": "payment_applications",
+      "status": "warning",
+      "started_at": "2026-06-25 21:24:14.682058+00",
+      "finished_at": "2026-06-25 21:24:21.808538+00",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 40,
+      "skipped": 0,
+      "errors": 0,
+      "error_message": null,
+      "stats": {
+        "cursor": "2026-06-25T00:20:55.928596+00:00",
+        "entity": "payment_applications",
+        "errors": 0,
+        "fetched": 0,
+        "skipped": 0,
+        "upserted": 0,
+        "warnings": [
+          "Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. No AR payment application OData entity set was found. Set ACUMATICA_AR_PAYMENT_APPLICATIONS_ENTITY to the exposed GI name once it appears in metadata. Currently relevant OData entity sets: APBillsToPayments, BI-ARInvoices, CR-CampaignInvoices, DB-StorageDetailsByItemWarehouseLocation, ProcoreRetainageReleaseInvoices, ProcoreSyncedInvoices, Project Summary With Revised vs Approved CO, Z Project Summary. REST fallback error: Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. ApplicationHistory error: Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"Optimization cannot be performed.The following fields cause the error:\\r\\nApplicationHistory.AdjustedDocType: View ARPost has BQL delegate\\r\\nApplicationHistory.BalanceWriteOff: View ARPost has BQL delegate\\r\\nApplicationHistory.BatchNbr: View ",
+          "Projected prime contract payments directly from acumatica_payments using unique customer-to-project mapping because historical payment applications are not exposed."
+        ],
+        "projected": 40
+      }
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-25 21:24:02.96464+00",
+      "finished_at": "2026-06-25 21:24:02.96464+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-25 21:24:02.96464+00",
+      "finished_at": "2026-06-25 21:24:02.96464+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-25 21:24:01.919464+00",
+      "finished_at": "2026-06-25 21:24:01.919464+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-25 21:24:01.919464+00",
+      "finished_at": "2026-06-25 21:24:01.919464+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-25 21:24:00.900088+00",
+      "finished_at": "2026-06-25 21:24:00.900088+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-25 21:24:00.900088+00",
+      "finished_at": "2026-06-25 21:24:00.900088+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-25 21:24:00.236191+00",
+      "finished_at": "2026-06-25 21:24:00.236191+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    },
+    {
+      "entity_name": "acumatica_payment_applications",
+      "status": "drift_sentinel",
+      "started_at": "2026-06-25 21:24:00.236191+00",
+      "finished_at": "2026-06-25 21:24:00.236191+00",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": null,
+      "skipped": null,
+      "errors": null,
+      "error_message": null,
+      "stats": null
+    }
+  ],
+  "duplicates": {
+    "acumatica_ap_bills": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "direct_costs": {
+      "exists": true,
+      "keys": [
+        "acumatica_document_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_ar_invoices": {
+      "exists": true,
+      "keys": [
+        "reference_nbr",
+        "type"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_checks": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "commitment_payments": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_change_orders": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_subcontracts": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_purchase_orders": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "prime_contract_change_orders": {
+      "exists": true,
+      "keys": [
+        "acumatica_external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "contract_change_orders": {
+      "exists": true,
+      "keys": [
+        "acumatica_external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "subcontracts": {
+      "exists": true,
+      "keys": [
+        "acumatica_external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "purchase_orders": {
+      "exists": true,
+      "keys": [
+        "acumatica_external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_payments": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_project_budgets": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_accounts": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_customers": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    },
+    "acumatica_project_tasks": {
+      "exists": true,
+      "keys": [
+        "external_key"
+      ],
+      "duplicate_groups": 0,
+      "duplicate_rows": 0
+    }
+  },
+  "uniqueConstraints": []
+}
