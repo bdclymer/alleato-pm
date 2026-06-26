@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { createServiceClient } from "@/lib/supabase/service";
+import { createToolContext, type ToolContext } from "./tool-context";
 import { createFinancialTools, isMissingBudgetViewError, fetchBudgetRowsForBriefing } from "./financial";
 import { createAcumaticaTools } from "./acumatica";
 import { createOperationalTools } from "./operational";
@@ -10,7 +10,6 @@ import { createForecastTools } from "./forecast-tools";
 import { createOutlookOperationsTools } from "./outlook-operations";
 import { createSaisTools } from "./sais";
 import { createSessionSearchTools } from "./search-past-conversations";
-import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, asNumber, withTrace as _withTrace } from "./tool-utils";
 import {
   RISK_CARD_TYPES,
@@ -30,6 +29,10 @@ export type CreateProjectToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
   sessionId?: string;
+  // Injected data seam; defaults to building a real context when omitted. The
+  // same ctx is threaded into every composed sub-factory so the whole tool tree
+  // shares one set of clients per request.
+  ctx?: ToolContext;
 };
 
 function parseTextList(value: unknown): string[] {
@@ -294,27 +297,32 @@ export function createProjectTools(
   _userId: string,
   options: CreateProjectToolsOptions = {},
 ) {
-  const supabase = createServiceClient();
-  const guardrails = createToolGuardrails(_userId, {
-    pinnedProjectId: options.pinnedProjectId,
-  });
+  const ctx =
+    options.ctx ??
+    createToolContext({ userId: _userId, pinnedProjectId: options.pinnedProjectId });
+  const supabase = ctx.db;
+  const guardrails = ctx.guardrails;
+
+  // Thread the same ctx into every composed sub-factory so the whole tool tree
+  // shares one set of clients per request. acumatica + appHelp take no client.
+  const subOptions = { ...options, ctx };
 
   // Financial tools (commitments, COs, direct costs, budget lines, trends, margin)
-  const financialTools = createFinancialTools(_userId, options);
+  const financialTools = createFinancialTools(_userId, subOptions);
 
   // Acumatica ERP tools (live AP/AR aging, cash position, vendor spend, POs)
   const acumaticaTools = createAcumaticaTools(_userId, options);
 
   // Operational tools (people, vendors, RFIs, submittals, cross-project, trends, semantic search)
-  const operationalTools = createOperationalTools(_userId, options);
+  const operationalTools = createOperationalTools(_userId, subOptions);
 
   // Domain-specific tool groups extracted from operationalTools for clarity
-  const scheduleTools = createScheduleTools(_userId, options);
+  const scheduleTools = createScheduleTools(_userId, subOptions);
   const appHelpTools = createAppHelpTools(options);
-  const forecastTools = createForecastTools(_userId, options);
-  const outlookOperationsTools = createOutlookOperationsTools(_userId, options);
-  const saisTools = createSaisTools(_userId, options);
-  const sessionSearchTools = createSessionSearchTools(_userId, options);
+  const forecastTools = createForecastTools(_userId, subOptions);
+  const outlookOperationsTools = createOutlookOperationsTools(_userId, subOptions);
+  const saisTools = createSaisTools(_userId, subOptions);
+  const sessionSearchTools = createSessionSearchTools(_userId, subOptions);
 
   return {
     ...financialTools,

@@ -17,6 +17,7 @@ import {
 import { createProjectTools } from "@/lib/ai/tools/project-tools";
 import { createOperationalTools } from "@/lib/ai/tools/operational";
 import { createToolGuardrails } from "@/lib/ai/tools/guardrails";
+import { createToolContext } from "@/lib/ai/tools/tool-context";
 import { createServiceClient } from "@/lib/supabase/service";
 import { generateDailyBrief } from "@/lib/executive/daily-brief";
 import type { SourceSpecificRagKind } from "@/lib/ai/detect-rag-request";
@@ -150,12 +151,13 @@ export type BuildExecutorDepsInput = {
 };
 
 export function buildExecutorDeps({ supabase, userId, sessionId }: BuildExecutorDepsInput): ExecutorDeps {
-  // Lazy-initialized tool factories — createServiceClient() inside each factory
-  // uses the module-level service client singleton, so calling them multiple times
-  // is safe. We create them once per request inside the closure.
-  const projectTools = createProjectTools(userId);
-  const operationalTools = createOperationalTools(userId);
-  const guardrails = createToolGuardrails(userId);
+  // One ToolContext per request: reuse the caller's supabase client as ctx.db so
+  // the tool factories, guardrails, and this executor all share a single set of
+  // clients instead of each constructing their own.
+  const ctx = createToolContext({ userId, overrides: { db: supabase } });
+  const projectTools = createProjectTools(userId, { ctx });
+  const operationalTools = createOperationalTools(userId, { ctx });
+  const guardrails = ctx.guardrails;
 
   // 1. loadIntelligencePacket
   //    Resolves the intelligence target for the projectId then loads the current packet.
