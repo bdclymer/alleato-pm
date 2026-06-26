@@ -16,10 +16,11 @@ export type AssistantActionCatalogItem = {
   label: string;
   group: string;
   prompt: string;
+  href: string | null;
   status: AssistantActionCatalogStatus;
   statusLabel: string;
   unavailableReason: string | null;
-  toolName: string;
+  toolName: string | null;
   requiresApproval: boolean;
   sourceFamilies: string[];
 };
@@ -39,10 +40,21 @@ type CatalogDefinition = {
   unavailableReason?: string;
 };
 
+type RouteCatalogDefinition = {
+  id: string;
+  label: string;
+  group: string;
+  prompt: string;
+  href: string;
+  status?: AssistantActionCatalogStatus;
+  unavailableReason?: string;
+};
+
 const GROUP_COPY: Record<string, string> = {
   "Find evidence": "Search project records, meetings, Teams, emails, and documents.",
   "Create records": "Draft construction records and follow-ups for review.",
   "Reports and briefings": "Prepare owner-ready summaries and progress outputs.",
+  "Review and approve": "Review AI-created drafts, approvals, and personal context.",
   "Personalization": "Use memory, learning, and company knowledge.",
   "Delivery": "Prepare email, calendar, and Teams messages with confirmation.",
 };
@@ -143,6 +155,25 @@ const FEATURED_ACTIONS: CatalogDefinition[] = [
   },
 ];
 
+const ROUTE_ACTIONS: RouteCatalogDefinition[] = [
+  {
+    id: "openAiApprovals",
+    label: "Review AI approvals",
+    group: "Review and approve",
+    prompt:
+      "Open the AI approvals queue so I can review preview-first AI-created drafts before anything is committed.",
+    href: "/ai/approvals",
+  },
+  {
+    id: "openAiProfile",
+    label: "Review my AI profile",
+    group: "Review and approve",
+    prompt:
+      "Open my AI profile so I can review what the assistant knows about my role, preferences, and prompt context.",
+    href: "/ai/profile",
+  },
+];
+
 function statusForEntry(
   entry: AssistantToolRegistryEntry,
   definition: CatalogDefinition,
@@ -216,6 +247,7 @@ export function buildAssistantActionCatalog(input: {
       label: definition.label,
       group: definition.group,
       prompt: definition.prompt,
+      href: null,
       status,
       statusLabel: statusLabel(status),
       unavailableReason: unavailableReason(status, entry, definition),
@@ -225,6 +257,27 @@ export function buildAssistantActionCatalog(input: {
         entry.requiresDeliveryPermission ||
         entry.evidencePolicy.ledgerRequired,
       sourceFamilies: entry.sourceFamilies ?? [],
+    };
+
+    const current = groups.get(definition.group) ?? [];
+    current.push(item);
+    groups.set(definition.group, current);
+  }
+
+  for (const definition of ROUTE_ACTIONS) {
+    const status = definition.status ?? "ready";
+    const item: AssistantActionCatalogItem = {
+      id: definition.id,
+      label: definition.label,
+      group: definition.group,
+      prompt: definition.prompt,
+      href: definition.href,
+      status,
+      statusLabel: statusLabel(status),
+      unavailableReason: definition.unavailableReason ?? null,
+      toolName: null,
+      requiresApproval: false,
+      sourceFamilies: [],
     };
 
     const current = groups.get(definition.group) ?? [];

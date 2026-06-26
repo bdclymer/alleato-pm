@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { Button } from "@/components/ui/button";
 import type { AssistantSuggestion } from "@/lib/ai/assistant-suggestion-resolver";
 import { cn } from "@/lib/utils";
@@ -35,20 +37,39 @@ export function AssistantSuggestionList({
         </div>
       ) : null}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {suggestions.map((suggestion) => (
-          <Button
-            key={suggestion.id}
-            type="button"
-            variant="ghost"
-            disabled={disabled || suggestion.status === "not_ready"}
-            className="min-h-16 min-w-0 items-start justify-start rounded-md bg-muted/35 px-3 py-2.5 text-left text-xs font-medium text-foreground shadow-none hover:bg-muted/55 disabled:opacity-50"
-            onClick={() => onSelectPrompt(suggestion.prompt)}
-          >
+        {suggestions.map((suggestion) => {
+          const content = (
             <span className="line-clamp-2 whitespace-normal leading-4">
               {suggestion.label}
             </span>
-          </Button>
-        ))}
+          );
+
+          if (suggestion.href && suggestion.status !== "not_ready" && !disabled) {
+            return (
+              <Button
+                key={suggestion.id}
+                asChild
+                variant="ghost"
+                className="min-h-16 min-w-0 items-start justify-start rounded-md bg-muted/35 px-3 py-2.5 text-left text-xs font-medium text-foreground shadow-none hover:bg-muted/55 disabled:opacity-50"
+              >
+                <Link href={suggestion.href}>{content}</Link>
+              </Button>
+            );
+          }
+
+          return (
+            <Button
+              key={suggestion.id}
+              type="button"
+              variant="ghost"
+              disabled={disabled || suggestion.status === "not_ready"}
+              className="min-h-16 min-w-0 items-start justify-start rounded-md bg-muted/35 px-3 py-2.5 text-left text-xs font-medium text-foreground shadow-none hover:bg-muted/55 disabled:opacity-50"
+              onClick={() => onSelectPrompt(suggestion.prompt)}
+            >
+              {content}
+            </Button>
+          );
+        })}
       </div>
     </div>
   );

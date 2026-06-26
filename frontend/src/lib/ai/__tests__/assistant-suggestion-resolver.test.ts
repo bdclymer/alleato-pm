@@ -29,11 +29,16 @@ describe("assistant suggestion resolver", () => {
     });
 
     expect(suggestions.map((suggestion) => suggestion.id)).toEqual([
+      "openAiApprovals",
       "getProjectBriefingSnapshot",
       "createRFI",
       "createChangeEvent",
-      "createWeeklyProgressReportDraft",
     ]);
+    expect(suggestions[0]).toMatchObject({
+      label: "Review AI approvals",
+      href: "/ai/approvals",
+      status: "ready",
+    });
   });
 
   it("uses persistent widget action chips when no route rule matches", () => {
@@ -43,11 +48,13 @@ describe("assistant suggestion resolver", () => {
     });
 
     expect(suggestions.map((suggestion) => suggestion.label)).toEqual([
+      "Review AI approvals",
       "Project status report",
       "Create change request",
       "Tasks overview",
     ]);
-    expect(suggestions[0].prompt).toContain("selected project");
+    expect(suggestions[0].href).toBe("/ai/approvals");
+    expect(suggestions[1].prompt).toContain("selected project");
   });
 
   it("does not return more than the requested suggestion limit", () => {

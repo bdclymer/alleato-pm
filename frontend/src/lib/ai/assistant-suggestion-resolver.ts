@@ -20,6 +20,7 @@ export type AssistantSuggestion = Pick<
   | "statusLabel"
   | "unavailableReason"
   | "requiresApproval"
+  | "href"
 > & {
   reason: string;
 };
@@ -94,12 +95,14 @@ const ROUTE_RULES: RouteRule[] = [
 
 const SURFACE_DEFAULTS: Record<AssistantSuggestionSurface, string[]> = {
   command_center: [
+    "openAiApprovals",
     "getProjectBriefingSnapshot",
     "createRFI",
     "createChangeEvent",
     "createWeeklyProgressReportDraft",
   ],
   widget: [
+    "openAiApprovals",
     "getProjectBriefingSnapshot",
     "createChangeEvent",
     "createGeneratedTask",
@@ -137,6 +140,7 @@ function suggestionFromId(input: {
     id: item.id,
     label: item.label,
     prompt: item.prompt,
+    href: item.href,
     status: item.status,
     statusLabel: item.statusLabel,
     unavailableReason: item.unavailableReason,

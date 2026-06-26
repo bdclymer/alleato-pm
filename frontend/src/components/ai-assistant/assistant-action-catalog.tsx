@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRightIcon, CheckCircle2Icon, LockKeyholeIcon } from "lucide-react";
+import Link from "next/link";
 
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,47 @@ export function AssistantActionCatalog({
             <div className="divide-y divide-border/60">
               {group.items.map((item) => {
                 const StatusIcon = statusIcon(item);
+                const buttonContent = (
+                  <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium text-foreground">
+                        {item.label}
+                      </div>
+                      {item.unavailableReason ? (
+                        <div className="mt-1 line-clamp-2 text-xs font-normal leading-5 text-muted-foreground">
+                          {item.unavailableReason}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium",
+                          statusClassName[item.status],
+                        )}
+                      >
+                        <StatusIcon className="h-3 w-3" />
+                        {item.statusLabel}
+                      </span>
+                      <ArrowRightIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
+                  </div>
+                );
+
+                if (item.href && item.status !== "not_ready" && !disabled) {
+                  return (
+                    <Button
+                      key={item.id}
+                      asChild
+                      type="button"
+                      variant="ghost"
+                      className="h-auto w-full justify-start rounded-none px-0 py-2.5 text-left hover:bg-transparent"
+                    >
+                      <Link href={item.href}>{buttonContent}</Link>
+                    </Button>
+                  );
+                }
+
                 return (
                   <Button
                     key={item.id}
@@ -70,30 +112,7 @@ export function AssistantActionCatalog({
                     className="h-auto w-full justify-start rounded-none px-0 py-2.5 text-left hover:bg-transparent"
                     onClick={() => onSelectPrompt(item.prompt)}
                   >
-                    <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium text-foreground">
-                          {item.label}
-                        </div>
-                        {item.unavailableReason ? (
-                          <div className="mt-1 line-clamp-2 text-xs font-normal leading-5 text-muted-foreground">
-                            {item.unavailableReason}
-                          </div>
-                        ) : null}
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium",
-                            statusClassName[item.status],
-                          )}
-                        >
-                          <StatusIcon className="h-3 w-3" />
-                          {item.statusLabel}
-                        </span>
-                        <ArrowRightIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                    </div>
+                    {buttonContent}
                   </Button>
                 );
               })}

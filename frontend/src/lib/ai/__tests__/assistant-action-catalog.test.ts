@@ -20,9 +20,27 @@ describe("assistant action catalog", () => {
     expect(
       items.find((item) => item.toolName === "getProjectBriefingSnapshot"),
     ).toMatchObject({
-      label: "Find project status evidence",
+      label: "Project status report",
       status: "ready",
       requiresApproval: false,
+    });
+  });
+
+  it("includes route actions without requiring registry tools", () => {
+    const approvalsAction = catalogItems().find((item) => item.id === "openAiApprovals");
+    const profileAction = catalogItems().find((item) => item.id === "openAiProfile");
+
+    expect(approvalsAction).toMatchObject({
+      label: "Review AI approvals",
+      href: "/ai/approvals",
+      toolName: null,
+      status: "ready",
+      requiresApproval: false,
+    });
+    expect(profileAction).toMatchObject({
+      label: "Review my AI profile",
+      href: "/ai/profile",
+      toolName: null,
     });
   });
 
