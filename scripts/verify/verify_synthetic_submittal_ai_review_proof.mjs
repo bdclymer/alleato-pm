@@ -46,10 +46,12 @@ function fail(message) {
 const syntheticSubmittalId = "7dfbccac-6ccf-4d69-8129-7de7918c5248";
 const drawingId = "4a041968-6862-41de-95da-f104a39d1172";
 const drawingMetadataId = "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9";
+const productDocumentId = "synthetic-submittal:goodwill-storefront-product-data";
+const specificationId = "6b0ee9d8-4727-4c12-bf99-a56bc48d6b91";
 
-const [submittals, linkedDrawings, drawings, docs, pages] = await Promise.all([
+const [submittals, linkedDrawings, drawings, docs, pages, productDocs, specifications] = await Promise.all([
   select("submittals", {
-    select: "id,submittal_number,title,ai_review_result",
+    select: "id,submittal_number,title,specification_id,ai_review_result",
     id: `eq.${syntheticSubmittalId}`,
   }),
   select("submittal_linked_drawings", {
@@ -67,6 +69,14 @@ const [submittals, linkedDrawings, drawings, docs, pages] = await Promise.all([
   select("document_page_intelligence", {
     select: "document_metadata_id,page_number",
     document_metadata_id: `eq.${drawingMetadataId}`,
+  }),
+  select("document_metadata", {
+    select: "id,title,content",
+    id: `eq.${productDocumentId}`,
+  }),
+  select("specifications", {
+    select: "id,section_number,content",
+    id: `eq.${specificationId}`,
   }),
 ]);
 
@@ -95,6 +105,20 @@ if ((pages ?? []).length === 0) {
   fail("Backfilled drawing has no document_page_intelligence rows.");
 }
 
+const productDoc = productDocs[0];
+if (!productDoc?.content?.includes("Submitted finish: dark bronze")) {
+  fail("Synthetic product data document is missing the submitted finish evidence.");
+}
+
+const specification = specifications[0];
+if (!specification?.content?.includes("Dark bronze finish is not acceptable")) {
+  fail("Synthetic specification is missing the finish conflict requirement.");
+}
+
+if (submittal.specification_id !== specificationId) {
+  fail(`Synthetic submittal does not point at expected specification ${specificationId}.`);
+}
+
 const aiReview = submittal.ai_review_result;
 if (!aiReview || typeof aiReview !== "object") {
   fail("Synthetic submittal has no stored ai_review_result.");
@@ -117,6 +141,29 @@ for (const [name, layer] of [
   }
 }
 
+const specLayer = layers.find((layer) => layer.key === "spec_context");
+if (!specLayer || specLayer.state !== "ready") {
+  fail("Synthetic submittal readiness layer spec_context is not ready.");
+}
+
+const checks = Array.isArray(aiReview.checks) ? aiReview.checks : [];
+const finishConflict = checks.find((check) =>
+  String(check.title ?? "").toLowerCase().includes("finish") &&
+  check.status === "fail"
+);
+
+if (!finishConflict) {
+  fail("Synthetic review did not produce the expected failing finish conflict.");
+}
+
+if ((aiReview.sourceCoverage?.submittalDocumentCount ?? 0) < 2) {
+  fail("Synthetic review did not include both submittal source documents.");
+}
+
+if ((aiReview.sourceCoverage?.specSourceCount ?? 0) < 1) {
+  fail("Synthetic review did not include specification source context.");
+}
+
 console.log(
   JSON.stringify(
     {
@@ -128,6 +175,12 @@ console.log(
       drawingContentLength: doc.content.length,
       pageCount: pages.length,
       aiReviewStatus: aiReview.status,
+      sourceCoverage: aiReview.sourceCoverage,
+      finishConflict: {
+        title: finishConflict.title,
+        status: finishConflict.status,
+        severity: finishConflict.severity,
+      },
       summary: aiReview.summary,
     },
     null,
