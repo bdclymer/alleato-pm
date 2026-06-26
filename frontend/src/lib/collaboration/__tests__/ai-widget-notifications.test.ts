@@ -138,7 +138,7 @@ describe("ai widget collaboration notifications", () => {
     expect(getFirstUnreadAiWidgetNotificationDraft(notifications)).toEqual({
       id: "1",
       prompt:
-        "Help me review this AI update: Retry delivery or choose another notification channel.\n\nContext: AI delivery failed - Teams notification could not be delivered.",
+        "Review this AI update: Retry delivery or choose another notification channel.",
       source: "ai_notification_routing",
     });
   });
@@ -186,8 +186,7 @@ describe("ai widget collaboration notifications", () => {
     ]);
     expect(getFirstUnreadAiWidgetNotificationDraft(notifications)).toEqual({
       id: "1",
-      prompt:
-        "Help me review this AI update: Draft a reply or assign ownership.\n\nContext: Email needs response - External request needs an owner.",
+      prompt: "Review this AI update: Draft a reply or assign ownership.",
       actionLabel: undefined,
       source: undefined,
     });

@@ -135,16 +135,5 @@ function getAiNotificationDecisionPrompt(
 
   if (!subject) return null;
 
-  const context = [title, body].filter(
-    (value, index, values): value is string =>
-      Boolean(value) && values.indexOf(value) === index && value !== subject,
-  );
-
-  if (context.length === 0) {
-    return `Help me review this AI update: ${subject}`;
-  }
-
-  return `Help me review this AI update: ${subject}\n\nContext: ${context.join(
-    " - ",
-  )}`;
+  return `Review this AI update: ${subject}`;
 }
