@@ -789,6 +789,7 @@ export function createSubmittalAIReviewService(userId: string) {
       linkedDrawings: [],
       checks: ((runData.submittal_ai_review_checks ?? []) as AnyRow[]).map(
         (row) => ({
+          id: row.id,
           checkType: row.check_type,
           status: row.status,
           severity: row.severity,
@@ -814,6 +815,78 @@ export function createSubmittalAIReviewService(userId: string) {
             }
           : null,
     });
+  }
+
+  async function updateCheckDisposition(
+    projectId: number,
+    submittalId: string,
+    checkId: string,
+    reviewerDisposition: SubmittalAIReviewCheck["reviewerDisposition"],
+    reviewerNotes: string | null,
+  ) {
+    await getScopedSubmittal(projectId, submittalId);
+
+    const { data: checkRow, error: checkError } = await service
+      .from("submittal_ai_review_checks" as never)
+      .select("id, project_id, submittal_id")
+      .eq("id", checkId)
+      .maybeSingle();
+
+    if (checkError) {
+      throw new GuardrailError({
+        code: "DB_ERROR",
+        where: WHERE,
+        message: `Could not load AI review check: ${checkError.message}`,
+      });
+    }
+
+    if (!checkRow) {
+      throw new GuardrailError({
+        code: "NOT_FOUND",
+        where: WHERE,
+        message: "AI review check not found.",
+      });
+    }
+
+    const scopedCheck = checkRow as AnyRow;
+    if (
+      Number(scopedCheck.project_id) !== projectId ||
+      String(scopedCheck.submittal_id) !== submittalId
+    ) {
+      throw new GuardrailError({
+        code: "NOT_FOUND",
+        where: WHERE,
+        message: "AI review check not found for this submittal.",
+      });
+    }
+
+    const { error: updateError } = await service
+      .from("submittal_ai_review_checks" as never)
+      .update({
+        reviewer_disposition: reviewerDisposition,
+        reviewer_notes: reviewerNotes,
+      } as never)
+      .eq("id", checkId);
+
+    if (updateError) {
+      throw new GuardrailError({
+        code: "DB_ERROR",
+        where: WHERE,
+        message: `Could not update AI review check disposition: ${updateError.message}`,
+      });
+    }
+
+    const latestReview = await getLatestReview(projectId, submittalId);
+    if (!latestReview) {
+      throw new GuardrailError({
+        code: "NOT_FOUND",
+        where: WHERE,
+        message: "AI review run not found after updating check disposition.",
+      });
+    }
+
+    await persistCompatibilityCache(submittalId, latestReview);
+    return latestReview;
   }
 
   async function runReview(
@@ -1328,6 +1401,7 @@ export function createSubmittalAIReviewService(userId: string) {
     getScopedSubmittal,
     getDrawingByScope,
     getLatestReview,
+    updateCheckDisposition,
     listLinkedDrawings,
     runReview,
   };

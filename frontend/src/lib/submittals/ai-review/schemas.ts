@@ -84,6 +84,7 @@ export const SubmittalAIReviewReadinessLayerSchema = z.object({
 });
 
 export const SubmittalAIReviewCheckSchema = z.object({
+  id: z.string().uuid().optional(),
   checkType: submittalReviewCheckTypeSchema,
   status: submittalReviewCheckStatusSchema,
   severity: submittalReviewSeveritySchema,

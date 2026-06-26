@@ -152,6 +152,7 @@ export interface AIReviewResult {
   };
   linkedDrawings: LinkedDrawing[];
   checks: Array<{
+    id?: string;
     checkType: string;
     status:
       | "pass"
@@ -186,6 +187,8 @@ export interface AIReviewResult {
   }>;
   error: { code: string; message: string } | null;
 }
+
+export type AIReviewDisposition = AIReviewResult["checks"][number]["reviewerDisposition"];
 
 export async function uploadSubmittalAttachments(
   projectId: number,
@@ -789,7 +792,51 @@ export function useRunSubmittalAIReview(
         data,
       );
       queryClient.invalidateQueries({
+        queryKey: ["submittal-ai-review", projectId, submittalId],
+      });
+      queryClient.invalidateQueries({
         queryKey: submittalKeys.linkedDrawings(projectId, submittalId),
+      });
+    },
+  });
+}
+
+/** Persists a reviewer disposition for one normalized AI review check. */
+export function useUpdateSubmittalAIReviewCheck(
+  projectId: number,
+  submittalId: string,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      checkId,
+      reviewerDisposition,
+      reviewerNotes,
+    }: {
+      checkId: string;
+      reviewerDisposition: AIReviewDisposition;
+      reviewerNotes?: string | null;
+    }) =>
+      apiFetch<AIReviewResult>(
+        `/api/projects/${projectId}/submittals/${submittalId}/ai-review/checks/${checkId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reviewerDisposition,
+            reviewerNotes: reviewerNotes ?? null,
+          }),
+        },
+      ),
+    onSuccess: (data) => {
+      queryClient.setQueryData(
+        ["submittal-ai-review", projectId, submittalId],
+        data,
+      );
+    },
+    onError: (err: Error) => {
+      toast.error("Could not update AI review finding", {
+        description: err.message,
       });
     },
   });

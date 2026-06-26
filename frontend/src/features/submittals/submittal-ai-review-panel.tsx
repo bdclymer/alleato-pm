@@ -13,9 +13,18 @@ import { InfoAlert } from "@/components/ds/InfoAlert";
 import { SectionRuleHeading } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  type AIReviewDisposition,
   type AIReviewResult,
   useRunSubmittalAIReview,
   useSubmittalAIReview,
+  useUpdateSubmittalAIReviewCheck,
 } from "@/hooks/use-submittals";
 
 interface Props {
@@ -25,26 +34,68 @@ interface Props {
 
 type ReviewCheck = AIReviewResult["checks"][number];
 
+const DISPOSITION_OPTIONS: Array<{
+  value: AIReviewDisposition;
+  label: string;
+}> = [
+  { value: "pending", label: "Pending" },
+  { value: "accepted", label: "Accepted" },
+  { value: "dismissed", label: "Dismissed" },
+  { value: "edited", label: "Edited" },
+];
+
 function ReviewCheckRow({
   icon,
   color,
   check,
+  isUpdating,
+  onDispositionChange,
 }: {
   icon: React.ReactNode;
   color: string;
   check: ReviewCheck;
+  isUpdating: boolean;
+  onDispositionChange: (
+    check: ReviewCheck,
+    disposition: AIReviewDisposition,
+  ) => void;
 }) {
   return (
     <div className={`flex gap-2.5 rounded-md border px-3 py-2.5 ${color}`}>
       <div className="mt-0.5 shrink-0">{icon}</div>
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-baseline gap-1.5">
-          <span className="text-xs font-medium text-foreground">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <span className="min-w-0 text-xs font-medium text-foreground">
             {check.title}
           </span>
-          <span className="text-xs text-muted-foreground">
-            {check.reviewerDisposition.replace("_", " ")}
-          </span>
+          {check.id ? (
+            <Select
+              value={check.reviewerDisposition}
+              onValueChange={(value) =>
+                onDispositionChange(check, value as AIReviewDisposition)
+              }
+              disabled={isUpdating}
+            >
+              <SelectTrigger
+                size="sm"
+                className="h-7 w-32 px-2 text-xs"
+                aria-label={`Reviewer disposition for ${check.title}`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="end">
+                {DISPOSITION_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <span className="text-xs text-muted-foreground">
+              {check.reviewerDisposition.replace("_", " ")}
+            </span>
+          )}
         </div>
         <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
           {check.finding}
@@ -72,7 +123,18 @@ function ReviewCheckRow({
   );
 }
 
-function ReviewFindings({ result }: { result: AIReviewResult }) {
+function ReviewFindings({
+  result,
+  updatingCheckId,
+  onDispositionChange,
+}: {
+  result: AIReviewResult;
+  updatingCheckId: string | null;
+  onDispositionChange: (
+    check: ReviewCheck,
+    disposition: AIReviewDisposition,
+  ) => void;
+}) {
   const failingChecks = result.checks.filter(
     (check) => check.status === "fail",
   );
@@ -152,6 +214,8 @@ function ReviewFindings({ result }: { result: AIReviewResult }) {
                 check={check}
                 icon={<XCircle className="h-3.5 w-3.5 text-destructive" />}
                 color="border-destructive/20 bg-destructive/5"
+                isUpdating={updatingCheckId === check.id}
+                onDispositionChange={onDispositionChange}
               />
             ))}
           </div>
@@ -170,6 +234,8 @@ function ReviewFindings({ result }: { result: AIReviewResult }) {
                 check={check}
                 icon={<CircleHelp className="h-3.5 w-3.5 text-warning" />}
                 color="border-warning/20 bg-warning/5"
+                isUpdating={updatingCheckId === check.id}
+                onDispositionChange={onDispositionChange}
               />
             ))}
           </div>
@@ -188,6 +254,8 @@ function ReviewFindings({ result }: { result: AIReviewResult }) {
                 check={check}
                 icon={<CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
                 color="border-primary/20 bg-primary/5"
+                isUpdating={updatingCheckId === check.id}
+                onDispositionChange={onDispositionChange}
               />
             ))}
           </div>
@@ -204,6 +272,26 @@ export function SubmittalAIReviewPanel({ projectId, submittalId }: Props) {
     isPending,
     error,
   } = useRunSubmittalAIReview(projectId, submittalId);
+  const updateDisposition = useUpdateSubmittalAIReviewCheck(
+    projectId,
+    submittalId,
+  );
+
+  const updatingCheckId = updateDisposition.isPending
+    ? (updateDisposition.variables?.checkId ?? null)
+    : null;
+
+  function handleDispositionChange(
+    check: ReviewCheck,
+    reviewerDisposition: AIReviewDisposition,
+  ) {
+    if (!check.id || check.reviewerDisposition === reviewerDisposition) return;
+    updateDisposition.mutate({
+      checkId: check.id,
+      reviewerDisposition,
+      reviewerNotes: check.reviewerNotes,
+    });
+  }
 
   return (
     <div className="space-y-4">
@@ -263,7 +351,13 @@ export function SubmittalAIReviewPanel({ projectId, submittalId }: Props) {
           </div>
         )}
 
-        {data && <ReviewFindings result={data} />}
+        {data && (
+          <ReviewFindings
+            result={data}
+            updatingCheckId={updatingCheckId}
+            onDispositionChange={handleDispositionChange}
+          />
+        )}
       </div>
     </div>
   );
