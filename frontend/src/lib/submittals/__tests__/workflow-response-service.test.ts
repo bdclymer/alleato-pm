@@ -24,6 +24,9 @@ class SupabaseMock {
   next(table: string, operation: string) {
     const key = `${table}.${operation}`;
     const result = this.results[key]?.shift();
+    if (!result && key === "users_auth.select") {
+      return { data: null, error: null };
+    }
     if (!result) {
       throw new Error(`No mock result queued for ${key}`);
     }
@@ -66,6 +69,11 @@ class QueryMock {
   }
 
   eq(column: string, value: unknown) {
+    this.filters.push([column, value]);
+    return this;
+  }
+
+  in(column: string, value: unknown) {
     this.filters.push([column, value]);
     return this;
   }
@@ -196,6 +204,77 @@ describe("recordSubmittalWorkflowResponse", () => {
         source: "ai_review",
       },
     });
+  });
+
+  it("records responses assigned to the signed-in user's linked person id", async () => {
+    const supabase = new SupabaseMock({
+      "submittals.select": [
+        {
+          data: {
+            id: "sub-1",
+            project_id: 25125,
+            status: "Open",
+            submittal_number: "SUB-001",
+            title: "Door hardware",
+          },
+        },
+      ],
+      "submittal_workflow_steps.select": [
+        { data: { id: "step-1" } },
+        {
+          data: [
+            {
+              id: "step-1",
+              step_order: 1,
+              step_type: "Reviewer",
+              submittal_responses: [
+                {
+                  responder_id: "person-1",
+                  response_status: "Approved as Noted",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      "submittal_responses.select": [{ data: { id: "response-1" } }],
+      "submittal_responses.update": [
+        { data: { id: "response-1", response_status: "Approved as Noted" } },
+      ],
+      "submittals.update": [{ data: null }],
+      "submittal_history.insert": [{ data: null }],
+    });
+    const identitySupabase = new SupabaseMock({
+      "users_auth.select": [{ data: { person_id: "person-1" } }],
+    });
+
+    await expect(
+      recordSubmittalWorkflowResponse({
+        supabase: supabase as never,
+        notificationSupabase: identitySupabase as never,
+        projectId: 25125,
+        submittalId: "sub-1",
+        stepId: "step-1",
+        userId: "auth-user-1",
+        responseStatus: "Approved as Noted",
+        comments: null,
+        where:
+          "projects/[projectId]/submittals/[submittalId]/workflow-steps/[stepId]/respond#POST",
+      }),
+    ).resolves.toMatchObject({
+      id: "response-1",
+      response_status: "Approved as Noted",
+    });
+
+    const assignedResponseCall = supabase.calls.find(
+      (call) =>
+        call.table === "submittal_responses" &&
+        call.operation === "select",
+    );
+    expect(assignedResponseCall?.filters).toContainEqual([
+      "responder_id",
+      ["auth-user-1", "person-1"],
+    ]);
   });
 
   it("creates a next responder notification when workflow advances", async () => {

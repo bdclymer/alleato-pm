@@ -72,6 +72,7 @@ import { apiFetch } from "@/lib/api-client";
 import { formatDate } from "@/lib/format";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { useConfirm } from "@/hooks/use-confirm";
+import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
 import { SubmittalAIReviewPanel } from "./submittal-ai-review-panel";
 
@@ -95,6 +96,19 @@ function resolveUserName(users: AuthUser[], id: string): string {
   if (!u) return "";
   const name = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim();
   return name || u.email;
+}
+
+function userMatchesResponder({
+  authUserId,
+  personId,
+  responderId,
+}: {
+  authUserId: string | null;
+  personId: string | null;
+  responderId: string;
+}): boolean {
+  if (!authUserId) return false;
+  return responderId === authUserId || Boolean(personId && responderId === personId);
 }
 
 function getInitials(name: string): string {
@@ -492,6 +506,7 @@ export function SubmittalDetailClient({
   const duplicateMutation = useDuplicateSubmittal(projectId);
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [distributeOpen, setDistributeOpen] = React.useState(false);
+  const { profile: currentUserProfile } = useCurrentUserProfile();
 
   const { users, allUsers } = useAuthUsers(String(projectId));
   const { companies } = useProjectCompanies(String(projectId), { per_page: 200 });
@@ -577,6 +592,9 @@ export function SubmittalDetailClient({
   const linkedDrawingIds = new Set(
     linkedDrawings.map((drawing) => drawing.drawingId),
   );
+  const currentUser = allUsers.find((user) => user.id === currentUserId) ?? null;
+  const currentUserPersonId =
+    currentUser?.person_id ?? currentUserProfile?.personId ?? null;
   const aiReviewWorkflowResponseStep = workflowSteps.find((step) => {
     const isActive = getStepState(step) === "in-progress";
     return (
@@ -584,7 +602,11 @@ export function SubmittalDetailClient({
       currentUserId &&
       step.submittal_responses?.some(
         (response) =>
-          response.responder_id === currentUserId &&
+          userMatchesResponder({
+            authUserId: currentUserId,
+            personId: currentUserPersonId,
+            responderId: response.responder_id,
+          }) &&
           response.response_status === "Pending",
       )
     );
@@ -928,8 +950,16 @@ export function SubmittalDetailClient({
                         const responder = step.submittal_responses?.[0]?.responder_id;
                         const responderName = responder ? resolveUserName(allUsers, responder) : null;
                         const isActive = state === "in-progress";
-                        const canRespond = isActive && currentUserId && step.submittal_responses?.some(r => r.responder_id === currentUserId && r.response_status === "Pending");
-                        const stepResponseEntry = step.submittal_responses?.find(r => r.responder_id === currentUserId && r.response_status === "Pending");
+                        const canRespond = isActive && currentUserId && step.submittal_responses?.some(r => userMatchesResponder({
+                          authUserId: currentUserId,
+                          personId: currentUserPersonId,
+                          responderId: r.responder_id,
+                        }) && r.response_status === "Pending");
+                        const stepResponseEntry = step.submittal_responses?.find(r => userMatchesResponder({
+                          authUserId: currentUserId,
+                          personId: currentUserPersonId,
+                          responderId: r.responder_id,
+                        }) && r.response_status === "Pending");
                         return (
                           <div key={step.id} className="border-b border-border last:border-b-0">
                             <div className={cn(

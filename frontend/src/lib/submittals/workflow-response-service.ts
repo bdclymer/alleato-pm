@@ -40,6 +40,35 @@ interface RecordWorkflowResponseInput {
   where: string;
 }
 
+async function resolveWorkflowResponderIds({
+  supabase,
+  userId,
+}: {
+  supabase: WorkflowSupabaseClient;
+  userId: string;
+}) {
+  const ids = new Set([userId]);
+
+  try {
+    const { data, error } = await supabase
+      .from("users_auth")
+      .select("person_id")
+      .eq("auth_user_id", userId)
+      .maybeSingle();
+
+    if (!error && data?.person_id) {
+      ids.add(data.person_id);
+    }
+  } catch (error) {
+    console.warn("[submittal-workflow] responder identity lookup failed", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  return Array.from(ids);
+}
+
 export type SubmittalWorkflowNotificationResult =
   | {
       status: "created";
@@ -566,7 +595,13 @@ export async function recordSubmittalWorkflowResponse({
       .select("id")
       .eq("submittal_id", submittalId)
       .eq("workflow_step_id", stepId)
-      .eq("responder_id", userId)
+      .in(
+        "responder_id",
+        await resolveWorkflowResponderIds({
+          supabase: notificationSupabase ?? supabase,
+          userId,
+        }),
+      )
       .eq("response_status", "Pending")
       .maybeSingle();
 

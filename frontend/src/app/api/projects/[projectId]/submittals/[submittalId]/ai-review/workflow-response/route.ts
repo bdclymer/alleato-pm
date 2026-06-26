@@ -7,6 +7,7 @@ import {
   submittalWorkflowResponseStatusSchema,
 } from "@/lib/submittals/workflow-response-service";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 const WHERE =
   "projects/[projectId]/submittals/[submittalId]/ai-review/workflow-response";
@@ -39,12 +40,14 @@ export const POST = withApiGuardrails<{
   submittalId: string;
 }>(`${WHERE}#POST`, async ({ request, params }) => {
   const { projectId, submittalId } = await params;
-  const { supabase, user } = await requireUser();
+  const { user } = await requireUser();
   const body = await parseJsonBody(request, postBodySchema, `${WHERE}#POST`);
   const projectIdNumber = Number.parseInt(projectId, 10);
+  const serviceClient = createServiceClient();
 
   const response = await recordSubmittalWorkflowResponse({
-    supabase,
+    supabase: serviceClient,
+    notificationSupabase: serviceClient,
     projectId: projectIdNumber,
     submittalId,
     stepId: body.stepId,
