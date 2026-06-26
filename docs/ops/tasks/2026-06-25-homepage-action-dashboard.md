@@ -1,6 +1,6 @@
 # Task: Homepage Action Dashboard MVP
 
-Status: Complete - Pending Publish
+Status: Published to origin/main at 58eaa6f96
 Owner: Codex
 Created: 2026-06-25
 Linear Issue: AAI-683 - https://linear.app/megankharrison/issue/AAI-683/add-post-login-homepage-action-dashboard-mvp
