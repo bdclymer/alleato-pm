@@ -1,14 +1,12 @@
 import { tool } from "ai";
 import { z } from "zod";
-import {
-  createRagServiceClient,
-  createServiceClient,
-} from "@/lib/supabase/service";
+import { createRagServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, withTrace as _withTrace } from "./tool-utils";
 import { listOutlookCalendarEvents } from "@/lib/microsoft-graph/calendar-events";
 
 type AnyRow = Record<string, unknown>;
+type OutlookOperationsStatus = "healthy" | "degraded";
 
 export type CreateOutlookOperationsToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -59,11 +57,49 @@ function normalizeSyncState(row: AnyRow) {
   };
 }
 
+export function evaluateOutlookOperationsStatus({
+  activeSubscriptionCount,
+  erroredSyncStateCount,
+  source,
+  subscriptionCount,
+  syncStateCount,
+}: {
+  activeSubscriptionCount: number;
+  erroredSyncStateCount: number;
+  source: "outlook_email" | "all_graph";
+  subscriptionCount: number;
+  syncStateCount: number;
+}): { status: OutlookOperationsStatus; warnings: string[] } {
+  const warnings: string[] = [];
+
+  if (activeSubscriptionCount === 0) {
+    warnings.push(
+      `No active ${source === "outlook_email" ? "Outlook email" : "Microsoft Graph"} subscriptions are registered. Treat real-time webhook monitoring as degraded until a subscription is active.`,
+    );
+  }
+
+  if (subscriptionCount === 0 && syncStateCount === 0) {
+    warnings.push(
+      "No Graph subscription or sync-state rows were visible to the assistant operations tool. Verify the RAG Supabase client/env and table permissions before reporting Outlook monitoring as healthy.",
+    );
+  }
+
+  if (erroredSyncStateCount > 0) {
+    warnings.push(
+      "One or more Graph sync-state rows are errored. Review graph_sync_state.error_message before reporting Outlook ingestion as healthy.",
+    );
+  }
+
+  return {
+    status: warnings.length > 0 ? "degraded" : "healthy",
+    warnings,
+  };
+}
+
 export function createOutlookOperationsTools(
   userId: string,
   options: CreateOutlookOperationsToolsOptions = {},
 ) {
-  const supabase = createServiceClient();
   const ragSupabase = createRagServiceClient();
   const guardrails = createToolGuardrails(userId, {
     pinnedProjectId: options.pinnedProjectId,
@@ -128,9 +164,18 @@ export function createOutlookOperationsTools(
           const normalizedSyncStates = ((syncStates ?? []) as AnyRow[]).map(normalizeSyncState);
           const activeSubscriptions = normalizedSubscriptions.filter((row) => row.status === "active");
           const erroredSyncStates = normalizedSyncStates.filter((row) => row.syncStatus === "error" || row.errorMessage);
+          const operationsStatus = evaluateOutlookOperationsStatus({
+            source: targetSource,
+            subscriptionCount: normalizedSubscriptions.length,
+            activeSubscriptionCount: activeSubscriptions.length,
+            syncStateCount: normalizedSyncStates.length,
+            erroredSyncStateCount: erroredSyncStates.length,
+          });
 
           return {
             source: targetSource,
+            status: operationsStatus.status,
+            warnings: operationsStatus.warnings,
             subscriptionCount: normalizedSubscriptions.length,
             activeSubscriptionCount: activeSubscriptions.length,
             syncStateCount: normalizedSyncStates.length,
@@ -138,7 +183,7 @@ export function createOutlookOperationsTools(
             subscriptions: normalizedSubscriptions,
             syncStates: normalizedSyncStates,
             failsLoudly:
-              "Webhook notifications are recorded into source_sync_runs and subscription/sync failures are visible through graph_subscriptions, graph_sync_state, source-sync health, and Render cron failures.",
+              "Webhook notifications are recorded into source_sync_runs and subscription/sync failures are visible through graph_subscriptions, graph_sync_state, source-sync health, and Render cron failures. Zero active subscriptions or zero visible operational rows must be reported as degraded, not healthy.",
           };
         },
       ),

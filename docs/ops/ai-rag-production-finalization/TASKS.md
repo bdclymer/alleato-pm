@@ -881,3 +881,40 @@ Evidence directory:
 - PDF/upload/document backfill has no active missing rows in the tracked recent candidate set after AAI-669 final inventory.
 - AAI-682 boundary blockers: metadata/client/backend-client boundary verifiers still fail on RAG/app ownership seams and need cleanup before this slice can claim production readiness.
 - Unrelated typecheck blocker: untracked `frontend/src/lib/ai/workflow-registry.ts` currently fails frontend typecheck outside this AAI-682 slice.
+
+### 2026-06-26: AAI-715 Outlook Webhook Subscription Blocker Opened
+
+- Production-readiness blocker found before continuing Outlook legacy deletion:
+  - scheduled Outlook sync and cached intake can pass while Outlook webhook subscriptions are not active.
+- Live evidence at `2026-06-26T12:11Z`:
+  - `npm run verify:microsoft-assistant-health -- --json`: pass for `bclymer@alleatogroup.com`;
+  - direct RAG DB subscription read: `subscriptionCount=1`, `activeSubscriptionCount=0`, `syncStateCount=12`, `erroredSyncStateCount=0`;
+  - only Outlook subscription row was expired/stale: `mharrison@alleatogroup.com`, status `renewal_due`, `reauthorizationRequired`.
+- AAI-709 Outlook legacy mirroring deletion is paused until webhook readiness is restored or explicitly blocked.
+- Subagents started:
+  - backend subscription reconcile investigation/fix;
+  - assistant operations status guardrail investigation/fix.
+- Links:
+  - [Task](../tasks/2026-06-26-outlook-webhook-subscription-readiness.md)
+  - [Linear AAI-715](https://linear.app/megankharrison/issue/AAI-715/restore-active-outlook-graph-webhook-subscriptions)
+
+### 2026-06-26: AAI-715 Outlook Webhook Subscription Coverage Restored
+
+- Patched Graph subscription reconciliation so expired, `renewal_due`, failed/removed/missed, or `reauthorizationRequired` rows create a fresh Graph subscription instead of trying to patch stale subscription ids first.
+- Stale Graph delete is now best-effort; a missing old subscription no longer blocks fresh subscription creation.
+- Manually triggered Render cron `alleato-graph-subscription-reconcile`.
+- Live verifier now proves all configured Outlook webhook targets are active:
+  - `expectedTargetCount=10`
+  - `activeSubscriptionCount=10`
+  - `missingActiveTargets=[]`
+  - `erroredSyncStateCount=0`
+- Added `npm run verify:graph-subscriptions` as a hard guardrail so zero or incomplete Outlook webhook subscription coverage fails loudly.
+- Updated the assistant-facing Outlook operations tool so zero active subscriptions or all-zero operational rows return `status: "degraded"` plus explicit warnings.
+- Verification passed:
+  - delegated changed-file typecheck after verifier/package edits;
+  - delegated changed-file typecheck after assistant-status TS edits;
+  - backend subscription pytest and py_compile;
+  - focused assistant operations Jest and ESLint;
+  - live graph subscription verifier.
+- Evidence:
+  - [outlook-graph-subscriptions-live-aai-715.json](../evidence/2026-06-25-ai-rag-production-finalization/outlook-graph-subscriptions-live-aai-715.json)

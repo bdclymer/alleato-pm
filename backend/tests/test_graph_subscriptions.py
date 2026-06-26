@@ -88,6 +88,7 @@ class _FakeGraph:
         self.posts = []
         self.patches = []
         self.deletes = []
+        self.delete_error = None
 
     def post(self, path, payload):
         self.posts.append((path, payload))
@@ -102,6 +103,8 @@ class _FakeGraph:
 
     def delete(self, path):
         self.deletes.append(path)
+        if self.delete_error:
+            raise self.delete_error
 
 
 def test_configured_subscription_targets_from_mailboxes(monkeypatch):
@@ -279,6 +282,84 @@ def test_ensure_subscriptions_renews_expiring_subscription(monkeypatch):
     assert result["renewed"] == 1
     assert graph.patches[0][0] == "/subscriptions/sub-existing"
     assert supabase.tables["graph_subscriptions"][0]["status"] == "active"
+
+
+def test_ensure_subscriptions_recreates_expired_reauthorization_subscription(monkeypatch):
+    monkeypatch.setenv("GRAPH_WEBHOOK_NOTIFICATION_URL", "https://example.com/api/graph/webhooks/notifications")
+    monkeypatch.setenv("GRAPH_WEBHOOK_CLIENT_STATE", "state-1")
+    supabase = _FakeSupabase()
+    expired = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+    supabase.tables["graph_subscriptions"] = [
+        {
+            "source": "outlook_email",
+            "resource_id": "a@example.com",
+            "graph_subscription_id": "sub-expired",
+            "resource": "users/a@example.com/mailFolders('inbox')/messages",
+            "expiration_at": expired,
+            "status": "renewal_due",
+            "last_error_message": "Microsoft Graph lifecycle event: reauthorizationRequired",
+        }
+    ]
+    graph = _FakeGraph()
+    target = subscriptions.GraphSubscriptionTarget(
+        source="outlook_email",
+        resource_id="a@example.com",
+        resource_name="Outlook: a@example.com",
+        resource="users/a@example.com/mailFolders('inbox')/messages",
+        change_type="created,updated",
+    )
+
+    original_read, original_write = _route_graph_subscriptions_to_fake_rag(supabase)
+    try:
+        result = subscriptions.ensure_subscriptions(supabase, targets=[target], graph=graph)
+    finally:
+        _restore_graph_subscriptions_clients(original_read, original_write)
+
+    assert result["created"] == 1
+    assert result["renewed"] == 0
+    assert graph.patches == []
+    assert graph.deletes == ["/subscriptions/sub-expired"]
+    assert graph.posts[0][0] == "/subscriptions"
+    assert supabase.tables["graph_subscriptions"][0]["graph_subscription_id"] == "sub-created"
+    assert supabase.tables["graph_subscriptions"][0]["status"] == "active"
+
+
+def test_ensure_subscriptions_creates_fresh_when_stale_delete_fails(monkeypatch):
+    monkeypatch.setenv("GRAPH_WEBHOOK_NOTIFICATION_URL", "https://example.com/api/graph/webhooks/notifications")
+    monkeypatch.setenv("GRAPH_WEBHOOK_CLIENT_STATE", "state-1")
+    supabase = _FakeSupabase()
+    expired = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+    supabase.tables["graph_subscriptions"] = [
+        {
+            "source": "outlook_email",
+            "resource_id": "a@example.com",
+            "graph_subscription_id": "sub-expired",
+            "resource": "users/a@example.com/mailFolders('inbox')/messages",
+            "expiration_at": expired,
+            "status": "renewal_due",
+        }
+    ]
+    graph = _FakeGraph()
+    graph.delete_error = RuntimeError("subscription was not found")
+    target = subscriptions.GraphSubscriptionTarget(
+        source="outlook_email",
+        resource_id="a@example.com",
+        resource_name="Outlook: a@example.com",
+        resource="users/a@example.com/mailFolders('inbox')/messages",
+        change_type="created,updated",
+    )
+
+    original_read, original_write = _route_graph_subscriptions_to_fake_rag(supabase)
+    try:
+        result = subscriptions.ensure_subscriptions(supabase, targets=[target], graph=graph)
+    finally:
+        _restore_graph_subscriptions_clients(original_read, original_write)
+
+    assert result["created"] == 1
+    assert result["failed"] == 0
+    assert graph.deletes == ["/subscriptions/sub-expired"]
+    assert graph.posts[0][0] == "/subscriptions"
+    assert supabase.tables["graph_subscriptions"][0]["graph_subscription_id"] == "sub-created"
 
 
 def test_delete_subscription_marks_removed():

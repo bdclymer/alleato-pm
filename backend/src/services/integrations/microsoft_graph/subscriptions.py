@@ -239,6 +239,37 @@ def _create_subscription_payload(
     return payload
 
 
+def _requires_fresh_subscription(
+    existing: Optional[Dict[str, Any]],
+    *,
+    existing_expiration: Optional[datetime],
+    now: datetime,
+) -> bool:
+    if not existing:
+        return False
+
+    status = str(existing.get("status") or "").lower()
+    last_error_message = str(existing.get("last_error_message") or "")
+    if status in {"renewal_due", "removed", "missed", "failed", "expired"}:
+        return True
+    if "reauthorizationrequired" in last_error_message.replace(" ", "").lower():
+        return True
+    if existing_expiration and existing_expiration <= now:
+        return True
+    return False
+
+
+def _delete_stale_subscription(graph_client: Any, graph_subscription_id: str) -> None:
+    try:
+        graph_client.delete(f"/subscriptions/{graph_subscription_id}")
+    except Exception as exc:
+        logger.warning(
+            "[GraphSubscriptions] DELETE failed for stale subscription %s; continuing with fresh create: %s",
+            graph_subscription_id,
+            exc,
+        )
+
+
 def ensure_subscriptions(
     supabase: Any,
     *,
@@ -283,8 +314,18 @@ def ensure_subscriptions(
                 lifecycle_notification_url=lifecycle_notification_url,
                 expiration_hours=expiration_hours,
             )
+            needs_fresh_subscription = _requires_fresh_subscription(
+                existing,
+                existing_expiration=existing_expiration,
+                now=now,
+            )
             if existing_graph_id and existing_resource and existing_resource != target.resource:
-                graph_client.delete(f"/subscriptions/{existing_graph_id}")
+                _delete_stale_subscription(graph_client, existing_graph_id)
+                response = graph_client.post("/subscriptions", payload)
+                graph_subscription_id = response.get("id")
+                stats["created"] += 1
+            elif existing_graph_id and needs_fresh_subscription:
+                _delete_stale_subscription(graph_client, existing_graph_id)
                 response = graph_client.post("/subscriptions", payload)
                 graph_subscription_id = response.get("id")
                 stats["created"] += 1
