@@ -35,6 +35,10 @@ Active cleanup/deletion proof slice:
 
 - [2026-06-26-ai-rag-legacy-cleanup-proof.md](../tasks/2026-06-26-ai-rag-legacy-cleanup-proof.md)
 
+Active Outlook project Emails repair:
+
+- [2026-06-26-outlook-project-emails-intake.md](../tasks/2026-06-26-outlook-project-emails-intake.md)
+
 Active env/database cleanup proof slice:
 
 - [2026-06-26-ai-rag-env-db-cleanup-proof.md](../tasks/2026-06-26-ai-rag-env-db-cleanup-proof.md)
@@ -1011,3 +1015,27 @@ Evidence directory:
 - Verified after push:
   - local `HEAD` equals `origin/main`.
   - Linear AAI-720 marked Done.
+
+### 2026-06-26: AAI-721 Project Emails Live Outlook Intake Repair Started
+
+- Opened urgent follow-up after the project Emails page rendered an empty inbox while Outlook sync data existed.
+- Confirmed root cause:
+  - `outlook_email_intake` had 545 rows in the last seven days;
+  - `project_emails` had 0 rows created in the same window;
+  - `/{projectId}/emails` calls `/api/projects/{projectId}/emails`, and that route still read only `project_emails`.
+- Patched the project GET route so:
+  - default `source=all` returns app-composed rows plus live Outlook intake rows;
+  - `source=outlook` bypasses stale `project_emails`;
+  - `source=app` preserves the app-authored draft path.
+- Guarded mixed-source UI actions:
+  - Outlook intake rows are read-only for old `project_emails` edit/delete/summarize/task endpoints;
+  - bulk delete excludes Outlook intake rows;
+  - old project-email attachment queries are disabled for Outlook intake rows until attachment rendering is migrated to `outlook_email_intake_attachments`.
+- Focused guardrails:
+  - route unit tests passed for project and global email routes;
+  - focused ESLint passed with existing warnings only;
+  - delegated changed-file typecheck passed.
+- Browser/API proof is still pending because unauthenticated curl to the local route correctly returned `AUTH_EXPIRED`, and the existing `localhost:3001` process is not proven to be running this worktree.
+- Links:
+  - [Task](../tasks/2026-06-26-outlook-project-emails-intake.md)
+  - [Linear AAI-721](https://linear.app/megankharrison/issue/AAI-721/repair-project-emails-route-to-read-live-outlook-intake)
