@@ -30,9 +30,40 @@ export type AiApprovalQueueMetadata = {
   tier?: string;
 };
 
+export type AiApprovalQueuePreviewField = {
+  key: string;
+  label: string;
+  value: string;
+};
+
+export type AiApprovalQueuePreview = {
+  table?: string;
+  fields: AiApprovalQueuePreviewField[];
+};
+
 export type AiApprovalQueueCandidate = {
   kind: string;
   metadata?: Json | null;
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  contract_company_id: "Vendor record",
+  contract_number: "Contract number",
+  default_retainage_percent: "Retainage %",
+  description: "Description",
+  estimated_completion_date: "Completion date",
+  expecting_revenue: "Expecting revenue",
+  line_item_revenue_source: "Revenue source",
+  line_items: "Line items",
+  origin: "Origin",
+  project_id: "Project",
+  reason: "Reason",
+  scope: "Scope",
+  start_date: "Start date",
+  status: "Status",
+  title: "Title",
+  type: "Type",
+  vendor_name_resolved: "Vendor",
 };
 
 function cleanString(value: unknown): string | undefined {
@@ -49,6 +80,50 @@ function getMetadataRecord(
   return metadata as Record<string, unknown>;
 }
 
+function getRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function formatFieldLabel(key: string): string {
+  return (
+    FIELD_LABELS[key] ??
+    key
+      .replaceAll("_", " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase())
+  );
+}
+
+function formatLineItems(value: unknown): string {
+  if (!Array.isArray(value)) return "Not provided";
+  if (value.length === 0) return "None";
+
+  const total = value.reduce((sum, item) => {
+    const record = getRecord(item);
+    const amount = record && typeof record.amount === "number" ? record.amount : 0;
+    return sum + amount;
+  }, 0);
+  const count = `${value.length} line item${value.length === 1 ? "" : "s"}`;
+
+  return total > 0
+    ? `${count} totaling ${new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+      }).format(total)}`
+    : count;
+}
+
+function formatFieldValue(key: string, value: unknown): string | null {
+  if (key === "line_items") return formatLineItems(value);
+  if (value == null || value === "") return null;
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "number") return String(value);
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.length > 0 ? `${value.length} items` : null;
+  if (typeof value === "object") return "Configured";
+  return null;
+}
+
 export function getAiApprovalQueueMetadata(
   metadata: Json | null | undefined,
 ): AiApprovalQueueMetadata {
@@ -62,6 +137,36 @@ export function getAiApprovalQueueMetadata(
     failureLoudBehavior: cleanString(record.failureLoudBehavior),
     source: cleanString(record.source),
     tier: cleanString(record.tier),
+  };
+}
+
+export function getAiApprovalQueuePreview(
+  metadata: Json | null | undefined,
+): AiApprovalQueuePreview | null {
+  const record = getMetadataRecord(metadata);
+  const preview = getRecord(record?.preview);
+  const fields = getRecord(preview?.fields);
+
+  if (!preview || !fields) return null;
+
+  const displayFields = Object.entries(fields)
+    .map(([key, value]) => {
+      const formatted = formatFieldValue(key, value);
+      return formatted
+        ? {
+            key,
+            label: formatFieldLabel(key),
+            value: formatted,
+          }
+        : null;
+    })
+    .filter((field): field is AiApprovalQueuePreviewField => Boolean(field));
+
+  if (displayFields.length === 0) return null;
+
+  return {
+    table: cleanString(preview.table),
+    fields: displayFields,
   };
 }
 

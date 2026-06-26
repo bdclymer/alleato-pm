@@ -64,6 +64,13 @@ describe("AI notification decision ledger", () => {
         entityType: "rfis",
         entityId: "rfi-1",
         eventKey: "rfi-1-overdue",
+        preview: {
+          table: "rfis",
+          fields: {
+            subject: "Door hardware clarification",
+            empty: undefined,
+          },
+        },
       }),
     ).resolves.toMatchObject({
       status: "recorded",
@@ -96,6 +103,12 @@ describe("AI notification decision ledger", () => {
           channelsSent: [],
           channelsFailed: [],
           channelsSkipped: [],
+          preview: {
+            table: "rfis",
+            fields: {
+              subject: "Door hardware clarification",
+            },
+          },
           ledgerOnly: true,
         }),
       }),

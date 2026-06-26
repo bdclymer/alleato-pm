@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ChevronDown,
@@ -12,8 +13,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCollaborationNotifications } from "@/hooks/use-collaboration-notifications";
+import { isAiApprovalQueueNotification } from "@/lib/collaboration/ai-approval-queue";
 import {
   getFirstUnreadAiWidgetNotificationDraft,
+  getUnreadAiApprovalDecisionNotifications,
   getUnreadAiWidgetNotifications,
   isAiWidgetNotificationKind,
   type AiWidgetNotificationDraft,
@@ -80,6 +83,11 @@ export function GlobalAiWidget() {
     () => getUnreadAiWidgetNotifications(notifications),
     [notifications],
   );
+  const unreadApprovalDecisionNotifications = React.useMemo(
+    () => getUnreadAiApprovalDecisionNotifications(notifications),
+    [notifications],
+  );
+  const unreadApprovalDecisionCount = unreadApprovalDecisionNotifications.length;
   const hasUnreadAiWelcomeNotification = unreadAiNotifications.some(
     (notification) => notification.kind === "ai_assistant_welcome",
   );
@@ -162,7 +170,9 @@ export function GlobalAiWidget() {
     setNotificationDraft(unreadNotificationDraft);
 
     const markableNotifications = unreadAiNotifications.filter(
-      (notification) => isAiWidgetNotificationKind(notification.kind),
+      (notification) =>
+        isAiWidgetNotificationKind(notification.kind) &&
+        !isAiApprovalQueueNotification(notification),
     );
     if (markableNotifications.length > 0) {
       void Promise.all(
@@ -191,7 +201,9 @@ export function GlobalAiWidget() {
     }
 
     const markableNotifications = unreadAiNotifications.filter(
-      (notification) => isAiWidgetNotificationKind(notification.kind),
+      (notification) =>
+        isAiWidgetNotificationKind(notification.kind) &&
+        !isAiApprovalQueueNotification(notification),
     );
     if (markableNotifications.length > 0) {
       void Promise.all(
@@ -345,6 +357,21 @@ export function GlobalAiWidget() {
               </Button>
             </div>
           </div>
+          {unreadApprovalDecisionCount > 0 && (
+            <Link
+              href="/ai/approvals"
+              className="mx-3.5 mb-2 flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span className="truncate">
+                {unreadApprovalDecisionCount === 1
+                  ? "1 AI decision needs review"
+                  : `${unreadApprovalDecisionCount} AI decisions need review`}
+              </span>
+              <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                Open
+              </span>
+            </Link>
+          )}
           <div className="flex min-h-0 flex-1 flex-col">
             <WidgetAiChat
               autoFocusComposer={open && view === "chat"}

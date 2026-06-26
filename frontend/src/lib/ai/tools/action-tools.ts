@@ -320,11 +320,13 @@ async function recordChangeEventPreviewNotificationDecision({
   projectId,
   title,
   eventKey,
+  preview,
 }: {
   userId: string;
   projectId: number;
   title: string;
   eventKey: string;
+  preview: unknown;
 }): Promise<AiNotificationDecisionLedgerResult> {
   return recordAiNotificationDecision({
     recipientUserId: userId,
@@ -339,6 +341,7 @@ async function recordChangeEventPreviewNotificationDecision({
       suppressTeams: true,
     },
     isUserOnRelatedPage: true,
+    preview,
   });
 }
 
@@ -348,12 +351,14 @@ async function recordCommitmentPreviewNotificationDecision({
   title,
   type,
   eventKey,
+  preview,
 }: {
   userId: string;
   projectId: number;
   title: string;
   type: "subcontract" | "purchase_order";
   eventKey: string;
+  preview: unknown;
 }): Promise<AiNotificationDecisionLedgerResult> {
   return recordAiNotificationDecision({
     recipientUserId: userId,
@@ -368,6 +373,7 @@ async function recordCommitmentPreviewNotificationDecision({
       suppressTeams: true,
     },
     isUserOnRelatedPage: true,
+    preview,
   });
 }
 
@@ -969,6 +975,12 @@ export function createActionTools(
 
         if (!confirmed) {
           const eventKey = resolvePreviewEventKey("createChangeEvent", fields);
+          const preview = {
+            toolName: "createChangeEvent",
+            table: "change_events",
+            fields,
+            reviewCard: buildChangeRequestReviewCard(fields),
+          };
           await notifyChangeRequestReviewNeeded(userId, {
             projectId: draft.projectId,
             title: draft.title,
@@ -985,16 +997,13 @@ export function createActionTools(
               projectId: draft.projectId,
               title: draft.title,
               eventKey,
+              preview,
             });
 
           return {
             action: "preview",
             message: "Here's the change request I'll create. Reply **confirm** to proceed.",
-            preview: {
-              table: "change_events",
-              fields,
-              reviewCard: buildChangeRequestReviewCard(fields),
-            },
+            preview,
             notificationDecision,
           };
         }
@@ -3372,6 +3381,12 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
               title,
               type,
               eventKey: resolvePreviewEventKey("createCommitment", previewFields),
+              preview: {
+                toolName: "createCommitment",
+                table,
+                fields: previewFields,
+                widget,
+              },
             });
 
           return {

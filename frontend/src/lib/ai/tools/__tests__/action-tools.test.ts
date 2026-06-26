@@ -293,6 +293,17 @@ describe("createChangeEvent", () => {
           suppressTeams: true,
         },
         isUserOnRelatedPage: true,
+        preview: expect.objectContaining({
+          toolName: "createChangeEvent",
+          table: "change_events",
+          fields: expect.objectContaining({
+            project_id: 43,
+            title: "Owner-requested lobby finish change",
+          }),
+          reviewCard: expect.objectContaining({
+            title: "Review change request",
+          }),
+        }),
       }),
     );
     expect(onTrace).toHaveBeenCalledWith(
@@ -1196,6 +1207,18 @@ describe("createCommitment previews", () => {
           suppressTeams: true,
         },
         isUserOnRelatedPage: true,
+        preview: expect.objectContaining({
+          toolName: "createCommitment",
+          table: "subcontracts",
+          fields: expect.objectContaining({
+            project_id: 43,
+            contract_number: "SC-001",
+            title: "Electrical rough-in",
+          }),
+          widget: expect.objectContaining({
+            type: "commitment_draft",
+          }),
+        }),
       }),
     );
   });

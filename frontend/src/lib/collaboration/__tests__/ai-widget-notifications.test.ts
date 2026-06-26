@@ -1,6 +1,7 @@
 import {
   getFirstUnreadAiWidgetNotificationDraft,
   getAiWidgetNotificationMetadata,
+  getUnreadAiApprovalDecisionNotifications,
   getUnreadAiWidgetNotifications,
   isAiWidgetNotificationKind,
 } from "../ai-widget-notifications";
@@ -126,6 +127,69 @@ describe("ai widget collaboration notifications", () => {
       prompt:
         "Help me review this AI update: Review the saved memory before using it.\n\nContext: AI memory saved - Megan prefers preview-first approvals.",
       source: "ai_notification_routing",
+    });
+  });
+
+  it("identifies unread AI approval decisions that need the review queue", () => {
+    const notifications = [
+      {
+        id: "1",
+        kind: "ai_notification_decision",
+        readAt: null,
+        metadata: { eventType: "ai_change_event_awaiting_approval" },
+      },
+      {
+        id: "2",
+        kind: "ai_notification_decision",
+        readAt: "2026-06-26T00:00:00Z",
+        metadata: { eventType: "ai_commitment_awaiting_approval" },
+      },
+      {
+        id: "3",
+        kind: "ai_notification_decision",
+        readAt: null,
+        metadata: { eventType: "ai_memory_updated" },
+      },
+      {
+        id: "4",
+        kind: "ai_action_ready",
+        readAt: null,
+        metadata: { eventType: "ai_change_event_awaiting_approval" },
+      },
+    ];
+
+    expect(getUnreadAiApprovalDecisionNotifications(notifications)).toEqual([
+      notifications[0],
+    ]);
+  });
+
+  it("does not turn unread approval queue decisions into chat drafts", () => {
+    expect(
+      getFirstUnreadAiWidgetNotificationDraft([
+        {
+          id: "1",
+          kind: "ai_notification_decision",
+          title: "Change request ready",
+          body: "Review before submitting.",
+          readAt: null,
+          metadata: {
+            eventType: "ai_change_event_awaiting_approval",
+            prompt: "Review this in the assistant.",
+            requiredAction: "Open the approvals queue.",
+          },
+        },
+        {
+          id: "2",
+          kind: "ai_action_ready",
+          readAt: null,
+          metadata: { prompt: "Open the regular assistant action." },
+        },
+      ]),
+    ).toEqual({
+      id: "2",
+      prompt: "Open the regular assistant action.",
+      actionLabel: undefined,
+      source: undefined,
     });
   });
 

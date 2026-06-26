@@ -18,6 +18,7 @@ export type AiNotificationDecisionRecordInput = AiNotificationRoutingInput & {
   eventKey?: string | null;
   title?: string | null;
   body?: string | null;
+  preview?: unknown;
 };
 
 export type AiNotificationDecisionLedgerResult =
@@ -58,6 +59,16 @@ function buildDecisionBody(
   return cleanText(input.body) ?? decision.requiredAction;
 }
 
+function cleanJson(value: unknown): Json | null {
+  if (value == null) return null;
+
+  try {
+    return JSON.parse(JSON.stringify(value)) as Json;
+  } catch {
+    return null;
+  }
+}
+
 function buildDecisionMetadata(
   input: AiNotificationDecisionRecordInput,
   decision: AiNotificationRoutingDecision,
@@ -81,6 +92,7 @@ function buildDecisionMetadata(
     teamsRecipientLinked: input.teamsRecipientLinked ?? null,
     isUserOnRelatedPage: input.isUserOnRelatedPage ?? null,
     hasDeliveryFailure: input.hasDeliveryFailure ?? false,
+    preview: cleanJson(input.preview),
     ledgerOnly: true,
   };
 }

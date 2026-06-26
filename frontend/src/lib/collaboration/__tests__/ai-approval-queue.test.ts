@@ -1,6 +1,7 @@
 import {
   formatAiApprovalQueueEventLabel,
   getAiApprovalQueueMetadata,
+  getAiApprovalQueuePreview,
   getAiApprovalQueueRelatedHref,
   isAiApprovalQueueEventType,
   isAiApprovalQueueNotification,
@@ -83,6 +84,42 @@ describe("AI approval queue helpers", () => {
       formatAiApprovalQueueEventLabel("ai_change_event_awaiting_approval"),
     ).toBe("Change Event Awaiting Approval");
     expect(formatAiApprovalQueueEventLabel(null)).toBe("AI review");
+  });
+
+  it("extracts preview fields for approval rows", () => {
+    expect(
+      getAiApprovalQueuePreview({
+        eventType: "ai_commitment_awaiting_approval",
+        preview: {
+          table: "subcontracts",
+          fields: {
+            project_id: 43,
+            title: "Electrical rough-in",
+            contract_number: "SC-001",
+            line_items: [
+              { description: "Rough-in", amount: 12500 },
+              { description: "Trim", amount: 5000 },
+            ],
+            ignored_null: null,
+          },
+        },
+      }),
+    ).toEqual({
+      table: "subcontracts",
+      fields: [
+        { key: "project_id", label: "Project", value: "43" },
+        { key: "title", label: "Title", value: "Electrical rough-in" },
+        { key: "contract_number", label: "Contract number", value: "SC-001" },
+        {
+          key: "line_items",
+          label: "Line items",
+          value: "2 line items totaling $17,500.00",
+        },
+      ],
+    });
+
+    expect(getAiApprovalQueuePreview({ preview: { fields: [] } })).toBeNull();
+    expect(getAiApprovalQueuePreview(null)).toBeNull();
   });
 
   it("builds related record links from notification context", () => {

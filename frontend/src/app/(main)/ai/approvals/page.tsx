@@ -5,12 +5,13 @@ import { formatDistanceToNow } from "date-fns";
 
 import { PageShell } from "@/components/layout";
 import { SectionRuleHeading } from "@/components/layout/spacing";
-import { Button, ErrorState } from "@/components/ds";
+import { Button, DetailField, DetailFieldGrid, ErrorState } from "@/components/ds";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
   formatAiApprovalQueueEventLabel,
   getAiApprovalQueueMetadata,
+  getAiApprovalQueuePreview,
   getAiApprovalQueueRelatedHref,
   isAiApprovalQueueNotification,
 } from "@/lib/collaboration/ai-approval-queue";
@@ -38,6 +39,7 @@ function AiApprovalQueueRow({
   onDiscard: (id: string) => void;
 }) {
   const metadata = getAiApprovalQueueMetadata(notification.metadata);
+  const preview = getAiApprovalQueuePreview(notification.metadata);
   const relatedHref = getAiApprovalQueueRelatedHref({
     projectId: notification.projectId,
     entityType: notification.entityType,
@@ -54,6 +56,15 @@ function AiApprovalQueueRow({
         <div className="line-clamp-2 text-xs leading-5 text-muted-foreground">
           {metadata.requiredAction ?? notification.body ?? "Review the AI decision."}
         </div>
+        {preview ? (
+          <DetailFieldGrid columns={2} className="mt-2 gap-x-4 gap-y-1">
+            {preview.fields.slice(0, 6).map((field) => (
+              <DetailField key={field.key} label={field.label}>
+                {field.value}
+              </DetailField>
+            ))}
+          </DetailFieldGrid>
+        ) : null}
       </div>
       <div className="min-w-0 text-sm text-foreground/80">
         <span className="text-xs font-medium uppercase tracking-[0.04em] text-muted-foreground lg:hidden">

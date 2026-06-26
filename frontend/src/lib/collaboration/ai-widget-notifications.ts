@@ -1,4 +1,8 @@
 import type { Json } from "@/types/database.types";
+import {
+  AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
+  isAiApprovalQueueNotification,
+} from "./ai-approval-queue";
 
 export const AI_WIDGET_NOTIFICATION_KINDS = [
   "ai_assistant_welcome",
@@ -80,10 +84,23 @@ export function getUnreadAiWidgetNotifications<
   return notifications.filter(isUnreadAiWidgetNotification);
 }
 
+export function getUnreadAiApprovalDecisionNotifications<
+  T extends AiWidgetNotificationCandidate,
+>(notifications: T[]): T[] {
+  return notifications.filter(
+    (notification) =>
+      !notification.readAt &&
+      notification.kind === AI_APPROVAL_QUEUE_NOTIFICATION_KIND &&
+      isAiApprovalQueueNotification(notification),
+  );
+}
+
 export function getFirstUnreadAiWidgetNotificationDraft<
   T extends AiWidgetNotificationCandidate & { id: string },
 >(notifications: T[]): AiWidgetNotificationDraft | null {
   for (const notification of getUnreadAiWidgetNotifications(notifications)) {
+    if (isAiApprovalQueueNotification(notification)) continue;
+
     const metadata = getAiWidgetNotificationMetadata(notification.metadata);
     const prompt =
       metadata.prompt ?? getAiNotificationDecisionPrompt(notification, metadata);
