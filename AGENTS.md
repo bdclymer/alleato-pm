@@ -314,7 +314,7 @@ Core workflow:
 - **Do not debug or patch deployment issues against unused hosts.** For backend runtime, health, env vars, logs, and pipeline behavior, inspect Render/FastAPI first.
 - **Required backend AI env:** `AI_GATEWAY_API_KEY` must be configured on Render and is the primary provider path for ingestion/vectorization. Direct `OPENAI_API_KEY` is fallback only and currently may be quota-limited.
 - **Pipeline source of truth:** Fireflies and Microsoft Graph ingestion/vectorization run through the native FastAPI backend under `backend/src/services/**` and `/api/pipeline/process`, not retired worker or Railway paths.
-- **Drawing OCR source of truth:** Azure Document Intelligence is live on Render. Drawing uploads create `document_metadata` rows with `status='no_text'`, `source_system='drawing_upload'`, and text is written to `document_metadata.content` (not `raw_text`) by `backend/src/services/integrations/microsoft_graph/ocr_worker.py`.
+- **Drawing OCR source of truth:** Azure Document Intelligence is live on Render. Drawing uploads create `document_metadata` rows with `status='no_text'`, `source_system='drawing_upload'`, and text is written to `document_metadata.content` (not `raw_text`) by `backend/src/services/integrations/microsoft_graph/ocr_worker.py`. Reference `docs/architecture/OCR-PIPELINE.md` before changing drawing upload, OCR, or RAG embedding behavior.
 - **Render env var safety:** Never use Render API `PUT /env-vars`; it replaces the entire environment set. Use individual create/update env-var operations and verify by reading service env/deploy status back.
 
 ### Directory Structure
@@ -379,6 +379,20 @@ Completion rules:
 - Record the migration ledger evidence in the handoff `Migration ledger evidence` field.
 - If `supabase db push` would apply unrelated pending migrations, apply the task migration deliberately and then repair/check the exact migration version.
 - If applying a migration is intentionally deferred, the final answer and handoff must say `Blocked/Deferred`, include the exact migration file, cause, detection gap, prevention step, and next owner action.
+
+### 1B. Drawing OCR Pipeline Gate
+
+Drawing uploads and drawing RAG search depend on the OCR pipeline documented in
+`docs/architecture/OCR-PIPELINE.md`.
+
+Rules:
+
+- New drawing uploads must create a `document_metadata` row with `status='no_text'`, `source_system='drawing_upload'`, `document_type='drawing'`, and a Supabase Storage `source_web_url`.
+- OCR text is stored in `document_metadata.content`, not `raw_text`.
+- `ocr_partial` is searchable and embedded; it means the Azure page cap was hit.
+- `ocr_failed` is not retried automatically. To retry, reset only scoped drawing-upload rows back to `no_text`, then run the admin OCR backfill endpoint.
+- Drawing PDFs uploaded through the app live in Supabase Storage, not OneDrive. OCR download logic must keep the Supabase public URL path separate from Microsoft Graph download paths.
+- Azure OCR env vars (`AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT`, `AZURE_DOCUMENT_INTELLIGENCE_KEY`, `AZURE_OCR_PAGE_CAP`, `AZURE_OCR_BATCH_SIZE`) live on Render `alleato-backend`. Never print secret values.
 
 ### 2. Route Naming Gate
 
@@ -579,6 +593,11 @@ npm run db:migrations:verify-clean # verify local/remote Supabase migration ledg
 npm run validate:runtime-config # validate required runtime configuration
 npm run quality:predeploy      # full predeploy quality gate
 npm run verify:postdeploy      # post-deploy verification checks
+npm run verify:active-backend-url # confirm frontend/backend URL wiring
+npm run rag:verify:render-ai   # verify Render AI Gateway health
+npm run rag:verify:source-provider-auth # verify source processing provider auth
+npm run rag:verify:metadata-boundary # guard AI/RAG document_metadata selects
+npm run rag:verify:chunk-integrity # verify RAG chunk integrity
 npm run worker-status -- <YYYY-MM-DD> # summarize orchestration handoff status
 
 # From frontend/ directory
