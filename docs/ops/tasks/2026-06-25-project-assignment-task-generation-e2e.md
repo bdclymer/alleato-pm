@@ -52,7 +52,7 @@ Verify and finalize end-to-end project assignment and automatic task generation 
 - [x] Delegate typecheck after every TS/JS implementation change and record evidence.
 - [x] Update central AI/RAG finalization `TASKS.md`.
 - [x] Update handoff with evidence, root cause, prevention, and remaining blockers.
-- [ ] Publish code/docs/evidence if code/docs change.
+- [x] Publish code/docs/evidence if code/docs change.
 
 ## Evidence
 
