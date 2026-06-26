@@ -153,7 +153,6 @@ import {
   type MemoryUsage,
 } from "./memory-usage-disclosure";
 import { AssistantSkillTrace, type SkillUsage } from "./skill-usage-disclosure";
-import { AssistantActionCatalog } from "./assistant-action-catalog";
 import { AssistantSuggestionList } from "./assistant-suggestion-list";
 import {
   resolveAssistantSuggestions,
@@ -1679,10 +1678,10 @@ export function ChatArea({
     <PromptInput
       multiple
       onSubmit={handleSubmit}
-      data-1p-ignore={welcomeHideOrb ? "true" : undefined}
-      data-dev-autofill-disabled={welcomeHideOrb ? "true" : undefined}
-      data-form-type={welcomeHideOrb ? "other" : undefined}
-      data-lpignore={welcomeHideOrb ? "true" : undefined}
+      data-1p-ignore="true"
+      data-dev-autofill-disabled="true"
+      data-form-type="other"
+      data-lpignore="true"
       className={cn(
         "overflow-hidden rounded-2xl border-0 transition-all",
         welcomeHideOrb
@@ -1701,10 +1700,10 @@ export function ChatArea({
       <PromptInputTextarea
         value={input}
         onChange={(event) => onInputChange(event.currentTarget.value)}
-        autoComplete={welcomeHideOrb ? "off" : undefined}
-        data-1p-ignore={welcomeHideOrb ? "true" : undefined}
-        data-form-type={welcomeHideOrb ? "other" : undefined}
-        data-lpignore={welcomeHideOrb ? "true" : undefined}
+        autoComplete="off"
+        data-1p-ignore="true"
+        data-form-type="other"
+        data-lpignore="true"
         placeholder={
           isRecording
             ? "Listening..."
@@ -1713,7 +1712,10 @@ export function ChatArea({
               : "Ask anything…"
         }
         className={cn(
-          "px-2 text-base leading-6 placeholder:text-muted-foreground/40 sm:text-lg",
+          "px-2 placeholder:text-muted-foreground/40",
+          welcomeHideOrb
+            ? "text-sm leading-5"
+            : "text-base leading-6 sm:text-lg",
           welcomeHideOrb
             ? hasMessages
               ? "min-h-8 pb-1.5 pt-0.5"
@@ -1981,14 +1983,7 @@ export function ChatArea({
                 </InfoAlert>
               ) : null
             }
-          >
-            {!welcomeHideOrb ? (
-              <AssistantActionCatalog
-                disabled={isStreaming}
-                onSelectPrompt={handleCatalogAction}
-              />
-            ) : null}
-          </WelcomeScreen>
+          />
         </div>
       ) : (
         <>
