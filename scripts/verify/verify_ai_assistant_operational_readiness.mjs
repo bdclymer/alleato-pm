@@ -20,6 +20,21 @@ function read(relativePath) {
   return fs.readFileSync(path.join(repoRoot, relativePath), "utf8");
 }
 
+function readFirstExistingJson(relativePaths, label) {
+  const existingPath = relativePaths.find((relativePath) =>
+    fs.existsSync(path.join(repoRoot, relativePath)),
+  );
+  if (!existingPath) {
+    throw new Error(
+      `${label} not found. Checked: ${relativePaths.join(", ")}`,
+    );
+  }
+  return {
+    path: existingPath,
+    json: JSON.parse(read(existingPath)),
+  };
+}
+
 function readJson(relativePath) {
   return JSON.parse(read(relativePath));
 }
@@ -49,7 +64,14 @@ function requireCondition(condition, message) {
 
 const packageJson = readJson("package.json");
 const scripts = packageJson.scripts ?? {};
-const evalSuite = readJson("docs/archive/2026-06-22-docs-migration/ai-plan/evals/assistant-eval-suite.json");
+const evalSuiteSource = readFirstExistingJson(
+  [
+    "docs/ai-plan2/evals/assistant-eval-suite.json",
+    "docs/archive/2026-06-22-docs-migration/ai-plan/evals/assistant-eval-suite.json",
+  ],
+  "assistant eval suite",
+);
+const evalSuite = evalSuiteSource.json;
 const evalRunner = read("scripts/verify/verify_ai_assistant_eval_suite.mjs");
 const chatHandler = read("frontend/src/app/api/ai-assistant/chat/handler-v2.ts");
 const actionTools = read("frontend/src/lib/ai/tools/action-tools.ts");
@@ -72,6 +94,8 @@ const requiredScripts = [
   "rag:verify:task-integrity",
   "rag:verify:assistant-operational-readiness",
 ];
+
+pass(`assistant eval suite loaded from ${evalSuiteSource.path}`);
 
 for (const scriptName of requiredScripts) {
   requireCondition(Boolean(scripts[scriptName]), `package script exists: ${scriptName}`);

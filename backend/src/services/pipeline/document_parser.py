@@ -38,6 +38,7 @@ DOC_SEGMENT_WINDOW_LINES = int(os.getenv("DOC_SEGMENT_WINDOW_LINES", "260"))
 DOC_SEGMENT_WINDOW_OVERLAP = int(os.getenv("DOC_SEGMENT_WINDOW_OVERLAP", "40"))
 DOC_SUMMARY_MAX_CHARS = int(os.getenv("DOC_SUMMARY_MAX_CHARS", "12000"))
 DOC_SEGMENT_USE_LLM = (os.getenv("DOC_SEGMENT_USE_LLM", "true").strip().lower() not in {"0", "false", "no", "off"})
+LOW_CONTENT_STATUS = "skipped_low_content"
 
 
 # ---------------------------------------------------------------------------
@@ -414,12 +415,9 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
 
     # 5. Generate document summary
     if extracted_is_too_short:
-        summary = (
-            f"Minimal extract for '{title}'. "
-            f"Parsed content was only {extracted_len} characters and may require OCR or a different source format."
-        )
+        summary = ""
         logger.warning(
-            "[DocParser] Extracted text too short (%d chars) for %s; using fallback summary/segment",
+            "[DocParser] Extracted text too short (%d chars) for %s; marking parser output low-content",
             extracted_len,
             metadata_id,
         )
@@ -434,14 +432,12 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
         segment_dicts = _segment_document(extracted_text, title)
         logger.info("[DocParser] Created %d segments", len(segment_dicts))
 
-    # If LLM returned no segments, create a single fallback segment
-    if not segment_dicts:
+    # If LLM returned no segments for real content, create a single fallback segment.
+    # Low-content sources are terminal parser skips so placeholder text never becomes
+    # searchable RAG content.
+    if not segment_dicts and not extracted_is_too_short:
         line_count = max(1, len(extracted_text.split("\n")))
         fallback_summary = summary[:500]
-        fallback_text = extracted_text.strip()
-        if not fallback_text:
-            fallback_text = f"Document: {title}\n\nNo extractable text was found in the uploaded file."
-            extracted_text = fallback_text
         segment_dicts = [{
             "title": title,
             "start_index": 0,
@@ -490,7 +486,7 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
     # 9. Update document_metadata with summary and advance status
     update_data: Dict[str, Any] = {
         "overview": summary,
-        "status": "segmented",
+        "status": LOW_CONTENT_STATUS if extracted_is_too_short else "segmented",
     }
     # Store content for the embedder to use if we extracted from a file
     if file_bytes and not content:
@@ -501,7 +497,7 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
                 "content": extracted_text[:500_000],
                 "raw_text": extracted_text[:500_000],
                 "content_length": len(extracted_text[:500_000]),
-                "parsing_status": "segmented",
+                "parsing_status": LOW_CONTENT_STATUS if extracted_is_too_short else "segmented",
                 "overview": summary,
             }
         ).execute()
@@ -512,7 +508,11 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
     update_ingestion_job_state(
         metadata_id,
         stage="segmented",
-        error_message=None,
+        error_message=(
+            f"{LOW_CONTENT_STATUS}: extracted text length {extracted_len} below {MIN_EXTRACTED_CHARS}"
+            if extracted_is_too_short
+            else None
+        ),
         client=client,
     )
 
@@ -521,4 +521,6 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
         "segmentCount": len(segments),
         "summaryLength": len(summary),
         "extractedChars": len(extracted_text),
+        "skipped": extracted_is_too_short,
+        "skipReason": LOW_CONTENT_STATUS if extracted_is_too_short else None,
     }

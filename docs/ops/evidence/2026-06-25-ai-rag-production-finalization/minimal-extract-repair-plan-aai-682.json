@@ -1,0 +1,350 @@
+{
+  "summary": {
+    "placeholder_only": 16,
+    "mixed": 15,
+    "placeholder_chunks": 67
+  },
+  "documents": [
+    {
+      "document_id": "03599dc2-404a-5de8-a290-87ffba220cb7",
+      "placeholder_chunks": 3,
+      "total_chunks": 3,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 3,
+      "title": "app 1 waiver",
+      "project_id": null,
+      "embedding_status": "embedded",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "467becd3-88c5-5002-81f9-8382922dbaa8",
+      "placeholder_chunks": 3,
+      "total_chunks": 3,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 3,
+      "title": "7 Hills - 2025 w9",
+      "project_id": null,
+      "embedding_status": "embedded",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "577029d5-ea40-57b7-b847-7d2a8fef3db6",
+      "placeholder_chunks": 3,
+      "total_chunks": 3,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 3,
+      "title": "7 Hills - COI",
+      "project_id": null,
+      "embedding_status": "embedded",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "8b5f0c5d-1e53-57e9-ae44-6a9edbec1179",
+      "placeholder_chunks": 3,
+      "total_chunks": 3,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 3,
+      "title": "WC RFI 013- Building Layout",
+      "project_id": 43,
+      "embedding_status": "embedded",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "c8175f68-1de3-5ca8-bab1-6e2a80ec7d5a",
+      "placeholder_chunks": 3,
+      "total_chunks": 3,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 3,
+      "title": "PARADISE ISLE",
+      "project_id": null,
+      "embedding_status": "embedded",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "037312b7-aa4f-5d02-b3f8-3b0819c0fea4",
+      "placeholder_chunks": 2,
+      "total_chunks": 9,
+      "non_placeholder_chunks": 7,
+      "embedded_chunks": 9,
+      "title": "Added Guardrail Change Order",
+      "project_id": null,
+      "embedding_status": "embedded",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "0d81985a-7b65-49ef-9538-34847803e4a1",
+      "placeholder_chunks": 2,
+      "total_chunks": 4,
+      "non_placeholder_chunks": 2,
+      "embedded_chunks": 4,
+      "title": "Electrical Room Door & Exterior Door Markup.pdf",
+      "project_id": 25125,
+      "embedding_status": "embedded",
+      "parsing_status": "segmented"
+    },
+    {
+      "document_id": "0dc2f684-ede4-5f51-9ab6-1193f0c86a92",
+      "placeholder_chunks": 2,
+      "total_chunks": 2,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 2,
+      "title": "WC RFI 010- Welded Bar at Slab Edge",
+      "project_id": 43,
+      "embedding_status": "complete",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "0ef844fb-3e56-5024-8102-4d42d3d06495",
+      "placeholder_chunks": 2,
+      "total_chunks": 2,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 2,
+      "title": "304470- Key info sheet",
+      "project_id": 43,
+      "embedding_status": "complete",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "21d783d5-6c56-584a-9f67-bdb84e0900da",
+      "placeholder_chunks": 2,
+      "total_chunks": 2,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 2,
+      "title": "2025 Craving Crepes W9",
+      "project_id": 43,
+      "embedding_status": "complete",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "32be3b5f-c622-4a5b-98ab-6d6104c7f450",
+      "placeholder_chunks": 2,
+      "total_chunks": 3,
+      "non_placeholder_chunks": 1,
+      "embedded_chunks": 3,
+      "title": "change-event-edit-upload-test.txt",
+      "project_id": 25125,
+      "embedding_status": "embedded",
+      "parsing_status": "segmented"
+    },
+    {
+      "document_id": "358fb1d6-daa7-4778-8c84-bb8b0d88ab1f",
+      "placeholder_chunks": 2,
+      "total_chunks": 3,
+      "non_placeholder_chunks": 1,
+      "embedded_chunks": 3,
+      "title": "change-event-detail-upload-test.txt",
+      "project_id": 25125,
+      "embedding_status": "embedded",
+      "parsing_status": "segmented"
+    },
+    {
+      "document_id": "3d6251ab-7b33-4fb7-b2bc-0457d9d20462",
+      "placeholder_chunks": 2,
+      "total_chunks": 20,
+      "non_placeholder_chunks": 18,
+      "embedded_chunks": 20,
+      "title": "Integrity Executed Subcontract.pdf",
+      "project_id": 25125,
+      "embedding_status": "embedded",
+      "parsing_status": "segmented"
+    },
+    {
+      "document_id": "456e8416-a129-5d74-a0ca-a22a4106c6ed",
+      "placeholder_chunks": 2,
+      "total_chunks": 6,
+      "non_placeholder_chunks": 4,
+      "embedded_chunks": 6,
+      "title": "ALLEATO GROUP  i43796 White Ga ASRS-2",
+      "project_id": null,
+      "embedding_status": "embedded",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "50f705c9-9fe7-5423-b8f5-b6184997f8af",
+      "placeholder_chunks": 2,
+      "total_chunks": 2,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 2,
+      "title": "Westfield Collective Weekly Report Scoreboard",
+      "project_id": 43,
+      "embedding_status": "complete",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "5e343094-404a-5bb5-917f-f1c0baa3d632",
+      "placeholder_chunks": 2,
+      "total_chunks": 2,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 2,
+      "title": "Dorsey CO Pricing",
+      "project_id": 43,
+      "embedding_status": "complete",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "6a7eeaaa-4568-5a86-b16f-5b449b2bc555",
+      "placeholder_chunks": 2,
+      "total_chunks": 2,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 2,
+      "title": "Dorsey $22,225",
+      "project_id": 43,
+      "embedding_status": "complete",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "739507a0-81eb-5814-8fff-8df56035d746",
+      "placeholder_chunks": 2,
+      "total_chunks": 2,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 2,
+      "title": "WC RFI 042- Bath Partition Dimensions",
+      "project_id": 43,
+      "embedding_status": "embedded",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "741f3769-8d09-4a4b-92b4-a374639728a5",
+      "placeholder_chunks": 2,
+      "total_chunks": 20,
+      "non_placeholder_chunks": 18,
+      "embedded_chunks": 20,
+      "title": "Right Image Signed Subcontract.pdf",
+      "project_id": 1067,
+      "embedding_status": "embedded",
+      "parsing_status": "segmented"
+    },
+    {
+      "document_id": "7a2c56bc-7cdd-4499-a215-ef8ece093a68",
+      "placeholder_chunks": 2,
+      "total_chunks": 3,
+      "non_placeholder_chunks": 1,
+      "embedded_chunks": 3,
+      "title": "change-event-edit-upload-test.txt",
+      "project_id": 25125,
+      "embedding_status": "embedded",
+      "parsing_status": "segmented"
+    },
+    {
+      "document_id": "7da64dcd-f6e6-466d-a999-7631cc26066f",
+      "placeholder_chunks": 2,
+      "total_chunks": 3,
+      "non_placeholder_chunks": 1,
+      "embedded_chunks": 3,
+      "title": null,
+      "project_id": null,
+      "embedding_status": "embedded",
+      "parsing_status": "segmented"
+    },
+    {
+      "document_id": "7f74c816-d491-529a-aa43-5c9567edf751",
+      "placeholder_chunks": 2,
+      "total_chunks": 2,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 2,
+      "title": "WC RFI 041- Liberty Walkthrough Design",
+      "project_id": 43,
+      "embedding_status": "complete",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "8238710d-66f9-5652-ba62-6bf27c852aad",
+      "placeholder_chunks": 2,
+      "total_chunks": 2,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 2,
+      "title": "10.24.25 Scoreboard. Westfield Collective.",
+      "project_id": 43,
+      "embedding_status": "complete",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "9b23216d-39d6-5200-ae70-a7935a4b6e6d",
+      "placeholder_chunks": 2,
+      "total_chunks": 2,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 2,
+      "title": "WC RFI 040- Roof Hatch for roof access",
+      "project_id": 43,
+      "embedding_status": "complete",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "9bce4ae4-c0e3-4763-a72d-561c06a4aabc",
+      "placeholder_chunks": 2,
+      "total_chunks": 4,
+      "non_placeholder_chunks": 2,
+      "embedded_chunks": 4,
+      "title": null,
+      "project_id": null,
+      "embedding_status": "embedded",
+      "parsing_status": "segmented"
+    },
+    {
+      "document_id": "a4ecaf16-9c91-55d5-9d07-63883fc1757f",
+      "placeholder_chunks": 2,
+      "total_chunks": 9,
+      "non_placeholder_chunks": 7,
+      "embedded_chunks": 9,
+      "title": "Commitment Change Order SC-4367-0001 - Additional Guardrails",
+      "project_id": null,
+      "embedding_status": "embedded",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "e10483d7-79b8-44c6-b491-61e1076eb54e",
+      "placeholder_chunks": 2,
+      "total_chunks": 4,
+      "non_placeholder_chunks": 2,
+      "embedded_chunks": 4,
+      "title": "Integrity W-9.pdf",
+      "project_id": 25125,
+      "embedding_status": "embedded",
+      "parsing_status": "segmented"
+    },
+    {
+      "document_id": "e4270be8-f28c-440a-89d0-aa5848a26a4b",
+      "placeholder_chunks": 2,
+      "total_chunks": 3,
+      "non_placeholder_chunks": 1,
+      "embedded_chunks": 3,
+      "title": "change-event-detail-upload-test.txt",
+      "project_id": 25125,
+      "embedding_status": "embedded",
+      "parsing_status": "segmented"
+    },
+    {
+      "document_id": "ecb5789c-02c3-519a-b52f-a83ec252a9fc",
+      "placeholder_chunks": 2,
+      "total_chunks": 2,
+      "non_placeholder_chunks": 0,
+      "embedded_chunks": 2,
+      "title": "WC RFI 030- Extra Piers",
+      "project_id": 43,
+      "embedding_status": "complete",
+      "parsing_status": "complete"
+    },
+    {
+      "document_id": "fff81973-cf5a-4b0e-97b1-37e44ded492e",
+      "placeholder_chunks": 2,
+      "total_chunks": 3,
+      "non_placeholder_chunks": 1,
+      "embedded_chunks": 3,
+      "title": "change-event-edit-upload-test.txt",
+      "project_id": 25125,
+      "embedding_status": "embedded",
+      "parsing_status": "segmented"
+    },
+    {
+      "document_id": "teams_1681400108704",
+      "placeholder_chunks": 2,
+      "total_chunks": 3,
+      "non_placeholder_chunks": 1,
+      "embedded_chunks": 3,
+      "title": "Teams: Alleato Group / General",
+      "project_id": 60,
+      "embedding_status": "embedded",
+      "parsing_status": "complete"
+    }
+  ]
+}

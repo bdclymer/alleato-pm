@@ -460,9 +460,42 @@ Evidence directory:
   - [rag-chunk-integrity-final-aai-669.txt](../evidence/2026-06-25-ai-rag-production-finalization/rag-chunk-integrity-final-aai-669.txt)
   - [test-graph-embed-after-outlook-vision-fix-aai-669.txt](../evidence/2026-06-25-ai-rag-production-finalization/test-graph-embed-after-outlook-vision-fix-aai-669.txt)
 
+### 2026-06-25: AAI-682 Vector Retrieval Validation Started
+
+- Created the dedicated task ledger for the retrieval filters, citations, duplicate handling, and assistant-usage slice.
+- Confirmed `docs/ops/tasks/TASK-TEMPLATE.md` is missing; this task mirrors the established production-finalization task format and records the missing template as a process gap instead of blocking.
+- Next action: inventory active retrieval paths and run current retrieval guardrails before implementation or deletion.
+- Task: [2026-06-25-vector-retrieval-filters-citations-validation.md](../tasks/2026-06-25-vector-retrieval-filters-citations-validation.md)
+- Linear: AAI-682.
+
+### 2026-06-25: AAI-682 Low-Content Placeholder Chunks Removed
+
+- Found and repaired embedded placeholder chunks generated from documents with no extractable text.
+- Changed the document parser/embedder so low-content documents no longer create fake searchable summaries; vision-only documents can still embed real page summaries, and true low-content documents become explicit `skipped_low_content` terminal rows.
+- Deleted 67 live RAG placeholder chunks, marked 16 placeholder-only RAG metadata rows as `skipped_low_content`, and mirrored that status to 16 app `document_metadata` rows.
+- Added a chunk-integrity fatal guardrail for low-content placeholder chunks.
+- Hybrid ranking passed after cleanup (`hybridHits=28`, `vectorHits=26`).
+- Remaining blocker: `npm run rag:verify:assistant-operational-readiness` now loads the active eval suite but fails because `backendDeepAgentExecutiveBriefing` is still required by architecture/evals and is not attached by the current handler.
+- Boundary verifiers also remain red for RAG/app ownership:
+  - Heavy app `document_metadata.content/raw_text` reads still exist in parser/embedder and document-intelligence paths.
+  - The admin AI work-runs route still reads RAG-owned `source_sync_runs` without `createRagServiceClient()`.
+  - Outlook intake reads in email digest and Microsoft executive assistant paths still need the AI DB resolver.
+- Evidence:
+  - [vector-retrieval-path-inventory-aai-682.md](../evidence/2026-06-25-ai-rag-production-finalization/vector-retrieval-path-inventory-aai-682.md)
+  - [minimal-extract-repair-applied-aai-682.json](../evidence/2026-06-25-ai-rag-production-finalization/minimal-extract-repair-applied-aai-682.json)
+  - [chunk-integrity-after-minimal-repair-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/chunk-integrity-after-minimal-repair-aai-682.txt)
+  - [hybrid-ranking-after-minimal-repair-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/hybrid-ranking-after-minimal-repair-aai-682.txt)
+  - [test-document-low-content-and-graph-embed-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/test-document-low-content-and-graph-embed-aai-682.txt)
+  - [assistant-operational-readiness-after-minimal-repair-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-after-minimal-repair-aai-682.txt)
+  - [metadata-boundary-after-minimal-repair-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/metadata-boundary-after-minimal-repair-aai-682.txt)
+  - [client-boundary-after-minimal-repair-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/client-boundary-after-minimal-repair-aai-682.txt)
+  - [backend-client-boundary-after-minimal-repair-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-after-minimal-repair-aai-682.txt)
+
 ## Remaining Blockers
 
 - No active Fireflies meeting error backlog remains inside the two-month operational concern window.
 - No active Outlook/Teams shared queue backlog remains inside the one-week operational concern window.
 - SharePoint source sync/retrieval is healthy.
 - PDF/upload/document backfill has no active missing rows in the tracked recent candidate set after AAI-669 final inventory.
+- AAI-682 remaining blocker: the assistant operational-readiness verifier fails on the missing canonical `backendDeepAgentExecutiveBriefing` bridge/tool trace. This needs migration/restoration or an explicit architecture/eval-suite decision.
+- AAI-682 boundary blockers: metadata/client/backend-client boundary verifiers still fail on RAG/app ownership seams and need cleanup before this slice can claim production readiness.

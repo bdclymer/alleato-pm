@@ -167,9 +167,63 @@ AAI-669 progress:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/rag-chunk-integrity-final-aai-669.txt`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/test-graph-embed-after-outlook-vision-fix-aai-669.txt`
 
+AAI-682 progress:
+
+- Scope: vector retrieval filters, duplicate/noise chunk handling, citation metadata guardrails, hybrid retrieval quality, and assistant readiness.
+- Code changed:
+  - `/Users/meganharrison/Documents/alleato-pm/backend/src/services/pipeline/document_parser.py`
+  - `/Users/meganharrison/Documents/alleato-pm/backend/src/services/pipeline/embedder.py`
+  - `/Users/meganharrison/Documents/alleato-pm/backend/tests/test_document_low_content_pipeline.py`
+  - `/Users/meganharrison/Documents/alleato-pm/scripts/verify/verify_rag_chunk_integrity.mjs`
+  - `/Users/meganharrison/Documents/alleato-pm/scripts/verify/verify_ai_assistant_operational_readiness.mjs`
+- Documentation/evidence changed:
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-25-vector-retrieval-filters-citations-validation.md`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/ai-rag-production-finalization/TASKS.md`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/vector-retrieval-path-inventory-aai-682.md`
+  - AAI-682 evidence files under `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/`
+- Root cause confirmed:
+  - `run_document_parser` converted low-content documents into fake summaries/segments with text like `Minimal extract... Parsed content was only 0 characters...`.
+  - `run_embedder` embedded those fake summaries as `meeting_summary`, `meeting_segment_summary`, `meeting_summary_embed`, and `teams_channel` chunks.
+  - Hybrid ranking failed because it sampled and retrieved indexed placeholder text, not because the embedding provider or vector RPC was down.
+- Data repair:
+  - Deleted 67 live RAG placeholder chunks matching the low-content placeholder pattern.
+  - Updated 16 placeholder-only `rag_document_metadata` rows to `skipped_low_content`.
+  - Mirrored `skipped_low_content` to 16 app `document_metadata` rows.
+  - Mixed documents with real chunks retained their real chunks; only placeholder chunks were deleted.
+- Prevention:
+  - Low-content documents no longer create fake parser summaries or segments.
+  - Embedder now supports no-segment vision-only documents when real `document_page_intelligence` summaries exist.
+  - Embedder explicitly marks no-text/no-vision documents as `skipped_low_content`, deletes stale chunks, and does not call embedding.
+  - `verify_rag_chunk_integrity.mjs` now fails on low-content placeholder chunks.
+  - `verify_ai_assistant_operational_readiness.mjs` now loads the active `docs/ai-plan2/evals/assistant-eval-suite.json` instead of a missing archive path.
+- Verification:
+  - PASS: `python3 -m py_compile backend/src/services/pipeline/document_parser.py backend/src/services/pipeline/embedder.py backend/tests/test_document_low_content_pipeline.py`
+  - PASS: `PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_document_low_content_pipeline.py backend/tests/test_graph_embed.py -q`
+  - PASS: `npm run rag:verify:chunk-integrity -- --days=2`
+  - PASS: `npm run rag:verify:hybrid-ranking`
+  - PASS: `npm run rag:verify:source-specific`
+  - PASS: `npm run rag:verify:response-contract`
+  - FAIL: `npm run rag:verify:assistant-operational-readiness` now reaches real assertions and fails because `backendDeepAgentExecutiveBriefing` is required by the architecture/eval suite but is not attached by the live handler.
+  - FAIL: `npm run verify:metadata-boundary` still flags heavy app `document_metadata.content/raw_text` reads in parser/embedder and document-intelligence paths.
+  - FAIL: `npm run verify:client-boundary` still flags the admin AI work-runs route reading RAG-owned `source_sync_runs` without `createRagServiceClient()`.
+  - FAIL: `npm run verify:backend-client-boundary` still flags Outlook intake reads that need the AI DB resolver in email digest and Microsoft executive assistant paths.
+- Evidence:
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/minimal-extract-repair-plan-aai-682.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/minimal-extract-repair-applied-aai-682.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/chunk-integrity-after-minimal-repair-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/hybrid-ranking-after-minimal-repair-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/test-document-low-content-and-graph-embed-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-after-minimal-repair-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/metadata-boundary-after-minimal-repair-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/client-boundary-after-minimal-repair-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-after-minimal-repair-aai-682.txt`
+- Remaining blocker:
+  - Restore/migrate the executive Deep Agents bridge/tool trace or deliberately update the target architecture and active eval suite if `backendDeepAgentExecutiveBriefing` has been retired. Until then, assistant operational readiness is not complete.
+  - Resolve RAG/app boundary failures before claiming retrieval production readiness.
+
 ## Exact Next Step
 
-Compare current code paths against `/Users/meganharrison/Documents/alleato-pm/docs/architecture/AI-DATA-PIPELINE-RAG-PRODUCTION-ARCHITECTURE.md`, then classify each mismatch as delete, migrate, or verify-current.
+Resolve the AAI-682 assistant operational-readiness blocker first: restore/migrate the `backendDeepAgentExecutiveBriefing` bridge/tool trace or explicitly update the target architecture and active eval suite if that workflow was intentionally retired. Then clear metadata/client/backend-client boundary verifier failures.
 
 ## Known Pitfalls
 

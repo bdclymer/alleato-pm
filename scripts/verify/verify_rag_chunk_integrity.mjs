@@ -22,6 +22,10 @@ const repoRoot = path.resolve(__dirname, "../..");
 
 const fatalPatterns = [
   {
+    label: "low-content placeholder chunk",
+    sql: "text ~* '^Minimal extract for .*Parsed content was only [0-9]+ characters and may require OCR or a different source format'",
+  },
+  {
     label: "Fireflies preview transcript marker",
     sql: "text ~* '\\\\.\\\\.\\\\. \\\\(showing 50 of [0-9]+ sentences\\\\)'",
   },

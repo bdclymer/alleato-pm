@@ -1,0 +1,348 @@
+{
+  "queryText": "minimal extract change event detail upload parsed content",
+  "keywords": [
+    "minimal",
+    "extract",
+    "change",
+    "event",
+    "detail",
+    "upload",
+    "parsed",
+    "content"
+  ],
+  "sampleChunk": "e4270be8-f28c-440a-89d0-aa5848a26a4b__ff_segment_summary_0_0",
+  "vectorKeywordHits": 24,
+  "hybridKeywordHits": 23,
+  "vector": [
+    {
+      "rank": 1,
+      "chunk_id": "037312b7-aa4f-5d02-b3f8-3b0819c0fea4__ff_segsummary_0_23d47459",
+      "document_id": "037312b7-aa4f-5d02-b3f8-3b0819c0fea4",
+      "source_type": "meeting_segment_summary",
+      "title": null,
+      "vector_score": 0.490883840752248,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.549489657072053,
+      "hybrid_score": 0.490883840752248,
+      "hits": [
+        "minimal",
+        "extract",
+        "change",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'Added Guardrail Change Order'. Parsed content was only 0 characters and may require OCR or a different source format."
+    },
+    {
+      "rank": 2,
+      "chunk_id": "037312b7-aa4f-5d02-b3f8-3b0819c0fea4__ff_meeting_summary_-1_0_92305b72",
+      "document_id": "037312b7-aa4f-5d02-b3f8-3b0819c0fea4",
+      "source_type": "meeting_summary",
+      "title": null,
+      "vector_score": 0.490857944257129,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.549489657072053,
+      "hybrid_score": 0.490857944257129,
+      "hits": [
+        "minimal",
+        "extract",
+        "change",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'Added Guardrail Change Order'. Parsed content was only 0 characters and may require OCR or a different source format."
+    },
+    {
+      "rank": 3,
+      "chunk_id": "a4ecaf16-9c91-55d5-9d07-63883fc1757f__ff_meeting_summary_-1_0_c0ee3dbc",
+      "document_id": "a4ecaf16-9c91-55d5-9d07-63883fc1757f",
+      "source_type": "meeting_summary",
+      "title": null,
+      "vector_score": 0.460354224882262,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.549489749312867,
+      "hybrid_score": 0.460354224882262,
+      "hits": [
+        "minimal",
+        "extract",
+        "change",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'Commitment Change Order SC-4367-0001 - Additional Guardrails'. Parsed content was only 0 characters and may require OCR or a different source format."
+    },
+    {
+      "rank": 4,
+      "chunk_id": "a4ecaf16-9c91-55d5-9d07-63883fc1757f__ff_segsummary_0_e679311e",
+      "document_id": "a4ecaf16-9c91-55d5-9d07-63883fc1757f",
+      "source_type": "meeting_segment_summary",
+      "title": null,
+      "vector_score": 0.460354224882262,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.549489749312867,
+      "hybrid_score": 0.460354224882262,
+      "hits": [
+        "minimal",
+        "extract",
+        "change",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'Commitment Change Order SC-4367-0001 - Additional Guardrails'. Parsed content was only 0 characters and may require OCR or a different source format."
+    },
+    {
+      "rank": 5,
+      "chunk_id": "ecb5789c-02c3-519a-b52f-a83ec252a9fc__ff_meeting_summary_-1_0",
+      "document_id": "ecb5789c-02c3-519a-b52f-a83ec252a9fc",
+      "source_type": "meeting_summary",
+      "title": "WC RFI 030- Extra Piers",
+      "vector_score": 0.454152098774509,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.553543004124599,
+      "hybrid_score": 0.454152098774509,
+      "hits": [
+        "minimal",
+        "extract",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'WC RFI 030- Extra Piers'. Parsed content was only 0 characters and may require OCR or a different source format."
+    },
+    {
+      "rank": 6,
+      "chunk_id": "ecb5789c-02c3-519a-b52f-a83ec252a9fc__ff_segment_summary_0_0",
+      "document_id": "ecb5789c-02c3-519a-b52f-a83ec252a9fc",
+      "source_type": "meeting_segment_summary",
+      "title": "WC RFI 030- Extra Piers",
+      "vector_score": 0.454152098774509,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.553543004124599,
+      "hybrid_score": 0.454152098774509,
+      "hits": [
+        "minimal",
+        "extract",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'WC RFI 030- Extra Piers'. Parsed content was only 0 characters and may require OCR or a different source format."
+    },
+    {
+      "rank": 7,
+      "chunk_id": "741f3769-8d09-4a4b-92b4-a374639728a5__ff_segment_summary_0_0",
+      "document_id": "741f3769-8d09-4a4b-92b4-a374639728a5",
+      "source_type": "meeting_segment_summary",
+      "title": "Right Image Signed Subcontract.pdf",
+      "vector_score": 0.444150527494586,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.999640608333159,
+      "hybrid_score": 0.444150527494586,
+      "hits": [
+        "minimal",
+        "extract",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'Right Image Signed Subcontract.pdf'. Parsed content was only 0 characters and may require OCR or a different source format."
+    },
+    {
+      "rank": 8,
+      "chunk_id": "741f3769-8d09-4a4b-92b4-a374639728a5__ff_meeting_summary_-1_0",
+      "document_id": "741f3769-8d09-4a4b-92b4-a374639728a5",
+      "source_type": "meeting_summary",
+      "title": "Right Image Signed Subcontract.pdf",
+      "vector_score": 0.444150527494586,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.999640596798855,
+      "hybrid_score": 0.444150527494586,
+      "hits": [
+        "minimal",
+        "extract",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'Right Image Signed Subcontract.pdf'. Parsed content was only 0 characters and may require OCR or a different source format."
+    }
+  ],
+  "hybrid": [
+    {
+      "rank": 1,
+      "chunk_id": "037312b7-aa4f-5d02-b3f8-3b0819c0fea4__ff_segsummary_0_23d47459",
+      "document_id": "037312b7-aa4f-5d02-b3f8-3b0819c0fea4",
+      "source_type": "meeting_segment_summary",
+      "title": null,
+      "vector_score": 0.490883840752248,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.549489641219107,
+      "hybrid_score": 0.392364669549049,
+      "hits": [
+        "minimal",
+        "extract",
+        "change",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'Added Guardrail Change Order'. Parsed content was only 0 characters and may require OCR or a different source format."
+    },
+    {
+      "rank": 2,
+      "chunk_id": "037312b7-aa4f-5d02-b3f8-3b0819c0fea4__ff_meeting_summary_-1_0_92305b72",
+      "document_id": "037312b7-aa4f-5d02-b3f8-3b0819c0fea4",
+      "source_type": "meeting_summary",
+      "title": null,
+      "vector_score": 0.490857944257129,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.549489641219107,
+      "hybrid_score": 0.392347836827222,
+      "hits": [
+        "minimal",
+        "extract",
+        "change",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'Added Guardrail Change Order'. Parsed content was only 0 characters and may require OCR or a different source format."
+    },
+    {
+      "rank": 3,
+      "chunk_id": "741f3769-8d09-4a4b-92b4-a374639728a5__ff_segment_summary_0_0",
+      "document_id": "741f3769-8d09-4a4b-92b4-a374639728a5",
+      "source_type": "meeting_segment_summary",
+      "title": "Right Image Signed Subcontract.pdf",
+      "vector_score": 0.444150527494586,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.99964057949322,
+      "hybrid_score": 0.384495562845274,
+      "hits": [
+        "minimal",
+        "extract",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'Right Image Signed Subcontract.pdf'. Parsed content was only 0 characters and may require OCR or a different source format."
+    },
+    {
+      "rank": 4,
+      "chunk_id": "741f3769-8d09-4a4b-92b4-a374639728a5__ff_meeting_summary_-1_0",
+      "document_id": "741f3769-8d09-4a4b-92b4-a374639728a5",
+      "source_type": "meeting_summary",
+      "title": "Right Image Signed Subcontract.pdf",
+      "vector_score": 0.444150527494586,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.999640567958915,
+      "hybrid_score": 0.384495562268559,
+      "hits": [
+        "minimal",
+        "extract",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'Right Image Signed Subcontract.pdf'. Parsed content was only 0 characters and may require OCR or a different source format."
+    },
+    {
+      "rank": 5,
+      "chunk_id": "a4ecaf16-9c91-55d5-9d07-63883fc1757f__ff_segsummary_0_e679311e",
+      "document_id": "a4ecaf16-9c91-55d5-9d07-63883fc1757f",
+      "source_type": "meeting_segment_summary",
+      "title": null,
+      "vector_score": 0.460354224882262,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.549489733459918,
+      "hybrid_score": 0.372520423845599,
+      "hits": [
+        "minimal",
+        "extract",
+        "change",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'Commitment Change Order SC-4367-0001 - Additional Guardrails'. Parsed content was only 0 characters and may require OCR or a different source format."
+    },
+    {
+      "rank": 6,
+      "chunk_id": "a4ecaf16-9c91-55d5-9d07-63883fc1757f__ff_meeting_summary_-1_0_c0ee3dbc",
+      "document_id": "a4ecaf16-9c91-55d5-9d07-63883fc1757f",
+      "source_type": "meeting_summary",
+      "title": null,
+      "vector_score": 0.460354224882262,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.549489733459918,
+      "hybrid_score": 0.372520423845599,
+      "hits": [
+        "minimal",
+        "extract",
+        "change",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'Commitment Change Order SC-4367-0001 - Additional Guardrails'. Parsed content was only 0 characters and may require OCR or a different source format."
+    },
+    {
+      "rank": 7,
+      "chunk_id": "ecb5789c-02c3-519a-b52f-a83ec252a9fc__ff_segment_summary_0_0",
+      "document_id": "ecb5789c-02c3-519a-b52f-a83ec252a9fc",
+      "source_type": "meeting_segment_summary",
+      "title": "WC RFI 030- Extra Piers",
+      "vector_score": 0.454152098774509,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.553542988154712,
+      "hybrid_score": 0.368691704610299,
+      "hits": [
+        "minimal",
+        "extract",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'WC RFI 030- Extra Piers'. Parsed content was only 0 characters and may require OCR or a different source format."
+    },
+    {
+      "rank": 8,
+      "chunk_id": "ecb5789c-02c3-519a-b52f-a83ec252a9fc__ff_meeting_summary_-1_0",
+      "document_id": "ecb5789c-02c3-519a-b52f-a83ec252a9fc",
+      "source_type": "meeting_summary",
+      "title": "WC RFI 030- Extra Piers",
+      "vector_score": 0.454152098774509,
+      "text_score": 0,
+      "recall_score": 0.458156909991326,
+      "recall_count": 2,
+      "recency_score": 0.553542988154712,
+      "hybrid_score": 0.368691704610299,
+      "hits": [
+        "minimal",
+        "extract",
+        "parsed",
+        "content"
+      ],
+      "preview": "Minimal extract for 'WC RFI 030- Extra Piers'. Parsed content was only 0 characters and may require OCR or a different source format."
+    }
+  ]
+}

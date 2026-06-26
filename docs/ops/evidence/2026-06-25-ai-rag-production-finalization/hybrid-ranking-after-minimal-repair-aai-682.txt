@@ -1,0 +1,14 @@
+
+> alleato-procore@0.1.0 rag:verify:hybrid-ranking
+> node scripts/verify/verify_hybrid_rag_ranking.mjs
+
+{
+  "status": "pass",
+  "queryText": "003913 email attachment subject goodwill bloomington",
+  "vectorTopChunk": "outlook_attachment_70bcd7532c96d48ff746a92b_064937c79e2a48ec10e7c414__chunk_0",
+  "hybridTopChunk": "outlook_attachment_41c77c854cb079b36b2f6fef_135a9ebe04bb011d592b71a1__chunk_0",
+  "vectorHits": 26,
+  "hybridHits": 28,
+  "hybridTopScore": "0.5459",
+  "telemetryRecallCount": 8
+}

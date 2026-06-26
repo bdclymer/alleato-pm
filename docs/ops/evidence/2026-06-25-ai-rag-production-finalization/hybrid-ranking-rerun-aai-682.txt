@@ -1,0 +1,5 @@
+
+> alleato-procore@0.1.0 rag:verify:hybrid-ranking
+> node scripts/verify/verify_hybrid_rag_ranking.mjs
+
+FAIL: hybrid lexical coverage regressed: hybrid=23, vector=24

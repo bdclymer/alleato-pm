@@ -36,6 +36,8 @@ SEGMENT_IDX_NOTES_TOPIC = -3
 
 # Stateless parser instance for content re-parsing.
 _parser = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
+LOW_CONTENT_STATUS = "skipped_low_content"
+MIN_SEARCHABLE_CHARS = 50
 
 
 def _hash_content(text: str) -> str:
@@ -51,6 +53,20 @@ def _build_summary_embedding_text(title: str, meeting_date: Optional[str], summa
     if summary:
         parts.append(summary)
     return "\n".join(parts).strip()
+
+
+def _is_low_content_placeholder(text: Optional[str]) -> bool:
+    value = str(text or "").strip()
+    return (
+        value.startswith("Minimal extract for ")
+        and "Parsed content was only" in value
+        and "may require OCR or a different source format" in value
+    )
+
+
+def _has_searchable_text(text: Optional[str]) -> bool:
+    value = str(text or "").strip()
+    return len(value) >= MIN_SEARCHABLE_CHARS and not _is_low_content_placeholder(value)
 
 
 def _is_interview_title(title: Optional[str]) -> bool:
@@ -323,7 +339,10 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     )
     segment_rows = seg_resp.data or []
     if not segment_rows:
-        raise ValueError(f"No segments found for metadata_id: {metadata_id}")
+        logger.warning(
+            "[Embedder] No parser segments found for %s; continuing only if direct text or vision chunks exist",
+            metadata_id,
+        )
 
     # 3. Convert rows to MeetingSegment objects
     segments: List[MeetingSegment] = [
@@ -383,7 +402,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
         )
 
     # Add meeting-level summary chunk
-    if meeting_summary:
+    if _has_searchable_text(meeting_summary):
         all_chunks.append(
             DocumentChunk(
                 content=meeting_summary,
@@ -396,7 +415,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
 
     # Add segment summary chunks
     for seg in segments:
-        if seg.summary:
+        if _has_searchable_text(seg.summary):
             all_chunks.append(
                 DocumentChunk(
                     content=seg.summary,
@@ -461,6 +480,60 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
             logger.info("[Embedder] Added %d vision page chunks", len(vision_pages))
     except Exception as exc:
         logger.warning("[Embedder] Failed to load vision pages (non-fatal): %s", exc)
+
+    if not all_chunks:
+        logger.warning(
+            "[Embedder] No searchable text or vision chunks for %s; marking %s",
+            metadata_id,
+            LOW_CONTENT_STATUS,
+        )
+        rag_client.table("document_chunks").delete().eq("document_id", metadata_id).execute()
+        client.table("document_metadata").update(
+            {"status": LOW_CONTENT_STATUS}
+        ).eq("id", metadata_id).execute()
+        rag_client.table("rag_document_metadata").upsert(
+            {
+                "id": metadata_id,
+                "app_document_id": metadata_id,
+                "title": title,
+                "source": metadata.get("source"),
+                "source_system": metadata.get("source_system"),
+                "type": metadata.get("type"),
+                "category": metadata.get("category"),
+                "document_type": metadata.get("document_type"),
+                "project_id": project_id,
+                "storage_bucket": metadata.get("storage_bucket"),
+                "storage_path": metadata.get("file_path"),
+                "source_web_url": metadata.get("source_web_url"),
+                "url": metadata.get("url"),
+                "content": metadata.get("content"),
+                "raw_text": metadata.get("raw_text"),
+                "summary": metadata.get("summary"),
+                "overview": metadata.get("overview"),
+                "parsing_status": LOW_CONTENT_STATUS,
+                "embedding_status": LOW_CONTENT_STATUS,
+                "embedding_error": (
+                    f"{LOW_CONTENT_STATUS}: no searchable text or vision page summaries"
+                ),
+                "source_metadata": metadata.get("source_metadata"),
+            },
+            on_conflict="id",
+        ).execute()
+        update_ingestion_job_state(
+            metadata_id,
+            stage="done",
+            error_message=(
+                f"{LOW_CONTENT_STATUS}: no searchable text or vision page summaries"
+            ),
+            client=client,
+        )
+        return {
+            "metadataId": metadata_id,
+            "chunkCount": 0,
+            "segmentCount": len(segments),
+            "skipped": True,
+            "skipReason": LOW_CONTENT_STATUS,
+        }
 
     # 6. Mark job as chunked before expensive embedding calls
     update_ingestion_job_state(
