@@ -17,6 +17,10 @@ services:
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
         value: "true"
+      - key: ALLOW_PM_APP_FINAL_PROJECTIONS
+        value: "true"
+      - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS
+        value: "50"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL

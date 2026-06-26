@@ -74,6 +74,12 @@ class _UpsertCall:
     assignee_email: str | None
 
 
+@pytest.fixture(autouse=True)
+def _allow_bounded_pm_projection(monkeypatch):
+    monkeypatch.setenv("ALLOW_PM_APP_FINAL_PROJECTIONS", "true")
+    monkeypatch.setenv("PM_APP_PROJECTION_MAX_TOTAL_ROWS", "25")
+
+
 @pytest.mark.parametrize(
     ("source_system", "expected_comm_type"),
     [
@@ -171,6 +177,7 @@ def test_project_synthesizer_writes_email_and_teams_tasks(monkeypatch, source_sy
     assert result[result_key] == 1
     assert result["tasks_written"] == 1
     assert result["errors"] == []
+    assert result["pm_projection_rows"] == {"tasks": 1}
     assert upserts == [
         _UpsertCall(
             metadata_id=doc_id,
@@ -289,6 +296,111 @@ def test_project_synthesizer_signal_promotion_failure_does_not_block_task_write(
 
     assert result["extractions_attempted"] == 1
     assert result["tasks_written"] == 1
+    assert result["pm_projection_rows"] == {
+        "insight_cards": 1,
+        "insight_card_targets": 1,
+        "insight_card_evidence": 1,
+        "tasks": 1,
+    }
     assert result["errors"][0]["stage"] == "signal_promotion"
     assert upserts[0].metadata_id == "email-doc-with-signal"
     assert upserts[0].source_system == "email"
+
+
+def test_project_synthesizer_projection_budget_blocks_task_write_before_pm_upsert(monkeypatch):
+    monkeypatch.setenv("PM_APP_PROJECTION_MAX_TOTAL_ROWS", "1")
+    client = _FakeSupabase(
+        [
+            {
+                "id": "email-doc-budget-blocked",
+                "title": "Email: Task",
+                "type": "email",
+                "category": "email",
+                "source": "outlook_email",
+                "source_system": "outlook_email",
+                "date": "2026-06-25",
+                "captured_at": "2026-06-25T12:00:00Z",
+                "participants": "Megan Harrison",
+                "participants_array": ["Megan Harrison"],
+                "source_metadata": {},
+                "source_item_id": "email-source-budget",
+                "source_web_url": None,
+                "source_path": None,
+                "content_hash": "hash-budget",
+                "project_id": 1009,
+            }
+        ]
+    )
+    rag_read = _FakeSupabase([])
+    rag_write = _FakeSupabase([])
+    upserts: list[_UpsertCall] = []
+
+    monkeypatch.setattr(project_synthesizer, "get_supabase_client", lambda: client)
+    monkeypatch.setattr(project_synthesizer, "get_rag_read_client", lambda: rag_read)
+    monkeypatch.setattr(project_synthesizer, "get_rag_write_client", lambda: rag_write)
+    monkeypatch.setattr(
+        project_synthesizer,
+        "ensure_client_project_target",
+        lambda *_args, **_kwargs: {"id": "target-1009"},
+    )
+    monkeypatch.setattr(project_synthesizer, "_resolve_since", lambda *_args, **_kwargs: "2026-06-18")
+    monkeypatch.setattr(project_synthesizer, "_fetch_project_state", lambda *_args, **_kwargs: "Tracked state")
+    monkeypatch.setattr(
+        project_synthesizer,
+        "fetch_optional_row",
+        lambda *_args, **_kwargs: {"content": "Please send the updated plan."},
+    )
+    monkeypatch.setattr(
+        project_synthesizer.llm,
+        "extract_deep_communication_intelligence",
+        lambda **_kwargs: StructuredData(
+            tasks=[
+                TaskItem(
+                    description="Send the updated plan.",
+                    assignee="Megan Harrison",
+                    assignee_email="megan@alleatogroup.com",
+                    priority="medium",
+                    confidence=0.94,
+                ),
+                TaskItem(
+                    description="Confirm the delivery date.",
+                    assignee="Megan Harrison",
+                    assignee_email="megan@alleatogroup.com",
+                    priority="medium",
+                    confidence=0.91,
+                ),
+            ]
+        ),
+    )
+    monkeypatch.setattr(
+        project_synthesizer,
+        "record_source_processing_status",
+        lambda *_args, **_kwargs: None,
+    )
+
+    def fake_upsert_task(_client: Any, task: TaskItem, *, metadata_id: str, project_id: int, client_id: Any, source_system: str):
+        upserts.append(
+            _UpsertCall(
+                metadata_id=metadata_id,
+                project_id=project_id,
+                source_system=source_system,
+                description=task.description,
+                assignee=task.assignee,
+                assignee_email=task.assignee_email,
+            )
+        )
+        return {"id": "task-1"}
+
+    monkeypatch.setattr(project_synthesizer, "_upsert_task", fake_upsert_task)
+
+    result = project_synthesizer.synthesize_project_intelligence(
+        1009,
+        since="2026-06-18",
+        max_docs=10,
+        skip_synthesized=False,
+    )
+
+    assert result["tasks_written"] == 0
+    assert upserts == []
+    assert result["errors"]
+    assert "projection row count" in result["errors"][0]["error"]

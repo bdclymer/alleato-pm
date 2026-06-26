@@ -218,6 +218,43 @@ AAI-682 progress:
   - PASS after follow-up: delegated sub-agent typechecks after retrieval-contract verifier edits passed with no errors.
   - PASS after follow-up: legacy retrieval inventory completed. No production retrieval code was deleted because import/route proof showed the old-looking paths are active backend/API/admin-eval workflows or manual/dev-only candidates requiring separate cleanup.
   - PASS final: AAI-682 closeout bundle passed chunk integrity, hybrid ranking, source-specific contract, retrieval contract, response contract, assistant operational readiness, metadata boundary, frontend RAG client boundary, and backend RAG client boundary.
+
+AAI-699 progress:
+
+- Scope: event-driven Outlook/Teams intelligence extraction and task/card/packet projection after Graph sync.
+- Code/config changed:
+  - `/Users/meganharrison/Documents/alleato-pm/backend/src/services/intelligence/project_synthesizer.py`
+  - `/Users/meganharrison/Documents/alleato-pm/backend/unit_tests/test_task_writer_titles.py`
+  - `/Users/meganharrison/Documents/alleato-pm/render.yaml`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/ai-rag-production-finalization/TASKS.md`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-26-event-driven-intelligence-task-write-guard.md`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/event-driven-intelligence-write-guard-aai-699.md`
+  - `/Users/meganharrison/Documents/github/alleato-os/apps/docs/project-intelligence/index.mdx`
+  - `/Users/meganharrison/Documents/github/alleato-os/apps/docs/project-intelligence/current-state.mdx`
+  - `/Users/meganharrison/Documents/github/alleato-os/apps/docs/project-intelligence/activation-runbook.mdx`
+  - `/Users/meganharrison/Documents/github/alleato-os/apps/docs/project-intelligence/verification.mdx`
+- Root cause confirmed:
+  - `run_graph_sync` called `synthesize_new_comms_since(...)`, but the event-driven and sweep entrypoints still had the obsolete whole-entrypoint `enforce_no_pm_app_high_churn_writes(...)` block. The path failed before reaching existing RAG staging and bounded PM projection writers.
+  - `source_signal_candidates` staging already writes through the AI/RAG client; final PM rows are `insight_cards`, `insight_card_targets`, `insight_card_evidence`, `intelligence_packets`, and `tasks`.
+- Prevention:
+  - Added cumulative run-level PM final-projection reservation before task/card/packet projection rows are written, so a sync cannot evade the budget by many small writes.
+  - Added `pm_projection_rows` to event-driven and sweep summaries for monitoring/redrive evidence.
+  - Added regression coverage for normal Outlook/Teams task projection budgeting and over-budget failure before PM task upsert.
+  - Patched live Render `alleato-graph-sync` env through single-key env-var API and verified `ALLOW_PM_APP_FINAL_PROJECTIONS=true`, `PM_APP_PROJECTION_MAX_TOTAL_ROWS=50`.
+- Active-window redrive evidence:
+  - Outlook-only bounded sync passed: `total_synced=2`, `embed.embedded=1`, `intelligence_extraction.errors=[]`, `pm_projection_rows={}`.
+  - Teams-only bounded sync passed: `total_synced=1`, `teams_dm=1`, `intelligence_extraction.errors=[]`, `pm_projection_rows={}`.
+  - No new task/card projection rows were created in those redrives because synced items were not project-scoped actionable communications in the run window. This is not a hidden failure; the path surfaced `pm_projection_rows` and returned no guard error. Add a deterministic seeded integration fixture later for project-scoped task/card projection proof.
+- Verification:
+  - PASS: `backend/.venv/bin/python -m compileall backend/src/services/intelligence/project_synthesizer.py backend/unit_tests/test_task_writer_titles.py`
+  - PASS: `cd backend && .venv/bin/python -m pytest unit_tests/test_task_writer_titles.py tests/test_db_pressure_guard.py tests/test_graph_sync_options.py -q` (`22 passed`)
+  - PASS: `cd backend && .venv/bin/python -m pytest tests/test_render_sync_blueprints.py -q` (`7 passed`)
+  - PASS: `npm run rag:verify:source-lifecycle -- --days 7`
+  - PASS: `PROJECT_ATTRIBUTION_AUDIT_DAYS=7 npm run verify:project-attribution`
+  - PASS: `npm run verify:microsoft-assistant-health -- --json`
+  - PASS: `npm run rag:verify:project-intelligence-live-paths`
+  - PASS: `npm run rag:verify:source-specific`
+  - PASS: `npm run rag:verify:chat-architecture`
 - Evidence:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/minimal-extract-repair-plan-aai-682.json`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/minimal-extract-repair-applied-aai-682.json`

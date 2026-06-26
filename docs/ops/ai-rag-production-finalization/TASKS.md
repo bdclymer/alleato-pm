@@ -27,6 +27,10 @@ Active AI assistant architecture slice:
 
 - [2026-06-26-ai-assistant-final-architecture-verification.md](../tasks/2026-06-26-ai-assistant-final-architecture-verification.md)
 
+Active event-driven intelligence/task write slice:
+
+- [2026-06-26-event-driven-intelligence-task-write-guard.md](../tasks/2026-06-26-event-driven-intelligence-task-write-guard.md)
+
 Evidence directory:
 
 - [2026-06-25-ai-rag-production-finalization](../evidence/2026-06-25-ai-rag-production-finalization)
@@ -224,6 +228,21 @@ Evidence directory:
 - Verified warning/fallback behavior is logged instead of silently failing:
   - unsupported customer fields are dropped with persisted warnings;
   - missing historical payment-application endpoint is logged with fallback projection from `acumatica_payments` where customer-to-project mapping is unique.
+
+### 2026-06-26: AAI-699 Event-Driven Outlook/Teams Intelligence Guard Patched
+
+- Replaced the obsolete whole-entrypoint PM high-churn block in the Outlook/Teams project synthesizer with a cumulative bounded PM final-projection budget.
+- Event-driven and daily sweep summaries now report `pm_projection_rows` for task/card/packet projection evidence.
+- Added missing Graph cron projection env in `render.yaml` so Graph-triggered intelligence can use the bounded projection path.
+- Patched live Render `alleato-graph-sync` with the same projection env through the single-key env-var API and verified by read-back.
+- Active-window redrives passed:
+  - Outlook-only: `total_synced=2`, `embed.embedded=1`, no intelligence extraction errors.
+  - Teams-only: `total_synced=1`, `teams_dm=1`, no intelligence extraction errors.
+- Verification passed: compileall, `22 passed` across task-writer/DB-pressure/Graph-sync tests, `7 passed` Render blueprint tests, source lifecycle, project attribution, Microsoft assistant health, project-intelligence live paths, source-specific RAG, and chat architecture.
+- Evidence:
+  - [event-driven-intelligence-write-guard-aai-699.md](../evidence/2026-06-25-ai-rag-production-finalization/event-driven-intelligence-write-guard-aai-699.md)
+- Task:
+  - [2026-06-26-event-driven-intelligence-task-write-guard.md](../tasks/2026-06-26-event-driven-intelligence-task-write-guard.md)
 - Verified duplicate prevention:
   - upsert/conflict-key code guardrails exist;
   - live unique indexes exist for Acumatica raw/projection keys;
