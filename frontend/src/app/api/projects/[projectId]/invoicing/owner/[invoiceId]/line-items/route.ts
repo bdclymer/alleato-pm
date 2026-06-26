@@ -2,6 +2,10 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import {
+  buildOwnerInvoiceLineItemSovFields,
+  normalizeOwnerInvoiceLineItems,
+} from "@/lib/invoicing/owner-invoice-line-items";
 
 // Helper to verify invoice belongs to project and return editable status
 async function verifyInvoice(
@@ -72,7 +76,7 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       });
     }
 
-    return NextResponse.json({ data: lineItems ?? [] });
+    return NextResponse.json({ data: normalizeOwnerInvoiceLineItems(lineItems) });
     },
 );
 
@@ -123,16 +127,10 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const {
       description,
       category,
-      scheduled_value = 0,
-      work_completed_previous = 0,
-      work_completed_period = 0,
-      materials_stored = 0,
-      retainage_pct = 0,
-      retainage_amount = 0,
-      retainage_released = 0,
       approved_amount = 0,
       sort_order = 0,
     } = body;
+    const sovFields = buildOwnerInvoiceLineItemSovFields(approved_amount);
 
     const { data: lineItem, error: insertError } = await supabase
       .from("owner_invoice_line_items")
@@ -141,13 +139,17 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
         description: description ?? null,
         category: category ?? null,
         approved_amount,
-        scheduled_value,
-        work_completed_previous,
-        work_completed_period,
-        materials_stored,
-        retainage_pct,
-        retainage_amount,
-        retainage_released,
+        scheduled_value: body.scheduled_value ?? sovFields.scheduled_value,
+        work_completed_previous: body.work_completed_previous ?? sovFields.work_completed_previous,
+        work_completed_period: body.work_completed_period ?? sovFields.work_completed_period,
+        materials_stored: body.materials_stored ?? sovFields.materials_stored,
+        total_completed_stored: body.total_completed_stored ?? sovFields.total_completed_stored,
+        work_completed_pct: body.work_completed_pct ?? sovFields.work_completed_pct,
+        retainage_pct: body.retainage_pct ?? 0,
+        retainage_amount: body.retainage_amount ?? sovFields.retainage_amount,
+        retainage_released: body.retainage_released ?? sovFields.retainage_released,
+        net_amount_this_period: body.net_amount_this_period ?? sovFields.net_amount_this_period,
+        balance_to_finish: body.balance_to_finish ?? sovFields.balance_to_finish,
         sort_order,
       })
       .select()

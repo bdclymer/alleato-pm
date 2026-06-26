@@ -309,13 +309,26 @@ async function bridgeToOwnerInvoices(supabase) {
         // Delete existing line items for this owner invoice, then re-insert
         await supabase.from("owner_invoice_line_items").delete().eq("invoice_id", ownerInvoiceId);
 
-        const lineRows = rawLines.map(l => ({
-          invoice_id:        ownerInvoiceId,
-          acumatica_line_nbr: l.line_nbr,
-          description:       l.transaction_description ?? l.account ?? null,
-          approved_amount:   l.amount ?? l.extended_price ?? 0,
-          category:          l.account ?? null,
-        }));
+        const lineRows = rawLines.map(l => {
+          const approvedAmount = l.amount ?? l.extended_price ?? 0;
+          return {
+            invoice_id:        ownerInvoiceId,
+            acumatica_line_nbr: l.line_nbr,
+            description:       l.transaction_description ?? l.account ?? null,
+            approved_amount:   approvedAmount,
+            category:          l.account ?? null,
+            scheduled_value: approvedAmount,
+            work_completed_previous: 0,
+            work_completed_period: approvedAmount,
+            materials_stored: 0,
+            total_completed_stored: approvedAmount,
+            work_completed_pct: approvedAmount > 0 ? 100 : 0,
+            retainage_amount: 0,
+            retainage_released: 0,
+            net_amount_this_period: approvedAmount,
+            balance_to_finish: 0,
+          };
+        });
 
         const { error: lineErr } = await supabase
           .from("owner_invoice_line_items")

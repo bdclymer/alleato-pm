@@ -1479,16 +1479,26 @@ class AcumaticaFinancialSyncService:
 
             self.supabase.table("owner_invoice_line_items").delete().eq("invoice_id", owner_invoice_id).execute()
             raw_lines = raw_lines_by_invoice_id.get(int(invoice["id"]), [])
-            owner_line_rows = [
-                {
+            owner_line_rows = []
+            for line in raw_lines:
+                approved_amount = _num(line.get("amount")) or _num(line.get("extended_price")) or 0
+                owner_line_rows.append({
                     "invoice_id": owner_invoice_id,
                     "acumatica_line_nbr": line.get("line_nbr"),
                     "description": line.get("transaction_description") or line.get("account"),
-                    "approved_amount": _num(line.get("amount")) or _num(line.get("extended_price")) or 0,
+                    "approved_amount": approved_amount,
                     "category": line.get("account"),
-                }
-                for line in raw_lines
-            ]
+                    "scheduled_value": approved_amount,
+                    "work_completed_previous": 0,
+                    "work_completed_period": approved_amount,
+                    "materials_stored": 0,
+                    "total_completed_stored": approved_amount,
+                    "work_completed_pct": 100 if approved_amount > 0 else 0,
+                    "retainage_amount": 0,
+                    "retainage_released": 0,
+                    "net_amount_this_period": approved_amount,
+                    "balance_to_finish": 0,
+                })
             if owner_line_rows:
                 for chunk in _chunked(owner_line_rows):
                     self.supabase.table("owner_invoice_line_items").insert(list(chunk)).execute()

@@ -8,6 +8,7 @@ import {
   type InvoicePdfData,
   type InvoicePdfLineItem,
 } from "@/lib/invoice-pdf";
+import { normalizeOwnerInvoiceLineItems } from "@/lib/invoicing/owner-invoice-line-items";
 
 // Node runtime required by @react-pdf/renderer
 export const runtime = "nodejs";
@@ -81,8 +82,8 @@ export async function fetchInvoicePdfData(
     companyName = company?.name ?? null;
   }
 
-  const lineItems: InvoicePdfLineItem[] = (
-    invoice.owner_invoice_line_items || []
+  const lineItems: InvoicePdfLineItem[] = normalizeOwnerInvoiceLineItems(
+    invoice.owner_invoice_line_items,
   ).map(
     (li: {
       id: number;

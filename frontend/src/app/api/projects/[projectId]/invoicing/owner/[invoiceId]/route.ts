@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { normalizeOwnerInvoiceLineItems } from "@/lib/invoicing/owner-invoice-line-items";
 
 // GET /api/projects/[projectId]/invoicing/owner/[invoiceId]
 // Fetch a single owner invoice with line items
@@ -64,7 +65,7 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     }
 
     // Compute total_amount
-    const lineItems = invoice.owner_invoice_line_items || [];
+    const lineItems = normalizeOwnerInvoiceLineItems(invoice.owner_invoice_line_items);
     const total_amount = lineItems.reduce(
       (sum: number, item: { approved_amount: number | null }) => sum + (item.approved_amount || 0),
       0,
@@ -109,6 +110,7 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     return NextResponse.json({
       data: {
         ...invoiceData,
+        owner_invoice_line_items: lineItems,
         total_amount,
         paid_amount: invoice.paid_amount ?? total_paid,
         total_paid,

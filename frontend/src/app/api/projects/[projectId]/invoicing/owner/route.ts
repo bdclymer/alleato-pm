@@ -9,6 +9,7 @@ import {
   type LivePrimeContractChangeTotals,
   mergePrimeContractFinancials,
 } from "@/lib/prime-contracts/live-change-order-totals";
+import { normalizeOwnerInvoiceLineItems } from "@/lib/invoicing/owner-invoice-line-items";
 
 // Normalize optional request values so Postgres sees nulls instead of empty strings.
 function normalizeOptionalField<T extends string | null | undefined>(value: T): T | null {
@@ -235,7 +236,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 
     // Compute financial summary for each invoice from line items
     const invoicesWithTotals = (invoices || []).map((invoice) => {
-      const lineItems = invoice.owner_invoice_line_items || [];
+      const lineItems = normalizeOwnerInvoiceLineItems(invoice.owner_invoice_line_items);
       const gross_amount = lineItems.reduce(
         (sum: number, item: { scheduled_value: number | null }) => sum + (item.scheduled_value || 0),
         0,
@@ -322,6 +323,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 
       return {
         ...invoiceData,
+        owner_invoice_line_items: lineItems,
         contract_number: pc?.contract_number ?? null,
         contract_title: pc?.title ?? null,
         total_contract_amount: totalContractAmount ?? pc?.revised_contract_value ?? pc?.original_contract_value ?? null,
