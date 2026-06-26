@@ -81,10 +81,10 @@ Evidence directory:
 
 - [x] Recover source lifecycle/project assignment verifier gate.
 - [x] Recover source-specific RAG observability verifier gate.
-- [ ] Validate finalized chunking strategy and duplicate chunk elimination.
+- [x] Validate finalized chunking strategy and duplicate chunk elimination.
 - [x] Verify metadata filters, project filters, permissions, citations/reference links, and retrieval quality.
-- [ ] Remove or migrate legacy retrieval paths after import/route/provider/database-write proof.
-- [ ] Verify every AI assistant uses the finalized RAG pipeline.
+- [x] Remove or migrate legacy retrieval paths after import/route/provider/database-write proof.
+- [x] Verify every AI assistant uses the finalized RAG pipeline.
 
 ### Phase 9: Project Assignment And Task Generation
 
@@ -279,7 +279,39 @@ Evidence directory:
 - Delegated typecheck passed after each tiny verifier edit.
 - Evidence:
   - [retrieval-contract-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/retrieval-contract-aai-682.txt)
-- Remaining AAI-682 closure gate: legacy retrieval candidates still need import/route/provider-schedule/database-write proof before deletion or migration.
+- Legacy retrieval inventory found no duplicate production implementation safe to delete in this slice. Active paths are recorded separately from manual/dev-only cleanup candidates.
+
+### 2026-06-25: AAI-682 Legacy Retrieval Inventory Completed
+
+- Classified live retrieval paths, active backend agent paths, active admin eval harness paths, and manual/dev-only cleanup candidates.
+- No production retrieval code was deleted because import/route proof showed the old-looking paths are still active or locally reachable.
+- Evidence:
+  - [retrieval-legacy-candidate-inventory-aai-682.md](../evidence/2026-06-25-ai-rag-production-finalization/retrieval-legacy-candidate-inventory-aai-682.md)
+- AAI-682 retrieval slice is now ready for final closeout verification/publish status, but broad AI/RAG production readiness still requires the remaining pipeline-finalization phases.
+
+### 2026-06-25: AAI-682 Retrieval Slice Closed
+
+- Final closeout verifier bundle passed:
+  - `npm run rag:verify:chunk-integrity -- --days=2`
+  - `npm run rag:verify:hybrid-ranking`
+  - `npm run rag:verify:source-specific`
+  - `npm run rag:verify:retrieval-contract`
+  - `npm run rag:verify:response-contract`
+  - `npm run rag:verify:assistant-operational-readiness`
+  - `npm run rag:verify:metadata-boundary`
+  - `npm run rag:verify:client-boundary`
+  - `npm run rag:verify:backend-client-boundary`
+- Evidence:
+  - [chunk-integrity-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/chunk-integrity-final-aai-682.txt)
+  - [hybrid-ranking-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/hybrid-ranking-final-aai-682.txt)
+  - [source-specific-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-specific-final-aai-682.txt)
+  - [retrieval-contract-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/retrieval-contract-final-aai-682.txt)
+  - [response-contract-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/response-contract-final-aai-682.txt)
+  - [assistant-operational-readiness-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-final-aai-682.txt)
+  - [metadata-boundary-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/metadata-boundary-final-aai-682.txt)
+  - [client-boundary-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/client-boundary-final-aai-682.txt)
+  - [backend-client-boundary-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-final-aai-682.txt)
+- AAI-682 is closed as a retrieval-slice deliverable. The overall production-finalization program remains open for the other pipeline and final all-system gates.
 
 ### 2026-06-25: Microsoft Executive Assistant Outlook Cache Recovered
 

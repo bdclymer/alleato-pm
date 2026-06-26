@@ -216,6 +216,8 @@ AAI-682 progress:
   - PASS after follow-up: Python compile passed for touched backend parser/embedder/backfill/digest/assistant files.
   - PASS after follow-up: `npm run rag:verify:retrieval-contract` validates live `search_document_chunks` project/source filters, duplicate top-chunk prevention, citation/reference metadata, and static service-role permission guard hooks.
   - PASS after follow-up: delegated sub-agent typechecks after retrieval-contract verifier edits passed with no errors.
+  - PASS after follow-up: legacy retrieval inventory completed. No production retrieval code was deleted because import/route proof showed the old-looking paths are active backend/API/admin-eval workflows or manual/dev-only candidates requiring separate cleanup.
+  - PASS final: AAI-682 closeout bundle passed chunk integrity, hybrid ranking, source-specific contract, retrieval contract, response contract, assistant operational readiness, metadata boundary, frontend RAG client boundary, and backend RAG client boundary.
 - Evidence:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/minimal-extract-repair-plan-aai-682.json`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/minimal-extract-repair-applied-aai-682.json`
@@ -234,13 +236,22 @@ AAI-682 progress:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-boundary-fix-aai-682.txt`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/focused-compile-lint-after-boundary-fix-aai-682.txt`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/retrieval-contract-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/retrieval-legacy-candidate-inventory-aai-682.md`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/chunk-integrity-final-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/hybrid-ranking-final-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/source-specific-final-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/retrieval-contract-final-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/response-contract-final-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-final-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/metadata-boundary-final-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/client-boundary-final-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-final-aai-682.txt`
 - Remaining blocker:
-  - Legacy retrieval candidates still need import/route/provider-schedule/database-write proof before deletion or migration.
-  - Broad production readiness still requires final all-pipeline verification after the remaining implementation/cleanup slices.
+  - No active blocker inside AAI-682. Broad production readiness still requires final all-pipeline verification after the remaining implementation/cleanup slices.
 
 ## Exact Next Step
 
-Clear metadata/client/backend-client boundary verifier failures for AAI-682. The assistant operational-readiness blocker is resolved, but retrieval production readiness still requires RAG/app ownership boundary cleanup.
+Move to the next open production-finalization slice: final all-pipeline verification, task/project assignment end-to-end proof, and cleanup candidates that still need import/route/provider/database-write evidence before deletion.
 
 ## Known Pitfalls
 

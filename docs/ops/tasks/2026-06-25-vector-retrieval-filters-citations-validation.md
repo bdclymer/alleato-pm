@@ -3,7 +3,7 @@
 Date: 2026-06-25
 Linear: AAI-682
 Parent: AAI-636
-Status: In Progress - Blocker Found
+Status: Complete - Retrieval Slice Published
 
 ## Objective
 
@@ -30,16 +30,16 @@ Finalize and verify the production vector retrieval layer: chunk integrity, dupl
 - [x] Verify permission behavior or record the exact ownership gap with prevention step.
 - [x] Verify citations/reference links are present for retrieved source records.
 - [x] Verify retrieval quality using current source-specific, hybrid ranking, and assistant eval gates.
-- [ ] Identify legacy retrieval candidates and prove inactive status before deletion.
-- [ ] Migrate or delete any proven duplicate retrieval implementation in this slice.
+- [x] Identify legacy retrieval candidates and prove inactive status before deletion.
+- [x] Migrate or delete any proven duplicate retrieval implementation in this slice.
 - [x] Verify every relevant AI assistant/tool consumes the finalized RAG pipeline or record a follow-on blocker.
 - [x] Update central AI/RAG finalization `TASKS.md`.
 - [x] Update handoff with evidence, root cause, prevention, and remaining blockers.
-- [ ] Publish code/docs/evidence if code/docs change.
+- [x] Publish code/docs/evidence if code/docs change.
 
 ## Evidence
 
-Pending. Evidence will be stored under:
+Evidence is stored under:
 
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/`
 
@@ -81,7 +81,20 @@ Low-content repair evidence:
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-boundary-fix-aai-682.txt`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/focused-compile-lint-after-boundary-fix-aai-682.txt`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/retrieval-contract-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/retrieval-legacy-candidate-inventory-aai-682.md`
 - Delegated typecheck checkpoints after retrieval-contract verifier edits: PASS from sub-agents Copernicus and Goodall, command `npm --prefix frontend run typecheck`.
+
+Final closeout verifier evidence:
+
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/chunk-integrity-final-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/hybrid-ranking-final-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/source-specific-final-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/retrieval-contract-final-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/response-contract-final-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-final-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/metadata-boundary-final-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/client-boundary-final-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-final-aai-682.txt`
 
 Linear milestone comment:
 
@@ -99,13 +112,14 @@ Linear milestone comment:
 
 ## Blockers
 
-- Legacy retrieval candidates still need import/route/provider-schedule/database-write proof before deletion or migration.
+- No active blocker inside the current AAI-682 retrieval slice. Broad production readiness remains blocked by later all-pipeline verification and cleanup slices.
 
 ## Resolved Blockers
 
 - `npm run rag:verify:assistant-operational-readiness` passed after restoring the canonical `backendDeepAgentExecutiveBriefing` handler path. The restored path is backed by the active Render Deep Agents research endpoint, records the canonical executive trace, and persists source/debug metadata for direct and fallback synthesis paths.
 - RAG/app database ownership boundary verifiers now pass after routing app metadata text fallbacks through `rag_document_metadata`, routing admin `source_sync_runs` reads through `createRagServiceClient()`, and routing Outlook intake reads/writes through AI DB resolver helpers.
 - Retrieval contract verifier now passes for live `search_document_chunks`: project filter, source-type filter, duplicate top-chunk prevention, citation/reference metadata, and static permission guard hooks.
+- Legacy retrieval inventory found no duplicate production implementation safe to delete in this slice. Old-looking backend RAG helpers are active through backend agents/API, and old eval scripts are still used by the local admin RAG eval route.
 
 ## Root Cause
 
@@ -133,3 +147,5 @@ The retrieval contract did not previously have a focused verifier for live proje
 ## Failure-Loud Guardrail
 
 This slice is not complete until failed retrieval filters, missing citations, duplicate chunks, inactive legacy paths, or assistant drift are caught by a repeatable verifier instead of manual inspection alone.
+
+Status: satisfied for the AAI-682 retrieval slice by the final closeout verifier bundle listed above.
