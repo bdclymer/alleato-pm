@@ -42,7 +42,6 @@ const updateSubmittalSchema = z.object({
       z.object({
         user_id: z.string().uuid(),
         step_type: z.string().min(1),
-        required: z.boolean().optional().default(true),
       }),
     )
     .optional(),

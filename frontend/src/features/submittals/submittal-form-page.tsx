@@ -154,7 +154,6 @@ const submittalFormSchema = z.object({
     z.object({
       user_id: z.string().min(1, "Reviewer is required"),
       step_type: z.string().min(1, "Role is required"),
-      required: z.boolean(),
     }),
   ),
 });
@@ -414,7 +413,6 @@ export function SubmittalFormPage({
       (template?.steps ?? []).map((step) => ({
         user_id: step.user_id ?? "",
         step_type: normalizeSubmittalWorkflowRole(step.step_type),
-        required: step.required ?? true,
       })),
     );
   }
@@ -423,7 +421,6 @@ export function SubmittalFormPage({
     workflowFieldArray.append({
       user_id: "",
       step_type: "Approver",
-      required: true,
     });
   }
 
@@ -480,7 +477,6 @@ export function SubmittalFormPage({
       initial_workflow_steps: values.initial_workflow_steps.map((step) => ({
         user_id: step.user_id,
         step_type: step.step_type,
-        required: step.required,
       })),
     };
 

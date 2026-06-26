@@ -45,7 +45,6 @@ const createSubmittalSchema = z.object({
       z.object({
         user_id: z.string().uuid(),
         step_type: z.string().min(1),
-        required: z.boolean().optional().default(true),
       }),
     )
     .max(20, "A submittal workflow can include at most 20 steps.")

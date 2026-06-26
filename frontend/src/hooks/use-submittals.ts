@@ -250,7 +250,6 @@ export interface CreateSubmittalInput {
   initial_workflow_steps?: Array<{
     user_id: string;
     step_type: string;
-    required?: boolean;
   }>;
 }
 
@@ -432,7 +431,6 @@ export function useAddWorkflowStep(projectId: number, submittalId: string) {
     mutationFn: (input: {
       user_id: string;
       step_type: string;
-      required?: boolean;
     }): Promise<{ id: string; step_order: number; step_type: string }> =>
       apiFetch<{ id: string; step_order: number; step_type: string }>(
         `/api/projects/${projectId}/submittals/${submittalId}/workflow-steps`,
@@ -577,7 +575,7 @@ export function useDeletePackage(projectId: number) {
 
 export interface WorkflowTemplateStep {
   step_type: string;
-  required: boolean;
+  required?: boolean;
   user_id?: string | null;
 }
 

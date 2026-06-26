@@ -32,7 +32,6 @@ import {
   StatusBadge,
 } from "@/components/ds";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -260,7 +259,6 @@ interface WorkflowBuilderProps {
   users: AuthUser[];
   currentSteps: {
     step_type: string;
-    required?: boolean;
     submittal_responses?: Array<{ responder_id: string; response_status: string }>;
   }[];
 }
@@ -274,7 +272,6 @@ function WorkflowBuilder({
   const router = useRouter();
   const [userId, setUserId] = React.useState("");
   const [stepType, setStepType] = React.useState<string>("Approver");
-  const [required, setRequired] = React.useState(true);
   const [templateName, setTemplateName] = React.useState("");
   const [savingTemplate, setSavingTemplate] = React.useState(false);
   const mutation = useAddWorkflowStep(projectId, submittalId);
@@ -284,10 +281,9 @@ function WorkflowBuilder({
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!userId) return;
-    await mutation.mutateAsync({ user_id: userId, step_type: stepType, required });
+    await mutation.mutateAsync({ user_id: userId, step_type: stepType });
     setUserId("");
     setStepType("Approver");
-    setRequired(true);
     router.refresh();
   }
 
@@ -300,7 +296,6 @@ function WorkflowBuilder({
       await mutation.mutateAsync({
         user_id: step.user_id ?? "",
         step_type: step.step_type,
-        required: step.required,
       });
     }
     router.refresh();
@@ -314,7 +309,6 @@ function WorkflowBuilder({
         s.submittal_responses?.[0]?.responder_id ?? null;
       return {
         step_type: s.step_type,
-        required: s.required ?? true,
         user_id: assignedUserId,
       };
     });
@@ -361,7 +355,7 @@ function WorkflowBuilder({
           Add Workflow Step
         </p>
         <form onSubmit={handleAdd} className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label className="text-xs">User</Label>
               <Select value={userId} onValueChange={setUserId}>
@@ -391,19 +385,6 @@ function WorkflowBuilder({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="flex items-end gap-1.5 pb-0.5">
-              <Checkbox
-                id="workflow-required"
-                checked={required}
-                onCheckedChange={(v) => setRequired(Boolean(v))}
-              />
-              <Label
-                htmlFor="workflow-required"
-                className="text-xs cursor-pointer"
-              >
-                Required
-              </Label>
             </div>
           </div>
           <div className="flex gap-2">
