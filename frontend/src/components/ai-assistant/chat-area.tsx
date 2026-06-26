@@ -2512,16 +2512,8 @@ function WidgetWelcomePrompt({
 }) {
   return (
     <div className="text-left">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Suggested actions
-          </p>
-          <p className="text-sm leading-5 text-foreground">
-            Continue from this page with the assistant.
-          </p>
-        </div>
-        {onDismiss && (
+      {onDismiss && (
+        <div className="mb-1 flex justify-end">
           <Button
             type="button"
             variant="ghost"
@@ -2532,9 +2524,9 @@ function WidgetWelcomePrompt({
           >
             <XIcon className="h-3.5 w-3.5" />
           </Button>
-        )}
-      </div>
-      <div className="mt-2">
+        </div>
+      )}
+      <div>
         <AssistantSuggestionList
           disabled={disabled}
           suggestions={suggestions.slice(0, 3)}
