@@ -227,7 +227,7 @@ describe("global AI assistant tool registry", () => {
 
   it("renders compact runtime routing guidance from registry policy metadata", () => {
     const guide = renderAssistantToolRoutingGuide({
-      allowedToolNames: ["searchTeamsMessages", "getMeetingIntelligence"],
+      allowedToolNames: ["searchTeamsMessages", "getMeetingsByDate"],
     });
 
     expect(guide).toContain("## Tool Routing Policy");
@@ -236,7 +236,7 @@ describe("global AI assistant tool registry", () => {
       "what insights can be found in the teams messages today",
     );
     expect(guide).toContain("do not substitute meetings");
-    expect(guide).toContain("getMeetingIntelligence (meeting, fireflies)");
+    expect(guide).toContain("getMeetingsByDate (meeting, fireflies)");
   });
 
   it("filters runtime tool sets through registered factory metadata", () => {

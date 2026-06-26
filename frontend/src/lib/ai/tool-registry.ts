@@ -204,7 +204,6 @@ export function renderAssistantToolRoutingGuide(
       "getRecentEmails",
       "searchEmails",
       "getMeetingsByDate",
-      "getMeetingIntelligence",
       "searchMeetingsByTopic",
       "getMeetingDetails",
       "semanticSearch",
@@ -638,7 +637,6 @@ function assistantReadRoutingPolicy(
       };
     case "searchMeetingsByTopic":
     case "getMeetingDetails":
-    case "getMeetingIntelligence":
     case "getMeetingsByDate":
       return {
         useWhen: [
@@ -793,7 +791,6 @@ const projectToolNames = [
   "getOutlookCalendarEvents",
   "getSopBacklog",
   "getFinanceSpendRollup",
-  "getMeetingIntelligence",
   "getProjectBriefingSnapshot",
   "getPortfolioOverview",
   "getProjectsWithRisks",
