@@ -953,3 +953,11 @@ Evidence directory:
   - Delegated `node --check scripts/verify/verify_graph_subscriptions.mjs` passed.
 - Evidence:
   - [AAI-718 evidence](../evidence/2026-06-25-ai-rag-production-finalization/outlook-stale-subscription-prevention-aai-718.md)
+
+### 2026-06-26: AAI-718 Outlook Stale Subscription Prevention Published
+
+- Published to `origin/main`:
+  - `76c1e1cb684251963fc09083466ffedc4bb67dfe`
+- Verified after push:
+  - local `HEAD` equals `origin/main`.
+  - Linear AAI-718 marked Done.

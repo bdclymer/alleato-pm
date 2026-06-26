@@ -1,6 +1,6 @@
 # Outlook Stale Subscription Prevention
 
-Status: Ready for Publish
+Status: Published
 
 Linear: AAI-718
 
@@ -24,7 +24,7 @@ The Graph subscription reconciler only guarantees rows for `MICROSOFT_SYNC_USERS
 - [x] Delegate typecheck/syntax verification after edits.
 - [x] Run focused backend tests and live verifier.
 - [x] Update progress notes and evidence.
-- [ ] Publish to `origin/main` and close Linear.
+- [x] Publish to `origin/main` and close Linear.
 
 ## Evidence
 
@@ -32,3 +32,5 @@ The Graph subscription reconciler only guarantees rows for `MICROSOFT_SYNC_USERS
 - Strict subscription verifier passed with `expectedTargetCount=11`, `activeSubscriptionCount=11`, `staleSubscriptionCount=0`, `unconfiguredSubscriptionCount=0`.
 - Megan mailbox sync read-back passed with `sync_status=success`, `last_sync_at=2026-06-26T12:57:54.566226+00:00`, and latest RAG `source_sync_runs` row `status=succeeded`.
 - Delegated verification passed: `29 passed`, Python compile passed, Node syntax check passed.
+- Published commit: `76c1e1cb684251963fc09083466ffedc4bb67dfe`.
+- Linear AAI-718 marked Done.
