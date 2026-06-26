@@ -1693,7 +1693,7 @@ export function ChatArea({
             : "px-4 pb-2.5 pt-3"
           : hasMessages
             ? "px-3 py-2 sm:px-4"
-            : "px-4 py-4 sm:px-5",
+            : "px-4 pb-2 pt-4 sm:px-5",
       )}
     >
       <AttachmentPreviews />
