@@ -1,9 +1,12 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import {
   FolderKanban,
   KeyRound,
-  ShieldCheck,
+  Pencil,
+  Plus,
+  Trash2,
 } from "lucide-react";
 
 import {
@@ -11,6 +14,7 @@ import {
   AvatarFallback,
   AvatarImage,
   Badge,
+  Button,
   EmptyState,
   InlineTable,
   InlineTableBody,
@@ -19,7 +23,6 @@ import {
   InlineTableHeaderCell,
   InlineTableHeaderRow,
   InlineTableRow,
-  KpiRow,
   Select,
   SelectContent,
   SelectItem,
@@ -36,32 +39,45 @@ import {
   type PermissionTemplate,
 } from "@/lib/permissions-shared";
 import {
-  formatProjectCount,
   getProjectRoleTemplates,
   type GranularOverrideEffect,
   type UserAccessSummary,
 } from "../_lib/user-access-data";
 
+type ProjectOption = {
+  id: number;
+  name: string;
+  jobNumber: string | null;
+};
+
 export function UserAccessPanel({
   user,
   templates,
   companyTemplates,
+  projects,
   isTemplatesLoading,
+  isProjectsLoading,
   isAssignmentSaving,
   isCompanyTemplateSaving,
   isGranularOverrideSaving,
   onAssignTemplate,
+  onAddProjectAccess,
+  onRemoveProjectAccess,
   onAssignCompanyTemplate,
   onSetGranularOverride,
 }: {
   user: UserAccessSummary;
   templates: PermissionTemplate[];
   companyTemplates: PermissionTemplate[];
+  projects: ProjectOption[];
   isTemplatesLoading: boolean;
+  isProjectsLoading: boolean;
   isAssignmentSaving: boolean;
   isCompanyTemplateSaving: boolean;
   isGranularOverrideSaving: boolean;
   onAssignTemplate: (projectId: number | string, personId: string, templateId: string) => void;
+  onAddProjectAccess: (projectId: number, templateId: string) => void;
+  onRemoveProjectAccess: (projectId: number | string) => void;
   onAssignCompanyTemplate: (personId: string, templateId: string | null) => void;
   onSetGranularOverride: (
     personId: string,
@@ -69,6 +85,12 @@ export function UserAccessPanel({
     effect: GranularOverrideEffect | null,
   ) => void;
 }) {
+  const [isEditingCompanyAccess, setIsEditingCompanyAccess] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("none");
+  const defaultProjectTemplateId = getProjectRoleTemplates(templates)[0]?.id ?? "none";
+  const [selectedProjectTemplateId, setSelectedProjectTemplateId] = useState<string>(
+    defaultProjectTemplateId,
+  );
   const assignmentProgress =
     user.projectCount > 0
       ? Math.round((user.assignedProjectCount / user.projectCount) * 100)
@@ -76,73 +98,67 @@ export function UserAccessPanel({
   const companyOverrideCount = user.granularOverrides.filter(
     (override) => override.projectId == null,
   ).length;
-  const accessMode = user.isAdmin
+  const assignedProjectIds = useMemo(
+    () => new Set(user.memberships.map((membership) => String(membership.projectId))),
+    [user.memberships],
+  );
+  const availableProjects = useMemo(
+    () => projects.filter((project) => !assignedProjectIds.has(String(project.id))),
+    [assignedProjectIds, projects],
+  );
+  const userRole = user.isAdmin
     ? "Admin"
     : user.companyTemplateName
-      ? "All-project access"
+      ? user.companyTemplateName
       : user.projectCount > 0
         ? "Selected projects"
         : "No project access";
+  const companyRoleContext =
+    user.isAdmin || !user.companyTemplateName || user.companyTemplateName === userRole
+      ? null
+      : user.companyTemplateName;
+  const canAddProject =
+    selectedProjectId !== "none" &&
+    selectedProjectTemplateId !== "none" &&
+    !isProjectsLoading &&
+    !isTemplatesLoading &&
+    !isAssignmentSaving;
 
   return (
     <div className="space-y-8">
-      <KpiRow
-          size="small"
-          bare
-          metrics={[
-            {
-              label: "Access mode",
-              value: accessMode,
-              context: user.companyTemplateName ?? user.primaryTemplateName,
-            },
-            {
-              label: "Project roles",
-              value: `${user.assignedProjectCount}/${user.projectCount}`,
-              context: user.projectCount === 0 ? "No memberships" : "Assigned memberships",
-              progress: {
-                value: assignmentProgress,
-                tone: user.missingTemplateCount > 0 ? "warning" : "neutral",
-              },
-            },
-            {
-              label: "Exceptions",
-              value: String(companyOverrideCount),
-              context: "Company-level overrides",
-            },
-            {
-              label: "Auth link",
-              value: user.authUserId ? "Linked" : "Missing",
-              context: user.authUserId ? "Can sign in" : "Needs reconciliation",
-              progress: {
-                value: user.authUserId ? 100 : 0,
-                tone: user.authUserId ? "neutral" : "danger",
-              },
-            },
-          ]}
-        />
-
-      <section className="space-y-4">
-        <div className="space-y-4">
-          <SectionRuleHeading
-            label="Company access"
-            icon={<ShieldCheck className="h-4 w-4" />}
-          />
-          <div className="space-y-3">
-            <p className="text-sm leading-6 text-muted-foreground">
-              Use company access when this person should inherit one role across every project.
-              Leave it empty for project-by-project control.
-            </p>
-            <div className="max-w-sm">
+      <section className="border-y border-border py-4">
+        <div className="grid gap-4 md:grid-cols-4">
+          <div className="group min-w-0 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                User role
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100"
+                disabled={isTemplatesLoading || isCompanyTemplateSaving || companyTemplates.length === 0}
+                onClick={() => setIsEditingCompanyAccess((current) => !current)}
+                aria-label="Edit user role"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </div>
+            {isEditingCompanyAccess ? (
               <Select
                 value={user.companyTemplateId ?? "none"}
                 disabled={isTemplatesLoading || isCompanyTemplateSaving || companyTemplates.length === 0}
-                onValueChange={(val) => onAssignCompanyTemplate(user.personId, val === "none" ? null : val)}
+                onValueChange={(val) => {
+                  onAssignCompanyTemplate(user.personId, val === "none" ? null : val);
+                  setIsEditingCompanyAccess(false);
+                }}
               >
                 <SelectTrigger className="h-9 w-full text-sm">
-                  <SelectValue placeholder="No company access" />
+                  <SelectValue placeholder="No company role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No company access</SelectItem>
+                  <SelectItem value="none">No company role</SelectItem>
                   {companyTemplates.map((tpl) => (
                     <SelectItem key={tpl.id} value={tpl.id}>
                       {tpl.name}
@@ -150,31 +166,88 @@ export function UserAccessPanel({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            ) : (
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-foreground">{userRole}</p>
+                {companyRoleContext && (
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {companyRoleContext}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
+          <SummaryItem
+            label="Project roles"
+            value={`${user.assignedProjectCount}/${user.projectCount}`}
+            context={user.projectCount === 0 ? "No memberships" : `${assignmentProgress}% assigned`}
+          />
+          <SummaryItem
+            label="Exceptions"
+            value={String(companyOverrideCount)}
+            context="Company-level overrides"
+          />
+          <SummaryItem
+            label="Auth link"
+            value={user.authUserId ? "Linked" : "Missing"}
+            context={user.authUserId ? "Can sign in" : "Needs reconciliation"}
+          />
         </div>
       </section>
 
-      <GranularExceptionPanel
-        user={user}
-        templates={templates}
-        companyTemplates={companyTemplates}
-        isSaving={isGranularOverrideSaving}
-        onSetGranularOverride={onSetGranularOverride}
-      />
-
       <section className="space-y-4">
-        <div>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <SectionRuleHeading
             label="Project access"
             icon={<FolderKanban className="h-4 w-4" />}
           />
+          <div className="grid gap-2 sm:grid-cols-[minmax(220px,1fr)_minmax(180px,220px)_auto] lg:w-2/3 lg:max-w-3xl">
+            <Select
+              value={selectedProjectId}
+              disabled={isProjectsLoading || isAssignmentSaving || availableProjects.length === 0}
+              onValueChange={setSelectedProjectId}
+            >
+              <SelectTrigger className="h-9 w-full text-sm">
+                <SelectValue placeholder="Select project" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none" disabled>
+                  Select project
+                </SelectItem>
+                {availableProjects.map((project) => (
+                  <SelectItem key={project.id} value={String(project.id)}>
+                    {project.name}
+                    {project.jobNumber ? ` (${project.jobNumber})` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <RoleSelect
+              value={selectedProjectTemplateId}
+              disabled={isTemplatesLoading || isAssignmentSaving || templates.length === 0}
+              templates={templates}
+              onValueChange={setSelectedProjectTemplateId}
+            />
+            <Button
+              type="button"
+              size="sm"
+              disabled={!canAddProject}
+              onClick={() => {
+                if (!canAddProject) return;
+                onAddProjectAccess(Number(selectedProjectId), selectedProjectTemplateId);
+                setSelectedProjectId("none");
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Add
+            </Button>
+          </div>
         </div>
 
         {user.memberships.length === 0 ? (
           <EmptyState
             title="No project memberships"
-            description="This person is in the company directory, but has not been added to any project yet."
+            description="Add a project above to give this person access."
             className="border-t border-border py-12"
           />
         ) : (
@@ -185,6 +258,7 @@ export function UserAccessPanel({
                   <InlineTableHeaderCell>Project</InlineTableHeaderCell>
                   <InlineTableHeaderCell>Status</InlineTableHeaderCell>
                   <InlineTableHeaderCell className="w-60">Role</InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-12" />
                 </InlineTableHeaderRow>
               </InlineTableHeader>
               <InlineTableBody>
@@ -197,6 +271,7 @@ export function UserAccessPanel({
                     isTemplatesLoading={isTemplatesLoading}
                     isAssignmentSaving={isAssignmentSaving}
                     onAssignTemplate={onAssignTemplate}
+                    onRemoveProjectAccess={onRemoveProjectAccess}
                   />
                 ))}
               </InlineTableBody>
@@ -211,12 +286,43 @@ export function UserAccessPanel({
                   isTemplatesLoading={isTemplatesLoading}
                   isAssignmentSaving={isAssignmentSaving}
                   onAssignTemplate={onAssignTemplate}
+                  onRemoveProjectAccess={onRemoveProjectAccess}
                 />
               ))}
             </div>
           </div>
         )}
       </section>
+
+      <GranularExceptionPanel
+        user={user}
+        templates={templates}
+        companyTemplates={companyTemplates}
+        isSaving={isGranularOverrideSaving}
+        onSetGranularOverride={onSetGranularOverride}
+      />
+    </div>
+  );
+}
+
+function SummaryItem({
+  label,
+  value,
+  context,
+}: {
+  label: string;
+  value: string;
+  context: string;
+}) {
+  return (
+    <div className="min-w-0 space-y-2">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium text-foreground">{value}</p>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">{context}</p>
+      </div>
     </div>
   );
 }
@@ -564,6 +670,7 @@ function ProjectAccessTableRow({
   isTemplatesLoading,
   isAssignmentSaving,
   onAssignTemplate,
+  onRemoveProjectAccess,
 }: {
   user: UserAccessSummary;
   membership: UserAccessSummary["memberships"][number];
@@ -575,6 +682,7 @@ function ProjectAccessTableRow({
     personId: string,
     templateId: string,
   ) => void;
+  onRemoveProjectAccess: (projectId: number | string) => void;
 }) {
   const hasRole = Boolean(membership.templateId);
 
@@ -606,6 +714,19 @@ function ProjectAccessTableRow({
           }
         />
       </InlineTableCell>
+      <InlineTableCell className="text-right">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          disabled={isAssignmentSaving}
+          onClick={() => onRemoveProjectAccess(membership.projectId)}
+          aria-label={`Remove ${membership.projectName ?? `project ${membership.projectId}`} access`}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </InlineTableCell>
     </InlineTableRow>
   );
 }
@@ -617,6 +738,7 @@ function ProjectAccessMobileRow({
   isTemplatesLoading,
   isAssignmentSaving,
   onAssignTemplate,
+  onRemoveProjectAccess,
 }: {
   user: UserAccessSummary;
   membership: UserAccessSummary["memberships"][number];
@@ -628,6 +750,7 @@ function ProjectAccessMobileRow({
     personId: string,
     templateId: string,
   ) => void;
+  onRemoveProjectAccess: (projectId: number | string) => void;
 }) {
   const hasRole = Boolean(membership.templateId);
 
@@ -642,10 +765,23 @@ function ProjectAccessMobileRow({
             Current: {membership.templateName ?? "No role"}
           </p>
         </div>
-        <StatusBadge
-          status={hasRole ? "Assigned" : "Missing"}
-          variant={hasRole ? "success" : "warning"}
-        />
+        <div className="flex shrink-0 items-center gap-1">
+          <StatusBadge
+            status={hasRole ? "Assigned" : "Missing"}
+            variant={hasRole ? "success" : "warning"}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            disabled={isAssignmentSaving}
+            onClick={() => onRemoveProjectAccess(membership.projectId)}
+            aria-label={`Remove ${membership.projectName ?? `project ${membership.projectId}`} access`}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       <RoleSelect
         value={membership.templateId}
