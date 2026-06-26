@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { VeltProvider } from "@veltdev/react";
 import { apiFetch } from "@/lib/api-client";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
+import { useDeferredMount } from "@/hooks/use-deferred-mount";
 
 async function getVeltToken(payload: {
   userId: string;
@@ -24,6 +25,14 @@ async function getVeltToken(payload: {
 export function VeltAuthProvider({ children }: { children: React.ReactNode }) {
   const { profile } = useCurrentUserProfile();
   const apiKey = process.env.NEXT_PUBLIC_VELT_API_KEY;
+  // Defer booting the Velt SDK past the critical render window. VeltProvider
+  // loads velt.js (~1.4 MB) and inits the SDK in a useEffect gated on `apiKey`;
+  // passing the key only after a delay + browser idle moves that cost off the
+  // LCP path. The provider stays mounted at the same tree position the whole
+  // time, so page children never remount — only the SDK script load is delayed.
+  // Velt's React hooks are null-safe until the client exists, so the header's
+  // comment button no-ops gracefully during the brief pre-boot window.
+  const sdkReady = useDeferredMount(3_000);
 
   const authProvider = useMemo(() => {
     if (!profile) return undefined;
@@ -60,7 +69,7 @@ export function VeltAuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <VeltProvider
-      apiKey={apiKey}
+      apiKey={sdkReady ? apiKey : ""}
       authProvider={authProvider}
     >
       {children}
