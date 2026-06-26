@@ -94,6 +94,11 @@ describe("AiApprovalsPage", () => {
 
     expect(screen.getByText("Change event draft")).toBeInTheDocument();
     expect(screen.queryByText("Memory updated")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Route: interrupt · approvals queue, in app, assistant widget",
+      ),
+    ).toBeInTheDocument();
 
     const markReviewedButton = screen.getByRole("button", {
       name: "Mark reviewed",
