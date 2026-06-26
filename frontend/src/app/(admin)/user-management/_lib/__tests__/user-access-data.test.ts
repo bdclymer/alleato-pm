@@ -128,6 +128,14 @@ describe("slugifyName", () => {
   it("falls back to 'user' when nothing slugifiable remains", () => {
     expect(slugifyName("！！！")).toBe("user");
   });
+
+  it("falls back to 'user' on empty string", () => {
+    expect(slugifyName("")).toBe("user");
+  });
+
+  it("falls back to 'user' on whitespace-only string", () => {
+    expect(slugifyName("   ")).toBe("user");
+  });
 });
 
 describe("looksLikePersonId", () => {
@@ -197,5 +205,45 @@ describe("buildUserSlugMaps", () => {
     for (const [personId, slug] of slugByPersonId) {
       expect(personIdBySlug.get(slug)).toBe(personId);
     }
+  });
+
+  it("handles an empty user list without error", () => {
+    const { slugByPersonId, personIdBySlug } = buildUserSlugMaps([]);
+    expect(slugByPersonId.size).toBe(0);
+    expect(personIdBySlug.size).toBe(0);
+  });
+
+  it("does not collide when a user's natural slug matches a generated suffix", () => {
+    // "John Smith 2" naturally slugifies to "john-smith-2". Without a collision
+    // guard, a second "John Smith" duplicate would overwrite its reverse-map entry.
+    const { slugByPersonId, personIdBySlug } = buildUserSlugMaps([
+      summaryFor("p-aaa", "John Smith"),
+      summaryFor("p-bbb", "John Smith 2"),
+      summaryFor("p-ccc", "John Smith"),
+    ]);
+
+    const aaaSlug = slugByPersonId.get("p-aaa")!;
+    const bbbSlug = slugByPersonId.get("p-bbb")!;
+    const cccSlug = slugByPersonId.get("p-ccc")!;
+
+    // All three slugs must be distinct.
+    expect(new Set([aaaSlug, bbbSlug, cccSlug]).size).toBe(3);
+
+    // Reverse map must resolve correctly for every user.
+    expect(personIdBySlug.get(aaaSlug)).toBe("p-aaa");
+    expect(personIdBySlug.get(bbbSlug)).toBe("p-bbb");
+    expect(personIdBySlug.get(cccSlug)).toBe("p-ccc");
+  });
+
+  it("treats accent-stripped names as duplicates of their ASCII equivalent", () => {
+    // "José Smith" and "Jose Smith" both slugify to "jose-smith".
+    // The second (higher personId) should get the "-2" suffix.
+    const { slugByPersonId } = buildUserSlugMaps([
+      summaryFor("p-aaa", "Jose Smith"),
+      summaryFor("p-bbb", "José Smith"),
+    ]);
+
+    expect(slugByPersonId.get("p-aaa")).toBe("jose-smith");
+    expect(slugByPersonId.get("p-bbb")).toBe("jose-smith-2");
   });
 });

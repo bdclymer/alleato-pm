@@ -208,6 +208,11 @@ export function buildUserSlugMaps(users: UserAccessSummary[]): UserSlugMaps {
   const slugByPersonId = new Map<string, string>();
   const personIdBySlug = new Map<string, string>();
   const baseCounts = new Map<string, number>();
+  // Tracks every final slug that has been assigned, so we can detect when a
+  // generated suffix collides with another user's natural base slug (e.g.
+  // "John Smith 2" naturally slugifies to "john-smith-2", which would otherwise
+  // be silently overwritten when two "John Smith" entries generate that suffix).
+  const usedSlugs = new Set<string>();
 
   const ordered = [...users].sort((a, b) => a.personId.localeCompare(b.personId));
 
@@ -215,9 +220,18 @@ export function buildUserSlugMaps(users: UserAccessSummary[]): UserSlugMaps {
     const base = slugifyName(user.fullName);
     const nextCount = (baseCounts.get(base) ?? 0) + 1;
     baseCounts.set(base, nextCount);
-    const slug = nextCount === 1 ? base : `${base}-${nextCount}`;
-    slugByPersonId.set(user.personId, slug);
-    personIdBySlug.set(slug, user.personId);
+    let candidate = nextCount === 1 ? base : `${base}-${nextCount}`;
+
+    // Walk forward until we find a slug not yet claimed by any other user.
+    let bump = nextCount;
+    while (usedSlugs.has(candidate)) {
+      bump++;
+      candidate = `${base}-${bump}`;
+    }
+
+    usedSlugs.add(candidate);
+    slugByPersonId.set(user.personId, candidate);
+    personIdBySlug.set(candidate, user.personId);
   }
 
   return { slugByPersonId, personIdBySlug };

@@ -273,7 +273,24 @@ export default function PermissionsAdminPage() {
     () => (activeUsersQuery.data?.data ?? []).map(toAccessSummary),
     [activeUsersQuery.data?.data],
   );
-  const { slugByPersonId } = useMemo(() => buildUserSlugMaps(users), [users]);
+  // Build the slug map from the full combined universe (app + project users)
+  // rather than the current tab's filtered subset. The detail page resolves
+  // slugs against all users, so both sides must agree on who is "john-smith"
+  // vs "john-smith-2" regardless of which tab the link came from.
+  const allUsersForSlugs = useMemo(() => {
+    const seen = new Set<string>();
+    return [
+      ...(appUsersQuery.data?.data ?? []),
+      ...(projectAccessUsersQuery.data?.data ?? []),
+    ]
+      .filter((u) => {
+        if (seen.has(u.personId)) return false;
+        seen.add(u.personId);
+        return true;
+      })
+      .map(toAccessSummary);
+  }, [appUsersQuery.data?.data, projectAccessUsersQuery.data?.data]);
+  const { slugByPersonId } = useMemo(() => buildUserSlugMaps(allUsersForSlugs), [allUsersForSlugs]);
   const userHref = useCallback(
     (user: UserAccessSummary) =>
       `/user-management/users/${slugByPersonId.get(user.personId) ?? user.personId}`,

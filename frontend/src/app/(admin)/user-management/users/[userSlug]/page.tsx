@@ -11,6 +11,7 @@ import {
   fetchTemplates,
   fetchUsers,
   getProjectRoleTemplates,
+  looksLikePersonId,
   toAccessSummary,
   type GranularOverrideEffect,
 } from "../../_lib/user-access-data";
@@ -24,8 +25,15 @@ export default function PermissionUserDetailPage() {
   const router = useRouter();
   const qc = useQueryClient();
   const searchParams = useSearchParams();
-  const { userSlug } = useParams<{ userSlug: string }>()! ?? { userSlug: "" };
-  const routeKey = decodeURIComponent(userSlug ?? "");
+  const { userSlug } = useParams<{ userSlug: string }>();
+  const rawSlug = userSlug ?? "";
+  const routeKey = (() => {
+    try {
+      return decodeURIComponent(rawSlug);
+    } catch {
+      return rawSlug;
+    }
+  })();
 
   const usersQuery = useQuery({
     queryKey: ["permission-users"],
@@ -54,14 +62,19 @@ export default function PermissionUserDetailPage() {
 
   // Resolve the route key as a name slug first, then fall back to a raw
   // personId/authUserId so legacy UUID links keep working.
-  const personIdFromSlug = personIdBySlug.get(routeKey) ?? null;
-  const user =
-    users.find(
-      (item) =>
-        item.personId === personIdFromSlug ||
-        item.personId === routeKey ||
-        item.authUserId === routeKey,
-    ) ?? null;
+  // Skip the slug map when the route key is already a UUID — the map won't
+  // have a UUID key, so the lookup would always return undefined anyway.
+  const personIdFromSlug = looksLikePersonId(routeKey) ? null : (personIdBySlug.get(routeKey) ?? null);
+  const user = useMemo(
+    () =>
+      users.find(
+        (item) =>
+          item.personId === personIdFromSlug ||
+          item.personId === routeKey ||
+          item.authUserId === routeKey,
+      ) ?? null,
+    [users, personIdFromSlug, routeKey],
+  );
 
   // Canonicalize the URL to the user's name slug (e.g. when arriving via a
   // legacy UUID link). Replace so the back button skips the UUID entry.
@@ -95,7 +108,9 @@ export default function PermissionUserDetailPage() {
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
     onError: (err) => {
-      toast.error("Failed to update project access");
+      toast.error("Project access update failed", {
+        description: err instanceof Error ? err.message : String(err),
+      });
     },
   });
 
@@ -116,7 +131,9 @@ export default function PermissionUserDetailPage() {
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
     onError: (err) => {
-      toast.error("Failed to update company access");
+      toast.error("Company access update failed", {
+        description: err instanceof Error ? err.message : String(err),
+      });
     },
   });
 
@@ -149,7 +166,9 @@ export default function PermissionUserDetailPage() {
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
     onError: (err) => {
-      toast.error("Failed to update permission exception");
+      toast.error("Permission exception update failed", {
+        description: err instanceof Error ? err.message : String(err),
+      });
     },
   });
 
