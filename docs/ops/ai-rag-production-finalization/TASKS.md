@@ -440,8 +440,12 @@ Evidence directory:
   - `python3 -m py_compile backend/src/services/integrations/microsoft_graph/embed.py backend/src/services/pipeline/vision_analyzer.py backend/tests/test_graph_embed.py`
   - `PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_graph_embed.py -q`
   - `node scripts/verify/verify_rag_chunk_integrity.mjs --days=2`
+- Render deployed the final Outlook attachment and vision-only metadata fix live:
+  - Deploy: `dep-d8us9surnols73bp5sj0`
+  - Commit: `4cc73d447508d9c54bc667444dc9f379ee24d724`
 - Evidence:
   - [render-backend-deploy-live-graph-auto-vision-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/render-backend-deploy-live-graph-auto-vision-aai-669.json)
+  - [render-backend-deploy-live-outlook-vision-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/render-backend-deploy-live-outlook-vision-aai-669.json)
   - [pdf-vision-onedrive-batch-1-corrected-postcheck-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-1-corrected-postcheck-aai-669.json)
   - [pdf-vision-onedrive-batch-2-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-2-aai-669.json)
   - [pdf-vision-onedrive-batch-3-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-3-aai-669.json)

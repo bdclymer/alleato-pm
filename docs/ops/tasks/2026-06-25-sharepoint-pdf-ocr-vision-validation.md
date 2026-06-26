@@ -3,7 +3,7 @@
 Date: 2026-06-25
 Linear: AAI-669
 Parent: AAI-636
-Status: In Progress - Final Verification And Publish Remaining
+Status: Complete
 
 ## Objective
 
@@ -51,6 +51,7 @@ Validate the production SharePoint and uploaded-document/PDF processing pipeline
 - Graph vision download proof: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-graph-download-proof-aai-669.json`
 - Graph embed auto-vision proof: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-graph-embed-auto-proof-aai-669.json`
 - Render auto-vision deploy live: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/render-backend-deploy-live-graph-auto-vision-aai-669.json`
+- Final Outlook/vision-only deploy live: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/render-backend-deploy-live-outlook-vision-aai-669.json`
 - OneDrive vision batches: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-1-corrected-postcheck-aai-669.json`, `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-2-aai-669.json`, `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-3-aai-669.json`
 - Drawing upload vision batch: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-drawing-upload-batch-aai-669.json`
 - Vision-only OneDrive OCR-failure repair: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-only-onedrive-ocr-failed-batch-aai-669.json`, `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-only-onedrive-failed-row-repair-aai-669.json`
@@ -87,6 +88,7 @@ Key results:
 - OneDrive proof succeeded for `onedrive_01F674PXSIV6J6OA5TSFBYSDO6AXFJZJOF`: 25 pages analyzed from Graph and 25 embedded `vision_page_summary` chunks written alongside 22 OneDrive text chunks.
 - Automatic Graph embed proof succeeded for `onedrive_01F674PXTBGWMDGWLXOJBZKUU35DJK3P37`: `embed_graph_document` ran vision internally and wrote 39 total chunks with page intelligence.
 - Render deployed the automatic Graph vision fix live on `alleato-backend` (`dep-d8urk2l7vvec73eklqd0`, commit `238b56c8e0824e5ad5d258d3f8ddce3108fd1d9b`).
+- Render deployed the final Outlook attachment and vision-only metadata fix live on `alleato-backend` (`dep-d8us9surnols73bp5sj0`, commit `4cc73d447508d9c54bc667444dc9f379ee24d724`).
 - OneDrive vision backfill repaired 29/29 embedded OneDrive drawing/document PDFs:
   - Batch 1 postcheck covered 5/5 additional rows after the first two proof rows.
   - Batch 2 covered 10/10.
