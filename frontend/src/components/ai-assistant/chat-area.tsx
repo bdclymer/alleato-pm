@@ -2530,6 +2530,7 @@ function WidgetWelcomePrompt({
         <AssistantSuggestionList
           disabled={disabled}
           suggestions={suggestions.slice(0, 3)}
+          variant="compact"
           onSelectPrompt={onAction}
         />
       </div>

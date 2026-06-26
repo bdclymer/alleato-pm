@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 type AssistantSuggestionListProps = {
   disabled?: boolean;
   suggestions: AssistantSuggestion[];
-  variant?: "inline" | "panel";
+  variant?: "compact" | "inline" | "panel";
   onSelectPrompt: (prompt: string) => void;
 };
 
@@ -20,6 +20,42 @@ export function AssistantSuggestionList({
   onSelectPrompt,
 }: AssistantSuggestionListProps) {
   if (suggestions.length === 0) return null;
+
+  if (variant === "compact") {
+    return (
+      <div className="flex flex-wrap gap-x-3 gap-y-2 text-xs">
+        {suggestions.map((suggestion) => {
+          const className =
+            "max-w-full text-left font-medium leading-5 text-primary underline-offset-4 hover:underline disabled:pointer-events-none disabled:text-muted-foreground";
+
+          if (suggestion.href && suggestion.status !== "not_ready" && !disabled) {
+            return (
+              <Link key={suggestion.id} href={suggestion.href} className={className}>
+                {suggestion.label}
+              </Link>
+            );
+          }
+
+          return (
+            <Button
+              key={suggestion.id}
+              type="button"
+              variant="link"
+              size="xs"
+              disabled={disabled || suggestion.status === "not_ready"}
+              className={cn(
+                className,
+                "h-auto min-h-0 shrink whitespace-normal p-0 text-xs",
+              )}
+              onClick={() => onSelectPrompt(suggestion.prompt)}
+            >
+              {suggestion.label}
+            </Button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div
