@@ -21,6 +21,7 @@ import {
   isAiWidgetNotificationKind,
   type AiWidgetNotificationDraft,
 } from "@/lib/collaboration/ai-widget-notifications";
+import { shouldInterruptAiWidget } from "@/lib/collaboration/ai-notification-routing";
 import { cn } from "@/lib/utils";
 import { WidgetAiChat, type WidgetAiChatView } from "./widget-ai-chat";
 
@@ -91,6 +92,9 @@ export function GlobalAiWidget() {
   const hasUnreadAiWelcomeNotification = unreadAiNotifications.some(
     (notification) => notification.kind === "ai_assistant_welcome",
   );
+  const hasUnreadInterruptingAiNotification = unreadAiNotifications.some(
+    shouldInterruptAiWidget,
+  );
   const unreadNotificationDraft = React.useMemo(
     () => getFirstUnreadAiWidgetNotificationDraft(notifications),
     [notifications],
@@ -98,7 +102,7 @@ export function GlobalAiWidget() {
   const hasUnread =
     hasAssistantActivityUnread ||
     showWelcomePrompt ||
-    unreadAiNotifications.length > 0;
+    hasUnreadInterruptingAiNotification;
 
   React.useEffect(() => {
     openRef.current = open;

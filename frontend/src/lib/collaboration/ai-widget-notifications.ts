@@ -21,6 +21,7 @@ export type AiWidgetNotificationMetadata = {
   source?: string;
   eventType?: string;
   requiredAction?: string;
+  tier?: string;
 };
 
 export type AiWidgetNotificationCandidate = {
@@ -67,6 +68,7 @@ export function getAiWidgetNotificationMetadata(
     source: cleanString(record.source),
     eventType: cleanString(record.eventType),
     requiredAction: cleanString(record.requiredAction),
+    tier: cleanString(record.tier),
   };
 }
 

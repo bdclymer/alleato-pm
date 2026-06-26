@@ -45,6 +45,7 @@ describe("ai widget collaboration notifications", () => {
         source: " collaboration_notifications ",
         eventType: " ai_memory_updated ",
         requiredAction: " Open the assistant. ",
+        tier: " quiet_unboxing ",
         ignored: "value",
       }),
     ).toEqual({
@@ -53,6 +54,7 @@ describe("ai widget collaboration notifications", () => {
       source: "collaboration_notifications",
       eventType: "ai_memory_updated",
       requiredAction: "Open the assistant.",
+      tier: "quiet_unboxing",
     });
 
     expect(
