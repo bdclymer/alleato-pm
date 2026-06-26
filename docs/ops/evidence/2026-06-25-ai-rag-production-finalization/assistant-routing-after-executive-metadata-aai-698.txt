@@ -1,0 +1,74 @@
+
+> alleato-procore@0.1.0 rag:verify:assistant-routing
+> pnpm --dir frontend exec playwright test tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts --config=config/playwright/playwright.no-webserver.config.ts --project=chromium
+
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.patchedDependencies", "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.patchedDependencies", "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+Already up to date
+Done in 228ms using pnpm v11.7.0
+[dotenv@17.2.3] injecting env (151) from .env.local -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (8) from ../.env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+Running 6 tests using 1 worker
+
+(node:18073) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18073) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[dotenv@17.2.3] injecting env (0) from ../.env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+Existing auth session is still valid; verifying protected route access
+  ✓  1 [setup] › tests/auth.setup.ts:159:6 › authenticate (8.2s)
+(node:18214) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18214) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+  ✓  2 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:142:7 › AI assistant intent and tool routing › routes RFI creation requests through preview-only action tooling (6.2s)
+  ✓  3 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:175:7 › AI assistant intent and tool routing › routes Teams source questions as source lookup instead of project briefing (3.5s)
+  ✓  4 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:191:7 › AI assistant intent and tool routing › answers executive briefing metadata follow-ups without asking for a project (1.6s)
+  ✘  5 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:205:7 › AI assistant intent and tool routing › answers personal task prompts from task sources instead of inferred reconstruction (2.1s)
+  -  6 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:219:7 › AI assistant intent and tool routing › returns a source-grounded Westfield briefing without streaming tool fallback
+
+
+  1) [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:205:7 › AI assistant intent and tool routing › answers personal task prompts from task sources instead of inferred reconstruction
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoContain[2m([22m[32mexpected[39m[2m) // indexOf[22m
+
+    Expected substring: [32m"Sources Checked"[39m
+    Received string:    [31m"I checked the Tasks page source of truth: `public.tasks` filtered to Brandon Clymer's open task owner identity.·[39m
+    [31mFound 50 open Brandon tasks in the Tasks table.[39m
+    [31m- **Resolve the five remaining Brandon Capital One coding items once** | Project: Alleato Finance | Due: Jun 9, 2026 | Source: Weekly Accounting Meeting[39m
+    [31m- **Resolve bank access administrative items** | Project: Alleato Finance | Due: Jun 15, 2026 | Source: Weekly Accounting Meeting[39m
+    [31m- **Lead Monday accounting review** | Project: Alleato Finance | Due: Jun 22, 2026 | Source: Weekly Accounting Meeting[39m
+    [31m- **Review WIP processes with accounting team** | Due: Jun 25, 2026 | Source: Rob+Brandon discussion[39m
+    [31m- **Send Park Collective floor plan to Phil** | Project: Port Collective | Due: Jun 26, 2026 | Source: Team Strategy Update[39m
+    [31m- **Follow up on Sam Harmon decision** | Due: Jun 26, 2026 | Source: Rob+Brandon discussion[39m
+    [31m- **Assess Port Wentworth redevelopment site** | Project: Port Collective | Due: Jun 28, 2026 | Source: Team Strategy Update[39m
+    [31m- **Finalize VP of Construction onboarding** | Due: Jul 20, 2026 | Source: Rob+Brandon discussion[39m
+    [31m- **Prepare year-end funding projections** | Project: Alleato Finance | Due: Nov 30, 2026 | Source: Brandon Clymer and Ben Golden[39m
+    [31m- **Confirm whether anything different is needed on this** | Project: Vermillion Rise Warehouse | Source: Email: Re: Project Name: 'Vermillion Rise TI' Number: '462305' confirmation.[39m
+    [31m- **Evaluate AI workflow pilots for staff** | Project: Alleato Internal Ops | Source: 30 Minute Meeting - Brandon  Clymer and Kate Marshall[39m
+    [31m- **Define trust governance and trustee preferences** | Project: Alleato Finance | Source: Brandon Clymer and Ben Golden·[39m
+    [31mThis answer is a direct task-table lookup, not an executive briefing synthesis."[39m
+
+      210 |     );
+      211 |
+    > 212 |     expect(report.content).toContain("Sources Checked");
+          |                            ^
+      213 |     expect(report.content).toContain("tasks.assignee_person_id");
+      214 |     expect(report.content).not.toContain("likely current tasks");
+      215 |     expect(report.content).not.toContain("pretty good reconstruction");
+        at /Users/meganharrison/Documents/alleato-pm/frontend/tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:212:28
+
+  1 failed
+    [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:205:7 › AI assistant intent and tool routing › answers personal task prompts from task sources instead of inferred reconstruction
+  1 did not run
+  4 passed (23.3s)

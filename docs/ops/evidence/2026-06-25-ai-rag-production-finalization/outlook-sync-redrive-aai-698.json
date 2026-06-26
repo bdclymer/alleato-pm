@@ -1,0 +1,65 @@
+/Users/meganharrison/Documents/alleato-pm/backend/.venv/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.3) or chardet (6.0.0.post1)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+[Outlook] Limiting bclymer@alleatogroup.com mailbox sync to 25/44 delta items. Raise OUTLOOK_SYNC_MAX_MESSAGES_PER_MAILBOX for a deliberate backlog drain.
+[Outlook] Reconciled project assignment for AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnuAAA= from None to document_metadata project_id=60
+[GraphSync] Event-driven extraction failed (non-fatal): Blocked project_synthesizer_event_driven: high-churn AI/intelligence writes to the PM app database are disabled after the Supabase health incident. Move this writer to the AI database or set ALLOW_PM_APP_HIGH_CHURN_WRITES=true only for a controlled one-off run. Target tables: source_signal_candidates, insight_cards, insight_card_evidence, intelligence_packets, tasks.
+{
+  "status": "complete_with_errors",
+  "total_synced": 18,
+  "outlook": 18,
+  "teams": 0,
+  "teams_dm": 0,
+  "onedrive": 0,
+  "sharepoint": 0,
+  "errors": [
+    "Intelligence extraction failed: Blocked project_synthesizer_event_driven: high-churn AI/intelligence writes to the PM app database are disabled after the Supabase health incident. Move this writer to the AI database or set ALLOW_PM_APP_HIGH_CHURN_WRITES=true only for a controlled one-off run. Target tables: source_signal_candidates, insight_cards, insight_card_evidence, intelligence_packets, tasks."
+  ],
+  "phases": {
+    "source_sync": "enabled",
+    "embedding": "enabled",
+    "ocr": "enabled",
+    "attachment_promotion": "enabled"
+  },
+  "outlook_users_selected": [
+    "bclymer@alleatogroup.com"
+  ],
+  "embed": {
+    "embedded": 10,
+    "skipped": 0,
+    "skipped_disabled": 0,
+    "total_chunks": 14,
+    "errors": 0,
+    "by_category": {
+      "email": 10
+    }
+  },
+  "ocr": {
+    "status": "ok",
+    "seen": 0,
+    "ocr_full": 0,
+    "ocr_partial": 0,
+    "failed": 0,
+    "skipped": 0
+  },
+  "embed_attachments": {
+    "embedded": 0,
+    "errors": 0
+  },
+  "embed_fireflies": {
+    "embedded": 1,
+    "total_chunks": 11,
+    "errors": 0
+  },
+  "attachment_promotion": {
+    "seen": 17,
+    "promoted": 0,
+    "skipped": 0,
+    "review_needed": 17,
+    "failed": 0,
+    "failures": []
+  },
+  "intelligence_extraction": {
+    "error": "Blocked project_synthesizer_event_driven: high-churn AI/intelligence writes to the PM app database are disabled after the Supabase health incident. Move this writer to the AI database or set ALLOW_PM_APP_HIGH_CHURN_WRITES=true only for a controlled one-off run. Target tables: source_signal_candidates, insight_cards, insight_card_evidence, intelligence_packets, tasks."
+  },
+  "phase": "outlook"
+}
