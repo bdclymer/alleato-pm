@@ -8,6 +8,7 @@ import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 const querySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(25),
   cursor: z.string().datetime().optional(),
+  kind: z.string().trim().min(1).max(80).optional(),
 });
 
 const patchSchema = z.discriminatedUnion("action", [
@@ -41,7 +42,7 @@ export const GET = withApiGuardrails(
       });
     }
 
-    const { limit, cursor } = parsed.data;
+    const { limit, cursor, kind } = parsed.data;
     const supabase = await createClient();
 
     let query = supabase
@@ -55,6 +56,10 @@ export const GET = withApiGuardrails(
 
     if (cursor) {
       query = query.lt("created_at", cursor);
+    }
+
+    if (kind) {
+      query = query.eq("kind", kind);
     }
 
     const { data, error } = await query;
@@ -71,11 +76,17 @@ export const GET = withApiGuardrails(
     const hasMore = (data?.length ?? 0) > limit;
     const page = hasMore ? data!.slice(0, limit) : data ?? [];
 
-    const { count: unreadCount, error: unreadError } = await supabase
+    let unreadQuery = supabase
       .from("collaboration_notifications")
       .select("id", { count: "exact", head: true })
       .is("deleted_at", null)
       .is("read_at", null);
+
+    if (kind) {
+      unreadQuery = unreadQuery.eq("kind", kind);
+    }
+
+    const { count: unreadCount, error: unreadError } = await unreadQuery;
 
     if (unreadError) {
       throw new GuardrailError({

@@ -27,8 +27,9 @@ interface NotificationsResponse {
 
 const PAGE_SIZE = 25;
 
-export function useCollaborationNotifications(options?: { enabled?: boolean }) {
+export function useCollaborationNotifications(options?: { enabled?: boolean; kind?: string }) {
   const enabled = options?.enabled ?? true;
+  const kind = options?.kind?.trim() || null;
   const [notifications, setNotifications] = useState<CollaborationNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,8 +41,11 @@ export function useCollaborationNotifications(options?: { enabled?: boolean }) {
 
   const baseQuery = useMemo(() => {
     const params = new URLSearchParams({ limit: String(PAGE_SIZE) });
+    if (kind) {
+      params.set("kind", kind);
+    }
     return params;
-  }, []);
+  }, [kind]);
 
   const fetchPage = useCallback(
     async ({ append, cursorValue }: { append: boolean; cursorValue?: string | null }) => {
