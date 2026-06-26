@@ -91,16 +91,16 @@ describe("getPostLoginRedirect", () => {
     expect(await getPostLoginRedirect(supabase, USER_ID)).toBe("/50/client-dashboard");
   });
 
-  it("routes a single-project employee to /home", async () => {
+  it("routes a single-project employee to the Action Dashboard", async () => {
     const supabase = mockSupabase({
       user_profiles: { is_admin: false },
       users_auth: { person_id: PERSON_ID },
       project_directory_memberships: [{ project_id: 7, user_type: "employee" }],
     });
-    expect(await getPostLoginRedirect(supabase, USER_ID)).toBe("/7/home");
+    expect(await getPostLoginRedirect(supabase, USER_ID)).toBe("/home");
   });
 
-  it("sends multi-project users to the portfolio when no callbackUrl is given", async () => {
+  it("sends multi-project users to the Action Dashboard when no callbackUrl is given", async () => {
     const supabase = mockSupabase({
       user_profiles: { is_admin: false },
       users_auth: { person_id: PERSON_ID },
@@ -109,6 +109,24 @@ describe("getPostLoginRedirect", () => {
         { project_id: 2, user_type: "employee" },
       ],
     });
-    expect(await getPostLoginRedirect(supabase, USER_ID)).toBe("/");
+    expect(await getPostLoginRedirect(supabase, USER_ID)).toBe("/home");
+  });
+
+  it("sends admins with no callbackUrl to the Action Dashboard", async () => {
+    const supabase = mockSupabase({
+      user_profiles: { is_admin: true },
+      users_auth: null,
+      project_directory_memberships: [],
+    });
+    expect(await getPostLoginRedirect(supabase, USER_ID)).toBe("/home");
+  });
+
+  it("sends users with no memberships to the Action Dashboard", async () => {
+    const supabase = mockSupabase({
+      user_profiles: { is_admin: false },
+      users_auth: null,
+      project_directory_memberships: [],
+    });
+    expect(await getPostLoginRedirect(supabase, USER_ID)).toBe("/home");
   });
 });

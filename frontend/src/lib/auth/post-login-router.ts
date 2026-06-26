@@ -5,9 +5,9 @@ export type PostLoginSupabaseClient = Pick<SupabaseClient<Database>, "from">;
 
 /**
  * Landing path for a single membership, based on its user_type.
- * Mirrors the redirect logic in app/(main)/[projectId]/home/page.tsx so a
- * subcontractor lands directly on /my-work (their only accessible surface)
- * rather than bouncing through /home first.
+ * Client/subcontractor users keep their role-specific project surfaces; internal
+ * users land on the company-level Action Dashboard so login does not drop them
+ * directly into a project before they decide what needs attention.
  */
 function landingForMembership(projectId: number, userType: string | null): string {
   if (userType === "client") {
@@ -16,7 +16,7 @@ function landingForMembership(projectId: number, userType: string | null): strin
   if (userType === "subcontractor") {
     return `/${projectId}/my-work`;
   }
-  return `/${projectId}/home`;
+  return "/home";
 }
 
 /**
@@ -37,9 +37,9 @@ function projectIdFromPath(path: string): number | null {
  *
  * - Client with 1 project → /{projectId}/client-dashboard
  * - Subcontractor with 1 project → /{projectId}/my-work
- * - Employee/developer with 1 project → /{projectId}/home
- * - Multiple projects → / (portfolio page, already filtered by membership)
- * - No memberships → / (will show empty state)
+ * - Employee/developer with 1 project -> /home
+ * - Multiple projects -> /home
+ * - No memberships -> /home
  *
  * `callbackUrl` (the page the user was trying to reach before login) is honored
  * ONLY when the user can actually access it. A callbackUrl pointing at a project
@@ -94,12 +94,12 @@ export async function getPostLoginRedirect(
     }
 
     if (isAdmin) {
-      // Admin with no specific destination → portfolio.
-      return "/";
+      // Admin with no specific destination -> Action Dashboard.
+      return "/home";
     }
 
     if (memberships.length === 0) {
-      return "/";
+      return "/home";
     }
 
     if (memberships.length === 1) {
@@ -107,8 +107,8 @@ export async function getPostLoginRedirect(
       return landingForMembership(m.project_id, m.user_type);
     }
 
-    // Multiple projects — portfolio page (filtered by API)
-    return "/";
+    // Multiple projects -> Action Dashboard.
+    return "/home";
   } catch {
     return "/";
   }
