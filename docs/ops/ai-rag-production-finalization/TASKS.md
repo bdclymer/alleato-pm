@@ -1019,7 +1019,7 @@ Evidence directory:
 ### 2026-06-26: AAI-721 Project Emails Live Outlook Intake Repair Started
 
 - Opened urgent follow-up after the project Emails page rendered an empty inbox while Outlook sync data existed.
-- Confirmed root cause:
+- Confirmed first root cause:
   - `outlook_email_intake` had 545 rows in the last seven days;
   - `project_emails` had 0 rows created in the same window;
   - `/{projectId}/emails` calls `/api/projects/{projectId}/emails`, and that route still read only `project_emails`.
@@ -1035,7 +1035,26 @@ Evidence directory:
   - route unit tests passed for project and global email routes;
   - focused ESLint passed with existing warnings only;
   - delegated changed-file typecheck passed.
-- Browser/API proof is still pending because unauthenticated curl to the local route correctly returned `AUTH_EXPIRED`, and the existing `localhost:3001` process is not proven to be running this worktree.
+- Production browser/API proof then failed before the env repair:
+  - authenticated admin session on `https://projects.alleatogroup.com/876/emails` showed the empty inbox;
+  - authenticated `/api/projects/876/emails?source=outlook` returned `[]`;
+  - RAG DB readback showed project `876` rows existed, including `Re: Exol Morrisville PA`.
+- Confirmed second root cause:
+  - Vercel production runtime env pull showed no active `RAG_SUPABASE_URL`, no `RAG_SUPABASE_SERVICE_ROLE_KEY`, and no `RAG_DATABASE_READS_ENABLED`;
+  - production therefore fell back to the PM App Supabase project, whose `outlook_email_intake` had 0 rows in the one-week operational window.
+- Applied provider/config repair:
+  - overwrote Vercel production `RAG_SUPABASE_URL`, `RAG_SUPABASE_SERVICE_ROLE_KEY`, and `RAG_DATABASE_READS_ENABLED` from the existing local secure env source without printing secrets;
+  - changed `createOutlookIntakeServiceClient()` so Outlook intake can only use the AI/RAG Supabase client and fails loudly if RAG env is missing;
+  - added `scripts/validate-runtime-config.mjs` production checks for the same RAG env vars.
+- Added fail-loud guardrail test:
+  - `src/lib/supabase/__tests__/service.test.ts` proves Outlook intake uses the RAG host and missing RAG env throws instead of falling back to PM App.
+- Production proof after env repair:
+  - Vercel redeploy `dpl_7f5gZeBdGQDphgiUJyK4myqS7MJJ` reached READY;
+  - authenticated `/api/emails` returned 1000 live Outlook rows;
+  - authenticated `/api/projects/876/emails?source=outlook` returned 28 rows with `Re: Exol Morrisville PA` first;
+  - browser body text for `/876/emails` contains `Steve Fischer` and `Re: Exol Morrisville PA` and no longer contains the empty-state strings.
+- Publish scope:
+  - this AAI-721 closeout publishes the fail-loud guardrail code so future production deployments cannot silently fall back to the PM App database.
 - Links:
   - [Task](../tasks/2026-06-26-outlook-project-emails-intake.md)
   - [Linear AAI-721](https://linear.app/megankharrison/issue/AAI-721/repair-project-emails-route-to-read-live-outlook-intake)

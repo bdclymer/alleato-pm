@@ -79,11 +79,15 @@ const isProductionRuntime =
   process.env.NODE_ENV === "production";
 
 if (isProductionRuntime) {
-  const productionRequired = ["ADMIN_API_KEY"].filter((key) => !process.env[key]?.trim());
+  const productionRequired = [
+    "ADMIN_API_KEY",
+    "RAG_SUPABASE_URL",
+    "RAG_SUPABASE_SERVICE_ROLE_KEY",
+  ].filter((key) => !process.env[key]?.trim());
   if (productionRequired.length > 0) {
     console.error(
       `Missing required production env vars: ${productionRequired.join(", ")}. ` +
-        `These power runtime-only code paths (e.g. schedule PDF import) and must be set in production.`,
+        `These power runtime-only code paths (e.g. schedule PDF import and Outlook intake reads) and must be set in production.`,
     );
     process.exit(1);
   }
