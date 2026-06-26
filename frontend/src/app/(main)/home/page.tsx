@@ -597,6 +597,12 @@ export default function HomeActionDashboardPage() {
                 actionLabel="Manage"
               />
               <ActionRow
+                title="AI actions"
+                meta="Open the assistant action catalog and chat workspace."
+                href="/ai"
+                actionLabel="Open"
+              />
+              <ActionRow
                 title="Executive intelligence"
                 meta="Open the existing source-backed executive surface."
                 href="/executive"

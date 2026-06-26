@@ -156,5 +156,16 @@ describe("HomeActionDashboardPage", () => {
         "Review what AI can use for role, memory, and approval context.",
       ),
     ).toBeInTheDocument();
+
+    const aiActionsLink = screen.getByRole("link", { name: /AI actions/i });
+    expect(aiActionsLink).toHaveAttribute("href", "/ai");
+    expect(
+      screen.getByText("Open the assistant action catalog and chat workspace."),
+    ).toBeInTheDocument();
+
+    const notificationsLink = screen.getByRole("link", {
+      name: /Notifications/i,
+    });
+    expect(notificationsLink).toHaveAttribute("href", "/notifications");
   });
 });
