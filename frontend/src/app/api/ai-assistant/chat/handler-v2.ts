@@ -62,10 +62,16 @@ import {
   type ContextCompactionMetadata,
 } from "@/lib/ai/stream/compaction";
 import {
+  buildDeepAgentExecutiveEvidenceWidget,
   buildDeepAgentResearchEvidenceWidget,
+  fetchDeepAgentExecutiveBriefing,
   fetchDeepAgentResearch,
+  formatDeepAgentExecutiveBriefingContext,
+  formatDeepAgentExecutiveDirectResponse,
   formatDeepAgentResearchContext,
   formatDeepAgentResearchDirectResponse,
+  shouldUseDeepAgentExecutiveBridge,
+  shouldUseDeepAgentExecutiveDirectResponse,
   shouldUseDeepAgentResearchBridge,
   shouldUseDeepAgentResearchDirectResponse,
 } from "@/lib/ai/deep-agent-bridge";
@@ -2566,6 +2572,204 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           responseAlreadyPersisted = true;
         }
         return;
+      }
+
+      if (
+        !AI_EVAL_DISABLE_BACKEND_DEEP_AGENTS &&
+        (shouldUseDeepAgentExecutiveBridge({
+          intent: plan.intent,
+          selectedProjectId: args.selectedProjectId ?? null,
+        }) ||
+          (selectedDeepAgentsStrategist &&
+            plan.reason === "executive_deep_agent_broad_operator_question"))
+      ) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "backend-deep-agents",
+            message: "Checking Render Deep Agents executive briefing",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        try {
+          const executiveBridgeStarted = Date.now();
+          const packet = await withKeepAlive(
+            writer,
+            {
+              statusId: "strategist-status",
+              stage: "backend-deep-agents",
+              message: "Still working with Render Deep Agents executive briefing…",
+            },
+            () =>
+              fetchDeepAgentExecutiveBriefing({
+                userId: args.user.id,
+                sessionId: args.sessionId,
+                question: lastUserContent,
+              }),
+          );
+          const executiveBridgeDurationMs =
+            Date.now() - executiveBridgeStarted;
+
+          if (shouldUseDeepAgentExecutiveDirectResponse(packet)) {
+            const content = formatDeepAgentExecutiveDirectResponse(packet);
+            const widget = buildDeepAgentExecutiveEvidenceWidget(packet);
+            const dataParts = widget
+              ? [
+                  {
+                    type: "data-assistant-widget",
+                    id: "assistant-widget-deep-agent-executive-briefing",
+                    data: { widget },
+                  },
+                ]
+              : [];
+            const toolTrace = [
+              createBackendBridgeTrace({
+                tool: "backendDeepAgentExecutiveBriefing",
+                status: "success",
+                message: lastUserContent,
+                selectedProjectId: args.selectedProjectId ?? null,
+                durationMs: executiveBridgeDurationMs,
+              }),
+              ...mapBackendPacketTrace(packet.toolTrace, {
+                message: lastUserContent,
+                selectedProjectId: args.selectedProjectId ?? null,
+              }),
+            ];
+            const sourceCoverage = packet.sources.map((source) => ({
+              sourceType: source.sourceType,
+              title: source.title,
+              url: source.url ?? null,
+            }));
+            const sourceDebug = buildAnswerDebugMetadata({
+              orchestrator: "backend-deep-agent-executive-briefing",
+              plan,
+              toolTrace,
+              sourceCoverage,
+              evidenceCount: packet.sources.length,
+            });
+
+            await persistDirectDeepAgentResponse({
+              supabase: args.supabase,
+              sessionId: args.sessionId,
+              userId: args.user.id,
+              content,
+              responseLabel: "executive-briefing",
+              sourceDebug,
+              trace: {
+                input: lastUserContent,
+                intent: plan.intent,
+                modelId:
+                  process.env.DEEP_AGENTS_RESEARCH_MODEL ??
+                  "render-backend-deep-agents",
+                selectedProjectId: args.selectedProjectId ?? null,
+                toolTrace,
+              },
+              metadata: {
+                architecture: "render-backend-deep-agents-v1",
+                model: process.env.DEEP_AGENTS_RESEARCH_MODEL ?? null,
+                provider_path: "render-backend-ai-gateway",
+                backend_deep_agent: {
+                  endpoint: "executive-briefing",
+                  backing_endpoint: "research",
+                  mode: packet.mode,
+                  orchestrator: packet.orchestrator,
+                  source_count: packet.sources.length,
+                  skills_loaded: packet.skillsLoaded,
+                },
+                retrieval_plan: {
+                  intent: plan.intent,
+                  reason: plan.reason,
+                  responseFormat: plan.responseFormat,
+                  sources: Object.keys(plan.sources),
+                },
+                tool_trace: toolTrace,
+                response_quality: buildResponseQualityMetadata({
+                  toolTrace,
+                  content,
+                }),
+                source_debug: sourceDebug,
+                data_parts: dataParts,
+              } as Json,
+            });
+
+            responseAlreadyPersisted = true;
+            dataParts.forEach((dataPart) => writer.write(dataPart as never));
+            writeTextResponse(
+              writer,
+              "strategist-deep-agent-executive-briefing",
+              content,
+            );
+            writer.write({
+              type: "data-status",
+              id: "strategist-status",
+              data: {
+                stage: "complete",
+                message: "Render Deep Agents executive answer returned",
+                status: "success",
+                timestamp: new Date().toISOString(),
+              },
+            } as never);
+            return;
+          }
+
+          backendDeepAgentContextBlocks.push(
+            formatDeepAgentExecutiveBriefingContext(packet),
+          );
+          bridgeToolTrace.push(
+            createBackendBridgeTrace({
+              tool: "backendDeepAgentExecutiveBriefing",
+              status: "success",
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId ?? null,
+              durationMs: executiveBridgeDurationMs,
+              detail:
+                "Backend executive packet returned context for local synthesis.",
+            }),
+            ...mapBackendPacketTrace(packet.toolTrace, {
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId ?? null,
+            }),
+          );
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "backend-deep-agents",
+              message:
+                "Render Deep Agents returned executive context but not a direct answer; using local synthesis",
+              status: "warning",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          bridgeToolTrace.push(
+            createBackendBridgeTrace({
+              tool: "backendDeepAgentExecutiveBriefing",
+              status: "failed",
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId ?? null,
+              detail,
+            }),
+          );
+          console.error("[handler-v2] Deep Agents executive bridge failed", {
+            message: detail,
+            intent: plan.intent,
+          });
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "backend-deep-agents",
+              message: `Render Deep Agents executive bridge failed; falling back to local retrieval: ${detail}`,
+              status: "warning",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+        }
       }
 
       if (

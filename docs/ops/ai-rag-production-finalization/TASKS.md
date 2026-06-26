@@ -475,7 +475,7 @@ Evidence directory:
 - Deleted 67 live RAG placeholder chunks, marked 16 placeholder-only RAG metadata rows as `skipped_low_content`, and mirrored that status to 16 app `document_metadata` rows.
 - Added a chunk-integrity fatal guardrail for low-content placeholder chunks.
 - Hybrid ranking passed after cleanup (`hybridHits=28`, `vectorHits=26`).
-- Remaining blocker: `npm run rag:verify:assistant-operational-readiness` now loads the active eval suite but fails because `backendDeepAgentExecutiveBriefing` is still required by architecture/evals and is not attached by the current handler.
+- Assistant readiness blocker found: `npm run rag:verify:assistant-operational-readiness` loaded the active eval suite but failed because `backendDeepAgentExecutiveBriefing` was still required by architecture/evals and was not attached by the current handler.
 - Boundary verifiers also remain red for RAG/app ownership:
   - Heavy app `document_metadata.content/raw_text` reads still exist in parser/embedder and document-intelligence paths.
   - The admin AI work-runs route still reads RAG-owned `source_sync_runs` without `createRagServiceClient()`.
@@ -491,11 +491,23 @@ Evidence directory:
   - [client-boundary-after-minimal-repair-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/client-boundary-after-minimal-repair-aai-682.txt)
   - [backend-client-boundary-after-minimal-repair-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-after-minimal-repair-aai-682.txt)
 
+### 2026-06-25: AAI-682 Executive Deep Agents Bridge Restored
+
+- Restored the live assistant handler path that attaches the canonical `backendDeepAgentExecutiveBriefing` trace for broad no-project executive/operator prompts.
+- The restored frontend bridge uses the active Render Deep Agents research endpoint with an executive-specific prompt contract instead of resurrecting the removed backend contract-spike service.
+- Direct executive backend answers now persist `render-backend-deep-agents-v1` metadata, response quality, source debug, source evidence widgets, and the canonical executive bridge tool trace.
+- Fallback synthesis now receives a `Backend Deep Agents Executive Briefing Packet` context block and still records the canonical trace.
+- `npm run rag:verify:assistant-operational-readiness` now passes: 80/80 checks.
+- `npm run typecheck` still reports unrelated untracked-file type debt in `frontend/src/lib/ai/workflow-registry.ts`; it is not part of this AAI-682 slice.
+- Evidence:
+  - [assistant-operational-readiness-after-executive-bridge-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-after-executive-bridge-aai-682.txt)
+  - [frontend-typecheck-after-executive-bridge-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-executive-bridge-aai-682.txt)
+
 ## Remaining Blockers
 
 - No active Fireflies meeting error backlog remains inside the two-month operational concern window.
 - No active Outlook/Teams shared queue backlog remains inside the one-week operational concern window.
 - SharePoint source sync/retrieval is healthy.
 - PDF/upload/document backfill has no active missing rows in the tracked recent candidate set after AAI-669 final inventory.
-- AAI-682 remaining blocker: the assistant operational-readiness verifier fails on the missing canonical `backendDeepAgentExecutiveBriefing` bridge/tool trace. This needs migration/restoration or an explicit architecture/eval-suite decision.
 - AAI-682 boundary blockers: metadata/client/backend-client boundary verifiers still fail on RAG/app ownership seams and need cleanup before this slice can claim production readiness.
+- Unrelated typecheck blocker: untracked `frontend/src/lib/ai/workflow-registry.ts` currently fails frontend typecheck outside this AAI-682 slice.

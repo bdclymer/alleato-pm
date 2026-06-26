@@ -207,6 +207,8 @@ AAI-682 progress:
   - FAIL: `npm run verify:metadata-boundary` still flags heavy app `document_metadata.content/raw_text` reads in parser/embedder and document-intelligence paths.
   - FAIL: `npm run verify:client-boundary` still flags the admin AI work-runs route reading RAG-owned `source_sync_runs` without `createRagServiceClient()`.
   - FAIL: `npm run verify:backend-client-boundary` still flags Outlook intake reads that need the AI DB resolver in email digest and Microsoft executive assistant paths.
+  - PASS after follow-up: `npm run rag:verify:assistant-operational-readiness` passes after restoring the canonical `backendDeepAgentExecutiveBriefing` handler path.
+  - WARN/BLOCKED outside this slice: `npm run typecheck` reports unrelated untracked-file type errors in `frontend/src/lib/ai/workflow-registry.ts`.
 - Evidence:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/minimal-extract-repair-plan-aai-682.json`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/minimal-extract-repair-applied-aai-682.json`
@@ -217,13 +219,15 @@ AAI-682 progress:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/metadata-boundary-after-minimal-repair-aai-682.txt`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/client-boundary-after-minimal-repair-aai-682.txt`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-after-minimal-repair-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-after-executive-bridge-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-executive-bridge-aai-682.txt`
 - Remaining blocker:
-  - Restore/migrate the executive Deep Agents bridge/tool trace or deliberately update the target architecture and active eval suite if `backendDeepAgentExecutiveBriefing` has been retired. Until then, assistant operational readiness is not complete.
   - Resolve RAG/app boundary failures before claiming retrieval production readiness.
+  - Resolve or isolate unrelated untracked `frontend/src/lib/ai/workflow-registry.ts` type errors before using full frontend typecheck as a closeout gate.
 
 ## Exact Next Step
 
-Resolve the AAI-682 assistant operational-readiness blocker first: restore/migrate the `backendDeepAgentExecutiveBriefing` bridge/tool trace or explicitly update the target architecture and active eval suite if that workflow was intentionally retired. Then clear metadata/client/backend-client boundary verifier failures.
+Clear metadata/client/backend-client boundary verifier failures for AAI-682. The assistant operational-readiness blocker is resolved, but retrieval production readiness still requires RAG/app ownership boundary cleanup.
 
 ## Known Pitfalls
 

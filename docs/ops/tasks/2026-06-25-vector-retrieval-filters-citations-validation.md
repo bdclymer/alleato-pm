@@ -73,11 +73,14 @@ Low-content repair evidence:
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/metadata-boundary-after-minimal-repair-aai-682.txt`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/client-boundary-after-minimal-repair-aai-682.txt`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-after-minimal-repair-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-after-executive-bridge-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-executive-bridge-aai-682.txt`
 
 Linear milestone comment:
 
 - AAI-682 comment `db0b4236-06bf-4c57-9d1a-5c187c7420d0`
 - AAI-682 checkpoint/blocker comment `bbf351b8-8ba2-4586-8ead-37f64e256877`
+- AAI-682 executive bridge checkpoint comment `e584c809-6cd4-4acc-b247-f2eb60d2c705`
 
 ## Initial Known Constraints
 
@@ -89,17 +92,23 @@ Linear milestone comment:
 
 ## Blockers
 
-- `npm run rag:verify:assistant-operational-readiness` fails one real assertion: the live assistant handler does not attach the canonical `backendDeepAgentExecutiveBriefing` bridge/tool trace even though the architecture and active eval suite still require it for broad no-project executive prompts.
 - Boundary verifiers still fail on RAG/app database ownership:
   - `npm run verify:metadata-boundary` flags heavy `document_metadata.content/raw_text` reads in the parser/embedder and related document-intelligence paths.
   - `npm run verify:client-boundary` flags `frontend/src/app/api/admin/ai-work-runs/route.ts` reading RAG-owned `source_sync_runs` without `createRagServiceClient()`.
   - `npm run verify:backend-client-boundary` flags Outlook intake reads that still need the AI DB resolver in email digest and Microsoft executive assistant paths.
+- `npm run typecheck` currently reports unrelated untracked-file type debt in `frontend/src/lib/ai/workflow-registry.ts`; the failing file is not part of this AAI-682 slice.
+
+## Resolved Blockers
+
+- `npm run rag:verify:assistant-operational-readiness` passed after restoring the canonical `backendDeepAgentExecutiveBriefing` handler path. The restored path is backed by the active Render Deep Agents research endpoint, records the canonical executive trace, and persists source/debug metadata for direct and fallback synthesis paths.
 
 ## Root Cause
 
 The document parser created placeholder summaries and segments for low-content documents. Those placeholders were embedded as searchable chunks, so hybrid ranking retrieved junk instead of production-grade source content.
 
 The assistant-readiness verifier also pointed at a missing archived eval-suite path, which hid the real remaining Deep Agents executive bridge assertion until the verifier path was fixed.
+
+The executive bridge assertion failed because the current handler and bridge module no longer exposed the canonical business-wide Deep Agents path, while the active architecture and eval suite still required `backendDeepAgentExecutiveBriefing` for no-project executive/operator prompts.
 
 ## Prevention
 
@@ -108,6 +117,7 @@ The assistant-readiness verifier also pointed at a missing archived eval-suite p
 - Documents with no searchable text and no vision are marked `skipped_low_content`, have stale chunks removed, and do not call embedding.
 - RAG chunk integrity now fails on low-content placeholder chunks.
 - Assistant operational readiness now loads the active `docs/ai-plan2/evals/assistant-eval-suite.json` eval suite.
+- Broad no-project executive prompts now route through `fetchDeepAgentExecutiveBriefing`, backed by the active Render Deep Agents research endpoint, and persist the canonical `backendDeepAgentExecutiveBriefing` trace.
 
 ## Failure-Loud Guardrail
 

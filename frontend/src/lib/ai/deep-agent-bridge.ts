@@ -15,6 +15,15 @@ const RESEARCH_WHERE = "ai-assistant.deep-agent-research";
 const APP_EXPERT_WHERE = "ai-assistant.deep-agent-app-expert";
 const DEFAULT_DEEP_AGENT_BRIDGE_TIMEOUT_MS = 120_000;
 
+const DEEP_AGENT_EXECUTIVE_CONTEXT_INTENTS = new Set<AssistantIntent>([
+  "latest_status",
+  "risk_review",
+  "financial_analysis",
+  "decision_lookup",
+  "task_followup",
+  "implementation_planning",
+]);
+
 const toolTraceSchema = z.object({
   agent: z.string(),
   tool: z.string(),
@@ -75,6 +84,13 @@ export type DeepAgentResearchRequest = {
   timeoutMs?: number;
 };
 
+export type DeepAgentExecutiveBriefingRequest = {
+  userId: string;
+  sessionId?: string | null;
+  question: string;
+  timeoutMs?: number;
+};
+
 export type DeepAgentAppExpertRequest = {
   userId: string;
   sessionId?: string | null;
@@ -107,6 +123,19 @@ export function shouldUseDeepAgentResearchBridge(params: {
   intent: AssistantIntent;
 }): boolean {
   return isDeepAgentBridgeEnabled() && params.intent === "external_research";
+}
+
+export function shouldUseDeepAgentExecutiveBridge(params: {
+  intent: AssistantIntent;
+  projectId?: number | null;
+  selectedProjectId?: number | null;
+}): boolean {
+  const projectId = params.projectId ?? params.selectedProjectId;
+  return (
+    isDeepAgentBridgeEnabled() &&
+    typeof projectId !== "number" &&
+    DEEP_AGENT_EXECUTIVE_CONTEXT_INTENTS.has(params.intent)
+  );
 }
 
 export function shouldUseDeepAgentAppExpertBridge(params: {
@@ -191,6 +220,25 @@ export async function fetchDeepAgentResearch(
   return deepResearchResponseSchema.parse(json);
 }
 
+export async function fetchDeepAgentExecutiveBriefing(
+  params: DeepAgentExecutiveBriefingRequest,
+): Promise<DeepResearchResponse> {
+  return fetchDeepAgentResearch({
+    userId: params.userId,
+    sessionId: params.sessionId,
+    projectId: null,
+    maxSearches: 8,
+    timeoutMs: params.timeoutMs,
+    question: [
+      "Business-wide executive briefing request.",
+      "Use Alleato internal read-only tools first: tasks, emails, Teams, meetings, documents, projects, financials, schedule, and current source health where relevant.",
+      "Return an operator-ready answer with source labels and call out missing or failed source categories.",
+      "",
+      params.question,
+    ].join("\n"),
+  });
+}
+
 export async function fetchDeepAgentAppExpert(
   params: DeepAgentAppExpertRequest,
 ): Promise<DeepAppExpertResponse> {
@@ -259,6 +307,41 @@ export function formatDeepAgentResearchContext(packet: DeepResearchResponse): st
   ].join("\n");
 }
 
+export function formatDeepAgentExecutiveBriefingContext(
+  packet: DeepResearchResponse,
+): string {
+  const sourceLines = packet.sources.slice(0, 10).map((source) => {
+    const url = source.url ? ` ${source.url}` : "";
+    return `- [${source.sourceType}] ${source.title}${url}`;
+  });
+  const traceLines = packet.toolTrace.slice(0, 10).map((trace) => {
+    return `- ${trace.agent}/${trace.tool}: ${trace.status}${trace.detail ? ` - ${trace.detail}` : ""}`;
+  });
+
+  return [
+    "# Backend Deep Agents Executive Briefing Packet",
+    "",
+    `Mode: ${packet.mode}`,
+    `Orchestrator: ${packet.orchestrator}`,
+    `Skills loaded: ${packet.skillsLoaded.join(", ") || "none reported"}`,
+    "",
+    "Backend executive synthesis:",
+    packet.answer,
+    "",
+    "Sources:",
+    ...(sourceLines.length > 0
+      ? sourceLines
+      : ["- No parsed source URLs were returned; inspect backend internal tool trace for Alleato source usage."]),
+    "",
+    "Backend trace:",
+    ...(traceLines.length > 0
+      ? traceLines
+      : ["- No backend trace rows were returned."]),
+    "",
+    "Use this packet as checked business-wide backend context. Do not claim writes were completed unless a deterministic action tool did that work.",
+  ].join("\n");
+}
+
 export function formatDeepAgentAppExpertContext(packet: DeepAppExpertResponse): string {
   const sourceLines = packet.sources.slice(0, 10).map((source) => {
     const route = source.route ? ` route=${source.route}` : "";
@@ -311,6 +394,12 @@ export function shouldUseDeepAgentResearchDirectResponse(
   );
 }
 
+export function shouldUseDeepAgentExecutiveDirectResponse(
+  packet: DeepResearchResponse,
+): boolean {
+  return shouldUseDeepAgentResearchDirectResponse(packet);
+}
+
 export function formatDeepAgentResearchDirectResponse(
   packet: DeepResearchResponse,
 ): string {
@@ -321,6 +410,19 @@ export function formatDeepAgentResearchDirectResponse(
     answer,
     "",
     "Source coverage note: the research backend did not return parsed source URLs. Treat uncited claims as lower confidence and ask for sources if you need audit-ready evidence.",
+  ].join("\n");
+}
+
+export function formatDeepAgentExecutiveDirectResponse(
+  packet: DeepResearchResponse,
+): string {
+  const answer = packet.answer.trim();
+  if (packet.sources.length > 0) return answer;
+
+  return [
+    answer,
+    "",
+    "Source coverage note: the backend executive briefing did not return parsed source URLs. Treat uncited claims as lower confidence and inspect the backend tool trace before acting on audit-sensitive details.",
   ].join("\n");
 }
 
@@ -340,6 +442,29 @@ export function buildDeepAgentResearchEvidenceWidget(
       href: source.url ?? undefined,
       snippet:
         source.sourceType === "web" ? "Public web source" : "Research source",
+      confidence: "medium",
+    })),
+  };
+}
+
+export function buildDeepAgentExecutiveEvidenceWidget(
+  packet: DeepResearchResponse,
+): AssistantWidgetPayload | null {
+  if (packet.sources.length === 0) return null;
+
+  return {
+    type: "source_evidence_drawer",
+    id: "deep-agent-executive-briefing-evidence",
+    title: "Executive briefing sources",
+    sources: packet.sources.slice(0, 10).map((source, index): SourceEvidenceItem => ({
+      id: source.url ?? `executive-source-${index + 1}`,
+      title: source.title,
+      sourceType: "knowledge",
+      href: source.url ?? undefined,
+      snippet:
+        source.sourceType === "web"
+          ? "Public web source"
+          : "Executive briefing source",
       confidence: "medium",
     })),
   };
