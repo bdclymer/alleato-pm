@@ -578,44 +578,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/Company'
 
-  # Ingestion Endpoints
-  /api/ingest/fireflies:
-    post:
-      tags:
-        - RAG Chat
-      summary: Ingest Fireflies meeting transcript
-      servers:
-        - url: http://localhost:8051
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - path
-              properties:
-                path:
-                  type: string
-                  description: Path to Fireflies transcript file
-                project_id:
-                  type: integer
-                  description: Associated project ID
-                dry_run:
-                  type: boolean
-                  default: true
-                  description: Preview without saving
-      responses:
-        '200':
-          description: Ingestion result
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  result:
-                    type: object
-
 # Component Definitions
 components:
   schemas:

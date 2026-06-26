@@ -171,12 +171,6 @@ class ChatRequest(BaseModel):
     limit: int = 5
 
 
-class IngestRequest(BaseModel):
-    path: str
-    project_id: Optional[int] = None
-    dry_run: bool = True
-
-
 class FirefliesRecentSyncRequest(BaseModel):
     limit: int = 5
     project_id: Optional[int] = None
@@ -761,46 +755,6 @@ async def extract_schedule_pdf_text(
         "page_count": len(reader.pages),
         "character_count": len(extracted_text),
     }
-
-
-@app.post("/api/ingest/fireflies", tags=["Ingestion"], summary="Ingest Fireflies transcript")
-def ingest_fireflies_endpoint(
-    payload: IngestRequest,
-    pipeline: FirefliesIngestionPipeline = Depends(get_ingestion_pipeline),
-    _: None = Depends(require_admin_api_key),
-) -> Dict[str, Any]:
-    """Ingest a Fireflies meeting transcript into the knowledge base.
-
-    This endpoint processes Fireflies meeting transcripts and extracts:
-    - Meeting metadata
-    - Transcript chunks for semantic search
-    - Action items and tasks
-    - Key insights and decisions
-
-    Args:
-        payload: IngestRequest with path to transcript file, optional project_id, and dry_run flag.
-
-    Returns:
-        Dict with ingestion result details.
-    """
-    allow_file_ingest = os.getenv("ENABLE_LEGACY_FIREFLIES_FILE_INGEST", "false").lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
-    if not allow_file_ingest:
-        raise HTTPException(
-            status_code=410,
-            detail=(
-                "Legacy file-based Fireflies ingest is disabled. "
-                "Use POST /api/ingest/fireflies/recent (or enable "
-                "ENABLE_LEGACY_FIREFLIES_FILE_INGEST=true for explicit legacy use)."
-            ),
-        )
-
-    result = pipeline.ingest_file(payload.path, project_id=payload.project_id, dry_run=payload.dry_run)
-    return {"result": result.__dict__}
 
 
 @app.post("/api/ingest/fireflies/recent", tags=["Ingestion"], summary="Sync recent Fireflies transcripts")

@@ -39,6 +39,10 @@ Active env/database cleanup proof slice:
 
 - [2026-06-26-ai-rag-env-db-cleanup-proof.md](../tasks/2026-06-26-ai-rag-env-db-cleanup-proof.md)
 
+Completed legacy Fireflies file-ingest removal slice:
+
+- [2026-06-26-remove-legacy-fireflies-file-ingest.md](../tasks/2026-06-26-remove-legacy-fireflies-file-ingest.md)
+
 Evidence directory:
 
 - [2026-06-25-ai-rag-production-finalization](../evidence/2026-06-25-ai-rag-production-finalization)
@@ -312,13 +316,40 @@ Evidence directory:
   - `docs/architecture/TABLE-LIST.md`
 - `npm run db:inventory` now passes schema drift and generated a 458-table inventory.
 - `npm run db:inventory -- --check-only` passes.
-- First env cleanup candidates were classified but not removed:
-  - `LEGACY_DAILY_DIGEST_ENABLED` and `ENABLE_LEGACY_FIREFLIES_FILE_INGEST` are migrate-first disabled legacy gates.
+- First env cleanup candidates were classified:
+  - `LEGACY_DAILY_DIGEST_ENABLED` remains a migrate-first disabled legacy gate.
+  - `ENABLE_LEGACY_FIREFLIES_FILE_INGEST` moved to AAI-706 and is being removed with the legacy file-ingest route.
   - `GRAPH_API_INGESTION_ENABLED` is an active provider/web-service pressure guard.
   - `OUTLOOK_SYNC_LEGACY_ATTACHMENTS`, `OUTLOOK_SYNC_LEGACY_LINKS`, and `OUTLOOK_SYNC_LEGACY_PROJECT_EMAILS` are migrate-first Outlook compatibility gates.
 - Evidence:
   - [2026-06-26-ai-rag-env-db-cleanup-proof.md](../tasks/2026-06-26-ai-rag-env-db-cleanup-proof.md)
   - [env-db-cleanup-candidate-inventory-aai-705.md](../evidence/2026-06-25-ai-rag-production-finalization/env-db-cleanup-candidate-inventory-aai-705.md)
+
+### 2026-06-26: AAI-706 Legacy Fireflies File-Ingest Removal Complete
+
+- Removed the disabled legacy `POST /api/ingest/fireflies` route,
+  `IngestRequest` model, `ENABLE_LEGACY_FIREFLIES_FILE_INGEST` escape hatch,
+  and unused `FirefliesIngestionPipeline.ingest_file(...)` method.
+- Updated backend tests to assert the legacy file route is 404 and the canonical
+  `/api/ingest/fireflies/recent` route invokes
+  `sync_recent_transcripts(...)`.
+- Removed stale legacy route/env references from current API docs, migrated API
+  route docs, and public OpenAPI JSON/YAML.
+- Proof shows the active production Fireflies path is
+  `POST /api/ingest/fireflies/recent` plus Render cron
+  `alleato-fireflies-sync`, both using
+  `FirefliesIngestionPipeline.sync_recent_transcripts(...)`.
+- Verification passed:
+  - delegated `cd frontend && npm run typecheck:changed`;
+  - backend compileall for changed backend files;
+  - `backend/.venv/bin/python -m pytest backend/tests/test_api_routes.py backend/tests/test_ingestion.py -q`;
+  - OpenAPI JSON parse check;
+  - live reference scan excluding task evidence;
+  - `npm run rag:verify:meetings`;
+  - `npm run rag:verify:chat-architecture`.
+- Evidence:
+  - [2026-06-26-remove-legacy-fireflies-file-ingest.md](../tasks/2026-06-26-remove-legacy-fireflies-file-ingest.md)
+  - [legacy-fireflies-file-ingest-removal-aai-706.md](../evidence/2026-06-25-ai-rag-production-finalization/legacy-fireflies-file-ingest-removal-aai-706.md)
 
 ### 2026-06-26: AAI-698 AI Assistant Routing And RAG Architecture Verified
 
