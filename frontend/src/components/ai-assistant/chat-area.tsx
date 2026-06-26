@@ -1688,7 +1688,13 @@ export function ChatArea({
         welcomeHideOrb
           ? "bg-background shadow-none ring-1 ring-border/35 focus-within:ring-border/60"
           : "bg-transparent shadow-[0_10px_40px_-28px_rgb(15_23_42/0.45)] ring-1 ring-border/70 focus-within:ring-2 focus-within:ring-border",
-        hasMessages ? "px-3 py-2 sm:px-4" : "px-4 py-4 sm:px-5",
+        welcomeHideOrb
+          ? hasMessages
+            ? "px-3 py-2"
+            : "px-4 pb-2.5 pt-3"
+          : hasMessages
+            ? "px-3 py-2 sm:px-4"
+            : "px-4 py-4 sm:px-5",
       )}
     >
       <AttachmentPreviews />
@@ -1708,10 +1714,21 @@ export function ChatArea({
         }
         className={cn(
           "px-2 text-base leading-6 placeholder:text-muted-foreground/40 sm:text-lg",
-          hasMessages ? "min-h-8 pb-2 pt-0.5" : "min-h-12 pb-3 pt-1",
+          welcomeHideOrb
+            ? hasMessages
+              ? "min-h-8 pb-1.5 pt-0.5"
+              : "min-h-8 pb-1 pt-0"
+            : hasMessages
+              ? "min-h-8 pb-2 pt-0.5"
+              : "min-h-12 pb-3 pt-1",
         )}
       />
-      <PromptInputFooter className="flex items-center justify-between gap-2 px-0 pb-1.5">
+      <PromptInputFooter
+        className={cn(
+          "flex items-center justify-between gap-2 px-0",
+          welcomeHideOrb ? "pb-0" : "pb-1.5",
+        )}
+      >
         <div className="flex min-w-0 items-center gap-1 overflow-x-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <PromptInputActionMenu>
             <PromptInputActionMenuTrigger
