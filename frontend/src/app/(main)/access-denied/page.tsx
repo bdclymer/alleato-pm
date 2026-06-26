@@ -18,6 +18,8 @@ const REASON_MESSAGES: Record<string, string> = {
     "You don't have permission to access this section. Contact your project administrator if you believe this is an error.",
   "developer-only":
     "This feature is currently in development and is only available to the Alleato development team.",
+  "owner-only":
+    "This section is restricted to the workspace owner.",
 };
 
 const DEFAULT_MESSAGE =

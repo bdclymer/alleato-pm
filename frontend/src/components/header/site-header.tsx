@@ -412,6 +412,7 @@ function MobileNavOverlay({
       isAppAdmin,
       userType,
       isDeveloper,
+      user?.email ?? null,
     ),
   }));
   const companyToolList = [
@@ -631,6 +632,7 @@ function ToolsDropdown({
       isAppAdmin,
       userType,
       isDeveloper,
+      userEmail,
     ),
   }));
   const visibleCompanyTools = filterToolsByPermission(

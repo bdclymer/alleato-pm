@@ -34,16 +34,22 @@ import {
   Sparkles,
   Table,
   TrendingUp,
+  UserCog,
   Users,
   Wrench,
 } from "lucide-react";
 import { hasModulePermission } from "@/hooks/use-project-permissions";
+import { OWNER_EMAIL } from "@/lib/auth/owner";
 
 /**
  * The single owner of the workspace. Tools flagged `ownerOnly` are visible only
  * to this user — used to hide internal vision/roadmap surfaces from the team.
+ *
+ * Defined in the server-safe `@/lib/auth/owner` module and re-exported here so
+ * existing client imports (`@/lib/navigation-config`) keep working while API
+ * routes can import the constant without pulling in client-only navigation code.
  */
-export const OWNER_EMAIL = "megan@megankharrison.com";
+export { OWNER_EMAIL };
 
 export type PermissionModule =
   | "directory"
@@ -120,6 +126,14 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     icon: Users,
     description: "People, companies, contacts",
     module: "directory",
+  },
+  {
+    name: "User Management",
+    path: "user-management",
+    requiresProject: false,
+    icon: UserCog,
+    description: "Users, roles, and permission templates",
+    adminOnly: true,
   },
   {
     name: "Meetings",
@@ -616,7 +630,7 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
       { name: "RFIs", path: "rfis", icon: MessageCircle, requiresProject: true, module: "rfis" as PermissionModule },
       { name: "Submittals", path: "submittals", icon: Package, requiresProject: true, module: "submittals" as PermissionModule },
       { name: "Transmittals", path: "transmittals", icon: Mail, requiresProject: true, module: "documents" as PermissionModule },
-      { name: "Emails", path: "emails", icon: Mail, requiresProject: true, module: "documents" as PermissionModule },
+      { name: "Emails", path: "emails", icon: Mail, requiresProject: true, module: "documents" as PermissionModule, ownerOnly: true },
     ],
   },
   {
@@ -789,6 +803,7 @@ export const headerNavGroups: HeaderNavGroup[] = [
         icon: Mail,
         description: "Application and Resend emails",
         module: "documents",
+        ownerOnly: true,
       },
     ],
     subGroups: [
