@@ -21,6 +21,7 @@ export type SubmittalWorkflowResponseStatus = z.infer<
 >;
 
 type WorkflowSupabaseClient = SupabaseClient<Database>;
+type JsonValue = Database["public"]["Tables"]["submittal_history"]["Insert"]["metadata"];
 
 interface RecordWorkflowResponseInput {
   supabase: WorkflowSupabaseClient;
@@ -39,6 +40,65 @@ function assertProjectId(projectId: number, where: string) {
       code: "INVALID_INPUT",
       where,
       message: "Project id must be a positive integer.",
+    });
+  }
+}
+
+function historySource(where: string) {
+  return where.includes("ai-review") ? "ai_review" : "workflow";
+}
+
+async function insertWorkflowResponseHistory({
+  supabase,
+  submittalId,
+  projectId,
+  userId,
+  previousStatus,
+  newStatus,
+  responseId,
+  stepId,
+  responseStatus,
+  comments,
+  where,
+}: {
+  supabase: WorkflowSupabaseClient;
+  submittalId: string;
+  projectId: number;
+  userId: string;
+  previousStatus: string | null;
+  newStatus: string | null;
+  responseId: string;
+  stepId: string;
+  responseStatus: SubmittalWorkflowResponseStatus;
+  comments: string | null;
+  where: string;
+}) {
+  const { error } = await supabase.from("submittal_history").insert({
+    submittal_id: submittalId,
+    action: "workflow_response_recorded",
+    actor_id: userId,
+    actor_type: "user",
+    previous_status: previousStatus,
+    new_status: newStatus,
+    description: `Workflow response recorded: ${responseStatus}`,
+    changes: {
+      response_status: responseStatus,
+      comments_present: Boolean(comments?.trim()),
+    } as JsonValue,
+    metadata: {
+      project_id: projectId,
+      workflow_step_id: stepId,
+      response_id: responseId,
+      source: historySource(where),
+    } as JsonValue,
+    occurred_at: new Date().toISOString(),
+  });
+
+  if (error) {
+    throw new GuardrailError({
+      code: "DB_ERROR",
+      where,
+      message: `Could not write submittal workflow response history: ${error.message}`,
     });
   }
 }
@@ -171,6 +231,8 @@ export async function recordSubmittalWorkflowResponse({
     currentResponses.length > 0 &&
     currentResponses.every((item) => item.response_status !== "Pending");
 
+  let nextSubmittalStatus: string | null = submittal.status ?? null;
+
   if (currentStep && allCurrentResolved) {
     const nextStep = steps?.find(
       (step) => step.step_order > currentStep.step_order,
@@ -189,6 +251,7 @@ export async function recordSubmittalWorkflowResponse({
           ball_in_court: null,
           updated_at: now,
         };
+    nextSubmittalStatus = "status" in submittalPatch ? "Closed" : submittal.status;
 
     const { error: updateSubmittalError } = await supabase
       .from("submittals")
@@ -204,6 +267,20 @@ export async function recordSubmittalWorkflowResponse({
       });
     }
   }
+
+  await insertWorkflowResponseHistory({
+    supabase,
+    submittalId,
+    projectId,
+    userId,
+    previousStatus: submittal.status ?? null,
+    newStatus: nextSubmittalStatus,
+    responseId: response.id,
+    stepId,
+    responseStatus,
+    comments,
+    where,
+  });
 
   return response;
 }
