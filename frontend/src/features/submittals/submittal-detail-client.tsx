@@ -586,6 +586,18 @@ export function SubmittalDetailClient({
   const linkedDrawingIds = new Set(
     linkedDrawings.map((drawing) => drawing.drawingId),
   );
+  const aiReviewWorkflowResponseStep = workflowSteps.find((step) => {
+    const isActive = getStepState(step) === "in-progress";
+    return (
+      isActive &&
+      currentUserId &&
+      step.submittal_responses?.some(
+        (response) =>
+          response.responder_id === currentUserId &&
+          response.response_status === "Pending",
+      )
+    );
+  });
 
   React.useEffect(() => {
     let isMounted = true;
@@ -1191,6 +1203,15 @@ export function SubmittalDetailClient({
               <SubmittalAIReviewPanel
                 projectId={projectId}
                 submittalId={submittal.id}
+                workflowResponseStep={
+                  aiReviewWorkflowResponseStep
+                    ? {
+                        stepId: aiReviewWorkflowResponseStep.id,
+                        stepType: aiReviewWorkflowResponseStep.step_type,
+                      }
+                    : null
+                }
+                onWorkflowResponseRecorded={() => router.refresh()}
               />
             )}
         </div>

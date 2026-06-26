@@ -190,6 +190,13 @@ export interface AIReviewResult {
 
 export type AIReviewDisposition = AIReviewResult["checks"][number]["reviewerDisposition"];
 
+export type SubmittalWorkflowResponseStatus =
+  | "Approved"
+  | "Approved as Noted"
+  | "Revise and Resubmit"
+  | "Rejected"
+  | "Reviewed - No Exception";
+
 export async function uploadSubmittalAttachments(
   projectId: number,
   submittalId: string,
@@ -836,6 +843,49 @@ export function useUpdateSubmittalAIReviewCheck(
     },
     onError: (err: Error) => {
       toast.error("Could not update AI review finding", {
+        description: err.message,
+      });
+    },
+  });
+}
+
+/** Records a workflow response using the AI Review result as the decision context. */
+export function useRecordSubmittalAIReviewWorkflowResponse(
+  projectId: number,
+  submittalId: string,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      stepId,
+      responseStatus,
+      comments,
+    }: {
+      stepId: string;
+      responseStatus: SubmittalWorkflowResponseStatus;
+      comments?: string | null;
+    }) =>
+      apiFetch<{ id: string; response_status: string }>(
+        `/api/projects/${projectId}/submittals/${submittalId}/ai-review/workflow-response`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stepId,
+            responseStatus,
+            comments: comments ?? null,
+          }),
+        },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
+      queryClient.invalidateQueries({
+        queryKey: submittalKeys.detail(projectId, submittalId),
+      });
+      toast.success("Workflow response recorded");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not record workflow response", {
         description: err.message,
       });
     },

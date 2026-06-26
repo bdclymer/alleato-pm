@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -22,6 +23,8 @@ import {
 import {
   type AIReviewDisposition,
   type AIReviewResult,
+  type SubmittalWorkflowResponseStatus,
+  useRecordSubmittalAIReviewWorkflowResponse,
   useRunSubmittalAIReview,
   useSubmittalAIReview,
   useUpdateSubmittalAIReviewCheck,
@@ -30,6 +33,11 @@ import {
 interface Props {
   projectId: number;
   submittalId: string;
+  workflowResponseStep?: {
+    stepId: string;
+    stepType: string;
+  } | null;
+  onWorkflowResponseRecorded?: () => void;
 }
 
 type ReviewCheck = AIReviewResult["checks"][number];
@@ -43,6 +51,56 @@ const DISPOSITION_OPTIONS: Array<{
   { value: "dismissed", label: "Dismissed" },
   { value: "edited", label: "Edited" },
 ];
+
+const RESPONSE_OPTIONS: SubmittalWorkflowResponseStatus[] = [
+  "Approved",
+  "Approved as Noted",
+  "Revise and Resubmit",
+  "Rejected",
+  "Reviewed - No Exception",
+];
+
+function recommendedResponseStatus(
+  result: AIReviewResult,
+): SubmittalWorkflowResponseStatus {
+  const unresolvedFailures = result.checks.some(
+    (check) => check.status === "fail" && check.reviewerDisposition !== "dismissed",
+  );
+  if (unresolvedFailures) return "Revise and Resubmit";
+
+  const unresolvedWarnings = result.checks.some(
+    (check) =>
+      [
+        "warning",
+        "missing_information",
+        "unable_to_determine",
+        "needs_human_review",
+      ].includes(check.status) &&
+      !["accepted", "dismissed"].includes(check.reviewerDisposition),
+  );
+  if (unresolvedWarnings) return "Approved as Noted";
+
+  return "Approved";
+}
+
+function buildAIReviewResponseComment(result: AIReviewResult): string {
+  const actionableChecks = result.checks.filter(
+    (check) =>
+      check.status !== "pass" && check.reviewerDisposition !== "dismissed",
+  );
+  const findingLines = actionableChecks
+    .slice(0, 5)
+    .map((check) => `- ${check.title}: ${check.finding}`);
+
+  return [
+    "AI review response context:",
+    result.summary ? `Summary: ${result.summary}` : null,
+    result.recommendation ? `Recommendation: ${result.recommendation}` : null,
+    findingLines.length > 0 ? ["Findings:", ...findingLines].join("\n") : null,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
 
 function ReviewCheckRow({
   icon,
@@ -265,7 +323,87 @@ function ReviewFindings({
   );
 }
 
-export function SubmittalAIReviewPanel({ projectId, submittalId }: Props) {
+function WorkflowResponseAction({
+  result,
+  workflowResponseStep,
+  onWorkflowResponseRecorded,
+  projectId,
+  submittalId,
+}: {
+  result: AIReviewResult;
+  workflowResponseStep: NonNullable<Props["workflowResponseStep"]>;
+  onWorkflowResponseRecorded?: () => void;
+  projectId: number;
+  submittalId: string;
+}) {
+  const [responseStatus, setResponseStatus] =
+    React.useState<SubmittalWorkflowResponseStatus>(() =>
+      recommendedResponseStatus(result),
+    );
+  const recordResponse = useRecordSubmittalAIReviewWorkflowResponse(
+    projectId,
+    submittalId,
+  );
+
+  React.useEffect(() => {
+    setResponseStatus(recommendedResponseStatus(result));
+  }, [result]);
+
+  async function handleRecordResponse() {
+    await recordResponse.mutateAsync({
+      stepId: workflowResponseStep.stepId,
+      responseStatus,
+      comments: buildAIReviewResponseComment(result),
+    });
+    onWorkflowResponseRecorded?.();
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+      <div className="min-w-0">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Workflow response
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {workflowResponseStep.stepType} step assigned to you
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <Select
+          value={responseStatus}
+          onValueChange={(value) =>
+            setResponseStatus(value as SubmittalWorkflowResponseStatus)
+          }
+        >
+          <SelectTrigger className="h-8 w-48 px-2 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent align="end">
+            {RESPONSE_OPTIONS.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          size="sm"
+          onClick={handleRecordResponse}
+          disabled={recordResponse.isPending}
+        >
+          {recordResponse.isPending ? "Recording..." : "Record Response"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function SubmittalAIReviewPanel({
+  projectId,
+  submittalId,
+  workflowResponseStep,
+  onWorkflowResponseRecorded,
+}: Props) {
   const { data, isLoading } = useSubmittalAIReview(projectId, submittalId);
   const {
     mutate: runReview,
@@ -334,6 +472,18 @@ export function SubmittalAIReviewPanel({ projectId, submittalId }: Props) {
         {data?.error && !isPending && (
           <InfoAlert variant="error">{data.error.message}</InfoAlert>
         )}
+
+        {data &&
+          data.readiness.state !== "not_ready" &&
+          workflowResponseStep && (
+            <WorkflowResponseAction
+              result={data}
+              workflowResponseStep={workflowResponseStep}
+              onWorkflowResponseRecorded={onWorkflowResponseRecorded}
+              projectId={projectId}
+              submittalId={submittalId}
+            />
+          )}
 
         {!data && !isLoading && !isPending && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
