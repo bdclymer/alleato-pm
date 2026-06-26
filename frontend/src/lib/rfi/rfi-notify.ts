@@ -26,18 +26,28 @@ import { classifyRfiRecipientEntries, personFullNameKey } from "./rfi-recipients
 import { createRfiResponseToken } from "./response-tokens";
 import { parseReplyMailbox, buildRfiReplyAddress } from "./email-reply";
 import RFIResponseReceivedNotification from "@/emails/rfi/RFIResponseReceivedNotification";
+import {
+  recordRfiOpenedAiNotificationDecisions,
+  type RfiAiNotificationDecisionSummary,
+  type RfiAiNotificationRecipient,
+} from "./rfi-ai-notifications";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
 export interface RfiNotifyResult {
   sent: number;
   failed: Array<{ email?: string; error: string }>;
+  aiDecisions?: RfiAiNotificationDecisionSummary;
 }
 
-interface RfiRecipient {
-  name: string;
-  email: string;
-}
+type RfiRecipient = RfiAiNotificationRecipient;
+
+type PersonEmailCandidate = {
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  auth_user_id?: string | null;
+};
 
 /**
  * Resolve raw RFI recipient entries (display names / UUIDs / emails) to a
@@ -62,19 +72,19 @@ async function resolveRfiRecipientEmails(
     personIds.size > 0
       ? supabase
           .from("people")
-          .select("id, first_name, last_name, email")
+          .select("id, first_name, last_name, email, auth_user_id")
           .in("id", [...personIds])
       : Promise.resolve({ data: [], error: null }),
     emails.size > 0
       ? supabase
           .from("people")
-          .select("id, first_name, last_name, email")
+          .select("id, first_name, last_name, email, auth_user_id")
           .in("email", [...emails])
       : Promise.resolve({ data: [], error: null }),
     // Name-shaped entries: no FK to join on, so match the computed full name in
     // memory. Only queried when there are names to resolve.
     names.size > 0
-      ? supabase.from("people").select("id, first_name, last_name, email")
+      ? supabase.from("people").select("id, first_name, last_name, email, auth_user_id")
       : Promise.resolve({ data: [], error: null }),
   ]);
 
@@ -94,16 +104,35 @@ async function resolveRfiRecipientEmails(
   );
 
   const recipientByEmail = new Map<string, RfiRecipient>();
+  const authUserIdsByEmail = new Map<string, Set<string>>();
   for (const p of [
     ...(peopleById || []),
     ...(peopleByEmail || []),
     ...nameMatchedPeople,
-  ]) {
+  ] satisfies PersonEmailCandidate[]) {
     if (!p.email) continue;
+    const email = p.email;
     recipientByEmail.set(p.email, {
       name: `${p.first_name || ""} ${p.last_name || ""}`.trim() || "Team member",
-      email: p.email,
+      email,
+      userMappingStatus: "unmapped",
     });
+
+    if (p.auth_user_id) {
+      const authUserIds = authUserIdsByEmail.get(email) ?? new Set<string>();
+      authUserIds.add(p.auth_user_id);
+      authUserIdsByEmail.set(email, authUserIds);
+    }
+  }
+
+  for (const [email, recipient] of recipientByEmail.entries()) {
+    const authUserIds = authUserIdsByEmail.get(email) ?? new Set<string>();
+    if (authUserIds.size === 1) {
+      recipient.userId = [...authUserIds][0];
+      recipient.userMappingStatus = "mapped";
+    } else if (authUserIds.size > 1) {
+      recipient.userMappingStatus = "ambiguous";
+    }
   }
 
   return { recipients: [...recipientByEmail.values()] };
@@ -232,7 +261,19 @@ export async function notifyRfiOpened(args: {
       error: result.error?.message ?? "Failed to send RFI notification.",
     }));
 
-  return { sent: results.length - failed.length, failed };
+  const aiDecisions = await recordRfiOpenedAiNotificationDecisions({
+    projectId,
+    projectName,
+    rfiId,
+    rfiNumber: rfi.number,
+    rfiSubject: rfi.subject,
+    actorUserId,
+    recipients,
+    assigneeEmails,
+    failedEmailRecipients: new Set(failed.map((failure) => failure.email).filter(Boolean) as string[]),
+  });
+
+  return { sent: results.length - failed.length, failed, aiDecisions };
 }
 
 // ── RFI updated notification ─────────────────────────────────────────────────
