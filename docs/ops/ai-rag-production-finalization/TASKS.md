@@ -23,6 +23,10 @@ Active Acumatica readiness slice:
 
 - [2026-06-26-acumatica-sync-production-readiness.md](../tasks/2026-06-26-acumatica-sync-production-readiness.md)
 
+Active AI assistant architecture slice:
+
+- [2026-06-26-ai-assistant-final-architecture-verification.md](../tasks/2026-06-26-ai-assistant-final-architecture-verification.md)
+
 Evidence directory:
 
 - [2026-06-25-ai-rag-production-finalization](../evidence/2026-06-25-ai-rag-production-finalization)
@@ -116,8 +120,8 @@ Evidence directory:
 
 - [x] Record AI SDK MCP architecture gap.
 - [x] Resolve AAI-641 by fully implementing AI SDK MCP discovery, merge, trace, and close in the live `/api/ai-assistant/chat` stream path.
-- [ ] Verify every assistant uses finalized prompt, tool calling, and RAG architecture.
-- [ ] Verify assistants retrieve expected context end to end.
+- [x] Verify every assistant uses finalized prompt, tool calling, and RAG architecture.
+- [x] Verify assistants retrieve expected context end to end.
 
 ### Phase 12: Cleanup And Deletion
 
@@ -234,6 +238,35 @@ Evidence directory:
   - [acumatica-code-guardrail-inventory-aai-697.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-code-guardrail-inventory-aai-697.json)
   - [acumatica-logging-stats-duplicate-proof-aai-697.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-logging-stats-duplicate-proof-aai-697.json)
   - [frontend-typecheck-after-acumatica-verifier-threshold-aai-697.txt](../evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-acumatica-verifier-threshold-aai-697.txt)
+
+### 2026-06-26: AAI-698 AI Assistant Routing And RAG Architecture Verified
+
+- Repaired live `/api/ai-assistant/chat` deterministic routing gaps that forced source-backed assistant workflows into slow model/tool loops or ambiguous follow-up handling.
+- Added preview-only RFI routing for explicit RFI create/draft/log prompts; no RFI row is written until confirmed.
+- Added direct semantic source lookup for Teams/source questions with persisted `intentPlanner`, `sourceLookupIntentRouter`, and `semanticSearch` traces.
+- Added executive briefing metadata lookup for follow-ups like "When was this regenerated?" against `daily_recaps.recap_kind=executive_briefing`, without asking for a project.
+- Added explicit personal-task source markers/citations for task table answers: `tasks.assignee_person_id / tasks.assignee_name / tasks.assignee_email`.
+- Added a permission-scoped `projects.name` fallback resolver for packet-first project briefings when intelligence-target resolution misses named projects like Westfield.
+- Added direct project briefing synthesis from loaded `getProjectBriefingSnapshot` plus `semanticSearch`, preventing the 120s Westfield model/tool-loop timeout and preserving `serverBusinessContextPreflight`, `getProjectBriefingSnapshot`, and `semanticSearch` traces.
+- Verification passed:
+  - `npm run rag:verify:assistant-routing` passed 6/6.
+  - `npm run rag:verify:chat-architecture` passed.
+  - `npm run rag:verify:assistant-operational-readiness` passed.
+  - `npm run rag:verify:source-specific` passed.
+  - `npm run verify:microsoft-assistant-health -- --json` passed.
+  - `npm run rag:verify:source-lifecycle -- --days 7` passed.
+  - `PROJECT_ATTRIBUTION_AUDIT_DAYS=7 npm run verify:project-attribution` passed.
+  - Delegated `TYPECHECK_NO_TIMEOUT=1 npm --prefix frontend run typecheck` passed.
+- Residual risk: the Outlook redrive completed source sync and embedding, but the intelligence extraction phase reported the existing high-churn AI/intelligence write guard for source-signal, insight-card, packet, and task writes. Track that as the next event-driven intelligence/task-write cleanup slice before final platform readiness.
+- Evidence:
+  - [assistant-routing-after-direct-project-planner-trace-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/assistant-routing-after-direct-project-planner-trace-aai-698.txt)
+  - [chat-architecture-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/chat-architecture-final-aai-698.txt)
+  - [assistant-operational-readiness-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-final-aai-698.txt)
+  - [source-specific-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-specific-final-aai-698.txt)
+  - [microsoft-assistant-health-final-aai-698.json](../evidence/2026-06-25-ai-rag-production-finalization/microsoft-assistant-health-final-aai-698.json)
+  - [source-lifecycle-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-final-aai-698.txt)
+  - [project-attribution-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/project-attribution-final-aai-698.txt)
+  - [frontend-typecheck-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-final-aai-698.txt)
 
 ### 2026-06-25: Health And Assistant Crons Restored
 

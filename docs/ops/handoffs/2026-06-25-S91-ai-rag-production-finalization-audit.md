@@ -391,9 +391,51 @@ AAI-697 progress:
 - Remaining blocker:
   - No active blocker inside AAI-697. The slice is ready to publish.
 
+AAI-698 progress:
+
+- Scope: final AI assistant prompt/tool/RAG architecture verification and repair.
+- Linear issue: AAI-698.
+- Code changed:
+  - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/ai-assistant/chat/handler-v2.ts`
+  - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai/retrieval/deps.ts`
+- Documentation/evidence changed:
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-26-ai-assistant-final-architecture-verification.md`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/ai-rag-production-finalization/TASKS.md`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-final-aai-698.txt`
+  - AAI-698 verifier evidence files under `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/`
+- Root cause confirmed:
+  - Several deterministic assistant workflows still fell through to broad model/tool-loop behavior: RFI create prompts, Teams/source lookup questions, executive briefing metadata follow-ups, personal task source citation output, and named-project packet-first briefings.
+  - Named project briefings could miss project resolution from text and then enter huge model/tool loops with empty or timed-out streams.
+- Prevention:
+  - Added deterministic, persisted, traceable routes for preview-only RFI creation, direct semantic source lookup, executive briefing metadata lookup, personal task source citations, and direct project briefing from loaded RAG context.
+  - Added permission-scoped `projects.name` fallback resolution in retrieval deps when intelligence-target resolution misses.
+  - Preserved required trace names for evaluator/operator evidence: `intentPlanner`, `sourceLookupIntentRouter`, `executiveBriefingMetadataLookup`, `getMyTasks`, `serverBusinessContextPreflight`, `getProjectBriefingSnapshot`, and `semanticSearch`.
+- Verification:
+  - PASS: `npm run rag:verify:assistant-routing` with 6/6 tests passing.
+  - PASS: `npm run rag:verify:chat-architecture`.
+  - PASS: `npm run rag:verify:assistant-operational-readiness`.
+  - PASS: `npm run rag:verify:source-specific`.
+  - PASS: `npm run verify:microsoft-assistant-health -- --json`.
+  - PASS: `npm run rag:verify:source-lifecycle -- --days 7`.
+  - PASS: `PROJECT_ATTRIBUTION_AUDIT_DAYS=7 npm run verify:project-attribution`.
+  - PASS: delegated sub-agent `TYPECHECK_NO_TIMEOUT=1 npm --prefix frontend run typecheck`.
+- Residual risk:
+  - Outlook redrive synced and embedded current mail, but the downstream intelligence extraction phase still reports the existing high-churn write guard for source-signal/intelligence/task tables. This is not blocking AAI-698 assistant routing/RAG architecture, but it is the next event-driven intelligence/task-write blocker before final platform readiness.
+- Evidence:
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/assistant-routing-after-direct-project-planner-trace-aai-698.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/chat-architecture-final-aai-698.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-final-aai-698.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/source-specific-final-aai-698.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/microsoft-assistant-health-final-aai-698.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-final-aai-698.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-attribution-final-aai-698.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-final-aai-698.txt`
+- Remaining blocker:
+  - No active blocker inside AAI-698.
+
 ## Exact Next Step
 
-Publish AAI-697, then continue Phase 11 with final assistant prompt/tool/RAG architecture verification and Phase 12 deletion-candidate proof.
+Publish AAI-698, then create the next cleanup slice for event-driven Outlook/Teams intelligence/task writes blocked by the high-churn AI/intelligence database-write guard before final all-pipeline verification and Phase 12 deletion-candidate proof.
 
 ## Known Pitfalls
 

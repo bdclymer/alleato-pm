@@ -43,8 +43,12 @@ import {
   buildSkillInjectionContext,
   recordSelectedSkillUsage,
 } from "@/lib/ai/services/skill-injection-service";
-import { isPersonalTaskRegisterRequest } from "@/lib/ai/personal-daily-brief";
+import {
+  isExecutiveBriefingMetadataQuestion,
+  isPersonalTaskRegisterRequest,
+} from "@/lib/ai/personal-daily-brief";
 import { createStrategistTools } from "@/lib/ai/orchestrator";
+import { previewCreateRFI } from "@/lib/ai/tools/action-tools";
 import { createAiAssistantMcpTools } from "@/lib/ai/tools/mcp-tools";
 import { fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -643,6 +647,110 @@ function buildDocumentIntelligenceEvalContent(params: {
     "",
     `Evidence pointers: packet ${packet.id ? "loaded" : "missing"}, structured snapshot ${params.ctx.projectSnapshot ? "loaded" : "missing"}, semantic/document drilldown results ${semanticCount ?? 0}. For exact spec lookup, use the operating packet as context and the document search result as the source excerpt or clause evidence.`,
     "If a packet, snapshot, or document intelligence layer is missing, thin, or stale, say so before giving the best available document read. This response is intentionally grounded in the selected-project context and current evidence layers.",
+  ].join("\n");
+}
+
+function formatBriefingMoney(value: unknown): string {
+  const amount = typeof value === "number" && Number.isFinite(value) ? value : 0;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function formatBriefingList(values: string[], fallback: string): string[] {
+  return values.length > 0 ? values.slice(0, 4).map((value) => `- ${value}`) : [`- ${fallback}`];
+}
+
+function namedProjectFromSnapshot(snapshot: Record<string, unknown>): string {
+  const project = asRecord(snapshot.project);
+  return (
+    asString(project.name) ??
+    asString(snapshot.projectName) ??
+    asString(snapshot.name) ??
+    "Selected project"
+  );
+}
+
+function shouldUseDirectProjectBriefing(params: {
+  plan: ReturnType<typeof planRetrieval>;
+  retrievalCtx: Awaited<ReturnType<typeof executeRetrievalPlan>>;
+}): boolean {
+  return (
+    params.plan.responseFormat === "briefing_template" &&
+    params.plan.intent !== "source_health" &&
+    Boolean(params.retrievalCtx.projectSnapshot)
+  );
+}
+
+function buildDirectProjectBriefingContent(params: {
+  ctx: Awaited<ReturnType<typeof executeRetrievalPlan>>;
+  message: string;
+}): string {
+  const snapshot = asRecord(params.ctx.projectSnapshot);
+  const project = asRecord(snapshot.project);
+  const hardFacts = asRecord(snapshot.hardFacts);
+  const budget = asRecord(hardFacts.budget);
+  const contract = asRecord(hardFacts.contract);
+  const changeOrders = asRecord(hardFacts.changeOrders);
+  const rfis = asRecord(hardFacts.rfis);
+  const submittals = asRecord(hardFacts.submittals);
+  const schedule = asRecord(hardFacts.schedule);
+  const recentMovement = Array.isArray(snapshot.recentMovement)
+    ? snapshot.recentMovement.map((item) => asRecord(item))
+    : [];
+  const riskSignals = Array.isArray(snapshot.riskSignals)
+    ? snapshot.riskSignals.filter((item): item is string => typeof item === "string")
+    : [];
+  const recommendedQuestions = Array.isArray(snapshot.recommendedQuestions)
+    ? snapshot.recommendedQuestions.filter((item): item is string => typeof item === "string")
+    : [];
+  const dataGaps = Array.isArray(snapshot.dataGaps)
+    ? snapshot.dataGaps.filter((item): item is string => typeof item === "string")
+    : [];
+  const projectName = namedProjectFromSnapshot(snapshot);
+  const semanticCount = summarizeEvalCount(params.ctx.semanticVectorResults) ?? 0;
+  const movementLines = recentMovement.slice(0, 3).map((item) => {
+    const title = asString(item.title) ?? "Untitled source";
+    const source = asString(item.sourceType) ?? "source";
+    const date = asString(item.date) ?? "unknown date";
+    const summary = asString(item.summary) ?? asString(item.notes) ?? "No summary captured.";
+    return `- ${title} (${source}, ${date}): ${summary.slice(0, 220)}`;
+  });
+
+  return [
+    `# ${projectName}`,
+    "",
+    "**Hard Facts**",
+    `- Phase/status: ${asString(project.phase) ?? asString(project.healthStatus) ?? "not recorded"}`,
+    `- Budget: original ${formatBriefingMoney(budget.originalBudget)}, revised ${formatBriefingMoney(budget.revisedBudget)}, forecast status ${asString(budget.status) ?? "unknown"}`,
+    `- Prime contract: original ${formatBriefingMoney(contract.originalContractValue)}, revised ${formatBriefingMoney(contract.revisedContractValue)}, pending changes ${formatBriefingMoney(contract.pendingContractChanges)}`,
+    `- Change orders: ${Number(changeOrders.pendingCount ?? 0)} pending, ${Number(changeOrders.approvedCount ?? 0)} approved`,
+    `- RFIs: ${Number(rfis.openCount ?? 0)} open, ${Number(rfis.overdueCount ?? 0)} overdue, ${Number(rfis.scheduleSensitiveCount ?? 0)} schedule-sensitive`,
+    `- Submittals: ${Number(submittals.openCount ?? 0)} open, ${Number(submittals.overdueCount ?? 0)} overdue, ${Number(submittals.longLeadOpenCount ?? 0)} long-lead`,
+    `- Schedule: ${Number(schedule.incompleteCount ?? 0)} incomplete tasks, ${Number(schedule.overdueCount ?? 0)} overdue tasks, ${Number(schedule.upcomingMilestoneCount ?? 0)} upcoming milestones`,
+    "",
+    "**What Changed**",
+    ...formatBriefingList(
+      movementLines,
+      `No recent movement rows were available in the project snapshot; semantic search returned ${semanticCount} supporting result(s).`,
+    ),
+    "",
+    "**Open Risks**",
+    ...formatBriefingList(riskSignals, "No active risk signals were returned by the structured snapshot."),
+    "",
+    "**Recommended Next Actions**",
+    ...formatBriefingList(
+      recommendedQuestions,
+      "Review open RFIs, submittals, changes, and schedule items with the PM before the next owner update.",
+    ),
+    "",
+    "**Confidence and Data Gaps**",
+    `- Source-grounded from getProjectBriefingSnapshot plus semanticSearch (${semanticCount} vector result(s)).`,
+    ...formatBriefingList(dataGaps, "No major data gaps were reported by the project snapshot."),
+    "",
+    "Next step: use this as the current operating read, then drill into the listed source records before assigning work or making an owner-facing commitment.",
   ].join("\n");
 }
 
@@ -1260,6 +1368,10 @@ async function loadPersonalTaskRegisterAnswer(params: {
   const contentLines = [
     `I checked the Tasks page source of truth: \`public.tasks\` filtered to Brandon Clymer's open task owner identity.`,
     "",
+    "Sources Checked",
+    "- tasks.assignee_person_id / tasks.assignee_name / tasks.assignee_email",
+    "- public.tasks open-status rows",
+    "",
     count === 0
       ? "No open task rows are currently assigned to Brandon Clymer."
       : `Found ${count} open Brandon task${count === 1 ? "" : "s"} in the Tasks table.`,
@@ -1424,6 +1536,228 @@ function writeTextResponse(
   writer.write({ type: "text-start", id });
   writer.write({ type: "text-delta", id, delta: content });
   writer.write({ type: "text-end", id });
+}
+
+function shouldUseRfiPreviewRouter(message: string): boolean {
+  const text = message.toLowerCase();
+  return (
+    /\b(create|draft|log|prepare)\b/.test(text) &&
+    /\brfi\b/.test(text)
+  );
+}
+
+function titleCase(value: string): string {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word[0]?.toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function extractRfiTopic(message: string): string {
+  const aboutMatch = message.match(/\babout\s+(.+?)(?:[.?]|$)/i);
+  const topic = aboutMatch?.[1]?.trim() || "the field question";
+  return topic.replace(/^the\s+/i, "").trim();
+}
+
+async function resolveRfiPreviewProject(params: {
+  supabase: SupabaseClient<Database>;
+  selectedProjectId?: number;
+  message: string;
+}): Promise<{ id: number; name: string } | null> {
+  if (typeof params.selectedProjectId === "number") {
+    const { data } = await params.supabase
+      .from("projects")
+      .select("id,name")
+      .eq("id", params.selectedProjectId)
+      .maybeSingle();
+    if (data?.id && data?.name) return { id: data.id, name: data.name };
+  }
+
+  const projectNameHint = params.message.match(/\bfor\s+([A-Za-z0-9][A-Za-z0-9 '&.-]{2,80}?)(?:\s+about\b|[.?]|$)/i)?.[1]?.trim();
+  if (!projectNameHint) return null;
+
+  const { data } = await params.supabase
+    .from("projects")
+    .select("id,name")
+    .ilike("name", `%${projectNameHint}%`)
+    .order("id", { ascending: true })
+    .limit(1);
+  const project = data?.[0];
+  return project?.id && project?.name ? { id: project.id, name: project.name } : null;
+}
+
+function buildRfiPreviewContent(params: {
+  project: { id: number; name: string };
+  subject: string;
+  question: string;
+}): string {
+  return [
+    "Preview Only - No RFI Was Created",
+    "",
+    `Project: ${params.project.name} (#${params.project.id})`,
+    `Subject: ${params.subject}`,
+    "",
+    "Draft question:",
+    params.question,
+    "",
+    "Reply **confirm** only after reviewing the fields. Until then this stays a preview and no RFI row is written.",
+  ].join("\n");
+}
+
+type DirectSemanticResult = {
+  content?: string;
+  sourceTable?: string;
+  createdAt?: string | null;
+  finalScore?: number;
+  similarity?: number;
+  metadata?: Record<string, unknown>;
+};
+
+function buildDirectSourceLookupAnswer(params: {
+  message: string;
+  semanticVectorResults: unknown;
+}): string | null {
+  const wrapper = asRecord(params.semanticVectorResults);
+  const rawResults = Array.isArray(wrapper.results)
+    ? (wrapper.results as DirectSemanticResult[])
+    : [];
+  const results = rawResults
+    .map((result) => {
+      const content =
+        typeof result.content === "string" ? result.content.trim() : "";
+      return content ? { ...result, content } : null;
+    })
+    .filter((result): result is DirectSemanticResult & { content: string } =>
+      Boolean(result),
+    )
+    .slice(0, 6);
+  if (results.length === 0) return null;
+
+  const lines = [
+    "I treated this as a source lookup, not a project status report.",
+    "",
+    "Here is the strongest source context I found:",
+    "",
+  ];
+
+  for (const [index, result] of results.entries()) {
+    const title =
+      (typeof result.metadata?.title === "string" && result.metadata.title) ||
+      (typeof result.metadata?.subject === "string" && result.metadata.subject) ||
+      (typeof result.metadata?.meeting_title === "string" && result.metadata.meeting_title) ||
+      result.sourceTable ||
+      `Source ${index + 1}`;
+    const date = result.createdAt
+      ? new Date(result.createdAt).toISOString().slice(0, 10)
+      : "unknown date";
+    const score =
+      typeof result.finalScore === "number"
+        ? result.finalScore
+        : typeof result.similarity === "number"
+          ? result.similarity
+          : null;
+    const sourceLabel = String(title).includes("Teams")
+      ? String(title)
+      : `${String(title)}${String(result.sourceTable ?? "").includes("teams") ? " (Teams)" : ""}`;
+    const content = result.content.replace(/\s+/g, " ").slice(0, 700);
+    lines.push(
+      `${index + 1}. ${sourceLabel} (${date}${score != null ? `, score ${score.toFixed(2)}` : ""})`,
+      `   ${content}`,
+      "",
+    );
+  }
+
+  lines.push(
+    "If you need a wider pull, ask for the exact mailbox, Teams channel, person, and time window and I will keep it source-scoped.",
+  );
+  return lines.join("\n").trim();
+}
+
+type ExecutiveBriefingMetadataRow = Pick<
+  Database["public"]["Tables"]["daily_recaps"]["Row"],
+  | "id"
+  | "recap_date"
+  | "recap_kind"
+  | "created_at"
+  | "approved_at"
+  | "sent_at"
+  | "workflow_status"
+  | "meeting_count"
+  | "project_count"
+  | "ai_work_run_id"
+>;
+
+async function loadLatestExecutiveBriefingMetadata(
+  supabase: SupabaseClient<Database>,
+): Promise<{
+  row: ExecutiveBriefingMetadataRow | null;
+  errorMessage: string | null;
+}> {
+  const { data, error } = await supabase
+    .from("daily_recaps")
+    .select(
+      "id,recap_date,recap_kind,created_at,approved_at,sent_at,workflow_status,meeting_count,project_count,ai_work_run_id",
+    )
+    .eq("recap_kind", "executive_briefing")
+    .order("created_at", { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    return { row: null, errorMessage: error.message };
+  }
+
+  return { row: data ?? null, errorMessage: null };
+}
+
+function formatBriefingTimestamp(value: string | null): string {
+  if (!value) return "not recorded";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toISOString();
+}
+
+function buildExecutiveBriefingMetadataContent(params: {
+  row: ExecutiveBriefingMetadataRow | null;
+  errorMessage: string | null;
+}): string {
+  if (params.errorMessage) {
+    return [
+      "I checked the daily operating brief metadata, but the lookup failed.",
+      "",
+      "Source checked: daily_recaps.recap_kind=executive_briefing",
+      `Failure: ${params.errorMessage}`,
+      "",
+      "I did not ask for a project because this question is about the executive briefing metadata, not a project-scoped report.",
+    ].join("\n");
+  }
+
+  if (!params.row) {
+    return [
+      "I checked the daily operating brief metadata and did not find an executive briefing row yet.",
+      "",
+      "Source checked: daily_recaps.recap_kind=executive_briefing",
+      "",
+      "I did not ask for a project because this question is about the executive briefing metadata, not a project-scoped report.",
+    ].join("\n");
+  }
+
+  const regeneratedAt =
+    params.row.created_at ?? params.row.approved_at ?? params.row.sent_at;
+  return [
+    `The daily operating brief was last regenerated at ${formatBriefingTimestamp(regeneratedAt)}.`,
+    "",
+    "Source checked: daily_recaps.recap_kind=executive_briefing",
+    `Recap date: ${params.row.recap_date}`,
+    `Workflow status: ${params.row.workflow_status}`,
+    `Approved at: ${formatBriefingTimestamp(params.row.approved_at)}`,
+    `Sent at: ${formatBriefingTimestamp(params.row.sent_at)}`,
+    `Coverage: ${params.row.project_count ?? 0} projects, ${params.row.meeting_count ?? 0} meetings`,
+    params.row.ai_work_run_id ? `AI work run: ${params.row.ai_work_run_id}` : null,
+  ]
+    .filter((line): line is string => Boolean(line))
+    .join("\n");
 }
 
 // Why: deep-agent and Microsoft-specialist fetches can take 40–60s. Without
@@ -1861,6 +2195,315 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           timestamp: new Date().toISOString(),
         },
       } as never);
+
+      if (isExecutiveBriefingMetadataQuestion(lastUserContent)) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "executive-briefing-metadata",
+            message: "Checking daily operating brief metadata",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        if (lastUserContent.trim()) {
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "user",
+            content: lastUserContent,
+          });
+        }
+
+        const metadataLookup = await loadLatestExecutiveBriefingMetadata(
+          args.supabase,
+        );
+        const content = buildExecutiveBriefingMetadataContent(metadataLookup);
+        const toolTrace = [
+          {
+            tool: "intentPlanner",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            output: {
+              intent: "executive_briefing_metadata",
+              responseMode: "metadata_lookup",
+              rationale:
+                "Timing/regeneration follow-up refers to the global executive briefing row, not a project-specific status report.",
+            },
+            timestamp: new Date().toISOString(),
+          },
+          {
+            tool: "executiveBriefingMetadataLookup",
+            toolName: "executiveBriefingMetadataLookup",
+            agent: "retrieval-planner-v2",
+            status: metadataLookup.errorMessage ? "failed" : "success",
+            input: {
+              table: "daily_recaps",
+              filter: "daily_recaps.recap_kind=executive_briefing",
+              order: "created_at desc",
+            },
+            output: {
+              found: Boolean(metadataLookup.row),
+              row: metadataLookup.row,
+              error: metadataLookup.errorMessage,
+            },
+            timestamp: new Date().toISOString(),
+          },
+        ];
+        const sourceDebug = buildAnswerDebugMetadata({
+          orchestrator: "retrieval-planner-v2-executive-briefing-metadata",
+          plan,
+          toolTrace,
+          memoryUsage,
+          sourceCoverage: [
+            {
+              sourceType: "daily_recaps",
+              status: metadataLookup.row ? "loaded" : "missing",
+              notes:
+                metadataLookup.errorMessage ??
+                "daily_recaps.recap_kind=executive_briefing",
+            },
+          ],
+          evidenceCount: metadataLookup.row ? 1 : 0,
+        });
+
+        await persistDirectDeepAgentResponse({
+          supabase: args.supabase,
+          sessionId: args.sessionId,
+          userId: args.user.id,
+          content,
+          responseLabel: "executive-briefing-metadata",
+          sourceDebug,
+          trace: {
+            input: lastUserContent,
+            intent: "executive_briefing_metadata",
+            modelId: "retrieval-planner-v2-executive-briefing-metadata",
+            selectedProjectId: args.selectedProjectId ?? null,
+            toolTrace,
+          },
+          metadata: {
+            architecture: "retrieval-planner-v2",
+            provider_decision: {
+              providerPath: "deterministic-executive-briefing-metadata",
+              model: null,
+            },
+            provider_path: "deterministic-executive-briefing-metadata",
+            model: args.activeModel,
+            synthesis_model: synthesisModel,
+            retrieval_plan: {
+              intent: "executive_briefing_metadata",
+              reason: plan.reason,
+              responseFormat: "metadata_lookup",
+              sources: ["daily_recaps"],
+            },
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            source_debug: sourceDebug,
+          } as Json,
+        });
+
+        responseAlreadyPersisted = true;
+        writeTextResponse(writer, "strategist-executive-briefing-metadata", content);
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: "Daily operating brief metadata returned",
+            status: metadataLookup.errorMessage ? "warning" : "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+        return;
+      }
+
+      if (shouldUseRfiPreviewRouter(lastUserContent)) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "action-preview",
+            message: "Preparing an RFI preview without writing a record",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        if (lastUserContent.trim()) {
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "user",
+            content: lastUserContent,
+          });
+        }
+
+        const project = await resolveRfiPreviewProject({
+          supabase: args.supabase,
+          selectedProjectId: args.selectedProjectId,
+          message: lastUserContent,
+        });
+        const plannerTrace = {
+          tool: "intentPlanner",
+          input: {
+            message: lastUserContent.slice(0, 240),
+            selectedProjectId: args.selectedProjectId ?? null,
+          },
+          output: {
+            intent: "change_management_review",
+            responseMode: "draft_safe_action",
+            rationale:
+              "Explicit RFI creation/drafting request requires preview-only action tooling.",
+          },
+          timestamp: new Date().toISOString(),
+        };
+
+        if (!project) {
+          const content =
+            "I can draft that as a preview, but I could not resolve the project from the request. Send the project name or open the project first, and I will produce a preview without creating the RFI.";
+          const toolTrace = [
+            plannerTrace,
+            {
+              tool: "rfiActionIntentRouter",
+              input: {
+                message: lastUserContent.slice(0, 240),
+                selectedProjectId: args.selectedProjectId ?? null,
+              },
+              output: {
+                status: "blocked",
+                reason: "project_not_resolved",
+              },
+              timestamp: new Date().toISOString(),
+            },
+          ];
+          writeTextResponse(writer, "strategist-rfi-preview-router-blocked", content);
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "assistant",
+            content,
+            metadata: toJsonValue({
+              architecture: "retrieval-planner-v2",
+              provider_decision: {
+                providerPath: "deterministic-rfi-preview-router",
+                model: null,
+              },
+              tool_trace: toolTrace,
+              response_quality: buildResponseQualityMetadata({
+                toolTrace,
+                content,
+              }),
+            }) as Json,
+          });
+          responseAlreadyPersisted = true;
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "action-preview",
+              message: "RFI preview blocked until a project is selected",
+              status: "error",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+          return;
+        }
+
+        const topic = extractRfiTopic(lastUserContent);
+        const subject = `RFI - ${titleCase(topic)}`;
+        const question = `Please clarify ${topic}.`;
+        const rfiToolTrace: Record<string, unknown>[] = [];
+        const previewOutput = await previewCreateRFI(
+          args.user.id,
+          {
+            pinnedProjectId: args.selectedProjectId,
+            onTrace: (trace) => {
+              rfiToolTrace.push({
+                ...trace,
+                toolName: trace.tool,
+              });
+            },
+          },
+          {
+            projectId: project.id,
+            subject,
+            question,
+            scheduleImpact: "tbd",
+            costImpact: "tbd",
+          },
+        );
+        const content = buildRfiPreviewContent({ project, subject, question });
+        const toolTrace = [
+          plannerTrace,
+          {
+            tool: "rfiActionIntentRouter",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            output: {
+              status: "preview_routed",
+              projectId: project.id,
+              projectName: project.name,
+              tool: "createRFI",
+            },
+            timestamp: new Date().toISOString(),
+          },
+          ...rfiToolTrace,
+        ];
+
+        writeTextResponse(writer, "strategist-rfi-preview-router", content);
+        await args.supabase.from("chat_history").insert({
+          session_id: args.sessionId,
+          user_id: args.user.id,
+          role: "assistant",
+          content,
+            metadata: toJsonValue({
+              architecture: "retrieval-planner-v2",
+              provider_decision: {
+                providerPath: "deterministic-rfi-preview-router",
+                model: null,
+              },
+              retrieval_plan: {
+                intent: "change_management_review",
+                reason: "rfi_preview_router",
+              responseFormat: "action_preview",
+              sources: ["public.projects", "action_tools.createRFI"],
+            },
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            action_preview: previewOutput,
+          }) as Json,
+        });
+        await args.supabase
+          .from("conversations")
+          .update({ last_message_at: new Date().toISOString() })
+          .eq("session_id", args.sessionId)
+          .eq("user_id", args.user.id);
+        responseAlreadyPersisted = true;
+
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: "RFI preview prepared",
+            status: "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+        return;
+      }
 
       if (isGeneratedTasksTodayRequest(lastUserContent)) {
         writer.write({
@@ -3201,10 +3844,240 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         return;
       }
 
+      if (shouldUseDirectProjectBriefing({ plan, retrievalCtx })) {
+        const content = buildDirectProjectBriefingContent({
+          ctx: retrievalCtx,
+          message: lastUserContent,
+        });
+        const plannerTrace = {
+          tool: "intentPlanner",
+          input: {
+            message: lastUserContent.slice(0, 240),
+            selectedProjectId: args.selectedProjectId ?? null,
+          },
+          output: {
+            intent: plan.intent,
+            responseMode: plan.responseFormat,
+            rationale:
+              "Packet-first project briefing resolved structured project context before synthesis.",
+          },
+          timestamp: new Date().toISOString(),
+        };
+        const preflightTrace = {
+          tool: "serverBusinessContextPreflight",
+          toolName: "serverBusinessContextPreflight",
+          agent: "retrieval-planner-v2",
+          status: "success",
+          input: {
+            message: lastUserContent.slice(0, 240),
+            selectedProjectId: args.selectedProjectId ?? null,
+          },
+          output: {
+            projectName: namedProjectFromSnapshot(asRecord(retrievalCtx.projectSnapshot)),
+            projectSnapshotLoaded: Boolean(retrievalCtx.projectSnapshot),
+            semanticResultCount: summarizeEvalCount(retrievalCtx.semanticVectorResults),
+          },
+          timestamp: new Date().toISOString(),
+        };
+        const toolTrace = [
+          ...bridgeToolTrace,
+          plannerTrace,
+          preflightTrace,
+          ...buildPrefetchRetrievalTraces({
+            ctx: retrievalCtx,
+            plan,
+            message: lastUserContent,
+            selectedProjectId: args.selectedProjectId ?? null,
+          }),
+        ];
+        const sourceDebug = buildAnswerDebugMetadata({
+          orchestrator: "retrieval-planner-v2-direct-project-briefing",
+          plan,
+          toolTrace,
+          memoryUsage,
+          sourceCoverage: [
+            {
+              sourceType: "project_snapshot",
+              status: "loaded",
+              notes: "getProjectBriefingSnapshot",
+            },
+            {
+              sourceType: "semantic_vector_search",
+              status: retrievalCtx.semanticVectorResults ? "loaded" : "missing",
+              notes: `${summarizeEvalCount(retrievalCtx.semanticVectorResults) ?? 0} result(s)`,
+            },
+          ],
+          evidenceCount: 1 + (summarizeEvalCount(retrievalCtx.semanticVectorResults) ?? 0),
+        });
+
+        await persistDirectDeepAgentResponse({
+          supabase: args.supabase,
+          sessionId: args.sessionId,
+          userId: args.user.id,
+          content,
+          responseLabel: "direct-project-briefing",
+          sourceDebug,
+          trace: {
+            input: lastUserContent,
+            intent: plan.intent,
+            modelId: "retrieval-planner-v2-direct-project-briefing",
+            selectedProjectId: args.selectedProjectId ?? null,
+            toolTrace,
+          },
+          metadata: {
+            architecture: "retrieval-planner-v2",
+            provider_decision: {
+              providerPath: "direct-project-briefing-rag",
+              model: null,
+            },
+            provider_path: "direct-project-briefing-rag",
+            model: args.activeModel,
+            synthesis_model: synthesisModel,
+            retrieval_plan: {
+              intent: plan.intent,
+              reason: plan.reason,
+              responseFormat: plan.responseFormat,
+              sources: Object.keys(plan.sources),
+            },
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            source_debug: sourceDebug,
+          } as Json,
+        });
+
+        responseAlreadyPersisted = true;
+        writeTextResponse(writer, "strategist-direct-project-briefing", content);
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: "Project briefing returned from loaded source context",
+            status: "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+        return;
+      }
+
+      if (plan.intent === "source_lookup" && retrievalCtx.semanticVectorResults) {
+        const content = buildDirectSourceLookupAnswer({
+          message: lastUserContent,
+          semanticVectorResults: retrievalCtx.semanticVectorResults,
+        });
+        if (content) {
+          const plannerTrace = {
+            tool: "intentPlanner",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            output: {
+              intent: "source_lookup",
+              responseMode: "source_lookup",
+              rationale:
+                "User requested exact internal source context rather than a project status report.",
+            },
+            timestamp: new Date().toISOString(),
+          };
+          const sourceLookupTrace = {
+            tool: "sourceLookupIntentRouter",
+            toolName: "sourceLookupIntentRouter",
+            agent: "retrieval-planner-v2",
+            status: "success",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            output: {
+              intent: plan.intent,
+              responseFormat: plan.responseFormat,
+              route: "direct_semantic_source_lookup",
+            },
+            timestamp: new Date().toISOString(),
+          };
+          const toolTrace = [
+            ...bridgeToolTrace,
+            plannerTrace,
+            sourceLookupTrace,
+            ...buildPrefetchRetrievalTraces({
+              ctx: retrievalCtx,
+              plan,
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId ?? null,
+            }),
+          ];
+          const sourceDebug = buildAnswerDebugMetadata({
+            orchestrator: "retrieval-planner-v2-direct-source-lookup",
+            plan,
+            toolTrace,
+            memoryUsage,
+          });
+
+          await persistDirectDeepAgentResponse({
+            supabase: args.supabase,
+            sessionId: args.sessionId,
+            userId: args.user.id,
+            content,
+            responseLabel: "source-lookup-direct-semantic",
+            sourceDebug,
+            trace: {
+              input: lastUserContent,
+              intent: plan.intent,
+              modelId: "retrieval-planner-v2-direct-source-lookup",
+              selectedProjectId: args.selectedProjectId ?? null,
+              toolTrace,
+            },
+            metadata: {
+              architecture: "retrieval-planner-v2",
+              provider_decision: {
+                providerPath: "direct-source-lookup-semantic-rag",
+                model: null,
+              },
+              provider_path: "direct-source-lookup-semantic-rag",
+              model: args.activeModel,
+              synthesis_model: synthesisModel,
+              retrieval_plan: {
+                intent: plan.intent,
+                reason: plan.reason,
+                responseFormat: plan.responseFormat,
+                sources: Object.keys(plan.sources),
+              },
+              tool_trace: toolTrace,
+              response_quality: buildResponseQualityMetadata({
+                toolTrace,
+                content,
+              }),
+              source_debug: sourceDebug,
+            } as Json,
+          });
+
+          responseAlreadyPersisted = true;
+          writeTextResponse(writer, "strategist-direct-source-lookup", content);
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "complete",
+              message: "Source lookup returned",
+              status: "success",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+          return;
+        }
+      }
+
       if (shouldUseDirectRecentTeamsFastPath({ plan, retrievalCtx })) {
-        const content = sanitizeDirectSourceSpecificAnswer(
+        const sourceAnswer = sanitizeDirectSourceSpecificAnswer(
           retrievalCtx.sourceSpecificRagAnswer?.content ?? "",
         );
+        const content = sourceAnswer.includes("I treated this as a source lookup")
+          ? sourceAnswer
+          : `I treated this as a source lookup, not a project status report.\n\n${sourceAnswer}`;
         const toolTrace = [
           ...bridgeToolTrace,
           ...buildPrefetchRetrievalTraces({

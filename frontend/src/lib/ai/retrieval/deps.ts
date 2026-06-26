@@ -71,6 +71,74 @@ function buildSyntheticRagRequest(kind: SourceSpecificRagKind, message?: string)
   }
 }
 
+function projectNameCandidatesFromQuery(query: string): string[] {
+  const candidates = new Set<string>();
+  const normalized = query.trim();
+  const relationMatch = normalized.match(
+    /\b(?:for|on|about)\s+([A-Za-z0-9][A-Za-z0-9 '&.-]{2,80}?)(?:,|\bincluding\b|\bwith\b|\band\b|[?.]|$)/i,
+  );
+  if (relationMatch?.[1]) candidates.add(relationMatch[1].trim());
+
+  for (const quoted of normalized.matchAll(/["“]([^"”]{3,80})["”]/g)) {
+    candidates.add(quoted[1].trim());
+  }
+
+  const ignored = new Set([
+    "give",
+    "current",
+    "executive",
+    "project",
+    "update",
+    "including",
+    "hard",
+    "facts",
+    "open",
+    "risks",
+    "recommended",
+    "next",
+    "actions",
+    "status",
+    "latest",
+  ]);
+  for (const token of normalized.match(/\b[A-Za-z][A-Za-z0-9'&.-]{2,}\b/g) ?? []) {
+    const lower = token.toLowerCase();
+    if (!ignored.has(lower)) candidates.add(token);
+  }
+
+  return [...candidates]
+    .map((candidate) => candidate.replace(/\s+/g, " ").trim())
+    .filter((candidate) => candidate.length >= 3)
+    .sort((a, b) => b.length - a.length)
+    .slice(0, 6);
+}
+
+async function resolveProjectFromProjectsTable(params: {
+  supabase: SupabaseClient<Database>;
+  guardrails: ReturnType<typeof createToolGuardrails>;
+  query: string;
+}): Promise<{ projectId: number } | null> {
+  const scopedProjectIds = await params.guardrails.getScopedProjectIds();
+  if (scopedProjectIds.length === 0) return null;
+
+  for (const candidate of projectNameCandidatesFromQuery(params.query)) {
+    const { data, error } = await params.supabase
+      .from("projects")
+      .select("id,name")
+      .eq("archived", false)
+      .in("id", scopedProjectIds)
+      .ilike("name", `%${candidate}%`)
+      .order("name", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (!error && typeof data?.id === "number") {
+      return { projectId: data.id };
+    }
+  }
+
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -255,8 +323,8 @@ export function buildExecutorDeps({ supabase, userId, sessionId }: BuildExecutor
   ): Promise<{ projectId: number } | null> => {
     if (!query.trim()) return null;
     const target = await resolveIntelligenceTarget({ query, supabase });
-    if (!target?.projectId) return null;
-    return { projectId: target.projectId };
+    if (target?.projectId) return { projectId: target.projectId };
+    return resolveProjectFromProjectsTable({ supabase, guardrails, query });
   };
 
   return {

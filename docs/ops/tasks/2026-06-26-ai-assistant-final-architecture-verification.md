@@ -75,7 +75,7 @@ Baseline and final verifier evidence:
 ## Blockers
 
 - Publish is still pending in this working turn.
-- The Outlook redrive surfaced a separate production guardrail: `intelligence_extraction` source-signal/task writes are currently blocked by the high-churn AI/intelligence database-write guard. Source sync, embedding, assistant health, project attribution, and source lifecycle recovered and pass; event-driven task/intelligence writes should be tracked as the next cleanup slice before final platform readiness is claimed.
+- The Outlook redrive surfaced a separate production guardrail: the intelligence extraction phase's source-signal/task writes are currently blocked by the high-churn AI/intelligence database-write guard. Source sync, embedding, assistant health, project attribution, and source lifecycle recovered and pass; event-driven task/intelligence writes should be tracked as the next cleanup slice before final platform readiness is claimed.
 
 ## Root Cause
 
